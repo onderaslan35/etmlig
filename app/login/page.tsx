@@ -1,67 +1,106 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const [userCode, setUserCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [sifre, setSifre] = useState("");
-  const [yukleniyor, setYukleniyor] = useState(false);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-  async function girisYap() {
-    setYukleniyor(true);
+    const cleanCode = userCode.trim();
+    const cleanPass = password.trim();
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: sifre,
-    });
-
-    setYukleniyor(false);
-
-    if (error) {
-      alert(error.message);
+    if (!cleanCode || !cleanPass) {
+      setError("Lütfen Kullanıcı ID ve Şifrenizi girin.");
       return;
     }
 
-    router.push("/dashboard");
-  }
+    setLoading(true);
+
+    const { data, error: dbError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("user_code", cleanCode)
+      .eq("password", cleanPass);
+
+    if (dbError || !data || data.length === 0) {
+      setError("Girdiğiniz Kullanıcı ID veya Şifre hatalı!");
+      setLoading(false);
+      return;
+    }
+
+    // Başarılı Giriş
+    const loggedUser = data[0];
+    localStorage.setItem("etml_user", JSON.stringify(loggedUser));
+
+    router.push("/tahmin");
+  };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="bg-zinc-900 p-8 rounded-2xl w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-md">
+        <div className="mb-8 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
+            Elit Tahmin Master Ligi
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
+            Giriş Yap
+          </h1>
+          <p className="mt-2 text-sm text-slate-400">
+            Lütfen size verilen Kullanıcı ID ve Şifrenizi giriniz.
+          </p>
+        </div>
 
-        <h1 className="text-3xl font-bold text-yellow-400 mb-6">
-          ETML Giriş
-        </h1>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Kullanıcı ID (Giriş Kodu)
+            </label>
+            <input
+              type="text"
+              value={userCode}
+              onChange={(e) => setUserCode(e.target.value)}
+              placeholder="Örn: 262728"
+              className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3.5 text-white outline-none transition focus:border-emerald-400 font-bold"
+            />
+          </div>
 
-        <input
-          type="email"
-          placeholder="E-posta"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-3 p-3 rounded bg-zinc-800"
-        />
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Şifre
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••"
+              className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3.5 text-white outline-none transition focus:border-emerald-400 font-bold"
+            />
+          </div>
 
-        <input
-          type="password"
-          placeholder="Şifre"
-          value={sifre}
-          onChange={(e) => setSifre(e.target.value)}
-          className="w-full mb-5 p-3 rounded bg-zinc-800"
-        />
+          {error && (
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-300">
+              {error}
+            </div>
+          )}
 
-        <button
-          onClick={girisYap}
-          disabled={yukleniyor}
-          className="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-xl font-bold"
-        >
-          {yukleniyor ? "Giriş Yapılıyor..." : "Giriş Yap"}
-        </button>
-
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-black text-slate-950 transition hover:bg-emerald-400 disabled:opacity-60 shadow-lg shadow-emerald-500/20"
+          >
+            {loading ? "Giriş Yapılıyor..." : "Sisteme Giriş Yap"}
+          </button>
+        </form>
       </div>
-    </main>
+    </div>
   );
 }

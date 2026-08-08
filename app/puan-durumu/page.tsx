@@ -1,65 +1,119 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+import PuanDurumuTable from '@/components/PuanDurumuTable';
+import week1Data from '@/app/data/week1_predictions.json';
+import week2Data from '@/app/data/week2_predictions.json';
+import week3Data from '@/app/data/week3_predictions.json';
+
+interface UserPrediction {
+  id: string;
+  name: string;
+  score: number;
+  exacts: number;
+}
+
+interface StandingUser {
+  id: string;
+  name: string;
+  w1_score: number;
+  w2_score: number;
+  w3_score: number;
+  total_score: number;
+  exacts: number;
+}
+
+export default function MasterPage() {
+  const [selectedWeek, setSelectedWeek] = useState<number | 'total'>('total');
+  const [computedStandings, setComputedStandings] = useState<StandingUser[]>([]);
+
+  useEffect(() => {
+    const userMap: Record<string, StandingUser> = {};
+
+    // 1. Hafta Verilerini İşle
+    (week1Data as UserPrediction[]).forEach((u) => {
+      userMap[u.id] = {
+        id: u.id,
+        name: u.name,
+        w1_score: u.score || 0,
+        w2_score: 0,
+        w3_score: 0,
+        total_score: u.score || 0,
+        exacts: u.exacts || 0,
+      };
+    });
+
+    // 2. Hafta Verilerini İşle
+    (week2Data as UserPrediction[]).forEach((u) => {
+      if (!userMap[u.id]) {
+        userMap[u.id] = { id: u.id, name: u.name, w1_score: 0, w2_score: 0, w3_score: 0, total_score: 0, exacts: 0 };
+      }
+      userMap[u.id].w2_score = u.score || 0;
+      userMap[u.id].exacts += u.exacts || 0;
+    });
+
+    // 3. Hafta Verilerini İşle
+    (week3Data as UserPrediction[]).forEach((u) => {
+      if (!userMap[u.id]) {
+        userMap[u.id] = { id: u.id, name: u.name, w1_score: 0, w2_score: 0, w3_score: 0, total_score: 0, exacts: 0 };
+      }
+      userMap[u.id].w3_score = u.score || 0;
+      userMap[u.id].exacts += u.exacts || 0;
+    });
+
+    // Toplam Puanları Hesapla ve Sırala
+    const list = Object.values(userMap).map((u) => ({
+      ...u,
+      total_score: u.w1_score + u.w2_score + u.w3_score,
+    }));
+
+    list.sort((a, b) => b.total_score - a.total_score || b.exacts - a.exacts);
+
+    setComputedStandings(list);
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="min-h-screen bg-slate-950 p-6 text-white">
+      <div className="flex justify-center gap-2 md:gap-4 mb-6 flex-wrap">
+        <button
+          onClick={() => setSelectedWeek(1)}
+          className={`px-4 py-2 rounded-lg font-bold transition text-xs md:text-sm ${
+            selectedWeek === 1 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700'
+          }`}
+        >
+          1. Hafta
+        </button>
+        <button
+          onClick={() => setSelectedWeek(2)}
+          className={`px-4 py-2 rounded-lg font-bold transition text-xs md:text-sm ${
+            selectedWeek === 2 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700'
+          }`}
+        >
+          2. Hafta
+        </button>
+        <button
+          onClick={() => setSelectedWeek(3)}
+          className={`px-4 py-2 rounded-lg font-bold transition text-xs md:text-sm ${
+            selectedWeek === 3 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700'
+          }`}
+        >
+          3. Hafta
+        </button>
+        <button
+          onClick={() => setSelectedWeek('total')}
+          className={`px-4 py-2 rounded-lg font-bold transition text-xs md:text-sm ${
+            selectedWeek === 'total' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700'
+          }`}
+        >
+          Genel Puan Durumu
+        </button>
+      </div>
+
+      <PuanDurumuTable 
+        leagueTitle={`Master Ligi - ${selectedWeek === 'total' ? 'Genel Sıralama' : `${selectedWeek}. Hafta`}`} 
+        standings={computedStandings} 
+        activeWeek={selectedWeek}
+      />
+    </main>
   );
 }

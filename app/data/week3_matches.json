@@ -1,0 +1,218 @@
+[
+  {
+    "id": "m1",
+    "home": "OLIMPIYAKOS",
+    "away": "NEC NIJMEGEN",
+    "score": "0 - 0",
+    "league": "DFO",
+    "categoryName": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "4 Ağustos | 21:00"
+  },
+  {
+    "id": "m2",
+    "home": "SPARTA PRAG",
+    "away": "OLIMPIC LYON",
+    "score": "2 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "4 Ağustos | 21:00"
+  },
+  {
+    "id": "m3",
+    "home": "USG",
+    "away": "BODO-GLIMT",
+    "score": "3 - 3",
+    "league": "DFO",
+    "categoryName": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "4 Ağustos | 21:00"
+  },
+  {
+    "id": "m4",
+    "home": "FENERBAHÇE",
+    "away": "STURM GRAZ",
+    "score": "2 - 0",
+    "league": "DFO",
+    "categoryName": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "5 Ağustos | 21:00"
+  },
+  {
+    "id": "m5",
+    "home": "PANATHINAIKOS",
+    "away": "CSKA 1948",
+    "score": "1 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "5 Ağustos | 21:30"
+  },
+  {
+    "id": "m6",
+    "home": "PAIDE LINNAMEESKOND",
+    "away": "RAPID WIEN",
+    "score": "1 - 4",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 19:00"
+  },
+  {
+    "id": "m7",
+    "home": "HRADEC KRALOVE",
+    "away": "BEŞİKTAŞ",
+    "score": "0 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 20:00"
+  },
+  {
+    "id": "m8",
+    "home": "DEBRECEN",
+    "away": "KOPENAG",
+    "score": "0 - 3",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 20:00"
+  },
+  {
+    "id": "m9",
+    "home": "DINAMO KIEV",
+    "away": "KARABAĞ FK",
+    "score": "1 - 0",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 20:00"
+  },
+  {
+    "id": "m10",
+    "home": "GOTEBORG",
+    "away": "GENT",
+    "score": "0 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 20:00"
+  },
+  {
+    "id": "m11",
+    "home": "PAOK",
+    "away": "ANDERLECHT",
+    "score": "0 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 20:45"
+  },
+  {
+    "id": "m12",
+    "home": "AJAX",
+    "away": "SHELBOURNE",
+    "score": "3 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 21:00"
+  },
+  {
+    "id": "m13",
+    "home": "BRAGA",
+    "away": "DINAMO MINSK",
+    "score": "1 - 0",
+    "league": "DFO",
+    "categoryName": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 21:30"
+  },
+  {
+    "id": "m14",
+    "home": "BENFICA",
+    "away": "HEART",
+    "score": "6 - 1",
+    "league": "DFO",
+    "categoryName": "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    "desc": "6 Ağustos | 22:00"
+  },
+  {
+    "id": "m15",
+    "home": "BOLUSPOR",
+    "away": "MANİSA FK",
+    "score": "1 - 0",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "7 Ağustos | 21:30"
+  },
+  {
+    "id": "m16",
+    "home": "BANDIRMASPOR",
+    "away": "İSTANBULSPOR",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "8 Ağustos | 17:00"
+  },
+  {
+    "id": "m17",
+    "home": "SİVASSPOR",
+    "away": "EROKSPOR",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "8 Ağustos | 19:00"
+  },
+  {
+    "id": "m18",
+    "home": "ÜMRANİYE SPOR",
+    "away": "MARDİN 1969",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "8 Ağustos | 19:00"
+  },
+  {
+    "id": "m19",
+    "home": "ANTALYASPOR",
+    "away": "KEÇİÖRENGÜCÜ",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "8 Ağustos | 21:30"
+  },
+  {
+    "id": "m20",
+    "home": "IĞDIR FK",
+    "away": "FATİH KARAGÜMRÜK",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "9 Ağustos | 19:00"
+  },
+  {
+    "id": "m21",
+    "home": "SARIYER",
+    "away": "MUĞLASPOR",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "9 Ağustos | 19:00"
+  },
+  {
+    "id": "m22",
+    "home": "BODRUMSPOR",
+    "away": "BURSASPOR",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "9 Ağustos | 21:30"
+  },
+  {
+    "id": "m23",
+    "home": "VANSPOR FK",
+    "away": "KAYSERİSPOR",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "9 Ağustos | 21:30"
+  },
+  {
+    "id": "m24",
+    "home": "PENDİKSPOR",
+    "away": "BATMAN PETROL SPOR",
+    "score": "- - -",
+    "league": "TFF",
+    "categoryName": "TÜRKİYE 1.LİG",
+    "desc": "10 Ağustos | 21:30"
+  }
+]
