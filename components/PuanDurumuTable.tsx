@@ -15,7 +15,7 @@ export default function PuanDurumuTable({ leagueTitle }: PuanDurumuTableProps) {
   const [tableRows, setTableRows] = useState<any[]>([]);
 
   const isDfo = leagueTitle.includes('DFO');
-  const totalSectionTitle = isDfo ? 'DFO Toplam Puan Durumu' : 'Master Toplam Puan Durumu';
+  const totalSectionTitle = 'TOPLAM PUAN DURUMU';
   const logoPath = isDfo ? '/dfo-logo.png' : '/master-logo.png';
 
   const row1Weeks = Array.from({ length: 24 }, (_, i) => i + 1);
@@ -70,7 +70,7 @@ export default function PuanDurumuTable({ leagueTitle }: PuanDurumuTableProps) {
       <div className="w-full flex flex-col items-center mb-6">
         <button
           onClick={() => setActiveTab('total')}
-          className={`px-8 py-2.5 rounded-xl font-bold text-sm md:text-base transition-all duration-200 border w-full max-w-md text-center shadow-md mb-4 ${
+          className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full max-w-md text-center shadow-md mb-4 uppercase tracking-wider ${
             activeTab === 'total'
               ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-105'
               : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'

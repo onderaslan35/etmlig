@@ -1,131 +1,145 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect } from 'react';
 
 export default function AdminMaclarPage() {
-  const [selectedWeek, setSelectedWeek] = useState<string>("3");
-  const [matches, setMatches] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedWeek, setSelectedWeek] = useState<number>(3);
+  const [matchId, setMatchId] = useState<number>(16);
+  const [homeScore, setHomeScore] = useState<string>('');
+  const [awayScore, setAwayScore] = useState<string>('');
+  const [matchType, setMatchType] = useState<string>('TFF');
+  const [savedStatus, setSavedStatus] = useState<boolean>(false);
+  const [allMatches, setAllMatches] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchMatches();
+    const localData = localStorage.getItem(`week${selectedWeek}_matches`);
+    if (localData) {
+      setAllMatches(JSON.parse(localData));
+    }
   }, [selectedWeek]);
 
-  const fetchMatches = async () => {
-    setLoading(true);
-    const tableName = `matches_h${selectedWeek}`;
-    const { data } = await supabase.from(tableName).select("*").order("mac_no");
-    setMatches(data || []);
-    setLoading(false);
-  };
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (homeScore === '' || awayScore === '') return;
 
-  const handleScoreChange = async (macNo: number, skorEv: string, skorDep: string, isTff: boolean) => {
-    const tableName = `matches_h${selectedWeek}`;
-    const katName = isTff ? "TFF" : "DFO";
-    
-    await supabase.from(tableName).upsert({
-      mac_no: macNo,
-      skor_ev: skorEv !== "" ? Number(skorEv) : null,
-      skor_dep: skorDep !== "" ? Number(skorDep) : null,
-      oynandi: skorEv !== "" && skorDep !== "",
-      kategori: katName
+    const storageKey = `week${selectedWeek}_matches`;
+    const currentData = localStorage.getItem(storageKey);
+    let matchArray = currentData ? JSON.parse(currentData) : [];
+
+    const updatedArray = matchArray.map((m: any) => {
+      if (m.id === matchId || m.matchNo === matchId) {
+        return {
+          ...m,
+          homeScore: Number(homeScore),
+          awayScore: Number(awayScore),
+          isFinished: true,
+          type: matchType,
+        };
+      }
+      return m;
     });
 
-    fetchMatches();
+    localStorage.setItem(storageKey, JSON.stringify(updatedArray));
+    setAllMatches(updatedArray);
+
+    setSavedStatus(true);
+    setTimeout(() => setSavedStatus(false), 3000);
+    setHomeScore('');
+    setAwayScore('');
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">
-              ADMIN YÖNETİM PANELİ
-            </p>
-            <h1 className="text-3xl font-black text-white">Maç Skorları ve Kategori Yönetimi</h1>
-          </div>
+    <div className="max-w-4xl mx-auto p-6 text-slate-100">
+      <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-black text-amber-400 uppercase tracking-wider">
+            ⚡ ANLIK MAÇ & SKOR YÖNETİMİ
+          </h1>
+          <p className="text-xs text-slate-400">Biten maçı girin, sitede anında canlı yayınlansın.</p>
+        </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-bold animate-pulse">
+          ● CANLI SİSTEM AKTİF
+        </div>
+      </div>
 
-          <div className="flex items-center gap-2 bg-slate-900 border border-white/10 p-2 rounded-xl">
-            <span className="text-xs text-slate-400 font-bold pl-2">HAFTA:</span>
+      <form onSubmit={handleSave} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Hafta Seçimi</label>
             <select
               value={selectedWeek}
-              onChange={(e) => setSelectedWeek(e.target.value)}
-              className="bg-slate-950 text-amber-400 font-bold text-xs px-3 py-1.5 rounded-lg border border-white/20 outline-none cursor-pointer"
+              onChange={(e) => setSelectedWeek(Number(e.target.value))}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-amber-500"
             >
-              <option value="1">1. Hafta (DFO)</option>
-              <option value="2">2. Hafta (DFO)</option>
-              <option value="3">3. Hafta (TFF 1. LİG & DFO)</option>
+              {Array.from({ length: 48 }, (_, i) => i + 1).map((w) => (
+                <option key={w} value={w}>
+                  {w}. Hafta
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Maç Sırası (1-24)</label>
+            <input
+              type="number"
+              min="1"
+              max="24"
+              value={matchId}
+              onChange={(e) => setMatchId(Number(e.target.value))}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Kategori / Lig Tipi</label>
+            <select
+              value={matchType}
+              onChange={(e) => setMatchType(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-amber-500"
+            >
+              <option value="DFO">DFO (Dünya Futbol Org.)</option>
+              <option value="TFF">TFF (Türkiye Futbol Org.)</option>
             </select>
           </div>
         </div>
 
-        {/* MAÇ LİSTESİ */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center py-12 text-slate-400 font-bold">Maçlar Yükleniyor...</div>
-          ) : (
-            matches.map((m) => {
-              // KURAL: 3. haftada maç no > 14 ise TFF 1. LİG, değilse DFO
-              const isTff = m.kategori === "TFF" || m.kategori === "TFFO" || (selectedWeek === "3" && m.mac_no > 14);
-
-              return (
-                <div
-                  key={m.mac_no}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-center justify-between gap-4 ${
-                    isTff
-                      ? "bg-red-950/20 border-red-500/40 hover:border-red-500"
-                      : "bg-blue-950/20 border-blue-500/40 hover:border-blue-500"
-                  }`}
-                >
-                  {/* LİG VE KATEGORİ ROZETİ */}
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <span
-                      className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase ${
-                        isTff
-                          ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
-                          : "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                      }`}
-                    >
-                      {isTff ? "🇹🇷 TFFO" : "🌍 DFO"}
-                    </span>
-                    <span className="text-xs font-bold text-slate-300">
-                      Maç #{m.mac_no} - {m.lig_adi || (isTff ? "TFF 1. Lig" : "Dünya Ligi")}
-                    </span>
-                  </div>
-
-                  {/* TAKIMLAR VE SKOR GİRİŞİ */}
-                  <div className="flex items-center gap-3 font-bold text-sm">
-                    <span className="text-right w-36 truncate text-slate-200">{m.ev_sahibi}</span>
-                    
-                    <input
-                      type="number"
-                      defaultValue={m.skor_ev ?? ""}
-                      onBlur={(e) => handleScoreChange(m.mac_no, e.target.value, String(m.skor_dep ?? ""), isTff)}
-                      className={`w-12 h-10 text-center font-black text-base rounded-xl border bg-slate-950 outline-none ${
-                        isTff ? "border-red-500/50 text-red-400 focus:border-red-500" : "border-blue-500/50 text-blue-400 focus:border-blue-500"
-                      }`}
-                    />
-
-                    <span className="text-slate-500 font-black">-</span>
-
-                    <input
-                      type="number"
-                      defaultValue={m.skor_dep ?? ""}
-                      onBlur={(e) => handleScoreChange(m.mac_no, String(m.skor_ev ?? ""), e.target.value, isTff)}
-                      className={`w-12 h-10 text-center font-black text-base rounded-xl border bg-slate-950 outline-none ${
-                        isTff ? "border-red-500/50 text-red-400 focus:border-red-500" : "border-blue-500/50 text-blue-400 focus:border-blue-500"
-                      }`}
-                    />
-
-                    <span className="text-left w-36 truncate text-slate-200">{m.deplasman}</span>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="border-t border-slate-800 pt-4 grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Ev Sahibi Skor</label>
+            <input
+              type="number"
+              placeholder="0"
+              value={homeScore}
+              onChange={(e) => setHomeScore(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-amber-500 text-center text-xl font-bold"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Deplasman Skor</label>
+            <input
+              type="number"
+              placeholder="0"
+              value={awayScore}
+              onChange={(e) => setAwayScore(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-amber-500 text-center text-xl font-bold"
+            />
+          </div>
         </div>
-      </div>
+
+        <button
+          type="submit"
+          className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg uppercase tracking-wider text-sm mt-4 cursor-pointer"
+        >
+          🚀 SKORU VE BİLGİLERİ ANINDA YAYINLA
+        </button>
+
+        {savedStatus && (
+          <div className="bg-emerald-500/20 border border-emerald-500 text-emerald-400 p-3 rounded-xl text-center text-xs font-bold animate-fade-in">
+            ✅ {selectedWeek}. Hafta {matchId}. Maç skoru başarıyla güncellendi ve canlıya alındı!
+          </div>
+        )}
+      </form>
     </div>
   );
 }

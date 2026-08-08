@@ -5,28 +5,14 @@ import Image from 'next/image';
 import totalStandings from '@/app/data/standings.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
+import week3Data from '@/app/data/week3_predictions.json';
 
 export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
-  const [week3Data, setWeek3Data] = useState<any[]>([]);
+  const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
-  const row1Weeks = Array.from({ length: 24 }, (_, i) => i + 1);
-  const row2Weeks = Array.from({ length: 24 }, (_, i) => i + 25);
-
-  useEffect(() => {
-    fetch('/api/save-score')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.predictions) setWeek3Data(data.predictions);
-        else {
-          import('@/app/data/week3_predictions.json').then((m) => setWeek3Data(m.default || []));
-        }
-      })
-      .catch(() => {
-        import('@/app/data/week3_predictions.json').then((m) => setWeek3Data(m.default || []));
-      });
-  }, []);
+  const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
   useEffect(() => {
     if (activeTab === 'total') {
@@ -51,7 +37,18 @@ export default function MasterPuanDurumuPage() {
 
       setTableRows(sorted);
     }
-  }, [activeTab, week3Data]);
+  }, [activeTab]);
+
+  const selectTab = (tabKey: string) => {
+    setActiveTab(tabKey);
+    setIsWeekMenuOpen(false);
+  };
+
+  const getActiveTabTitle = () => {
+    if (activeTab === 'total') return 'TOPLAM PUAN DURUMU';
+    const weekNum = activeTab.replace('week', '');
+    return `${weekNum}. HAFTA PUAN DURUMU`;
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 text-slate-100 flex flex-col items-center">
@@ -65,83 +62,79 @@ export default function MasterPuanDurumuPage() {
         ELİT TAHMİN MASTER LİGİ
       </h1>
 
-      {/* SEKMELER VE HAFTA SEÇİMLERİ */}
-      <div className="w-full flex flex-col items-center mb-6">
-        {/* YUKARI ÇEKİLMİŞ PUAN DURUMU BUTONU */}
+      {/* BUTONLAR VE AÇILIR MENÜ ALANI */}
+      <div className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
         <button
-          onClick={() => setActiveTab('total')}
-          className={`px-8 py-2 rounded-xl font-bold text-sm md:text-base transition-all duration-200 border w-full max-w-xl text-center shadow-md mb-3 uppercase ${
+          onClick={() => selectTab('total')}
+          className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
             activeTab === 'total'
-              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-105'
+              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]'
               : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
           }`}
         >
-          PUAN DURUMU
+          TOPLAM PUAN DURUMU
         </button>
 
-        {/* ARA BAŞLIK: HAFTALAR */}
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-          HAFTALAR
-        </span>
+        <div className="w-full relative">
+          <button
+            onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)}
+            className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${
+              activeTab !== 'total'
+                ? 'bg-red-500 text-white border-red-400'
+                : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+            }`}
+          >
+            <span>📅 {activeTab === 'total' ? 'HAFTA SEÇİNİZ' : getActiveTabTitle()}</span>
+            <span className="text-xs transition-transform duration-200">
+              {isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+            </span>
+          </button>
 
-        {/* HAFTA BUTONLARI IZGARASI */}
-        <div className="w-full bg-slate-900/90 border border-slate-800 p-2.5 rounded-2xl shadow-lg space-y-2">
-          {/* 1. SATIR: 1 - 24 */}
-          <div className="grid grid-cols-12 md:grid-cols-24 gap-1 w-full">
-            {row1Weeks.map((weekNum) => {
-              const weekKey = `week${weekNum}`;
-              const isActive = activeTab === weekKey;
-              return (
-                <button
-                  key={weekNum}
-                  onClick={() => setActiveTab(weekKey)}
-                  className={`py-1 text-xs font-bold rounded-md border transition-all text-center ${
-                    isActive
-                      ? 'bg-red-500 text-white border-red-400 scale-110 shadow-sm z-10'
-                      : 'bg-slate-950/80 text-red-400 border-slate-800 hover:bg-slate-800 hover:text-red-300'
-                  }`}
-                  title={`${weekNum}. Hafta Master Puan Durumu`}
-                >
-                  {weekNum}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 2. SATIR: 25 - 48 */}
-          <div className="grid grid-cols-12 md:grid-cols-24 gap-1 w-full">
-            {row2Weeks.map((weekNum) => {
-              const weekKey = `week${weekNum}`;
-              const isActive = activeTab === weekKey;
-              return (
-                <button
-                  key={weekNum}
-                  onClick={() => setActiveTab(weekKey)}
-                  className={`py-1 text-xs font-bold rounded-md border transition-all text-center ${
-                    isActive
-                      ? 'bg-red-500 text-white border-red-400 scale-110 shadow-sm z-10'
-                      : 'bg-slate-950/80 text-red-400 border-slate-800 hover:bg-slate-800 hover:text-red-300'
-                  }`}
-                  title={`${weekNum}. Hafta Master Puan Durumu`}
-                >
-                  {weekNum}
-                </button>
-              );
-            })}
-          </div>
+          {isWeekMenuOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
+              <div className="text-[11px] font-bold text-slate-400 mb-2 text-center uppercase tracking-wider border-b border-slate-800 pb-1">
+                İncelemek İstediğiniz Haftayı Seçin
+              </div>
+              <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
+                {totalWeeks.map((weekNum) => {
+                  const weekKey = `week${weekNum}`;
+                  const isActive = activeTab === weekKey;
+                  return (
+                    <button
+                      key={weekNum}
+                      onClick={() => selectTab(weekKey)}
+                      className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${
+                        isActive
+                          ? 'bg-red-500 text-white border-red-400 scale-105 shadow-sm'
+                          : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-red-500/20 hover:text-red-300'
+                      }`}
+                    >
+                      {weekNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="bg-slate-950 px-6 py-2.5 border-b border-slate-800 text-center">
+          <span className="text-xs font-black text-amber-400 uppercase tracking-widest">
+            {getActiveTabTitle()}
+          </span>
+        </div>
+
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
+              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-4 w-16 text-center">SIRA</th>
-                  <th className="px-6 py-4">YARİŞMACI</th>
-                  <th className="px-6 py-4 text-right">
+                  <th className="px-6 py-3.5 w-16 text-center">SIRA</th>
+                  <th className="px-6 py-3.5">YARIŞMACI</th>
+                  <th className="px-6 py-3.5 text-right">
                     {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                   </th>
                 </tr>
@@ -160,8 +153,8 @@ export default function MasterPuanDurumuPage() {
             </table>
           </div>
         ) : (
-          <div className="py-12 text-center text-slate-500 font-medium">
-            ⏳ {activeTab.replace('week', '')}. Haftanın Master verileri bulunamadı.
+          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
+            ⏳ {activeTab.replace('week', '')}. Haftanın verileri bulunamadı veya henüz hesaplanmadı.
           </div>
         )}
       </div>
