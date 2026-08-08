@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
@@ -165,25 +166,19 @@ export default function MacArsiviPage() {
     }
   };
 
-  // Gerçek JSON verisinden ve canlı skordan yola çıkarak o maçı bilenleri ve PUANSİS kuralına göre puanını bulan fonksiyon
   const getPredictorsForMatch = (matchId: string) => {
     let dataSource = week1Data;
     if (activeWeek === 2) dataSource = week2Data;
     if (activeWeek === 3) dataSource = week3Data;
 
-    // Aktif haftanın güncel skorlarını al
     const currentScores = activeWeek === 3 ? week3Matches : (activeWeek === 2 ? week2Matches : week1Matches);
     const targetMatch = currentScores.find(m => m.id === matchId);
     const officialScore = liveScores[matchId] || (targetMatch ? targetMatch.score : '');
 
-    // Eğer maç henüz oynanmamışsa veya skor girilmemişse boş dön
     if (!officialScore || officialScore.includes('- -')) return [];
 
-    // Bu maçı tam bilen kullanıcıları filtrele (Senin orijinal JSON yapına göre predictions içinde o maçın skoru veya puanı tutuluyor)
-    // Gerçek tahmin verilerini tarıyoruz:
     const predictors = (dataSource || []).filter((user: any) => {
       if (!user.predictions) return false;
-      // Eğer kullanıcının predictions objesinde bu maç için kayıt varsa ve puanı 0'dan büyükse
       return user.predictions[matchId] !== undefined && user.predictions[matchId] > 0;
     });
 
@@ -192,25 +187,25 @@ export default function MacArsiviPage() {
 
     return predictors.map((user: any) => ({
       name: user.name,
-      puan: calculatedPoints, // PUANSİS kurallarına göre dinamik puan (1 kişi:12, 2 kişi:6, 3 kişi:5 vb.)
+      puan: calculatedPoints,
     })).sort((a, b) => b.puan - a.puan);
   };
 
   const renderTeamBadge = (teamName: string) => {
     const shortText = teamName.substring(0, 3).toUpperCase();
     return (
-      <div className="w-12 h-12 bg-slate-950 border border-amber-500/30 rounded-xl flex items-center justify-center font-black text-xs text-amber-400 uppercase shadow-md shrink-0">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-950 border border-amber-500/30 rounded-xl flex items-center justify-center font-black text-xs text-amber-400 uppercase shadow-md shrink-0">
         {shortText}
       </div>
     );
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-1 text-amber-400 tracking-wider uppercase">
+    <div className="max-w-5xl mx-auto p-3 sm:p-4 text-slate-100 flex flex-col items-center">
+      <h1 className="text-2xl sm:text-4xl font-extrabold text-center mb-1 text-amber-400 tracking-wider uppercase">
         MAÇLAR VE FİKSTÜR
       </h1>
-      <p className="text-slate-400 text-xs md:text-sm mb-6 text-center">
+      <p className="text-slate-400 text-xs sm:text-sm mb-6 text-center">
         Organizasyon ve haftalara göre karşılaşmalar, skorlar ve detaylar
       </p>
 
@@ -223,7 +218,7 @@ export default function MacArsiviPage() {
               setActiveLeague(league);
               if (league === 'TFF') setActiveWeek(3);
             }}
-            className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${
+            className={`px-5 sm:px-6 py-2 rounded-lg text-xs font-black transition-all ${
               activeLeague === league ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -233,7 +228,7 @@ export default function MacArsiviPage() {
       </div>
 
       {/* Hafta Seçim Butonları */}
-      <div className="flex gap-2 mb-8">
+      <div className="flex gap-2 mb-6">
         {availableWeeks.map((week) => (
           <button
             key={week}
@@ -241,7 +236,7 @@ export default function MacArsiviPage() {
               setActiveWeek(week);
               setSelectedMatch(null);
             }}
-            className={`px-6 py-2 rounded-lg text-xs font-bold border transition-all ${
+            className={`px-5 sm:px-6 py-2 rounded-lg text-xs font-bold border transition-all ${
               activeWeek === week ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md scale-105' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
             }`}
           >
@@ -260,41 +255,42 @@ export default function MacArsiviPage() {
             <div
               key={`${match.id}-${index}`}
               onClick={() => setSelectedMatch(match)}
-              className="bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] shadow-lg group relative overflow-hidden flex flex-col justify-between"
+              className="bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-3.5 sm:p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-lg group relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="w-full flex justify-center mb-1.5">
-                  <span className={`w-full text-center px-3 py-1 rounded-lg border text-[11px] font-extrabold uppercase tracking-tight shadow-sm ${badgeClass}`}>
+                  <span className={`w-full text-center px-3 py-1 rounded-lg border text-[10px] sm:text-[11px] font-extrabold uppercase tracking-tight shadow-sm truncate ${badgeClass}`}>
                     {match.categoryName}
                   </span>
                 </div>
 
                 <div className="text-[11px] font-bold text-amber-400/90 text-center mb-1">{match.desc}</div>
 
-                <div className="w-full flex justify-center mb-3">
-                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 font-black text-[11px] px-3 py-0.5 rounded-full uppercase tracking-widest shadow-sm">
+                <div className="w-full flex justify-center mb-2.5">
+                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 font-black text-[10px] sm:text-[11px] px-3 py-0.5 rounded-full uppercase tracking-widest shadow-sm">
                     {match.league} - {index + 1}. MAÇ
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between py-3 px-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
-                  <div className="flex flex-col items-center w-2/5 text-center gap-1.5">
+                <div className="flex items-center justify-between py-2.5 px-2.5 bg-slate-950/70 rounded-xl border border-slate-800/80">
+                  <div className="flex flex-col items-center w-2/5 text-center gap-1 min-w-0">
                     {renderTeamBadge(match.home)}
-                    <span className="font-extrabold text-xs text-slate-100 line-clamp-1">{match.home}</span>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-slate-100 truncate w-full">{match.home}</span>
                   </div>
 
-                  <div className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-sm md:text-base tracking-wider shadow-lg shrink-0 border border-amber-400">
+                  {/* KARTTAKİ SKOR KUTUSU (ASLA YAN SATIRA KIRILMAZ) */}
+                  <div className="bg-amber-500 text-slate-950 font-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm tracking-wider shadow-lg shrink-0 border border-amber-400 whitespace-nowrap">
                     {match.score}
                   </div>
 
-                  <div className="flex flex-col items-center w-2/5 text-center gap-1.5">
+                  <div className="flex flex-col items-center w-2/5 text-center gap-1 min-w-0">
                     {renderTeamBadge(match.away)}
-                    <span className="font-extrabold text-xs text-slate-100 line-clamp-1">{match.away}</span>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-slate-100 truncate w-full">{match.away}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="text-[10px] text-center text-slate-400 mt-3 font-semibold group-hover:text-amber-400 transition-colors flex items-center justify-center gap-1.5 border-t border-slate-800/40 pt-2">
+              <div className="text-[10px] text-center text-slate-400 mt-2.5 font-semibold group-hover:text-amber-400 transition-colors flex items-center justify-center gap-1.5 border-t border-slate-800/40 pt-2">
                 <span className="text-emerald-400 font-bold">🎯 {predictors.length} kişi bildi</span>
                 <span className="text-slate-600">•</span>
                 <span>Puan alanları gör ➔</span>
@@ -304,62 +300,95 @@ export default function MacArsiviPage() {
         })}
       </div>
 
-      {/* Modal / Maç Detayı */}
+      {/* ======================================================== */}
+      {/* BÜTÜN MAÇLAR İÇİN ORTAK YENİLENMİŞ MOBİL POPUP (MODAL) */}
+      {/* ======================================================== */}
       {selectedMatch && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md font-bold">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 z-50">
+          <div className="bg-[#0b1329] border border-slate-800/90 w-[95%] max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100">
+            
+            {/* Pop-up Üst Başlık */}
+            <div className="p-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div className="min-w-0 pr-2">
+                <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md font-extrabold uppercase">
                   {selectedMatch.league} - {activeWeek}. HAFTA
                 </span>
-                <h3 className="text-sm font-bold text-slate-200 mt-1">{selectedMatch.home} vs {selectedMatch.away}</h3>
+                <h3 className="text-xs sm:text-sm font-black text-slate-100 mt-1 truncate">
+                  {selectedMatch.home} vs {selectedMatch.away}
+                </h3>
               </div>
-              <button onClick={() => setSelectedMatch(null)} className="text-slate-400 hover:text-white bg-slate-800 w-8 h-8 rounded-xl flex items-center justify-center font-bold">✕</button>
+              <button
+                onClick={() => setSelectedMatch(null)}
+                className="text-slate-400 hover:text-white bg-slate-800/80 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="p-4 bg-slate-900/50 text-center border-b border-slate-800 flex flex-col items-center">
-              <span className={`px-3 py-1 rounded-lg border text-[11px] font-extrabold uppercase tracking-tight mb-2 ${getBadgeStyle(selectedMatch.category)}`}>
+            {/* Pop-up Orta Skor Alanı */}
+            <div className="p-3.5 bg-slate-900/60 text-center border-b border-slate-800/80 flex flex-col items-center">
+              <span className={`px-2.5 py-1 rounded-md border text-[10px] font-extrabold uppercase tracking-tight mb-2 max-w-full truncate ${getBadgeStyle(selectedMatch.category)}`}>
                 {selectedMatch.categoryName}
               </span>
-              <div className="flex items-center justify-center gap-4 my-2">
-                <div className="flex flex-col items-center gap-1 w-28">
+
+              {/* MOBİLDE KUSURSUZ YAN YANA DURAN SKOR PANELİ */}
+              <div className="flex items-center justify-between w-full bg-slate-950/80 rounded-2xl p-2.5 border border-slate-800 my-1">
+                {/* Ev Sahibi */}
+                <div className="flex flex-col items-center flex-1 min-w-0 px-1">
                   {renderTeamBadge(selectedMatch.home)}
-                  <span className="text-xs font-bold text-slate-200 truncate w-full text-center">{selectedMatch.home}</span>
+                  <span className="text-[11px] font-bold text-slate-200 truncate w-full text-center mt-1">{selectedMatch.home}</span>
                 </div>
-                <div className="text-2xl font-black text-amber-400 bg-slate-950 px-5 py-2 rounded-xl border border-slate-800 shadow-md">
+
+                {/* SKOR KUTUSU (ASLA ALT SATIRA KIRILMAZ) */}
+                <div className="text-lg sm:text-xl font-black text-amber-400 bg-slate-900 px-3.5 py-1.5 rounded-xl border border-amber-500/30 shadow-md whitespace-nowrap select-none mx-1">
                   {selectedMatch.score}
                 </div>
-                <div className="flex flex-col items-center gap-1 w-28">
+
+                {/* Deplasman */}
+                <div className="flex flex-col items-center flex-1 min-w-0 px-1">
                   {renderTeamBadge(selectedMatch.away)}
-                  <span className="text-xs font-bold text-slate-200 truncate w-full text-center">{selectedMatch.away}</span>
+                  <span className="text-[11px] font-bold text-slate-200 truncate w-full text-center mt-1">{selectedMatch.away}</span>
                 </div>
               </div>
-              <div className="text-xs text-amber-400 font-bold mt-1">{selectedMatch.desc}</div>
+
+              <div className="text-[11px] text-amber-400 font-bold mt-1">{selectedMatch.desc}</div>
             </div>
 
-            <div className="p-4 overflow-y-auto flex-1 space-y-2">
-              <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                <span>🎯 Bu Maçtan Puan Kazanan Yarışmacılar</span>
-                <span className="bg-slate-800 text-amber-400 px-2 py-0.5 rounded-full text-[10px]">
+            {/* Pop-up Kazananlar Listesi (Mobil Taşmasını Önleyen İç Kaydırma) */}
+            <div className="p-3 overflow-y-auto flex-1 space-y-2 max-h-52 sm:max-h-64">
+              <h4 className="text-[11px] sm:text-xs font-black text-slate-300 uppercase mb-2 flex items-center justify-between border-b border-slate-800 pb-2">
+                <span>🎯 Bu Maçtan Puan Kazananlar</span>
+                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full text-[10px]">
                   {getPredictorsForMatch(selectedMatch.id).length} Kişi
                 </span>
               </h4>
+
               {getPredictorsForMatch(selectedMatch.id).length > 0 ? (
                 getPredictorsForMatch(selectedMatch.id).map((p, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-950/60 border border-slate-800 rounded-xl">
-                    <span className="text-xs font-bold text-slate-200">{idx + 1}. {p.name}</span>
-                    <span className="text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-lg">+{p.puan} PTS</span>
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-950/70 border border-slate-800/80 rounded-xl">
+                    <span className="text-xs font-bold text-slate-200 truncate pr-2">{idx + 1}. {p.name}</span>
+                    <span className="text-[11px] font-black bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2.5 py-0.5 rounded-lg whitespace-nowrap">
+                      +{p.puan} PTS
+                    </span>
                   </div>
                 ))
               ) : (
-                <div className="py-8 text-center text-slate-500 text-xs font-medium">Bu maçtan puan kazanan yarışmacı bulunmuyor.</div>
+                <div className="py-6 text-center text-slate-500 text-xs font-medium">
+                  Bu maçtan puan kazanan yarışmacı bulunmuyor.
+                </div>
               )}
             </div>
 
-            <div className="p-3 bg-slate-950 border-t border-slate-800 text-right">
-              <button onClick={() => setSelectedMatch(null)} className="px-5 py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-bold">Kapat</button>
+            {/* Pop-up Kapat Butonu */}
+            <div className="p-2.5 bg-slate-950 border-t border-slate-800 text-right">
+              <button
+                onClick={() => setSelectedMatch(null)}
+                className="w-full sm:w-auto px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition text-center"
+              >
+                Kapat
+              </button>
             </div>
+
           </div>
         </div>
       )}
