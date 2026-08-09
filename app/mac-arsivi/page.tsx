@@ -675,11 +675,267 @@ const week2Matches = [
   }
 ];
 
+// 3. HAFTA MAÇ VERİLERİ (TAMAMLANAN 19 MAÇ)
+const week3Matches = [
+  {
+    id: 1,
+    weekLabel: "3. Hafta - 1. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "05.08.2026",
+    time: "20:00",
+    homeTeam: "OLIMPIYAKOS",
+    awayTeam: "NEC NIJMEGEN",
+    score: "0 - 0",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 2,
+    weekLabel: "3. Hafta - 2. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "05.08.2026",
+    time: "20:30",
+    homeTeam: "SPARTA PRAG",
+    awayTeam: "OLIMPIC LYON",
+    score: "2 - 1",
+    winnersCount: 3,
+    earnedPoints: 5,
+    winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"]
+  },
+  {
+    id: 3,
+    weekLabel: "3. Hafta - 3. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "05.08.2026",
+    time: "21:00",
+    homeTeam: "USG",
+    awayTeam: "BODO-GLIMT",
+    score: "3 - 3",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 4,
+    weekLabel: "3. Hafta - 4. MAÇ",
+    category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "05.08.2026",
+    time: "21:45",
+    homeTeam: "FENERBAHÇE",
+    awayTeam: "STURM GRAZ",
+    score: "2 - 0",
+    winnersCount: 8,
+    earnedPoints: 1,
+    winners: ["HAKAN AYAN", "MUSTAFA GÜMÜŞÇÜ", "İLYAS KAZDAL", "ALİOS GÖZTEPE", "SEDAT DİŞLİ", "KEMAL ERSOY", "AYHAN LUŞOĞLU", "CEMAL SİVRİKAYA"]
+  },
+  {
+    id: 5,
+    weekLabel: "3. Hafta - 5. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "19:00",
+    homeTeam: "PANATHINAIKOS",
+    awayTeam: "CSKA 1948",
+    score: "1 - 1",
+    winnersCount: 6,
+    earnedPoints: 2,
+    winners: ["RIDVAN DOGER", "MUSTAFA ELMAS", "FATİH AYAN", "SAVAŞ ÇAĞLAYAN", "DOĞAÇ ALKAN", "R. İLHAN KARACA"]
+  },
+  {
+    id: 6,
+    weekLabel: "3. Hafta - 6. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "20:00",
+    homeTeam: "PAIDE LINNAMEESKOND",
+    awayTeam: "RAPID WIEN",
+    score: "1 - 4",
+    winnersCount: 2,
+    earnedPoints: 6,
+    winners: ["ULAŞ ADIGÜZEL", "SEDAT DİŞLİ"]
+  },
+  {
+    id: 7,
+    weekLabel: "3. Hafta - 7. MAÇ",
+    category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "20:30",
+    homeTeam: "HRADEC KRALOVE",
+    awayTeam: "BEŞİKTAŞ",
+    score: "0 - 1",
+    winnersCount: 7,
+    earnedPoints: 1,
+    winners: ["BİROL DEMİREL", "HUDAVER TOPARDIC", "OSMAN ALİ AYDIN", "İSMAİL EKER", "SALİH KARACAOĞLU", "YUSUF ERBAY", "UĞUR GÜRBÜZ"]
+  },
+  {
+    id: 8,
+    weekLabel: "3. Hafta - 8. MAÇ",
+    category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "20:00",
+    homeTeam: "DEBRECEN",
+    awayTeam: "KOPENHAG",
+    score: "0 - 3",
+    winnersCount: 4,
+    earnedPoints: 3,
+    winners: ["LEVENT YILDIRIM", "SEDAT SEDAT", "CUMALİ SÖKER", "SALİH KARACAOĞLU"]
+  },
+  {
+    id: 9,
+    weekLabel: "3. Hafta - 9. MAÇ",
+    category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "21:00",
+    homeTeam: "DINAMO KIEV",
+    awayTeam: "KARABAĞ FK",
+    score: "1 - 0",
+    winnersCount: 1,
+    earnedPoints: 12,
+    winners: ["MUHSİN ASİLKAN"]
+  },
+  {
+    id: 10,
+    weekLabel: "3. Hafta - 10. MAÇ",
+    category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "21:00",
+    homeTeam: "GOTEBORG",
+    awayTeam: "GENT",
+    score: "0 - 1",
+    winnersCount: 3,
+    earnedPoints: 5,
+    winners: ["HUDAVER TOPARDIC", "GAZİ AYAN", "YUSUF KIZILTUĞ"]
+  },
+  {
+    id: 11,
+    weekLabel: "3. Hafta - 11. MAÇ",
+    category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "21:00",
+    homeTeam: "PAOK",
+    awayTeam: "ANDERLECHT",
+    score: "0 - 1",
+    winnersCount: 3,
+    earnedPoints: 5,
+    winners: ["MUSTAFA GÜMÜŞÇÜ", "İLYAS KAZDAL", "RIDVAN DOĞER"]
+  },
+  {
+    id: 12,
+    weekLabel: "3. Hafta - 12. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "21:30",
+    homeTeam: "AJAX",
+    awayTeam: "SHELBOURNE",
+    score: "2 - 0",
+    winnersCount: 4,
+    earnedPoints: 3,
+    winners: ["MEHMET ALİ KARA", "RIDVAN DOGER", "MURAT KARA", "EYÜP KARACAOĞLU"]
+  },
+  {
+    id: 13,
+    weekLabel: "3. Hafta - 13. MAÇ",
+    category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "21:30",
+    homeTeam: "BRAGA",
+    awayTeam: "DINAMO MINSK",
+    score: "1 - 0",
+    winnersCount: 1,
+    earnedPoints: 12,
+    winners: ["SEDAT SEDAT"]
+  },
+  {
+    id: 14,
+    weekLabel: "3. Hafta - 14. MAÇ",
+    category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ",
+    date: "06.08.2026",
+    time: "21:45",
+    homeTeam: "BENFICA",
+    awayTeam: "HEART",
+    score: "2 - 0",
+    winnersCount: 6,
+    earnedPoints: 2,
+    winners: ["İLYAS KAZDAL", "ALİ ÖZKÖZTEPE", "SALİH KARACAOĞLU", "ÖNDER IŞIK", "RECEP İLHAN KARACA", "FATİH AYAN"]
+  },
+  {
+    id: 15,
+    weekLabel: "3. Hafta - 15. MAÇ",
+    category: "TFF 1. LİG",
+    date: "07.08.2026",
+    time: "20:00",
+    homeTeam: "BOLUSPOR",
+    awayTeam: "MANİSA FK",
+    score: "1 - 2",
+    winnersCount: 3,
+    earnedPoints: 5,
+    winners: ["ULAŞ ADIGÜZEL", "LEVENT YILDIRIM", "ÖNDER ASLAN"]
+  },
+  {
+    id: 16,
+    weekLabel: "3. Hafta - 16. MAÇ",
+    category: "TFF 1. LİG",
+    date: "07.08.2026",
+    time: "21:00",
+    homeTeam: "BANDIRMASPOR",
+    awayTeam: "İSTANBULSPOR",
+    score: "3 - 0",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 17,
+    weekLabel: "3. Hafta - 17. MAÇ",
+    category: "TFF 1. LİG",
+    date: "08.08.2026",
+    time: "19:15",
+    homeTeam: "SİVASSPOR",
+    awayTeam: "ESENLER EROKSPOR",
+    score: "0 - 0",
+    winnersCount: 2,
+    earnedPoints: 6,
+    winners: ["HAKAN AYAN", "GAZİ AYAN"]
+  },
+  {
+    id: 18,
+    weekLabel: "3. Hafta - 18. MAÇ",
+    category: "TFF 1. LİG",
+    date: "08.08.2026",
+    time: "21:45",
+    homeTeam: "ÜMRANİYESPOR",
+    awayTeam: "VANSPOR",
+    score: "0 - 0",
+    winnersCount: 4,
+    earnedPoints: 3,
+    winners: ["SEDAT SEDAT", "MUHSİN ASİLKAN", "HAKAN AYAN", "İSMAİL EKER"]
+  },
+  {
+    id: 19,
+    weekLabel: "3. Hafta - 19. MAÇ",
+    category: "TFF 1. LİG",
+    date: "08.08.2026",
+    time: "21:45",
+    homeTeam: "ANTALYASPOR",
+    awayTeam: "KEÇİÖRENGÜCÜ",
+    score: "4 - 3",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  }
+];
+
 export default function MacArsiviPage() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(2); // Varsayılan 2. Hafta
+  const [selectedWeek, setSelectedWeek] = useState<number>(3); // Varsayılan 3. Hafta
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
 
-  const currentMatches = selectedWeek === 1 ? week1Matches : week2Matches;
+  const currentMatches =
+    selectedWeek === 1
+      ? week1Matches
+      : selectedWeek === 2
+      ? week2Matches
+      : week3Matches;
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({
@@ -722,6 +978,7 @@ export default function MacArsiviPage() {
             >
               <option value={1}>1. HAFTA BÜLTENİ</option>
               <option value={2}>2. HAFTA BÜLTENİ</option>
+              <option value={3}>3. HAFTA BÜLTENİ</option>
             </select>
           </div>
         </div>
@@ -738,14 +995,14 @@ export default function MacArsiviPage() {
                 className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between text-center"
               >
                 <div>
-                  {/* EN TEPEDEKİ BEYAZ NEON PARLAK SİYAH HAFTA ETİKETİ (DFO ÇIKARILDI) */}
+                  {/* EN TEPEDEKİ BEYAZ NEON PARLAK SİYAH HAFTA ETİKETİ */}
                   <div className="flex justify-center mb-2">
                     <span className="text-[10px] font-extrabold text-white bg-black border border-white/80 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-[0_0_12px_rgba(255,255,255,0.6)]">
                       {match.weekLabel}
                     </span>
                   </div>
 
-                  {/* KATEGORİ BAŞLIĞI (ORTALANMIŞ & KURUMSAL RENKLİ) */}
+                  {/* KATEGORİ BAŞLIĞI */}
                   <div className="flex justify-center mb-1">
                     <span
                       className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border text-center ${badgeClass}`}
@@ -754,7 +1011,7 @@ export default function MacArsiviPage() {
                     </span>
                   </div>
 
-                  {/* TARİH VE SAAT (SKORUN TAM ÜSTÜNDE & ORTALANMIŞ) */}
+                  {/* TARİH VE SAAT */}
                   <div className="text-[10px] font-semibold text-slate-400 my-1">
                     {match.date} | {match.time}
                   </div>
@@ -784,10 +1041,10 @@ export default function MacArsiviPage() {
                   </div>
                 </div>
 
-                {/* ALT ALAN (SOLDA BİLEN BİLGİSİ, ORTADA DFO ETİKETİ, SAĞDA BUTON) */}
+                {/* ALT ALAN */}
                 <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex flex-col justify-between items-stretch">
                   <div className="flex justify-between items-center w-full">
-                    {/* SOL ALT: BİLEN KİŞİ BİLGİSİ / BİLEN YOK */}
+                    {/* SOL ALT: BİLEN KİŞİ BİLGİSİ */}
                     <div className="text-left flex-1">
                       {match.winnersCount === 0 ? (
                         <span className="text-xs font-medium text-slate-400 italic">
@@ -810,7 +1067,7 @@ export default function MacArsiviPage() {
                       </span>
                     </div>
 
-                    {/* SAĞ ALT: PUAN ALANI / ALANLARI GÖR BUTONU */}
+                    {/* SAĞ ALT: BUTON */}
                     <div className="text-right flex-1">
                       {match.winnersCount > 0 && (
                         <button
