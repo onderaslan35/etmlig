@@ -15,7 +15,6 @@ export default function SkorDurumuPage() {
 
   useEffect(() => {
     if (activeTab === 'total') {
-      // Genel Toplam Skor Sıralaması
       const sorted = totalStandings
         .slice()
         .sort((a, b) => (b.skor || 0) - (a.skor || 0))
@@ -26,7 +25,6 @@ export default function SkorDurumuPage() {
         }));
       setTableRows(sorted);
     } else {
-      // Haftalık Skor Sıralaması
       let currentData: any[] = [];
       if (activeTab === 'week1') currentData = week1Data || [];
       else if (activeTab === 'week2') currentData = week2Data || [];
@@ -60,15 +58,12 @@ export default function SkorDurumuPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      {/* Başlık */}
       <div className="text-3xl mb-1">🎯</div>
       <h1 className="text-xl md:text-2xl font-extrabold text-center mb-4 text-emerald-400 tracking-wider uppercase">
         ELİT TAHMİN SKOR İSABET KRALLIĞI
       </h1>
 
-      {/* Butonlar & Açılır Menü (Akordeon Dropdown) */}
       <div className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
-        {/* Toplam Skor Butonu */}
         <button
           onClick={() => selectTab('total')}
           className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
@@ -80,7 +75,6 @@ export default function SkorDurumuPage() {
           TOPLAM SKOR İSABET DURUMU
         </button>
 
-        {/* Haftalık Seçim Akordeon Dropdown Butonu */}
         <div className="w-full relative">
           <button
             onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)}
@@ -96,7 +90,6 @@ export default function SkorDurumuPage() {
             </span>
           </button>
 
-          {/* Akordeon Açılır Kutu */}
           {isWeekMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
               <div className="text-[11px] font-bold text-slate-400 mb-2 text-center uppercase tracking-wider border-b border-slate-800 pb-1">
@@ -126,14 +119,7 @@ export default function SkorDurumuPage() {
         </div>
       </div>
 
-      {/* Tablo Yapısı */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="bg-slate-950 px-6 py-2.5 border-b border-slate-800 text-center">
-          <span className="text-xs font-black text-emerald-400 uppercase tracking-widest">
-            {getActiveTabTitle()}
-          </span>
-        </div>
-
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -141,8 +127,10 @@ export default function SkorDurumuPage() {
                 <tr>
                   <th className="px-6 py-3.5 w-16 text-center">SIRA</th>
                   <th className="px-6 py-3.5">YARIŞMACI</th>
-                  <th className="px-6 py-3.5 text-right">
-                    {activeTab === 'total' ? 'TOPLAM İSABET' : 'HAFTALIK İSABET'}
+                  {/* BAŞLIĞI İKİ SATIRA BÖLÜP MERKEZLEDİK */}
+                  <th className="px-6 py-3.5 text-center leading-tight">
+                    <div className="text-[10px]">TOPLAM</div>
+                    <div className="text-[10px]">İSABET</div>
                   </th>
                 </tr>
               </thead>
@@ -151,8 +139,9 @@ export default function SkorDurumuPage() {
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
-                    <td className="px-6 py-3.5 text-right font-bold text-emerald-400 text-base">
-                      {row.skor} SKOR
+                    {/* RAKAMLAR TAM OLARAK BAŞLIĞIN ALTINDA VE MERKEZDE */}
+                    <td className="px-6 py-3.5 text-center font-black text-emerald-400 text-lg">
+                      {row.skor}
                     </td>
                   </tr>
                 ))}

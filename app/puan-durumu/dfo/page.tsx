@@ -1,20 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import week3Data from '@/app/data/week3_predictions.json';
+import totalStandings from '@/app/data/standings.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
-import totalStandings from '@/app/data/standings.json';
+import week3Data from '@/app/data/week3_predictions.json';
 
 export default function DfoPuanDurumuPage() {
-  // Varsayılan sekmeyi 'total' (DFO TOPLAM PUAN DURUMU) yaptık
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  // BUGÜNÜN MAÇLARI (9 AĞUSTOS PAZAR)
   const todaysMatches = [
     { id: 20, home: "IĞDIR FK", away: "KARAGÜMRÜK", time: "19:00", league: "TFF 1. LİG" },
     { id: 21, home: "SARIYER", away: "MUĞLASPOR", time: "19:00", league: "TFF 1. LİG" },
@@ -26,38 +24,24 @@ export default function DfoPuanDurumuPage() {
     if (activeTab === 'total') {
       const sorted = [...totalStandings].sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
-    } else if (activeTab === 'week3') {
-      const sorted = [...week3Data]
-        .map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          puan: u.puan_dfo !== undefined ? u.puan_dfo : (u.puan || 0),
-        }))
-        .sort((a, b) => b.puan - a.puan);
-
-      setTableRows(sorted);
-    } else if (activeTab === 'week2') {
-      const sorted = [...week2Data]
-        .map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          puan: u.puan !== undefined ? u.puan : 0,
-        }))
-        .sort((a, b) => b.puan - a.puan);
-
-      setTableRows(sorted);
-    } else if (activeTab === 'week1') {
-      const sorted = [...week1Data]
-        .map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          puan: u.puan !== undefined ? u.puan : 0,
-        }))
-        .sort((a, b) => b.puan - a.puan);
-
-      setTableRows(sorted);
     } else {
-      setTableRows([]);
+      let currentData: any[] = [];
+      if (activeTab === 'week1') currentData = week1Data || [];
+      else if (activeTab === 'week2') currentData = week2Data || [];
+      else if (activeTab === 'week3') currentData = week3Data || [];
+
+      const getPuan = (u: any) => Number(u.puan !== undefined ? u.puan : u.score) || 0;
+
+      const sorted = currentData
+        .slice()
+        .sort((a, b) => getPuan(b) - getPuan(a))
+        .map((u, idx) => ({
+          sira: idx + 1,
+          name: u.name,
+          puan: getPuan(u),
+        }));
+
+      setTableRows(sorted);
     }
   }, [activeTab]);
 
@@ -74,14 +58,12 @@ export default function DfoPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      {/* 1. EN ÜST ANA BAŞLIK */}
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
           ELİT TAHMİN DFO LİGİ
         </h1>
       </div>
 
-      {/* 2. BUGÜNÜN MÜSABAKALARI - YATAY KAYDIRMALI ŞERİT (CAROUSEL) */}
       <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2">
           <div className="flex items-center gap-2">
@@ -98,7 +80,6 @@ export default function DfoPuanDurumuPage() {
           </span>
         </div>
 
-        {/* KAYDIRILABİLİR YATAY BANT */}
         <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
           {todaysMatches.map((m) => (
             <div
@@ -132,8 +113,7 @@ export default function DfoPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
-      <div className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
+      <div className="max-w-xl w-full flex flex-col items-center mb-6 space-y-3">
         <button
           onClick={() => selectTab('total')}
           className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
@@ -189,14 +169,7 @@ export default function DfoPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="bg-slate-950 px-6 py-2.5 border-b border-slate-800 text-center">
-          <span className="text-xs font-black text-amber-400 uppercase tracking-widest">
-            {getActiveTabTitle()}
-          </span>
-        </div>
-
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -215,7 +188,7 @@ export default function DfoPuanDurumuPage() {
                     <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
                     <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
-                      {row.puan} PTS
+                      {row.puan}
                     </td>
                   </tr>
                 ))}

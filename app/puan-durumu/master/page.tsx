@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import totalStandings from '@/app/data/standings.json';
+import week3Data from '@/app/data/week3_predictions.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
-import week3Data from '@/app/data/week3_predictions.json';
+import totalStandings from '@/app/data/standings.json';
 
 export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
@@ -118,7 +118,7 @@ export default function MasterPuanDurumuPage() {
       </div>
 
       {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
-      <div className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
+      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3">
         <button
           onClick={() => selectTab('total')}
           className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
@@ -174,14 +174,8 @@ export default function MasterPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 4. PUAN TABLOSU */}
+      {/* 4. PUAN TABLOSU (İÇİNDEKİ ÜST BAŞLIK SATIRI KALDIRILDI, PTS SİLİNDİ) */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="bg-slate-950 px-6 py-2.5 border-b border-slate-800 text-center">
-          <span className="text-xs font-black text-amber-400 uppercase tracking-widest">
-            {getActiveTabTitle()}
-          </span>
-        </div>
-
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -199,8 +193,9 @@ export default function MasterPuanDurumuPage() {
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
+                    {/* PTS YAZISI SİLİNDİ, SADECE RAKAMLAR BIRAKILDI */}
                     <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
-                      {row.puan} PTS
+                      {row.puan}
                     </td>
                   </tr>
                 ))}

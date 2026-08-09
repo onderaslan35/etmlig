@@ -63,7 +63,7 @@ const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
   { id: 3, weekLabel: "3. Hafta - 3. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "21:00", homeTeam: "USG", awayTeam: "BODO-GLIMT", score: "3 - 3", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 4, weekLabel: "3. Hafta - 4. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "21:45", homeTeam: "FENERBAHÇE", awayTeam: "STURM GRAZ", score: "2 - 0", winnersCount: 8, earnedPoints: 1, winners: ["HAKAN AYAN", "MUSTAFA GÜMÜŞÇÜ", "İLYAS KAZDAL", "ALİOS GÖZTEPE", "SEDAT DİŞLİ", "KEMAL ERSOY", "AYHAN LUŞOĞLU", "CEMAL SİVRİKAYA"] },
+  { id: 4, weekLabel: "3. Hafta - 4. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "21:45", homeTeam: "FENERBAHÇE", awayTeam: "STURM GRAZ", score: "2 - 0", winnersCount: 8, earnedPoints: 1, winners: ["HAKAN AYAN", "MUSTAFA GÜMÜŞÇÜ", "İLYAS KAZDAL", "ALİOS GÖZTEPE", "SEDAT DİŞLİ", "KEMAL ERSOY", "AYHAN LUŞOĞLU", "CEMAL SİVRİKAYA"] },
   { id: 5, weekLabel: "3. Hafta - 5. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "06.08.2026", time: "19:00", homeTeam: "PANATHINAIKOS", awayTeam: "CSKA 1948", score: "1 - 1", winnersCount: 6, earnedPoints: 2, winners: ["RIDVAN DOGER", "MUSTAFA ELMAS", "FATİH AYAN", "SAVAŞ ÇAĞLAYAN", "DOĞAÇ ALKAN", "R. İLHAN KARACA"] },
   { id: 6, weekLabel: "3. Hafta - 6. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "06.08.2026", time: "20:00", homeTeam: "PAIDE LINNAMEESKOND", awayTeam: "RAPID WIEN", score: "1 - 4", winnersCount: 2, earnedPoints: 6, winners: ["ULAŞ ADIGÜZEL", "SEDAT DİŞLİ"] },
   { id: 7, weekLabel: "3. Hafta - 7. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "06.08.2026", time: "20:30", homeTeam: "HRADEC KRALOVE", awayTeam: "BEŞİKTAŞ", score: "0 - 1", winnersCount: 7, earnedPoints: 1, winners: ["BİROL DEMİREL", "HUDAVER TOPARDIC", "OSMAN ALİ AYDIN", "İSMAİL EKER", "SALİH KARACAOĞLU", "YUSUF ERBAY", "UĞUR GÜRBÜZ"] },
@@ -74,16 +74,16 @@ const week3Matches = [
   { id: 12, weekLabel: "3. Hafta - 12. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "06.08.2026", time: "21:30", homeTeam: "AJAX", awayTeam: "SHELBOURNE", score: "2 - 0", winnersCount: 4, earnedPoints: 3, winners: ["MEHMET ALİ KARA", "RIDVAN DOGER", "MURAT KARA", "EYÜP KARACAOĞLU"] },
   { id: 13, weekLabel: "3. Hafta - 13. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "06.08.2026", time: "21:30", homeTeam: "BRAGA", awayTeam: "DINAMO MINSK", score: "1 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SEDAT SEDAT"] },
   { id: 14, weekLabel: "3. Hafta - 14. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "06.08.2026", time: "21:45", homeTeam: "BENFICA", awayTeam: "HEART", score: "2 - 0", winnersCount: 6, earnedPoints: 2, winners: ["İLYAS KAZDAL", "ALİ ÖZKÖZTEPE", "SALİH KARACAOĞLU", "ÖNDER IŞIK", "RECEP İLHAN KARACA", "FATİH AYAN"] },
-  { id: 15, weekLabel: "3. Hafta - 15. MAÇ", category: "TFF 1. LİG", date: "07.08.2026", time: "20:00", homeTeam: "BOLUSPOR", awayTeam: "MANİSA FK", score: "1 - 2", winnersCount: 3, earnedPoints: 5, winners: ["ULAŞ ADIGÜZEL", "LEVENT YILDIRIM", "ÖNDER ASLAN"] },
-  { id: 16, weekLabel: "3. Hafta - 16. MAÇ", category: "TFF 1. LİG", date: "07.08.2026", time: "21:00", homeTeam: "BANDIRMASPOR", awayTeam: "İSTANBULSPOR", score: "3 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 17, weekLabel: "3. Hafta - 17. MAÇ", category: "TFF 1. LİG", date: "08.08.2026", time: "19:15", homeTeam: "SİVASSPOR", awayTeam: "ESENLER EROKSPOR", score: "0 - 0", winnersCount: 2, earnedPoints: 6, winners: ["HAKAN AYAN", "GAZİ AYAN"] },
-  { id: 18, weekLabel: "3. Hafta - 18. MAÇ", category: "TFF 1. LİG", date: "08.08.2026", time: "21:45", homeTeam: "ÜMRANİYESPOR", awayTeam: "VANSPOR", score: "0 - 0", winnersCount: 4, earnedPoints: 3, winners: ["SEDAT SEDAT", "MUHSİN ASİLKAN", "HAKAN AYAN", "İSMAİL EKER"] },
-  { id: 19, weekLabel: "3. Hafta - 19. MAÇ", category: "TFF 1. LİG", date: "08.08.2026", time: "21:45", homeTeam: "ANTALYASPOR", awayTeam: "KEÇİÖRENGÜCÜ", score: "4 - 3", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 20, weekLabel: "3. Hafta - 20. MAÇ", category: "TFF 1. LİG", date: "09.08.2026", time: "19:00", homeTeam: "IĞDIR FK", awayTeam: "FATİH KARAGÜMRÜK", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 21, weekLabel: "3. Hafta - 21. MAÇ", category: "TFF 1. LİG", date: "09.08.2026", time: "19:00", homeTeam: "SARIYER", awayTeam: "MUĞLASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 22, weekLabel: "3. Hafta - 22. MAÇ", category: "TFF 1. LİG", date: "09.08.2026", time: "21:30", homeTeam: "BODRUMSPOR", awayTeam: "BURSASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 23, weekLabel: "3. Hafta - 23. MAÇ", category: "TFF 1. LİG", date: "09.08.2026", time: "21:30", homeTeam: "VANSPOR FK", awayTeam: "KAYSERİSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TFF 1. LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] }
+  { id: 15, weekLabel: "3. Hafta - 15. MAÇ", category: "TÜRKİYE 1.LİG", date: "07.08.2026", time: "20:00", homeTeam: "BOLUSPOR", awayTeam: "MANİSA FK", score: "1 - 2", winnersCount: 3, earnedPoints: 5, winners: ["ULAŞ ADIGÜZEL", "LEVENT YILDIRIM", "ÖNDER ASLAN"] },
+  { id: 16, weekLabel: "3. Hafta - 16. MAÇ", category: "TÜRKİYE 1.LİG", date: "07.08.2026", time: "21:00", homeTeam: "BANDIRMASPOR", awayTeam: "İSTANBULSPOR", score: "3 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 17, weekLabel: "3. Hafta - 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "08.08.2026", time: "19:15", homeTeam: "SİVASSPOR", awayTeam: "ESENLER EROKSPOR", score: "0 - 0", winnersCount: 2, earnedPoints: 6, winners: ["HAKAN AYAN", "GAZİ AYAN"] },
+  { id: 18, weekLabel: "3. Hafta - 18. MAÇ", category: "TÜRKİYE 1.LİG", date: "08.08.2026", time: "21:45", homeTeam: "ÜMRANİYESPOR", awayTeam: "VANSPOR", score: "0 - 0", winnersCount: 4, earnedPoints: 3, winners: ["SEDAT SEDAT", "MUHSİN ASİLKAN", "HAKAN AYAN", "İSMAİL EKER"] },
+  { id: 19, weekLabel: "3. Hafta - 19. MAÇ", category: "TÜRKİYE 1.LİG", date: "08.08.2026", time: "21:45", homeTeam: "ANTALYASPOR", awayTeam: "KEÇİÖRENGÜCÜ", score: "4 - 3", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 20, weekLabel: "3. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "19:00", homeTeam: "IĞDIR FK", awayTeam: "FATİH KARAGÜMRÜK", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 21, weekLabel: "3. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "19:00", homeTeam: "SARIYER", awayTeam: "MUĞLASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 22, weekLabel: "3. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "21:30", homeTeam: "BODRUMSPOR", awayTeam: "BURSASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 23, weekLabel: "3. Hafta - 23. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "21:30", homeTeam: "VANSPOR FK", awayTeam: "KAYSERİSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] }
 ];
 
 // 4. HAFTA MAÇ VERİLERİ (24 MAÇ FULL)
@@ -134,16 +134,90 @@ export default function MacArsiviPage() {
     }));
   };
 
-  // KATEGORİYE ÖZEL KURUMSAL RENK FONKSİYONU
-  const getCategoryBadgeClass = (category: string) => {
-    if (category.includes("ŞAMPİYONLAR LİGİ")) {
-      return "text-cyan-400 bg-cyan-950/60 border-cyan-500/40 shadow-[0_0_10px_rgba(34,211,238,0.2)]";
-    } else if (category.includes("AVRUPA LİGİ")) {
-      return "text-orange-400 bg-orange-950/60 border-orange-500/40 shadow-[0_0_10px_rgba(251,146,60,0.2)]";
-    } else if (category.includes("KONFERANS LİGİ")) {
-      return "text-emerald-400 bg-emerald-950/60 border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.2)]";
+  // KISTASLARA GÖRE TFF MAÇI MI KONTROL ETME FONKSİYONU
+  const isTffMatchCheck = (category: string) => {
+    const uppercaseCat = category.toUpperCase();
+    return (
+      uppercaseCat.includes("TÜRKİYE SÜPER LİG") ||
+      uppercaseCat.includes("TÜRKİYE KUPASI") ||
+      uppercaseCat.includes("TÜRKİYE 1.LİG") ||
+      uppercaseCat.includes("TÜRKİYE SÜPER KUPA") ||
+      uppercaseCat.includes("TÜRKİYE KADINLAR SÜPER LİG") ||
+      uppercaseCat.includes("TFF 1. LİG")
+    );
+  };
+
+  // KART ARKA PLANI VE NEON ETİKET STİLİNİ BELİRLEME (PNG DESTEKLİ)
+  const getMatchThemeStyle = (category: string) => {
+    const uppercaseCat = category.toUpperCase();
+
+    // 1. ŞAMPİYONLAR LİGİ MAÇLARI İÇİN cl-bg.png ARKA PLAN
+    if (uppercaseCat.includes("ŞAMPİYONLAR LİGİ")) {
+      return {
+        bgImage: "url('/cl-bg.png')",
+        cardBgClass: "bg-slate-900/90 border-cyan-400/60 shadow-[0_0_20px_rgba(34,211,238,0.2)]",
+        badgeClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_12px_rgba(34,211,238,0.4)]",
+        tagClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
+      };
     }
-    return "text-amber-400 bg-amber-950/60 border-amber-500/40";
+    
+    // 2. UEFA AVRUPA LİGİ MAÇLARI İÇİN el-bg.png ARKA PLAN
+    else if (uppercaseCat.includes("AVRUPA LİGİ")) {
+      return {
+        bgImage: "url('/el-bg.png')",
+        cardBgClass: "bg-slate-900/90 border-orange-500/60 shadow-[0_0_20px_rgba(251,146,60,0.2)]",
+        badgeClass: "text-orange-400 bg-orange-950/90 border-orange-500/80 shadow-[0_0_12px_rgba(251,146,60,0.4)]",
+        tagClass: "text-orange-400 bg-orange-950/90 border-orange-500/80 shadow-[0_0_10px_rgba(251,146,60,0.35)]"
+      };
+    }
+
+    // 3. UEFA KONFERANS LİGİ MAÇLARI İÇİN uecl-bg.png ARKA PLAN
+    else if (uppercaseCat.includes("KONFERANS LİGİ")) {
+      return {
+        bgImage: "url('/uecl-bg.png')",
+        cardBgClass: "bg-slate-900/90 border-emerald-500/60 shadow-[0_0_20px_rgba(52,211,153,0.2)]",
+        badgeClass: "text-emerald-400 bg-emerald-950/90 border-emerald-500/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]",
+        tagClass: "text-emerald-400 bg-emerald-950/90 border-emerald-500/80 shadow-[0_0_10px_rgba(52,211,153,0.35)]"
+      };
+    }
+
+    // 4. UEFA SÜPER KUPA MAÇLARI İÇİN supercup-bg.png ARKA PLAN
+    else if (uppercaseCat.includes("SÜPER KUPA") && !uppercaseCat.includes("TÜRKİYE") && !uppercaseCat.includes("İNGİLTERE")) {
+      return {
+        bgImage: "url('/supercup-bg.png')",
+        cardBgClass: "bg-slate-900/90 border-cyan-400/60 shadow-[0_0_20px_rgba(34,211,238,0.2)]",
+        badgeClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_12px_rgba(34,211,238,0.4)]",
+        tagClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
+      };
+    }
+
+    // 5. İNGİLTERE SÜPER KUPA MAÇLARI İÇİN england-bg.png ARKA PLAN
+    else if (uppercaseCat.includes("İNGİLTERE")) {
+      return {
+        bgImage: "url('/england-bg.png')",
+        cardBgClass: "bg-slate-900/90 border-indigo-400/60 shadow-[0_0_20px_rgba(129,140,248,0.2)]",
+        badgeClass: "text-indigo-300 bg-indigo-950/90 border-indigo-400/80 shadow-[0_0_12px_rgba(129,140,248,0.4)]",
+        tagClass: "text-indigo-300 bg-indigo-950/90 border-indigo-400/80 shadow-[0_0_10px_rgba(129,140,248,0.35)]"
+      };
+    }
+
+    // 6. TFF MAÇLARI İÇİN tff-bg.png ARKA PLAN
+    else if (isTffMatchCheck(category)) {
+      return {
+        bgImage: "url('/tff-bg.png')",
+        cardBgClass: "bg-slate-900/90 border-red-500/60 shadow-[0_0_20px_rgba(248,113,113,0.2)]",
+        badgeClass: "text-red-400 bg-red-950/90 border-red-500/80 shadow-[0_0_12px_rgba(248,113,113,0.4)]",
+        tagClass: "text-red-400 bg-red-950/90 border-red-500/80 shadow-[0_0_10px_rgba(248,113,113,0.35)]"
+      };
+    }
+
+    // 7. DİĞER MAÇLAR
+    return {
+      bgImage: null,
+      cardBgClass: "bg-slate-900/80 border-slate-800",
+      badgeClass: "text-amber-400 bg-amber-950/80 border-amber-500/60 shadow-[0_0_12px_rgba(251,191,36,0.35)]",
+      tagClass: "text-amber-400 bg-amber-950/90 border-amber-500/60 shadow-[0_0_10px_rgba(251,191,36,0.3)]"
+    };
   };
 
   return (
@@ -178,13 +252,22 @@ export default function MacArsiviPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {currentMatches.map((match) => {
             const isWinnersOpen = !!openWinnersMap[match.id];
-            const badgeClass = getCategoryBadgeClass(match.category);
-            const isTffMatch = match.category.includes("TFF") || match.category.includes("TÜRKİYE 1.LİG");
+            const isTffMatch = isTffMatchCheck(match.category);
+            const { bgImage, cardBgClass, badgeClass, tagClass } = getMatchThemeStyle(match.category);
 
             return (
               <div
                 key={match.id}
-                className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between text-center"
+                style={
+                  bgImage
+                    ? {
+                        backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.45)), ${bgImage}`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }
+                    : {}
+                }
+                className={`rounded-xl p-4 shadow-sm flex flex-col justify-between text-center transition-all duration-300 relative overflow-hidden ${cardBgClass}`}
               >
                 <div>
                   {/* HAFTA ETİKETİ */}
@@ -204,7 +287,7 @@ export default function MacArsiviPage() {
                   </div>
 
                   {/* TARİH VE SAAT */}
-                  <div className="text-[10px] font-semibold text-slate-400 my-1">
+                  <div className="text-[10px] font-semibold text-slate-300 my-1 drop-shadow">
                     {match.date} | {match.time}
                   </div>
 
@@ -212,7 +295,7 @@ export default function MacArsiviPage() {
                   <div className="flex items-center justify-center gap-2 my-2">
                     {/* EV SAHİBİ */}
                     <div className="flex-1 text-right">
-                      <span className="text-xs sm:text-sm font-bold text-slate-100 leading-tight block break-words">
+                      <span className="text-xs sm:text-sm font-bold text-slate-100 leading-tight block break-words drop-shadow">
                         {match.homeTeam}
                       </span>
                     </div>
@@ -226,7 +309,7 @@ export default function MacArsiviPage() {
 
                     {/* DEPLASMAN */}
                     <div className="flex-1 text-left">
-                      <span className="text-xs sm:text-sm font-bold text-slate-100 leading-tight block break-words">
+                      <span className="text-xs sm:text-sm font-bold text-slate-100 leading-tight block break-words drop-shadow">
                         {match.awayTeam}
                       </span>
                     </div>
@@ -234,32 +317,28 @@ export default function MacArsiviPage() {
                 </div>
 
                 {/* ALT ALAN */}
-                <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex flex-col justify-between items-stretch">
+                <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-col justify-between items-stretch">
                   <div className="flex justify-between items-center w-full">
                     {/* SOL ALT: BİLEN KİŞİ BİLGİSİ */}
                     <div className="text-left flex-1">
                       {match.winnersCount === 0 ? (
-                        <span className="text-xs font-medium text-slate-400 italic">
+                        <span className="text-xs font-medium text-slate-300 italic drop-shadow">
                           {selectedWeek === 4 ? "Henüz oynanmadı" : "Bu maçı bilen yok"}
                         </span>
                       ) : (
-                        <span className="text-xs font-medium text-slate-300">
+                        <span className="text-xs font-medium text-slate-200 drop-shadow">
                           <strong className="text-amber-400">{match.winnersCount} kişi</strong> bildi
                           {match.earnedPoints > 0 && (
-                            <span className="text-slate-400"> ({match.earnedPoints} Puan)</span>
+                            <span className="text-slate-300"> ({match.earnedPoints} Puan)</span>
                           )}
                         </span>
                       )}
                     </div>
 
-                    {/* EN ORTA ALT: SIKIŞTIRILMIŞ VE TAŞMAYAN NEONLU ETİKET */}
+                    {/* EN ORTA ALT: NEONLU ETİKET */}
                     <div className="flex-0 text-center px-1">
                       <span
-                        className={`text-[9px] font-black tracking-tight whitespace-nowrap px-1.5 py-0.5 rounded border shadow-sm block ${
-                          isTffMatch
-                            ? "text-red-400 bg-red-950/40 border-red-500/40"
-                            : "text-amber-400/90 bg-amber-950/40 border-amber-500/30"
-                        }`}
+                        className={`text-[9px] font-black tracking-tight whitespace-nowrap px-2 py-0.5 rounded border block ${tagClass}`}
                       >
                         {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
                       </span>
@@ -270,7 +349,7 @@ export default function MacArsiviPage() {
                       {match.winnersCount > 0 && (
                         <button
                           onClick={() => toggleWinners(match.id)}
-                          className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-xs outline-none whitespace-nowrap"
+                          className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-xs outline-none whitespace-nowrap drop-shadow"
                         >
                           {isWinnersOpen
                             ? "Gizle ▲"
@@ -284,7 +363,7 @@ export default function MacArsiviPage() {
 
                   {/* BİLEN YARIŞMACILAR LİSTESİ */}
                   {isWinnersOpen && match.winnersCount > 0 && (
-                    <div className="w-full mt-2.5 p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-xs animate-fadeIn">
+                    <div className="w-full mt-2.5 p-2.5 bg-slate-950/95 rounded-lg border border-slate-800 text-xs animate-fadeIn">
                       <div className="text-slate-400 font-semibold mb-1.5 border-b border-slate-800 pb-1 flex justify-between items-center text-[11px]">
                         <span>
                           {match.winnersCount === 1 ? "BİLEN YARIŞMACI" : "BİLEN YARIŞMACILAR"}
