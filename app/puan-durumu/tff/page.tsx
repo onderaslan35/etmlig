@@ -1,15 +1,61 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import totalStandings from '@/app/data/standings.json';
-import week1Data from '@/app/data/week1_predictions.json';
-import week2Data from '@/app/data/week2_predictions.json';
-import week3Data from '@/app/data/week3_predictions.json';
+import React, { useState } from 'react';
+
+// EKRAN GÖRÜNTÜSÜNDEKİ BİREBİR TFF 3. HAFTA VERİ LİSTESİ
+const tffWeek3List = [
+  { id: 262707, name: "HAKAN AYAN", puan: 10 },
+  { id: 262706, name: "GAZİ AYAN 🏆🏆", puan: 6 },
+  { id: 262771, name: "ULAŞ ADIGÜZEL", puan: 5 },
+  { id: 262734, name: "LEVENT YILDIRIM", puan: 5 },
+  { id: 262728, name: "ÖNDER ASLAN", puan: 5 },
+  { id: 262816, name: "SEDAT SEDAT", puan: 4 },
+  { id: 262733, name: "MUHSİN ASİLKAN", puan: 4 },
+  { id: 262714, name: "İSMAİL EKER 🏆", puan: 4 },
+  { id: 262721, name: "MUSTAFA GÜMÜŞÇÜ", puan: 0 },
+  { id: 262725, name: "İLYAS KAZDAL", puan: 0 },
+  { id: 351925, name: "ALİOS GÖZTEPE", puan: 0 },
+  { id: 262709, name: "SALİH KARACAOĞLU", puan: 0 },
+  { id: 262763, name: "MUSTAFA ELMAS", puan: 0 },
+  { id: 262711, name: "RIDVAN DOGER", puan: 0 },
+  { id: 262786, name: "SEDAT DİŞLİ", puan: 0 },
+  { id: 262726, name: "HUDAVER TOPARDIC", puan: 0 },
+  { id: 262730, name: "ÖNDER IŞIK", puan: 0 },
+  { id: 262813, name: "KEMAL ERSOY", puan: 0 },
+  { id: 262738, name: "MEVLÜT EVLER", puan: 0 },
+  { id: 262753, name: "YUSUF KIZILTUĞ", puan: 0 },
+  { id: 262732, name: "R. İLHAN KARACA 🏆🏆", puan: 0 },
+  { id: 262731, name: "FATİH AYAN", puan: 0 },
+  { id: 262702, name: "MURAT KARA", puan: 0 },
+  { id: 262756, name: "EYÜP KARACAOĞLU", puan: 0 },
+  { id: 262755, name: "DOĞAÇ ALKAN", puan: 0 },
+  { id: 262747, name: "SAVAŞ ÇAĞLAYAN", puan: 0 },
+  { id: 262723, name: "AYHAN LUŞOĞLU", puan: 0 },
+  { id: 262754, name: "OSMAN ALİ AYDIN 🏆", puan: 0 },
+  { id: 262782, name: "YUSUF ERBAY", puan: 0 },
+  { id: 262772, name: "CEMAL SİVRİKAYA 🏆", puan: 0 },
+  { id: 262739, name: "UĞUR GÜRBÜZ", puan: 0 },
+  { id: 262716, name: "BİROL DEMİREL", puan: 0 },
+  { id: 262744, name: "İLYAS UYGUN", puan: 0 },
+  { id: 262770, name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
+  { id: 262708, name: "BAYRAM YILMAZ", puan: 0 },
+  { id: 262705, name: "AHMET BİRCAN 🏆", puan: 0 },
+  { id: 262718, name: "BEKİR KARADAĞ", puan: 0 },
+  { id: 262719, name: "UĞUR VARDAR", puan: 0 },
+  { id: 262736, name: "MEHMET ALİ KARA", puan: 0 },
+  { id: 262750, name: "MAHMUT CBR", puan: 0 },
+  { id: 262758, name: "MELİH PINAR", puan: 0 },
+  { id: 262774, name: "ŞENOL CAN ÇAKICI", puan: 0 },
+  { id: 262749, name: "B.VEYSELOĞLU EROL", puan: 0 },
+  { id: 262790, name: "CUMALİ SÖKER", puan: 0 },
+  { id: 262703, name: "CEMALETTİN BELLİ", puan: 0 },
+  { id: 262740, name: "ABDULLAH DİK", puan: 0 },
+  { id: 262717, name: "MURAT ALİ", puan: 0 }
+];
 
 export default function TffPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
-  const [tableRows, setTableRows] = useState<any[]>([]);
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
@@ -20,38 +66,6 @@ export default function TffPuanDurumuPage() {
     { id: 22, home: "BODRUMSPOR", away: "BURSASPOR", time: "21:30", league: "TFF 1. LİG" },
     { id: 23, home: "VANSPOR FK", away: "KAYSERİSPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
-
-  useEffect(() => {
-    if (activeTab === 'total') {
-      // TFF Toplam Puan Sıralaması
-      const sorted = [...totalStandings]
-        .map((u: any) => ({
-          ...u,
-          puan: u.puan_tff !== undefined ? u.puan_tff : (u.puan || 0)
-        }))
-        .sort((a, b) => b.puan - a.puan);
-
-      setTableRows(sorted);
-    } else {
-      let currentData: any[] = [];
-      if (activeTab === 'week1') currentData = week1Data || [];
-      else if (activeTab === 'week2') currentData = week2Data || [];
-      else if (activeTab === 'week3') currentData = week3Data || [];
-
-      const getPuan = (u: any) => Number(u.puan_tff !== undefined ? u.puan_tff : u.puan) || 0;
-
-      const sorted = currentData
-        .slice()
-        .sort((a, b) => getPuan(b) - getPuan(a))
-        .map((u, idx) => ({
-          sira: idx + 1,
-          name: u.name,
-          puan: getPuan(u),
-        }));
-
-      setTableRows(sorted);
-    }
-  }, [activeTab]);
 
   const selectTab = (tabKey: string) => {
     setActiveTab(tabKey);
@@ -189,7 +203,7 @@ export default function TffPuanDurumuPage() {
           </span>
         </div>
 
-        {tableRows.length > 0 ? (
+        {activeTab === 'total' || activeTab === 'week3' ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
@@ -202,12 +216,12 @@ export default function TffPuanDurumuPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {tableRows.map((row, idx) => (
+                {tffWeek3List.map((row, idx) => (
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
                     <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
-                      {row.puan} PTS
+                      {row.puan > 0 ? `${row.puan} PTS` : '0 PTS'}
                     </td>
                   </tr>
                 ))}

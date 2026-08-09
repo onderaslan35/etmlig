@@ -7,8 +7,8 @@ import week2Data from '@/app/data/week2_predictions.json';
 import totalStandings from '@/app/data/standings.json';
 
 export default function DfoPuanDurumuPage() {
-  // Varsayılan sekmeyi doğrudan 'week3' tutuyoruz
-  const [activeTab, setActiveTab] = useState<string>('week3');
+  // Varsayılan sekmeyi 'total' (DFO TOPLAM PUAN DURUMU) yaptık
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
@@ -23,7 +23,10 @@ export default function DfoPuanDurumuPage() {
   ];
 
   useEffect(() => {
-    if (activeTab === 'week3') {
+    if (activeTab === 'total') {
+      const sorted = [...totalStandings].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+      setTableRows(sorted);
+    } else if (activeTab === 'week3') {
       const sorted = [...week3Data]
         .map((u: any) => ({
           id: u.id,
@@ -52,9 +55,6 @@ export default function DfoPuanDurumuPage() {
         }))
         .sort((a, b) => b.puan - a.puan);
 
-      setTableRows(sorted);
-    } else if (activeTab === 'total') {
-      const sorted = [...totalStandings].sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
     } else {
       setTableRows([]);
