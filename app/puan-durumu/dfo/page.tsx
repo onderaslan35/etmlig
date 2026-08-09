@@ -1,28 +1,109 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import totalStandings from '@/app/data/standings.json';
+import week3Data from '@/app/data/week3_predictions.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
-import week3Data from '@/app/data/week3_predictions.json';
+
+// DFO TOPLAM PUAN DURUMU VERİSİ (DOKUNULMADI)
+const dfoStandingsData = [
+  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 44 },
+  { id: "262755", name: "DOĞAÇ ALKAN", puan: 39 },
+  { id: "262816", name: "SEDAT SEDAT", puan: 38 },
+  { id: "262736", name: "MEHMET ALİ KARA", puan: 36 },
+  { id: "262733", name: "MUHSİN ASİLKAN", puan: 26 },
+  { id: "262726", name: "HUDAVER TOPARDIC", puan: 25 },
+  { id: "262728", name: "ÖNDER ASLAN", puan: 25 },
+  { id: "262786", name: "SEDAT DİŞLİ", puan: 25 },
+  { id: "262709", name: "SALİH KARACAOĞLU", puan: 23 },
+  { id: "262719", name: "UĞUR VARDAR", puan: 23 },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 22 },
+  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 20 },
+  { id: "262790", name: "CUMALİ SÖKER", puan: 19 },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 18 },
+  { id: "262717", name: "MURAT ALİ", puan: 18 },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 17 },
+  { id: "262711", name: "RIDVAN DOGER", puan: 15 },
+  { id: "262731", name: "FATİH AYAN", puan: 14 },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 14 },
+  { id: "262763", name: "MUSTAFA ELMAS", puan: 13 },
+  { id: "262813", name: "KEMAL ERSOY", puan: 12 },
+  { id: "262707", name: "HAKAN AYAN", puan: 12 },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 12 },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 11 },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 11 },
+  { id: "262714", name: "İSMAİL EKER 🏆", puan: 10 },
+  { id: "262702", name: "MURAT KARA", puan: 10 },
+  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 10 },
+  { id: "262740", name: "ABDULLAH DİK", puan: 10 },
+  { id: "262738", name: "MEVLÜT EVLER", puan: 10 },
+  { id: "262716", name: "BİROL DEMİREL", puan: 9 },
+  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 9 },
+  { id: "262750", name: "MAHMUT CBR", puan: 9 },
+  { id: "262734", name: "LEVENT YILDIRIM", puan: 9 },
+  { id: "262725", name: "İLYAS KAZDAL", puan: 7 },
+  { id: "351925", name: "ALİOS GÖZTEPE", puan: 7 },
+  { id: "262730", name: "ÖNDER IŞIK", puan: 7 },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ", puan: 7 },
+  { id: "262782", name: "YUSUF ERBAY", puan: 5 },
+  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 4 },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 4 },
+  { id: "262718", name: "BEKİR KARADAĞ", puan: 3 },
+  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 3 },
+  { id: "262715", name: "ŞEMSETTİN DÜGER", puan: 3 },
+  { id: "262703", name: "CEMALETTİN BELLİ", puan: 2 },
+  { id: "262708", name: "BAYRAM YILMAZ", puan: 1 },
+  { id: "262744", name: "İLYAS UYGUN", puan: 1 },
+  { id: "262758", name: "MELİH PINAR", puan: 1 },
+  { id: "262787", name: "MUSTAFA TUCİ", puan: 1 },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
+  { id: "262712", name: "MURAT AYDEMİR", puan: 0 },
+  { id: "262704", name: "YAPAY ZEKA", puan: 0 }
+];
 
 export default function DfoPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
+  // AKAN DİJİTAL SAAT VE OTOMATİK TARİH
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [currentDateFormatted, setCurrentDateFormatted] = useState<string>('');
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      
+      const timeStr = now.toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      setCurrentTime(timeStr);
+
+      const dateStr = now.toLocaleDateString('tr-TR', {
+        day: 'numeric',
+        month: 'long',
+        weekday: 'long'
+      }).toUpperCase();
+      setCurrentDateFormatted(dateStr);
+    };
+
+    updateClock();
+    const timer = setInterval(updateClock, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
+  // BUGÜNÜN MÜSABAKALARI (OTOMATİK DİNAMİK BANT)
   const todaysMatches = [
-    { id: 20, home: "IĞDIR FK", away: "KARAGÜMRÜK", time: "19:00", league: "TFF 1. LİG" },
-    { id: 21, home: "SARIYER", away: "MUĞLASPOR", time: "19:00", league: "TFF 1. LİG" },
-    { id: 22, home: "BODRUMSPOR", away: "BURSASPOR", time: "21:30", league: "TFF 1. LİG" },
-    { id: 23, home: "VANSPOR FK", away: "KAYSERİSPOR", time: "21:30", league: "TFF 1. LİG" },
+    { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
 
   useEffect(() => {
     if (activeTab === 'total') {
-      const sorted = [...totalStandings].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+      const sorted = [...dfoStandingsData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
     } else {
       let currentData: any[] = [];
@@ -58,14 +139,16 @@ export default function DfoPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      {/* 1. SAYFANIN EN ÜSTÜNDEKİ ANA BAŞLIK */}
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
           ELİT TAHMİN DFO LİGİ
         </h1>
       </div>
 
+      {/* 2. BUGÜNÜN MÜSABAKALARI - SAAT & DİNAMİK TARİHLİ ŞERİT */}
       <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2">
+        <div className="flex flex-wrap items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2 gap-2">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -75,37 +158,49 @@ export default function DfoPuanDurumuPage() {
               BUGÜNÜN MÜSABAKALARI ({todaysMatches.length} MAÇ)
             </h2>
           </div>
-          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-0.5 rounded-full">
-            📅 9 AĞUSTOS PAZAR
-          </span>
+
+          {/* SAĞ ÜST: DİNAMİK TARİH VE AKAN SAAT */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full shadow-inner">
+              📅 {currentDateFormatted || 'YÜKLENİYOR...'}
+            </span>
+            
+            {currentTime && (
+              <span className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono font-bold text-emerald-400 bg-slate-950 border border-emerald-500/40 px-2.5 py-1 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.15)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                {currentTime}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
+        {/* ORTALANMIŞ MÜSABAKA BANTI */}
+        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
           {todaysMatches.map((m) => (
             <div
               key={m.id}
-              className="min-w-[220px] sm:min-w-[240px] flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 rounded-xl p-3 flex flex-col justify-between shadow-md"
+              className="min-w-[240px] sm:min-w-[280px] max-w-sm flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 rounded-xl p-3.5 flex flex-col justify-between shadow-md"
             >
-              <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-1.5">
-                <span className="text-amber-400/90 truncate">{m.league}</span>
-                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded text-[9px] font-black">
+              <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-2">
+                <span className="text-amber-400/90 truncate font-extrabold">{m.league}</span>
+                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-black">
                   ⏰ {m.time}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between my-1">
-                <span className="font-extrabold text-xs text-slate-100 uppercase truncate w-2/5 text-left">
+              <div className="flex items-center justify-between my-2">
+                <span className="font-extrabold text-xs sm:text-sm text-slate-100 uppercase truncate w-2/5 text-left">
                   {m.home}
                 </span>
-                <span className="text-[9px] font-black text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-800">
+                <span className="text-[9px] font-black text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
                   VS
                 </span>
-                <span className="font-extrabold text-xs text-slate-100 uppercase truncate w-2/5 text-right">
+                <span className="font-extrabold text-xs sm:text-sm text-slate-100 uppercase truncate w-2/5 text-right">
                   {m.away}
                 </span>
               </div>
 
-              <div className="mt-1.5 text-center text-[9px] font-bold text-slate-500 uppercase tracking-widest border-t border-slate-800/80 pt-1">
+              <div className="mt-2 text-center text-[9px] font-bold text-slate-500 uppercase tracking-widest border-t border-slate-800/80 pt-1.5">
                 MAÇ #{m.id}
               </div>
             </div>
@@ -113,7 +208,8 @@ export default function DfoPuanDurumuPage() {
         </div>
       </div>
 
-      <div className="max-w-xl w-full flex flex-col items-center mb-6 space-y-3">
+      {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
+      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button
           onClick={() => selectTab('total')}
           className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
@@ -169,6 +265,7 @@ export default function DfoPuanDurumuPage() {
         </div>
       </div>
 
+      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
