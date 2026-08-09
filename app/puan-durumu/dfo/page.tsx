@@ -1,55 +1,63 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import totalStandings from '@/app/data/standings.json';
+import week3Data from '@/app/data/week3_predictions.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
-import week3Data from '@/app/data/week3_predictions.json';
+import totalStandings from '@/app/data/standings.json';
 
 export default function DfoPuanDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('total');
+  // Varsayılan sekmeyi doğrudan 'week3' tutuyoruz
+  const [activeTab, setActiveTab] = useState<string>('week3');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  useEffect(() => {
-    if (activeTab === 'total') {
-      // DFO toplam puan durumu: 15. maçın DFO'ya girmeyen puanları çıkarılarak hesaplanır
-      const sorted = totalStandings.map((u: any) => {
-        const w3User = week3Data.find((w: any) => w.id === u.id);
-        const tffPuan = w3User && w3User.puan_tff !== undefined ? w3User.puan_tff : 0;
-        return {
-          ...u,
-          puan: (u.puan || 0) - tffPuan,
-        };
-      }).sort((a, b) => b.puan - a.puan);
+  // BUGÜNÜN MAÇLARI (9 AĞUSTOS PAZAR)
+  const todaysMatches = [
+    { id: 20, home: "IĞDIR FK", away: "KARAGÜMRÜK", time: "19:00", league: "TFF 1. LİG" },
+    { id: 21, home: "SARIYER", away: "MUĞLASPOR", time: "19:00", league: "TFF 1. LİG" },
+    { id: 22, home: "BODRUMSPOR", away: "BURSASPOR", time: "21:30", league: "TFF 1. LİG" },
+    { id: 23, home: "VANSPOR FK", away: "KAYSERİSPOR", time: "21:30", league: "TFF 1. LİG" },
+  ];
 
+  useEffect(() => {
+    if (activeTab === 'week3') {
+      const sorted = [...week3Data]
+        .map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          puan: u.puan_dfo !== undefined ? u.puan_dfo : (u.puan || 0),
+        }))
+        .sort((a, b) => b.puan - a.puan);
+
+      setTableRows(sorted);
+    } else if (activeTab === 'week2') {
+      const sorted = [...week2Data]
+        .map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          puan: u.puan !== undefined ? u.puan : 0,
+        }))
+        .sort((a, b) => b.puan - a.puan);
+
+      setTableRows(sorted);
+    } else if (activeTab === 'week1') {
+      const sorted = [...week1Data]
+        .map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          puan: u.puan !== undefined ? u.puan : 0,
+        }))
+        .sort((a, b) => b.puan - a.puan);
+
+      setTableRows(sorted);
+    } else if (activeTab === 'total') {
+      const sorted = [...totalStandings].sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
     } else {
-      let currentData: any[] = [];
-      if (activeTab === 'week1') currentData = week1Data || [];
-      else if (activeTab === 'week2') currentData = week2Data || [];
-      else if (activeTab === 'week3') {
-        currentData = week3Data.map((u: any) => ({
-          ...u,
-          puan: u.puan_dfo !== undefined ? u.puan_dfo : u.puan,
-        })) || [];
-      }
-
-      const getPuan = (u: any) => Number(u.puan !== undefined ? u.puan : u.score) || 0;
-
-      const sorted = currentData
-        .slice()
-        .sort((a, b) => getPuan(b) - getPuan(a))
-        .map((u, idx) => ({
-          sira: idx + 1,
-          name: u.name,
-          puan: getPuan(u),
-        }));
-
-      setTableRows(sorted);
+      setTableRows([]);
     }
   }, [activeTab]);
 
@@ -65,15 +73,66 @@ export default function DfoPuanDurumuPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="relative w-20 h-20 md:w-24 md:h-24 drop-shadow-2xl mb-2">
-        <Image src="/dfo-logo.png" alt="DFO Logosu" fill className="object-contain" priority />
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      {/* 1. EN ÜST ANA BAŞLIK */}
+      <div className="flex flex-col items-center text-center mb-5 mt-1">
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
+          ELİT TAHMİN DFO LİGİ
+        </h1>
       </div>
 
-      <h1 className="text-xl md:text-2xl font-extrabold text-center mb-4 text-amber-400 tracking-wider uppercase">
-        ELİT TAHMİN DFO LİGİ
-      </h1>
+      {/* 2. BUGÜNÜN MÜSABAKALARI - YATAY KAYDIRMALI ŞERİT (CAROUSEL) */}
+      <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            <h2 className="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-wider">
+              BUGÜNÜN MÜSABAKALARI ({todaysMatches.length} MAÇ)
+            </h2>
+          </div>
+          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-0.5 rounded-full">
+            📅 9 AĞUSTOS PAZAR
+          </span>
+        </div>
 
+        {/* KAYDIRILABİLİR YATAY BANT */}
+        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
+          {todaysMatches.map((m) => (
+            <div
+              key={m.id}
+              className="min-w-[220px] sm:min-w-[240px] flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 rounded-xl p-3 flex flex-col justify-between shadow-md"
+            >
+              <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-1.5">
+                <span className="text-amber-400/90 truncate">{m.league}</span>
+                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded text-[9px] font-black">
+                  ⏰ {m.time}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between my-1">
+                <span className="font-extrabold text-xs text-slate-100 uppercase truncate w-2/5 text-left">
+                  {m.home}
+                </span>
+                <span className="text-[9px] font-black text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-800">
+                  VS
+                </span>
+                <span className="font-extrabold text-xs text-slate-100 uppercase truncate w-2/5 text-right">
+                  {m.away}
+                </span>
+              </div>
+
+              <div className="mt-1.5 text-center text-[9px] font-bold text-slate-500 uppercase tracking-widest border-t border-slate-800/80 pt-1">
+                MAÇ #{m.id}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
       <div className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
         <button
           onClick={() => selectTab('total')}
@@ -95,7 +154,7 @@ export default function DfoPuanDurumuPage() {
                 : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
             }`}
           >
-            <span>📅 {activeTab === 'total' ? 'HAFTA SEÇİNİZ' : getActiveTabTitle()}</span>
+            <span>📅 {getActiveTabTitle()}</span>
             <span className="text-xs transition-transform duration-200">
               {isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
             </span>
@@ -130,6 +189,7 @@ export default function DfoPuanDurumuPage() {
         </div>
       </div>
 
+      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         <div className="bg-slate-950 px-6 py-2.5 border-b border-slate-800 text-center">
           <span className="text-xs font-black text-amber-400 uppercase tracking-widest">

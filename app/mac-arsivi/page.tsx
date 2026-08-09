@@ -675,7 +675,7 @@ const week2Matches = [
   }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ (TAMAMLANAN 19 MAÇ)
+// 3. HAFTA MAÇ VERİLERİ (EKSİKSİZ 24 MAÇ)
 const week3Matches = [
   {
     id: 1,
@@ -920,6 +920,71 @@ const week3Matches = [
     homeTeam: "ANTALYASPOR",
     awayTeam: "KEÇİÖRENGÜCÜ",
     score: "4 - 3",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 20,
+    weekLabel: "3. Hafta - 20. MAÇ",
+    category: "TFF 1. LİG",
+    date: "09.08.2026",
+    time: "19:00",
+    homeTeam: "IĞDIR FK",
+    awayTeam: "FATİH KARAGÜMRÜK",
+    score: "- : -",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 21,
+    weekLabel: "3. Hafta - 21. MAÇ",
+    category: "TFF 1. LİG",
+    date: "09.08.2026",
+    time: "19:00",
+    homeTeam: "SARIYER",
+    awayTeam: "MUĞLASPOR",
+    score: "- : -",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 22,
+    weekLabel: "3. Hafta - 22. MAÇ",
+    category: "TFF 1. LİG",
+    date: "09.08.2026",
+    time: "21:30",
+    homeTeam: "BODRUMSPOR",
+    awayTeam: "BURSASPOR",
+    score: "- : -",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 23,
+    weekLabel: "3. Hafta - 23. MAÇ",
+    category: "TFF 1. LİG",
+    date: "09.08.2026",
+    time: "21:30",
+    homeTeam: "VANSPOR FK",
+    awayTeam: "KAYSERİSPOR",
+    score: "- : -",
+    winnersCount: 0,
+    earnedPoints: 0,
+    winners: []
+  },
+  {
+    id: 24,
+    weekLabel: "3. Hafta - 24. MAÇ",
+    category: "TFF 1. LİG",
+    date: "10.08.2026",
+    time: "21:30",
+    homeTeam: "PENDİKSPOR",
+    awayTeam: "BATMAN PETROL SPOR",
+    score: "- : -",
     winnersCount: 0,
     earnedPoints: 0,
     winners: []
