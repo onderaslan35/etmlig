@@ -4,7 +4,62 @@ import React, { useState, useEffect } from 'react';
 import week3Data from '@/app/data/week3_predictions.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
-import totalStandings from '@/app/data/standings.json';
+
+// GÜNCEL MASTER TOPLAM PUAN DURUMU VERİSİ
+const masterStandingsData = [
+  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 44 },
+  { id: "262755", name: "DOĞAÇ ALKAN", puan: 39 },
+  { id: "262816", name: "SEDAT SEDAT", puan: 36 },
+  { id: "262736", name: "MEHMET ALİ KARA", puan: 36 },
+  { id: "262733", name: "MUHSİN ASİLKAN", puan: 26 },
+  { id: "262726", name: "HUDAVER TOPARDIC", puan: 25 },
+  { id: "262786", name: "SEDAT DİŞLİ", puan: 25 },
+  { id: "262709", name: "SALİH KARACAOĞLU", puan: 25 },
+  { id: "262728", name: "ÖNDER ASLAN", puan: 24 },
+  { id: "262719", name: "UĞUR VARDAR", puan: 23 },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 20 },
+  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 20 },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 19 },
+  { id: "262790", name: "CUMALİ SÖKER", puan: 19 },
+  { id: "262717", name: "MURAT ALİ", puan: 18 },
+  { id: "262731", name: "FATİH AYAN", puan: 16 },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 16 },
+  { id: "262711", name: "RIDVAN DOGER", puan: 15 },
+  { id: "262763", name: "MUSTAFA ELMAS", puan: 13 },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 13 },
+  { id: "262813", name: "KEMAL ERSOY", puan: 12 },
+  { id: "262707", name: "HAKAN AYAN", puan: 12 },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 12 },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 11 },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 11 },
+  { id: "262714", name: "İSMAİL EKER 🏆", puan: 10 },
+  { id: "262740", name: "ABDULLAH DİK", puan: 10 },
+  { id: "262738", name: "MEVLÜT EVLER", puan: 10 },
+  { id: "262716", name: "BİROL DEMİREL", puan: 9 },
+  { id: "262725", name: "İLYAS KAZDAL", puan: 9 },
+  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 9 },
+  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 9 },
+  { id: "262750", name: "MAHMUT CBR", puan: 9 },
+  { id: "262734", name: "LEVENT YILDIRIM", puan: 9 },
+  { id: "351925", name: "ALİOS GÖZTEPE", puan: 8 },
+  { id: "262730", name: "ÖNDER IŞIK", puan: 8 },
+  { id: "262702", name: "MURAT KARA", puan: 7 },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ", puan: 7 },
+  { id: "262718", name: "BEKİR KARADAĞ", puan: 3 },
+  { id: "262715", name: "ŞEMSETTIN DÜGER", puan: 3 },
+  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 2 },
+  { id: "262782", name: "YUSUF ERBAY", puan: 2 },
+  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 2 },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 2 },
+  { id: "262703", name: "CEMALETTİN BELLİ", puan: 2 },
+  { id: "262744", name: "İLYAS UYGUN", puan: 1 },
+  { id: "262708", name: "BAYRAM YILMAZ", puan: 1 },
+  { id: "262758", name: "MELİH PINAR", puan: 1 },
+  { id: "262787", name: "MUSTAFA TUCİ", puan: 1 },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
+  { id: "262712", name: "MURAT AYDEMİR", puan: 0 },
+  { id: "262704", name: "YAPAY ZEKA", puan: 0 }
+];
 
 export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
@@ -23,7 +78,7 @@ export default function MasterPuanDurumuPage() {
 
   useEffect(() => {
     if (activeTab === 'total') {
-      const sorted = [...totalStandings].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+      const sorted = [...masterStandingsData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
     } else {
       let currentData: any[] = [];
@@ -174,7 +229,7 @@ export default function MasterPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 4. PUAN TABLOSU (İÇİNDEKİ ÜST BAŞLIK SATIRI KALDIRILDI, PTS SİLİNDİ) */}
+      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
@@ -193,7 +248,6 @@ export default function MasterPuanDurumuPage() {
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
-                    {/* PTS YAZISI SİLİNDİ, SADECE RAKAMLAR BIRAKILDI */}
                     <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
                       {row.puan}
                     </td>

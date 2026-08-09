@@ -1,10 +1,65 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import totalStandings from '@/app/data/standings.json';
+import week3Data from '@/app/data/week3_predictions.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
-import week3Data from '@/app/data/week3_predictions.json';
+
+// GÖRSELDEKİ GERÇEK SKOR VERİLERİ (Puan Değil, Skor Sütunu)
+const masterScoreData = [
+  { id: "262756", name: "EYÜP KARACAOĞLU", skor: 9 },
+  { id: "262755", name: "DOĞAÇ ALKAN", skor: 9 },
+  { id: "262816", name: "SEDAT SEDAT", skor: 8 },
+  { id: "262726", name: "HUDAVER TOPARDIC", skor: 8 },
+  { id: "262728", name: "ÖNDER ASLAN", skor: 7 },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", skor: 7 },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", skor: 7 },
+  { id: "262736", name: "MEHMET ALİ KARA", skor: 6 },
+  { id: "262786", name: "SEDAT DİŞLİ", skor: 6 },
+  { id: "262709", name: "SALİH KARACAOĞLU", skor: 6 },
+  { id: "262790", name: "CUMALİ SÖKER", skor: 6 },
+  { id: "262731", name: "FATİH AYAN", skor: 6 },
+  { id: "262714", name: "İSMAİL EKER 🏆", skor: 6 },
+  { id: "262733", name: "MUHSİN ASİLKAN", skor: 5 },
+  { id: "262771", name: "ULAŞ ADIGÜZEL", skor: 5 },
+  { id: "262717", name: "MURAT ALİ", skor: 5 },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", skor: 5 },
+  { id: "262763", name: "MUSTAFA ELMAS", skor: 5 },
+  { id: "262813", name: "KEMAL ERSOY", skor: 5 },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", skor: 5 },
+  { id: "262719", name: "UĞUR VARDAR", skor: 4 },
+  { id: "262711", name: "RIDVAN DOGER", skor: 4 },
+  { id: "262707", name: "HAKAN AYAN", skor: 4 },
+  { id: "262716", name: "BİROL DEMİREL", skor: 4 },
+  { id: "262725", name: "İLYAS KAZDAL", skor: 4 },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆", skor: 3 },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", skor: 3 },
+  { id: "262740", name: "ABDULLAH DİK", skor: 3 },
+  { id: "262753", name: "YUSUF KIZILTUĞ", skor: 3 },
+  { id: "262705", name: "AHMET BİRCAN 🏆", skor: 3 },
+  { id: "351925", name: "ALİOS GÖZTEPE", skor: 3 },
+  { id: "262730", name: "ÖNDER IŞIK", skor: 3 },
+  { id: "262702", name: "MURAT KARA", skor: 3 },
+  { id: "262718", name: "BEKİR KARADAĞ", skor: 3 },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", skor: 2 },
+  { id: "262738", name: "MEVLÜT EVLER", skor: 2 },
+  { id: "262750", name: "MAHMUT CBR", skor: 2 },
+  { id: "262734", name: "LEVENT YILDIRIM", skor: 2 },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ", skor: 2 },
+  { id: "262715", name: "ŞEMSETTIN DÜGER", skor: 2 },
+  { id: "262723", name: "AYHAN LUŞOĞLU", skor: 2 },
+  { id: "262782", name: "YUSUF ERBAY", skor: 2 },
+  { id: "262739", name: "UĞUR GÜRBÜZ", skor: 2 },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", skor: 1 },
+  { id: "262703", name: "CEMALETTİN BELLİ", skor: 1 },
+  { id: "262744", name: "İLYAS UYGUN", skor: 1 },
+  { id: "262708", name: "BAYRAM YILMAZ", skor: 1 },
+  { id: "262758", name: "MELİH PINAR", skor: 1 },
+  { id: "262787", name: "MUSTAFA TUCİ", skor: 1 },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", skor: 0 },
+  { id: "262712", name: "MURAT AYDEMİR", skor: 0 },
+  { id: "262704", name: "YAPAY ZEKA", skor: 0 }
+];
 
 export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
@@ -13,16 +68,17 @@ export default function SkorDurumuPage() {
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
+  // BUGÜNÜN MAÇLARI
+  const todaysMatches = [
+    { id: 20, home: "IĞDIR FK", away: "KARAGÜMRÜK", time: "19:00", league: "TFF 1. LİG" },
+    { id: 21, home: "SARIYER", away: "MUĞLASPOR", time: "19:00", league: "TFF 1. LİG" },
+    { id: 22, home: "BODRUMSPOR", away: "BURSASPOR", time: "21:30", league: "TFF 1. LİG" },
+    { id: 23, home: "VANSPOR FK", away: "KAYSERİSPOR", time: "21:30", league: "TFF 1. LİG" },
+  ];
+
   useEffect(() => {
     if (activeTab === 'total') {
-      const sorted = totalStandings
-        .slice()
-        .sort((a, b) => (b.skor || 0) - (a.skor || 0))
-        .map((u, idx) => ({
-          sira: idx + 1,
-          name: u.name,
-          skor: u.skor || 0,
-        }));
+      const sorted = [...masterScoreData].sort((a, b) => (b.skor || 0) - (a.skor || 0));
       setTableRows(sorted);
     } else {
       let currentData: any[] = [];
@@ -30,7 +86,7 @@ export default function SkorDurumuPage() {
       else if (activeTab === 'week2') currentData = week2Data || [];
       else if (activeTab === 'week3') currentData = week3Data || [];
 
-      const getSkor = (u: any) => Number(u.skor !== undefined ? u.skor : 0);
+      const getSkor = (u: any) => Number(u.skor !== undefined ? u.skor : u.score) || 0;
 
       const sorted = currentData
         .slice()
@@ -51,28 +107,81 @@ export default function SkorDurumuPage() {
   };
 
   const getActiveTabTitle = () => {
-    if (activeTab === 'total') return 'GENEL SKOR İSABET DURUMU';
+    if (activeTab === 'total') return 'TOPLAM SKOR DURUMU';
     const weekNum = activeTab.replace('week', '');
-    return `${weekNum}. HAFTA SKOR İSABET DURUMU`;
+    return `${weekNum}. HAFTA SKOR DURUMU`;
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="text-3xl mb-1">🎯</div>
-      <h1 className="text-xl md:text-2xl font-extrabold text-center mb-4 text-emerald-400 tracking-wider uppercase">
-        ELİT TAHMİN SKOR İSABET KRALLIĞI
-      </h1>
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      {/* 1. ANA BAŞLIK */}
+      <div className="flex flex-col items-center text-center mb-5 mt-1">
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
+          ELİT TAHMİN SKOR DURUMU
+        </h1>
+      </div>
 
-      <div className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
+      {/* 2. BUGÜNÜN MÜSABAKALARI */}
+      <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            <h2 className="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-wider">
+              BUGÜNÜN MÜSABAKALARI ({todaysMatches.length} MAÇ)
+            </h2>
+          </div>
+          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-0.5 rounded-full">
+            📅 9 AĞUSTOS PAZAR
+          </span>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
+          {todaysMatches.map((m) => (
+            <div
+              key={m.id}
+              className="min-w-[220px] sm:min-w-[240px] flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 rounded-xl p-3 flex flex-col justify-between shadow-md"
+            >
+              <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-1.5">
+                <span className="text-amber-400/90 truncate">{m.league}</span>
+                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded text-[9px] font-black">
+                  ⏰ {m.time}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between my-1">
+                <span className="font-extrabold text-xs text-slate-100 uppercase truncate w-2/5 text-left">
+                  {m.home}
+                </span>
+                <span className="text-[9px] font-black text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-800">
+                  VS
+                </span>
+                <span className="font-extrabold text-xs text-slate-100 uppercase truncate w-2/5 text-right">
+                  {m.away}
+                </span>
+              </div>
+
+              <div className="mt-1.5 text-center text-[9px] font-bold text-slate-500 uppercase tracking-widest border-t border-slate-800/80 pt-1">
+                MAÇ #{m.id}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. BUTONLAR VE AÇILIR MENÜ */}
+      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3">
         <button
           onClick={() => selectTab('total')}
           className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
             activeTab === 'total'
-              ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-emerald-500/20 scale-[1.02]'
+              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]'
               : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
           }`}
         >
-          TOPLAM SKOR İSABET DURUMU
+          TOPLAM SKOR DURUMU
         </button>
 
         <div className="w-full relative">
@@ -84,7 +193,7 @@ export default function SkorDurumuPage() {
                 : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
             }`}
           >
-            <span>📅 {activeTab === 'total' ? 'HAFTA SEÇİNİZ' : getActiveTabTitle()}</span>
+            <span>📅 {getActiveTabTitle()}</span>
             <span className="text-xs transition-transform duration-200">
               {isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
             </span>
@@ -119,6 +228,7 @@ export default function SkorDurumuPage() {
         </div>
       </div>
 
+      {/* 4. TABLO */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
@@ -127,10 +237,8 @@ export default function SkorDurumuPage() {
                 <tr>
                   <th className="px-6 py-3.5 w-16 text-center">SIRA</th>
                   <th className="px-6 py-3.5">YARIŞMACI</th>
-                  {/* BAŞLIĞI İKİ SATIRA BÖLÜP MERKEZLEDİK */}
-                  <th className="px-6 py-3.5 text-center leading-tight">
-                    <div className="text-[10px]">TOPLAM</div>
-                    <div className="text-[10px]">İSABET</div>
+                  <th className="px-6 py-3.5 text-right">
+                    {activeTab === 'total' ? 'TOPLAM SKOR' : 'HAFTALIK SKOR'}
                   </th>
                 </tr>
               </thead>
@@ -139,8 +247,7 @@ export default function SkorDurumuPage() {
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
-                    {/* RAKAMLAR TAM OLARAK BAŞLIĞIN ALTINDA VE MERKEZDE */}
-                    <td className="px-6 py-3.5 text-center font-black text-emerald-400 text-lg">
+                    <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
                       {row.skor}
                     </td>
                   </tr>
@@ -150,7 +257,7 @@ export default function SkorDurumuPage() {
           </div>
         ) : (
           <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
-            ⏳ {activeTab.replace('week', '')}. Haftanın skor verileri bulunamadı veya henüz girilmedi.
+            ⏳ {activeTab.replace('week', '')}. Haftanın verileri bulunamadı veya henüz hesaplanmadı.
           </div>
         )}
       </div>
