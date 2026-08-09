@@ -2,71 +2,81 @@
 
 import React, { useState, useEffect } from 'react';
 
-// SADECE SKOR VERİLERİ İŞLENDİ (ID SÜTUNU KALDIRILDI)
-const skorStandingsData = [
-  { id: "262756", name: "EYÜP KARACAOĞLU", exactScores: 9 },
-  { id: "262755", name: "DOĞAÇ ALKAN", exactScores: 9 },
-  { id: "262816", name: "SEDAT SEDAT", exactScores: 9 },
-  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", exactScores: 9 },
-  { id: "262726", name: "HUDAVER TOPARDIC", exactScores: 8 },
-  { id: "262728", name: "ÖNDER ASLAN", exactScores: 8 },
-  { id: "262736", name: "MEHMET ALİ KARA", exactScores: 6 },
-  { id: "262786", name: "SEDAT DİŞLİ", exactScores: 6 },
-  { id: "262790", name: "CUMALİ SÖKER", exactScores: 6 },
-  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", exactScores: 6 },
-  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", exactScores: 6 },
-  { id: "262714", name: "İSMAİL EKER 🏆", exactScores: 6 },
-  { id: "262733", name: "MUHSİN ASİLKAN", exactScores: 5 },
-  { id: "262709", name: "SALİH KARACAOĞLU", exactScores: 5 },
-  { id: "262771", name: "ULAŞ ADIGÜZEL", exactScores: 5 },
-  { id: "262717", name: "MURAT ALİ", exactScores: 5 },
-  { id: "262731", name: "FATİH AYAN", exactScores: 5 },
-  { id: "262763", name: "MUSTAFA ELMAS", exactScores: 5 },
-  { id: "262813", name: "KEMAL ERSOY", exactScores: 5 },
-  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", exactScores: 5 },
-  { id: "262702", name: "MURAT KARA", exactScores: 5 },
-  { id: "262719", name: "UĞUR VARDAR", exactScores: 4 },
-  { id: "262711", name: "RIDVAN DOGER", exactScores: 4 },
-  { id: "262707", name: "HAKAN AYAN", exactScores: 4 },
-  { id: "262705", name: "AHMET BİRCAN 🏆", exactScores: 4 },
-  { id: "262716", name: "BİROL DEMİREL", exactScores: 4 },
-  { id: "262782", name: "YUSUF ERBAY", exactScores: 4 },
-  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", exactScores: 3 },
-  { id: "262706", name: "GAZİ AYAN 🏆🏆", exactScores: 3 },
-  { id: "262774", name: "ŞENOL CAN ÇAKICI", exactScores: 3 },
-  { id: "262740", name: "ABDULLAH DİK", exactScores: 3 },
-  { id: "262753", name: "YUSUF KIZILTUĞ", exactScores: 3 },
-  { id: "262725", name: "İLYAS KAZDAL", exactScores: 3 },
-  { id: "351925", name: "ALİOS GÖZTEPE", exactScores: 3 },
-  { id: "262730", name: "ÖNDER IŞIK", exactScores: 3 },
-  { id: "262723", name: "AYHAN LUŞOĞLU", exactScores: 3 },
-  { id: "262718", name: "BEKİR KARADAĞ", exactScores: 3 },
-  { id: "262739", name: "UĞUR GÜRBÜZ", exactScores: 3 },
-  { id: "262738", name: "MEVLÜT EVLER", exactScores: 2 },
-  { id: "262750", name: "MAHMUT CBR", exactScores: 2 },
-  { id: "262734", name: "LEVENT YILDIRIM", exactScores: 2 },
-  { id: "262737", name: "ŞAHİN GEZGİNCİ", exactScores: 2 },
-  { id: "262749", name: "B.VEYSELOĞLU EROL", exactScores: 2 },
-  { id: "262715", name: "ŞEMSETTİN DÜGER", exactScores: 2 },
-  { id: "262703", name: "CEMALETTİN BELLİ", exactScores: 1 },
-  { id: "262708", name: "BAYRAM YILMAZ", exactScores: 1 },
-  { id: "262744", name: "İLYAS UYGUN", exactScores: 1 },
-  { id: "262758", name: "MELİH PINAR", exactScores: 1 },
-  { id: "262787", name: "MUSTAFA TUCİ", exactScores: 1 },
-  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", exactScores: 1 },
-  { id: "262712", name: "MURAT AYDEMİR", exactScores: 0 },
-  { id: "262704", name: "YAPAY ZEKA", exactScores: 0 }
+const defaultUsers = [
+  { id: "262756", name: "EYÜP KARACAOĞLU" },
+  { id: "262755", name: "DOĞAÇ ALKAN" },
+  { id: "262816", name: "SEDAT SEDAT" },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆" },
+  { id: "262726", name: "HUDAVER TOPARDIC" },
+  { id: "262728", name: "ÖNDER ASLAN" },
+  { id: "262736", name: "MEHMET ALİ KARA" },
+  { id: "262786", name: "SEDAT DİŞLİ" },
+  { id: "262790", name: "CUMALİ SÖKER" },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆" },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ" },
+  { id: "262714", name: "İSMAİL EKER 🏆" },
+  { id: "262733", name: "MUHSİN ASİLKAN" },
+  { id: "262709", name: "SALİH KARACAOĞLU" },
+  { id: "262771", name: "ULAŞ ADIGÜZEL" },
+  { id: "262717", name: "MURAT ALİ" },
+  { id: "262731", name: "FATİH AYAN" },
+  { id: "262763", name: "MUSTAFA ELMAS" },
+  { id: "262813", name: "KEMAL ERSOY" },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN" },
+  { id: "262702", name: "MURAT KARA" },
+  { id: "262719", name: "UĞUR VARDAR" },
+  { id: "262711", name: "RIDVAN DOGER" },
+  { id: "262707", name: "HAKAN AYAN" },
+  { id: "262705", name: "AHMET BİRCAN 🏆" },
+  { id: "262716", name: "BİROL DEMİREL" },
+  { id: "262782", name: "YUSUF ERBAY" },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆" },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆" },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI" },
+  { id: "262740", name: "ABDULLAH DİK" },
+  { id: "262753", name: "YUSUF KIZILTUĞ" },
+  { id: "262725", name: "İLYAS KAZDAL" },
+  { id: "351925", name: "ALİOS GÖZTEPE" },
+  { id: "262730", name: "ÖNDER IŞIK" },
+  { id: "262723", name: "AYHAN LUŞOĞLU" },
+  { id: "262718", name: "BEKİR KARADAĞ" },
+  { id: "262739", name: "UĞUR GÜRBÜZ" },
+  { id: "262738", name: "MEVLÜT EVLER" },
+  { id: "262750", name: "MAHMUT CBR" },
+  { id: "262734", name: "LEVENT YILDIRIM" },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ" },
+  { id: "262749", name: "B.VEYSELOĞLU EROL" },
+  { id: "262715", name: "ŞEMSETTİN DÜGER" },
+  { id: "262703", name: "CEMALETTİN BELLİ" },
+  { id: "262708", name: "BAYRAM YILMAZ" },
+  { id: "262744", name: "İLYAS UYGUN" },
+  { id: "262758", name: "MELİH PINAR" },
+  { id: "262787", name: "MUSTAFA TUCİ" },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM" },
+  { id: "262712", name: "MURAT AYDEMİR" },
+  { id: "262704", name: "YAPAY ZEKA" }
 ];
 
 export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
+  const [weeklySkors, setWeeklySkors] = useState<Record<string, Record<string, number>>>({});
 
   // AKAN DİJİTAL SAAT VE OTOMATİK TARİH
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDateFormatted, setCurrentDateFormatted] = useState<string>('');
 
   useEffect(() => {
+    // Admin verisini oku
+    const saved = localStorage.getItem('skorWeeklyData');
+    if (saved) {
+      try {
+        setWeeklySkors(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     const updateClock = () => {
       const now = new Date();
       
@@ -92,13 +102,32 @@ export default function SkorDurumuPage() {
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  // BUGÜNÜN MÜSABAKALARI (10 AĞUSTOS PAZARTESİ)
   const todaysMatches = [
     { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
 
-  // TABLO SIRALAMASI: TAM SKOR'A GÖRE YÜKSEKTEN DÜŞÜĞE
-  const sortedStandings = [...skorStandingsData].sort((a, b) => b.exactScores - a.exactScores);
+  // TABLO SIRALAMASI
+  const getDisplayData = () => {
+    if (activeTab === 'total') {
+      // TÜM HAFTALARIN TOPLAMI
+      return defaultUsers.map((user) => {
+        let totalExact = 0;
+        Object.keys(weeklySkors).forEach((weekKey) => {
+          totalExact += weeklySkors[weekKey]?.[user.id] || 0;
+        });
+        return { ...user, exactScores: totalExact };
+      }).sort((a, b) => b.exactScores - a.exactScores);
+    } else {
+      // SEÇİLİ HAFTANIN SKORU
+      const weekData = weeklySkors[activeTab] || {};
+      return defaultUsers.map((user) => ({
+        ...user,
+        exactScores: weekData[user.id] || 0
+      })).sort((a, b) => b.exactScores - a.exactScores);
+    }
+  };
+
+  const sortedStandings = getDisplayData();
 
   const selectTab = (tabKey: string) => {
     setActiveTab(tabKey);
@@ -113,14 +142,13 @@ export default function SkorDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center font-sans">
-      {/* 1. SAYFANIN EN ÜSTÜNDEKİ ANA BAŞLIK */}
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
           ELİT TAHMİN SKOR LİGİ
         </h1>
       </div>
 
-      {/* 2. BUGÜNÜN MÜSABAKALARI - SAAT & DİNAMİK TARİHLİ ŞERİT */}
+      {/* BUGÜNÜN MÜSABAKALARI */}
       <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
         <div className="flex flex-wrap items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2 gap-2">
           <div className="flex items-center gap-2">
@@ -133,7 +161,6 @@ export default function SkorDurumuPage() {
             </h2>
           </div>
 
-          {/* SAĞ ÜST: TARİH VE AKAN DİJİTAL SAAT KUTUSU */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full shadow-inner">
               📅 {currentDateFormatted || 'YÜKLENİYOR...'}
@@ -148,7 +175,6 @@ export default function SkorDurumuPage() {
           </div>
         </div>
 
-        {/* ORTALANMIŞ MÜSABAKA BANTI */}
         <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
           {todaysMatches.map((m) => (
             <div
@@ -182,7 +208,7 @@ export default function SkorDurumuPage() {
         </div>
       </div>
 
-      {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
+      {/* BUTONLAR VE HAFTA MENÜSÜ */}
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button
           onClick={() => selectTab('total')}
@@ -239,7 +265,7 @@ export default function SkorDurumuPage() {
         </div>
       </div>
 
-      {/* 4. SADECE SIRA, YARIŞMACI VE TAM SKOR SÜTUNLARINDAN OLUŞAN TABLO */}
+      {/* PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -247,7 +273,9 @@ export default function SkorDurumuPage() {
               <tr className="bg-slate-950/80 border-b border-slate-800 text-slate-400 text-[11px] font-extrabold uppercase tracking-wider">
                 <th className="py-3.5 px-4 text-center w-16">SIRA</th>
                 <th className="py-3.5 px-4">YARIŞMACI</th>
-                <th className="py-3.5 px-4 text-right text-emerald-400">TAM SKOR</th>
+                <th className="py-3.5 px-4 text-right text-emerald-400">
+                  {activeTab === 'total' ? 'TOPLAM TAM SKOR' : 'HAFTALIK TAM SKOR'}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-xs sm:text-sm font-semibold">

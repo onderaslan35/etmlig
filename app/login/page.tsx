@@ -1,103 +1,88 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [userCode, setUserCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [adminId, setAdminId] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setErrorMsg('');
 
-    const cleanCode = userCode.trim();
-    const cleanPass = password.trim();
+    // E-Posta veya sadece ID girilmesini destekler (262728 veya 262728@admin.com)
+    const cleanId = adminId.split('@')[0].trim();
 
-    if (!cleanCode || !cleanPass) {
-      setError("Lütfen Kullanıcı ID ve Şifrenizi girin.");
-      return;
+    if (cleanId === '262728' && password === '24351324') {
+      localStorage.setItem('adminSession', JSON.stringify({
+        id: '262728',
+        name: 'ÖNDER ASLAN',
+        role: 'SUPER_ADMIN',
+        loginTime: new Date().toISOString()
+      }));
+      
+      router.push('/admin');
+    } else {
+      setErrorMsg('Hatalı Yönetici ID/E-posta veya Şifre!');
     }
-
-    setLoading(true);
-
-    const { data, error: dbError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("user_code", cleanCode)
-      .eq("password", cleanPass);
-
-    if (dbError || !data || data.length === 0) {
-      setError("Girdiğiniz Kullanıcı ID veya Şifre hatalı!");
-      setLoading(false);
-      return;
-    }
-
-    // Başarılı Giriş
-    const loggedUser = data[0];
-    localStorage.setItem("etml_user", JSON.stringify(loggedUser));
-
-    router.push("/tahmin");
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-md">
-        <div className="mb-8 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
-            Elit Tahmin Master Ligi
-          </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
-            Giriş Yap
+    <div className="min-h-[80vh] flex items-center justify-center p-4 text-slate-100 font-sans">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl backdrop-blur-md">
+        <div className="text-center mb-6">
+          <span className="text-3xl">🛡️</span>
+          <h1 className="text-xl font-black text-amber-400 mt-2 uppercase tracking-wider">
+            YÖNETİCİ GİRİŞİ
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Lütfen size verilen Kullanıcı ID ve Şifrenizi giriniz.
+          <p className="text-xs text-slate-400 mt-1">
+            Elit Tahmin Ligleri Yönetim Paneli
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 text-xs font-bold rounded-xl text-center">
+            ⚠️ {errorMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Kullanıcı ID (Giriş Kodu)
+            <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+              Yönetici ID / E-Posta
             </label>
             <input
               type="text"
-              value={userCode}
-              onChange={(e) => setUserCode(e.target.value)}
+              value={adminId}
+              onChange={(e) => setAdminId(e.target.value)}
               placeholder="Örn: 262728"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3.5 text-white outline-none transition focus:border-emerald-400 font-bold"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-100 focus:outline-none focus:border-amber-400 transition-colors"
+              required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Şifre
+            <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+              Yönetici Şifresi
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3.5 text-white outline-none transition focus:border-emerald-400 font-bold"
+              placeholder="••••••••"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-100 focus:outline-none focus:border-amber-400 transition-colors"
+              required
             />
           </div>
 
-          {error && (
-            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-300">
-              {error}
-            </div>
-          )}
-
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-black text-slate-950 transition hover:bg-emerald-400 disabled:opacity-60 shadow-lg shadow-emerald-500/20"
+            className="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg shadow-amber-500/20 uppercase tracking-wider text-sm"
           >
-            {loading ? "Giriş Yapılıyor..." : "Sisteme Giriş Yap"}
+            SİSTEME GİRİŞ YAP
           </button>
         </form>
       </div>
