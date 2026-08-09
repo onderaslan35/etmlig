@@ -2,65 +2,61 @@
 
 import React, { useState, useEffect } from 'react';
 
-// GÜNCEL TFF LİGİ PUAN DURUMU VERİSİ
-const tffStandingsData = [
-  { rank: 1, name: "EYÜP KARACAOĞLU", id: "262756", points: 44, exactScores: 9 },
-  { rank: 2, name: "DOĞAÇ ALKAN", id: "262755", points: 39, exactScores: 9 },
-  { rank: 3, name: "SEDAT SEDAT", id: "262816", points: 38, exactScores: 9 },
-  { rank: 4, name: "MEHMET ALİ KARA", id: "262736", points: 36, exactScores: 6 },
-  { rank: 5, name: "MUHSİN ASİLKAN", id: "262733", points: 26, exactScores: 5 },
-  { rank: 6, name: "HUDAVER TOPARDIC", id: "262726", points: 25, exactScores: 8 },
-  { rank: 7, name: "ÖNDER ASLAN", id: "262728", points: 25, exactScores: 8 },
-  { rank: 8, name: "SEDAT DİŞLİ", id: "262786", points: 25, exactScores: 6 },
-  { rank: 9, name: "SALİH KARACAOĞLU", id: "262709", points: 23, exactScores: 5 },
-  { rank: 10, name: "UĞUR VARDAR", id: "262719", points: 23, exactScores: 4 },
-  { rank: 11, name: "OSMAN ALİ AYDIN 🏆", id: "262754", points: 22, exactScores: 9 },
-  { rank: 12, name: "ULAŞ ADIGÜZEL", id: "262771", points: 20, exactScores: 5 },
-  { rank: 13, name: "CUMALİ SÖKER", id: "262790", points: 19, exactScores: 6 },
-  { rank: 14, name: "R. İLHAN KARACA 🏆🏆", id: "262732", points: 18, exactScores: 6 },
-  { rank: 15, name: "MURAT ALİ", id: "262717", points: 18, exactScores: 5 },
-  { rank: 16, name: "MUSTAFA GÜMÜŞÇÜ", id: "262721", points: 17, exactScores: 6 },
-  { rank: 17, name: "RIDVAN DOGER", id: "262711", points: 15, exactScores: 4 },
-  { rank: 18, name: "FATİH AYAN", id: "262731", points: 14, exactScores: 5 },
-  { rank: 19, name: "CEMAL SİVRİKAYA 🏆", id: "262772", points: 14, exactScores: 3 },
-  { rank: 20, name: "MUSTAFA ELMAS", id: "262763", points: 13, exactScores: 5 },
-  { rank: 21, name: "KEMAL ERSOY", id: "262813", points: 12, exactScores: 5 },
-  { rank: 22, name: "HAKAN AYAN", id: "262707", points: 12, exactScores: 4 },
-  { rank: 23, name: "GAZİ AYAN 🏆🏆", id: "262706", points: 12, exactScores: 3 },
-  { rank: 24, name: "SAVAŞ ÇAĞLAYAN", id: "262747", points: 11, exactScores: 5 },
-  { rank: 25, name: "ŞENOL CAN ÇAKICI", id: "262774", points: 11, exactScores: 3 },
-  { rank: 26, name: "İSMAİL EKER 🏆", id: "262714", points: 10, exactScores: 6 },
-  { rank: 27, name: "MURAT KARA", id: "262702", points: 10, exactScores: 5 },
-  { rank: 28, name: "AHMET BİRCAN 🏆", id: "262705", points: 10, exactScores: 4 },
-  { rank: 29, name: "ABDULLAH DİK", id: "262740", points: 10, exactScores: 3 },
-  { rank: 30, name: "MEVLÜT EVLER", id: "262738", points: 10, exactScores: 2 },
-  { rank: 31, name: "BİROL DEMİREL", id: "262716", points: 9, exactScores: 4 },
-  { rank: 32, name: "YUSUF KIZILTUĞ", id: "262753", points: 9, exactScores: 3 },
-  { rank: 33, name: "MAHMUT CBR", id: "262750", points: 9, exactScores: 2 },
-  { rank: 34, name: "LEVENT YILDIRIM", id: "262734", points: 9, exactScores: 2 },
-  { rank: 35, name: "İLYAS KAZDAL", id: "262725", points: 7, exactScores: 3 },
-  { rank: 36, name: "ALİOS GÖZTEPE", id: "351925", points: 7, exactScores: 3 },
-  { rank: 37, name: "ÖNDER IŞIK", id: "262730", points: 7, exactScores: 3 },
-  { rank: 38, name: "ŞAHİN GEZGİNCİ", id: "262737", points: 7, exactScores: 2 },
-  { rank: 39, name: "YUSUF ERBAY", id: "262782", points: 5, exactScores: 4 },
-  { rank: 40, name: "AYHAN LUŞOĞLU", id: "262723", points: 4, exactScores: 3 },
-  { rank: 41, name: "B.VEYSELOĞLU EROL", id: "262749", points: 4, exactScores: 2 },
-  { rank: 42, name: "BEKİR KARADAĞ", id: "262718", points: 3, exactScores: 3 },
-  { rank: 43, name: "UĞUR GÜRBÜZ", id: "262739", points: 3, exactScores: 3 },
-  { rank: 44, name: "ŞEMSETTİN DÜGER", id: "262715", points: 3, exactScores: 2 },
-  { rank: 45, name: "CEMALETTİN BELLİ", id: "262703", points: 2, exactScores: 1 },
-  { rank: 46, name: "BAYRAM YILMAZ", id: "262708", points: 1, exactScores: 1 },
-  { rank: 47, name: "İLYAS UYGUN", id: "262744", points: 1, exactScores: 1 },
-  { rank: 48, name: "MELİH PINAR", id: "262758", points: 1, exactScores: 1 },
-  { rank: 49, name: "MUSTAFA TUCİ", id: "262787", points: 1, exactScores: 1 },
-  { rank: 50, name: "OZKAYA MAZAKALI BAYRAM", id: "262770", points: 1, exactScores: 1 },
-  { rank: 51, name: "MURAT AYDEMİR", id: "262712", points: 0, exactScores: 0 },
-  { rank: 52, name: "YAPAY ZEKA", id: "262704", points: 0, exactScores: 0 }
+// GÜNCEL TFF 3. HAFTA PUAN VERİSİ
+const week3TffData = [
+  { id: "262707", name: "HAKAN AYAN", puan: 10 },
+  { id: "262816", name: "SEDAT SEDAT", puan: 9 },
+  { id: "262733", name: "MUHSİN ASİLKAN", puan: 7 },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 6 },
+  { id: "262728", name: "ÖNDER ASLAN", puan: 6 },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 6 },
+  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 5 },
+  { id: "262734", name: "LEVENT YILDIRIM", puan: 5 },
+  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 4 },
+  { id: "262763", name: "MUSTAFA ELMAS", puan: 4 },
+  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 4 },
+  { id: "262714", name: "İSMAİL EKER 🏆", puan: 4 },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 4 },
+  { id: "262740", name: "ABDULLAH DİK", puan: 4 },
+  { id: "262702", name: "MURAT KARA", puan: 3 },
+  { id: "262782", name: "YUSUF ERBAY", puan: 3 },
+  { id: "262813", name: "KEMAL ERSOY", puan: 3 },
+  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 2 },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 2 },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 },
+  { id: "351925", name: "ALİOS GÖZTEPE", puan: 1 },
+  { id: "262730", name: "ÖNDER IŞIK", puan: 1 },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 1 },
+  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 1 },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
+  { id: "262786", name: "SEDAT DİŞLİ", puan: 0 },
+  { id: "262711", name: "RIDVAN DOGER", puan: 0 },
+  { id: "262726", name: "HUDAVER TOPARDIC", puan: 0 },
+  { id: "262725", name: "İLYAS KAZDAL", puan: 0 },
+  { id: "262709", name: "SALİH KARACAOĞLU", puan: 0 },
+  { id: "262738", name: "MEVLÜT EVLER", puan: 0 },
+  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 0 },
+  { id: "262731", name: "FATİH AYAN", puan: 0 },
+  { id: "262755", name: "DOĞAÇ ALKAN", puan: 0 },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 0 },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 0 },
+  { id: "262716", name: "BİROL DEMİREL", puan: 0 },
+  { id: "262719", name: "UĞUR VARDAR", puan: 0 },
+  { id: "262708", name: "BAYRAM YILMAZ", puan: 0 },
+  { id: "262744", name: "İLYAS UYGUN", puan: 0 },
+  { id: "262758", name: "MELİH PINAR", puan: 0 },
+  { id: "262718", name: "BEKİR KARADAĞ", puan: 0 },
+  { id: "262736", name: "MEHMET ALİ KARA", puan: 0 },
+  { id: "262790", name: "CUMALİ SÖKER", puan: 0 },
+  { id: "262750", name: "MAHMUT CBR", puan: 0 },
+  { id: "262717", name: "MURAT ALİ", puan: 0 },
+  { id: "262703", name: "CEMALETTİN BELLİ", puan: 0 }
 ];
 
 export default function TffPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
+  const [tableRows, setTableRows] = useState<any[]>([]);
 
   // AKAN DİJİTAL SAAT VE OTOMATİK TARİH
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -97,6 +93,16 @@ export default function TffPuanDurumuPage() {
     { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
 
+  useEffect(() => {
+    if (activeTab === 'total' || activeTab === 'week3') {
+      const sorted = [...week3TffData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+      setTableRows(sorted);
+    } else {
+      // 1. ve 2. Hafta verileri olmadığı için boş dizi döner
+      setTableRows([]);
+    }
+  }, [activeTab]);
+
   const selectTab = (tabKey: string) => {
     setActiveTab(tabKey);
     setIsWeekMenuOpen(false);
@@ -109,7 +115,7 @@ export default function TffPuanDurumuPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center font-sans">
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       {/* 1. SAYFANIN EN ÜSTÜNDEKİ ANA BAŞLIK */}
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
@@ -236,45 +242,38 @@ export default function TffPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 4. MASTER İLE BİREBİR AYNI DETAYLI PUAN TABLOSU */}
+      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-950/80 border-b border-slate-800 text-slate-400 text-[11px] font-extrabold uppercase tracking-wider">
-                <th className="py-3.5 px-4 text-center w-16">SIRA</th>
-                <th className="py-3.5 px-4">YARIŞMACI</th>
-                <th className="py-3.5 px-4 text-center hidden sm:table-cell">ID</th>
-                <th className="py-3.5 px-4 text-center">TAM SKOR</th>
-                <th className="py-3.5 px-4 text-right text-amber-400">PUAN</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-xs sm:text-sm font-semibold">
-              {tffStandingsData.map((user) => (
-                <tr
-                  key={user.id}
-                  className="hover:bg-slate-800/50 transition-colors duration-150"
-                >
-                  <td className="py-3 px-4 text-center text-slate-400 font-bold">
-                    {user.rank}
-                  </td>
-                  <td className="py-3 px-4 font-bold text-slate-100">
-                    {user.name}
-                  </td>
-                  <td className="py-3 px-4 text-center text-slate-500 text-xs hidden sm:table-cell">
-                    {user.id}
-                  </td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-extrabold">
-                    {user.exactScores}
-                  </td>
-                  <td className="py-3 px-4 text-right font-black text-amber-400 text-base">
-                    {user.points}
-                  </td>
+        {tableRows.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
+                <tr>
+                  <th className="px-6 py-3.5 w-16 text-center">SIRA</th>
+                  <th className="px-6 py-3.5">YARIŞMACI</th>
+                  <th className="px-6 py-3.5 text-right">
+                    {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {tableRows.map((row, idx) => (
+                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
+                    <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
+                    <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
+                      {row.puan}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
+            ⏳ {activeTab.replace('week', '')}. Haftanın verileri bulunamadı veya henüz hesaplanmadı.
+          </div>
+        )}
       </div>
     </div>
   );

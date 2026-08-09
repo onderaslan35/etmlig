@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import week3Data from '@/app/data/week3_predictions.json';
 import week1Data from '@/app/data/week1_predictions.json';
 import week2Data from '@/app/data/week2_predictions.json';
 
-// GÜNCEL MASTER TOPLAM PUAN DURUMU VERİSİ
+// GÜNCEL MASTER TOPLAM PUAN DURUMU VERİSİ (KORUNDU)
 const masterStandingsData = [
   { id: "262756", name: "EYÜP KARACAOĞLU", puan: 44 },
   { id: "262755", name: "DOĞAÇ ALKAN", puan: 39 },
@@ -61,6 +60,57 @@ const masterStandingsData = [
   { id: "262704", name: "YAPAY ZEKA", puan: 0 }
 ];
 
+// GÖNDERDİĞİNİZ GÜNCEL 3. HAFTA VERİLERİ
+const week3MasterData = [
+  { id: "262816", name: "SEDAT SEDAT", puan: 25 },
+  { id: "262733", name: "MUHSİN ASİLKAN", puan: 19 },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 },
+  { id: "262707", name: "HAKAN AYAN", puan: 11 },
+  { id: "262763", name: "MUSTAFA ELMAS", puan: 11 },
+  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 11 },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 11 },
+  { id: "262734", name: "LEVENT YILDIRIM", puan: 9 },
+  { id: "262813", name: "KEMAL ERSOY", puan: 8 },
+  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 8 },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 7 },
+  { id: "351925", name: "ALİOS GÖZTEPE", puan: 7 },
+  { id: "262702", name: "MURAT KARA", puan: 7 },
+  { id: "262786", name: "SEDAT DİŞLİ", puan: 7 },
+  { id: "262711", name: "RIDVAN DOGER", puan: 7 },
+  { id: "262726", name: "HUDAVER TOPARDIC", puan: 6 },
+  { id: "262725", name: "İLYAS KAZDAL", puan: 6 },
+  { id: "262728", name: "ÖNDER ASLAN", puan: 6 },
+  { id: "262709", name: "SALİH KARACAOĞLU", puan: 5 },
+  { id: "262714", name: "İSMAİL EKER 🏆", puan: 5 },
+  { id: "262730", name: "ÖNDER IŞIK", puan: 5 },
+  { id: "262738", name: "MEVLÜT EVLER", puan: 5 },
+  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 5 },
+  { id: "262782", name: "YUSUF ERBAY", puan: 4 },
+  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 4 },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 4 },
+  { id: "262740", name: "ABDULLAH DİK", puan: 4 },
+  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 3 },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 2 },
+  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 2 },
+  { id: "262731", name: "FATİH AYAN", puan: 2 },
+  { id: "262755", name: "DOĞAÇ ALKAN", puan: 2 },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 2 },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 2 },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 2 },
+  { id: "262716", name: "BİROL DEMİREL", puan: 1 },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
+  { id: "262719", name: "UĞUR VARDAR", puan: 0 },
+  { id: "262708", name: "BAYRAM YILMAZ", puan: 0 },
+  { id: "262744", name: "İLYAS UYGUN", puan: 0 },
+  { id: "262758", name: "MELİH PINAR", puan: 0 },
+  { id: "262718", name: "BEKİR KARADAĞ", puan: 0 },
+  { id: "262736", name: "MEHMET ALİ KARA", puan: 0 },
+  { id: "262790", name: "CUMALİ SÖKER", puan: 0 },
+  { id: "262750", name: "MAHMUT CBR", puan: 0 },
+  { id: "262717", name: "MURAT ALİ", puan: 0 },
+  { id: "262703", name: "CEMALETTİN BELLİ", puan: 0 }
+];
+
 export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
@@ -74,7 +124,6 @@ export default function MasterPuanDurumuPage() {
     const updateClock = () => {
       const now = new Date();
       
-      // Dijital Saat Formatı (Sadece HH:MM:SS)
       const timeStr = now.toLocaleTimeString('tr-TR', {
         hour: '2-digit',
         minute: '2-digit',
@@ -82,7 +131,6 @@ export default function MasterPuanDurumuPage() {
       });
       setCurrentTime(timeStr);
 
-      // Dinamik Gün Formatı
       const dateStr = now.toLocaleDateString('tr-TR', {
         day: 'numeric',
         month: 'long',
@@ -107,11 +155,13 @@ export default function MasterPuanDurumuPage() {
     if (activeTab === 'total') {
       const sorted = [...masterStandingsData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
+    } else if (activeTab === 'week3') {
+      const sorted = [...week3MasterData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+      setTableRows(sorted);
     } else {
       let currentData: any[] = [];
       if (activeTab === 'week1') currentData = week1Data || [];
       else if (activeTab === 'week2') currentData = week2Data || [];
-      else if (activeTab === 'week3') currentData = week3Data || [];
 
       const getPuan = (u: any) => Number(u.puan !== undefined ? u.puan : u.score) || 0;
 
@@ -161,7 +211,7 @@ export default function MasterPuanDurumuPage() {
             </h2>
           </div>
 
-          {/* SAĞ ÜST: TARİH VE AKAN ŞIK DİJİTAL SAAT KUTUSU */}
+          {/* SAĞ ÜST: TARİH VE AKAN DİJİTAL SAAT KUTUSU */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full shadow-inner">
               📅 {currentDateFormatted || 'YÜKLENİYOR...'}
@@ -176,7 +226,7 @@ export default function MasterPuanDurumuPage() {
           </div>
         </div>
 
-        {/* ORTALANMIŞ VEYA KAYDIRILABİLİR BANT */}
+        {/* ORTALANMIŞ MÜSABAKA BANTI */}
         <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
           {todaysMatches.map((m) => (
             <div
@@ -211,7 +261,7 @@ export default function MasterPuanDurumuPage() {
       </div>
 
       {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
-      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3">
+      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button
           onClick={() => selectTab('total')}
           className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
