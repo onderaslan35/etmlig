@@ -1,27 +1,47 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DFO Tahmin Ligi",
-  description: "DFO ve Master Futbol Tahmin Ligi Puan Durumu",
+  metadataBase: new URL("https://elitmlig-umber.vercel.app"),
+  title: "ELİT TAHMİN LİGİ | Canlı Puan Durumu & Fikstür",
+  description: "DFO, Master ve TFF Organizasyonları canlı skor takibi, haftalık tahminler ve anlık puan durumu simülasyonu.",
+  keywords: ["Elit Tahmin Ligi", "DFO Puan Durumu", "Master Lig", "Futbol Tahmin", "Tahminmatik"],
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "🏆 ELİT TAHMİN LİGİ - CANLI SKOR & PUAN DURUMU",
+    description: "Haftalık müsabaka tahminleri, canlı skormatik ve güncel Master/TFF puan durumlarını inceleyin!",
+    url: "https://elitmlig-umber.vercel.app",
+    siteName: "Elit Tahmin Ligi",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Elit Tahmin Ligi Banner",
+      },
+    ],
+    locale: "tr_TR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "🏆 ELİT TAHMİN LİGİ",
+    description: "Canlı puan durumu ve futbol tahmin platformu.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="tr">
-      <body className={`${inter.className} bg-slate-950 min-h-screen text-slate-100`}>
-        <Navbar />
-        <main className="pb-12">
-          {children}
-        </main>
+      <body className="bg-slate-950 text-slate-100 font-sans antialiased">
+        {children}
       </body>
     </html>
   );
