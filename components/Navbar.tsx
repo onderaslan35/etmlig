@@ -35,8 +35,8 @@ export default function Navbar() {
                     href={item.href}
                     className={`px-3 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 border shadow-lg ${
                       isActive
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-amber-400/30 scale-105'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/40 hover:bg-amber-500/20 hover:scale-105'
+                        ? 'bg-emerald-400 text-slate-950 border-emerald-300 shadow-emerald-400/30 scale-105'
+                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/20 hover:scale-105'
                     }`}
                   >
                     {item.name}
@@ -50,7 +50,7 @@ export default function Navbar() {
                   href={item.href}
                   className={`px-3 py-1.5 rounded-lg font-extrabold text-xs uppercase tracking-wider transition-all duration-150 ${
                     isActive
-                      ? 'bg-slate-800 text-amber-400 border border-slate-700'
+                      ? 'bg-slate-800 text-emerald-400 border border-slate-700'
                       : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
@@ -62,7 +62,7 @@ export default function Navbar() {
 
           {/* MOBİL MENÜ BUTONU */}
           <div className="flex md:hidden justify-between items-center w-full">
-            <span className="font-extrabold text-amber-400 text-sm tracking-wider uppercase">
+            <span className="font-extrabold text-emerald-400 text-sm tracking-wider uppercase">
               ELİT TAHMİN LİGİ
             </span>
             <button
@@ -88,9 +88,9 @@ export default function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block px-4 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all ${
                   item.isHighlight
-                    ? 'bg-amber-500 text-slate-950 text-center font-black shadow-md'
+                    ? 'bg-emerald-500 text-slate-950 text-center font-black shadow-md'
                     : isActive
-                    ? 'bg-slate-800 text-amber-400 border border-slate-700'
+                    ? 'bg-slate-800 text-emerald-400 border border-slate-700'
                     : 'text-slate-300 hover:bg-slate-800'
                 }`}
               >
