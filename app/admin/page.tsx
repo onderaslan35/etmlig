@@ -4,66 +4,65 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const defaultUsers = [
-  { id: "262756", name: "EYÜP KARACAOĞLU" },
-  { id: "262755", name: "DOĞAÇ ALKAN" },
-  { id: "262816", name: "SEDAT SEDAT" },
-  { id: "262754", name: "OSMAN ALİ AYDIN 🏆" },
-  { id: "262726", name: "HUDAVER TOPARDIC" },
-  { id: "262728", name: "ÖNDER ASLAN" },
-  { id: "262736", name: "MEHMET ALİ KARA" },
-  { id: "262786", name: "SEDAT DİŞLİ" },
-  { id: "262790", name: "CUMALİ SÖKER" },
-  { id: "262732", name: "R. İLHAN KARACA 🏆🏆" },
-  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ" },
-  { id: "262714", name: "İSMAİL EKER 🏆" },
-  { id: "262733", name: "MUHSİN ASİLKAN" },
-  { id: "262709", name: "SALİH KARACAOĞLU" },
-  { id: "262771", name: "ULAŞ ADIGÜZEL" },
-  { id: "262717", name: "MURAT ALİ" },
-  { id: "262731", name: "FATİH AYAN" },
-  { id: "262763", name: "MUSTAFA ELMAS" },
-  { id: "262813", name: "KEMAL ERSOY" },
-  { id: "262747", name: "SAVAŞ ÇAĞLAYAN" },
-  { id: "262702", name: "MURAT KARA" },
-  { id: "262719", name: "UĞUR VARDAR" },
-  { id: "262711", name: "RIDVAN DOGER" },
-  { id: "262707", name: "HAKAN AYAN" },
-  { id: "262705", name: "AHMET BİRCAN 🏆" },
-  { id: "262716", name: "BİROL DEMİREL" },
-  { id: "262782", name: "YUSUF ERBAY" },
-  { id: "262772", name: "CEMAL SİVRİKAYA 🏆" },
-  { id: "262706", name: "GAZİ AYAN 🏆🏆" },
-  { id: "262774", name: "ŞENOL CAN ÇAKICI" },
   { id: "262740", name: "ABDULLAH DİK" },
-  { id: "262753", name: "YUSUF KIZILTUĞ" },
-  { id: "262725", name: "İLYAS KAZDAL" },
+  { id: "262705", name: "AHMET BİRCAN 🏆" },
   { id: "351925", name: "ALİOS GÖZTEPE" },
-  { id: "262730", name: "ÖNDER IŞIK" },
   { id: "262723", name: "AYHAN LUŞOĞLU" },
-  { id: "262718", name: "BEKİR KARADAĞ" },
-  { id: "262739", name: "UĞUR GÜRBÜZ" },
-  { id: "262738", name: "MEVLÜT EVLER" },
-  { id: "262750", name: "MAHMUT CBR" },
-  { id: "262734", name: "LEVENT YILDIRIM" },
-  { id: "262737", name: "ŞAHİN GEZGİNCİ" },
-  { id: "262749", name: "B.VEYSELOĞLU EROL" },
-  { id: "262715", name: "ŞEMSETTİN DÜGER" },
-  { id: "262703", name: "CEMALETTİN BELLİ" },
   { id: "262708", name: "BAYRAM YILMAZ" },
+  { id: "262718", name: "BEKİR KARADAĞ" },
+  { id: "262716", name: "BİROL DEMİREL" },
+  { id: "262749", name: "B.VEYSELOĞLU EROL" },
+  { id: "262703", name: "CEMALETTİN BELLİ" },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆" },
+  { id: "262790", name: "CUMALİ SÖKER" },
+  { id: "262755", name: "DOĞAÇ ALKAN" },
+  { id: "262756", name: "EYÜP KARACAOĞLU" },
+  { id: "262731", name: "FATİH AYAN" },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆" },
+  { id: "262707", name: "HAKAN AYAN" },
+  { id: "262726", name: "HUDAVER TOPARDIC" },
+  { id: "262725", name: "İLYAS KAZDAL" },
   { id: "262744", name: "İLYAS UYGUN" },
+  { id: "262714", name: "İSMAİL EKER 🏆" },
+  { id: "262813", name: "KEMAL ERSOY" },
+  { id: "262734", name: "LEVENT YILDIRIM" },
+  { id: "262750", name: "MAHMUT CBR" },
+  { id: "262736", name: "MEHMET ALİ KARA" },
   { id: "262758", name: "MELİH PINAR" },
-  { id: "262787", name: "MUSTAFA TUCİ" },
-  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM" },
+  { id: "262738", name: "MEVLÜT EVLER" },
+  { id: "262733", name: "MUHSİN ASİLKAN" },
+  { id: "262717", name: "MURAT ALİ" },
   { id: "262712", name: "MURAT AYDEMİR" },
-  { id: "262704", name: "YAPAY ZEKA" }
+  { id: "262702", name: "MURAT KARA" },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ" },
+  { id: "262763", name: "MUSTAFA ELMAS" },
+  { id: "262787", name: "MUSTAFA TUCİ" },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆" },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM" },
+  { id: "262728", name: "ÖNDER ASLAN" },
+  { id: "262730", name: "ÖNDER IŞIK" },
+  { id: "262711", name: "RIDVAN DOGER" },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆" },
+  { id: "262709", name: "SALİH KARACAOĞLU" },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN" },
+  { id: "262816", name: "SEDAT SEDAT" },
+  { id: "262786", name: "SEDAT DİŞLİ" },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ" },
+  { id: "262715", name: "ŞEMSETTİN DÜGER" },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI" },
+  { id: "262771", name: "ULAŞ ADIGÜZEL" },
+  { id: "262739", name: "UĞUR GÜRBÜZ" },
+  { id: "262719", name: "UĞUR VARDAR" },
+  { id: "262704", name: "YAPAY ZEKA" },
+  { id: "262782", name: "YUSUF ERBAY" },
+  { id: "262753", name: "YUSUF KIZILTUĞ" }
 ];
 
 export default function AdminDashboardPage() {
   const [adminUser, setAdminUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'menu' | 'skor'>('menu');
-  const [selectedWeek, setSelectedWeek] = useState<number>(3); // Varsayılan 3. Hafta
+  const [activeTab, setActiveTab] = useState<'menu' | 'skor'>('skor');
+  const [selectedWeek, setSelectedWeek] = useState<number>(3);
   
-  // Tüm haftaların verilerini tutan obje: { week1: { "262756": 3, ... }, week2: ... }
   const [weeklySkors, setWeeklySkors] = useState<Record<string, Record<string, number>>>({});
   const [currentWeekData, setCurrentWeekData] = useState<Record<string, number>>({});
   const [successMsg, setSuccessMsg] = useState('');
@@ -82,7 +81,6 @@ export default function AdminDashboardPage() {
       }
     }
 
-    // Yerel depodan haftalık skor verilerini oku
     const savedWeekly = localStorage.getItem('skorWeeklyData');
     if (savedWeekly) {
       try {
@@ -94,7 +92,6 @@ export default function AdminDashboardPage() {
     }
   }, [router]);
 
-  // Seçili hafta değiştiğinde form verilerini güncelle
   useEffect(() => {
     const weekKey = `week${selectedWeek}`;
     const weekData = weeklySkors[weekKey] || {};
@@ -209,7 +206,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       ) : (
-        /* HAFTALIK SKOR DÜZENLEME EKRANI */
+        /* HAFTALIK SKOR DÜZENLEME EKRANI (ALFABETİK SIRALI) */
         <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
           <div className="flex flex-wrap justify-between items-center mb-6 pb-4 border-b border-slate-800 gap-4">
             <div>
@@ -217,7 +214,7 @@ export default function AdminDashboardPage() {
                 🎯 Haftalık Skor Durumu Yönetimi
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Düzenlemek istediğiniz haftayı seçin ve yarışmacıların skorlarını girin.
+                Yarışmacılar alfabetik olarak sıralanmıştır. Haftayı seçip skorları girin.
               </p>
             </div>
 
@@ -229,7 +226,7 @@ export default function AdminDashboardPage() {
               <select
                 value={selectedWeek}
                 onChange={(e) => setSelectedWeek(Number(e.target.value))}
-                className="bg-slate-950 border border-amber-500/50 text-amber-400 font-black text-sm px-4 py-2 rounded-xl focus:outline-none"
+                className="bg-slate-950 border border-amber-500/50 text-amber-400 font-black text-sm px-4 py-2 rounded-xl focus:outline-none cursor-pointer"
               >
                 {Array.from({ length: 48 }, (_, i) => i + 1).map((w) => (
                   <option key={w} value={w}>
@@ -258,7 +255,7 @@ export default function AdminDashboardPage() {
               {defaultUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex items-center justify-between"
+                  className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex items-center justify-between hover:border-slate-700 transition-colors"
                 >
                   <div>
                     <span className="block text-xs font-bold text-slate-100">
