@@ -13,6 +13,7 @@ export default function Navbar() {
     { name: 'TFF PUAN DURUMU', path: '/puan-durumu/tff' },
     { name: 'SKOR DURUMU', path: '/skor-durumu' },
     { name: 'MAÇ ARŞİVİ', path: '/mac-arsivi' },
+    { name: 'TAHMİNLER', path: '/tahmin' },
   ];
 
   return (

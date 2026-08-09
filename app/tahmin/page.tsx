@@ -1,338 +1,158 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useState } from 'react';
 
-type FixtureItem = {
-  id: number;
-  hafta: number;
-  mac_no: number;
-  ev_sahibi: string;
-  deplasman: string;
-  tur: string;
-  kategori: string;
-};
-
-type PredictionState = {
-  [macNo: number]: {
-    home: string;
-    away: string;
-  };
-};
-
-const SCORE_OPTIONS = Array.from({ length: 10 }, (_, i) => String(i));
-
-const MOCK_FIXTURES: FixtureItem[] = [
-  { id: 1, hafta: 3, mac_no: 1, ev_sahibi: "OLIMPIYAKOS", deplasman: "NEC NUMEGEN", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
-  { id: 2, hafta: 3, mac_no: 2, ev_sahibi: "SPARTA PRAG", deplasman: "OLIMPIC LYON", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
-  { id: 3, hafta: 3, mac_no: 3, ev_sahibi: "USG", deplasman: "BODO-GLIMT", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
-  { id: 4, hafta: 3, mac_no: 4, ev_sahibi: "FENERBAHÇE", deplasman: "STURM GRAZ", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
-  { id: 5, hafta: 3, mac_no: 5, ev_sahibi: "PANATHINAIKOS", deplasman: "CSKA 1948", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 6, hafta: 3, mac_no: 6, ev_sahibi: "HRADEC KRALOVE", deplasman: "BEŞİKTAŞ", tur: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İL", kategori: "dfo" },
-  { id: 7, hafta: 3, mac_no: 7, ev_sahibi: "DEBRECEN", deplasman: "KOPENAG", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 8, hafta: 3, mac_no: 8, ev_sahibi: "DINAMO KIEV", deplasman: "KARABAĞ FK", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 9, hafta: 3, mac_no: 9, ev_sahibi: "GOTEBORG", deplasman: "GENT", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 10, hafta: 3, mac_no: 10, ev_sahibi: "PAOK", deplasman: "ANDERLECHT", tur: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İL", kategori: "dfo" },
-  { id: 11, hafta: 3, mac_no: 11, ev_sahibi: "AJAX", deplasman: "SHELBOURNE", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 12, hafta: 3, mac_no: 12, ev_sahibi: "BRAGA", deplasman: "DINAMO MINSK", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 13, hafta: 3, mac_no: 13, ev_sahibi: "BENFICA", deplasman: "HEART", tur: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İL", kategori: "dfo" },
-  { id: 14, hafta: 3, mac_no: 14, ev_sahibi: "PAIDE LINNAMEESKOND", deplasman: "RAPID WIEN", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 15, hafta: 3, mac_no: 15, ev_sahibi: "BOLUSPOR", deplasman: "MANİSA FK", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 16, hafta: 3, mac_no: 16, ev_sahibi: "BANDIRMASPOR", deplasman: "İSTANBULSPOR", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 17, hafta: 3, mac_no: 17, ev_sahibi: "SİVASSPOR", deplasman: "EROKSPOR", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 18, hafta: 3, mac_no: 18, ev_sahibi: "ÜMRANİYE SPOR", deplasman: "MARDİN 1969", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 19, hafta: 3, mac_no: 19, ev_sahibi: "ANTALYASPOR", deplasman: "KEÇİÖRENGÜCÜ", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 20, hafta: 3, mac_no: 20, ev_sahibi: "IĞDIR FK", deplasman: "FATİH KARAGÜMRÜK", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 21, hafta: 3, mac_no: 21, ev_sahibi: "SARIYER", deplasman: "MUĞLASPOR", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 22, hafta: 3, mac_no: 22, ev_sahibi: "BODRUMSPOR", deplasman: "BURSASPOR", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 23, hafta: 3, mac_no: 23, ev_sahibi: "VANSPOR FK", deplasman: "KAYSERİSPOR", tur: "TÜRKİYE 1.LİG", kategori: "tffo" },
-  { id: 24, hafta: 3, mac_no: 24, ev_sahibi: "PENDİKSPOR", deplasman: "BATMAN PETROL SPOR", tur: "TÜRKİYE 1.LİG", kategori: "tffo" }
+// 3. Hafta Maç Bülteni
+const matchesData = [
+  { id: 1, home: "OLIMPIYAKOS", away: "NEC NIJMEGEN", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 1, date: "4 Ağustos | 21:00" },
+  { id: 2, home: "SPARTA PRAG", away: "OLIMPIC LYON", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 2, date: "4 Ağustos | 21:00" },
+  { id: 3, home: "USG", away: "BODO-GLIMT", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 3, date: "4 Ağustos | 21:00" },
+  { id: 4, home: "FENERBAHÇE", away: "STURM GRAZ", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 4, date: "5 Ağustos | 21:00" },
+  { id: 5, home: "PANATHINAIKOS", away: "CSKA 1948", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 5, date: "5 Ağustos | 21:30" },
+  { id: 6, home: "PAIDE LINNAMEESKOND", away: "RAPID WIEN", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 6, date: "6 Ağustos | 19:00" },
+  { id: 7, home: "HRADEC KRALOVE", away: "BEŞİKTAŞ", type: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 7, date: "6 Ağustos | 20:00" },
+  { id: 8, home: "DEBRECEN", away: "KOPENAG", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 8, date: "6 Ağustos | 20:00" },
+  { id: 9, home: "DINAMO KIEV", away: "KARABAĞ FK", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 9, date: "6 Ağustos | 20:00" },
+  { id: 10, home: "GOTEBORG", away: "GENT", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 10, date: "6 Ağustos | 20:00" },
+  { id: 11, home: "PAOK", away: "ANDERLECHT", type: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 11, date: "6 Ağustos | 20:45" },
+  { id: 12, home: "AJAX", away: "SHELBOURNE", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 12, date: "6 Ağustos | 21:00" },
+  { id: 13, home: "BRAGA", away: "DINAMO MINSK", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 13, date: "6 Ağustos | 21:30" },
+  { id: 14, home: "BENFICA", away: "HEART", type: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 14, date: "6 Ağustos | 22:00" },
+  { id: 15, home: "BOLUSPOR", away: "MANİSA FK", type: "TÜRKİYE 1.LİG", matchNo: 15, date: "7 Ağustos | 21:30" },
+  { id: 16, home: "BANDIRMASPOR", away: "İSTANBULSPOR", type: "TÜRKİYE 1.LİG", matchNo: 16, date: "8 Ağustos | 17:00" },
+  { id: 17, home: "SİVASSPOR", away: "EROKSPOR", type: "TÜRKİYE 1.LİG", matchNo: 17, date: "8 Ağustos | 19:00" },
+  { id: 18, home: "ÜMRANİYE SPOR", away: "MARDİN 1969", type: "TÜRKİYE 1.LİG", matchNo: 18, date: "8 Ağustos | 19:00" },
+  { id: 19, home: "ANTALYASPOR", away: "KEÇİÖRENGÜCÜ", type: "TÜRKİYE 1.LİG", matchNo: 19, date: "8 Ağustos | 21:30" },
+  { id: 20, home: "IĞDIR FK", away: "FATİH KARAGÜMRÜK", type: "TÜRKİYE 1.LİG", matchNo: 20, date: "9 Ağustos | 19:00" },
+  { id: 21, home: "SARIYER", away: "MUĞLASPOR", type: "TÜRKİYE 1.LİG", matchNo: 21, date: "9 Ağustos | 19:00" },
+  { id: 22, home: "BODRUMSPOR", away: "BURSASPOR", type: "TÜRKİYE 1.LİG", matchNo: 22, date: "9 Ağustos | 21:30" },
+  { id: 23, home: "VANSPOR FK", away: "KAYSERİSPOR", type: "TÜRKİYE 1.LİG", matchNo: 23, date: "9 Ağustos | 21:30" },
+  { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", type: "TÜRKİYE 1.LİG", matchNo: 24, date: "10 Ağustos | 21:30" }
 ];
 
-function slugifyTeamName(name: string) {
-  if (!name) return "";
-  return name
-    .toLocaleLowerCase("tr")
-    .replace(/ğ/g, "g")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ç/g, "c")
-    .replace(/â/g, "a")
-    .replace(/î/g, "i")
-    .replace(/û/g, "u")
-    .replace(/'/g, "")
-    .replace(/\./g, "")
-    .replace(/\s+/g, "-");
-}
+// Matristen Alınan Tüm Yarışmacıların Gerçek Tahminleri
+const usersData = [
+  { id: "262816", name: "SEDAT SEDAT", predictions: { "1": "2-0", "2": "1-2", "3": "0-3", "4": "2-0", "5": "3-0", "6": "0-4", "7": "0-3", "8": "0-2", "9": "2-2", "10": "3-0", "11": "0-2", "12": "3-0", "13": "1-0", "14": "3-0", "15": "0-3", "16": "2-0", "17": "4-0", "18": "0-1", "19": "0-4", "20": "2-0", "21": "2-0", "22": "0-4", "23": "2-1", "24": "2-1" } },
+  { id: "262755", name: "DOĞAÇ ALKAN", predictions: { "1": "2-1", "2": "1-3", "3": "0-2", "4": "0-2", "5": "4-1", "6": "0-4", "7": "1-2", "8": "0-3", "9": "1-3", "10": "1-4", "11": "2-1", "12": "4-1", "13": "3-1", "14": "4-0", "15": "1-2", "16": "2-1", "17": "1-2", "18": "3-2", "19": "3-1", "20": "1-2", "21": "1-2", "22": "1-2", "23": "3-1", "24": "1-2" } },
+  { id: "262756", name: "EYÜP KARACAOĞLU", predictions: { "1": "2-0", "2": "1-3", "3": "0-3", "4": "2-0", "5": "3-0", "6": "0-4", "7": "0-3", "8": "0-2", "9": "2-2", "10": "2-2", "11": "0-3", "12": "3-0", "13": "3-0", "14": "0-2", "15": "0-1", "16": "2-1", "17": "0-3", "18": "3-1", "19": "0-1", "20": "0-1", "21": "1-2", "22": "0-2", "23": "1-1", "24": "1-1" } },
+  { id: "262736", name: "MEHMET ALİ KARA", predictions: { "1": "3-1", "2": "1-2", "3": "4-2", "4": "3-2", "5": "3-1", "6": "1-2", "7": "1-1", "8": "0-1", "9": "1-0", "10": "1-0", "11": "1-1", "12": "3-0", "13": "3-0", "14": "2-0", "15": "3-0", "16": "1-1", "17": "2-1", "18": "2-0", "19": "2-1", "20": "1-2", "21": "1-2", "22": "3-1", "23": "0-3", "24": "2-0" } },
+  { id: "262786", name: "SEDAT DİŞLİ", predictions: { "1": "2-1", "2": "0-2", "3": "3-1", "4": "1-2", "5": "3-0", "6": "0-2", "7": "0-2", "8": "1-1", "9": "1-1", "10": "1-3", "11": "3-0", "12": "4-0", "13": "2-0", "14": "4-1", "15": "1-1", "16": "1-1", "17": "1-1", "18": "3-0", "19": "1-1", "20": "0-1", "21": "2-1", "22": "1-1", "23": "0-1", "24": "0-1" } },
+  { id: "262726", name: "HUDAVER TOPARDIC", predictions: { "1": "1-1", "2": "1-3", "3": "2-0", "4": "2-0", "5": "3-1", "6": "1-2", "7": "1-0", "8": "0-2", "9": "0-0", "10": "0-2", "11": "1-2", "12": "2-0", "13": "3-1", "14": "4-0", "15": "1-1", "16": "0-2", "17": "1-2", "18": "3-0", "19": "1-1", "20": "0-2", "21": "2-0", "22": "1-1", "23": "1-3", "24": "3-0" } },
+  { id: "262709", name: "SALİH KARACAOĞLU", predictions: { "1": "3-1", "2": "1-2", "3": "0-2", "4": "0-2", "5": "3-0", "6": "0-2", "7": "0-3", "8": "0-3", "9": "3-0", "10": "3-0", "11": "0-2", "12": "0-2", "13": "3-0", "14": "1-0", "15": "3-0", "16": "0-3", "17": "2-0", "18": "0-0", "19": "0-1", "20": "0-4", "21": "2-0", "22": "0-4", "23": "0-2", "24": "2-1" } },
+  { id: "262719", name: "UĞUR VARDAR", predictions: { "1": "3-1", "2": "1-3", "3": "2-2", "4": "2-1", "5": "1-0", "6": "1-2", "7": "1-2", "8": "0-2", "9": "1-2", "10": "4-2", "11": "1-1", "12": "3-2", "13": "2-0", "14": "3-0", "15": "2-1", "16": "3-2", "17": "1-2", "18": "2-0", "19": "1-1", "20": "2-2", "21": "1-0", "22": "2-2", "23": "1-2", "24": "3-0" } },
+  { id: "262728", name: "ÖNDER ASLAN", predictions: { "1": "2-0", "2": "1-2", "3": "1-1", "4": "1-0", "5": "1-1", "6": "1-2", "7": "1-4", "8": "1-3", "9": "2-3", "10": "1-3", "11": "2-1", "12": "2-0", "13": "3-1", "14": "2-1", "15": "2-2", "16": "1-3", "17": "4-2", "18": "0-1", "19": "0-1", "20": "1-0", "21": "1-0", "22": "1-2", "23": "0-1", "24": "2-2" } },
+  { id: "262790", name: "CUMALİ SÖKER", predictions: { "1": "2-0", "2": "1-2", "3": "1-1", "4": "2-1", "5": "2-0", "6": "0-2", "7": "1-3", "8": "1-3", "9": "1-3", "10": "1-2", "11": "1-2", "12": "4-0", "13": "3-0", "14": "3-0", "15": "1-1", "16": "2-1", "17": "1-1", "18": "2-0", "19": "1-2", "20": "2-1", "21": "1-1", "22": "0-2", "23": "2-2", "24": "1-0" } },
+  { id: "262733", name: "MUHSİN ASİLKAN", predictions: { "1": "2-2", "2": "1-3", "3": "4-3", "4": "2-1", "5": "2-1", "6": "1-1", "7": "1-4", "8": "1-3", "9": "2-3", "10": "1-3", "11": "2-1", "12": "2-2", "13": "2-2", "14": "3-0", "15": "1-3", "16": "1-0", "17": "4-2", "18": "0-1", "19": "0-1", "20": "1-0", "21": "1-0", "22": "1-2", "23": "0-1", "25": "2-2" } },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", predictions: { "1": "2-0", "2": "1-2", "3": "1-1", "4": "2-1", "5": "2-0", "6": "0-2", "7": "1-3", "8": "1-3", "9": "1-3", "10": "1-2", "11": "1-2", "12": "4-0", "13": "3-0", "14": "3-0", "15": "1-1", "16": "2-1", "17": "1-1", "18": "2-0", "19": "1-2", "20": "2-1", "21": "1-1", "22": "0-2", "23": "2-2", "24": "1-0" } },
+  { id: "262717", name: "MURAT ALİ", predictions: { "1": "1-0", "2": "0-2", "3": "0-0", "4": "2-0", "5": "0-0", "6": "0-2", "7": "0-0", "8": "0-2", "9": "0-0", "10": "0-2", "11": "0-2", "12": "3-0", "13": "3-0", "14": "0-0", "15": "0-0", "16": "0-0", "17": "0-0", "18": "0-0", "19": "0-0", "20": "0-2", "21": "1-0", "22": "0-2", "23": "0-2", "24": "2-0" } },
+  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", predictions: { "1": "2-1", "2": "2-2", "3": "3-2", "4": "2-1", "5": "3-1", "6": "1-4", "7": "0-2", "8": "2-2", "9": "2-2", "10": "1-2", "11": "2-2", "12": "4-1", "13": "3-1", "14": "4-1", "15": "1-2", "16": "1-1", "17": "2-2", "18": "1-2", "19": "3-1", "20": "1-2", "21": "1-2", "22": "1-3", "23": "1-1", "24": "1-2" } },
+  { id: "262771", name: "ULAŞ ADIGÜZEL", predictions: { "1": "2-0", "2": "1-1", "3": "1-2", "4": "1-2", "5": "2-1", "6": "1-3", "7": "1-2", "8": "1-2", "9": "1-1", "10": "2-1", "11": "0-0", "12": "2-1", "13": "5-0", "14": "3-0", "15": "4-0", "16": "2-3", "17": "2-1", "18": "1-1", "19": "3-1", "20": "1-1", "21": "1-2", "22": "1-2", "23": "3-1", "24": "1-2" } },
+  { id: "262711", name: "RIDVAN DOGER", predictions: { "1": "2-0", "2": "1-2", "3": "0-3", "4": "2-0", "5": "2-0", "6": "0-4", "7": "0-3", "8": "0-2", "9": "2-2", "10": "2-2", "11": "0-3", "12": "3-0", "13": "3-0", "14": "0-2", "15": "0-1", "16": "2-1", "17": "0-3", "18": "3-1", "19": "0-1", "20": "0-1", "21": "1-2", "22": "0-2", "23": "1-1", "24": "1-1" } },
+  { id: "262731", name: "FATİH AYAN", predictions: { "1": "4-0", "2": "0-2", "3": "0-1", "4": "1-0", "5": "3-0", "6": "0-2", "7": "0-3", "8": "0-1", "9": "1-2", "10": "1-0", "11": "1-1", "12": "2-0", "13": "3-0", "14": "4-0", "15": "0-2", "16": "1-0", "17": "0-2", "18": "1-0", "19": "1-0", "20": "2-1", "21": "1-0", "22": "0-2", "23": "0-2", "24": "1-1" } },
+  { id: "262738", name: "MEVLÜT EVLER", predictions: { "1": "3-0", "2": "2-1", "3": "0-1", "4": "2-1", "5": "2-0", "6": "0-2", "7": "0-2", "8": "2-2", "9": "3-0", "10": "2-1", "11": "0-0", "12": "1-0", "13": "2-0", "14": "2-0", "15": "0-0", "16": "0-0", "17": "2-0", "18": "1-0", "19": "2-1", "20": "1-0", "21": "0-0", "22": "0-2", "23": "0-0", "24": "2-1" } },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", predictions: { "1": "2-1", "2": "0-0", "3": "0-1", "4": "0-1", "5": "1-2", "6": "0-5", "7": "0-2", "8": "0-1", "9": "0-1", "10": "1-1", "11": "1-0", "12": "1-3", "13": "3-0", "14": "1-2", "15": "2-1", "16": "2-0", "17": "0-2", "18": "0-1", "19": "0-1", "20": "0-0", "21": "1-1", "22": "1-0", "23": "1-3", "24": "0-1" } },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", predictions: { "1": "2-2", "2": "2-1", "3": "1-2", "4": "2-1", "5": "2-2", "6": "2-2", "7": "1-2", "8": "1-2", "9": "2-2", "10": "1-1", "11": "2-1", "12": "3-1", "13": "2-1", "14": "2-2", "15": "1-1", "16": "2-1", "17": "1-1", "18": "1-1", "19": "1-1", "20": "1-1", "21": "1-1", "22": "1-2", "23": "0-1", "24": "2-2" } },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", predictions: { "1": "2-1", "2": "1-1", "3": "1-2", "4": "1-2", "5": "2-1", "6": "1-3", "7": "1-2", "8": "1-2", "9": "1-1", "10": "2-1", "11": "0-0", "12": "2-1", "13": "5-0", "14": "3-0", "15": "4-0", "16": "2-3", "17": "2-1", "18": "1-1", "19": "3-1", "20": "1-1", "21": "1-2", "22": "1-2", "23": "3-1", "24": "1-2" } },
+  { id: "262725", name: "İLYAS KAZDAL", predictions: { "1": "2-1", "2": "1-1", "3": "1-2", "4": "2-0", "5": "2-0", "6": "1-3", "7": "0-2", "8": "1-2", "9": "1-2", "10": "2-1", "11": "0-0", "12": "2-1", "13": "3-1", "14": "2-1", "15": "2-0", "16": "1-1", "17": "1-2", "18": "1-1", "19": "3-1", "20": "1-1", "21": "0-0", "22": "1-1", "23": "1-1", "24": "1-2" } },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", predictions: { "1": "2-0", "2": "1-2", "3": "0-2", "4": "1-1", "5": "2-0", "6": "0-1", "7": "0-2", "8": "1-2", "9": "2-2", "10": "1-0", "11": "1-1", "12": "3-1", "13": "2-0", "14": "4-0", "15": "1-0", "16": "1-1", "17": "1-1", "18": "2-0", "19": "3-1", "20": "2-0", "21": "1-0", "22": "2-2", "23": "1-2", "24": "3-0" } },
+  { id: "262763", name: "MUSTAFA ELMAS", predictions: { "1": "2-1", "2": "2-2", "3": "1-2", "4": "2-0", "5": "2-1", "6": "1-3", "7": "0-2", "8": "1-2", "9": "2-2", "10": "1-1", "11": "1-2", "12": "3-2", "13": "3-0", "14": "2-1", "15": "2-2", "16": "1-1", "17": "1-1", "18": "1-0", "19": "2-0", "20": "0-2", "21": "3-0", "22": "1-2", "23": "0-2", "24": "1-0" } },
+  { id: "262716", name: "BİROL DEMİREL", predictions: { "1": "1-0", "2": "0-2", "3": "0-2", "4": "1-0", "5": "3-1", "6": "0-2", "7": "0-3", "8": "0-1", "9": "0-0", "10": "0-1", "11": "0-0", "12": "4-0", "13": "4-1", "14": "5-0", "15": "0-0", "16": "1-0", "17": "0-1", "18": "0-1", "19": "0-1", "20": "0-1", "21": "1-1", "22": "0-0", "23": "0-1", "24": "3-0" } },
+  { id: "262753", name: "YUSUF KIZILTUĞ", predictions: { "1": "2-1", "2": "2-2", "3": "2-2", "4": "3-2", "5": "3-0", "6": "1-2", "7": "1-2", "8": "1-3", "9": "2-1", "10": "2-1", "11": "1-2", "12": "3-1", "13": "2-1", "14": "2-2", "15": "1-1", "16": "2-1", "17": "3-0", "18": "2-0", "19": "2-0", "20": "3-1", "21": "2-2", "22": "3-1", "23": "1-3", "24": "3-1" } },
+  { id: "262740", name: "ABDULLAH DİK", predictions: { "1": "1-2", "2": "1-2", "3": "1-2", "4": "3-0", "5": "1-0", "6": "2-2", "7": "2-1", "8": "2-1", "9": "2-1", "10": "0-2", "11": "2-0", "12": "2-0", "13": "4-0", "14": "2-0", "15": "1-1", "16": "2-1", "17": "1-2", "18": "2-0", "19": "2-0", "20": "2-2", "21": "2-2", "22": "2-0", "23": "1-1", "24": "1-1" } },
+  { id: "262750", name: "MAHMUT CBR", predictions: { "1": "3-1", "2": "1-2", "3": "0-2", "4": "2-1", "5": "2-0", "6": "0-3", "7": "0-2", "8": "0-1", "9": "2-2", "10": "1-0", "11": "1-3", "12": "4-1", "13": "3-1", "14": "4-1", "15": "2-1", "16": "3-1", "17": "2-0", "18": "2-0", "19": "0-2", "20": "0-2", "21": "2-0", "22": "2-1", "23": "0-3", "24": "1-2" } },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ", predictions: { "1": "2-1", "2": "1-3", "3": "1-1", "4": "2-0", "5": "4-1", "6": "1-4", "7": "0-4", "8": "1-3", "9": "1-3", "10": "1-2", "11": "1-1", "12": "3-1", "13": "3-2", "14": "3-0", "15": "3-1", "16": "0-2", "17": "0-2", "18": "0-2", "19": "0-1", "20": "1-3", "21": "1-1", "22": "1-3", "23": "3-1", "24": "1-2" } },
+  { id: "262714", name: "İSMAİL EKER 🏆", predictions: { "1": "1-1", "2": "1-1", "3": "1-0", "4": "1-0", "5": "0-0", "6": "0-3", "7": "0-1", "8": "0-2", "9": "0-0", "10": "1-1", "11": "1-0", "12": "1-0", "13": "2-0", "14": "1-1", "15": "2-1", "16": "1-0", "17": "0-2", "18": "0-1", "19": "0-1", "20": "0-0", "21": "1-1", "22": "0-0", "23": "1-1", "24": "1-1" } },
+  { id: "262705", name: "AHMET BİRCAN 🏆", predictions: { "1": "2-1", "2": "1-0", "3": "3-2", "4": "1-1", "5": "1-2", "6": "0-0", "7": "1-2", "8": "1-0", "9": "1-1", "10": "2-2", "11": "1-2", "12": "1-1", "13": "0-1", "14": "3-1", "15": "1-1", "16": "1-0", "17": "1-3", "18": "1-0", "19": "1-0", "20": "2-3", "21": "2-1", "22": "3-1", "23": "1-2", "24": "1-0" } },
+  { id: "351925", name: "ALİOS GÖZTEPE", predictions: { "1": "1-1", "2": "0-1", "3": "1-1", "4": "2-1", "5": "1-0", "6": "0-2", "7": "1-2", "8": "1-1", "9": "1-1", "10": "0-0", "11": "1-3", "12": "1-0", "13": "2-0", "14": "1-0", "15": "0-0", "16": "0-0", "17": "2-0", "18": "1-0", "19": "2-0", "20": "1-1", "21": "0-1", "22": "0-1", "23": "0-1", "24": "1-0" } },
+  { id: "262730", name: "ÖNDER IŞIK", predictions: { "1": "2-1", "2": "0-2", "3": "0-2", "4": "3-1", "5": "1-0", "6": "0-2", "7": "1-1", "8": "1-1", "9": "2-1", "10": "0-0", "11": "2-1", "12": "3-0", "13": "2-1", "14": "2-0", "15": "3-0", "16": "1-0", "17": "2-0", "18": "3-0", "19": "0-2", "20": "1-1", "21": "1-1", "22": "2-0", "23": "2-0", "24": "2-1" } },
+  { id: "262706", name: "GAZİ AYAN 🏆🏆", predictions: { "1": "2-1", "2": "0-2", "3": "0-2", "4": "3-1", "6": "0-4", "7": "0-1", "8": "0-3", "9": "0-1", "10": "0-0", "11": "0-1", "12": "4-0", "13": "4-1", "14": "5-0", "15": "0-0", "16": "1-0", "17": "0-0", "18": "0-1", "19": "0-1", "20": "0-1", "21": "1-1", "22": "0-0", "23": "0-2", "24": "3-0" } },
+  { id: "262813", name: "KEMAL ERSOY", predictions: { "1": "1-1", "2": "1-2", "3": "1-0", "4": "2-0", "5": "3-1", "6": "1-2", "7": "1-0", "8": "0-2", "9": "0-0", "10": "0-2", "11": "1-2", "12": "2-0", "13": "3-1", "14": "4-0", "15": "1-1", "16": "0-2", "17": "1-2", "18": "3-0", "19": "1-1", "20": "0-2", "21": "2-0", "22": "1-1", "23": "1-3", "24": "3-0" } },
+  { id: "262734", name: "LEVENT YILDIRIM", predictions: { "1": "2-1", "2": "1-3", "3": "0-2", "4": "0-2", "5": "4-1", "6": "0-4", "7": "1-2", "8": "0-3", "9": "1-3", "10": "1-4", "11": "2-1", "12": "4-1", "13": "3-1", "14": "4-0", "15": "1-2", "16": "2-1", "17": "1-2", "18": "3-2", "19": "3-1", "20": "1-2", "21": "1-2", "22": "1-2", "23": "3-1", "24": "1-2" } },
+  { id: "262718", name: "BEKİR KARADAĞ", predictions: { "1": "3-1", "2": "1-3", "3": "2-2", "4": "2-1", "5": "1-0", "6": "1-2", "7": "1-2", "8": "0-2", "9": "1-2", "10": "4-2", "11": "1-1", "12": "3-2", "13": "2-0", "14": "3-0", "15": "2-1", "16": "3-2", "17": "1-2", "18": "2-0", "19": "1-1", "20": "2-2", "21": "1-0", "22": "2-2", "23": "1-2", "24": "3-0" } },
+  { id: "262702", name: "MURAT KARA", predictions: { "1": "4-0", "2": "0-2", "3": "0-1", "4": "1-0", "5": "3-0", "6": "0-2", "7": "0-3", "8": "0-3", "9": "0-1", "10": "1-2", "11": "1-0", "12": "1-1", "13": "2-0", "14": "3-0", "15": "4-0", "16": "0-2", "17": "1-0", "18": "0-2", "19": "1-0", "20": "2-1", "21": "1-0", "22": "0-2", "23": "0-2", "24": "1-1" } },
+  { id: "262715", name: "ŞEMSETTİN DÜGER", predictions: { "1": "3-0", "2": "2-1", "3": "0-1", "4": "2-0", "5": "2-0", "6": "0-2", "7": "0-2", "8": "2-2", "9": "0-2", "10": "3-0", "11": "2-1", "12": "0-0", "13": "1-0", "14": "2-0", "15": "0-0", "16": "0-0", "17": "2-0", "18": "1-1", "19": "0-4", "20": "2-0", "21": "1-1", "22": "0-4", "23": "2-1", "24": "2-1" } },
+  { id: "262707", name: "HAKAN AYAN", predictions: { "1": "1-0", "2": "0-2", "3": "0-0", "4": "2-0", "5": "0-0", "6": "0-2", "7": "0-0", "8": "0-2", "9": "0-0", "10": "0-2", "11": "0-2", "12": "3-0", "13": "3-0", "14": "0-0", "15": "0-0", "16": "0-0", "17": "0-0", "18": "0-0", "19": "0-0", "20": "0-2", "21": "1-0", "22": "0-2", "23": "0-2", "24": "2-0" } },
+  { id: "262723", name: "AYHAN LUŞOĞLU", predictions: { "1": "2-1", "2": "2-2", "3": "1-2", "4": "2-0", "5": "2-0", "6": "1-3", "7": "0-2", "8": "1-2", "9": "1-1", "10": "1-1", "11": "3-2", "12": "3-0", "13": "2-0", "14": "3-1", "15": "2-1", "16": "2-0", "17": "2-2", "18": "1-0", "19": "2-0", "20": "0-2", "21": "3-0", "22": "1-2", "23": "0-2", "24": "1-0" } },
+  { id: "262782", name: "YUSUF ERBAY", predictions: { "1": "1-0", "2": "0-2", "3": "0-0", "4": "1-0", "5": "3-1", "6": "0-2", "7": "0-3", "8": "0-1", "9": "0-1", "10": "0-0", "11": "0-0", "12": "4-0", "13": "4-1", "14": "5-0", "15": "1-0", "16": "0-0", "17": "0-1", "18": "0-1", "19": "0-1", "20": "0-1", "21": "1-1", "22": "0-0", "23": "0-2", "24": "3-0" } },
+  { id: "262739", name: "UĞUR GÜRBÜZ", predictions: { "1": "2-0", "2": "0-0", "3": "0-3", "4": "2-1", "5": "3-1", "6": "0-1", "7": "1-3", "8": "2-0", "9": "2-0", "10": "4-0", "11": "4-1", "12": "5-1", "13": "2-0", "14": "2-1", "15": "2-1", "16": "2-0", "17": "3-1", "18": "2-1", "19": "1-0", "20": "1-3", "21": "4-0", "22": "4-1", "23": "1-0", "24": "1-0" } },
+  { id: "262703", name: "CEMALETTİN BELLİ", predictions: { "1": "1-1", "2": "0-1", "3": "1-1", "4": "2-1", "5": "1-0", "6": "0-2", "7": "1-2", "8": "1-1", "9": "1-1", "10": "0-0", "11": "1-3", "12": "3-0", "13": "2-0", "14": "1-0", "15": "0-0", "16": "0-0", "17": "2-0", "18": "1-0", "19": "2-0", "20": "1-1", "21": "0-1", "22": "0-1", "23": "0-1", "24": "1-0" } },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", predictions: { "1": "2-0", "2": "1-2", "3": "1-1", "4": "2-1", "5": "2-0", "6": "0-2", "7": "1-3", "8": "1-3", "9": "1-3", "10": "1-2", "11": "1-2", "12": "4-0", "13": "3-0", "14": "3-0", "15": "1-1", "16": "2-1", "17": "1-1", "18": "2-0", "19": "1-2", "20": "2-1", "21": "1-1", "22": "0-2", "23": "2-2", "24": "1-0" } },
+  { id: "262744", name: "İLYAS UYGUN", predictions: { "1": "2-1", "2": "1-3", "3": "0-2", "4": "0-2", "5": "3-0", "6": "0-4", "7": "1-2", "8": "0-3", "9": "0-2", "10": "2-2", "11": "1-1", "12": "1-3", "13": "3-0", "14": "2-1", "15": "1-1", "16": "2-1", "17": "1-1", "18": "2-0", "19": "1-2", "20": "2-1", "21": "1-1", "22": "0-1", "23": "2-2", "24": "1-0" } },
+  { id: "262758", name: "MELİH PINAR", predictions: { "1": "2-1", "2": "0-2", "3": "3-1", "4": "1-2", "5": "3-0", "6": "0-2", "7": "0-2", "8": "1-1", "9": "1-1", "10": "1-3", "11": "3-0", "12": "4-0", "13": "2-0", "14": "4-1", "15": "1-1", "16": "1-1", "17": "1-1", "18": "3-0", "19": "1-1", "20": "0-2", "21": "2-1", "22": "1-1", "23": "0-1", "24": "0-1" } },
+  { id: "262708", name: "BAYRAM YILMAZ", predictions: { "1": "2-1", "2": "1-2", "3": "0-3", "4": "2-0", "5": "3-1", "6": "0-2", "7": "0-3", "8": "0-2", "9": "2-1", "10": "2-0", "11": "3-0", "12": "2-0", "13": "3-0", "14": "0-2", "15": "2-1", "16": "2-1", "17": "2-0", "18": "3-1", "19": "2-1", "20": "1-0", "21": "1-3", "22": "4-0", "23": "1-2", "24": "2-0" } },
+  { id: "262787", name: "MUSTAFA TUCİ", predictions: { "1": "3-1", "2": "1-2", "3": "1-1", "4": "4-0", "5": "3-0", "6": "1-0", "7": "1-2", "8": "0-2", "9": "2-0", "10": "0-2", "11": "0-0", "12": "3-0", "13": "3-0", "14": "3-0", "15": "2-2", "16": "1-2", "17": "1-2", "18": "0-2", "19": "2-0", "20": "2-1", "21": "3-1", "22": "0-2", "23": "1-2", "24": "2-0" } },
+  { id: "262712", name: "MURAT AYDEMİR", predictions: { "1": "2-1", "2": "0-1", "3": "1-1", "4": "2-1", "5": "1-0", "6": "0-2", "7": "1-2", "8": "1-1", "9": "1-1", "10": "0-0", "11": "1-3", "12": "3-0", "13": "2-0", "14": "1-0", "15": "0-0", "16": "0-0", "17": "2-0", "18": "1-0", "19": "2-0", "20": "1-1", "21": "0-1", "22": "0-1", "23": "0-1", "24": "1-0" } },
+  { id: "262704", name: "YAPAY ZEKA", predictions: { "1": "2-0", "2": "0-1", "3": "0-3", "4": "2-1", "5": "3-1", "6": "0-1", "7": "0-3", "8": "0-2", "9": "2-1", "10": "2-0", "11": "3-0", "12": "2-0", "13": "3-0", "14": "0-2", "15": "2-1", "16": "2-1", "17": "2-0", "18": "3-1", "19": "2-1", "20": "1-0", "21": "1-3", "22": "4-0", "23": "1-2", "24": "2-0" } },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", predictions: { "1": "3-1", "2": "1-2", "3": "1-1", "4": "3-1", "5": "4-0", "6": "0-4", "7": "0-1", "8": "0-3", "9": "0-1", "10": "0-0", "11": "0-1", "12": "4-0", "13": "4-1", "14": "5-0", "15": "0-0", "16": "1-0", "17": "0-0", "18": "0-1", "19": "0-1", "20": "0-1", "21": "1-1", "22": "0-0", "23": "0-2", "24": "3-0" } }
+];
 
-function TeamLogo({ teamName, size = 80 }: { teamName: string; size?: number }) {
-  const [failed, setFailed] = useState(false);
+export default function TahminlerPage() {
+  const [selectedUserId, setSelectedUserId] = useState<string>(usersData[0].id);
 
-  if (!teamName || failed) {
-    return (
-      <div
-        className="flex items-center justify-center font-black text-slate-500 text-3xl"
-        style={{ width: size, height: size }}
-      >
-        ⚽
-      </div>
-    );
-  }
-
-  const logoPath = `/logos/${slugifyTeamName(teamName)}.png`;
-
-  return (
-    <div
-      className="flex items-center justify-center overflow-hidden rounded-full p-1 transition-transform duration-300 hover:scale-110 drop-shadow-[0_8px_12px_rgba(0,0,0,0.6)]"
-      style={{ width: size, height: size }}
-    >
-      <img
-        key={teamName}
-        src={logoPath}
-        alt={teamName}
-        className="h-full w-full object-contain rounded-full"
-        onError={() => setFailed(true)}
-      />
-    </div>
-  );
-}
-
-export default function TahminPage() {
-  const router = useRouter();
-  const [fixtures, setFixtures] = useState<FixtureItem[]>(MOCK_FIXTURES);
-  const [currentUser, setCurrentUser] = useState<{ username: string; user_code: string; id?: string } | null>(null);
-  const [predictions, setPredictions] = useState<PredictionState>({});
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const stored = localStorage.getItem("etml_user");
-    if (!stored) {
-      setCurrentUser({ username: "ÖNDER ASLAN", user_code: "262728" });
-    } else {
-      setCurrentUser(JSON.parse(stored));
-    }
-  }, [router]);
-
-  const completedCount = useMemo(() => {
-    return fixtures.filter((match) => {
-      const current = predictions[match.mac_no];
-      return current && current.home !== "" && current.away !== "";
-    }).length;
-  }, [fixtures, predictions]);
-
-  const handleScoreChange = (
-    macNo: number,
-    field: "home" | "away",
-    value: string
-  ) => {
-    setPredictions((prev) => ({
-      ...prev,
-      [macNo]: {
-        home: prev[macNo]?.home ?? "",
-        away: prev[macNo]?.away ?? "",
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleSavePredictions = async () => {
-    setMessage("");
-    setError("");
-
-    if (fixtures.length === 0) {
-      setError("Tahmin yapılacak maç bulunamadı.");
-      return;
-    }
-
-    for (const match of fixtures) {
-      const current = predictions[match.mac_no];
-      if (!current || current.home === "" || current.away === "") {
-        setError(`Lütfen ${match.ev_sahibi} vs ${match.deplasman} maçı için skor seçin.`);
-        return;
-      }
-    }
-
-    setSaving(true);
-    const userIdToUse = currentUser?.user_code || currentUser?.id || "262728";
-
-    try {
-      for (const match of fixtures) {
-        const p = predictions[match.mac_no];
-        if (!p) continue;
-
-        await supabase
-          .from("tahminler_h3")
-          .upsert({
-            yarismaci_id: userIdToUse,
-            mac_no: match.mac_no,
-            tahmin_ev: Number(p.home),
-            tahmin_dep: Number(p.away)
-          }, { onConflict: 'yarismaci_id,mac_no' });
-      }
-      setMessage(`Tahminleriniz başarıyla kaydedildi!`);
-    } catch (err: any) {
-      setMessage(`Tahminler başarıyla işlendi!`);
-    }
-    setSaving(false);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("etml_user");
-    router.push("/login");
-  };
+  const selectedUser = usersData.find((u) => u.id === selectedUserId);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-sm">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
-                ETML Tahmin Paneli
-              </p>
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                Hoş Geldin, {currentUser?.username || "ÖNDER ASLAN"}
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
-                ID: <span className="font-bold text-amber-400">{currentUser?.user_code || "262728"}</span> • 3. Hafta maç tahminlerinizi seçip kaydedebilirsiniz.
-              </p>
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Üst Bilgi ve Seçim Alanı */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Katılımcı Tahminleri</h1>
+            <p className="text-sm text-slate-400 mt-1">3. Hafta maç bülteni ve oyuncu tahmin matrisi</p>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3 text-xs font-bold text-red-300 hover:bg-red-500/20"
-              >
-                Çıkış Yap
-              </button>
-            </div>
+          <div className="w-full md:w-72">
+            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+              Yarışmacı Seçin
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 text-white cursor-pointer"
+            >
+              {usersData.map((user) => (
+                <option key={user.id} value={user.id} className="bg-slate-900 text-white">
+                  {user.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <div className="mb-6 rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-emerald-400">3. Hafta Maç Fikstürü</h2>
-              <p className="text-xs text-slate-400">Tüm 24 maç listelenmiştir, skorları aşağıdan seçebilirsiniz.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-2.5 text-center">
-                <p className="text-[10px] uppercase tracking-widest text-cyan-300">Toplam Maç</p>
-                <p className="text-xl font-black text-white">{fixtures.length}</p>
-              </div>
-              <div className="rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/10 px-4 py-2.5 text-center">
-                <p className="text-[10px] uppercase tracking-widest text-fuchsia-300">Girilen Tahmin</p>
-                <p className="text-xl font-black text-white">{completedCount}/{fixtures.length}</p>
-              </div>
-            </div>
+        {/* Tahmin Listesi */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-slate-850 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+            <h2 className="font-semibold text-lg text-amber-400">
+              {selectedUser ? `${selectedUser.name} - Maç Tahminleri` : 'Tahminler'}
+            </h2>
           </div>
 
-          {message && (
-            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-              {message}
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {error}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 shadow-xl sm:p-6">
-          <div className="grid grid-cols-1 gap-6">
-            {fixtures.map((match) => {
-              const current = predictions[match.mac_no] || { home: "", away: "" };
-
+          <div className="divide-y divide-slate-800">
+            {matchesData.map((match) => {
+              const userPrediction = selectedUser?.predictions[match.matchNo] || 'Oynanmamış';
               return (
-                <div
-                  key={match.mac_no}
-                  className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-2xl backdrop-blur-md"
-                >
-                  <div className="mb-6 flex items-center justify-between border-b border-white/5 pb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                      {match.tur}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-400">
-                      {match.kategori?.toUpperCase()} - Maç #{match.mac_no}
-                    </span>
+                <div key={match.id} className="p-4 md:px-6 hover:bg-slate-850/50 transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-400 font-medium">
+                      Maç #{match.matchNo} • {match.type} • {match.date}
+                    </div>
+                    <div className="font-semibold text-base text-white">
+                      {match.home} <span className="text-slate-500 mx-1">vs</span> {match.away}
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-11 items-center gap-2">
-                    <div className="col-span-4 flex flex-col items-center justify-center text-center">
-                      <TeamLogo teamName={match.ev_sahibi} size={80} />
-                      <span className="mt-3 text-base font-black text-white leading-tight">
-                        {match.ev_sahibi}
-                      </span>
-
-                      <select
-                        value={current.home}
-                        onChange={(e) =>
-                          handleScoreChange(match.mac_no, "home", e.target.value)
-                        }
-                        className="mt-4 w-20 text-center rounded-2xl border border-emerald-500/40 bg-slate-900 py-2.5 text-xl font-black text-emerald-400 outline-none transition focus:border-emerald-400 shadow-xl cursor-pointer"
-                      >
-                        <option value="">-</option>
-                        {SCORE_OPTIONS.map((val) => (
-                          <option key={val} value={val} className="bg-slate-950 text-white font-bold">
-                            {val}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="col-span-3 flex flex-col items-center justify-center">
-                      <span className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-black text-slate-300 shadow">
-                        VS
-                      </span>
-                    </div>
-
-                    <div className="col-span-4 flex flex-col items-center justify-center text-center">
-                      <TeamLogo teamName={match.deplasman} size={80} />
-                      <span className="mt-3 text-base font-black text-white leading-tight">
-                        {match.deplasman}
-                      </span>
-
-                      <select
-                        value={current.away}
-                        onChange={(e) =>
-                          handleScoreChange(match.mac_no, "away", e.target.value)
-                        }
-                        className="mt-4 w-20 text-center rounded-2xl border border-emerald-500/40 bg-slate-900 py-2.5 text-xl font-black text-emerald-400 outline-none transition focus:border-emerald-400 shadow-xl cursor-pointer"
-                      >
-                        <option value="">-</option>
-                        {SCORE_OPTIONS.map((val) => (
-                          <option key={val} value={val} className="bg-slate-950 text-white font-bold">
-                            {val}
-                          </option>
-                        ))}
-                      </select>
+                  <div className="flex items-center gap-3 self-end md:self-center">
+                    <div className="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700">
+                      Tahmin: <span className="font-bold text-amber-400 text-sm ml-1">{userPrediction}</span>
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <div className="mt-8">
-            <button
-              type="button"
-              onClick={handleSavePredictions}
-              disabled={saving}
-              className="w-full rounded-2xl bg-emerald-500 px-6 py-4 text-lg font-black text-slate-950 transition hover:bg-emerald-400 disabled:opacity-60 shadow-lg shadow-emerald-500/20 cursor-pointer"
-            >
-              {saving ? "Kaydediliyor..." : "Tahminleri Kaydet"}
-            </button>
-          </div>
         </div>
+
       </div>
     </div>
   );
