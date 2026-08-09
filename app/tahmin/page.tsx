@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 
 // 3. Hafta Maç Bülteni
 const matchesData = [
@@ -88,7 +87,6 @@ const usersData = [
 ];
 
 export default function TahminlerPage() {
-  const searchParams = useSearchParams();
   const [selectedUserId, setSelectedUserId] = useState<string>(usersData[0].id);
 
   const selectedUser = usersData.find((u) => u.id === selectedUserId);
