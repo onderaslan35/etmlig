@@ -28,7 +28,7 @@ const officialWeek3Matches = [
   { id: 15, home: "BOLUSPOR", away: "MANİSA FK", info: "TÜRKİYE 1.LİG", cat: "TFF" },
   { id: 16, home: "BANDIRMASPOR", away: "İSTANBULSPOR", info: "TÜRKİYE 1.LİG", cat: "TFF" },
   { id: 17, home: "SİVASSPOR", away: "EROKSPOR", info: "TÜRKİYE 1.LİG", cat: "TFF" },
-  { id: 18, home: "ÜMRANİYE SPOR", away: "MARDİN 1969", info: "TÜRKİYE 1.LİG", cat: "TFF" },
+  { id: "18", home: "ÜMRANİYE SPOR", away: "MARDİN 1969", info: "TÜRKİYE 1.LİG", cat: "TFF" },
   { id: 19, home: "ANTALYASPOR", away: "KEÇİÖRENGÜCÜ", info: "TÜRKİYE 1.LİG", cat: "TFF" },
   { id: 20, home: "IĞDIR FK", away: "FATİH KARAGÜMRÜK", info: "TÜRKİYE 1.LİG", cat: "TFF" },
   { id: 21, home: "SARIYER", away: "MUĞLASPOR", info: "TÜRKİYE 1.LİG", cat: "TFF" },
@@ -208,9 +208,23 @@ export default function AdminTahminmatikPage() {
 
     localStorage.setItem('elitTahmin_ApprovedMatches', JSON.stringify(approvedStore));
 
+    // --- YENİ EKLENEN ÖZELLİK: SKOR LİGİ HAFTALIK SKOR GÜNCELLEMESİ ---
+    const weeklyScoresStore = JSON.parse(localStorage.getItem('elitTahmin_WeeklyScores') || '{}');
+    if (!weeklyScoresStore[selectedWeek]) {
+      weeklyScoresStore[selectedWeek] = {};
+    }
+
+    bilenUsers.forEach(u => {
+      // Her bilen kullanıcıya ilgili hafta için +1 skor eklenir
+      weeklyScoresStore[selectedWeek][u.id] = (weeklyScoresStore[selectedWeek][u.id] || 0) + 1;
+    });
+
+    localStorage.setItem('elitTahmin_WeeklyScores', JSON.stringify(weeklyScoresStore));
+    // -----------------------------------------------------------------
+
     setCardMessages(prev => ({
       ...prev,
-      [match.id]: `✅ [${scoreString}] skoru güncellendi! ${count} kişiye (${namesList}) ${tahsisPuani}'şer puan [${targetLeaguesText}] tablolarına canlı işlendi.`
+      [match.id]: `✅ [${scoreString}] skoru güncellendi! ${count} kişiye (${namesList}) ${tahsisPuani}'şer puan [${targetLeaguesText}] tablolarına ve haftalık skor ligine canlı işlendi.`
     }));
     setApprovedMatches(prev => ({ ...prev, [match.id]: true }));
   };
@@ -218,10 +232,11 @@ export default function AdminTahminmatikPage() {
   const handleResetAllSimulations = () => {
     if (confirm('Tüm simülasyon puan onaylarını sıfırlamak istediğinize emin misiniz? Tablolar ilk günkü haline dönecektir.')) {
       localStorage.removeItem('elitTahmin_ApprovedMatches');
+      localStorage.removeItem('elitTahmin_WeeklyScores');
       setApprovedMatches({});
       setCardMessages({});
       setScores({});
-      alert('⚡ Tüm test ve simülasyon puanları başarıyla sıfırlandı!');
+      alert('⚡ Tüm test ve simülasyon puanları ve haftalık skorlar başarıyla sıfırlandı!');
     }
   };
 
@@ -272,7 +287,7 @@ export default function AdminTahminmatikPage() {
             <span>⚡</span> TAHMİNMATİK ({selectedWeek}. HAFTA) — ONAY PANELİ
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Skoru seçip onaylayın. Skoru "- -" yapıp tekrar basarak maçı iptal edebilir ya da en üstten tüm simülasyonu sıfırlayabilirsiniz!
+            Skoru seçip onaylayın. Onaylandığı an hem puanlar tablolarına işlenir hem de bilenlerin haftalık skor hanesine +1 eklenir!
           </p>
         </div>
 
@@ -306,7 +321,7 @@ export default function AdminTahminmatikPage() {
                   <div className="flex items-center gap-1.5">
                     {isApproved && (
                       <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 animate-pulse">
-                        ✅ PUANLAR DAĞITILDI
+                        ✅ PUANLAR VE SKORLAR İŞLENDİ
                       </span>
                     )}
 
@@ -382,7 +397,7 @@ export default function AdminTahminmatikPage() {
                     </div>
 
                     <div className="text-[9px] font-bold text-slate-400 pt-0.5">
-                      📍 Aktarılacak Ligler: <span className="text-amber-400 font-black">MASTER</span> + <span className="text-amber-400 font-black">{match.cat}</span>
+                      📍 Aktarılacak Ligler: <span className="text-amber-400 font-black">MASTER</span> + <span className="text-amber-400 font-black">{match.cat}</span> + <span className="text-amber-400 font-black">SKOR LİGİ (+1)</span>
                     </div>
                   </div>
                 ) : (
