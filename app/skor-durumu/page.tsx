@@ -172,7 +172,7 @@ export default function SkorDurumuPage() {
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
   const todaysMatches = [
-    { id: 1, home: "OLIMPIYAKOS", away: "NEC NIJMEGEN", time: "20:00", league: "UEFA ŞAMPİYONLAR LİGİ" },
+    { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TÜRKİYE 1.LİG" },
   ];
 
   useEffect(() => {
