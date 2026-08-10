@@ -35,7 +35,7 @@ const officialWeek3Matches = [
   { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", info: "TÜRKİYE 1.LİG", cat: "TFF" }
 ];
 
-const userPredictionsData: any[] = []; // (Buradaki tahmin matrisini önceki kodundan koru)
+const userPredictionsData: any[] = [];
 
 const getTahsisPuan = (count: number) => {
   if (count === 1) return 12;
@@ -79,7 +79,7 @@ export default function AdminTahminmatikPage() {
     if (!matchScore || !matchScore.h || !matchScore.a) return [];
     
     const targetScoreStr = `${matchScore.h}-${matchScore.a}`;
-    return userPredictionsData.filter(u => u.preds[matchId - 1] === targetScoreStr)
+    return userPredictionsData.filter(u => u.preds && u.preds[matchId - 1] === targetScoreStr)
       .map(u => ({ id: u.id, name: userMap[u.id] || `ID: ${u.id}` }));
   };
 
@@ -109,6 +109,8 @@ export default function AdminTahminmatikPage() {
 
       localStorage.setItem('elitTahmin_WeeklyScores', JSON.stringify(weeklyScoresStore));
       setCardMessages(prev => ({ ...prev, [key]: `✅ İşlendi: ${count} kişi puan kazandı.` }));
+    } else {
+      setCardMessages(prev => ({ ...prev, [key]: `⚠️ Bu skoru bilen yarışmacı bulunamadı.` }));
     }
 
     localStorage.setItem('elitTahmin_ApprovedMatches', JSON.stringify(approvedStore));
@@ -118,16 +120,96 @@ export default function AdminTahminmatikPage() {
   if (!adminUser) return null;
 
   return (
-    <div className="p-4 text-white">
-      <h1 className="text-xl font-bold mb-4">ADMIN TAHMİNMATİK</h1>
-      {officialWeek3Matches.map(match => (
-        <div key={match.id} className="mb-4 p-4 bg-slate-800 rounded">
-          <p>{match.home} vs {match.away}</p>
-          <input type="number" onChange={(e) => handleScoreChange(match.id, 'h', e.target.value)} />
-          <input type="number" onChange={(e) => handleScoreChange(match.id, 'a', e.target.value)} />
-          <button onClick={() => handleApproveAndDistribute(match)}>Onayla</button>
-        </div>
-      ))}
+    <div className="max-w-7xl mx-auto p-4 md:p-6 text-slate-100">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 mb-8 text-center shadow-xl backdrop-blur-md">
+        <h1 className="text-2xl md:text-3xl font-black text-amber-400 tracking-wider uppercase mb-2">
+          ⚡ ADMIN TAHMİNMATİK (3. HAFTA)
+        </h1>
+        <p className="text-xs md:text-sm text-slate-400 font-medium">
+          Maç skorlarını girerek kazanan yarışmacıları anında onaylayın ve puanları dağıtın!
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {officialWeek3Matches.map(match => {
+          const key = match.id.toString();
+          const isApproved = approvedMatches[key];
+          const message = cardMessages[key];
+          const bilenCount = getBilenUsers(match.id).length;
+
+          return (
+            <div 
+              key={match.id} 
+              className="bg-slate-950/90 border border-slate-800 hover:border-amber-500/40 transition-all rounded-2xl p-5 flex flex-col justify-between shadow-lg relative overflow-hidden"
+            >
+              <div>
+                <div className="flex justify-between items-center text-[11px] text-slate-400 font-bold mb-3 border-b border-slate-800/80 pb-2">
+                  <span className="text-amber-400 tracking-wider font-extrabold uppercase">
+                    3. HAFTA - {match.id}. MAÇ ({match.cat})
+                  </span>
+                  <span className="bg-slate-900 text-slate-300 border border-slate-800 px-2.5 py-1 rounded-md text-[10px] font-black uppercase">
+                    {match.info}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between my-4 px-2">
+                  <span className="font-extrabold text-sm sm:text-base text-slate-100 uppercase truncate w-[38%] text-left">
+                    {match.home}
+                  </span>
+
+                  <div className="flex items-center gap-2 justify-center w-[24%]">
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={scores[key]?.h || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'h', e.target.value)}
+                      className="w-11 h-11 text-center bg-slate-900 border border-slate-700 focus:border-amber-500 rounded-xl font-black text-lg text-amber-400 outline-none shadow-inner"
+                      placeholder="-"
+                    />
+                    <span className="text-xs font-black text-slate-500">-</span>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={scores[key]?.a || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'a', e.target.value)}
+                      className="w-11 h-11 text-center bg-slate-900 border border-slate-700 focus:border-amber-500 rounded-xl font-black text-lg text-amber-400 outline-none shadow-inner"
+                      placeholder="-"
+                    />
+                  </div>
+
+                  <span className="font-extrabold text-sm sm:text-base text-slate-100 uppercase truncate w-[38%] text-right">
+                    {match.away}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-400">
+                    Bilen Yarışmacı: <strong className="text-amber-400">{bilenCount} kişi</strong>
+                  </span>
+                  <button
+                    onClick={() => handleApproveAndDistribute(match)}
+                    className={`px-5 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${
+                      isApproved 
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
+                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-400'
+                    }`}
+                  >
+                    {isApproved ? '✓ ONAYLANDI' : 'ONAYLA & DAĞIT'}
+                  </button>
+                </div>
+
+                {message && (
+                  <div className="text-xs font-bold text-center py-1.5 px-3 bg-slate-900 border border-slate-800 rounded-lg text-amber-300">
+                    {message}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
