@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-export default function AdminMainPage() {
+export default function AdminPage() {
   const [approvedMatches, setApprovedMatches] = useState<Record<string, any>>({});
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
 
@@ -21,7 +21,6 @@ export default function AdminMainPage() {
     }));
   };
 
-  // MAÇI ONAYLAMA FONKSİYONU
   const handleApprove = (matchId: string) => {
     const mScores = scores[matchId];
     if (!mScores || mScores.home === '' || mScores.away === '') {
@@ -35,7 +34,7 @@ export default function AdminMainPage() {
       awayScore: mScores.away,
       approvedAt: new Date().toISOString(),
       allocations: [
-        { id: "262728", points: 3, cat: "TFF" } // Örnek puan dağıtımı
+        { id: "262728", points: 3, cat: "TFF" }
       ]
     };
 
@@ -46,12 +45,11 @@ export default function AdminMainPage() {
 
     localStorage.setItem('elitTahmin_ApprovedMatches', JSON.stringify(updatedStore));
     setApprovedMatches(updatedStore);
-    alert(`Maç #${matchId} onaylandı ve puanlar işlendi!`);
   };
 
-  // 🔄 TEKİL MAÇ SIFIRLAMA / İPTAL ETME FONKSİYONU
+  // 🔄 TEKİL MAÇ SIFIRLAMA
   const handleResetSingleMatch = (matchId: string) => {
-    const isConfirmed = window.confirm(`Maç #${matchId} için verilmiş puanları iptal etmek ve SADECE bu maçı sıfırlamak istediğinize emin misiniz?`);
+    const isConfirmed = window.confirm(`Maç #${matchId} skor ve puanlarını sıfırlamak istediğinize emin misiniz?`);
     if (!isConfirmed) return;
 
     const updatedStore = { ...approvedMatches };
@@ -65,22 +63,50 @@ export default function AdminMainPage() {
       delete updated[matchId];
       return updated;
     });
+  };
 
-    alert(`Maç #${matchId} puanları başarıyla iptal edildi ve tekil olarak sıfırlandı!`);
+  const handleResetAll = () => {
+    const isConfirmed = window.confirm("TÜM SİSTEMİ VE PUANLARI SIFIRLAMAK İSTEDİĞİNİZE EMİN MİSİNİZ?");
+    if (isConfirmed) {
+      localStorage.removeItem('elitTahmin_ApprovedMatches');
+      setApprovedMatches({});
+      setScores({});
+      alert("Tüm canlı maç puanları sıfırlandı.");
+    }
   };
 
   const adminMatches = [
-    { id: '19', name: '3. HAFTA - 19. MAÇ (TFF) 📌 [TFF LİGİ]', home: 'ANTALYASPOR', away: 'KEÇİÖRENGÜCÜ', league: 'TÜRKİYE 1.LİG' },
-    { id: '20', name: '3. HAFTA - 20. MAÇ (TFF) 📌 [TFF LİGİ]', home: 'IĞDIR FK', away: 'FATİH KARAGÜMRÜK', league: 'TÜRKİYE 1.LİG' },
-    { id: '21', name: '3. HAFTA - 21. MAÇ (TFF) 📌 [TFF LİGİ]', home: 'SARIYER', away: 'MUĞLASPOR', league: 'TÜRKİYE 1.LİG' },
-    { id: '22', name: '3. HAFTA - 22. MAÇ (TFF) 📌 [TFF LİGİ]', home: 'BODRUMSPOR', away: 'BURSASPOR', league: 'TÜRKİYE 1.LİG' },
-    { id: '23', name: '3. HAFTA - 23. MAÇ (TFF) 📌 [TFF LİGİ]', home: 'VANSPOR FK', away: 'KAYSERİSPOR', league: 'TÜRKİYE 1.LİG' },
-    { id: '24', name: '3. HAFTA - 24. MAÇ (TFF) 📌 [TFF LİGİ]', home: 'PENDİKSPOR', away: 'BATMAN PETROL SPOR', league: 'TÜRKİYE 1.LİG' },
+    { id: '1', name: '3. HAFTA - 1. MAÇ (DFO) ★ [MASTER / DFO]', home: 'OLIMPIYAKOS', away: 'NEC NIJMEGEN', league: 'UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ' },
+    { id: '2', name: '3. HAFTA - 2. MAÇ (DFO) ★ [MASTER / DFO]', home: 'SPARTA PRAG', away: 'OLIMPIC LYON', league: 'UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ' },
+    { id: '3', name: '3. HAFTA - 3. MAÇ (DFO) ★ [MASTER / DFO]', home: 'USG', away: 'BODO-GLIMT', league: 'UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ' },
+    { id: '4', name: '3. HAFTA - 4. MAÇ (DFO) ★ [MASTER / DFO]', home: 'FENERBAHÇE', away: 'STURM GRAZ', league: 'UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ' },
+    { id: '5', name: '3. HAFTA - 5. MAÇ (DFO) ★ [MASTER / DFO]', home: 'PANATHINAIKOS', away: 'CSKA 1948', league: 'UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ' },
+    { id: '6', name: '3. HAFTA - 6. MAÇ (DFO) ★ [MASTER / DFO]', home: 'PAIDE LINNAMEESKO...', away: 'RAPID WIEN', league: 'UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ' },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 text-slate-100">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="max-w-7xl mx-auto p-4 text-slate-100">
+      {/* ORIJINAL BAŞLIK BANNERI */}
+      <div className="w-full bg-[#0d1527]/90 border border-slate-800/90 rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between shadow-2xl relative overflow-hidden">
+        <div className="text-center md:text-left z-10">
+          <h1 className="text-2xl md:text-3xl font-black text-amber-400 uppercase tracking-wider flex items-center justify-center md:justify-start gap-2">
+            <span>⚡</span> ADMIN TAHMİNMATİK (3. HAFTA)
+          </h1>
+          <p className="text-xs md:text-sm text-slate-400 font-bold mt-1">
+            Skorları seçin, puanları hatasız dağıtın.
+          </p>
+        </div>
+
+        <button
+          onClick={handleResetAll}
+          className="mt-4 md:mt-0 z-10 px-4 py-2 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/80 text-rose-300 font-black text-xs rounded-xl transition-all flex items-center gap-2 shadow-lg"
+        >
+          <span>📌</span> SİSTEMİ & PUANLARI SIFIRLA
+        </button>
+      </div>
+
+      {/* ORIJINAL KART IZGARASI */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {adminMatches.map((m) => {
           const isApproved = !!approvedMatches[m.id];
           const curScore = scores[m.id] || { home: '', away: '' };
@@ -88,74 +114,78 @@ export default function AdminMainPage() {
           return (
             <div
               key={m.id}
-              className={`p-4 rounded-2xl border transition-all ${
-                isApproved
-                  ? 'bg-slate-900/90 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                  : 'bg-slate-900/60 border-slate-800'
-              }`}
+              className="bg-[#0b1329]/90 border border-slate-800/90 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
             >
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-xs font-black text-sky-400">{m.name}</span>
-                <span className="text-[10px] font-bold text-slate-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                  {m.league}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between my-3">
-                <span className="font-extrabold text-sm sm:text-base text-slate-100 w-2/5 text-left truncate">
-                  {m.home}
-                </span>
-
-                <div className="flex items-center gap-1">
-                  <select
-                    value={curScore.home}
-                    onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
-                    className="bg-slate-950 border border-slate-700 text-amber-400 font-bold text-xs p-1 rounded"
-                  >
-                    <option value="">-</option>
-                    {[0,1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                  <span className="text-slate-500 font-bold text-xs">-</span>
-                  <select
-                    value={curScore.away}
-                    onChange={(e) => handleScoreChange(m.id, 'away', e.target.value)}
-                    className="bg-slate-950 border border-slate-700 text-amber-400 font-bold text-xs p-1 rounded"
-                  >
-                    <option value="">-</option>
-                    {[0,1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
+              <div>
+                <div className="flex justify-between items-center mb-4 gap-2">
+                  <span className="text-xs font-black text-amber-400 uppercase tracking-wide truncate">{m.name}</span>
+                  <span className="text-[9px] font-black text-slate-300 bg-slate-950 px-2 py-1 rounded-md border border-slate-800/80 whitespace-nowrap">
+                    {m.league}
+                  </span>
                 </div>
 
-                <span className="font-extrabold text-sm sm:text-base text-slate-100 w-2/5 text-right truncate">
-                  {m.away}
-                </span>
+                <div className="flex items-center justify-between my-4">
+                  <span className="font-extrabold text-sm sm:text-base text-slate-100 uppercase w-2/5 text-left truncate">
+                    {m.home}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={curScore.home}
+                      onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
+                      className="bg-slate-950 border border-slate-800 text-amber-400 font-bold text-xs px-2 py-1.5 rounded-lg outline-none cursor-pointer"
+                    >
+                      <option value="">-</option>
+                      {[0,1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                    <span className="text-slate-600 font-bold text-xs">-</span>
+                    <select
+                      value={curScore.away}
+                      onChange={(e) => handleScoreChange(m.id, 'away', e.target.value)}
+                      className="bg-slate-950 border border-slate-800 text-amber-400 font-bold text-xs px-2 py-1.5 rounded-lg outline-none cursor-pointer"
+                    >
+                      <option value="">-</option>
+                      {[0,1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+
+                  <span className="font-extrabold text-sm sm:text-base text-slate-100 uppercase w-2/5 text-right truncate">
+                    {m.away}
+                  </span>
+                </div>
+
+                <div className="my-4 p-3 bg-slate-950/80 border border-slate-800/60 rounded-xl">
+                  <div className="text-xs font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    TAM SKORU BİLENLER (0 KİŞİ)
+                  </div>
+                  <div className="text-[10px] text-slate-500 italic pl-3.5">
+                    Skorları seçtiğinizde bilenler burada listelenir...
+                  </div>
+                </div>
               </div>
 
-              <div className="text-[11px] font-bold text-amber-500 my-2">
-                ● TAM SKORU BİLENLER (0 KİŞİ)
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                <span className={`text-xs font-bold ${isApproved ? 'text-emerald-400' : 'text-amber-500'}`}>
-                  Durum: {isApproved ? 'Tamamlandı' : 'Bekliyor'}
+              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-500">
+                  Durum: <span className={isApproved ? "text-emerald-400 font-black" : "text-amber-500"}>{isApproved ? 'Tamamlandı' : 'Bekliyor'}</span>
                 </span>
 
                 <div className="flex items-center gap-2">
+                  {/* SADECE MAÇ ONAYLANDIĞINDA ÇIKAN TEKİL SIFIRLAMA BUTONU */}
                   {isApproved && (
                     <button
                       onClick={() => handleResetSingleMatch(m.id)}
-                      className="py-1.5 px-3 bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/40 font-extrabold text-xs rounded-xl transition-all flex items-center gap-1 shadow-md"
+                      className="py-1.5 px-3 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/80 font-extrabold text-xs rounded-xl transition-all flex items-center gap-1 shadow-md"
                     >
-                      <span>🔄</span>
-                      <span>SIFIRLA</span>
+                      <span>🔄</span> SIFIRLA
                     </button>
                   )}
 
                   <button
                     onClick={() => handleApprove(m.id)}
-                    className="py-1.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all uppercase tracking-wider"
+                    className="py-1.5 px-5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all uppercase tracking-wider"
                   >
-                    {isApproved ? 'GÜNCELLE' : 'ONAYLA & DAĞIT'}
+                    ONAYLA & DAĞIT
                   </button>
                 </div>
               </div>
