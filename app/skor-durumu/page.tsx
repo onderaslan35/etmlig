@@ -176,14 +176,20 @@ export default function SkorDurumuPage() {
   ];
 
   useEffect(() => {
-    const weeklyScoresStore = JSON.parse(localStorage.getItem('elitTahmin_WeeklyScores') || '{}');
+    // 🔴 İŞTE BURASI! Admin panelindeki skor sayacını sisteme bağlıyoruz
+    const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
 
     const getWeek3CurrentData = () => {
       return dfoWeek3BaseSkorData.map(item => {
-        const liveExtraScore = (weeklyScoresStore['3'] && weeklyScoresStore['3'][item.id]) || 0;
+        // Admin simülasyonundan gelen anlık skor adedi (+1'ler)
+        const liveExtraScore = liveLeaderboard[item.id]?.skor || 0;
+        // Puanı da istersen buradan çekebilirsin
+        const liveExtraPuan = liveLeaderboard[item.id]?.master || 0; 
+        
         return {
           ...item,
-          skor: item.skor + liveExtraScore
+          skor: item.skor + liveExtraScore,
+          puan: item.puan + liveExtraPuan
         };
       });
     };

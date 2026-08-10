@@ -2,63 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 
-// ALL 52 PLAYERS FULL REGISTRY (TÜM OYUNCU KİMLİK SÖZLÜĞÜ)
 const allPlayersMasterList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU",
-  "262755": "DOĞAÇ ALKAN",
-  "262816": "SEDAT SEDAT",
-  "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ",
-  "262733": "MUHSİN ASİLKAN",
-  "262728": "ÖNDER ASLAN",
-  "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU",
-  "262719": "UĞUR VARDAR",
-  "262754": "OSMAN ALİ AYDIN 🏆",
-  "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ",
-  "262790": "CUMALİ SÖKER",
-  "262717": "MURAT ALİ",
-  "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER",
-  "262731": "FATİH AYAN",
-  "262772": "CEMAL SİVRİKAYA 🏆",
-  "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN",
-  "262706": "GAZİ AYAN 🏆🏆",
-  "262813": "KEMAL ERSOY",
-  "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN",
-  "262705": "AHMET BİRCAN 🏆",
-  "262714": "İSMAİL EKER 🏆",
-  "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA",
-  "262738": "MEVLÜT EVLER",
-  "262753": "YUSUF KIZILTUĞ",
-  "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR",
-  "262734": "LEVENT YILDIRIM",
-  "262725": "İLYAS KAZDAL",
-  "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE",
-  "262730": "ÖNDER IŞIK",
-  "262782": "YUSUF ERBAY",
-  "262723": "AYHAN LUŞOĞLU",
-  "262749": "B.VEYSELOĞLU EROL",
-  "262718": "BEKİR KARADAĞ",
-  "262715": "ŞEMSETTİN DÜGER",
-  "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ",
-  "262758": "MELİH PINAR",
-  "262770": "OZKAYA MAZAKALI BAYRAM",
-  "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ",
-  "262744": "İLYAS UYGUN",
-  "262712": "MURAT AYDEMİR",
-  "262704": "YAPAY ZEKA"
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT 👑🎯", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY", "262723": "AYHAN LUŞOĞLU",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
-// 1. HAFTA HAM VERİLERİ (DFO 1)
 const masterWeek1Data: Record<string, { name: string; puan: number }> = {
   "262736": { name: "MEHMET ALİ KARA 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 31 },
   "262719": { name: "UĞUR VARDAR", puan: 23 },
@@ -98,14 +57,13 @@ const masterWeek1Data: Record<string, { name: string; puan: number }> = {
   "262749": { name: "B.VEYSELOĞLU EROL", puan: 0 },
   "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
   "262708": { name: "BAYRAM YILMAZ", puan: 0 },
-  "262711": { name: "RIDVAN DOGER", puan: 0 },
+  "262711": { name: "RID DOGER", puan: 0 },
   "262712": { name: "MURAT AYDEMİR", puan: 0 },
   "262734": { name: "LEVENT YILDIRIM", puan: 0 },
   "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
   "262704": { name: "YAPAY ZEKA", puan: 0 }
 };
 
-// 2. HAFTA HAM VERİLERİ (DFO 2)
 const masterWeek2Data: Record<string, { name: string; puan: number }> = {
   "262756": { name: "EYÜP KARACAOĞLU 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 16 },
   "262755": { name: "DOĞAÇ ALKAN", puan: 13 },
@@ -147,7 +105,6 @@ const masterWeek2Data: Record<string, { name: string; puan: number }> = {
   "262704": { name: "YAPAY ZEKA", puan: 0 }
 };
 
-// 3. HAFTA HAM VERİLERİ (DFO 3 + TFF 3)
 const dfoWeek3: Record<string, number> = {
   "262816": 16, "262733": 12, "262721": 10, "262763": 7, "262786": 7, "262711": 7,
   "351925": 6, "262726": 6, "262725": 6, "262771": 6, "262813": 5, "262709": 5,
@@ -163,11 +120,12 @@ const tffWeek3: Record<string, number> = {
   "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1
 };
 
-// ONAYLANAN HAFTALIK BONUS MAP
+// 🔴 İŞTE BURASI: SEDAT'IN +6 SABİT BONUSU!
 const masterBonusData: Record<string, { week1?: number; week2?: number; week3?: number }> = {
-  "262736": { week1: 3 }, // Mehmet Ali Kara (+3 Hafta 1 Zirve Bonusu)
-  "262755": { week1: 3 }, // Doğaç Alkan (+3 Hafta 1 Skor Bonusu)
-  "262756": { week2: 3 }  // Eyüp Karacaoğlu (+3 Hafta 2 Zirve Bonusu)
+  "262736": { week1: 3 }, 
+  "262755": { week1: 3 }, 
+  "262756": { week2: 3 },
+  "262816": { week3: 6 } // Sedat Sedat'ın 3. Hafta +6 Şovu
 };
 
 export default function MasterPuanDurumuPage() {
@@ -196,79 +154,57 @@ export default function MasterPuanDurumuPage() {
   ];
 
   useEffect(() => {
-    // ADMIN / TAHMİNMATİK ÜZERİNDEN GELECEK CANLI MAÇ PUANLARI
-    const approvedStore = JSON.parse(localStorage.getItem('elitTahmin_ApprovedMatches') || '{}');
-    const extraMasterPoints: Record<string, number> = {};
-
-    Object.values(approvedStore).forEach((m: any) => {
-      if (m && m.allocations) {
-        m.allocations.forEach((alloc: any) => {
-          extraMasterPoints[alloc.id] = (extraMasterPoints[alloc.id] || 0) + alloc.points;
-        });
-      }
-    });
+    const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
 
     if (activeTab === 'total') {
-      // TÜM 52 YARIŞMACIYI EKSİKSİZ TARA VE HESAPLA
       const combinedList = Object.keys(allPlayersMasterList).map(id => {
-        const name = allPlayersMasterList[id];
+        const liveIcons = liveLeaderboard[id]?.icons || "";
+        const name = allPlayersMasterList[id] + liveIcons;
 
-        // Haftalık Ham Puanlar
         const w1 = masterWeek1Data[id]?.puan || 0;
         const w2 = masterWeek2Data[id]?.puan || 0;
         const w3DFO = dfoWeek3[id] || 0;
         const w3TFF = tffWeek3[id] || 0;
 
-        // Onaylı Bonuslar
         const b1 = masterBonusData[id]?.week1 || 0;
         const b2 = masterBonusData[id]?.week2 || 0;
         const b3 = masterBonusData[id]?.week3 || 0;
 
-        // Canlı Ekstra Puanlar
-        const extra = extraMasterPoints[id] || 0;
+        const liveExtra = liveLeaderboard[id]?.master || 0;
 
-        const totalPuan = w1 + b1 + w2 + b2 + w3DFO + w3TFF + b3 + extra;
+        const totalPuan = w1 + b1 + w2 + b2 + w3DFO + w3TFF + b3 + liveExtra;
 
         return { id, name, puan: totalPuan };
       });
 
       setTableRows(combinedList.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week1') {
-      // MASTER 1. HAFTA
       const list = Object.keys(allPlayersMasterList).map(id => {
         const rawObj = masterWeek1Data[id];
         const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
         const basePuan = rawObj ? rawObj.puan : 0;
         const b1 = masterBonusData[id]?.week1 || 0;
-        return {
-          id,
-          name: displayName,
-          puan: basePuan + b1
-        };
+        return { id, name: displayName, puan: basePuan + b1 };
       });
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week2') {
-      // MASTER 2. HAFTA
       const list = Object.keys(allPlayersMasterList).map(id => {
         const rawObj = masterWeek2Data[id];
         const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
         const basePuan = rawObj ? rawObj.puan : 0;
         const b2 = masterBonusData[id]?.week2 || 0;
-        return {
-          id,
-          name: displayName,
-          puan: basePuan + b2
-        };
+        return { id, name: displayName, puan: basePuan + b2 };
       });
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week3') {
-      // MASTER 3. HAFTA
       const list = Object.keys(allPlayersMasterList).map(id => {
-        const displayName = allPlayersMasterList[id];
+        const liveIcons = liveLeaderboard[id]?.icons || "";
+        const displayName = allPlayersMasterList[id] + liveIcons;
         const w3DFO = dfoWeek3[id] || 0;
         const w3TFF = tffWeek3[id] || 0;
         const b3 = masterBonusData[id]?.week3 || 0;
-        return { id, name: displayName, puan: w3DFO + w3TFF + b3 };
+        const liveExtra = liveLeaderboard[id]?.master || 0;
+        return { id, name: displayName, puan: w3DFO + w3TFF + b3 + liveExtra };
       });
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
