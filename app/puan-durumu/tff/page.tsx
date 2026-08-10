@@ -2,61 +2,59 @@
 
 import React, { useState, useEffect } from 'react';
 
-// TFF LİGİ 52 KİŞİLİK DÜZELTİLMİŞ TAM LİSTE
-const tffStandingsData = [
-  { id: "262707", name: "HAKAN AYAN", puan: 10 },
-  { id: "262816", name: "SEDAT SEDAT", puan: 9 },
-  { id: "262733", name: "MUHSİN ASİLKAN", puan: 7 },
-  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 6 },
-  { id: "262728", name: "ÖNDER ASLAN", puan: 6 },
-  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 6 },
-  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 5 },
-  { id: "262734", name: "LEVENT YILDIRIM", puan: 5 },
-  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 4 },
-  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 4 },
-  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 3 },
-  { id: "262786", name: "SEDAT DİŞLİ", puan: 3 },
-  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 3 },
-  { id: "262763", name: "MUSTAFA ELMAS", puan: 3 },
-  { id: "262813", name: "KEMAL ERSOY", puan: 2 },
-  { id: "262702", name: "MURAT KARA", puan: 2 },
-  { id: "262711", name: "RIDVAN DOGER", puan: 2 },
-  { id: "351925", name: "ALİOS GÖZTEPE", puan: 1 },
-  { id: "262730", name: "ÖNDER IŞIK", puan: 1 },
-  { id: "262782", name: "YUSUF ERBAY", puan: 1 },
-  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 1 },
-  { id: "262758", name: "MELİH PINAR", puan: 1 },
-  { id: "262708", name: "BAYRAM YILMAZ", puan: 0 },
-  { id: "262755", name: "DOĞAÇ ALKAN", puan: 0 },
-  { id: "262736", name: "MEHMET ALİ KARA", puan: 0 },
-  { id: "262726", name: "HUDAVER TOPARDIC", puan: 0 },
-  { id: "262709", name: "SALİH KARACAOĞLU", puan: 0 },
-  { id: "262719", name: "UĞUR VARDAR", puan: 0 },
-  { id: "262790", name: "CUMALİ SÖKER", puan: 0 },
-  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 0 },
-  { id: "262717", name: "MURAT ALİ", puan: 0 },
-  { id: "262731", name: "FATİH AYAN", puan: 0 },
-  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 0 },
-  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 0 },
-  { id: "262714", name: "İSMAİL EKER 🏆", puan: 0 },
-  { id: "262740", name: "ABDULLAH DİK", puan: 0 },
-  { id: "262738", name: "MEVLÜT EVLER", puan: 0 },
-  { id: "262716", name: "BİROL DEMİREL", puan: 0 },
-  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 0 },
-  { id: "262750", name: "MAHMUT CBR", puan: 0 },
-  { id: "262725", name: "İLYAS KAZDAL", puan: 0 },
-  { id: "262737", name: "ŞAHİN GEZGİNCİ", puan: 0 },
-  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 0 },
-  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 0 },
-  { id: "262718", name: "BEKİR KARADAĞ", puan: 0 },
-  { id: "262715", name: "ŞEMSETTİN DÜGER", puan: 0 },
-  { id: "262703", name: "CEMALETTİN BELLİ", puan: 0 },
-  { id: "262744", name: "İLYAS UYGUN", puan: 0 },
-  { id: "262787", name: "MUSTAFA TUCİ", puan: 0 },
-  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
-  { id: "262712", name: "MURAT AYDEMİR", puan: 0 },
-  { id: "262704", name: "YAPAY ZEKA", puan: 0 }
-];
+// TFF LİGİ 3. HAFTA (İLK BAŞLANGIÇ HAFTASI) HAM VERİLERİ
+const tffWeek3Data: Record<string, { name: string; puan: number }> = {
+  "262707": { name: "HAKAN AYAN", puan: 10 },
+  "262816": { name: "SEDAT SEDAT", puan: 9 },
+  "262733": { name: "MUHSİN ASİLKAN", puan: 7 },
+  "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 6 },
+  "262728": { name: "ÖNDER ASLAN", puan: 6 },
+  "262706": { name: "GAZİ AYAN 🏆🏆", puan: 6 },
+  "262771": { name: "ULAŞ ADIGÜZEL", puan: 5 },
+  "262734": { name: "LEVENT YILDIRIM", puan: 5 },
+  "262705": { name: "AHMET BİRCAN 🏆", puan: 4 },
+  "262714": { name: "İSMAİL EKER 🏆", puan: 4 },
+  "262763": { name: "MUSTAFA ELMAS", puan: 4 },
+  "262756": { name: "EYÜP KARACAOĞLU", puan: 4 },
+  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 },
+  "262740": { name: "ABDULLAH DİK", puan: 4 },
+  "262702": { name: "MURAT KARA", puan: 3 },
+  "262782": { name: "YUSUF ERBAY", puan: 3 },
+  "262813": { name: "KEMAL ERSOY", puan: 3 },
+  "262723": { name: "AYHAN LUŞOĞLU", puan: 2 },
+  "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 },
+  "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 },
+  "351925": { name: "ALİOS GÖZTEPE", puan: 1 },
+  "262730": { name: "ÖNDER IŞIK", puan: 1 },
+  "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 1 },
+  "262739": { name: "UĞUR GÜRBÜZ", puan: 1 },
+  "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
+  "262758": { name: "MELİH PINAR", puan: 0 },
+  "262708": { name: "BAYRAM YILMAZ", puan: 0 },
+  "262755": { name: "DOĞAÇ ALKAN", puan: 0 },
+  "262736": { name: "MEHMET ALİ KARA", puan: 0 },
+  "262726": { name: "HUDAVER TOPARDIC", puan: 0 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 0 },
+  "262719": { name: "UĞUR VARDAR", puan: 0 },
+  "262790": { name: "CUMALİ SÖKER", puan: 0 },
+  "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 0 },
+  "262717": { name: "MURAT ALİ", puan: 0 },
+  "262731": { name: "FATİH AYAN", puan: 0 },
+  "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 0 },
+  "262738": { name: "MEVLÜT EVLER", puan: 0 },
+  "262716": { name: "BİROL DEMİREL", puan: 0 },
+  "262753": { name: "YUSUF KIZILTUĞ", puan: 0 },
+  "262750": { name: "MAHMUT CBR", puan: 0 },
+  "262725": { name: "İLYAS KAZDAL", puan: 0 },
+  "262737": { name: "ŞAHİN GEZGİNCİ", puan: 0 },
+  "262718": { name: "BEKİR KARADAĞ", puan: 0 },
+  "262715": { name: "ŞEMSETTİN DÜGER", puan: 0 },
+  "262703": { name: "CEMALETTİN BELLİ", puan: 0 },
+  "262744": { name: "İLYAS UYGUN", puan: 0 },
+  "262787": { name: "MUSTAFA TUCİ", puan: 0 },
+  "262712": { name: "MURAT AYDEMİR", puan: 0 },
+  "262704": { name: "YAPAY ZEKA", puan: 0 }
+};
 
 export default function TffPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
@@ -98,17 +96,26 @@ export default function TffPuanDurumuPage() {
     });
 
     if (activeTab === 'total') {
-      const updatedTotal = tffStandingsData.map(u => {
-        const added = extraTffPoints[u.id] || 0;
+      // TFF LİGİ 3. HAFTADAN BAŞLADIĞI İÇİN TOPLAM = 3. HAFTA VERİSİ + Varsa Yeni Eklenenler
+      const list = Object.keys(tffWeek3Data).map(id => {
+        const extra = extraTffPoints[id] || 0;
         return {
-          ...u,
-          puan: (u.puan || 0) + added
+          id,
+          name: tffWeek3Data[id].name,
+          puan: tffWeek3Data[id].puan + extra
         };
       });
-
-      const sorted = updatedTotal.sort((a, b) => (b.puan || 0) - (a.puan || 0));
-      setTableRows(sorted);
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
+    } else if (activeTab === 'week3') {
+      // 3. HAFTA SEKMESİ
+      const list = Object.keys(tffWeek3Data).map(id => ({
+        id,
+        name: tffWeek3Data[id].name,
+        puan: tffWeek3Data[id].puan
+      }));
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
+      // 1. VE 2. HAFTALARDA TFF LİGİ OYNANMADIĞI İÇİN BOŞ/SAYFA VERİSİ
       setTableRows([]);
     }
   }, [activeTab]);

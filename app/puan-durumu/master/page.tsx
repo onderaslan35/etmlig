@@ -1,144 +1,189 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import week1Data from '@/app/data/week1_predictions.json';
-import week2Data from '@/app/data/week2_predictions.json';
 
-// GÜNCEL MASTER TOPLAM PUAN DURUMU VERİSİ (KORUNDU)
-const masterStandingsData = [
-  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 44 },
-  { id: "262755", name: "DOĞAÇ ALKAN", puan: 39 },
-  { id: "262816", name: "SEDAT SEDAT", puan: 38 },
-  { id: "262736", name: "MEHMET ALİ KARA", puan: 36 },
-  { id: "262733", name: "MUHSİN ASİLKAN", puan: 26 },
-  { id: "262726", name: "HUDAVER TOPARDIC", puan: 25 },
-  { id: "262728", name: "ÖNDER ASLAN", puan: 25 },
-  { id: "262786", name: "SEDAT DİŞLİ", puan: 25 },
-  { id: "262709", name: "SALİH KARACAOĞLU", puan: 23 },
-  { id: "262719", name: "UĞUR VARDAR", puan: 23 },
-  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 22 },
-  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 20 },
-  { id: "262790", name: "CUMALİ SÖKER", puan: 19 },
-  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 18 },
-  { id: "262717", name: "MURAT ALİ", puan: 18 },
-  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 17 },
-  { id: "262711", name: "RIDVAN DOGER", puan: 15 },
-  { id: "262731", name: "FATİH AYAN", puan: 14 },
-  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 14 },
-  { id: "262763", name: "MUSTAFA ELMAS", puan: 13 },
-  { id: "262813", name: "KEMAL ERSOY", puan: 12 },
-  { id: "262707", name: "HAKAN AYAN", puan: 12 },
-  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 12 },
-  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 11 },
-  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 11 },
-  { id: "262714", name: "İSMAİL EKER 🏆", puan: 10 },
-  { id: "262702", name: "MURAT KARA", puan: 10 },
-  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 10 },
-  { id: "262740", name: "ABDULLAH DİK", puan: 10 },
-  { id: "262738", name: "MEVLÜT EVLER", puan: 10 },
-  { id: "262716", name: "BİROL DEMİREL", puan: 9 },
-  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 9 },
-  { id: "262750", name: "MAHMUT CBR", puan: 9 },
-  { id: "262734", name: "LEVENT YILDIRIM", puan: 9 },
-  { id: "262725", name: "İLYAS KAZDAL", puan: 7 },
-  { id: "351925", name: "ALİOS GÖZTEPE", puan: 7 },
-  { id: "262730", name: "ÖNDER IŞIK", puan: 7 },
-  { id: "262737", name: "ŞAHİN GEZGİNCİ", puan: 7 },
-  { id: "262782", name: "YUSUF ERBAY", puan: 5 },
-  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 4 },
-  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 4 },
-  { id: "262718", name: "BEKİR KARADAĞ", puan: 3 },
-  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 3 },
-  { id: "262715", name: "ŞEMSETTİN DÜGER", puan: 3 },
-  { id: "262703", name: "CEMALETTİN BELLİ", puan: 2 },
-  { id: "262708", name: "BAYRAM YILMAZ", puan: 1 },
-  { id: "262744", name: "İLYAS UYGUN", puan: 1 },
-  { id: "262758", name: "MELİH PINAR", puan: 1 },
-  { id: "262787", name: "MUSTAFA TUCİ", puan: 1 },
-  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
-  { id: "262712", name: "MURAT AYDEMİR", puan: 0 },
-  { id: "262704", name: "YAPAY ZEKA", puan: 0 }
-];
+// ALL 52 PLAYERS FULL REGISTRY (TÜM OYUNCU KİMLİK SÖZLÜĞÜ)
+const allPlayersMasterList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU",
+  "262755": "DOĞAÇ ALKAN",
+  "262816": "SEDAT SEDAT",
+  "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ",
+  "262733": "MUHSİN ASİLKAN",
+  "262728": "ÖNDER ASLAN",
+  "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU",
+  "262719": "UĞUR VARDAR",
+  "262754": "OSMAN ALİ AYDIN 🏆",
+  "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ",
+  "262790": "CUMALİ SÖKER",
+  "262717": "MURAT ALİ",
+  "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER",
+  "262731": "FATİH AYAN",
+  "262772": "CEMAL SİVRİKAYA 🏆",
+  "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN",
+  "262706": "GAZİ AYAN 🏆🏆",
+  "262813": "KEMAL ERSOY",
+  "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN",
+  "262705": "AHMET BİRCAN 🏆",
+  "262714": "İSMAİL EKER 🏆",
+  "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA",
+  "262738": "MEVLÜT EVLER",
+  "262753": "YUSUF KIZILTUĞ",
+  "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR",
+  "262734": "LEVENT YILDIRIM",
+  "262725": "İLYAS KAZDAL",
+  "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE",
+  "262730": "ÖNDER IŞIK",
+  "262782": "YUSUF ERBAY",
+  "262723": "AYHAN LUŞOĞLU",
+  "262749": "B.VEYSELOĞLU EROL",
+  "262718": "BEKİR KARADAĞ",
+  "262715": "ŞEMSETTİN DÜGER",
+  "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ",
+  "262758": "MELİH PINAR",
+  "262770": "OZKAYA MAZAKALI BAYRAM",
+  "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ",
+  "262744": "İLYAS UYGUN",
+  "262712": "MURAT AYDEMİR",
+  "262704": "YAPAY ZEKA"
+};
 
-// GÖNDERDİĞİNİZ GÜNCEL 3. HAFTA VERİLERİ
-const week3MasterData = [
-  { id: "262816", name: "SEDAT SEDAT", puan: 25 },
-  { id: "262733", name: "MUHSİN ASİLKAN", puan: 19 },
-  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 },
-  { id: "262707", name: "HAKAN AYAN", puan: 11 },
-  { id: "262763", name: "MUSTAFA ELMAS", puan: 11 },
-  { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 11 },
-  { id: "262706", name: "GAZİ AYAN 🏆🏆", puan: 11 },
-  { id: "262734", name: "LEVENT YILDIRIM", puan: 9 },
-  { id: "262813", name: "KEMAL ERSOY", puan: 8 },
-  { id: "262756", name: "EYÜP KARACAOĞLU", puan: 8 },
-  { id: "262754", name: "OSMAN ALİ AYDIN 🏆", puan: 7 },
-  { id: "351925", name: "ALİOS GÖZTEPE", puan: 7 },
-  { id: "262702", name: "MURAT KARA", puan: 7 },
-  { id: "262786", name: "SEDAT DİŞLİ", puan: 7 },
-  { id: "262711", name: "RIDVAN DOGER", puan: 7 },
-  { id: "262726", name: "HUDAVER TOPARDIC", puan: 6 },
-  { id: "262725", name: "İLYAS KAZDAL", puan: 6 },
-  { id: "262728", name: "ÖNDER ASLAN", puan: 6 },
-  { id: "262709", name: "SALİH KARACAOĞLU", puan: 5 },
-  { id: "262714", name: "İSMAİL EKER 🏆", puan: 5 },
-  { id: "262730", name: "ÖNDER IŞIK", puan: 5 },
-  { id: "262738", name: "MEVLÜT EVLER", puan: 5 },
-  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 5 },
-  { id: "262782", name: "YUSUF ERBAY", puan: 4 },
-  { id: "262705", name: "AHMET BİRCAN 🏆", puan: 4 },
-  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 4 },
-  { id: "262740", name: "ABDULLAH DİK", puan: 4 },
-  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 3 },
-  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 2 },
-  { id: "262739", name: "UĞUR GÜRBÜZ", puan: 2 },
-  { id: "262731", name: "FATİH AYAN", puan: 2 },
-  { id: "262755", name: "DOĞAÇ ALKAN", puan: 2 },
-  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 2 },
-  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 2 },
-  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 2 },
-  { id: "262716", name: "BİROL DEMİREL", puan: 1 },
-  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
-  { id: "262719", name: "UĞUR VARDAR", puan: 0 },
-  { id: "262708", name: "BAYRAM YILMAZ", puan: 0 },
-  { id: "262744", name: "İLYAS UYGUN", puan: 0 },
-  { id: "262758", name: "MELİH PINAR", puan: 0 },
-  { id: "262718", name: "BEKİR KARADAĞ", puan: 0 },
-  { id: "262736", name: "MEHMET ALİ KARA", puan: 0 },
-  { id: "262790", name: "CUMALİ SÖKER", puan: 0 },
-  { id: "262750", name: "MAHMUT CBR", puan: 0 },
-  { id: "262717", name: "MURAT ALİ", puan: 0 },
-  { id: "262703", name: "CEMALETTİN BELLİ", puan: 0 }
-];
+// 1. HAFTA HAM VERİLERİ (DFO 1)
+const masterWeek1Data: Record<string, { name: string; puan: number }> = {
+  "262736": { name: "MEHMET ALİ KARA 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 31 },
+  "262719": { name: "UĞUR VARDAR", puan: 23 },
+  "262755": { name: "DOĞAÇ ALKAN 🎯 (+3 PUAN HAFTANIN SKOR BONUSU)", puan: 21 },
+  "262756": { name: "EYÜP KARACAOĞLU", puan: 17 },
+  "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 14 },
+  "262786": { name: "SEDAT DİŞLİ", puan: 12 },
+  "262731": { name: "FATİH AYAN", puan: 11 },
+  "262717": { name: "MURAT ALİ", puan: 11 },
+  "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 10 },
+  "262726": { name: "HUDAVER TOPARDIC", puan: 10 },
+  "262750": { name: "MAHMUT CBR", puan: 9 },
+  "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 8 },
+  "262771": { name: "ULAŞ ADIGÜZEL", puan: 8 },
+  "262728": { name: "ÖNDER ASLAN", puan: 8 },
+  "262816": { name: "SEDAT SEDAT", puan: 7 },
+  "262716": { name: "BİROL DEMİREL", puan: 7 },
+  "262790": { name: "CUMALİ SÖKER", puan: 7 },
+  "262733": { name: "MUHSİN ASİLKAN", puan: 7 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 5 },
+  "262753": { name: "YUSUF KIZILTUĞ", puan: 4 },
+  "262813": { name: "KEMAL ERSOY", puan: 4 },
+  "262740": { name: "ABDULLAH DİK", puan: 4 },
+  "262718": { name: "BEKİR KARADAĞ", puan: 3 },
+  "262707": { name: "HAKAN AYAN", puan: 1 },
+  "262782": { name: "YUSUF ERBAY", puan: 1 },
+  "262702": { name: "MURAT KARA", puan: 1 },
+  "262714": { name: "İSMAİL EKER 🏆", puan: 1 },
+  "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 },
+  "262706": { name: "GAZİ AYAN 🏆🏆", puan: 1 },
+  "262787": { name: "MUSTAFA TUCİ", puan: 1 },
+  "262744": { name: "İLYAS UYGUN", puan: 1 },
+  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 },
+  "262715": { name: "ŞEMSETTİN DÜGER", puan: 1 },
+  "262723": { name: "AYHAN LUŞOĞLU", puan: 1 },
+  "351925": { name: "ALİOS GÖZTEPE", puan: 0 },
+  "262749": { name: "B.VEYSELOĞLU EROL", puan: 0 },
+  "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
+  "262708": { name: "BAYRAM YILMAZ", puan: 0 },
+  "262711": { name: "RIDVAN DOGER", puan: 0 },
+  "262712": { name: "MURAT AYDEMİR", puan: 0 },
+  "262734": { name: "LEVENT YILDIRIM", puan: 0 },
+  "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
+  "262704": { name: "YAPAY ZEKA", puan: 0 }
+};
+
+// 2. HAFTA HAM VERİLERİ (DFO 2)
+const masterWeek2Data: Record<string, { name: string; puan: number }> = {
+  "262756": { name: "EYÜP KARACAOĞLU 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 16 },
+  "262755": { name: "DOĞAÇ ALKAN", puan: 13 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 13 },
+  "262790": { name: "CUMALİ SÖKER", puan: 12 },
+  "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 12 },
+  "262728": { name: "ÖNDER ASLAN", puan: 11 },
+  "262726": { name: "HUDAVER TOPARDIC", puan: 9 },
+  "262711": { name: "RIDVAN DOGER", puan: 8 },
+  "262717": { name: "MURAT ALİ", puan: 7 },
+  "262737": { name: "ŞAHİN GEZGİNCİ", puan: 7 },
+  "262705": { name: "AHMET BİRCAN 🏆", puan: 6 },
+  "262816": { name: "SEDAT SEDAT", puan: 6 },
+  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 6 },
+  "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 6 },
+  "262786": { name: "SEDAT DİŞLİ", puan: 6 },
+  "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 },
+  "262738": { name: "MEVLÜT EVLER", puan: 5 },
+  "262714": { name: "İSMAİL EKER 🏆", puan: 4 },
+  "262763": { name: "MUSTAFA ELMAS", puan: 2 },
+  "262736": { name: "MEHMET ALİ KARA", puan: 2 },
+  "262740": { name: "ABDULLAH DİK", puan: 2 },
+  "262702": { name: "MURAT KARA", puan: 2 },
+  "262703": { name: "CEMALETTİN BELLİ", puan: 2 },
+  "262730": { name: "ÖNDER IŞIK", puan: 2 },
+  "262715": { name: "ŞEMSETTİN DÜGER", puan: 2 },
+  "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 },
+  "262725": { name: "İLYAS KAZDAL", puan: 1 },
+  "262758": { name: "MELİH PINAR", puan: 1 },
+  "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 },
+  "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 },
+  "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 },
+  "262716": { name: "BİROL DEMİREL", puan: 1 },
+  "262708": { name: "BAYRAM YILMAZ", puan: 1 },
+  "262731": { name: "FATİH AYAN", puan: 1 },
+  "262739": { name: "UĞUR GÜRBÜZ", puan: 1 },
+  "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
+  "262712": { name: "MURAT AYDEMİR", puan: 0 },
+  "262704": { name: "YAPAY ZEKA", puan: 0 }
+};
+
+// 3. HAFTA HAM VERİLERİ (DFO 3 + TFF 3)
+const dfoWeek3: Record<string, number> = {
+  "262816": 16, "262733": 12, "262721": 10, "262763": 7, "262786": 7, "262711": 7,
+  "351925": 6, "262726": 6, "262725": 6, "262771": 6, "262813": 5, "262709": 5,
+  "262706": 5, "262738": 5, "262753": 5, "262734": 4, "262756": 4, "262702": 4,
+  "262730": 4, "262731": 2, "262755": 2, "262747": 2, "262732": 2, "262707": 1,
+  "262754": 1, "262714": 1, "262782": 1, "262723": 1, "262772": 1, "262739": 1, "262716": 1
+};
+
+const tffWeek3: Record<string, number> = {
+  "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6,
+  "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4,
+  "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2,
+  "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1
+};
+
+// ONAYLANAN HAFTALIK BONUS MAP
+const masterBonusData: Record<string, { week1?: number; week2?: number; week3?: number }> = {
+  "262736": { week1: 3 }, // Mehmet Ali Kara (+3 Hafta 1 Zirve Bonusu)
+  "262755": { week1: 3 }, // Doğaç Alkan (+3 Hafta 1 Skor Bonusu)
+  "262756": { week2: 3 }  // Eyüp Karacaoğlu (+3 Hafta 2 Zirve Bonusu)
+};
 
 export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
-  // AKAN DİJİTAL SAAT VE OTOMATİK TARİH
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDateFormatted, setCurrentDateFormatted] = useState<string>('');
 
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      
-      const timeStr = now.toLocaleTimeString('tr-TR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      setCurrentTime(timeStr);
-
-      const dateStr = now.toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'long',
-        weekday: 'long'
-      }).toUpperCase();
-      setCurrentDateFormatted(dateStr);
+      setCurrentTime(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setCurrentDateFormatted(now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }).toUpperCase());
     };
-
     updateClock();
     const timer = setInterval(updateClock, 1000);
     return () => clearInterval(timer);
@@ -146,13 +191,12 @@ export default function MasterPuanDurumuPage() {
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  // BUGÜNÜN MÜSABAKALARI (10 AĞUSTOS PAZARTESİ)
   const todaysMatches = [
     { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
 
   useEffect(() => {
-    // ADMIN PANELİNDEN ONAYLANAN CANLI PUANLARI HESAPLAMA LOGİC'İ
+    // ADMIN / TAHMİNMATİK ÜZERİNDEN GELECEK CANLI MAÇ PUANLARI
     const approvedStore = JSON.parse(localStorage.getItem('elitTahmin_ApprovedMatches') || '{}');
     const extraMasterPoints: Record<string, number> = {};
 
@@ -165,36 +209,70 @@ export default function MasterPuanDurumuPage() {
     });
 
     if (activeTab === 'total') {
-      const updatedTotal = masterStandingsData.map(u => {
-        const added = extraMasterPoints[u.id] || 0;
-        return {
-          ...u,
-          puan: (u.puan || 0) + added
-        };
+      // TÜM 52 YARIŞMACIYI EKSİKSİZ TARA VE HESAPLA
+      const combinedList = Object.keys(allPlayersMasterList).map(id => {
+        const name = allPlayersMasterList[id];
+
+        // Haftalık Ham Puanlar
+        const w1 = masterWeek1Data[id]?.puan || 0;
+        const w2 = masterWeek2Data[id]?.puan || 0;
+        const w3DFO = dfoWeek3[id] || 0;
+        const w3TFF = tffWeek3[id] || 0;
+
+        // Onaylı Bonuslar
+        const b1 = masterBonusData[id]?.week1 || 0;
+        const b2 = masterBonusData[id]?.week2 || 0;
+        const b3 = masterBonusData[id]?.week3 || 0;
+
+        // Canlı Ekstra Puanlar
+        const extra = extraMasterPoints[id] || 0;
+
+        const totalPuan = w1 + b1 + w2 + b2 + w3DFO + w3TFF + b3 + extra;
+
+        return { id, name, puan: totalPuan };
       });
 
-      const sorted = updatedTotal.sort((a, b) => (b.puan || 0) - (a.puan || 0));
-      setTableRows(sorted);
+      setTableRows(combinedList.sort((a, b) => b.puan - a.puan));
+    } else if (activeTab === 'week1') {
+      // MASTER 1. HAFTA
+      const list = Object.keys(allPlayersMasterList).map(id => {
+        const rawObj = masterWeek1Data[id];
+        const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
+        const basePuan = rawObj ? rawObj.puan : 0;
+        const b1 = masterBonusData[id]?.week1 || 0;
+        return {
+          id,
+          name: displayName,
+          puan: basePuan + b1
+        };
+      });
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
+    } else if (activeTab === 'week2') {
+      // MASTER 2. HAFTA
+      const list = Object.keys(allPlayersMasterList).map(id => {
+        const rawObj = masterWeek2Data[id];
+        const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
+        const basePuan = rawObj ? rawObj.puan : 0;
+        const b2 = masterBonusData[id]?.week2 || 0;
+        return {
+          id,
+          name: displayName,
+          puan: basePuan + b2
+        };
+      });
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week3') {
-      const sorted = [...week3MasterData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
-      setTableRows(sorted);
+      // MASTER 3. HAFTA
+      const list = Object.keys(allPlayersMasterList).map(id => {
+        const displayName = allPlayersMasterList[id];
+        const w3DFO = dfoWeek3[id] || 0;
+        const w3TFF = tffWeek3[id] || 0;
+        const b3 = masterBonusData[id]?.week3 || 0;
+        return { id, name: displayName, puan: w3DFO + w3TFF + b3 };
+      });
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
-      let currentData: any[] = [];
-      if (activeTab === 'week1') currentData = week1Data || [];
-      else if (activeTab === 'week2') currentData = week2Data || [];
-
-      const getPuan = (u: any) => Number(u.puan !== undefined ? u.puan : u.score) || 0;
-
-      const sorted = currentData
-        .slice()
-        .sort((a, b) => getPuan(b) - getPuan(a))
-        .map((u, idx) => ({
-          sira: idx + 1,
-          name: u.name,
-          puan: getPuan(u),
-        }));
-
-      setTableRows(sorted);
+      setTableRows([]);
     }
   }, [activeTab]);
 
@@ -211,14 +289,12 @@ export default function MasterPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      {/* 1. SAYFANIN EN ÜSTÜNDEKİ ANA BAŞLIK */}
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
           ELİT TAHMİN MASTER LİGİ
         </h1>
       </div>
 
-      {/* 2. BUGÜNÜN MÜSABAKALARI - SAAT & DİNAMİK TARİHLİ ŞERİT */}
       <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
         <div className="flex flex-wrap items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2 gap-2">
           <div className="flex items-center gap-2">
@@ -231,7 +307,6 @@ export default function MasterPuanDurumuPage() {
             </h2>
           </div>
 
-          {/* SAĞ ÜST: TARİH VE AKAN DİJİTAL SAAT KUTUSU */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full shadow-inner">
               📅 {currentDateFormatted || 'YÜKLENİYOR...'}
@@ -246,7 +321,6 @@ export default function MasterPuanDurumuPage() {
           </div>
         </div>
 
-        {/* ORTALANMIŞ MÜSABAKA BANTI */}
         <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
           {todaysMatches.map((m) => (
             <div
@@ -280,7 +354,6 @@ export default function MasterPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button
           onClick={() => selectTab('total')}
@@ -298,7 +371,7 @@ export default function MasterPuanDurumuPage() {
             onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)}
             className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${
               activeTab !== 'total'
-                ? 'bg-red-500 text-white border-red-400'
+                ? 'bg-amber-500 text-slate-950 border-amber-400'
                 : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
             }`}
           >
@@ -323,8 +396,8 @@ export default function MasterPuanDurumuPage() {
                       onClick={() => selectTab(weekKey)}
                       className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${
                         isActive
-                          ? 'bg-red-500 text-white border-red-400 scale-105 shadow-sm'
-                          : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-red-500/20 hover:text-red-300'
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm'
+                          : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'
                       }`}
                     >
                       {weekNum}
@@ -337,7 +410,6 @@ export default function MasterPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
