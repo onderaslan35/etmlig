@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 
-// DFO 1. HAFTA SKOR LİSTESİ
 const dfoWeek1SkorData = [
   { id: "262736", name: "MEHMET ALİ KARA", puan: 31, skor: 4 },
   { id: "262755", name: "DOĞAÇ ALKAN", puan: 21, skor: 6 },
@@ -47,7 +46,6 @@ const dfoWeek1SkorData = [
   { id: "262734", name: "LEVENT YILDIRIM", puan: 0, skor: 0 }
 ];
 
-// DFO 2. HAFTA SKOR LİSTESİ
 const dfoWeek2SkorData = [
   { id: "262756", name: "EYÜP KARACAOĞLU", puan: 16, skor: 3 },
   { id: "262755", name: "DOĞAÇ ALKAN", puan: 13, skor: 2 },
@@ -102,7 +100,6 @@ const dfoWeek2SkorData = [
   { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 0, skor: 0 }
 ];
 
-// DFO 3. HAFTA TEMEL SKOR LİSTESİ (BAYRAM YILMAZ'IN SKORU DOĞRU OLARAK 1'E SABİTLENDİ)
 const dfoWeek3BaseSkorData = [
   { id: "262816", name: "SEDAT SEDAT", puan: 25, skor: 5 },
   { id: "262733", name: "MUHSİN ASİLKAN", puan: 19, skor: 3 },
@@ -142,7 +139,7 @@ const dfoWeek3BaseSkorData = [
   { id: "262716", name: "BİROL DEMİREL", puan: 1, skor: 1 },
   { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1, skor: 1 },
   { id: "262719", name: "UĞUR VARDAR", puan: 0, skor: 0 },
-  { id: "262708", name: "BAYRAM YILMAZ", puan: 0, skor: 1 }, // <--- Bayram Yılmaz'ın doğru skoru 1 olarak ayarlandı
+  { id: "262708", name: "BAYRAM YILMAZ", puan: 0, skor: 1 },
   { id: "262744", name: "İLYAS UYGUN", puan: 0, skor: 0 },
   { id: "262758", name: "MELİH PINAR", puan: 0, skor: 0 },
   { id: "262718", name: "BEKİR KARADAĞ", puan: 0, skor: 0 },
@@ -153,8 +150,8 @@ const dfoWeek3BaseSkorData = [
   { id: "262703", name: "CEMALETTİN BELLİ", puan: 0, skor: 0 }
 ];
 
-export default function DfoSkorDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('week1');
+export default function SkorDurumuPage() {
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
@@ -251,19 +248,19 @@ export default function DfoSkorDurumuPage() {
   };
 
   const getActiveTabTitle = () => {
-    if (activeTab === 'total') return 'DFO TOPLAM SKOR DURUMU';
-    if (activeTab === 'week1') return 'DFO 1. HAFTA SKOR DURUMU';
-    if (activeTab === 'week2') return 'DFO 2. HAFTA SKOR DURUMU';
-    if (activeTab === 'week3') return 'DFO 3. HAFTA SKOR DURUMU';
+    if (activeTab === 'total') return 'ELİT TAHMİN TOPLAM SKOR DURUMU';
+    if (activeTab === 'week1') return '1. HAFTA SKOR DURUMU';
+    if (activeTab === 'week2') return '2. HAFTA SKOR DURUMU';
+    if (activeTab === 'week3') return '3. HAFTA SKOR DURUMU';
     const weekNum = activeTab.replace('week', '');
-    return `DFO ${weekNum}. HAFTA SKOR DURUMU`;
+    return `${weekNum}. HAFTA SKOR DURUMU`;
   };
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
-          ELİT TAHMİN DÜNYA FUTBOL ORGANİZASYONLARI (DFO) SKOR LİGİ
+          ELİT TAHMİN SKOR LİGİ
         </h1>
       </div>
 
@@ -335,7 +332,7 @@ export default function DfoSkorDurumuPage() {
               : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
           }`}
         >
-          DFO TOPLAM SKOR DURUMU
+          TOPLAM SKOR DURUMU
         </button>
 
         <div className="w-full relative">
