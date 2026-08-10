@@ -152,8 +152,28 @@ export default function MasterPuanDurumuPage() {
   ];
 
   useEffect(() => {
+    // ADMIN PANELİNDEN ONAYLANAN CANLI PUANLARI HESAPLAMA LOGİC'İ
+    const approvedStore = JSON.parse(localStorage.getItem('elitTahmin_ApprovedMatches') || '{}');
+    const extraMasterPoints: Record<string, number> = {};
+
+    Object.values(approvedStore).forEach((m: any) => {
+      if (m && m.allocations) {
+        m.allocations.forEach((alloc: any) => {
+          extraMasterPoints[alloc.id] = (extraMasterPoints[alloc.id] || 0) + alloc.points;
+        });
+      }
+    });
+
     if (activeTab === 'total') {
-      const sorted = [...masterStandingsData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+      const updatedTotal = masterStandingsData.map(u => {
+        const added = extraMasterPoints[u.id] || 0;
+        return {
+          ...u,
+          puan: (u.puan || 0) + added
+        };
+      });
+
+      const sorted = updatedTotal.sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
     } else if (activeTab === 'week3') {
       const sorted = [...week3MasterData].sort((a, b) => (b.puan || 0) - (a.puan || 0));

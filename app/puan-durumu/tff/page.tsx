@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 
-// GÜNCEL TFF 3. HAFTA PUAN VERİSİ
-const week3TffData = [
+// TFF LİGİ 52 KİŞİLİK DÜZELTİLMİŞ TAM LİSTE
+const tffStandingsData = [
   { id: "262707", name: "HAKAN AYAN", puan: 10 },
   { id: "262816", name: "SEDAT SEDAT", puan: 9 },
   { id: "262733", name: "MUHSİN ASİLKAN", puan: 7 },
@@ -13,44 +13,49 @@ const week3TffData = [
   { id: "262771", name: "ULAŞ ADIGÜZEL", puan: 5 },
   { id: "262734", name: "LEVENT YILDIRIM", puan: 5 },
   { id: "262705", name: "AHMET BİRCAN 🏆", puan: 4 },
-  { id: "262763", name: "MUSTAFA ELMAS", puan: 4 },
   { id: "262756", name: "EYÜP KARACAOĞLU", puan: 4 },
-  { id: "262714", name: "İSMAİL EKER 🏆", puan: 4 },
-  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 4 },
-  { id: "262740", name: "ABDULLAH DİK", puan: 4 },
-  { id: "262702", name: "MURAT KARA", puan: 3 },
-  { id: "262782", name: "YUSUF ERBAY", puan: 3 },
-  { id: "262813", name: "KEMAL ERSOY", puan: 3 },
-  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 2 },
-  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 2 },
-  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 },
+  { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", puan: 3 },
+  { id: "262786", name: "SEDAT DİŞLİ", puan: 3 },
+  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 3 },
+  { id: "262763", name: "MUSTAFA ELMAS", puan: 3 },
+  { id: "262813", name: "KEMAL ERSOY", puan: 2 },
+  { id: "262702", name: "MURAT KARA", puan: 2 },
+  { id: "262711", name: "RIDVAN DOGER", puan: 2 },
   { id: "351925", name: "ALİOS GÖZTEPE", puan: 1 },
   { id: "262730", name: "ÖNDER IŞIK", puan: 1 },
-  { id: "262772", name: "CEMAL SİVRİKAYA 🏆", puan: 1 },
+  { id: "262782", name: "YUSUF ERBAY", puan: 1 },
   { id: "262739", name: "UĞUR GÜRBÜZ", puan: 1 },
-  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
-  { id: "262786", name: "SEDAT DİŞLİ", puan: 0 },
-  { id: "262711", name: "RIDVAN DOGER", puan: 0 },
-  { id: "262726", name: "HUDAVER TOPARDIC", puan: 0 },
-  { id: "262725", name: "İLYAS KAZDAL", puan: 0 },
-  { id: "262709", name: "SALİH KARACAOĞLU", puan: 0 },
-  { id: "262738", name: "MEVLÜT EVLER", puan: 0 },
-  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 0 },
-  { id: "262731", name: "FATİH AYAN", puan: 0 },
-  { id: "262755", name: "DOĞAÇ ALKAN", puan: 0 },
-  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 0 },
-  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 0 },
-  { id: "262716", name: "BİROL DEMİREL", puan: 0 },
-  { id: "262719", name: "UĞUR VARDAR", puan: 0 },
+  { id: "262758", name: "MELİH PINAR", puan: 1 },
   { id: "262708", name: "BAYRAM YILMAZ", puan: 0 },
-  { id: "262744", name: "İLYAS UYGUN", puan: 0 },
-  { id: "262758", name: "MELİH PINAR", puan: 0 },
-  { id: "262718", name: "BEKİR KARADAĞ", puan: 0 },
+  { id: "262755", name: "DOĞAÇ ALKAN", puan: 0 },
   { id: "262736", name: "MEHMET ALİ KARA", puan: 0 },
+  { id: "262726", name: "HUDAVER TOPARDIC", puan: 0 },
+  { id: "262709", name: "SALİH KARACAOĞLU", puan: 0 },
+  { id: "262719", name: "UĞUR VARDAR", puan: 0 },
   { id: "262790", name: "CUMALİ SÖKER", puan: 0 },
-  { id: "262750", name: "MAHMUT CBR", puan: 0 },
+  { id: "262732", name: "R. İLHAN KARACA 🏆🏆", puan: 0 },
   { id: "262717", name: "MURAT ALİ", puan: 0 },
-  { id: "262703", name: "CEMALETTİN BELLİ", puan: 0 }
+  { id: "262731", name: "FATİH AYAN", puan: 0 },
+  { id: "262747", name: "SAVAŞ ÇAĞLAYAN", puan: 0 },
+  { id: "262774", name: "ŞENOL CAN ÇAKICI", puan: 0 },
+  { id: "262714", name: "İSMAİL EKER 🏆", puan: 0 },
+  { id: "262740", name: "ABDULLAH DİK", puan: 0 },
+  { id: "262738", name: "MEVLÜT EVLER", puan: 0 },
+  { id: "262716", name: "BİROL DEMİREL", puan: 0 },
+  { id: "262753", name: "YUSUF KIZILTUĞ", puan: 0 },
+  { id: "262750", name: "MAHMUT CBR", puan: 0 },
+  { id: "262725", name: "İLYAS KAZDAL", puan: 0 },
+  { id: "262737", name: "ŞAHİN GEZGİNCİ", puan: 0 },
+  { id: "262723", name: "AYHAN LUŞOĞLU", puan: 0 },
+  { id: "262749", name: "B.VEYSELOĞLU EROL", puan: 0 },
+  { id: "262718", name: "BEKİR KARADAĞ", puan: 0 },
+  { id: "262715", name: "ŞEMSETTİN DÜGER", puan: 0 },
+  { id: "262703", name: "CEMALETTİN BELLİ", puan: 0 },
+  { id: "262744", name: "İLYAS UYGUN", puan: 0 },
+  { id: "262787", name: "MUSTAFA TUCİ", puan: 0 },
+  { id: "262770", name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
+  { id: "262712", name: "MURAT AYDEMİR", puan: 0 },
+  { id: "262704", name: "YAPAY ZEKA", puan: 0 }
 ];
 
 export default function TffPuanDurumuPage() {
@@ -58,29 +63,15 @@ export default function TffPuanDurumuPage() {
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
-  // AKAN DİJİTAL SAAT VE OTOMATİK TARİH
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDateFormatted, setCurrentDateFormatted] = useState<string>('');
 
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      
-      const timeStr = now.toLocaleTimeString('tr-TR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      setCurrentTime(timeStr);
-
-      const dateStr = now.toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'long',
-        weekday: 'long'
-      }).toUpperCase();
-      setCurrentDateFormatted(dateStr);
+      setCurrentTime(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setCurrentDateFormatted(now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }).toUpperCase());
     };
-
     updateClock();
     const timer = setInterval(updateClock, 1000);
     return () => clearInterval(timer);
@@ -88,17 +79,36 @@ export default function TffPuanDurumuPage() {
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  // BUGÜNÜN MÜSABAKALARI (10 AĞUSTOS PAZARTESİ)
   const todaysMatches = [
     { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
 
   useEffect(() => {
-    if (activeTab === 'total' || activeTab === 'week3') {
-      const sorted = [...week3TffData].sort((a, b) => (b.puan || 0) - (a.puan || 0));
+    const approvedStore = JSON.parse(localStorage.getItem('elitTahmin_ApprovedMatches') || '{}');
+    const extraTffPoints: Record<string, number> = {};
+
+    Object.values(approvedStore).forEach((m: any) => {
+      if (m && m.allocations) {
+        m.allocations.forEach((alloc: any) => {
+          if (alloc.cat === 'TFF') {
+            extraTffPoints[alloc.id] = (extraTffPoints[alloc.id] || 0) + alloc.points;
+          }
+        });
+      }
+    });
+
+    if (activeTab === 'total') {
+      const updatedTotal = tffStandingsData.map(u => {
+        const added = extraTffPoints[u.id] || 0;
+        return {
+          ...u,
+          puan: (u.puan || 0) + added
+        };
+      });
+
+      const sorted = updatedTotal.sort((a, b) => (b.puan || 0) - (a.puan || 0));
       setTableRows(sorted);
     } else {
-      // 1. ve 2. Hafta verileri olmadığı için boş dizi döner
       setTableRows([]);
     }
   }, [activeTab]);
@@ -116,27 +126,24 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      {/* 1. SAYFANIN EN ÜSTÜNDEKİ ANA BAŞLIK */}
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase">
           ELİT TAHMİN TFF LİGİ
         </h1>
       </div>
 
-      {/* 2. BUGÜNÜN MÜSABAKALARI - SAAT & DİNAMİK TARİHLİ ŞERİT */}
       <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
         <div className="flex flex-wrap items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2 gap-2">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
             </span>
-            <h2 className="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-wider">
+            <h2 className="text-xs sm:text-sm font-black text-red-400 uppercase tracking-wider">
               BUGÜNÜN MÜSABAKALARI ({todaysMatches.length} MAÇ)
             </h2>
           </div>
 
-          {/* SAĞ ÜST: TARİH VE AKAN DİJİTAL SAAT KUTUSU */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full shadow-inner">
               📅 {currentDateFormatted || 'YÜKLENİYOR...'}
@@ -151,16 +158,15 @@ export default function TffPuanDurumuPage() {
           </div>
         </div>
 
-        {/* ORTALANMIŞ MÜSABAKA BANTI */}
-        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
+        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-red-500/30 scrollbar-track-slate-950">
           {todaysMatches.map((m) => (
             <div
               key={m.id}
-              className="min-w-[240px] sm:min-w-[280px] max-w-sm flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 rounded-xl p-3.5 flex flex-col justify-between shadow-md"
+              className="min-w-[240px] sm:min-w-[280px] max-w-sm flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-red-500/50 transition-all duration-200 rounded-xl p-3.5 flex flex-col justify-between shadow-md"
             >
               <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-2">
-                <span className="text-amber-400/90 truncate font-extrabold">{m.league}</span>
-                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-black">
+                <span className="text-red-400/90 truncate font-extrabold">{m.league}</span>
+                <span className="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-black">
                   ⏰ {m.time}
                 </span>
               </div>
@@ -185,7 +191,6 @@ export default function TffPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 3. BUTONLAR VE AÇILIR MENÜ ALANI */}
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button
           onClick={() => selectTab('total')}
@@ -242,7 +247,6 @@ export default function TffPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 4. PUAN TABLOSU */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
