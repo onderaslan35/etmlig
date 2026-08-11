@@ -31,7 +31,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262714": ["1-3", "2-0", "0-2"], "262749": ["2-1", "3-1", "2-0"], "262753": ["1-1", "2-1", "2-0"],
   "262740": ["1-2", "1-1", "2-1"], "262790": ["0-2", "3-1", "0-2"], "262786": ["1-2", "3-1", "3-1"],
   "262734": ["3-0", "4-1", "2-1"], "262756": ["2-2", "3-2", "2-0"], "262703": ["2-2", "1-1", "1-1"],
-  "262772": ["0-2", "2-0", "1-1"], "262717": ["1-2", "0-1", "1-1"], "262728": ["0-0", "0-0", "1-0"], // 🔴 İŞTE ÖNDER ASLAN BURADA! (0-0)
+  "262772": ["0-2", "2-0", "1-1"], "262717": ["1-2", "0-1", "1-1"], "262728": ["0-0", "0-0", "1-0"], // ÖNDER ASLAN BURADA
   "262770": ["3-1", "3-1", "2-2"], "262755": ["1-2", "4-1", "3-2"], "262704": ["1-1", "2-1", "1-1"],
   "262747": ["1-1", "2-0", "1-0"], "262723": ["1-1", "3-1", "2-1"], "262709": ["1-1", "2-1", "2-1"],
   "262739": ["1-0", "3-1", "1-1"]
@@ -62,7 +62,7 @@ export default function LiveMatchCard() {
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   // 🔴 SİMÜLASYON DEĞİŞKENLERİ
-  const simMatchId = 1; // Sturm Graz - FB
+  const simMatchId = 1;
   const simHomeScore = 0;
   const simAwayScore = 0;
   const simStatus = "FINISHED"; // MAÇ BİTTİ DİYE ZORLUYORUZ!
@@ -82,19 +82,15 @@ export default function LiveMatchCard() {
     const matchesForToday = week4Matches.filter(m => m.date === formattedToday);
     setTodaysMatches(matchesForToday);
 
-    // 🔴 EKMEL - OTOMATİK SİMÜLASYON VE DAĞITIM MOTORU (DEVREDE)
     const runSimulation = () => {
-      // 1. AŞAMA: Ekrana skoru 0-0 BİTTİ olarak bas
       setLiveData(prev => ({
         ...prev,
         [simMatchId]: { status: simStatus, homeScore: simHomeScore, awayScore: simAwayScore }
       }));
 
-      // 2. AŞAMA: "0-0" Bilenleri Bul
       const targetScore = `${simHomeScore}-${simAwayScore}`;
       const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][0] === targetScore);
       
-      // 3. AŞAMA: Ödül Puanını Hesapla (Senin formülün)
       let points = 1;
       if(winnerIds.length === 1) points = 12;
       else if(winnerIds.length === 2) points = 6;
@@ -103,42 +99,27 @@ export default function LiveMatchCard() {
       else if(winnerIds.length === 5) points = 3;
       else if(winnerIds.length === 6) points = 2;
 
-      // 4. AŞAMA: LocalStorage'a (Canlı Lider Tablosuna) Mühürle
       const currentBoard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
       let changed = false;
 
       winnerIds.forEach(wId => {
         if(!currentBoard[wId]) currentBoard[wId] = {};
-        // Eğer zaten verilmemişse ver! (Sürekli eklemesini engellemek için)
         if(currentBoard[wId].dfo !== points || currentBoard[wId].master !== points || currentBoard[wId].skor !== 1) {
             currentBoard[wId].dfo = points;
             currentBoard[wId].master = points;
-            currentBoard[wId].skor = 1; // 1 tam skor bildi
+            currentBoard[wId].skor = 1;
             changed = true;
         }
       });
 
-      if(changed) {
-        localStorage.setItem('elitTahmin_Leaderboard', JSON.stringify(currentBoard));
-      }
+      if(changed) localStorage.setItem('elitTahmin_Leaderboard', JSON.stringify(currentBoard));
     };
 
-    if (matchesForToday.length > 0) {
-      runSimulation(); // Simülasyonu ateşle!
-    }
+    if (matchesForToday.length > 0) runSimulation();
   }, []);
 
   const toggleWinners = (matchId: number) => {
-    setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-  };
-
-  const getMatchThemeStyle = (category: string) => {
-    return {
-      bgImage: "url('/cl-bg.png')",
-      cardBgClass: "bg-slate-900/90 border-cyan-400/60 shadow-[0_0_20px_rgba(34,211,238,0.2)]",
-      badgeClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80",
-      tagClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80"
-    };
+    setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); // Eğer manuel tıklandıysa durumunu tersine çevir
   };
 
   if (todaysMatches.length === 0) return null;
@@ -146,18 +127,19 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-5xl mx-auto mb-8 flex flex-wrap justify-center gap-4">
       {todaysMatches.map((match) => {
-        // Simülasyon Verisini Oku
         const data = liveData[match.id] || {};
         const isLive = data.status === 'LIVE';
         const isFinished = data.status === 'FINISHED';
-        const homeScore = data.homeScore ?? "-";
-        const awayScore = data.awayScore ?? "-";
+        const homeScore = data.homeScore !== undefined ? data.homeScore : (isLive || isFinished ? "0" : "-");
+        const awayScore = data.awayScore !== undefined ? data.awayScore : (isLive || isFinished ? "0" : "-");
         
         const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
         const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
-        const isWinnersOpen = !!openWinnersMap[match.id];
+        
+        // 🔴 EKMEL DOKUNUŞU: BİLENLER KUTUSU ARTIK OTOMATİK AÇIK OLACAK!
+        // Eğer kullanıcı manuel olarak kapatmadıysa (false değilse), varsayılan olarak açık (true) kalsın.
+        const isWinnersOpen = openWinnersMap[match.id] !== false;
 
-        // ŞU AN BİLENLERİ EŞLEŞTİR (0-0 OLANLARI)
         let currentWinners: string[] = [];
         if ((isLive || isFinished)) {
           const targetScore = `${homeScore}-${awayScore}`;
@@ -168,7 +150,6 @@ export default function LiveMatchCard() {
         }
         const winnersCount = currentWinners.length;
 
-        // ÖDÜL HESAPLA
         let displayPoints = 1;
         if(winnersCount === 1) displayPoints = 12;
         else if(winnersCount === 2) displayPoints = 6;
@@ -181,8 +162,6 @@ export default function LiveMatchCard() {
           <div key={match.id} className="w-full max-w-lg bg-[#0a1120] border border-emerald-500/60 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] overflow-hidden transition-all duration-500 flex flex-col">
             
             <div className="p-4 sm:p-6 relative flex-grow">
-              
-              {/* EKMEL SİMÜLASYON ETİKETİ */}
               <div className="absolute top-0 right-0 bg-emerald-600 text-slate-950 font-black px-3 py-1 rounded-bl-xl text-[10px] animate-pulse">
                 EKMEL SİMÜLASYONU AKTİF
               </div>
@@ -238,6 +217,7 @@ export default function LiveMatchCard() {
                 </div>
               </div>
               
+              {/* 🔴 ARTIK VARSAYILAN OLARAK AÇIK! */}
               {isWinnersOpen && winnersCount > 0 && (
                 <div className="w-full mt-3 p-3 bg-[#0a1120] rounded-lg border border-emerald-900/50 text-xs animate-fadeIn shadow-inner">
                   <div className="text-slate-400 font-semibold mb-2 border-b border-slate-800 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">

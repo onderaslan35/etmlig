@@ -6,11 +6,11 @@ import LiveMatchCard from '@/components/LiveMatchCard';
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL"
 };
 
@@ -47,32 +47,50 @@ export default function DfoPuanDurumuPage() {
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
   useEffect(() => {
-    // 🔴 EKMEL DOKUNUŞU: Canlı Simülasyon Verisini Okuma
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
 
     if (activeTab === 'total') {
-      const list = Object.keys(allPlayersList).map(id => {
-        const liveIcons = liveLeaderboard[id]?.icons || "";
-        const name = allPlayersList[id] + liveIcons;
-        
-        const w1 = dfoWeek1Data[id] || 0;
-        const w2 = dfoWeek2Data[id] || 0;
-        const w3 = dfoWeek3Data[id] || 0;
-        
-        // SİMÜLASYONDAN GELEN PUAN (+12)
+      
+      // 🔴 EKMEL - ÖNCE BAZ LİSTEYİ (ESKİ SIRAYI) BULALIM 🔴
+      // Canlı puanlar eklenmeden önceki sırayı buluyoruz ki kıyaslayabilelim.
+      const baseList = Object.keys(allPlayersList).map(id => {
+        const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
+        return { id, basePuan, name: allPlayersList[id] };
+      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name)); // Puan aynıysa isme göre sırala ki oklar sapıtmasın
+      
+      const prevRanks: Record<string, number> = {};
+      baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      // 🔴 EKMEL - ŞİMDİ CANLI LİSTEYİ OLUŞTURALIM 🔴
+      const liveList = Object.keys(allPlayersList).map(id => {
+        const name = allPlayersList[id];
+        const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
         const liveExtra = liveLeaderboard[id]?.dfo || 0; 
+        return { id, name, basePuan, liveExtra, puan: basePuan + liveExtra };
+      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name));
+
+      // 🔴 EKMEL - ESKİ VE YENİ SIRAYI KIYASLAYIP OKLARI ATAYALIM 🔴
+      const finalRows = liveList.map((player, index) => {
+        const currentRank = index + 1;
+        const prevRank = prevRanks[player.id];
         
-        return { id, name, puan: w1 + w2 + w3 + liveExtra };
+        let trend = 'same';
+        if (currentRank < prevRank) trend = 'up'; // Sıra rakamı küçüldüyse (yükseldiyse)
+        else if (currentRank > prevRank) trend = 'down'; // Sıra rakamı büyüdüyse (düştüyse)
+
+        return { ...player, currentRank, prevRank, trend };
       });
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
+
+      setTableRows(finalRows);
+
     } else if (activeTab === 'week1') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek1Data[id] || 0 }));
+      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek1Data[id] || 0, trend: 'none' }));
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week2') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek2Data[id] || 0 }));
+      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek2Data[id] || 0, trend: 'none' }));
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week3') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek3Data[id] || 0 }));
+      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek3Data[id] || 0, trend: 'none' }));
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
       setTableRows([]);
@@ -133,17 +151,43 @@ export default function DfoPuanDurumuPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr><th className="px-6 py-3.5 text-center w-16">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
+                <tr>
+                  <th className="px-6 py-3.5 text-center w-20">SIRA</th>
+                  <th className="px-6 py-3.5">YARIŞMACI</th>
+                  <th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
                   <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-3.5 text-center text-slate-400 font-medium">{idx + 1}</td>
-                    <td className="px-6 py-3.5 text-slate-200 font-semibold">{row.name}</td>
-                    {/* 🔴 SİMÜLASYON TETİKLENDİĞİNDE ÖNDER ASLAN BURADA +12 PUANLA ŞOV YAPACAK */}
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.id === "262728" ? "text-emerald-400 animate-pulse" : "text-amber-400"}`}>
+                    
+                    {/* 🔴 SIRA VE OK EFEKTLERİ */}
+                    <td className="px-6 py-3.5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
+                        {row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce" title={`Önceki Sıra: ${row.prevRank}`}>▲</span>}
+                        {row.trend === 'down' && <span className="text-red-500 text-sm" title={`Önceki Sıra: ${row.prevRank}`}>▼</span>}
+                        {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
+                      </div>
+                    </td>
+
+                    {/* 🔴 İSİM VE CANLI PUAN ROZETİ */}
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-200 font-semibold">{row.name}</span>
+                        {row.liveExtra > 0 && activeTab === 'total' && (
+                          <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
+                            +{row.liveExtra} CANLI
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* PUAN */}
+                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
                       {row.puan}
                     </td>
+
                   </tr>
                 ))}
               </tbody>
