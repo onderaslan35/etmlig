@@ -16,39 +16,39 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 const dfoWeek1Data: Record<string, number> = { "262736": 31, "262719": 23, "262755": 21, "262756": 17, "262754": 14, "262786": 12, "262731": 11, "262717": 11, "262732": 10, "262726": 10, "262750": 9, "262747": 8, "262771": 8, "262728": 8, "262816": 7, "262716": 7, "262790": 7, "262733": 7, "262709": 5, "262753": 4, "262813": 4, "262740": 4, "262718": 3, "262707": 1, "262782": 1, "262702": 1, "262714": 1, "262721": 1, "262706": 1, "262787": 1, "262744": 1, "262774": 1, "262715": 1, "262723": 1 };
 const dfoWeek2Data: Record<string, number> = { "262756": 16, "262755": 13, "262709": 13, "262790": 12, "262772": 12, "262728": 11, "262726": 9, "262711": 8, "262717": 7, "262737": 7, "262705": 6, "262816": 6, "262774": 6, "262732": 6, "262786": 6, "262721": 5, "262738": 5, "262714": 4, "262763": 2, "262736": 2, "262740": 2, "262702": 2, "262703": 2, "262730": 2, "262715": 2, "262749": 2, "262725": 1, "262758": 1, "262771": 1, "262754": 1, "262747": 1, "262716": 1, "262708": 1, "262731": 1, "262739": 1 };
 const dfoWeek3Data: Record<string, number> = { "262816": 16, "262733": 12, "262721": 10, "262763": 7, "262786": 7, "262711": 7, "351925": 6, "262726": 6, "262725": 6, "262771": 6, "262813": 5, "262709": 5, "262706": 5, "262738": 5, "262753": 5, "262734": 4, "262756": 4, "262702": 4, "262730": 4, "262731": 2, "262755": 2, "262747": 2, "262732": 2, "262707": 1, "262754": 1, "262714": 1, "262782": 1, "262723": 1, "262772": 1, "262739": 1, "262716": 1 };
+const dfoWeek4Data: Record<string, number> = {}; 
 
 export default function DfoPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED'); // 🔴 EKMEL: Maçın durumunu hafızada tutar!
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
   const loadLeaderboard = () => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
+    const signalData = JSON.parse(localStorage.getItem('elitTahmin_AdminSignal') || '{}');
+    setAdminStatus(signalData.status || 'NOT_STARTED'); // Maç canlı mı, bitti mi okuyoruz
 
     if (activeTab === 'total') {
       const baseList = Object.keys(allPlayersList).map(id => {
-        const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
-        return { id, basePuan, name: allPlayersList[id] };
-      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name));
+        const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0) + (dfoWeek4Data[id] || 0);
+        const liveExtra = liveLeaderboard[id]?.dfo || 0; 
+        return { id, basePuan, puan: basePuan + liveExtra, name: allPlayersList[id], liveExtra };
+      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
       
       const prevRanks: Record<string, number> = {};
-      baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+      const noLiveList = [...baseList].sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
+      noLiveList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      const liveList = Object.keys(allPlayersList).map(id => {
-        const name = allPlayersList[id];
-        const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
-        const liveExtra = liveLeaderboard[id]?.dfo || 0; 
-        return { id, name, basePuan, liveExtra, puan: basePuan + liveExtra };
-      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name));
-
-      const finalRows = liveList.map((player, index) => {
+      const finalRows = baseList.map((player, index) => {
         const currentRank = index + 1;
         const prevRank = prevRanks[player.id];
         let trend = 'same';
@@ -58,16 +58,30 @@ export default function DfoPuanDurumuPage() {
       });
       setTableRows(finalRows);
     } else {
-      const dataMap = activeTab === 'week1' ? dfoWeek1Data : activeTab === 'week2' ? dfoWeek2Data : dfoWeek3Data;
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dataMap[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
+      let dataMap = dfoWeek1Data;
+      if(activeTab === 'week2') dataMap = dfoWeek2Data;
+      if(activeTab === 'week3') dataMap = dfoWeek3Data;
+      if(activeTab === 'week4') dataMap = dfoWeek4Data;
+
+      const isCurrentWeek = activeTab === 'week4'; 
+
+      const list = Object.keys(allPlayersList).map(id => {
+        const basePuan = dataMap[id] || 0;
+        const liveExtra = isCurrentWeek ? (liveLeaderboard[id]?.dfo || 0) : 0;
+        return { id, name: allPlayersList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none' };
+      });
+      setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
     }
   };
 
   useEffect(() => {
     loadLeaderboard();
     window.addEventListener('leaderboardUpdate', loadLeaderboard);
-    return () => window.removeEventListener('leaderboardUpdate', loadLeaderboard);
+    window.addEventListener('adminUpdate', loadLeaderboard);
+    return () => {
+      window.removeEventListener('leaderboardUpdate', loadLeaderboard);
+      window.removeEventListener('adminUpdate', loadLeaderboard);
+    };
   }, [activeTab]);
 
   const selectTab = (tabKey: string) => {
@@ -93,7 +107,6 @@ export default function DfoPuanDurumuPage() {
         </button>
         <div className="w-full relative">
           <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            {/* 🔴 EKMEL: TOTAL YAZISI VE NOKTA KALDIRILDI! SADECE HAFTA YAZISI KALDI */}
             <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
             <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
           </button>
@@ -131,22 +144,32 @@ export default function DfoPuanDurumuPage() {
                     <td className="px-6 py-3.5 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
-                        {row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce" title={`Önceki Sıra: ${row.prevRank}`}>▲</span>}
-                        {row.trend === 'down' && <span className="text-red-500 text-sm" title={`Önceki Sıra: ${row.prevRank}`}>▼</span>}
-                        {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
+                        {activeTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce">▲</span>}
+                        {activeTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-sm">▼</span>}
+                        {activeTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
                       </div>
                     </td>
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
                         <span className="text-slate-200 font-semibold">{row.name}</span>
-                        {row.liveExtra > 0 && activeTab === 'total' && (
+                        
+                        {/* 🔴 EKMEL MANTIĞI: TOPLAM SAYFASINDA SADECE "LIVE" İKEN GÖRÜNÜR, BİTİNCE SİLİNİR */}
+                        {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                             +{row.liveExtra} CANLI
                           </span>
                         )}
+
+                        {/* 🔴 EKMEL MANTIĞI: HAFTA SAYFASINDA CANLIYKEN "CANLI", BİTİNCE "1. MAÇ" YAZAR (KALICI OLUR) */}
+                        {row.liveExtra > 0 && activeTab !== 'total' && (
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-sm ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
+                            +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(1. MAÇ)'}
+                          </span>
+                        )}
+
                       </div>
                     </td>
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>
                       {row.puan}
                     </td>
                   </tr>

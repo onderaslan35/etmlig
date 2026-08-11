@@ -16,51 +16,49 @@ const allPlayersMasterList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 const masterWeek1Data: Record<string, { name: string; puan: number }> = { "262736": { name: "MEHMET ALİ KARA 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 34 }, "262755": { name: "DOĞAÇ ALKAN 🎯 (+3 PUAN HAFTANIN SKOR BONUSU)", puan: 24 }, "262719": { name: "UĞUR VARDAR", puan: 23 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 17 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 14 }, "262786": { name: "SEDAT DİŞLİ", puan: 12 }, "262717": { name: "MURAT ALİ", puan: 11 }, "262731": { name: "FATİH AYAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 10 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 10 }, "262750": { name: "MAHMUT CBR", puan: 9 }, "262728": { name: "ÖNDER ASLAN", puan: 8 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 8 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 8 }, "262716": { name: "BİROL DEMİREL", puan: 7 }, "262733": { name: "MUHSİN ASİLKAN", puan: 7 }, "262790": { name: "CUMALİ SÖKER", puan: 7 }, "262816": { name: "SEDAT SEDAT", puan: 7 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 4 }, "262813": { name: "KEMAL ERSOY", puan: 4 }, "262718": { name: "BEKİR KARADAĞ", puan: 3 }, "262702": { name: "MURAT KARA", puan: 1 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 1 }, "262707": { name: "HAKAN AYAN", puan: 1 }, "262714": { name: "İSMAİL EKER 🏆", puan: 1 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 1 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 1 }, "262744": { name: "İLYAS UYGUN", puan: 1 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 }, "262782": { name: "YUSUF ERBAY", puan: 1 } };
 const masterWeek2Data: Record<string, { name: string; puan: number }> = { "262756": { name: "EYÜP KARACAOĞLU 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 19 }, "262709": { name: "SALİH KARACAOĞLU", puan: 13 }, "262755": { name: "DOĞAÇ ALKAN", puan: 13 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 12 }, "262790": { name: "CUMALİ SÖKER", puan: 12 }, "262728": { name: "ÖNDER ASLAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 9 }, "262711": { name: "RIDVAN DOGER", puan: 8 }, "262717": { name: "MURAT ALİ", puan: 7 }, "262737": { name: "ŞAHİN GEZGİNCİ", puan: 7 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 6 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 6 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 6 }, "262786": { name: "SEDAT DİŞLİ", puan: 6 }, "262816": { name: "SEDAT SEDAT", puan: 6 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 4 }, "262702": { name: "MURAT KARA", puan: 2 }, "262703": { name: "CEMALETTİN BELLİ", puan: 2 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 2 }, "262730": { name: "ÖNDER IŞIK", puan: 2 }, "262736": { name: "MEHMET ALİ KARA", puan: 2 }, "262740": { name: "ABDULLAH DİK", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262763": { name: "MUSTAFA ELMAS", puan: 2 }, "262708": { name: "BAYRAM YILMAZ", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262725": { name: "İLYAS KAZDAL", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 }, "262758": { name: "MELİH PINAR", puan: 1 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 } };
 const masterWeek3Data: Record<string, { name: string; puan: number }> = { "262816": { name: "SEDAT SEDAT 👑🎯", puan: 31 }, "262733": { name: "MUHSİN ASİLKAN", puan: 19 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 11 }, "262707": { name: "HAKAN AYAN", puan: 11 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 }, "262763": { name: "MUSTAFA ELMAS", puan: 11 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 11 }, "262734": { name: "LEVENT YILDIRIM", puan: 9 }, "262755": { name: "DOĞAÇ ALKAN", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 8 }, "262813": { name: "KEMAL ERSOY", puan: 8 }, "262702": { name: "MURAT KARA", puan: 7 }, "262711": { name: "RIDVAN DOGER", puan: 7 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 7 }, "262786": { name: "SEDAT DİŞLİ", puan: 7 }, "351925": { name: "ALİOS GÖZTEPE", puan: 7 }, "262725": { name: "İLYAS KAZDAL", puan: 6 }, "262726": { name: "HUDAVER TOPARDIC", puan: 6 }, "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 }, "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 }, "262782": { name: "YUSUF ERBAY", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 }, "262731": { name: "FATİH AYAN", puan: 2 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 } };
+const masterWeek4Data: Record<string, { name: string; puan: number }> = {}; 
 
 export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
   const loadLeaderboard = () => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
+    const signalData = JSON.parse(localStorage.getItem('elitTahmin_AdminSignal') || '{}');
+    setAdminStatus(signalData.status || 'NOT_STARTED');
 
     if (activeTab === 'total') {
       const baseList = Object.keys(allPlayersMasterList).map(id => {
         const w1 = masterWeek1Data[id]?.puan || 0;
         const w2 = masterWeek2Data[id]?.puan || 0;
         const w3 = masterWeek3Data[id]?.puan || 0;
-        const basePuan = w1 + w2 + w3;
-        return { id, basePuan, name: allPlayersMasterList[id] };
-      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name));
-
-      const prevRanks: Record<string, number> = {};
-      baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
-
-      const liveList = Object.keys(allPlayersMasterList).map(id => {
-        const liveIcons = liveLeaderboard[id]?.icons || "";
-        let finalName = allPlayersMasterList[id] + liveIcons;
-        if (id === "262816") finalName = "SEDAT SEDAT 👑🎯" + liveIcons;
-        if (id === "262755") finalName = "DOĞAÇ ALKAN" + liveIcons;
-        if (id === "262736") finalName = "MEHMET ALİ KARA" + liveIcons;
-
-        const w1 = masterWeek1Data[id]?.puan || 0;
-        const w2 = masterWeek2Data[id]?.puan || 0;
-        const w3 = masterWeek3Data[id]?.puan || 0;
-        const basePuan = w1 + w2 + w3;
+        const w4 = masterWeek4Data[id]?.puan || 0;
+        const basePuan = w1 + w2 + w3 + w4;
         const liveExtra = liveLeaderboard[id]?.master || 0;
+        
+        let finalName = allPlayersMasterList[id];
+        if (id === "262816") finalName = "SEDAT SEDAT 👑🎯";
+        if (id === "262755") finalName = "DOĞAÇ ALKAN";
+        if (id === "262736") finalName = "MEHMET ALİ KARA";
 
         return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
-      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name));
+      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
 
-      const finalRows = liveList.map((player, index) => {
+      const prevRanks: Record<string, number> = {};
+      const noLiveList = [...baseList].sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
+      noLiveList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      const finalRows = baseList.map((player, index) => {
         const currentRank = index + 1;
         const prevRank = prevRanks[player.id];
         let trend = 'same';
@@ -71,19 +69,31 @@ export default function MasterPuanDurumuPage() {
 
       setTableRows(finalRows);
     } else {
-      const dataMap = activeTab === 'week1' ? masterWeek1Data : activeTab === 'week2' ? masterWeek2Data : masterWeek3Data;
+      let dataMap = masterWeek1Data;
+      if(activeTab === 'week2') dataMap = masterWeek2Data;
+      if(activeTab === 'week3') dataMap = masterWeek3Data;
+      if(activeTab === 'week4') dataMap = masterWeek4Data;
+
+      const isCurrentWeek = activeTab === 'week4';
+
       const list = Object.keys(allPlayersMasterList).map(id => {
         const rawObj = dataMap[id];
-        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0, trend: 'none' };
+        const basePuan = rawObj ? rawObj.puan : 0;
+        const liveExtra = isCurrentWeek ? (liveLeaderboard[id]?.master || 0) : 0;
+        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none' };
       });
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
+      setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
     }
   };
 
   useEffect(() => {
     loadLeaderboard();
     window.addEventListener('leaderboardUpdate', loadLeaderboard);
-    return () => window.removeEventListener('leaderboardUpdate', loadLeaderboard);
+    window.addEventListener('adminUpdate', loadLeaderboard);
+    return () => {
+      window.removeEventListener('leaderboardUpdate', loadLeaderboard);
+      window.removeEventListener('adminUpdate', loadLeaderboard);
+    };
   }, [activeTab]);
 
   const selectTab = (tabKey: string) => {
@@ -109,7 +119,6 @@ export default function MasterPuanDurumuPage() {
         </button>
         <div className="w-full relative">
           <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            {/* 🔴 EKMEL: TOTAL YAZISI VE NOKTA KALDIRILDI! SADECE HAFTA YAZISI KALDI */}
             <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `MASTER ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
             <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
           </button>
@@ -143,22 +152,31 @@ export default function MasterPuanDurumuPage() {
                     <td className="px-6 py-3.5 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
-                        {row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce" title={`Önceki Sıra: ${row.prevRank}`}>▲</span>}
-                        {row.trend === 'down' && <span className="text-red-500 text-sm" title={`Önceki Sıra: ${row.prevRank}`}>▼</span>}
-                        {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
+                        {activeTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce">▲</span>}
+                        {activeTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-sm">▼</span>}
+                        {activeTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
                       </div>
                     </td>
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
                         <span className="text-slate-200 font-semibold">{row.name}</span>
-                        {row.liveExtra > 0 && activeTab === 'total' && (
+                        
+                        {/* 🔴 EKMEL MANTIĞI */}
+                        {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                             +{row.liveExtra} CANLI
                           </span>
                         )}
+
+                        {row.liveExtra > 0 && activeTab !== 'total' && (
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-sm ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
+                            +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(1. MAÇ)'}
+                          </span>
+                        )}
+
                       </div>
                     </td>
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>
                       {row.puan}
                     </td>
                   </tr>
