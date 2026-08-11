@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import LiveMatchCard from '@/components/LiveMatchCard'; // 🔴 EKMEL: Kart Vitrine Eklendi
+import LiveMatchCard from '@/components/LiveMatchCard';
 
 const allPlayersMasterList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
@@ -16,7 +16,7 @@ const allPlayersMasterList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY", "262723": "AYHAN LUŞOĞLU",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
 const masterWeek1Data: Record<string, { name: string; puan: number }> = {
@@ -139,49 +139,67 @@ export default function MasterPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
-
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
   useEffect(() => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
 
     if (activeTab === 'total') {
-      const combinedList = Object.keys(allPlayersMasterList).map(id => {
-        const liveIcons = liveLeaderboard[id]?.icons || "";
-        const name = allPlayersMasterList[id] + liveIcons;
-
+      // 🔴 EKMEL - BAZ LİSTE (ESKİ SIRA İÇİN)
+      const baseList = Object.keys(allPlayersMasterList).map(id => {
         const w1 = masterWeek1Data[id]?.puan || 0;
         const w2 = masterWeek2Data[id]?.puan || 0;
         const w3 = masterWeek3Data[id]?.puan || 0;
-        const liveExtra = liveLeaderboard[id]?.master || 0;
-        
-        const totalPuan = w1 + w2 + w3 + liveExtra;
+        const basePuan = w1 + w2 + w3;
+        return { id, basePuan, name: allPlayersMasterList[id] };
+      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name));
 
-        let finalName = name;
+      const prevRanks: Record<string, number> = {};
+      baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      // 🔴 EKMEL - CANLI LİSTE (YENİ SIRA İÇİN)
+      const liveList = Object.keys(allPlayersMasterList).map(id => {
+        const liveIcons = liveLeaderboard[id]?.icons || "";
+        let finalName = allPlayersMasterList[id] + liveIcons;
         if (id === "262816") finalName = "SEDAT SEDAT 👑🎯" + liveIcons;
         if (id === "262755") finalName = "DOĞAÇ ALKAN" + liveIcons;
         if (id === "262736") finalName = "MEHMET ALİ KARA" + liveIcons;
 
-        return { id, name: finalName, puan: totalPuan };
+        const w1 = masterWeek1Data[id]?.puan || 0;
+        const w2 = masterWeek2Data[id]?.puan || 0;
+        const w3 = masterWeek3Data[id]?.puan || 0;
+        const basePuan = w1 + w2 + w3;
+        const liveExtra = liveLeaderboard[id]?.master || 0;
+
+        return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
+      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name));
+
+      const finalRows = liveList.map((player, index) => {
+        const currentRank = index + 1;
+        const prevRank = prevRanks[player.id];
+        let trend = 'same';
+        if (currentRank < prevRank) trend = 'up';
+        else if (currentRank > prevRank) trend = 'down';
+        return { ...player, currentRank, prevRank, trend };
       });
 
-      setTableRows(combinedList.sort((a, b) => b.puan - a.puan));
+      setTableRows(finalRows);
     } else if (activeTab === 'week1') {
       const list = Object.keys(allPlayersMasterList).map(id => {
         const rawObj = masterWeek1Data[id];
-        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0 };
+        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0, trend: 'none' };
       });
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week2') {
       const list = Object.keys(allPlayersMasterList).map(id => {
         const rawObj = masterWeek2Data[id];
-        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0 };
+        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0, trend: 'none' };
       });
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else if (activeTab === 'week3') {
       const list = Object.keys(allPlayersMasterList).map(id => {
         const rawObj = masterWeek3Data[id];
-        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0 };
+        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0, trend: 'none' };
       });
       setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
@@ -208,7 +226,6 @@ export default function MasterPuanDurumuPage() {
         </h1>
       </div>
 
-      {/* 🔴 CANLI MAÇ KARTI VİTRİNDE */}
       <div className="w-full mb-6">
         <LiveMatchCard />
       </div>
@@ -224,7 +241,6 @@ export default function MasterPuanDurumuPage() {
           </button>
           {isWeekMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="text-[11px] font-bold text-slate-400 mb-2 text-center uppercase tracking-wider border-b border-slate-800 pb-1">İncelemek İstediğiniz Haftayı Seçin</div>
               <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
                 {totalWeeks.map((weekNum) => {
                   const weekKey = `week${weekNum}`;
@@ -245,14 +261,39 @@ export default function MasterPuanDurumuPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr><th className="px-6 py-3.5 w-16 text-center">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
+                <tr><th className="px-6 py-3.5 w-20 text-center">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
-                    <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
-                    <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">{row.puan}</td>
+                    
+                    {/* 🔴 SIRA VE OK EFEKTLERİ */}
+                    <td className="px-6 py-3.5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
+                        {row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce" title={`Önceki Sıra: ${row.prevRank}`}>▲</span>}
+                        {row.trend === 'down' && <span className="text-red-500 text-sm" title={`Önceki Sıra: ${row.prevRank}`}>▼</span>}
+                        {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
+                      </div>
+                    </td>
+
+                    {/* 🔴 İSİM VE CANLI PUAN ROZETİ */}
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-200 font-semibold">{row.name}</span>
+                        {row.liveExtra > 0 && activeTab === 'total' && (
+                          <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
+                            +{row.liveExtra} CANLI
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* PUAN */}
+                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                      {row.puan}
+                    </td>
+
                   </tr>
                 ))}
               </tbody>

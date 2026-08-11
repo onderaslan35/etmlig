@@ -6,11 +6,11 @@ import LiveMatchCard from '@/components/LiveMatchCard';
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL"
 };
 
@@ -46,22 +46,18 @@ export default function DfoPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  useEffect(() => {
+  const loadLeaderboard = () => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
 
     if (activeTab === 'total') {
-      
-      // 🔴 EKMEL - ÖNCE BAZ LİSTEYİ (ESKİ SIRAYI) BULALIM 🔴
-      // Canlı puanlar eklenmeden önceki sırayı buluyoruz ki kıyaslayabilelim.
       const baseList = Object.keys(allPlayersList).map(id => {
         const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
         return { id, basePuan, name: allPlayersList[id] };
-      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name)); // Puan aynıysa isme göre sırala ki oklar sapıtmasın
+      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name));
       
       const prevRanks: Record<string, number> = {};
       baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      // 🔴 EKMEL - ŞİMDİ CANLI LİSTEYİ OLUŞTURALIM 🔴
       const liveList = Object.keys(allPlayersList).map(id => {
         const name = allPlayersList[id];
         const basePuan = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
@@ -69,43 +65,33 @@ export default function DfoPuanDurumuPage() {
         return { id, name, basePuan, liveExtra, puan: basePuan + liveExtra };
       }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name));
 
-      // 🔴 EKMEL - ESKİ VE YENİ SIRAYI KIYASLAYIP OKLARI ATAYALIM 🔴
       const finalRows = liveList.map((player, index) => {
         const currentRank = index + 1;
         const prevRank = prevRanks[player.id];
-        
         let trend = 'same';
-        if (currentRank < prevRank) trend = 'up'; // Sıra rakamı küçüldüyse (yükseldiyse)
-        else if (currentRank > prevRank) trend = 'down'; // Sıra rakamı büyüdüyse (düştüyse)
-
+        if (currentRank < prevRank) trend = 'up'; 
+        else if (currentRank > prevRank) trend = 'down'; 
         return { ...player, currentRank, prevRank, trend };
       });
-
       setTableRows(finalRows);
-
-    } else if (activeTab === 'week1') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek1Data[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week2') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek2Data[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week3') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dfoWeek3Data[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
-      setTableRows([]);
+      // Diğer sekmeler...
+      const dataMap = activeTab === 'week1' ? dfoWeek1Data : activeTab === 'week2' ? dfoWeek2Data : dfoWeek3Data;
+      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dataMap[id] || 0, trend: 'none' }));
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
     }
+  };
+
+  useEffect(() => {
+    loadLeaderboard();
+    // 🔴 EKMEL CANLI DİNLEME: Maç kartı puanı her güncellediğinde bu tablo anında titreyecek!
+    window.addEventListener('leaderboardUpdate', loadLeaderboard);
+    return () => window.removeEventListener('leaderboardUpdate', loadLeaderboard);
   }, [activeTab]);
 
   const selectTab = (tabKey: string) => {
     setActiveTab(tabKey);
     setIsWeekMenuOpen(false);
-  };
-
-  const getActiveTabTitle = () => {
-    if (activeTab === 'total') return 'DFO TOPLAM PUAN DURUMU';
-    const weekNum = activeTab.replace('week', '');
-    return `DFO ${weekNum}. HAFTA PUAN DURUMU`;
   };
 
   return (
@@ -118,32 +104,6 @@ export default function DfoPuanDurumuPage() {
 
       <div className="w-full mb-6">
         <LiveMatchCard />
-      </div>
-
-      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-          DFO TOPLAM PUAN DURUMU
-        </button>
-        <div className="w-full relative">
-          <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            <span>📅 {getActiveTabTitle()}</span>
-            <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
-          </button>
-          {isWeekMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                {totalWeeks.map((weekNum) => {
-                  const weekKey = `week${weekNum}`;
-                  return (
-                    <button key={weekNum} onClick={() => selectTab(weekKey)} className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}>
-                      {weekNum}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
@@ -160,8 +120,6 @@ export default function DfoPuanDurumuPage() {
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
                   <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                    
-                    {/* 🔴 SIRA VE OK EFEKTLERİ */}
                     <td className="px-6 py-3.5 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
@@ -170,8 +128,6 @@ export default function DfoPuanDurumuPage() {
                         {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
                       </div>
                     </td>
-
-                    {/* 🔴 İSİM VE CANLI PUAN ROZETİ */}
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
                         <span className="text-slate-200 font-semibold">{row.name}</span>
@@ -182,12 +138,9 @@ export default function DfoPuanDurumuPage() {
                         )}
                       </div>
                     </td>
-
-                    {/* PUAN */}
                     <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
                       {row.puan}
                     </td>
-
                   </tr>
                 ))}
               </tbody>
