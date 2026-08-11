@@ -19,69 +19,41 @@ const allPlayersList: Record<string, string> = {
 };
 
 const week4PredictionsData: Record<string, string[]> = {
-  "262711": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2"],
-  "262734": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1"],
-  "262721": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1"],
-  "262758": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0"],
-  "262716": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0"],
-  "262733": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0"],
-  "262744": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1"],
-  "262763": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0"],
-  "262813": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1"],
-  "262816": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1"],
-  "262718": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1"],
-  "262731": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1"],
-  "262755": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0"],
-  "262749": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0"],
-  "262726": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1"],
-  "262736": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0"],
-  "262707": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1"],
-  "262771": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1"],
-  "262725": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2"],
-  "262702": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1"],
-  "351925": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0"],
-  "262728": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1"], 
-  "262738": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1"],
-  "262730": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0"],
-  "262719": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2"],
-  "262772": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1"],
-  "262774": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1"],
-  "262723": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1"],
-  "262706": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2"],
-  "262740": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0"],
-  "262756": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2"],
-  "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2"],
-  "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1"],
-  "262705": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1"],
-  "262753": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2"],
-  "262750": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1"],
-  "262770": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0"],
-  "262754": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0"],
-  "262747": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1"],
-  "262714": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1"],
-  "262717": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1"],
-  "262703": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1"],
-  "262732": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1"],
-  "262709": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1"]
+  "262711": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2"], "262734": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1"],
+  "262721": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1"], "262758": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0"],
+  "262716": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0"], "262733": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0"],
+  "262744": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1"], "262763": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0"],
+  "262813": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1"], "262816": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1"],
+  "262718": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1"], "262731": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1"],
+  "262755": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0"], "262749": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0"],
+  "262726": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1"], "262736": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0"],
+  "262707": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1"], "262771": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1"],
+  "262725": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2"], "262702": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1"],
+  "351925": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0"], "262728": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1"], 
+  "262738": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1"], "262730": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0"],
+  "262719": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2"], "262772": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1"],
+  "262774": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1"], "262723": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1"],
+  "262706": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2"], "262740": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0"],
+  "262756": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2"],
+  "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1"], "262705": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1"],
+  "262753": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2"], "262750": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1"],
+  "262770": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0"], "262754": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0"],
+  "262747": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1"], "262714": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1"],
+  "262717": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1"], "262703": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1"],
+  "262732": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1"], "262709": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0"], "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1"]
 };
 
 const localTeamLogos: Record<string, string> = {
-  "FENERBAHÇE": "/logos/fenerbahce.png",
-  "STURM GRAZ": "/logos/sturm-graz.png",
-  "PARIS SAINT-GERMAIN": "/logos/psg.png",
-  "ASTON VILLA": "/logos/aston-villa.png",
-  "BEŞİKTAŞ": "/logos/besiktas.png",
-  "KARABAĞ FK": "/logos/karabag.png",
-  "DINAMO KIEV": "/logos/dinamo-kiev.png",
-  "HRADEC KRALOVE": "/logos/hradec.png",
-  "KAIRAT ALMATY": "/logos/kairat.png",
-  "LEVSKI SOFIA": "/logos/levski.png"
+  "FENERBAHÇE": "/logos/fenerbahce.png", "STURM GRAZ": "/logos/sturm-graz.png",
+  "PARIS SAINT-GERMAIN": "/logos/psg.png", "ASTON VILLA": "/logos/aston-villa.png",
+  "BEŞİKTAŞ": "/logos/besiktas.png", "KARABAĞ FK": "/logos/karabag.png",
+  "DINAMO KIEV": "/logos/dinamo-kiev.png", "HRADEC KRALOVE": "/logos/hradec.png",
+  "KAIRAT ALMATY": "/logos/kairat.png", "LEVSKI SOFIA": "/logos/levski.png"
 };
 
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA - 1. MAÇ", category: "CHAMPIONS LEAGUE ELEME TUR 3", date: "11.08.2026", time: "18:00", homeTeam: "KAIRAT ALMATY", awayTeam: "LEVSKI SOFIA" }
+  { id: 1, weekLabel: "4. HAFTA - 1. MAÇ (GERÇEK TEST)", category: "CHAMPIONS LEAGUE ELEME TUR 3", date: "11.08.2026", time: "18:00", homeTeam: "KAIRAT ALMATY", awayTeam: "LEVSKI SOFIA" }
 ];
 
 export default function LiveMatchCard() {
@@ -105,32 +77,93 @@ export default function LiveMatchCard() {
     const matchesForToday = week4Matches.filter(m => m.date === formattedToday);
     setTodaysMatches(matchesForToday);
 
+    // 🔴 EKMEL HAYALET KURYESİ (CLIENT-SIDE FETCH) 🔴
     const fetchAllLiveScores = async () => {
       const newData: Record<number, any> = {};
+      
+      // Saat farklarına karşı garantili tarih
+      const trTime = new Date(new Date().getTime() + (3 * 60 * 60 * 1000));
+      const dateStr = `${trTime.getFullYear()}${String(trTime.getMonth() + 1).padStart(2, '0')}${String(trTime.getDate()).padStart(2, '0')}`;
+
       for (const match of matchesForToday) {
         try {
-          const homeEncoded = encodeURIComponent(match.homeTeam);
-          const awayEncoded = encodeURIComponent(match.awayTeam);
+          // Vercel'i pas geçip, senin tarayıcın üzerinden FotMob'a AllOrigins maskesiyle gidiyoruz
+          const targetUrl = `https://www.fotmob.com/api/matches?date=${dateStr}`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
           
-          const res = await fetch(`/api/canli-skor?home=${homeEncoded}&away=${awayEncoded}`);
-          if (res.ok) {
-            const data = await res.json();
-            newData[match.id] = data;
+          const res = await fetch(proxyUrl, { cache: 'no-store' });
+          if (!res.ok) continue;
+
+          const proxyData = await res.json();
+          // JSON stringini normal objeye çeviriyoruz
+          if (!proxyData.contents) continue;
+          const data = JSON.parse(proxyData.contents);
+          
+          // İlk 4 harf ile radar eşleştirmesi
+          const homeKeyword = match.homeTeam.substring(0, 4).toUpperCase();
+          const awayKeyword = match.awayTeam.substring(0, 4).toUpperCase();
+          
+          let matchFound = null;
+
+          if (data && data.leagues) {
+            for (const league of data.leagues) {
+              if (!league.matches) continue;
+              for (const m of league.matches) {
+                const fotmobHome = (m.home?.name || '').toUpperCase();
+                const fotmobAway = (m.away?.name || '').toUpperCase();
+                
+                if (fotmobHome.includes(homeKeyword) && fotmobAway.includes(awayKeyword)) {
+                  matchFound = m;
+                  break;
+                }
+              }
+              if (matchFound) break;
+            }
+          }
+
+          if (matchFound) {
+            const isFinished = matchFound.status?.finished || matchFound.status?.type === 'finished';
+            const isStarted = matchFound.status?.started || matchFound.status?.type === 'inprogress' || matchFound.status?.liveTime != null;
+            const isCancelled = matchFound.status?.cancelled || matchFound.status?.type === 'cancelled';
+            
+            let status = 'NOT_STARTED';
+            if (isFinished) status = 'FINISHED';
+            else if (isStarted && !isCancelled) status = 'LIVE';
+
+            let hScore = matchFound.home?.score ?? 0;
+            let aScore = matchFound.away?.score ?? 0;
+            
+            if (matchFound.status?.scoreStr) {
+               const scoreParts = matchFound.status.scoreStr.split('-');
+               if (scoreParts.length === 2) {
+                  hScore = parseInt(scoreParts[0].trim());
+                  aScore = parseInt(scoreParts[1].trim());
+               }
+            }
+
+            newData[match.id] = {
+              status: status,
+              homeScore: isNaN(hScore) ? 0 : hScore,
+              awayScore: isNaN(aScore) ? 0 : aScore,
+              matchTime: matchFound.status?.liveTime?.short || "1'"
+            };
           }
         } catch (err) {
-          console.error("API Hatası:", err);
+          console.log("Client-Side Fetch Hatası: ", err);
         }
       }
+      
       if (Object.keys(newData).length > 0) setLiveData(newData);
     };
 
     if (matchesForToday.length > 0) {
-      fetchAllLiveScores();
-      const interval = setInterval(fetchAllLiveScores, 15000); 
+      fetchAllLiveScores(); // İlk çekim
+      const interval = setInterval(fetchAllLiveScores, 15000); // 15 saniyede bir senin tarayıcından sessizce çeker
       return () => clearInterval(interval);
     }
   }, []);
 
+  // CANLI PUAN MOTORU
   useEffect(() => {
     if (todaysMatches.length === 0) return;
 
@@ -241,7 +274,7 @@ export default function LiveMatchCard() {
                 🧪 TEST AŞAMASI
               </div>
               <div className="absolute top-0 right-0 bg-cyan-600 text-slate-950 font-black px-3 py-1 rounded-bl-xl text-[10px] shadow-lg z-20">
-                ⚡ GERÇEK API BAĞLANTISI AKTİF
+                ⚡ HAYALET KURYE (CANLI) AKTİF
               </div>
 
               <div className="text-center mb-6 mt-4">
