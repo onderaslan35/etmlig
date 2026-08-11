@@ -53,7 +53,7 @@ const localTeamLogos: Record<string, string> = {
 };
 
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA - 1. MAÇ", category: "CHAMPIONS LEAGUE ELEME TUR 3", date: "11.08.2026", time: "18:00", homeTeam: "KAIRAT ALMATY", awayTeam: "LEVSKI SOFIA" }
+  { id: 1, weekLabel: "4. HAFTA - 1. MAÇ (GERÇEK TEST)", category: "CHAMPIONS LEAGUE ELEME TUR 3", date: "11.08.2026", time: "18:00", homeTeam: "KAIRAT ALMATY", awayTeam: "LEVSKI SOFIA" }
 ];
 
 export default function LiveMatchCard() {
@@ -81,7 +81,11 @@ export default function LiveMatchCard() {
       const newData: Record<number, any> = {};
       for (const match of matchesForToday) {
         try {
-          const res = await fetch(`/api/canli-skor?home=${match.homeTeam}&away=${match.awayTeam}`);
+          // 🔴 EKMEL DOKUNUŞU: encodeURIComponent eklendi! Boşluklar URL'de kırılmayacak!
+          const homeEncoded = encodeURIComponent(match.homeTeam);
+          const awayEncoded = encodeURIComponent(match.awayTeam);
+          
+          const res = await fetch(`/api/canli-skor?home=${homeEncoded}&away=${awayEncoded}`);
           if (res.ok) {
             const data = await res.json();
             newData[match.id] = data;
@@ -95,7 +99,7 @@ export default function LiveMatchCard() {
 
     if (matchesForToday.length > 0) {
       fetchAllLiveScores();
-      const interval = setInterval(fetchAllLiveScores, 60000); 
+      const interval = setInterval(fetchAllLiveScores, 15000); // Kairat maçı 15 saniyede bir güncellensin!
       return () => clearInterval(interval);
     }
   }, []);
@@ -186,6 +190,7 @@ export default function LiveMatchCard() {
         else if(winnersCount === 4) displayPoints = 4;
         else if(winnersCount === 5) displayPoints = 3;
         else if(winnersCount === 6) displayPoints = 2;
+        else if(winnersCount === 0) displayPoints = 0;
 
         let countdownText = "";
         if (!isLive && !isFinished) {
@@ -205,13 +210,9 @@ export default function LiveMatchCard() {
           <div key={match.id} className="w-full max-w-lg bg-[#0a1120] border border-cyan-500/60 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.2)] overflow-hidden transition-all duration-500 flex flex-col mt-4">
             
             <div className="p-4 sm:p-6 relative flex-grow">
-              
-              {/* 🔴 EKMEL - SOL ÜST: TEST AŞAMASI ETİKETİ */}
               <div className="absolute top-0 left-0 bg-amber-500 text-slate-950 font-black px-3 py-1 rounded-br-xl text-[10px] animate-pulse shadow-lg z-20">
                 🧪 TEST AŞAMASI
               </div>
-
-              {/* 🔴 EKMEL - SAĞ ÜST: GERÇEK API ETİKETİ */}
               <div className="absolute top-0 right-0 bg-cyan-600 text-slate-950 font-black px-3 py-1 rounded-bl-xl text-[10px] shadow-lg z-20">
                 ⚡ GERÇEK API BAĞLANTISI AKTİF
               </div>

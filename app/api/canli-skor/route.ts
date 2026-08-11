@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// 🔴 EKMEL DOKUNUŞU: Bu sayede Next.js skoru hafızaya almaz (cache yapmaz), her saniye güncel çeker!
 export const dynamic = 'force-dynamic'; 
 
 export async function GET(request: Request) {
@@ -13,32 +12,41 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Bugünün tarihini FotMob'un anladığı formata (YYYYMMDD) çeviriyoruz
+    // 🔴 EKMEL DOKUNUŞU: Vercel İngiltere saatindedir, biz Türkiye saatini (UTC+3) zorluyoruz ki tarih şaşmasın!
     const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
+    const trTime = new Date(today.getTime() + (3 * 60 * 60 * 1000));
+    const yyyy = trTime.getFullYear();
+    const mm = String(trTime.getMonth() + 1).padStart(2, '0');
+    const dd = String(trTime.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}${mm}${dd}`;
 
-    // FotMob'un Günlük Canlı Maçlar Sistemine Sızıyoruz
+    // 🔴 EKMEL DOKUNUŞU: FotMob, Vercel'i bot sanmasın diye sahte Chrome Tarayıcı kimliği (Headers) takıyoruz!
     const response = await fetch(`https://www.fotmob.com/api/matches?date=${dateStr}`, {
       headers: {
-        'Cache-Control': 'no-cache',
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'sec-ch-ua': '"Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-      }
+      },
+      cache: 'no-store'
     });
     
+    if (!response.ok) {
+       return NextResponse.json({ error: `FotMob API Engeli. Status: ${response.status}` }, { status: response.status });
+    }
+
     const data = await response.json();
     let matchFound = null;
 
-    // FotMob'un o devasa lig listesi içinde bizim Kairat Almaty'yi arıyoruz
     if (data && data.leagues) {
       for (const league of data.leagues) {
         for (const m of league.matches) {
           const fotmobHome = m.home.name.toUpperCase();
           const fotmobAway = m.away.name.toUpperCase();
 
-          // Kısmi eşleşme: İsimlerin bir kısmı uysa bile yakalar (Örn: "KAIRAT ALMATY" ile "Kairat")
           if (
             (fotmobHome.includes(home) || home.includes(fotmobHome)) &&
             (fotmobAway.includes(away) || away.includes(fotmobAway))
@@ -51,7 +59,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // EĞER MAÇI BULDUYSAK VİTRİNE GÖNDER!
     if (matchFound) {
       const isFinished = matchFound.status.finished;
       const isStarted = matchFound.status.started;
@@ -68,10 +75,10 @@ export async function GET(request: Request) {
         matchTime: matchFound.status.liveTime?.short || "1'"
       });
     } else {
-      return NextResponse.json({ error: 'Mac henüz FotMob listesine dusmedi veya bulunamadi.' }, { status: 404 });
+      return NextResponse.json({ error: 'Mac listede bulunamadi', home, away }, { status: 404 });
     }
 
   } catch (error) {
-    return NextResponse.json({ error: 'FotMob baglanti hatasi' }, { status: 500 });
+    return NextResponse.json({ error: 'Sunucu baglanti hatasi' }, { status: 500 });
   }
 }
