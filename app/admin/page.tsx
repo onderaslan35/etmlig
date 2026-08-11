@@ -97,7 +97,7 @@ const week4Matches = [
 ];
 
 export default function AdminTahminmatik() {
-  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState<boolean>(true); // Otomatik açık başlasın
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState<boolean>(true); 
   const [matchInputs, setMatchInputs] = useState<Record<number, { home: string, away: string, min: string }>>({});
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -141,7 +141,6 @@ export default function AdminTahminmatik() {
       console.log("Supabase hatası, sadece lokal güncelleniyor.");
     }
 
-    // YEDEK LOKAL GÜNCELLEME (Hızlı Tepki İçin)
     const targetScore = `${h}-${a}`;
     const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchId - 1] === targetScore);
     
@@ -154,7 +153,9 @@ export default function AdminTahminmatik() {
     else if(winnerIds.length === 6) points = 2;
     else if(winnerIds.length === 0) points = 0;
 
-    const currentBoard = {}; 
+    // 🔴 HATA BURADAYDI, DÜZELTİLDİ: Explicit Record type added to satisfy Vercel TS Compiler
+    const currentBoard: Record<string, any> = {}; 
+
     winnerIds.forEach(wId => {
       currentBoard[wId] = { dfo: points, master: points, skor: 1 };
     });

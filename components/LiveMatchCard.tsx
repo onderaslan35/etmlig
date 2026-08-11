@@ -95,7 +95,7 @@ export default function LiveMatchCard() {
   useEffect(() => {
     setTodaysMatches(week4Matches);
     
-    // 🔴 SEYİRCİ KARTI: DÜNYAYA AÇILAN KAPI (SUPABASE DİNLEYİCİSİ)
+    // 🔴 DÜNYAYA AÇILAN KAPI (SUPABASE DİNLEYİCİSİ)
     const fetchFromDB = async () => {
       try {
         const { data, error } = await supabase.from('live_matches').select('*').eq('id', 1).single();
@@ -119,7 +119,9 @@ export default function LiveMatchCard() {
             else if(winnerIds.length === 5) points = 3;
             else if(winnerIds.length === 6) points = 2;
 
-            const currentBoard = {}; 
+            // 🔴 HATA BURADAYDI, DÜZELTİLDİ: Explicit Record type
+            const currentBoard: Record<string, any> = {}; 
+            
             winnerIds.forEach(wId => {
               currentBoard[wId] = { dfo: points, master: points, skor: 1 };
             });
@@ -137,7 +139,7 @@ export default function LiveMatchCard() {
     };
 
     fetchFromDB(); 
-    const interval = setInterval(fetchFromDB, 5000); // Her 5 saniyede bir Supabase'i kontrol et!
+    const interval = setInterval(fetchFromDB, 5000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -145,7 +147,6 @@ export default function LiveMatchCard() {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
   };
 
-  // 🔴 AKILLI DAKİKA HESAPLAMA MOTORU (Sen dokunmasan da saniye saniye sayar!)
   const getDisplayMinute = () => {
     if (!startedAt || !baseMinute || baseMinute === 'İY' || baseMinute === 'MS') return baseMinute;
     
