@@ -61,6 +61,7 @@ export default function LiveMatchCard() {
   const [liveData, setLiveData] = useState<Record<number, any>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
@@ -77,93 +78,123 @@ export default function LiveMatchCard() {
     const matchesForToday = week4Matches.filter(m => m.date === formattedToday);
     setTodaysMatches(matchesForToday);
 
-    // 🔴 EKMEL HAYALET KURYESİ (CLIENT-SIDE FETCH) 🔴
     const fetchAllLiveScores = async () => {
-      const newData: Record<number, any> = {};
-      
-      // Saat farklarına karşı garantili tarih
+      let fotmobData = null;
+      setFetchError(null);
+
+      // EKMEL ZIRHI 1: Tarih Şaşmasına Karşı 3 Günü Tarayacağız
+      const datesToTry = [];
       const trTime = new Date(new Date().getTime() + (3 * 60 * 60 * 1000));
-      const dateStr = `${trTime.getFullYear()}${String(trTime.getMonth() + 1).padStart(2, '0')}${String(trTime.getDate()).padStart(2, '0')}`;
+      for (let i = -1; i <= 1; i++) {
+        const d = new Date(trTime.getTime() + (i * 24 * 60 * 60 * 1000));
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        datesToTry.push(`${yyyy}${mm}${dd}`);
+      }
+
+      // 🔴 EKMEL'İN BÜYÜK DEVRİMİ: 3'LÜ TİTANYUM PROXY SİSTEMİ 🔴
+      // Biri engellenirse diğeri anında devreye girer!
+      for (const dateStr of datesToTry) {
+        const targetUrl = `https://www.fotmob.com/api/matches?date=${dateStr}&_=${new Date().getTime()}`; // Cache buster
+        
+        const proxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+          targetUrl // Son çare direkt denemek
+        ];
+
+        for (const proxyUrl of proxies) {
+          try {
+            const res = await fetch(proxyUrl, { cache: 'no-store' });
+            if (!res.ok) continue;
+            
+            const json = await res.json();
+            if (json && json.leagues) {
+              fotmobData = json;
+              break; // BAŞARILI! Datayı aldık, döngüden çık
+            }
+          } catch (e) {
+            continue; // Hata verirse sessizce diğer proxy'e geç
+          }
+        }
+        if (fotmobData) break; // Eğer veriyi bulduysak diğer günleri aramayı bırak
+      }
+
+      // EĞER 3 PROXY DE PATLARSA (Kİ ÇOK ZOR)
+      if (!fotmobData) {
+        setFetchError("API Engellendi! Proxyler devredışı.");
+        return;
+      }
+
+      // Veriyi bulduk, şimdi bizim maçı eşleştirelim
+      const newData: Record<number, any> = {};
 
       for (const match of matchesForToday) {
-        try {
-          // Vercel'i pas geçip, senin tarayıcın üzerinden FotMob'a AllOrigins maskesiyle gidiyoruz
-          const targetUrl = `https://www.fotmob.com/api/matches?date=${dateStr}`;
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-          
-          const res = await fetch(proxyUrl, { cache: 'no-store' });
-          if (!res.ok) continue;
+        // Sadece ilk 4 harfe bak! ("KAIRAT" -> "KAIR")
+        const homeKeyword = match.homeTeam.substring(0, 4).toUpperCase();
+        const awayKeyword = match.awayTeam.substring(0, 4).toUpperCase();
+        
+        let matchFound = null;
 
-          const proxyData = await res.json();
-          // JSON stringini normal objeye çeviriyoruz
-          if (!proxyData.contents) continue;
-          const data = JSON.parse(proxyData.contents);
-          
-          // İlk 4 harf ile radar eşleştirmesi
-          const homeKeyword = match.homeTeam.substring(0, 4).toUpperCase();
-          const awayKeyword = match.awayTeam.substring(0, 4).toUpperCase();
-          
-          let matchFound = null;
-
-          if (data && data.leagues) {
-            for (const league of data.leagues) {
-              if (!league.matches) continue;
-              for (const m of league.matches) {
-                const fotmobHome = (m.home?.name || '').toUpperCase();
-                const fotmobAway = (m.away?.name || '').toUpperCase();
-                
-                if (fotmobHome.includes(homeKeyword) && fotmobAway.includes(awayKeyword)) {
-                  matchFound = m;
-                  break;
-                }
-              }
-              if (matchFound) break;
+        for (const league of fotmobData.leagues) {
+          if (!league.matches) continue;
+          for (const m of league.matches) {
+            const fotmobHome = (m.home?.name || '').toUpperCase();
+            const fotmobAway = (m.away?.name || '').toUpperCase();
+            
+            if (fotmobHome.includes(homeKeyword) && fotmobAway.includes(awayKeyword)) {
+              matchFound = m;
+              break;
             }
           }
+          if (matchFound) break;
+        }
 
-          if (matchFound) {
-            const isFinished = matchFound.status?.finished || matchFound.status?.type === 'finished';
-            const isStarted = matchFound.status?.started || matchFound.status?.type === 'inprogress' || matchFound.status?.liveTime != null;
-            const isCancelled = matchFound.status?.cancelled || matchFound.status?.type === 'cancelled';
-            
-            let status = 'NOT_STARTED';
-            if (isFinished) status = 'FINISHED';
-            else if (isStarted && !isCancelled) status = 'LIVE';
+        if (matchFound) {
+          const isFinished = matchFound.status?.finished || matchFound.status?.type === 'finished';
+          const isStarted = matchFound.status?.started || matchFound.status?.type === 'inprogress' || matchFound.status?.liveTime != null;
+          const isCancelled = matchFound.status?.cancelled || matchFound.status?.type === 'cancelled';
+          
+          let status = 'NOT_STARTED';
+          if (isFinished) status = 'FINISHED';
+          else if (isStarted && !isCancelled) status = 'LIVE';
 
-            let hScore = matchFound.home?.score ?? 0;
-            let aScore = matchFound.away?.score ?? 0;
-            
-            if (matchFound.status?.scoreStr) {
-               const scoreParts = matchFound.status.scoreStr.split('-');
-               if (scoreParts.length === 2) {
-                  hScore = parseInt(scoreParts[0].trim());
-                  aScore = parseInt(scoreParts[1].trim());
-               }
-            }
-
-            newData[match.id] = {
-              status: status,
-              homeScore: isNaN(hScore) ? 0 : hScore,
-              awayScore: isNaN(aScore) ? 0 : aScore,
-              matchTime: matchFound.status?.liveTime?.short || "1'"
-            };
+          let hScore = matchFound.home?.score ?? 0;
+          let aScore = matchFound.away?.score ?? 0;
+          
+          // Fotmob skor string koruması
+          if (matchFound.status?.scoreStr) {
+             const scoreParts = matchFound.status.scoreStr.split('-');
+             if (scoreParts.length === 2) {
+                hScore = parseInt(scoreParts[0].trim());
+                aScore = parseInt(scoreParts[1].trim());
+             }
           }
-        } catch (err) {
-          console.log("Client-Side Fetch Hatası: ", err);
+
+          newData[match.id] = {
+            status: status,
+            homeScore: isNaN(hScore) ? 0 : hScore,
+            awayScore: isNaN(aScore) ? 0 : aScore,
+            matchTime: matchFound.status?.liveTime?.short || "1'"
+          };
         }
       }
       
-      if (Object.keys(newData).length > 0) setLiveData(newData);
+      if (Object.keys(newData).length > 0) {
+        setLiveData(newData);
+        setFetchError(null);
+      }
     };
 
     if (matchesForToday.length > 0) {
-      fetchAllLiveScores(); // İlk çekim
-      const interval = setInterval(fetchAllLiveScores, 15000); // 15 saniyede bir senin tarayıcından sessizce çeker
+      fetchAllLiveScores(); 
+      const interval = setInterval(fetchAllLiveScores, 15000); // 15 Saniyede Bir Tarar
       return () => clearInterval(interval);
     }
   }, []);
 
-  // CANLI PUAN MOTORU
+  // 🔴 CANLI PUAN HESAPLAMA MOTORU 🔴
   useEffect(() => {
     if (todaysMatches.length === 0) return;
 
@@ -292,9 +323,13 @@ export default function LiveMatchCard() {
                 </div>
 
                 <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32 z-10">
-                  {!isLive && !isFinished ? (
+                  {!isLive && !isFinished && !fetchError ? (
                     <div className="bg-[#141e33] border border-slate-600/80 px-4 py-1 rounded-full shadow-sm">
                       <span className="text-amber-400 text-xs sm:text-sm font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                    </div>
+                  ) : fetchError ? (
+                    <div className="bg-red-950/80 border border-red-700 px-4 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse">
+                      <span className="text-red-500 text-[10px] font-black tracking-widest">API ENGELLENDİ</span>
                     </div>
                   ) : isLive ? (
                     <div className="bg-red-950/80 border border-red-700 px-4 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse">
@@ -313,7 +348,7 @@ export default function LiveMatchCard() {
                     <span className="text-2xl sm:text-3xl font-black text-cyan-400 drop-shadow-md">{awayScore}</span>
                   </div>
 
-                  {!isLive && !isFinished && countdownText && (
+                  {!isLive && !isFinished && countdownText && !fetchError && (
                     <div className="w-full bg-[#0c2a3b] border border-[#164e63] py-1.5 rounded-lg text-center shadow-md">
                       <span className="text-[#38bdf8] text-[10px] sm:text-xs font-mono font-bold tracking-widest drop-shadow-sm">
                         {countdownText}
@@ -336,7 +371,7 @@ export default function LiveMatchCard() {
                 
                 <div className="text-left flex-1">
                   {!isLive && !isFinished ? (
-                    <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
+                    <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">{fetchError ? 'Sistem deniyor...' : 'Maç saatini bekliyor...'}</span>
                   ) : winnersCount === 0 ? (
                     <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
                   ) : (
