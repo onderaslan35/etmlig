@@ -16,7 +16,7 @@ const allPlayersList: Record<string, string> = {
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU" // 🔴 EKMEL EKSİĞİ: Bu kişi listede yoktu, eklendi!
+  "262723": "AYHAN LUŞOĞLU" 
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -97,103 +97,129 @@ const week4Matches = [
 ];
 
 export default function TahminmatikPage() {
-  const [selectedMatchId, setSelectedMatchId] = useState<number>(1);
-  const selectedMatch = week4Matches.find(m => m.id === selectedMatchId) || week4Matches[0];
+  const [selectedWeek, setSelectedWeek] = useState<number>(4);
+  const [matchInputs, setMatchInputs] = useState<Record<number, { home: string, away: string }>>({});
 
-  const matchPredictions = Object.entries(week4PredictionsData).map(([id, preds]) => {
-    return {
-      // 🔴 EKMEL ÇELİK ZIRHI: Liste uyuşmazlığında çökmeyi sonsuza kadar önler
-      name: allPlayersList[id] || `Bilinmeyen Oyuncu (${id})`,
-      prediction: preds[selectedMatchId - 1] || "-"
-    };
-  }).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-  const predictionCounts = matchPredictions.reduce((acc, curr) => {
-    if (curr.prediction !== "-") {
-      acc[curr.prediction] = (acc[curr.prediction] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  const calculatePoints = (winnersCount: number) => {
+    if (winnersCount === 0) return 0;
+    if (winnersCount === 1) return 12;
+    if (winnersCount === 2) return 6;
+    if (winnersCount === 3) return 5;
+    if (winnersCount === 4) return 4;
+    if (winnersCount === 5) return 3;
+    if (winnersCount === 6) return 2;
+    return 1; 
+  };
 
-  const sortedStats = Object.entries(predictionCounts).sort((a, b) => b[1] - a[1]);
+  const handleScoreChange = (matchId: number, type: 'home' | 'away', value: string) => {
+    setMatchInputs(prev => ({
+      ...prev,
+      [matchId]: {
+        ...prev[matchId] || { home: "-", away: "-" },
+        [type]: value
+      }
+    }));
+  };
+
+  const getWinnersForMatch = (matchIndex: number, home: string, away: string) => {
+    if (!home || !away || home === "-" || away === "-") return [];
+    
+    const targetScore = `${home}-${away}`;
+    const winners: string[] = [];
+    
+    Object.keys(week4PredictionsData).forEach(playerId => {
+      const preds = week4PredictionsData[playerId];
+      if (preds && preds[matchIndex] && preds[matchIndex] === targetScore) {
+        winners.push(allPlayersList[playerId] || `Bilinmeyen Oyuncu (${playerId})`);
+      }
+    });
+    
+    return winners.sort((a, b) => a.localeCompare(b, 'tr'));
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 text-slate-100 min-h-screen">
       
-      <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/60 p-5 rounded-2xl border border-slate-800 shadow-xl mb-8">
-        <div className="text-center md:text-left mb-4 md:mb-0">
-          <h1 className="text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase flex items-center justify-center md:justify-start gap-2">
-            ⚡ 4. HAFTA TAHMİNMATİK
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">Yarışmacıların maç bazlı tahmin analizleri</p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <label className="text-[10px] text-amber-500 font-bold mb-1 ml-1 uppercase">MAÇ SEÇİN</label>
-            <select 
-              value={selectedMatchId} 
-              onChange={(e) => setSelectedMatchId(Number(e.target.value))}
-              className="bg-slate-950 border border-slate-700 text-slate-200 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-amber-500 transition-colors shadow-inner w-64 sm:w-80 cursor-pointer"
-            >
-              {week4Matches.map(m => (
-                <option key={m.id} value={m.id}>MAÇ {m.id} | {m.homeTeam} - {m.awayTeam}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl mb-8">
+        <h1 className="text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase flex items-center gap-3">
+          ⚡ 4. HAFTA TAHMİNMATİK
+        </h1>
+        <p className="text-slate-400 text-sm mt-2 md:mt-0 font-medium">İstediğiniz skoru seçin, kimlerin doğru tahmin ettiğini görün!</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-center items-center text-center">
-           <h3 className="text-slate-400 text-xs font-bold tracking-widest mb-3 uppercase border-b border-slate-800 pb-2 w-full">SEÇİLİ MAÇ</h3>
-           <div className="text-xl font-black text-white">{selectedMatch.homeTeam}</div>
-           <div className="text-amber-500 font-black my-1">VS</div>
-           <div className="text-xl font-black text-white">{selectedMatch.awayTeam}</div>
-           <div className="mt-4 bg-slate-950 px-4 py-1.5 rounded-lg border border-slate-800 text-[10px] text-slate-400 uppercase tracking-widest">
-             {selectedMatch.category}
-           </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {week4Matches.map((match, index) => {
+          const currentInputs = matchInputs[match.id] || { home: "-", away: "-" };
+          const winners = getWinnersForMatch(index, currentInputs.home, currentInputs.away);
+          const earnedPoints = calculatePoints(winners.length);
 
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
-           <h3 className="text-slate-400 text-xs font-bold tracking-widest mb-4 uppercase border-b border-slate-800 pb-2">📊 TAHMİN İSTATİSTİKLERİ (TÜM YARIŞMACILAR)</h3>
-           <div className="flex flex-wrap gap-3">
-             {sortedStats.length > 0 ? (
-               sortedStats.map(([score, count], idx) => (
-                 <div key={score} className={`flex items-center gap-3 px-4 py-2 rounded-xl border shadow-sm ${idx === 0 ? 'bg-amber-500/10 border-amber-500/50' : 'bg-slate-950 border-slate-700'}`}>
-                    <span className={`text-lg font-black ${idx === 0 ? 'text-amber-400' : 'text-slate-300'}`}>{score}</span>
-                    <span className="bg-slate-800 text-slate-300 text-[10px] px-2 py-1 rounded font-bold">{count} KİŞİ</span>
-                 </div>
-               ))
-             ) : (
-               <span className="text-slate-500 text-sm">Bu maç için henüz tahmin girilmemiş.</span>
-             )}
-           </div>
-        </div>
-      </div>
+          return (
+            <div key={match.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col justify-between hover:border-amber-500/30 transition-colors">
+              
+              <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-800/80">
+                <span className="text-xs font-black text-slate-300 tracking-widest uppercase">{match.title}</span>
+                <span className="text-[9px] font-bold text-slate-400 bg-slate-950 px-2 py-1 rounded-md border border-slate-800 uppercase max-w-[150px] truncate">
+                  {match.category}
+                </span>
+              </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="bg-slate-950/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
-          <h2 className="text-sm font-extrabold text-white tracking-wide uppercase">
-            YARIŞMACI TAHMİNLERİ
-          </h2>
-          <span className="bg-slate-800 text-slate-300 text-xs font-bold px-3 py-1 rounded-full border border-slate-700">
-            {matchPredictions.length} KİŞİ
-          </span>
-        </div>
+              <div className="flex items-center justify-between gap-2 sm:gap-4 mb-5">
+                <span className="flex-1 text-right text-xs sm:text-sm font-extrabold text-white uppercase">{match.homeTeam}</span>
+                
+                <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800 shadow-inner">
+                  <select 
+                    value={currentInputs.home} 
+                    onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
+                    className="bg-slate-900 text-amber-400 font-bold text-lg px-3 py-1.5 rounded-lg outline-none border border-slate-700 focus:border-amber-500 cursor-pointer appearance-none text-center"
+                  >
+                    {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                  <span className="text-slate-500 font-bold">-</span>
+                  <select 
+                    value={currentInputs.away} 
+                    onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
+                    className="bg-slate-900 text-amber-400 font-bold text-lg px-3 py-1.5 rounded-lg outline-none border border-slate-700 focus:border-amber-500 cursor-pointer appearance-none text-center"
+                  >
+                    {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+                
+                <span className="flex-1 text-left text-xs sm:text-sm font-extrabold text-white uppercase">{match.awayTeam}</span>
+              </div>
 
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {matchPredictions.map((mp, idx) => (
-            <div key={idx} className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 flex justify-between items-center hover:bg-slate-800/40 transition-colors">
-               <span className="text-xs font-semibold text-slate-300 truncate pr-2" title={mp.name}>{mp.name}</span>
-               <span className="bg-slate-900 border border-slate-700 text-amber-400 font-black text-sm px-3 py-1 rounded-lg shadow-inner min-w-[50px] text-center">
-                 {mp.prediction}
-               </span>
+              <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800 mb-2 min-h-[80px]">
+                <div className="text-xs font-bold mb-2 flex justify-between items-center border-b border-slate-800/80 pb-2">
+                  <span className="text-amber-500 flex items-center gap-1.5">
+                    🎯 Skoru Bilenler [{winners.length} Kişi]
+                  </span>
+                  {winners.length > 0 && (
+                    <span className="text-[10px] bg-emerald-950/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-900/50">
+                      Kişi Başı: {earnedPoints} Puan
+                    </span>
+                  )}
+                </div>
+                
+                {winners.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mt-2 animate-fadeIn">
+                    {winners.map((winner, idx) => (
+                      <span key={idx} className="bg-slate-800 text-slate-200 text-[10px] px-2 py-1 rounded border border-slate-700 font-medium">
+                        {winner}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-slate-500 italic mt-2 text-center">
+                    {currentInputs.home === "-" || currentInputs.away === "-" ? "Skor girilmesini bekliyor..." : "Bu skoru tam bilen yarışmacı bulunamadı."}
+                  </div>
+                )}
+              </div>
+              
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
-
     </div>
   );
 }
