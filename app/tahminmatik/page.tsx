@@ -15,7 +15,8 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU" // 🔴 EKMEL EKSİĞİ: Bu kişi listede yoktu, eklendi!
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -99,15 +100,14 @@ export default function TahminmatikPage() {
   const [selectedMatchId, setSelectedMatchId] = useState<number>(1);
   const selectedMatch = week4Matches.find(m => m.id === selectedMatchId) || week4Matches[0];
 
-  // Bu maç için bütün yarışmacıların tahminlerini bulalım
   const matchPredictions = Object.entries(week4PredictionsData).map(([id, preds]) => {
     return {
-      name: allPlayersList[id],
+      // 🔴 EKMEL ÇELİK ZIRHI: Liste uyuşmazlığında çökmeyi sonsuza kadar önler
+      name: allPlayersList[id] || `Bilinmeyen Oyuncu (${id})`,
       prediction: preds[selectedMatchId - 1] || "-"
     };
   }).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-  // Yapay Zeka: Skor istatistiklerini çıkaralım
   const predictionCounts = matchPredictions.reduce((acc, curr) => {
     if (curr.prediction !== "-") {
       acc[curr.prediction] = (acc[curr.prediction] || 0) + 1;
@@ -144,7 +144,6 @@ export default function TahminmatikPage() {
         </div>
       </div>
 
-      {/* İSTATİSTİK (YAPAY ZEKA ANALİZİ) BÖLÜMÜ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-center items-center text-center">
            <h3 className="text-slate-400 text-xs font-bold tracking-widest mb-3 uppercase border-b border-slate-800 pb-2 w-full">SEÇİLİ MAÇ</h3>
@@ -173,7 +172,6 @@ export default function TahminmatikPage() {
         </div>
       </div>
 
-      {/* YARIŞMACI LİSTESİ BÖLÜMÜ */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         <div className="bg-slate-950/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
           <h2 className="text-sm font-extrabold text-white tracking-wide uppercase">
