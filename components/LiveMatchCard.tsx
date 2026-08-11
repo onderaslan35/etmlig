@@ -18,23 +18,55 @@ const allPlayersList: Record<string, string> = {
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
+// 🔴 EKMEL - GÜNCEL 4. HAFTA TAHMİNLERİ
 const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1"], "262758": ["1-2", "3-0", "2-0"], "262763": ["1-1", "1-1", "1-1"],
-  "262744": ["1-2", "3-1", "1-1"], "262813": ["1-2", "4-1", "1-0"], "351925": ["0-2", "0-0", "2-1"],
-  "262732": ["2-1", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0"],
-  "262774": ["0-1", "2-0", "1-0"], "262771": ["2-2", "3-1", "2-1"], "262730": ["0-2", "3-0", "1-0"],
-  "262707": ["0-4", "3-0", "2-1"], "262816": ["0-1", "3-1", "0-2"], "262719": ["2-1", "2-1", "2-0"],
-  "262725": ["0-2", "2-0", "1-1"], "262711": ["0-1", "3-1", "1-0"], "262718": ["1-2", "4-1", "3-1"],
-  "262721": ["0-1", "2-0", "1-0"], "262726": ["1-3", "2-2", "2-2"], "262702": ["0-2", "1-0", "1-1"],
-  "262738": ["1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2"], "262705": ["1-3", "3-1", "2-1"],
-  "262706": ["0-2", "4-1", "1-0"], "262716": ["1-1", "3-2", "1-0"], "262736": ["1-2", "2-1", "1-2"],
-  "262714": ["1-3", "2-0", "0-2"], "262749": ["2-1", "3-1", "2-0"], "262753": ["1-1", "2-1", "2-0"],
-  "262740": ["1-2", "1-1", "2-1"], "262790": ["0-2", "3-1", "0-2"], "262786": ["1-2", "3-1", "3-1"],
-  "262734": ["3-0", "4-1", "2-1"], "262756": ["2-2", "3-2", "2-0"], "262703": ["2-2", "1-1", "1-1"],
-  "262772": ["0-2", "2-0", "1-1"], "262717": ["1-2", "0-1", "1-1"], "262728": ["0-0", "0-0", "1-0"], // Önder Aslan
-  "262770": ["3-1", "3-1", "2-2"], "262755": ["1-2", "4-1", "3-2"], "262704": ["1-1", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0"], "262723": ["1-1", "3-1", "2-1"], "262709": ["1-1", "2-1", "2-1"],
-  "262739": ["1-0", "3-1", "1-1"]
+  "262711": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2"],
+  "262734": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1"],
+  "262721": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1"],
+  "262758": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0"],
+  "262716": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0"],
+  "262733": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0"],
+  "262744": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1"],
+  "262763": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0"],
+  "262813": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1"],
+  "262816": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1"],
+  "262718": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1"],
+  "262731": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1"],
+  "262755": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0"],
+  "262749": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0"],
+  "262726": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1"],
+  "262736": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0"],
+  "262707": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1"],
+  "262771": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1"],
+  "262725": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2"],
+  "262702": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1"],
+  "351925": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0"],
+  "262728": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1"], 
+  "262738": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1"],
+  "262730": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0"],
+  "262719": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2"],
+  "262772": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1"],
+  "262774": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1"],
+  "262723": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1"],
+  "262706": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2"],
+  "262740": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0"],
+  "262756": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2"],
+  "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2"],
+  "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1"],
+  "262705": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1"],
+  "262753": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2"],
+  "262750": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1"],
+  "262770": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0"],
+  "262754": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0"],
+  "262747": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1"],
+  "262714": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1"],
+  "262717": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1"],
+  "262703": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1"],
+  "262732": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1"],
+  "262709": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2"],
+  "262782": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1"],
+  "262708": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1"],
+  "262739": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0"]
 };
 
 const localTeamLogos: Record<string, string> = {
@@ -85,7 +117,7 @@ export default function LiveMatchCard() {
         clearInterval(interval);
         setSimStatus('FINISHED');
       }
-    }, 2000); // HER 2 SANİYEDE 1 DAKİKA İLERLER! (Sıkılma diye hızlı yaptım)
+    }, 2000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -105,25 +137,26 @@ export default function LiveMatchCard() {
     else if(winnerIds.length === 0) points = 0;
 
     const currentBoard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
-    // Önceki canli puanları sıfırla ki tablo temizlensin
     Object.keys(currentBoard).forEach(id => {
       currentBoard[id] = { ...currentBoard[id], dfo: 0, master: 0, skor: 0 };
     });
 
-    // Yeni bilenlere puanları yaz!
     winnerIds.forEach(wId => {
       currentBoard[wId] = { ...currentBoard[wId], dfo: points, master: points, skor: 1 };
     });
 
     localStorage.setItem('elitTahmin_Leaderboard', JSON.stringify(currentBoard));
-    
-    // TABLOYA "GÜNCELLEN" DİYE SİNYAL GÖNDER! (İŞTE BU SAYEDE SAYFAYI YENİLEMEDEN OKLAR OYNAYACAK)
     window.dispatchEvent(new Event('leaderboardUpdate'));
 
   }, [simHomeScore, simAwayScore]);
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
+  };
+
+  const isTffMatchCheck = (category: string) => {
+    const uppercaseCat = category.toUpperCase();
+    return uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TFF");
   };
 
   if (todaysMatches.length === 0) return null;
@@ -134,6 +167,7 @@ export default function LiveMatchCard() {
         const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
         const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
         const isWinnersOpen = openWinnersMap[match.id] !== false;
+        const isTffMatch = isTffMatchCheck(match.category);
 
         const targetScore = `${simHomeScore}-${simAwayScore}`;
         const currentWinners = Object.keys(week4PredictionsData)
@@ -205,8 +239,8 @@ export default function LiveMatchCard() {
                 </div>
                 
                 <div className="flex-0 text-center px-1">
-                  <span className="text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border text-cyan-300 bg-cyan-950/90 border-cyan-400/80">
-                    MASTER & DFO MAÇI
+                  <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${isTffMatch ? "text-red-400 bg-red-950/90 border-red-500/80" : "text-cyan-300 bg-cyan-950/90 border-cyan-400/80"}`}>
+                    {isTffMatch ? "TFF LİGİ MAÇI" : "MASTER & DFO MAÇI"}
                   </span>
                 </div>
 
@@ -228,7 +262,7 @@ export default function LiveMatchCard() {
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {currentWinners.map((winner: string, idx: number) => (
-                      <span key={idx} className={`border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-emerald-900 text-white border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]`}>
+                      <span key={idx} className={`border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 ${winner === "ÖNDER ASLAN" ? "bg-emerald-900 text-white border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" : "bg-slate-800 text-slate-200 border-slate-700/80"}`}>
                         {winner}
                       </span>
                     ))}
