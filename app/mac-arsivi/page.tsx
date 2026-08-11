@@ -2,7 +2,57 @@
 
 import React, { useState } from "react";
 
-// 1. HAFTA MAÇ VERİLERİ (24 MAÇ FULL)
+// 🔴 EKMEL - YEREL (LOCAL) LOGO BANKASI
+const localTeamLogos: Record<string, string> = {
+  "FENERBAHÇE": "/logos/fenerbahce.png",
+  "GALATASARAY": "/logos/galatasaray.png",
+  "BEŞİKTAŞ": "/logos/besiktas.png",
+  "TRABZONSPOR": "/logos/trabzonspor.png",
+  "STURM GRAZ": "/logos/sturm-graz.png",
+  "PARIS SAINT-GERMAIN": "/logos/psg.png",
+  "ASTON VILLA": "/logos/aston-villa.png",
+  "KARABAĞ FK": "/logos/karabag.png",
+  "DINAMO KIEV": "/logos/dinamo-kiev.png",
+  "HRADEC KRALOVE": "/logos/hradec.png",
+  "ÇORUM FK": "/logos/corum-fk.png",
+  "KASIMPAŞA": "/logos/kasimpasa.png",
+  "KONYASPOR": "/logos/konyaspor.png",
+  "ÇAYKUR RİZE": "/logos/caykur-rize.png",
+  "BAŞAKŞEHİR": "/logos/basaksehir.png",
+  "IBERIA 1999": "/logos/iberia.png",
+  "SLOVAN BRATISLAVA": "/logos/slovan.png",
+  "SABAH FK": "/logos/sabah.png",
+  "KUPS": "/logos/kups.png",
+  "GORNİK ZABRZE": "/logos/gornik.png",
+  "THUN": "/logos/thun.png",
+  "DINAMO ZAGREB": "/logos/dinamo-zagreb.png",
+  "HEART": "/logos/heart.png",
+  "LARNE FC": "/logos/larne.png",
+  "KIZILYILDIZ": "/logos/kizilyildiz.png",
+  "GOTEBORG": "/logos/goteborg.png",
+  "LEVADIA FC": "/logos/levadia.png",
+  "LEVSKI SOFYA": "/logos/levski.png",
+  "UNIVERSITATEA CRAIOVA": "/logos/craiova.png",
+  "KOPENAG": "/logos/kopenhag.png",
+  "KOPENHAG": "/logos/kopenhag.png",
+  "RAPID WIEN": "/logos/rapid-wien.png",
+  "AJAX": "/logos/ajax.png",
+  "PANATHINAIKOS": "/logos/panathinaikos.png",
+  "BRAGA": "/logos/braga.png",
+  "PAOK": "/logos/paok.png",
+  "ANDERLECHT": "/logos/anderlecht.png",
+  "TWENTE": "/logos/twente.png",
+  "BENFICA": "/logos/benfica.png",
+  "SİVASSPOR": "/logos/sivasspor.png",
+  "ANTALYASPOR": "/logos/antalyaspor.png",
+  "KAYSERİSPOR": "/logos/kayserispor.png",
+  "PENDİKSPOR": "/logos/pendikspor.png",
+  "BATMAN PETROL SPOR": "/logos/batman.png",
+  "ESENLER EROKSPOR": "/logos/erokspor.png",
+  "EROKSPOR": "/logos/erokspor.png"
+};
+
+// 1. HAFTA MAÇ VERİLERİ
 const week1Matches = [
   { id: 1, weekLabel: "1. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME", date: "21.07.2026", time: "20:00", homeTeam: "IBERIA 1999", awayTeam: "SLOVAN BRATISLAVA", score: "0 - 2", winnersCount: 13, earnedPoints: 1, winners: ["MUSTAFA GÜMÜŞÇÜ", "CUMALİ SÖKER", "SEDAT SEDAT", "ÖNDER ASLAN", "FATİH AYAN", "MEHMET ALİ KARA", "İSMAİL EKER", "HUDAVER TOPARDIC", "MURAT ALİ", "SAVAŞ ÇAĞLAYAN", "MUSTAFA ELMAS", "UĞUR GÜRBÜZ", "R. İLHAN KARACA"] },
   { id: 2, weekLabel: "1. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME", date: "21.07.2026", time: "21:00", homeTeam: "SABAH FK", awayTeam: "KUPS", score: "1 - 0", winnersCount: 2, earnedPoints: 6, winners: ["EYÜP KARACAOĞLU", "ÖNDER ASLAN"] },
@@ -30,21 +80,21 @@ const week1Matches = [
   { id: 24, weekLabel: "1. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME", date: "23.07.2026", time: "22:00", homeTeam: "SPARTAK TRNAVA", awayTeam: "CSKA 1948", score: "2 - 0", winnersCount: 3, earnedPoints: 5, winners: ["MEHMET ALİ KARA", "İSMAİL EKER", "HUDAVER TOPARDIC"] }
 ];
 
-// 2. HAFTA MAÇ VERİLERİ (24 MAÇ FULL)
+// 2. HAFTA MAÇ VERİLERİ
 const week2Matches = [
   { id: 1, weekLabel: "2. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "18:00", homeTeam: "KUPS", awayTeam: "SABAH FK", score: "0 - 2", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA GÜMÜŞÇÜ", "CUMALİ SÖKER", "SEDAT SEDAT"] },
-  { id: 2, weekLabel: "2. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "20:30", homeTeam: "DINAMO ZAGREB", awayTeam: "THUN", score: "3 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 3, weekLabel: "2. Hafta - 3. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "21:00", homeTeam: "HEART", awayTeam: "STURM GRAZ", score: "0 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 4, weekLabel: "2. Hafta - 4. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "21:45", homeTeam: "CSKA 1948", awayTeam: "SPARTAK TRNAVA", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 5, weekLabel: "2. Hafta - 5. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:00", homeTeam: "UNIVERSITATEA CRAIOVA", awayTeam: "LEVSKI SOFYA", score: "2 - 2", winnersCount: 1, earnedPoints: 12, winners: ["DOĞAÇ ALKAN"] },
-  { id: 6, weekLabel: "2. Hafta - 6. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:30", homeTeam: "KIZILYILDIZ", awayTeam: "LARNE FC", score: "5 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 7, weekLabel: "2. Hafta - 7. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "21:00", homeTeam: "GORNİK ZABRZE", awayTeam: "FENERBAHÇE", score: "1 - 1", winnersCount: 9, earnedPoints: 1, winners: ["FATİH AYAN", "MEHMET ALİ KARA", "İSMAİL EKER", "ÖNDER ASLAN", "HUDAVER TOPARDIC", "MURAT ALİ", "SAVAŞ ÇAĞLAYAN", "MUSTAFA ELMAS", "UĞUR GÜRBÜZ"] },
-  { id: 8, weekLabel: "2. Hafta - 8. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "21:00", homeTeam: "SLOVAN BRATISLAVA", awayTeam: "IBERIA 1999", score: "1 - 1", winnersCount: 3, earnedPoints: 5, winners: ["CUMALİ SÖKER", "EYÜP KARACAOĞLU", "ŞAHİN GEZGİNCİ"] },
-  { id: 9, weekLabel: "2. Hafta - 9. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "21:15", homeTeam: "KOPENAG", awayTeam: "POLISSYA", score: "2 - 1", winnersCount: 6, earnedPoints: 2, winners: ["B. VEYSELOĞLU EROL", "ABDULLAH DİK", "ŞAHİN GEZGİNCİ", "ÖNDER ASLAN", "HUDAVER TOPARDIC", "ŞEMSETTİN DÜGER"] },
-  { id: 10, weekLabel: "2. Hafta - 10. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "21:30", homeTeam: "RAPID WIEN", awayTeam: "SANTA COLOMA FC", score: "6 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 11, weekLabel: "2. Hafta - 11. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "19:00", homeTeam: "AUDA RIGA", awayTeam: "FCSB", score: "4 - 1", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 12, weekLabel: "2. Hafta - 12. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "19:00", homeTeam: "INTER TURKU", awayTeam: "BAŞAKŞEHİR", score: "2 - 0", winnersCount: 2, earnedPoints: 6, winners: ["EYÜP KARACAOĞLU", "ÖNDER ASLAN"] },
-  { id: 13, weekLabel: "2. Hafta - 13. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "19:30", homeTeam: "LEVADIA FC", awayTeam: "GOTEBORG", score: "0 - 1", winnersCount: 6, earnedPoints: 2, winners: ["RIDVAN DOGER", "ÖNDER IŞIK", "MURAT KARA", "CEMALETTİN BELLİ", "İSMAİL EKER", "ÖNDER ASLAN"] },
+  { id: 2, weekLabel: "2. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "21:00", homeTeam: "DINAMO ZAGREB", awayTeam: "THUN", score: "3 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 3, weekLabel: "2. Hafta - 3. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "21:45", homeTeam: "HEART", awayTeam: "STURM GRAZ", score: "0 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 4, weekLabel: "2. Hafta - 4. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "20:30", homeTeam: "CSKA 1948", awayTeam: "SPARTAK TRNAVA", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 5, weekLabel: "2. Hafta - 5. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "19:00", homeTeam: "UNIVERSITATEA CRAIOVA", awayTeam: "LEVSKI SOFYA", score: "2 - 2", winnersCount: 1, earnedPoints: 12, winners: ["DOĞAÇ ALKAN"] },
+  { id: 6, weekLabel: "2. Hafta - 6. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "19:30", homeTeam: "KIZILYILDIZ", awayTeam: "LARNE FC", score: "5 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 7, weekLabel: "2. Hafta - 7. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:00", homeTeam: "GORNİK ZABRZE", awayTeam: "FENERBAHÇE", score: "1 - 1", winnersCount: 9, earnedPoints: 1, winners: ["FATİH AYAN", "MEHMET ALİ KARA", "İSMAİL EKER", "ÖNDER ASLAN", "HUDAVER TOPARDIC", "MURAT ALİ", "SAVAŞ ÇAĞLAYAN", "MUSTAFA ELMAS", "UĞUR GÜRBÜZ"] },
+  { id: 8, weekLabel: "2. Hafta - 8. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:00", homeTeam: "SLOVAN BRATISLAVA", awayTeam: "IBERIA 1999", score: "1 - 1", winnersCount: 3, earnedPoints: 5, winners: ["CUMALİ SÖKER", "EYÜP KARACAOĞLU", "ŞAHİN GEZGİNCİ"] },
+  { id: 9, weekLabel: "2. Hafta - 9. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:00", homeTeam: "KOPENAG", awayTeam: "POLISSYA", score: "2 - 1", winnersCount: 6, earnedPoints: 2, winners: ["B. VEYSELOĞLU EROL", "ABDULLAH DİK", "ŞAHİN GEZGİNCİ", "ÖNDER ASLAN", "HUDAVER TOPARDIC", "ŞEMSETTİN DÜGER"] },
+  { id: 10, weekLabel: "2. Hafta - 10. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:00", homeTeam: "RAPID WIEN", awayTeam: "SANTA COLOMA FC", score: "6 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 11, weekLabel: "2. Hafta - 11. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "29.07.2026", time: "20:00", homeTeam: "AUDA RIGA", awayTeam: "FCSB", score: "4 - 1", winnersCount: 0, earnedPoints: 0, winners: [] },
+  { id: 12, weekLabel: "2. Hafta - 12. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "20:00", homeTeam: "INTER TURKU", awayTeam: "BAŞAKŞEHİR", score: "2 - 0", winnersCount: 2, earnedPoints: 6, winners: ["EYÜP KARACAOĞLU", "ÖNDER ASLAN"] },
+  { id: 13, weekLabel: "2. Hafta - 13. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "21:00", homeTeam: "LEVADIA FC", awayTeam: "GOTEBORG", score: "0 - 1", winnersCount: 6, earnedPoints: 2, winners: ["RIDVAN DOGER", "ÖNDER IŞIK", "MURAT KARA", "CEMALETTİN BELLİ", "İSMAİL EKER", "ÖNDER ASLAN"] },
   { id: 14, weekLabel: "2. Hafta - 14. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "21:30", homeTeam: "BRANN", awayTeam: "UNIVERSITATEA CLUJ", score: "3 - 1", winnersCount: 1, earnedPoints: 12, winners: ["CEMAL SİVRİKAYA"] },
   { id: 15, weekLabel: "2. Hafta - 15. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "21:00", homeTeam: "AJAX", awayTeam: "VOJVODINA", score: "4 - 1", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 16, weekLabel: "2. Hafta - 16. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "20:00", homeTeam: "PANATHINAIKOS", awayTeam: "PAKSI FC", score: "2 - 2", winnersCount: 3, earnedPoints: 5, winners: ["AHMET BİRCAN", "MEVLÜT EVLER", "EYÜP KARACAOĞLU"] },
@@ -53,12 +103,12 @@ const week2Matches = [
   { id: 19, weekLabel: "2. Hafta - 19. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "20:45", homeTeam: "PATOS", awayTeam: "HAJDUK SPLIT", score: "2 - 0", winnersCount: 2, earnedPoints: 6, winners: ["ŞENOL CAN ÇAKICI", "MURAT ALİ"] },
   { id: 20, weekLabel: "2. Hafta - 20. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "21:00", homeTeam: "PAOK", awayTeam: "DINAMO KIEV", score: "2 - 0", winnersCount: 8, earnedPoints: 1, winners: ["CUMALİ SÖKER", "MUSTAFA ELMAS", "SEDAT SEDAT", "OSMAN ALİ AYDIN", "DOĞAÇ ALKAN", "BİROL DEMİREL", "İSMAİL EKER", "BAYRAM YILMAZ"] },
   { id: 21, weekLabel: "2. Hafta - 21. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "21:30", homeTeam: "CSKA SOFYA", awayTeam: "KARABAĞ FK", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 22, weekLabel: "2. Hafta - 22. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "21:30", homeTeam: "ANDERLECHT", awayTeam: "HAMMARBY", score: "3 - 1", winnersCount: 7, earnedPoints: 1, winners: ["ULAŞ ADIGÜZEL", "CUMALİ SÖKER", "MEHMET ALİ KARA", "İLYAS KAZDAL", "AHMET BİRCAN", "MELİH PINAR", "SALİH KARACAOĞLU"] },
+  { id: 22, weekLabel: "2. Hafta - 22. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:00", homeTeam: "ANDERLECHT", awayTeam: "HAMMARBY", score: "3 - 1", winnersCount: 7, earnedPoints: 1, winners: ["ULAŞ ADIGÜZEL", "CUMALİ SÖKER", "MEHMET ALİ KARA", "İLYAS KAZDAL", "AHMET BİRCAN", "MELİH PINAR", "SALİH KARACAOĞLU"] },
   { id: 23, weekLabel: "2. Hafta - 23. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:00", homeTeam: "FERENCVAROS", awayTeam: "TWENTE", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["RIDVAN DOGER", "SEDAT DİŞLİ"] },
-  { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:00", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
+  { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ (24 MAÇ FULL - 20, 21, 22 VE 23. MAÇLAR GÜNCELLENDİ)
+// 3. HAFTA MAÇ VERİLERİ
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -83,58 +133,50 @@ const week3Matches = [
   { id: 21, weekLabel: "3. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "19:00", homeTeam: "SARIYER", awayTeam: "MUĞLASPOR", score: "2 - 0", winnersCount: 5, earnedPoints: 3, winners: ["SEDAT SEDAT", "MUHSİN ASİLKAN", "KEMAL ERSOY", "OSMAN ALİ AYDIN", "AHMET BİRCAN"] },
   { id: 22, weekLabel: "3. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "21:30", homeTeam: "BODRUMSPOR", awayTeam: "BURSASPOR", score: "0 - 2", winnersCount: 11, earnedPoints: 1, winners: ["MUSTAFA GÜMÜŞÇÜ", "MURAT KARA", "ALİOS GÖZTEPE", "ÖNDER ASLAN", "ÖNDER IŞIK", "CEMAL SİVRİKAYA", "AHMET BİRCAN", "OZKAYA MAZAKALI BAYRAM", "OSMAN ALİ AYDIN", "YUSUF ERBAY", "UĞUR GÜRBÜZ"] },
   { id: 23, weekLabel: "3. Hafta - 23. MAÇ", category: "TÜRKİYE 1.LİG", date: "09.08.2026", time: "21:30", homeTeam: "VANSPOR FK", awayTeam: "KAYSERİSPOR", score: "0 - 2", winnersCount: 6, earnedPoints: 2, winners: ["SEDAT SEDAT", "B.VEYSELOĞLU EROL", "MURAT KARA", "AYHAN LUŞOĞLU", "OSMAN ALİ AYDIN", "YUSUF ERBAY"] },
-  { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] }
+  { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["DOĞAÇ ALKAN", "MEHMET ALİ KARA"] }
 ];
 
-// 4. HAFTA MAÇ VERİLERİ (24 MAÇ FULL)
+// 4. HAFTA MAÇ VERİLERİ 
 const week4Matches = [
-  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 7, weekLabel: "4. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 8, weekLabel: "4. Hafta - 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 9, weekLabel: "4. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYE SPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 10, weekLabel: "4. Hafta - 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 11, weekLabel: "4. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 12, weekLabel: "4. Hafta - 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 13, weekLabel: "4. Hafta - 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 14, weekLabel: "4. Hafta - 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 15, weekLabel: "4. Hafta - 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 16, weekLabel: "4. Hafta - 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 17, weekLabel: "4. Hafta - 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 18, weekLabel: "4. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 19, weekLabel: "4. Hafta - 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 20, weekLabel: "4. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 21, weekLabel: "4. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 22, weekLabel: "4. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 23, weekLabel: "4. Hafta - 23. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] },
-  { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", score: "- : -", winnersCount: 0, earnedPoints: 0, winners: [] }
+  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "- : -" },
+  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA", score: "- : -" },
+  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", score: "- : -" },
+  { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", score: "- : -" },
+  { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", score: "- : -" },
+  { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER", score: "- : -" },
+  { id: 7, weekLabel: "4. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR", score: "- : -" },
+  { id: 8, weekLabel: "4. Hafta - 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE", score: "- : -" },
+  { id: 9, weekLabel: "4. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR", score: "- : -" },
+  { id: 10, weekLabel: "4. Hafta - 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR", score: "- : -" },
+  { id: 11, weekLabel: "4. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR", score: "- : -" },
+  { id: 12, weekLabel: "4. Hafta - 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE", score: "- : -" },
+  { id: 13, weekLabel: "4. Hafta - 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK", score: "- : -" },
+  { id: 14, weekLabel: "4. Hafta - 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK", score: "- : -" },
+  { id: 15, weekLabel: "4. Hafta - 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY", score: "- : -" },
+  { id: 16, weekLabel: "4. Hafta - 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR", score: "- : -" },
+  { id: 17, weekLabel: "4. Hafta - 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR", score: "- : -" },
+  { id: 18, weekLabel: "4. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR", score: "- : -" },
+  { id: 19, weekLabel: "4. Hafta - 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR", score: "- : -" },
+  { id: 20, weekLabel: "4. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR", score: "- : -" },
+  { id: 21, weekLabel: "4. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR", score: "- : -" },
+  { id: 22, weekLabel: "4. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", score: "- : -" },
+  { id: 23, weekLabel: "4. Hafta - 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", score: "- : -" },
+  { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", score: "- : -" }
 ];
 
 export default function MacArsiviPage() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(3); // Varsayılan 3. Hafta
+  const [selectedWeek, setSelectedWeek] = useState<number>(4);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
 
   const currentMatches =
-    selectedWeek === 1
-      ? week1Matches
-      : selectedWeek === 2
-      ? week2Matches
-      : selectedWeek === 3
-      ? week3Matches
-      : week4Matches;
+    selectedWeek === 1 ? week1Matches :
+    selectedWeek === 2 ? week2Matches :
+    selectedWeek === 3 ? week3Matches : week4Matches;
 
   const toggleWinners = (matchId: number) => {
-    setOpenWinnersMap((prev) => ({
-      ...prev,
-      [matchId]: !prev[matchId]
-    }));
+    setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   };
 
-  // KISTASLARA GÖRE TFF MAÇI MI KONTROL ETME FONKSİYONU
   const isTffMatchCheck = (category: string) => {
     const uppercaseCat = category.toUpperCase();
     return (
@@ -147,11 +189,8 @@ export default function MacArsiviPage() {
     );
   };
 
-  // KART ARKA PLANI VE NEON ETİKET STİLİNİ BELİRLEME (PNG DESTEKLİ)
   const getMatchThemeStyle = (category: string) => {
     const uppercaseCat = category.toUpperCase();
-
-    // 1. ŞAMPİYONLAR LİGİ MAÇLARI İÇİN cl-bg.png ARKA PLAN
     if (uppercaseCat.includes("ŞAMPİYONLAR LİGİ")) {
       return {
         bgImage: "url('/cl-bg.png')",
@@ -159,50 +198,35 @@ export default function MacArsiviPage() {
         badgeClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_12px_rgba(34,211,238,0.4)]",
         tagClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
       };
-    }
-    
-    // 2. UEFA AVRUPA LİGİ MAÇLARI İÇİN el-bg.png ARKA PLAN
-    else if (uppercaseCat.includes("AVRUPA LİGİ")) {
+    } else if (uppercaseCat.includes("AVRUPA LİGİ")) {
       return {
         bgImage: "url('/el-bg.png')",
         cardBgClass: "bg-slate-900/90 border-orange-500/60 shadow-[0_0_20px_rgba(251,146,60,0.2)]",
         badgeClass: "text-orange-400 bg-orange-950/90 border-orange-500/80 shadow-[0_0_12px_rgba(251,146,60,0.4)]",
         tagClass: "text-orange-400 bg-orange-950/90 border-orange-500/80 shadow-[0_0_10px_rgba(251,146,60,0.35)]"
       };
-    }
-
-    // 3. UEFA KONFERANS LİGİ MAÇLARI İÇİN uecl-bg.png ARKA PLAN
-    else if (uppercaseCat.includes("KONFERANS LİGİ")) {
+    } else if (uppercaseCat.includes("KONFERANS LİGİ")) {
       return {
         bgImage: "url('/uecl-bg.png')",
         cardBgClass: "bg-slate-900/90 border-emerald-500/60 shadow-[0_0_20px_rgba(52,211,153,0.2)]",
         badgeClass: "text-emerald-400 bg-emerald-950/90 border-emerald-500/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]",
         tagClass: "text-emerald-400 bg-emerald-950/90 border-emerald-500/80 shadow-[0_0_10px_rgba(52,211,153,0.35)]"
       };
-    }
-
-    // 4. UEFA SÜPER KUPA MAÇLARI İÇİN supercup-bg.png ARKA PLAN
-    else if (uppercaseCat.includes("SÜPER KUPA") && !uppercaseCat.includes("TÜRKİYE") && !uppercaseCat.includes("İNGİLTERE")) {
+    } else if (uppercaseCat.includes("SÜPER KUPA") && !uppercaseCat.includes("TÜRKİYE") && !uppercaseCat.includes("İNGİLTERE")) {
       return {
         bgImage: "url('/supercup-bg.png')",
         cardBgClass: "bg-slate-900/90 border-cyan-400/60 shadow-[0_0_20px_rgba(34,211,238,0.2)]",
         badgeClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_12px_rgba(34,211,238,0.4)]",
         tagClass: "text-cyan-300 bg-cyan-950/90 border-cyan-400/80 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
       };
-    }
-
-    // 5. İNGİLTERE SÜPER KUPA MAÇLARI İÇİN england-bg.png ARKA PLAN
-    else if (uppercaseCat.includes("İNGİLTERE")) {
+    } else if (uppercaseCat.includes("İNGİLTERE")) {
       return {
         bgImage: "url('/england-bg.png')",
         cardBgClass: "bg-slate-900/90 border-indigo-400/60 shadow-[0_0_20px_rgba(129,140,248,0.2)]",
         badgeClass: "text-indigo-300 bg-indigo-950/90 border-indigo-400/80 shadow-[0_0_12px_rgba(129,140,248,0.4)]",
         tagClass: "text-indigo-300 bg-indigo-950/90 border-indigo-400/80 shadow-[0_0_10px_rgba(129,140,248,0.35)]"
       };
-    }
-
-    // 6. TFF MAÇLARI İÇİN tff-bg.png ARKA PLAN
-    else if (isTffMatchCheck(category)) {
+    } else if (isTffMatchCheck(category)) {
       return {
         bgImage: "url('/tff-bg.png')",
         cardBgClass: "bg-slate-900/90 border-red-500/60 shadow-[0_0_20px_rgba(248,113,113,0.2)]",
@@ -210,8 +234,6 @@ export default function MacArsiviPage() {
         tagClass: "text-red-400 bg-red-950/90 border-red-500/80 shadow-[0_0_10px_rgba(248,113,113,0.35)]"
       };
     }
-
-    // 7. DİĞER MAÇLAR
     return {
       bgImage: null,
       cardBgClass: "bg-slate-900/80 border-slate-800",
@@ -223,7 +245,6 @@ export default function MacArsiviPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans">
       <div className="max-w-5xl mx-auto">
-        {/* ÜST BAŞLIK VE HAFTA SEÇİM BUTONU */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3 border-b border-slate-800 pb-4">
           <div className="text-center sm:text-left">
             <h1 className="text-xl sm:text-2xl font-bold text-amber-400 tracking-tight flex items-center justify-center sm:justify-start gap-2">
@@ -233,7 +254,6 @@ export default function MacArsiviPage() {
               {selectedWeek}. Hafta Müsabakaları ve Programı
             </p>
           </div>
-
           <div>
             <select
               value={selectedWeek}
@@ -248,12 +268,14 @@ export default function MacArsiviPage() {
           </div>
         </div>
 
-        {/* MAÇ KARTLARI IZGARASI */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {currentMatches.map((match) => {
             const isWinnersOpen = !!openWinnersMap[match.id];
             const isTffMatch = isTffMatchCheck(match.category);
             const { bgImage, cardBgClass, badgeClass, tagClass } = getMatchThemeStyle(match.category);
+            
+            const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
+            const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
             return (
               <div
@@ -270,115 +292,87 @@ export default function MacArsiviPage() {
                 className={`rounded-xl p-4 shadow-sm flex flex-col justify-between text-center transition-all duration-300 relative overflow-hidden ${cardBgClass}`}
               >
                 <div>
-                  {/* HAFTA ETİKETİ */}
                   <div className="flex justify-center mb-2">
                     <span className="text-[10px] font-extrabold text-white bg-black border border-white/80 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-[0_0_12px_rgba(255,255,255,0.6)]">
                       {match.weekLabel}
                     </span>
                   </div>
 
-                  {/* KATEGORİ BAŞLIĞI */}
                   <div className="flex justify-center mb-1">
-                    <span
-                      className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border text-center ${badgeClass}`}
-                    >
+                    <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border text-center ${badgeClass}`}>
                       {match.category}
                     </span>
                   </div>
 
-                  {/* TARİH VE SAAT */}
                   <div className="text-[10px] font-semibold text-slate-300 my-1 drop-shadow">
                     {match.date} | {match.time}
                   </div>
 
-                  {/* MAÇ SKOR ALANI */}
-                  <div className="flex items-center justify-center gap-2 my-2">
-                    {/* EV SAHİBİ */}
-                    <div className="flex-1 text-right">
-                      <span className="text-xs sm:text-sm font-bold text-slate-100 leading-tight block break-words drop-shadow">
-                        {match.homeTeam}
-                      </span>
+                  <div className="flex items-center justify-between px-1 my-3">
+                    
+                    {/* 🔴 EKMEL LOGO DOKUNUŞU: Padding silindi, Scale eklendi */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/40 border border-slate-600/40 rounded-full flex items-center justify-center mb-1.5 shadow-lg overflow-hidden relative">
+                        <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain transform scale-[1.20] drop-shadow-xl" />
+                      </div>
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-white text-center uppercase leading-tight drop-shadow">{match.homeTeam}</span>
                     </div>
 
-                    {/* SKOR KUTUSU */}
-                    <div className="shrink-0">
-                      <div className="bg-amber-500 text-slate-950 font-extrabold text-xs sm:text-sm px-2.5 py-1 rounded-md shadow-sm whitespace-nowrap">
+                    <div className="shrink-0 px-2 sm:px-4">
+                      <div className="bg-amber-500 text-slate-950 font-extrabold text-sm sm:text-base px-3 py-1.5 rounded-md shadow-md whitespace-nowrap">
                         {match.score}
                       </div>
                     </div>
 
-                    {/* DEPLASMAN */}
-                    <div className="flex-1 text-left">
-                      <span className="text-xs sm:text-sm font-bold text-slate-100 leading-tight block break-words drop-shadow">
-                        {match.awayTeam}
-                      </span>
+                    {/* 🔴 EKMEL LOGO DOKUNUŞU: Padding silindi, Scale eklendi */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/40 border border-slate-600/40 rounded-full flex items-center justify-center mb-1.5 shadow-lg overflow-hidden relative">
+                        <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain transform scale-[1.20] drop-shadow-xl" />
+                      </div>
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-white text-center uppercase leading-tight drop-shadow">{match.awayTeam}</span>
                     </div>
+
                   </div>
                 </div>
 
-                {/* ALT ALAN */}
                 <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-col justify-between items-stretch">
                   <div className="flex justify-between items-center w-full">
-                    {/* SOL ALT: BİLEN KİŞİ BİLGİSİ */}
                     <div className="text-left flex-1">
-                      {match.winnersCount === 0 ? (
+                      {(match as any).winnersCount === 0 || !(match as any).winnersCount ? (
                         <span className="text-xs font-medium text-slate-300 italic drop-shadow">
                           {selectedWeek === 4 ? "Henüz oynanmadı" : "Bu maçı bilen yok"}
                         </span>
                       ) : (
                         <span className="text-xs font-medium text-slate-200 drop-shadow">
-                          <strong className="text-amber-400">{match.winnersCount} kişi</strong> bildi
-                          {match.earnedPoints > 0 && (
-                            <span className="text-slate-300"> ({match.earnedPoints} Puan)</span>
+                          <strong className="text-amber-400">{(match as any).winnersCount} kişi</strong> bildi
+                          {(match as any).earnedPoints > 0 && (
+                            <span className="text-slate-300"> ({(match as any).earnedPoints} Puan)</span>
                           )}
                         </span>
                       )}
                     </div>
-
-                    {/* EN ORTA ALT: NEONLU ETİKET */}
                     <div className="flex-0 text-center px-1">
-                      <span
-                        className={`text-[9px] font-black tracking-tight whitespace-nowrap px-2 py-0.5 rounded border block ${tagClass}`}
-                      >
+                      <span className={`text-[9px] font-black tracking-tight whitespace-nowrap px-2 py-0.5 rounded border block ${tagClass}`}>
                         {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
                       </span>
                     </div>
-
-                    {/* SAĞ ALT: BUTON */}
                     <div className="text-right flex-1">
-                      {match.winnersCount > 0 && (
-                        <button
-                          onClick={() => toggleWinners(match.id)}
-                          className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-xs outline-none whitespace-nowrap drop-shadow"
-                        >
-                          {isWinnersOpen
-                            ? "Gizle ▲"
-                            : match.winnersCount === 1
-                            ? "Puan alanı gör →"
-                            : "Puan alanları gör →"}
+                      {(match as any).winnersCount > 0 && (
+                        <button onClick={() => toggleWinners(match.id)} className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-xs outline-none whitespace-nowrap drop-shadow">
+                          {isWinnersOpen ? "Gizle ▲" : (match as any).winnersCount === 1 ? "Puan alanı gör →" : "Puan alanları gör →"}
                         </button>
                       )}
                     </div>
                   </div>
-
-                  {/* BİLEN YARIŞMACILAR LİSTESİ */}
-                  {isWinnersOpen && match.winnersCount > 0 && (
+                  {isWinnersOpen && (match as any).winnersCount > 0 && (
                     <div className="w-full mt-2.5 p-2.5 bg-slate-950/95 rounded-lg border border-slate-800 text-xs animate-fadeIn">
                       <div className="text-slate-400 font-semibold mb-1.5 border-b border-slate-800 pb-1 flex justify-between items-center text-[11px]">
-                        <span>
-                          {match.winnersCount === 1 ? "BİLEN YARIŞMACI" : "BİLEN YARIŞMACILAR"}
-                        </span>
-                        <span className="text-amber-400">
-                          Kişi Başı: {match.earnedPoints} Puan
-                        </span>
+                        <span>{(match as any).winnersCount === 1 ? "BİLEN YARIŞMACI" : "BİLEN YARIŞMACILAR"}</span>
+                        <span className="text-amber-400">Kişi Başı: {(match as any).earnedPoints} Puan</span>
                       </div>
-
                       <div className="flex flex-wrap justify-center gap-1 mt-1.5">
-                        {match.winners.map((winner, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-slate-800 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded text-[10px] sm:text-[11px]"
-                          >
+                        {((match as any).winners || []).map((winner: string, idx: number) => (
+                          <span key={idx} className="bg-slate-800 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded text-[10px] sm:text-[11px]">
                             {winner}
                           </span>
                         ))}
