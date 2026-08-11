@@ -47,7 +47,7 @@ const week4MatchesList = [
   { id: 24, title: "BATMAN PETROL SPOR VS BOLUSPOR", cat: "TÜRKİYE 1.LİG", date: "17 AĞUSTOS PAZARTESİ | 21:30" }
 ];
 
-// 🔴 EKMEL - EKSİKSİZ 47 KİŞİLİK 4. HAFTA TAHMİN MATRİSİ (YUSUF ERBAY DAHİL)
+// 🔴 EKMEL - HATASIZ VE KUSURSUZ 47 KİŞİLİK 24 MAÇLIK YENİ TAHMİN MATRİSİ
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
   "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],

@@ -12,7 +12,11 @@ const allPlayersList: Record<string, string> = {
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY"
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
 const dfoWeek1Data: Record<string, number> = { "262736": 31, "262719": 23, "262755": 21, "262756": 17, "262754": 14, "262786": 12, "262731": 11, "262717": 11, "262732": 10, "262726": 10, "262750": 9, "262747": 8, "262771": 8, "262728": 8, "262816": 7, "262716": 7, "262790": 7, "262733": 7, "262709": 5, "262753": 4, "262813": 4, "262740": 4, "262718": 3, "262707": 1, "262782": 1, "262702": 1, "262714": 1, "262721": 1, "262706": 1, "262787": 1, "262744": 1, "262774": 1, "262715": 1, "262723": 1 };
@@ -71,23 +75,8 @@ export default function DfoPuanDurumuPage() {
     setIsWeekMenuOpen(false);
   };
 
-  const getActiveTabTitle = () => {
-    if (activeTab === 'total') return 'DFO TOPLAM PUAN DURUMU';
-    const weekNum = activeTab.replace('week', '');
-    return `DFO ${weekNum}. HAFTA PUAN DURUMU`;
-  };
-
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      
-      {/* 🔴 EKMEL - BİLGİLENDİRME AFİŞİ */}
-      <div className="w-full bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
-        <span className="text-amber-500 text-xl animate-pulse">🚨</span>
-        <p className="text-amber-200 text-[11px] sm:text-xs font-semibold leading-tight">
-          <strong className="text-amber-400">BİLGİLENDİRME:</strong> Şu anki maç test aşamasıdır. Gerçek lig maçı saat 21:30'da Sturm Graz - Fenerbahçe ile başlayacak. En geç saat 21:00'de her şey aktif olacaktır.
-        </p>
-      </div>
-
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md tracking-wider">
           ELİT TAHMİN DFO LİGİ
@@ -104,7 +93,8 @@ export default function DfoPuanDurumuPage() {
         </button>
         <div className="w-full relative">
           <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            <span>📅 {getActiveTabTitle()}</span>
+            {/* 🔴 EKMEL: TOTAL YAZISI VE NOKTA KALDIRILDI! SADECE HAFTA YAZISI KALDI */}
+            <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
             <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
           </button>
           {isWeekMenuOpen && (

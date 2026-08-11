@@ -11,19 +11,17 @@ const allPlayersList: Record<string, string> = {
   "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA", "262763": "MUSTAFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL"
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
 const tffWeek1Data: Record<string, number> = {};
 const tffWeek2Data: Record<string, number> = {};
-const tffWeek3Data: Record<string, number> = {
-  "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6,
-  "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4,
-  "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2,
-  "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1,
-  "262736": 6, 
-  "262755": 6  
-};
+const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
 
 export default function TffPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
@@ -31,11 +29,10 @@ export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  useEffect(() => {
+  const loadLeaderboard = () => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
 
     if (activeTab === 'total') {
-      // 🔴 EKMEL - BAZ LİSTE (ESKİ SIRA İÇİN)
       const baseList = Object.keys(allPlayersList).map(id => {
         const basePuan = (tffWeek1Data[id] || 0) + (tffWeek2Data[id] || 0) + (tffWeek3Data[id] || 0);
         return { id, basePuan, name: allPlayersList[id] };
@@ -44,7 +41,6 @@ export default function TffPuanDurumuPage() {
       const prevRanks: Record<string, number> = {};
       baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      // 🔴 EKMEL - CANLI LİSTE (YENİ SIRA İÇİN)
       const liveList = Object.keys(allPlayersList).map(id => {
         const name = allPlayersList[id];
         const basePuan = (tffWeek1Data[id] || 0) + (tffWeek2Data[id] || 0) + (tffWeek3Data[id] || 0);
@@ -62,29 +58,22 @@ export default function TffPuanDurumuPage() {
       });
 
       setTableRows(finalRows);
-    } else if (activeTab === 'week1') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: tffWeek1Data[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week2') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: tffWeek2Data[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week3') {
-      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: tffWeek3Data[id] || 0, trend: 'none' }));
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
     } else {
-      setTableRows([]);
+      const dataMap = activeTab === 'week1' ? tffWeek1Data : activeTab === 'week2' ? tffWeek2Data : tffWeek3Data;
+      const list = Object.keys(allPlayersList).map(id => ({ id, name: allPlayersList[id], puan: dataMap[id] || 0, trend: 'none' }));
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
     }
+  };
+
+  useEffect(() => {
+    loadLeaderboard();
+    window.addEventListener('leaderboardUpdate', loadLeaderboard);
+    return () => window.removeEventListener('leaderboardUpdate', loadLeaderboard);
   }, [activeTab]);
 
   const selectTab = (tabKey: string) => {
     setActiveTab(tabKey);
     setIsWeekMenuOpen(false);
-  };
-
-  const getActiveTabTitle = () => {
-    if (activeTab === 'total') return 'TFF TOPLAM PUAN DURUMU';
-    const weekNum = activeTab.replace('week', '');
-    return `TFF ${weekNum}. HAFTA PUAN DURUMU`;
   };
 
   return (
@@ -103,7 +92,8 @@ export default function TffPuanDurumuPage() {
         </button>
         <div className="w-full relative">
           <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold border transition-all flex items-center justify-between ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>
-            <span>📅 {getActiveTabTitle()}</span>
+            {/* 🔴 EKMEL: TOTAL YAZISI VE NOKTA KALDIRILDI! */}
+            <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `TFF ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
             <span>{isWeekMenuOpen ? '▲' : '▼'}</span>
           </button>
           {isWeekMenuOpen && (
@@ -129,8 +119,6 @@ export default function TffPuanDurumuPage() {
             <tbody className="divide-y divide-slate-800/60">
               {tableRows.map((row, idx) => (
                 <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                  
-                  {/* 🔴 SIRA VE OK EFEKTLERİ */}
                   <td className="px-6 py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
@@ -139,8 +127,6 @@ export default function TffPuanDurumuPage() {
                       {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
                     </div>
                   </td>
-
-                  {/* 🔴 İSİM VE CANLI PUAN ROZETİ */}
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-200 font-semibold">{row.name}</span>
@@ -151,12 +137,9 @@ export default function TffPuanDurumuPage() {
                       )}
                     </div>
                   </td>
-
-                  {/* PUAN */}
                   <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
                     {row.puan}
                   </td>
-
                 </tr>
               ))}
             </tbody>
