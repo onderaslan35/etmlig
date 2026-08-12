@@ -7,7 +7,7 @@ import { supabase } from '@/utils/supabase';
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
-  "HRADEC KRALOVE": "https://tr.wikipedia.org/wiki/Special:FilePath/Hradec_Kralove_CoA_CZ.svg",
+  "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
   "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
   "KASIMPAŞA": "https://de.wikipedia.org/wiki/Special:FilePath/Kasimpasa_Logo.svg",
   "TRABZONSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Trabzonspor_2022.svg",
@@ -114,7 +114,6 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// 4. HAFTANIN OTONOM LİSTESİ
 const week4Matches = [
   { id: 1, title: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, title: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -147,23 +146,19 @@ export default function AdminTahminmatik() {
   const [matchInputs, setMatchInputs] = useState<Record<number, { home: string, away: string, min: string }>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   const [liveData, setLiveData] = useState<Record<number, any>>({});
-  
-  // 🔴 AKILLI VİTRİN: Sadece bugünün maçları açık gelecek
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
-  // 1 Saniyelik Otonom Motor (Zaman Kilitleri ve Canlı Saat için)
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Bugünün Maçlarını Akıllı Vitrinde Aç
   useEffect(() => {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
-    const todayFormatted = `${dd}.${mm}.${yyyy}`; // Örn: 12.08.2026
+    const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
     const initialExpanded: Record<number, boolean> = {};
     week4Matches.forEach(m => {
@@ -174,7 +169,6 @@ export default function AdminTahminmatik() {
     setExpandedMatches(initialExpanded);
   }, []);
 
-  // Canlı Veritabanı Dinleyici
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
@@ -223,7 +217,6 @@ export default function AdminTahminmatik() {
     }));
   };
 
-  // 🔴 Puan Dağıtma ve Kaydetme Merkezi
   const dispatchScores = async (matchId: number, h: string, a: string, status: 'LIVE' | 'HT' | 'FINISHED' | 'NOT_STARTED', baseMinute: string) => {
     let startedAt = 0;
     const currentDbMatch = liveData[matchId];
@@ -258,7 +251,6 @@ export default function AdminTahminmatik() {
     else if(winnerIds.length === 5) points = 3;
     else if(winnerIds.length >= 6) points = 2;
     
-    // Maç resetlendiğinde veya başlamadığında sıfır puan
     if(winnerIds.length === 0 || h === "-" || a === "-") points = 0;
 
     const currentBoard: Record<string, any> = {}; 
@@ -274,7 +266,6 @@ export default function AdminTahminmatik() {
     window.dispatchEvent(new Event('leaderboardUpdate')); 
   };
 
-  // 🔴 Sol Üst Köşe SIFIRLA Butonu İşlevi
   const resetSingleMatch = async (matchId: number) => {
     try {
       await supabase.from('live_matches').upsert({
@@ -316,12 +307,11 @@ export default function AdminTahminmatik() {
     else { return total > 90 ? `90+${total - 90}` : `${total}`; }
   };
 
-  // 🔴 ZAMAN KİLİDİ HESAPLAYICISI (Maça 1 dakika kala açılır)
   const getUnlockStatus = (matchDate: string, matchTime: string) => {
     const [d, m, y] = matchDate.split('.');
     const [h, min] = matchTime.split(':');
     const matchTimeMs = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), 0).getTime();
-    const unlockTimeMs = matchTimeMs - 60000; // 1 Dakika Önce
+    const unlockTimeMs = matchTimeMs - 60000; 
     const isUnlocked = now >= unlockTimeMs;
     
     const hUnl = new Date(unlockTimeMs).getHours().toString().padStart(2, '0');
@@ -330,24 +320,110 @@ export default function AdminTahminmatik() {
     return { isUnlocked, unlockTimeStr: `${hUnl}:${mUnl}` };
   };
 
-  // 🔴 ALTIN STANDART TEMA MOTORU
+  const isTffMatchCheck = (category: string) => {
+    const uppercaseCat = category.toUpperCase();
+    return (
+      uppercaseCat.includes("TÜRKİYE SÜPER LİG") ||
+      uppercaseCat.includes("TÜRKİYE KUPASI") ||
+      uppercaseCat.includes("TÜRKİYE 1.LİG") ||
+      uppercaseCat.includes("TÜRKİYE SÜPER KUPA") ||
+      uppercaseCat.includes("TÜRKİYE KADINLAR SÜPER LİG") ||
+      uppercaseCat.includes("TFF 1. LİG")
+    );
+  };
+
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
-      return { containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.3)]", containerBg: "bg-[#050b14]", badgeBg: "bg-indigo-900/80", badgeText: "text-indigo-200", badgeBorder: "border-indigo-500/50", catText: "text-white", scoreBorder: "border-white/30" };
+      return {
+        bgImg: "url('/cl-bg.png')",
+        containerBorder: "border-indigo-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.3)]",
+        containerBg: "bg-[#050b14]",
+        badgeBg: "bg-indigo-900/80",
+        badgeText: "text-indigo-200",
+        badgeBorder: "border-indigo-500/50",
+        catText: "text-white",
+        scoreBorder: "border-white/30",
+        colonText: "text-white/50",
+        tagText: "text-cyan-300",
+        tagBg: "bg-cyan-950/90",
+        tagBorder: "border-cyan-400/80",
+        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+      };
     } else if (upCat.includes("AVRUPA LİGİ")) {
-      return { containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.3)]", containerBg: "bg-[#140805]", badgeBg: "bg-orange-900/80", badgeText: "text-orange-200", badgeBorder: "border-orange-500/50", catText: "text-orange-300", scoreBorder: "border-orange-600/40" };
+      return {
+        bgImg: "url('/el-bg.png')", 
+        containerBorder: "border-orange-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.3)]",
+        containerBg: "bg-[#140805]",
+        badgeBg: "bg-orange-900/80",
+        badgeText: "text-orange-200",
+        badgeBorder: "border-orange-500/50",
+        catText: "text-orange-300",
+        scoreBorder: "border-orange-600/40",
+        colonText: "text-orange-400/50",
+        tagText: "text-orange-300",
+        tagBg: "bg-orange-950/90",
+        tagBorder: "border-orange-400/80",
+        bottomBar: "bg-[#140805]/90 border-orange-900/30"
+      };
     } else if (upCat.includes("KONFERANS LİGİ")) {
-      return { containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.3)]", containerBg: "bg-[#05140b]", badgeBg: "bg-emerald-900/80", badgeText: "text-emerald-200", badgeBorder: "border-emerald-500/50", catText: "text-emerald-300", scoreBorder: "border-emerald-600/40" };
-    } else {
-      return { containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.3)]", containerBg: "bg-[#140505]", badgeBg: "bg-red-900/80", badgeText: "text-red-200", badgeBorder: "border-red-500/50", catText: "text-red-300", scoreBorder: "border-red-600/40" };
+      return {
+        bgImg: "url('/uecl-bg.png')",
+        containerBorder: "border-emerald-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.3)]",
+        containerBg: "bg-[#05140b]",
+        badgeBg: "bg-emerald-900/80",
+        badgeText: "text-emerald-200",
+        badgeBorder: "border-emerald-500/50",
+        catText: "text-emerald-300",
+        scoreBorder: "border-emerald-600/40",
+        colonText: "text-emerald-400/50",
+        tagText: "text-emerald-300",
+        tagBg: "bg-emerald-950/90",
+        tagBorder: "border-emerald-400/80",
+        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
+      };
+    } else if (isTffMatchCheck(category)) {
+      return {
+        bgImg: "url('/tff-bg.png')",
+        containerBorder: "border-red-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.3)]",
+        containerBg: "bg-[#140505]",
+        badgeBg: "bg-red-900/80",
+        badgeText: "text-red-200",
+        badgeBorder: "border-red-500/50",
+        catText: "text-red-300",
+        scoreBorder: "border-red-600/40",
+        colonText: "text-red-400/50",
+        tagText: "text-red-400",
+        tagBg: "bg-red-950/90",
+        tagBorder: "border-red-500/80",
+        bottomBar: "bg-[#140505]/90 border-red-900/30"
+      };
     }
+    return {
+        bgImg: null,
+        containerBorder: "border-blue-500/30",
+        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.3)]",
+        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
+        badgeBg: "bg-blue-900/80",
+        badgeText: "text-blue-200",
+        badgeBorder: "border-blue-500/50",
+        catText: "text-blue-300",
+        scoreBorder: "border-blue-600/40",
+        colonText: "text-blue-400/50",
+        tagText: "text-cyan-300",
+        tagBg: "bg-cyan-950/90",
+        tagBorder: "border-cyan-400/80",
+        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+    };
   };
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 text-slate-100 min-h-screen font-sans">
       
-      {/* BAŞLIK VE SIFIRLAMA */}
       <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl mb-8 backdrop-blur-md">
         <h1 className="text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase flex items-center gap-3">
           ⚡ ŞAMPİYONLAR LİGİ REJİ ODASI
@@ -369,7 +445,6 @@ export default function AdminTahminmatik() {
         {isAdminPanelOpen && (
           <div className="absolute top-full left-0 right-0 mt-3 z-40 bg-slate-950/95 border-2 border-amber-500/50 p-4 sm:p-6 rounded-2xl shadow-2xl backdrop-blur-xl animate-fadeIn max-h-[80vh] overflow-y-auto">
             
-            {/* 🔴 ALTIN STANDART İZGARASI */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 items-start">
               {week4Matches.map((match) => { 
                 const currentInputs = matchInputs[match.id] || { home: "-", away: "-", min: "1" };
@@ -386,7 +461,6 @@ export default function AdminTahminmatik() {
 
                 const isExpanded = expandedMatches[match.id];
 
-                // 🔴 GİZLİ GÖZ: Canlı Skor Bilenler Önizlemesi
                 const isPreviewActive = currentInputs.home !== "-" && currentInputs.away !== "-";
                 let previewWinners: string[] = [];
                 let previewPoints = 0;
@@ -403,7 +477,6 @@ export default function AdminTahminmatik() {
                    else if(winnerIds.length >= 6) previewPoints = 2;
                 }
 
-                // EĞER KART KAPALIYSA (Akordeon İnce Bar)
                 if (!isExpanded) {
                   return (
                     <div key={match.id} className="w-full bg-slate-900 border border-slate-700/50 rounded-xl flex items-center justify-between p-3 sm:p-4 shadow-sm hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => toggleExpand(match.id)}>
@@ -420,11 +493,9 @@ export default function AdminTahminmatik() {
                   );
                 }
 
-                // 🔴 EĞER KART AÇIKSA (Altın Standart Otonom Reji Kartı)
                 return (
                   <div key={match.id} className={`flex flex-col relative rounded-2xl border overflow-hidden p-4 sm:p-6 transition-all duration-500 ${theme.containerBorder} ${theme.containerBg} ${theme.containerShadow}`}>
                     
-                    {/* ARKA PLAN BÜYÜSÜ */}
                     {theme.bgImg && (
                       <>
                         <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}></div>
@@ -432,7 +503,6 @@ export default function AdminTahminmatik() {
                       </>
                     )}
 
-                    {/* 🔴 ZAMAN KİLİDİ EKRANI (Maça 1 dk kalana kadar devrede) */}
                     {!isUnlocked && (
                       <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-4">
                          <span className="text-4xl sm:text-5xl mb-3">⏳</span>
@@ -447,7 +517,6 @@ export default function AdminTahminmatik() {
                       </div>
                     )}
 
-                    {/* KÖŞE TAŞLARI (Sol Üst: Sıfırla | Sağ Üst: Bitir) */}
                     <button onClick={() => resetSingleMatch(match.id)} className="absolute top-0 left-0 bg-red-600/90 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-br-xl z-40 hover:bg-red-500 border-b border-r border-red-400 shadow-md transition-colors">
                       🔄 SIFIRLA
                     </button>
@@ -455,7 +524,6 @@ export default function AdminTahminmatik() {
                       🏁 BİTİR & PUAN DAĞIT
                     </button>
 
-                    {/* GÖRÜNÜR KART İÇERİĞİ */}
                     <div className="relative z-10 flex flex-col h-full mt-4 sm:mt-2">
                       
                       <div className="flex flex-col items-center justify-center mb-4 gap-1.5 sm:gap-2">
@@ -466,7 +534,6 @@ export default function AdminTahminmatik() {
 
                       <div className="flex items-start justify-between">
                         
-                        {/* 🔴 SOL TARAF: Ev Sahibi Logosu ve Atlı Butonları */}
                         <div className="flex flex-col items-center flex-1 gap-1.5 sm:gap-2">
                           <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', currentInputs.min)} className="w-full bg-blue-600/90 hover:bg-blue-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-blue-400 transition-colors">
                             🟢 MAÇI BAŞLAT
@@ -480,7 +547,6 @@ export default function AdminTahminmatik() {
                           <span className="text-white font-extrabold text-[10px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1 mt-1">{match.homeTeam}</span>
                         </div>
 
-                        {/* 🔴 MERKEZ: Otonom Saat ve Açılır Skor Menüleri */}
                         <div className="flex flex-col items-center justify-center mx-2 w-32 sm:w-40 z-30 pt-2">
                           
                           <div className="w-full flex flex-col items-center mb-3">
@@ -526,7 +592,6 @@ export default function AdminTahminmatik() {
 
                         </div>
 
-                        {/* 🔴 SAĞ TARAF: Deplasman Logosu ve Atlı Butonları */}
                         <div className="flex flex-col items-center flex-1 gap-1.5 sm:gap-2">
                           <button onClick={() => { handleScoreChange(match.id, 'min', '46'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', '46'); }} className="w-full bg-cyan-600/90 hover:bg-cyan-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-cyan-400 transition-colors">
                             ▶️ 2. YARI BAŞLAT
@@ -542,7 +607,6 @@ export default function AdminTahminmatik() {
 
                       </div>
 
-                      {/* 🔴 GİZLİ GÖZ: Anlık Canlı Bilenler Önizlemesi */}
                       {isPreviewActive && (
                         <div className="w-full mt-5 p-3 bg-slate-950/80 rounded-xl border border-slate-700/60 shadow-inner">
                            <div className="flex justify-between items-center border-b border-slate-700/50 pb-1.5 mb-2">
