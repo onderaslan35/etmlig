@@ -253,54 +253,59 @@ export default function MasterPuanDurumuPage() {
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr><th className="px-6 py-3.5 w-24 text-center">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
+            {/* 🔴 EKMEL MÜDAHALESİ: MOBİL UYUMLU, DAR VE ŞIK TABLO YAPISI 🔴 */}
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
+                <tr>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-3.5 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-slate-300 font-medium text-sm w-5 text-right">{row.currentRank || idx + 1}</span>
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
+                      <div className="flex items-center justify-center gap-0.5 sm:gap-2">
+                        <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank || idx + 1}</span>
                         
-                        <div className="w-10 flex items-center justify-start">
+                        <div className="w-6 sm:w-10 flex items-center justify-start">
                           {activeTab === 'total' && row.trend === 'up' && (
-                            <span className="text-emerald-400 text-xs font-bold animate-bounce flex items-center gap-0.5">
-                              ▲ <span className="text-[10px]">{row.trendDiff}</span>
+                            <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">
+                              ▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
                             </span>
                           )}
                           {activeTab === 'total' && row.trend === 'down' && (
-                            <span className="text-red-500 text-xs font-bold flex items-center gap-0.5">
-                              ▼ <span className="text-[10px]">{row.trendDiff}</span>
+                            <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">
+                              ▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
                             </span>
                           )}
                           {activeTab === 'total' && row.trend === 'same' && (
-                            <span className="text-slate-600 text-[10px] ml-1">▶</span>
+                            <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>
                           )}
                         </div>
-
                       </div>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-200 font-semibold">{row.name}</span>
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
+                      <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
+                        {/* İsimler asla aşağı kaymayacak, uzunsa 3 nokta (...) ile kesilecek */}
+                        <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink">{row.name}</span>
                         
+                        {/* Rozetler asla ezilmeyecek (flex-shrink-0) */}
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
-                          <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
+                          <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
                             +{row.liveExtra} CANLI
                           </span>
                         )}
 
                         {row.liveExtra > 0 && activeTab !== 'total' && (
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-sm ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
+                          <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
                             +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}
                           </span>
                         )}
-
                       </div>
                     </td>
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                    <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-bold text-sm sm:text-base whitespace-nowrap ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>
                       {row.puan}
                     </td>
                   </tr>
