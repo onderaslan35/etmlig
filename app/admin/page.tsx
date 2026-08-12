@@ -61,7 +61,9 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  // 🔴 EKMEL MÜDAHALESİ: KAYIP KAHRAMAN SİSTEME EKLENDİ!
+  "262723": "AYHAN LUŞOĞLU" 
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -153,17 +155,15 @@ export default function AdminTahminmatik() {
     return () => clearInterval(timer);
   }, []);
 
-  // 🔴 YENİ ESNEK ZAMAN ALGORİTMASI: Bugünün maçları hep açık, gelecek maçlar kilitli, geçmiş maçlar 14 saat sonra kilitli!
   useEffect(() => {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
-    const todayFormatted = `${dd}.${mm}.${yyyy}`; // Örn: 12.08.2026
+    const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
     const initialExpanded: Record<number, boolean> = {};
     week4Matches.forEach(m => {
-      // 1. KURAL: Bugünün maçları VİTRİNDE AÇIK kalsın
       if (m.date === todayFormatted) {
         initialExpanded[m.id] = true;
       }
@@ -309,7 +309,6 @@ export default function AdminTahminmatik() {
     else { return total > 90 ? `90+${total - 90}` : `${total}`; }
   };
 
-  // 🔴 YENİ ESNEK KİLİT MOTORU
   const getUnlockStatus = (matchDate: string, matchTime: string) => {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
@@ -321,25 +320,20 @@ export default function AdminTahminmatik() {
     const [h, min] = matchTime.split(':');
     const matchTimeMs = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), 0).getTime();
     
-    // KURAL 1: Bugünün maçları ASLA kilitlenmez, tam kontrol sende!
     if (matchDate === todayFormatted) {
         return { isUnlocked: true, isArchived: false, message: "AÇIK" };
     }
 
-    // KURAL 2: Gelecek maçlar (Henüz zamanı gelmediyse) KİLİTLİ
     if (matchTimeMs > now) {
         return { isUnlocked: false, isArchived: false, message: "Gelecek Maç" };
     }
 
-    // KURAL 3: Geçmiş maçlar için 14 SAAT KURALI
     const fourteenHoursMs = 14 * 60 * 60 * 1000;
     const archiveTimeMs = matchTimeMs + fourteenHoursMs;
     
     if (now >= archiveTimeMs) {
-        // Maçın üzerinden 14 saat geçmiş, ARŞİVE KALDIRILDI KİLİDİ
         return { isUnlocked: false, isArchived: true, message: "Arşive Kaldırıldı" };
     } else {
-        // Maç geçmişte ama henüz 14 saat dolmamış (Örneğin dünün maçı), KONTROLE AÇIK
         return { isUnlocked: true, isArchived: false, message: "AÇIK" };
     }
   };
@@ -479,7 +473,6 @@ export default function AdminTahminmatik() {
                 const displayMinute = getDisplayMinute(dbBaseMin, dbStartedAt, dbStatus);
                 const theme = getEliteTheme(match.category);
                 
-                // 🔴 ESNEK ZAMAN KİLİDİ ÇAĞIRISI
                 const { isUnlocked, isArchived, message } = getUnlockStatus(match.date, match.time);
                 
                 const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
@@ -529,7 +522,6 @@ export default function AdminTahminmatik() {
                       </>
                     )}
 
-                    {/* 🔴 KİLİT EKRANLARI (Gelecek Maçlar veya Arşive Kaldırılan Geçmiş Maçlar) */}
                     {!isUnlocked && (
                       <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-4">
                          <span className="text-4xl sm:text-5xl mb-3">⏳</span>
