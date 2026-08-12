@@ -16,7 +16,7 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262787": "MUST बुन्देलİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
   "262723": "AYHAN LUŞOĞLU"
 };
 
@@ -29,13 +29,15 @@ export default function DfoPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED'); // 🔴 EKMEL: Maçın durumunu hafızada tutar!
-  const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED'); 
+  
+  // 🔴 EKMEL MANTIĞI: Sadece aktif olan haftalar. (DFO İçin Ortalanmış Yapı)
+  const availableWeeks = [1, 2, 3, 4];
 
   const loadLeaderboard = () => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
     const signalData = JSON.parse(localStorage.getItem('elitTahmin_AdminSignal') || '{}');
-    setAdminStatus(signalData.status || 'NOT_STARTED'); // Maç canlı mı, bitti mi okuyoruz
+    setAdminStatus(signalData.status || 'NOT_STARTED');
 
     if (activeTab === 'total') {
       const baseList = Object.keys(allPlayersList).map(id => {
@@ -110,13 +112,19 @@ export default function DfoPuanDurumuPage() {
             <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
             <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
           </button>
+          
           {isWeekMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                {totalWeeks.map((weekNum) => {
+              {/* 🔴 EKMEL MANTIĞI: DFO İçin Ortalanmış, Kutuyu Bozmayan Tasarım */}
+              <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
+                {availableWeeks.map((weekNum) => {
                   const weekKey = `week${weekNum}`;
                   return (
-                    <button key={weekNum} onClick={() => selectTab(weekKey)} className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}>
+                    <button 
+                      key={weekNum} 
+                      onClick={() => selectTab(weekKey)} 
+                      className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}
+                    >
                       {weekNum}
                     </button>
                   );
@@ -153,14 +161,12 @@ export default function DfoPuanDurumuPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-slate-200 font-semibold">{row.name}</span>
                         
-                        {/* 🔴 EKMEL MANTIĞI: TOPLAM SAYFASINDA SADECE "LIVE" İKEN GÖRÜNÜR, BİTİNCE SİLİNİR */}
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                             +{row.liveExtra} CANLI
                           </span>
                         )}
 
-                        {/* 🔴 EKMEL MANTIĞI: HAFTA SAYFASINDA CANLIYKEN "CANLI", BİTİNCE "1. MAÇ" YAZAR (KALICI OLUR) */}
                         {row.liveExtra > 0 && activeTab !== 'total' && (
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-sm ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
                             +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(1. MAÇ)'}
