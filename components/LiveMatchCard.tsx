@@ -3,6 +3,34 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 EKMEL - YEREL LOGO BANKASI (Tüm 4. Hafta Takımları)
+const localTeamLogos: Record<string, string> = {
+  "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
+  "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", "PARIS SAINT-GERMAIN": "/logos/psg.png",
+  "ASTON VILLA": "/logos/aston-villa.png", "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
+  "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
+  "KONYASPOR": "/logos/konyaspor.png", "ÇAYKUR RİZE": "/logos/caykur-rize.png", "BAŞAKŞEHİR": "/logos/basaksehir.png",
+  "IBERIA 1999": "/logos/iberia.png", "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png",
+  "KUPS": "/logos/kups.png", "GORNİK ZABRZE": "/logos/gornik.png", "THUN": "/logos/thun.png",
+  "DINAMO ZAGREB": "/logos/dinamo-zagreb.png", "HEART": "/logos/heart.png", "LARNE FC": "/logos/larne.png",
+  "KIZILYILDIZ": "/logos/kizilyildiz.png", "GOTEBORG": "/logos/goteborg.png", "LEVADIA FC": "/logos/levadia.png",
+  "LEVSKI SOFYA": "/logos/levski.png", "UNIVERSITATEA CRAIOVA": "/logos/craiova.png", "KOPENAG": "/logos/kopenhag.png",
+  "KOPENHAG": "/logos/kopenhag.png", "RAPID WIEN": "/logos/rapid-wien.png", "AJAX": "/logos/ajax.png",
+  "PANATHINAIKOS": "/logos/panathinaikos.png", "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png",
+  "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+  "SİVASSPOR": "/logos/sivasspor.png", "ANTALYASPOR": "/logos/antalyaspor.png", "KAYSERİSPOR": "/logos/kayserispor.png",
+  "PENDİKSPOR": "/logos/pendikspor.png", "BATMAN PETROL SPOR": "/logos/batman.png", "ESENLER EROKSPOR": "/logos/erokspor.png",
+  "EROKSPOR": "/logos/erokspor.png", "ALANYASPOR": "/logos/alanyaspor.png", "GENÇLERBİRLİĞİ": "/logos/genclerbirligi.png",
+  "IĞDIR FK": "/logos/igdir.png", "BURSASPOR": "/logos/bursaspor.png", "MANİSA FK": "/logos/manisa.png",
+  "VANSPOR FK": "/logos/vanspor.png", "ARSENAL": "/logos/arsenal.png", "MANCHESTER CITY": "/logos/man-city.png",
+  "KOCAELİSPOR": "/logos/kocaelispor.png", "AMED SPOR": "/logos/amedspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
+  "EYÜPSPOR": "/logos/eyupspor.png", "KEÇİÖRENGÜCÜ": "/logos/keciorengucu.png", "MARDİN 1969": "/logos/mardin.png",
+  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", "SAMSUNSPOR": "/logos/samsunspor.png",
+  "GÖZTEPE": "/logos/goztepe.png", "BOLUSPOR": "/logos/boluspor.png", "FATİH KARAGÜMRÜK": "/logos/karagumruk.png",
+  "ÜMRANİYESPOR": "/logos/umraniyespor.png", "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png",
+  "GAZİANTEP FK": "/logos/gaziantep.png", "SARIYER": "/logos/sariyer.png"
+};
+
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -69,21 +97,43 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-const localTeamLogos: Record<string, string> = {
-  "FENERBAHÇE": "/logos/fenerbahce.png", "STURM GRAZ": "/logos/sturm-graz.png"
-};
-
+// 🔴 EKMEL - 4. HAFTA TÜM FİKSTÜR (Takvim Motoru Buradan Beslenir)
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" }
+  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA" },
+  { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 5, weekLabel: "4. HAFTA 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
+  { id: 6, weekLabel: "4. HAFTA 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
+  { id: 7, weekLabel: "4. HAFTA 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
+  { id: 8, weekLabel: "4. HAFTA 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
+  { id: 9, weekLabel: "4. HAFTA 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
+  { id: 10, weekLabel: "4. HAFTA 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
+  { id: 11, weekLabel: "4. HAFTA 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
+  { id: 12, weekLabel: "4. HAFTA 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
+  { id: 13, weekLabel: "4. HAFTA 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
+  { id: 14, weekLabel: "4. HAFTA 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
+  { id: 15, weekLabel: "4. HAFTA 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
+  { id: 16, weekLabel: "4. HAFTA 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
+  { id: 17, weekLabel: "4. HAFTA 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
+  { id: 18, weekLabel: "4. HAFTA 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
+  { id: 19, weekLabel: "4. HAFTA 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
+  { id: 20, weekLabel: "4. HAFTA 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
+  { id: 21, weekLabel: "4. HAFTA 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
+  { id: 22, weekLabel: "4. HAFTA 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
+  { id: 23, weekLabel: "4. HAFTA 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
+  { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
+// TFF - DFO Ayrıştırıcı
+const isTffMatchCheck = (category: string) => {
+  const uppercaseCat = category.toUpperCase();
+  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
+};
+
 export default function LiveMatchCard() {
-  const [todaysMatches, setTodaysMatches] = useState<any[]>([]);
-  const [matchStatus, setMatchStatus] = useState<string>('NOT_STARTED');
-  const [homeScore, setHomeScore] = useState<string>('-');
-  const [awayScore, setAwayScore] = useState<string>('-');
-  const [baseMinute, setBaseMinute] = useState<string>('');
-  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
+  const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
 
@@ -93,43 +143,64 @@ export default function LiveMatchCard() {
   }, []);
 
   useEffect(() => {
-    setTodaysMatches(week4Matches);
+    // 🔴 EKMEL - TAKVİM MOTORU: Sistemin uyanıp "Bugün günlerden ne?" dediği an.
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const todayFormatted = `${dd}.${mm}.${yyyy}`; // Örn: 12.08.2026
+
+    // O güne ait tüm maçları süzüp alır (Yarın 2 maç varsa 2'sini de alır)
+    const todaysMatches = week4Matches.filter(m => m.date === todayFormatted);
+    setTodaysMatchesList(todaysMatches);
     
+    if (todaysMatches.length === 0) return;
+
     const fetchFromDB = async () => {
       try {
-        const { data, error } = await supabase.from('live_matches').select('*').eq('id', 1).single();
-        
+        // O günkü maçların güncel durumlarını Supabase'den çek
+        const { data, error } = await supabase.from('live_matches').select('*');
         if (data) {
-          setMatchStatus(data.status);
-          setHomeScore(data.home_score);
-          setAwayScore(data.away_score);
-          setBaseMinute(data.base_minute);
-          setStartedAt(data.started_at);
+          const map: Record<number, any> = {};
+          data.forEach(row => map[row.id] = row);
+          setLiveMatchesData(map);
           
-          if (data.home_score !== '-' && data.away_score !== '-') {
-            const targetScore = `${data.home_score}-${data.away_score}`;
-            const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][0] === targetScore);
-            
-            let points = 1;
-            if(winnerIds.length === 1) points = 12;
-            else if(winnerIds.length === 2) points = 6;
-            else if(winnerIds.length === 3) points = 5;
-            else if(winnerIds.length === 4) points = 4;
-            else if(winnerIds.length === 5) points = 3;
-            else if(winnerIds.length === 6) points = 2;
+          // Liderlik Tablosunu Dinamik Güncelleme (Çoklu Maç Desteğiyle)
+          let currentBoard: Record<string, any> = {}; 
+          let hasLiveScores = false;
 
-            const currentBoard: Record<string, any> = {}; 
-            
-            winnerIds.forEach(wId => {
-              currentBoard[wId] = { dfo: points, master: points, skor: 1 };
-            });
-            
+          todaysMatches.forEach(match => {
+            const dbMatch = map[match.id];
+            if (dbMatch && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+              hasLiveScores = true;
+              const isTff = isTffMatchCheck(match.category);
+              const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+              const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][match.id - 1] === targetScore);
+              
+              let points = 1;
+              if(winnerIds.length === 1) points = 12;
+              else if(winnerIds.length === 2) points = 6;
+              else if(winnerIds.length === 3) points = 5;
+              else if(winnerIds.length === 4) points = 4;
+              else if(winnerIds.length === 5) points = 3;
+              else if(winnerIds.length === 6) points = 2;
+
+              winnerIds.forEach(wId => {
+                if(!currentBoard[wId]) currentBoard[wId] = { dfo: 0, tff: 0, master: 0, skor: 0 };
+                if (isTff) currentBoard[wId].tff += points;
+                else currentBoard[wId].dfo += points;
+                currentBoard[wId].master += points;
+                currentBoard[wId].skor += 1;
+              });
+            }
+          });
+
+          if (hasLiveScores) {
             localStorage.setItem('elitTahmin_Leaderboard', JSON.stringify(currentBoard));
-            window.dispatchEvent(new Event('leaderboardUpdate')); 
           } else {
             localStorage.removeItem('elitTahmin_Leaderboard');
-            window.dispatchEvent(new Event('leaderboardUpdate')); 
           }
+          window.dispatchEvent(new Event('leaderboardUpdate')); 
         }
       } catch (e) {
         console.log("Supabase baglantisi bekleniyor...");
@@ -145,43 +216,39 @@ export default function LiveMatchCard() {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
   };
 
-  const getDisplayMinute = () => {
+  const getDisplayMinute = (baseMinute: string, startedAt: number | null) => {
     if (!startedAt || !baseMinute || baseMinute === 'İY' || baseMinute === 'MS') return baseMinute;
-    
     const elapsedMins = Math.floor((now - startedAt) / 60000);
-    let base = 0;
-    let extra = 0;
-
+    let base = 0; let extra = 0;
     if (baseMinute.includes('+')) {
       const parts = baseMinute.split('+');
-      base = parseInt(parts[0]);
-      extra = parseInt(parts[1]);
+      base = parseInt(parts[0]); extra = parseInt(parts[1]);
     } else {
       base = parseInt(baseMinute);
     }
-
     const total = base + extra + elapsedMins;
-
-    if (base <= 45) {
-      if (total > 45) return `45+${total - 45}`;
-      return `${total}`;
-    } else {
-      if (total > 90) return `90+${total - 90}`;
-      return `${total}`;
-    }
+    if (base <= 45) { return total > 45 ? `45+${total - 45}` : `${total}`; } 
+    else { return total > 90 ? `90+${total - 90}` : `${total}`; }
   };
 
-  if (todaysMatches.length === 0) return null;
+  if (todaysMatchesList.length === 0) return null;
 
   return (
     <div className="w-full max-w-5xl mx-auto mb-8 flex flex-col gap-6">
-      {todaysMatches.map((match) => {
+      {todaysMatchesList.map((match) => {
         const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
         const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
         const isWinnersOpen = openWinnersMap[match.id] !== false;
 
-        // 🔴 ŞAMPİYONLAR LİGİ TEMA DEDEKTÖRÜ
+        const dbMatch = liveMatchesData[match.id] || {};
+        const matchStatus = dbMatch.status || 'NOT_STARTED';
+        const homeScore = dbMatch.home_score || '-';
+        const awayScore = dbMatch.away_score || '-';
+        const baseMinute = dbMatch.base_minute || '';
+        const startedAt = dbMatch.started_at || null;
+
         const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+        const isTffMatch = isTffMatchCheck(match.category);
 
         let currentWinners: string[] = [];
         if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'HT') && homeScore !== '-' && awayScore !== '-') {
@@ -216,7 +283,7 @@ export default function LiveMatchCard() {
           }
         }
 
-        const currentDisplayMinute = getDisplayMinute();
+        const currentDisplayMinute = getDisplayMinute(baseMinute, startedAt);
 
         return (
           <div 
@@ -227,47 +294,42 @@ export default function LiveMatchCard() {
                 : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14] border-blue-500/30 shadow-[0_0_30px_rgba(30,58,138,0.5)]'
             }`}
           >
-            
-            {/* 🔴 EKMEL BÖLGESİ: BURASI TAMAMEN YENİLENDİ VE NETLEŞTİRİLDİ */}
             <div className="p-4 sm:p-6 relative flex-grow overflow-hidden">
               
-              {/* Orijinal cl-bg.png veya cl-bg.jpg Dosyası (Karartma veya blur yok!) */}
               {isChampionsLeague && (
                 <>
                   <div 
                     className="absolute inset-0 z-0 opacity-100"
                     style={{ 
-                      // 🔴 DİKKAT: .jpg kullanıyorsan aşağıdaki satırı "url('/logos/cl-bg.jpg')" yap! 
-                      // Şu an Maç Arşivinde sorunsuz çalışan PNG uzantısına göre ayarladım.
                       backgroundImage: "url('/logos/cl-bg.png')",
                       backgroundSize: 'cover', 
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat'
                     }}
                   ></div>
-                  {/* Yazıların bir tık daha okunaklı olması için Maç Arşivindeki gibi çook hafif bir gölgelendirme (Zift gibi karartma değil) */}
                   <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
                 </>
               )}
 
-              {/* İÇERİKLER (z-10 verilerek resmin üstüne çıkartıldı) */}
               <div className="relative z-10">
-                {/* Hafta Etiketi */}
+                
+                {/* 🔴 EKMEL - SOL ÜST KÖŞE: GÜNÜN MAÇI ETİKETİ */}
+                <div className="absolute -top-4 sm:-top-6 -left-4 sm:-left-6 bg-amber-500 text-slate-950 font-black px-3 py-1 rounded-br-xl text-[10px] border-b border-r border-amber-400 shadow-md backdrop-blur-sm z-20 flex items-center gap-1">
+                  <span className="animate-pulse">🔥</span> BUGÜNÜN MAÇI
+                </div>
+
                 <div className={`absolute -top-4 sm:-top-6 -right-4 sm:-right-6 ${isChampionsLeague ? 'bg-indigo-900/80 text-indigo-200 border-indigo-500/50' : 'bg-blue-900/80 text-blue-200 border-blue-500/50'} font-black px-3 py-1 rounded-bl-xl text-[10px] border-b border-l shadow-md backdrop-blur-sm`}>
                   {match.weekLabel}
                 </div>
 
-                {/* Kategori (Kupa İsmi) */}
                 <div className="text-center mb-6 mt-3">
                   <span className={`${isChampionsLeague ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]'} text-xs sm:text-sm font-bold uppercase tracking-wider flex justify-center items-center gap-2`}>
                     🏆 {match.category}
                   </span>
                 </div>
 
-                {/* Takımlar ve Skor Alanı */}
                 <div className="flex items-center justify-between px-2 sm:px-6">
                   
-                  {/* Ev Sahibi */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
                       <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
@@ -275,7 +337,6 @@ export default function LiveMatchCard() {
                     <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                   </div>
 
-                  {/* Skor / Zaman Orta Alan */}
                   <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32">
                     
                     {matchStatus === 'NOT_STARTED' && (
@@ -318,7 +379,6 @@ export default function LiveMatchCard() {
                     )}
                   </div>
 
-                  {/* Deplasman */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
                       <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
@@ -329,7 +389,6 @@ export default function LiveMatchCard() {
               </div>
             </div>
 
-            {/* 🔴 EKMEL BÖLGESİ: BURASI KESİNLİKLE DEĞİŞMEZ! Orijinal Lacivert Alt Bölüm */}
             <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-4 py-3 w-full backdrop-blur-md z-10 relative">
               <div className="flex justify-between items-center w-full">
                 <div className="text-left flex-1">
@@ -345,8 +404,8 @@ export default function LiveMatchCard() {
                 </div>
 
                 <div className="flex-0 text-center px-1">
-                  <span className="text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border text-cyan-300 bg-cyan-950/90 border-cyan-400/80">
-                    MASTER & DFO MAÇI
+                  <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${isTffMatch ? 'text-red-400 bg-red-950/90 border-red-500/80' : 'text-cyan-300 bg-cyan-950/90 border-cyan-400/80'}`}>
+                    {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                   </span>
                 </div>
 
@@ -375,7 +434,6 @@ export default function LiveMatchCard() {
                 </div>
               )}
             </div>
-
           </div>
         );
       })}
