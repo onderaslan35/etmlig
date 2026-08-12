@@ -3,37 +3,88 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (PSG ve Aston Villa %100 Wikipedia'dan!)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Tüm Wikipedia Şeffaf Logoları Entegre Edildi)
 const localTeamLogos: Record<string, string> = {
-  "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
-  "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", 
-  
-  // 🔴 İŞTE VİZYON: Her iki takım da doğrudan Wikipedia'nın şeffaf SVG sunucusundan canlı çekiliyor!
-  "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
-  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/fr/0/00/Logo_Aston_Villa_FC_2024.svg",
-  
-  "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
-  "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
-  "KONYASPOR": "/logos/konyaspor.png", "ÇAYKUR RİZE": "/logos/caykur-rize.png", "BAŞAKŞEHİR": "/logos/basaksehir.png",
-  "IBERIA 1999": "/logos/iberia.png", "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png",
-  "KUPS": "/logos/kups.png", "GORNİK ZABRZE": "/logos/gornik.png", "THUN": "/logos/thun.png",
-  "DINAMO ZAGREB": "/logos/dinamo-zagreb.png", "HEART": "/logos/heart.png", "LARNE FC": "/logos/larne.png",
-  "KIZILYILDIZ": "/logos/kizilyildiz.png", "GOTEBORG": "/logos/goteborg.png", "LEVADIA FC": "/logos/levadia.png",
-  "LEVSKI SOFYA": "/logos/levski.png", "UNIVERSITATEA CRAIOVA": "/logos/craiova.png", "KOPENAG": "/logos/kopenhag.png",
-  "KOPENHAG": "/logos/kopenhag.png", "RAPID WIEN": "/logos/rapid-wien.png", "AJAX": "/logos/ajax.png",
-  "PANATHINAIKOS": "/logos/panathinaikos.png", "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png",
-  "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/twente.png", "BENFICA": "/logos/benfica.png",
-  "SİVASSPOR": "/logos/sivasspor.png", "ANTALYASPOR": "/logos/antalyaspor.png", "KAYSERİSPOR": "/logos/kayserispor.png",
-  "PENDİKSPOR": "/logos/pendikspor.png", "BATMAN PETROL SPOR": "/logos/batman.png", "ESENLER EROKSPOR": "/logos/erokspor.png",
-  "EROKSPOR": "/logos/erokspor.png", "ALANYASPOR": "/logos/alanyaspor.png", "GENÇLERBİRLİĞİ": "/logos/genclerbirligi.png",
-  "IĞDIR FK": "/logos/igdir.png", "BURSASPOR": "/logos/bursaspor.png", "MANİSA FK": "/logos/manisa.png",
-  "VANSPOR FK": "/logos/vanspor.png", "ARSENAL": "/logos/arsenal.png", "MANCHESTER CITY": "/logos/man-city.png",
-  "KOCAELİSPOR": "/logos/kocaelispor.png", "AMED SPOR": "/logos/amedspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "EYÜPSPOR": "/logos/eyupspor.png", "KEÇİÖRENGÜCÜ": "/logos/keciorengucu.png", "MARDİN 1969": "/logos/mardin.png",
-  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", "SAMSUNSPOR": "/logos/samsunspor.png",
-  "GÖZTEPE": "/logos/goztepe.png", "BOLUSPOR": "/logos/boluspor.png", "FATİH KARAGÜMRÜK": "/logos/karagumruk.png",
-  "ÜMRANİYESPOR": "/logos/umraniyespor.png", "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png",
-  "GAZİANTEP FK": "/logos/gaziantep.png", "SARIYER": "/logos/sariyer.png"
+  "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
+  "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
+  "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
+  "KASIMPAŞA": "https://de.wikipedia.org/wiki/Special:FilePath/Kasimpasa_Logo.svg",
+  "TRABZONSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Trabzonspor_2022.svg",
+  "KONYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Konyaspor_(logo).svg",
+  "ÇAYKUR RİZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Caykur_Rizespor_(logo).svg",
+  "FATİH KARAGÜMRÜK": "https://fr.wikipedia.org/wiki/Special:FilePath/Fatih_Karag%C3%BCmr%C3%BCk_SK_(logo).svg",
+  "ÜMRANİYESPOR": "https://el.wikipedia.org/wiki/Special:FilePath/%C3%9Cmraniyespor_(logo).svg",
+  "GAZİANTEP FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gaziantep_FK.svg",
+  "FENERBAHÇE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Fenerbah%C3%A7e_SK_-_120_Yil_(1907-2027).svg",
+  "ALANYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Alanyaspor_(logo).svg",
+  "GENÇLERBİRLİĞİ": "https://fr.wikipedia.org/wiki/Special:FilePath/Gen%C3%A7lerbirli%C4%9Fi_S.K._(logo).svg",
+  "IĞDIR FK": "https://ar.wikipedia.org/wiki/Special:FilePath/I%C4%9Fd%C4%B1r_FK.svg",
+  "VANSPOR FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Vanspor_FK_(2019).svg",
+  "MANİSA FK": "https://tr.wikipedia.org/wiki/Special:FilePath/Manisa_FK.png",
+  "BAŞAKŞEHİR": "https://de.wikipedia.org/wiki/Special:FilePath/Istanbul_Basaksehir_FK_Logo.svg",
+  "KAYSERİSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Kayserispor.svg",
+  "SİVASSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Sivasspor_-_Logo.svg",
+  "AMED SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Amed_SK.png",
+  "MARDİN 1969": "https://tr.wikipedia.org/wiki/Special:FilePath/Mardin_1969_SK.png",
+  "ANTALYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Antalyaspor.svg",
+  "BATMAN PETROL SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Batman_Petrolspor.png",
+  "KEÇİÖRENGÜCÜ": "https://tr.wikipedia.org/wiki/Special:FilePath/Ankara_Ke%C3%A7i%C3%B6reng%C3%BCc%C3%BC_SK.png",
+  "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
+  "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
+  "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
+  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
+  "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
+  "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
+  "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
+  "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
+  "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
+  "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
+  "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
+  "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
+  "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
+  "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
+  "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
+  "SABAH FK": "https://en.wikipedia.org/wiki/Special:FilePath/Sabah_FC_(Azerbaijan).png",
+  "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
+  "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
+  "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
+  "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
+  "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
+  "KIZILYILDIZ": "https://en.wikipedia.org/wiki/Special:FilePath/Red_Star_Belgrade_crest.svg",
+  "LEVADIA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Levadia_Tallinnin.png",
+  "LEVSKI SOFYA": "https://en.wikipedia.org/wiki/Special:FilePath/Levski_Sofia_crest_(2026).svg",
+  "UNIVERSITATEA CRAIOVA": "https://ro.wikipedia.org/wiki/Special:FilePath/CS_Universitatea_Craiova.svg",
+  "POLISSYA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Polissya_Zhytomyr.png",
+  "KOPENAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
+  "KOPENHAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
+  "SANTA COLOMA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Santa_Coloma_logo.svg",
+  "RAPID WIEN": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Rapid_Wien_Logo.svg",
+  "FCSB": "https://tr.wikipedia.org/wiki/Special:FilePath/Fcsb-logo.svg",
+  "AUDA RIGA": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Auda_logo.png",
+  "BRANN": "https://en.wikipedia.org/wiki/Special:FilePath/Brann_logo.svg",
+  "PAKSI FC": "https://tr.wikipedia.org/wiki/Special:FilePath/Paksi_FC_(Logo).svg",
+  "PANATHINAIKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Panathinaikos.svg",
+  "ZELEZNICAR PANCEVO": "https://en.wikipedia.org/wiki/Special:FilePath/FK_%C5%BDelezni%C4%8Dar_Pan%C4%8Devo_logo.png",
+  "MIDTJYLLAND": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Midtjylland.png",
+  "HAJDUK SPLIT": "https://tr.wikipedia.org/wiki/Special:FilePath/Hajduk_Split.png",
+  "PATOS": "https://en.wikipedia.org/wiki/Special:FilePath/Pafos_FC_crest.svg",
+  "CSKA SOFYA": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_Sofia_logo.svg",
+  "ST GALLEN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_St._Gallen_logo.svg",
+  "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
+  "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
+  "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_G%C3%B6teborg_logo.svg",
+  "UNIVERSITATEA CLUJ": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Universitatea_Cluj_logo.svg",
+  "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
+  "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
+  "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
+  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
+  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png",
+  "VOJVODINA": "/logos/vojvodina.png", "NEC NIJMEGEN": "/logos/nec.png", "FERENCVAROS": "/logos/ferencvaros.png",
+  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "USG": "/logos/usg.png", 
+  "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
+  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png"
 };
 
 const allPlayersList: Record<string, string> = {
@@ -95,11 +146,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"],
   "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"],
   "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
-  "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
-  "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
+  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"]
 };
 
 // 4. HAFTA TÜM FİKSTÜR
@@ -234,7 +281,8 @@ export default function LiveMatchCard() {
   if (todaysMatchesList.length === 0) return null;
 
   return (
-    <div className="w-full max-w-5xl mx-auto mb-8 flex flex-col gap-6">
+    // 🔴 EKMEL MÜDAHALESİ: KARTLAR ARTIK MASAÜSTÜNDE YAN YANA (grid-cols-2)
+    <div className="w-full max-w-6xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
       {todaysMatchesList.map((match) => {
         const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
         const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
@@ -288,7 +336,7 @@ export default function LiveMatchCard() {
         return (
           <div 
             key={match.id} 
-            className={`w-full max-w-lg mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${
+            className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${
               isChampionsLeague 
                 ? 'border-indigo-500/50 shadow-[0_0_40px_rgba(79,70,229,0.4)] bg-[#050b14]' 
                 : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14] border-blue-500/30 shadow-[0_0_30px_rgba(30,58,138,0.5)]'
@@ -329,7 +377,6 @@ export default function LiveMatchCard() {
 
                 <div className="flex items-center justify-between px-2 sm:px-6">
                   
-                  {/* 🔴 EKREM: EV SAHİBİ ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                       <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
@@ -379,7 +426,6 @@ export default function LiveMatchCard() {
                     )}
                   </div>
 
-                  {/* 🔴 EKREM: DEPLASMAN ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                       <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
@@ -426,7 +472,7 @@ export default function LiveMatchCard() {
                     <span>CANLI SKOR BİLENLER (A-Z)</span>
                     <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
                     {currentWinners.map((winner: string, idx: number) => (
                       <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
                         {winner}
