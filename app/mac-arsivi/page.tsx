@@ -108,7 +108,7 @@ const week2Matches = [
   { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ
+// 3. HA Cup MAÇ VERİLERİ
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -136,9 +136,9 @@ const week3Matches = [
   { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["DOĞAÇ ALKAN", "MEHMET ALİ KARA"] }
 ];
 
-// 4. HAFTA MAÇ VERİLERİ 
+// 🔴 EKMEL - 4. HAFTA MAÇ VERİLERİ (1. Maç Mühürlendi, 2. Maç Aktif)
 const week4Matches = [
-  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "- : -" },
+  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "0 - 1", winnersCount: 4, earnedPoints: 4, winners: ["MUSTAFA GÜMÜŞÇÜ", "RIDVAN DOGER", "SEDAT SEDAT", "ŞENOL CAN ÇAKICI"] },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA", score: "- : -" },
   { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", score: "- : -" },
   { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", score: "- : -" },
@@ -272,11 +272,149 @@ export default function MacArsiviPage() {
           {currentMatches.map((match) => {
             const isWinnersOpen = !!openWinnersMap[match.id];
             const isTffMatch = isTffMatchCheck(match.category);
-            const { bgImage, cardBgClass, badgeClass, tagClass } = getMatchThemeStyle(match.category);
-            
             const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
             const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
+            // 🔴 EKMEL MANTIĞI: 4. HAFTA 1. VE 2. MAÇ İÇİN YAPAY ZEKA ARŞİV OKUYUCUSU
+            if (selectedWeek === 4 && (match.id === 1 || match.id === 2)) {
+              const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+              
+              // Skoru ayrıştır
+              const scoreParts = match.score ? match.score.split(match.score.includes('-') ? '-' : ':').map(s => s.trim()) : ['-', '-'];
+              const homeScore = scoreParts[0] || '-';
+              const awayScore = scoreParts[1] || '-';
+              const isFinished = homeScore !== '-' && awayScore !== '-' && homeScore !== '';
+              
+              const winnersCount = (match as any).winnersCount || 0;
+              const displayPoints = (match as any).earnedPoints || 0;
+              const currentWinners = (match as any).winners || [];
+
+              return (
+                <div 
+                  key={match.id} 
+                  className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${
+                    isChampionsLeague 
+                      ? 'border-indigo-500/50 shadow-[0_0_40px_rgba(79,70,229,0.4)] bg-[#050b14]' 
+                      : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14] border-blue-500/30 shadow-[0_0_30px_rgba(30,58,138,0.5)]'
+                  }`}
+                >
+                  <div className="p-4 sm:p-6 relative flex-grow overflow-hidden">
+                    {/* ŞL İçin Özel Arka Plan (cl-bg.png) */}
+                    {isChampionsLeague && (
+                      <>
+                        <div 
+                          className="absolute inset-0 z-0 opacity-100"
+                          style={{ 
+                            backgroundImage: "url('/logos/cl-bg.png')",
+                            backgroundSize: 'cover', 
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat'
+                          }}
+                        ></div>
+                        <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
+                      </>
+                    )}
+
+                    <div className="relative z-10">
+                      <div className={`absolute -top-4 sm:-top-6 -right-4 sm:-right-6 ${isChampionsLeague ? 'bg-indigo-900/80 text-indigo-200 border-indigo-500/50' : 'bg-blue-900/80 text-blue-200 border-blue-500/50'} font-black px-3 py-1 rounded-bl-xl text-[10px] border-b border-l shadow-md backdrop-blur-sm`}>
+                        {match.weekLabel.toUpperCase()}
+                      </div>
+
+                      <div className="text-center mb-6 mt-3">
+                        <span className={`${isChampionsLeague ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]'} text-xs sm:text-sm font-bold uppercase tracking-wider flex justify-center items-center gap-2`}>
+                          🏆 {match.category}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between px-2 sm:px-6">
+                        {/* Ev Sahibi */}
+                        <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                          <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
+                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                          </div>
+                          <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+                        </div>
+
+                        {/* Skor / Saat Alanı */}
+                        <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32">
+                          {!isFinished ? (
+                            <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
+                              <span className="text-amber-400 text-xs sm:text-sm font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                            </div>
+                          ) : (
+                            <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
+                              <span className="text-slate-400 text-xs font-black tracking-widest">MS (BİTTİ)</span>
+                            </div>
+                          )}
+
+                          <div className={`w-full bg-[#080d1a]/80 border ${isChampionsLeague ? 'border-white/30' : 'border-blue-600/40'} py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                            <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                            <span className={`text-lg sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                            <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                          </div>
+                        </div>
+
+                        {/* Deplasman */}
+                        <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                          <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
+                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                          </div>
+                          <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alt Lacivert Tablo */}
+                  <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-4 py-3 w-full backdrop-blur-md z-10 relative">
+                    <div className="flex justify-between items-center w-full">
+                      <div className="text-left flex-1">
+                        {!isFinished ? (
+                          <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Henüz oynanmadı</span>
+                        ) : winnersCount === 0 ? (
+                          <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Bu skoru bilen yok</span>
+                        ) : (
+                          <span className="text-[10px] sm:text-xs font-medium text-blue-200">
+                            <strong className="text-blue-400">{winnersCount} kişi</strong> tam isabetli
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-0 text-center px-1">
+                        <span className="text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border text-cyan-300 bg-cyan-950/90 border-cyan-400/80">
+                          {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
+                        </span>
+                      </div>
+                      <div className="text-right flex-1">
+                        {winnersCount > 0 && (
+                          <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
+                            {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {isWinnersOpen && winnersCount > 0 && (
+                      <div className="w-full mt-3 p-3 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
+                        <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
+                          <span>CANLI SKOR BİLENLER (A-Z)</span>
+                          <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {currentWinners.map((winner: string, idx: number) => (
+                            <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                              {winner}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            // 🔴 EKMEL MANTIĞI BİTİŞİ: ARŞİVİN GERİ KALAN TÜM MAÇLARI ESKİ MİMARİSİYLE KUSURSUZCA ÇIKMAYA DEVAM EDER
+            const { bgImage, cardBgClass, badgeClass, tagClass } = getMatchThemeStyle(match.category);
+            
             return (
               <div
                 key={match.id}
@@ -309,8 +447,6 @@ export default function MacArsiviPage() {
                   </div>
 
                   <div className="flex items-center justify-between px-1 my-3">
-                    
-                    {/* 🔴 EKMEL LOGO DOKUNUŞU: Padding silindi, Scale eklendi */}
                     <div className="flex flex-col items-center flex-1">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/40 border border-slate-600/40 rounded-full flex items-center justify-center mb-1.5 shadow-lg overflow-hidden relative">
                         <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain transform scale-[1.20] drop-shadow-xl" />
@@ -324,7 +460,6 @@ export default function MacArsiviPage() {
                       </div>
                     </div>
 
-                    {/* 🔴 EKMEL LOGO DOKUNUŞU: Padding silindi, Scale eklendi */}
                     <div className="flex flex-col items-center flex-1">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/40 border border-slate-600/40 rounded-full flex items-center justify-center mb-1.5 shadow-lg overflow-hidden relative">
                         <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain transform scale-[1.20] drop-shadow-xl" />
