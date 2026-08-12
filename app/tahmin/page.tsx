@@ -116,22 +116,34 @@ const week4PredictionsData: Record<string, string[]> = {
 };
 
 const week4Matches = [
-  { id: 1, homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" }, { id: 2, homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" }, { id: 4, homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
-  { id: 5, homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" }, { id: 6, homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
-  { id: 7, homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" }, { id: 8, homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
-  { id: 9, homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" }, { id: 10, homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
-  { id: 11, homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" }, { id: 12, homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
-  { id: 13, homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" }, { id: 14, homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
-  { id: 15, homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" }, { id: 16, homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
-  { id: 17, homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" }, { id: 18, homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
-  { id: 19, homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" }, { id: 20, homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
-  { id: 21, homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" }, { id: 22, homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
-  { id: 23, homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" }, { id: 24, homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
+  { id: 1, homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", cat: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "11 AĞUSTOS SALI", time: "21:30" }, 
+  { id: 2, homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", cat: "UEFA SÜPER KUPA", date: "12 AĞUSTOS ÇARŞAMBA", time: "22:00" },
+  { id: 3, homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", cat: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13 AĞUSTOS PERŞEMBE", time: "19:00" }, 
+  { id: 4, homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", cat: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13 AĞUSTOS PERŞEMBE", time: "20:00" },
+  { id: 5, homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", cat: "TÜRKİYE SÜPER LİG", date: "14 AĞUSTOS CUMA", time: "21:30" }, 
+  { id: 6, homeTeam: "EROKSPOR", awayTeam: "SARIYER", cat: "TÜRKİYE 1.LİG", date: "14 AĞUSTOS CUMA", time: "21:30" },
+  { id: 7, homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR", cat: "TÜRKİYE SÜPER LİG", date: "15 AĞUSTOS CUMARTESİ", time: "19:00" }, 
+  { id: 8, homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE", cat: "TÜRKİYE SÜPER LİG", date: "15 AĞUSTOS CUMARTESİ", time: "19:00" },
+  { id: 9, homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR", cat: "TÜRKİYE 1.LİG", date: "15 AĞUSTOS CUMARTESİ", time: "19:00" }, 
+  { id: 10, homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR", cat: "TÜRKİYE 1.LİG", date: "15 AĞUSTOS CUMARTESİ", time: "19:00" },
+  { id: 11, homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR", cat: "TÜRKİYE SÜPER LİG", date: "15 AĞUSTOS CUMARTESİ", time: "21:30" }, 
+  { id: 12, homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE", cat: "TÜRKİYE SÜPER LİG", date: "15 AĞUSTOS CUMARTESİ", time: "21:30" },
+  { id: 13, homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK", cat: "TÜRKİYE 1.LİG", date: "15 AĞUSTOS CUMARTESİ", time: "21:30" }, 
+  { id: 14, homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK", cat: "TÜRKİYE 1.LİG", date: "15 AĞUSTOS CUMARTESİ", time: "21:30" },
+  { id: 15, homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY", cat: "İNGİLTERE SÜPER KUPA", date: "16 AĞUSTOS PAZAR", time: "17:00" }, 
+  { id: 16, homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR", cat: "TÜRKİYE SÜPER LİG", date: "16 AĞUSTOS PAZAR", time: "19:00" },
+  { id: 17, homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR", cat: "TÜRKİYE 1.LİG", date: "16 AĞUSTOS PAZAR", time: "19:00" }, 
+  { id: 18, homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR", cat: "TÜRKİYE SÜPER LİG", date: "16 AĞUSTOS PAZAR", time: "21:30" },
+  { id: 19, homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR", cat: "TÜRKİYE SÜPER LİG", date: "16 AĞUSTOS PAZAR", time: "21:30" }, 
+  { id: 20, homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR", cat: "TÜRKİYE 1.LİG", date: "16 AĞUSTOS PAZAR", time: "19:00" },
+  { id: 21, homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR", cat: "TÜRKİYE 1.LİG", date: "16 AĞUSTOS PAZAR", time: "21:30" }, 
+  { id: 22, homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", cat: "TÜRKİYE 1.LİG", date: "16 AĞUSTOS PAZAR", time: "21:30" },
+  { id: 23, homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", cat: "TÜRKİYE SÜPER KUPA", date: "17 AĞUSTOS PAZARTESİ", time: "21:30" }, 
+  { id: 24, homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", cat: "TÜRKİYE 1.LİG", date: "17 AĞUSTOS PAZARTESİ", time: "21:30" }
 ];
 
 export default function TahminlerMerkezi() {
-  const [view, setView] = useState<'menu' | 'login' | 'entry' | 'declaration'>('menu');
+  const [view, setView] = useState<'menu' | 'login' | 'entry' | 'declaration' | 'accordion'>('menu');
   
   // Login State
   const [userId, setUserId] = useState('');
@@ -144,8 +156,10 @@ export default function TahminlerMerkezi() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  // Declaration State
+  // Declaration & Accordion State
   const [allPredictions, setAllPredictions] = useState<any[]>([]);
+  const [selectedWeek, setSelectedWeek] = useState('4. HAFTA');
+  const [selectedPlayer, setSelectedPlayer] = useState('262728'); // Default Önder Aslan
 
   // 🔴 GİYOTİN SAATİ (4. Hafta Kapanış: 17 Ağustos 2026, 21:00:00)
   const [isLocked, setIsLocked] = useState<boolean>(false);
@@ -229,52 +243,45 @@ export default function TahminlerMerkezi() {
     setIsSaving(false);
   };
 
-  // 🔴 EKMEL MÜDAHALESİ: KİLİT KIRILDI VE VERİLER BİRLEŞTİRİLDİ!
-  const loadDeclaration = async () => {
+  // 🔴 VERİLERİ (HEM YENİ DB HEM ESKİ ARŞİV) BİRLEŞTİRİP ÇEKME MOTORU
+  const loadAllData = async (targetView: 'declaration' | 'accordion') => {
     try {
-      // 1. Önce Supabase'den güncel verileri (senin test ettiklerini) çekelim
       const { data, error } = await supabase.from('user_predictions').select('*').eq('week_no', 4);
-      
       const formattedList: any[] = [];
       
-      // 2. Bütün oyuncuları tek tek tarayıp listeye ekleyelim
-      Object.keys(allPlayersList).forEach(userId => {
-        const userName = allPlayersList[userId];
-        const pData: any = { name: userName };
+      Object.keys(allPlayersList).forEach(uid => {
+        const userName = allPlayersList[uid];
+        const pData: any = { id: uid, name: userName };
         let hasData = false;
 
-        // Önce Supabase'de kaydı var mı bakıyoruz (Örn: Önder Aslan testi)
-        const dbRecord = data?.find(r => r.user_id === userId);
-        
+        const dbRecord = data?.find(r => r.user_id === uid);
         if (dbRecord) {
           for(let i=1; i<=24; i++) pData[`m${i}`] = dbRecord[`m${i}`] || "-:-";
           hasData = true;
-        } 
-        // Eğer Supabase'de yoksa, eski hardcoded (arşiv) verisinden çekiyoruz
-        else if (week4PredictionsData[userId]) {
-          const hardcodedScores = week4PredictionsData[userId];
+        } else if (week4PredictionsData[uid]) {
+          const hardcodedScores = week4PredictionsData[uid];
           for(let i=1; i<=24; i++) pData[`m${i}`] = hardcodedScores[i-1] || "-:-";
           hasData = true;
         }
 
-        // Eğer kişinin tahmini varsa (yeni veya eski) listeye ekle
-        if (hasData) {
-          formattedList.push(pData);
-        }
+        if (hasData) formattedList.push(pData);
       });
 
-      // İsim sırasına göre diz ve ekrana bas
       setAllPredictions(formattedList.sort((a,b) => a.name.localeCompare(b.name, 'tr')));
-    } catch(e) {
-      console.error(e);
-    }
+    } catch(e) { console.error(e); }
     
-    // Kilide falan bakmadan direkt tabloyu açıyoruz!
-    setView('declaration');
+    setView(targetView);
+  };
+
+  // Akordeon menü için seçili oyuncunun skorunu bulma fonksiyonu
+  const getPlayerScore = (matchIndex: number) => {
+    const pData = allPredictions.find(p => p.id === selectedPlayer);
+    if (!pData) return "-:-";
+    return pData[`m${matchIndex + 1}`] || "-:-";
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 font-sans pb-24">
       <div className="max-w-7xl mx-auto">
         
         {/* ÜST BİLGİ */}
@@ -285,30 +292,97 @@ export default function TahminlerMerkezi() {
           <p className="text-slate-400 mt-2 font-medium tracking-wide">4. HAFTA BÜLTENİ VE DEKLARASYON SİSTEMİ</p>
         </div>
 
-        {/* 🔴 AŞAMA 1: ANA MENÜ (ÇİFT KAPI) */}
+        {/* 🔴 AŞAMA 1: 3 KAPILI ANA MENÜ */}
         {view === 'menu' && (
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-stretch max-w-4xl mx-auto mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-12">
             
-            {/* A KAPISI: DEKLARASYON (KİLİDİ AÇIK!) */}
-            <div onClick={loadDeclaration} className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-slate-800 hover:border-cyan-500 rounded-2xl p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] group relative overflow-hidden text-center">
-              <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors"></div>
-              <span className="text-6xl mb-4 block group-hover:scale-110 transition-transform">📊</span>
-              <h2 className="text-xl font-black text-white mb-2">KATILIMCI TAHMİNLERİNİ GÖR</h2>
-              <p className="text-sm text-slate-400">Tüm yarışmacıların 4. hafta tahmin listesi (Deneme aşaması için kilit kaldırılmıştır).</p>
+            {/* A KAPISI: ESKİ AKORDEON MENÜ (Senin Namusun) */}
+            <div onClick={() => loadAllData('accordion')} className="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-slate-800 hover:border-blue-500 rounded-2xl p-6 sm:p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] group relative overflow-hidden text-center flex flex-col justify-center">
+              <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors"></div>
+              <span className="text-5xl sm:text-6xl mb-4 block group-hover:scale-110 transition-transform">📋</span>
+              <h2 className="text-lg sm:text-xl font-black text-blue-400 mb-2">KATILIMCI TAHMİNLERİNİ GÖR</h2>
+              <p className="text-xs sm:text-sm text-slate-400">Yarışmacıların maç maç detaylı tahmin analizi.</p>
             </div>
 
             {/* B KAPISI: KİŞİSEL GİRİŞ */}
-            <div onClick={() => setView('login')} className="flex-1 bg-gradient-to-b from-amber-900/40 to-slate-950 border-2 border-amber-700/50 hover:border-amber-500 rounded-2xl p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] group relative overflow-hidden text-center">
+            <div onClick={() => setView('login')} className="bg-gradient-to-b from-amber-900/40 to-slate-950 border-2 border-amber-700/50 hover:border-amber-500 rounded-2xl p-6 sm:p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] group relative overflow-hidden text-center flex flex-col justify-center transform md:-translate-y-4">
               <div className="absolute inset-0 bg-amber-500/5 group-hover:bg-amber-500/10 transition-colors"></div>
-              <span className="text-6xl mb-4 block group-hover:scale-110 transition-transform">🔒</span>
-              <h2 className="text-xl font-black text-amber-400 mb-2">TAHMİNLERİNİ GİR / GÜNCELLE</h2>
-              <p className="text-sm text-slate-400">Sana özel ID ve şifrenle giriş yap, 72 saatlik mühlet boyunca skorlarını taktiksel olarak yönet.</p>
+              <span className="text-5xl sm:text-6xl mb-4 block group-hover:scale-110 transition-transform">🔒</span>
+              <h2 className="text-lg sm:text-xl font-black text-amber-400 mb-2">TAHMİNLERİNİ GİR / GÜNCELLE</h2>
+              <p className="text-xs sm:text-sm text-slate-400">Sana özel ID ve şifrenle giriş yap, skorlarını taktiksel olarak yönet.</p>
+            </div>
+
+            {/* C KAPISI: YENİ RESMİ DEKLARASYON TABLOSU */}
+            <div onClick={() => loadAllData('declaration')} className="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-slate-800 hover:border-cyan-500 rounded-2xl p-6 sm:p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] group relative overflow-hidden text-center flex flex-col justify-center">
+              <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors"></div>
+              <span className="text-5xl sm:text-6xl mb-4 block group-hover:scale-110 transition-transform">📊</span>
+              <h2 className="text-lg sm:text-xl font-black text-cyan-400 mb-2">RESMİ DEKLARASYON</h2>
+              <p className="text-xs sm:text-sm text-slate-400">Tüm yarışmacıların mühürlenmiş devasa skor matrisi.</p>
             </div>
 
           </div>
         )}
 
-        {/* 🔴 AŞAMA 2: GÜVENLİK KAPISI (LOGİN) */}
+        {/* 🔴 A KAPISI: KATILIMCI TAHMİNLERİ (Eski Akordeon Tasarım) */}
+        {view === 'accordion' && (
+          <div className="animate-fadeIn max-w-5xl mx-auto">
+            
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-6 shadow-xl">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-amber-500 uppercase">KATILIMCI TAHMİNLERİ</h2>
+                <p className="text-slate-400 text-sm">4. Hafta maç bülteni ve oyuncu tahmin incelemesi</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div className="flex flex-col gap-1 w-full sm:w-40">
+                  <label className="text-[10px] font-bold text-amber-500 uppercase tracking-widest pl-1">Hafta Seçin</label>
+                  <select value={selectedWeek} onChange={(e)=>setSelectedWeek(e.target.value)} className="bg-slate-950 text-white border border-slate-700 rounded-xl px-4 py-2 outline-none cursor-pointer text-sm font-semibold">
+                    <option value="4. HAFTA">4. HAFTA</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1 w-full sm:w-64">
+                  <label className="text-[10px] font-bold text-amber-500 uppercase tracking-widest pl-1">Yarışmacı Seçin</label>
+                  <select value={selectedPlayer} onChange={(e)=>setSelectedPlayer(e.target.value)} className="bg-slate-950 text-white border border-slate-700 rounded-xl px-4 py-2 outline-none cursor-pointer text-sm font-semibold">
+                    {allPredictions.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                   <button onClick={() => setView('menu')} className="h-[42px] bg-slate-800 hover:bg-slate-700 text-white px-6 rounded-xl font-bold transition-colors">Geri</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-black text-white mb-6 border-b border-slate-800 pb-4 flex justify-between items-center">
+                <span>{allPlayersList[selectedPlayer]} - MAÇ TAHMİNLERİ</span>
+                <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full">{selectedWeek}</span>
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                {week4Matches.map((match, idx) => (
+                  <div key={match.id} className="bg-slate-900 border border-slate-700 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-slate-800 transition-colors gap-4">
+                    <div className="flex flex-col flex-1">
+                      <span className="text-[10px] sm:text-xs text-slate-400 font-semibold mb-1">
+                        MAÇ #{match.id} • {match.cat} • {match.date} | {match.time}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-black text-slate-200 tracking-wide">
+                        {match.homeTeam} <span className="text-amber-500 mx-2">VS</span> {match.awayTeam}
+                      </h3>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-600 rounded-lg px-4 py-2 flex items-center justify-center min-w-[120px] shadow-inner">
+                      <span className="text-slate-400 text-xs font-bold mr-2">Tahmin:</span>
+                      <span className="text-amber-400 font-black text-lg sm:text-xl tracking-wider">{getPlayerScore(idx)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* 🔴 B KAPISI: GÜVENLİK KAPISI (LOGİN) */}
         {view === 'login' && (
           <div className="max-w-md mx-auto bg-slate-900/80 border border-slate-700 rounded-2xl p-8 shadow-2xl backdrop-blur-sm animate-fadeIn">
             <h2 className="text-2xl font-black text-amber-500 text-center mb-6">GÜVENLİK DUVARI</h2>
@@ -329,7 +403,7 @@ export default function TahminlerMerkezi() {
           </div>
         )}
 
-        {/* 🔴 AŞAMA 3: 24 MAÇLIK OTONOM BÜLTEN (KAYIT EKRANI) */}
+        {/* 🔴 B KAPISI (İÇERİSİ): 24 MAÇLIK OTONOM BÜLTEN (KAYIT EKRANI) */}
         {view === 'entry' && loggedInUser && (
           <div className="animate-fadeIn max-w-5xl mx-auto">
             
@@ -406,7 +480,7 @@ export default function TahminlerMerkezi() {
           </div>
         )}
 
-        {/* 🔴 AŞAMA 4: DİJİTAL MÜHÜRLÜ DEKLARASYON TABLOSU (KİLİTSİZ AÇIK ERİŞİM) */}
+        {/* 🔴 C KAPISI: DİJİTAL MÜHÜRLÜ DEKLARASYON TABLOSU (AÇIK ERİŞİM) */}
         {view === 'declaration' && (
           <div className="animate-fadeIn w-full overflow-hidden">
             
@@ -417,25 +491,21 @@ export default function TahminlerMerkezi() {
 
             <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl">
               
-              {/* DİJİTAL MÜHÜR METNİ (AÇIK ERİŞİM VERSİYONU) */}
               <div className="bg-cyan-950/40 border-b border-cyan-900/50 p-4">
                 <p className="text-xs text-cyan-300 leading-relaxed font-medium">
                   <strong className="text-cyan-400 font-black">🔓 AÇIK ERİŞİM (TEST MODU):</strong> 4. Hafta tahminleri tüm kullanıcılara açık hale getirilmiştir. Tabloda hem sistemdeki güncel kayıtlar hem de mevcut arşiv verileri birlikte görüntülenmektedir.
                 </p>
               </div>
 
-              {/* EXCEL BENZERİ MUAZZAM TABLO */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[10px] sm:text-xs whitespace-nowrap">
                   <thead>
-                    {/* SÜTUN NUMARALARI */}
                     <tr className="bg-slate-950 border-b border-slate-800">
                       <th className="p-3 font-black text-amber-500 bg-slate-950 sticky left-0 z-20 border-r border-slate-800 w-48 shadow-[5px_0_10px_rgba(0,0,0,0.5)]">4. HAFTA BÜLTENİ</th>
                       {week4Matches.map(m => (
                         <th key={m.id} className="p-2 font-black text-slate-500 text-center border-r border-slate-800 min-w-[45px]">{m.id}</th>
                       ))}
                     </tr>
-                    {/* LOGOLAR */}
                     <tr className="bg-slate-900 border-b-2 border-slate-700">
                       <th className="p-3 font-black text-white bg-slate-900 sticky left-0 z-20 border-r border-slate-700 shadow-[5px_0_10px_rgba(0,0,0,0.5)]">OYUNCU İSMİ</th>
                       {week4Matches.map(m => {
