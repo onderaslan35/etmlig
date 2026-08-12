@@ -153,15 +153,17 @@ export default function AdminTahminmatik() {
     return () => clearInterval(timer);
   }, []);
 
+  // 🔴 YENİ ESNEK ZAMAN ALGORİTMASI: Bugünün maçları hep açık, gelecek maçlar kilitli, geçmiş maçlar 14 saat sonra kilitli!
   useEffect(() => {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
-    const todayFormatted = `${dd}.${mm}.${yyyy}`;
+    const todayFormatted = `${dd}.${mm}.${yyyy}`; // Örn: 12.08.2026
 
     const initialExpanded: Record<number, boolean> = {};
     week4Matches.forEach(m => {
+      // 1. KURAL: Bugünün maçları VİTRİNDE AÇIK kalsın
       if (m.date === todayFormatted) {
         initialExpanded[m.id] = true;
       }
@@ -307,17 +309,39 @@ export default function AdminTahminmatik() {
     else { return total > 90 ? `90+${total - 90}` : `${total}`; }
   };
 
+  // 🔴 YENİ ESNEK KİLİT MOTORU
   const getUnlockStatus = (matchDate: string, matchTime: string) => {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const todayFormatted = `${dd}.${mm}.${yyyy}`;
+
     const [d, m, y] = matchDate.split('.');
     const [h, min] = matchTime.split(':');
     const matchTimeMs = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), 0).getTime();
-    const unlockTimeMs = matchTimeMs - 60000; 
-    const isUnlocked = now >= unlockTimeMs;
     
-    const hUnl = new Date(unlockTimeMs).getHours().toString().padStart(2, '0');
-    const mUnl = new Date(unlockTimeMs).getMinutes().toString().padStart(2, '0');
+    // KURAL 1: Bugünün maçları ASLA kilitlenmez, tam kontrol sende!
+    if (matchDate === todayFormatted) {
+        return { isUnlocked: true, isArchived: false, message: "AÇIK" };
+    }
+
+    // KURAL 2: Gelecek maçlar (Henüz zamanı gelmediyse) KİLİTLİ
+    if (matchTimeMs > now) {
+        return { isUnlocked: false, isArchived: false, message: "Gelecek Maç" };
+    }
+
+    // KURAL 3: Geçmiş maçlar için 14 SAAT KURALI
+    const fourteenHoursMs = 14 * 60 * 60 * 1000;
+    const archiveTimeMs = matchTimeMs + fourteenHoursMs;
     
-    return { isUnlocked, unlockTimeStr: `${hUnl}:${mUnl}` };
+    if (now >= archiveTimeMs) {
+        // Maçın üzerinden 14 saat geçmiş, ARŞİVE KALDIRILDI KİLİDİ
+        return { isUnlocked: false, isArchived: true, message: "Arşive Kaldırıldı" };
+    } else {
+        // Maç geçmişte ama henüz 14 saat dolmamış (Örneğin dünün maçı), KONTROLE AÇIK
+        return { isUnlocked: true, isArchived: false, message: "AÇIK" };
+    }
   };
 
   const isTffMatchCheck = (category: string) => {
@@ -437,7 +461,7 @@ export default function AdminTahminmatik() {
         <button onClick={() => setIsAdminPanelOpen(!isAdminPanelOpen)} className={`w-full py-4 px-6 rounded-xl font-extrabold text-base border-2 transition-all flex items-center justify-between shadow-lg ${isAdminPanelOpen ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-amber-500 border-amber-500/50 hover:bg-slate-800'}`}>
           <div className="flex items-center gap-3">
             <span className="text-2xl">🎛️</span>
-            <span>MANUEL MAÇ KONTROL PANELİ (OTONOM ZAMAN KİLİTLİ)</span>
+            <span>MANUEL MAÇ KONTROL PANELİ (ESNEK ZAMAN KİLİTLİ)</span>
           </div>
           <span className="text-lg transition-transform duration-300">{isAdminPanelOpen ? '▲' : '▼'}</span>
         </button>
@@ -454,7 +478,9 @@ export default function AdminTahminmatik() {
                 
                 const displayMinute = getDisplayMinute(dbBaseMin, dbStartedAt, dbStatus);
                 const theme = getEliteTheme(match.category);
-                const { isUnlocked, unlockTimeStr } = getUnlockStatus(match.date, match.time);
+                
+                // 🔴 ESNEK ZAMAN KİLİDİ ÇAĞIRISI
+                const { isUnlocked, isArchived, message } = getUnlockStatus(match.date, match.time);
                 
                 const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
                 const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
@@ -486,7 +512,7 @@ export default function AdminTahminmatik() {
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4">
                         <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">{match.date} | {match.time}</span>
-                        {!isUnlocked && <span className="text-[10px] text-red-500 font-bold" title="Zaman Kilidi Aktif">🔒</span>}
+                        {!isUnlocked && <span className="text-[10px] text-red-500 font-bold" title={message}>🔒</span>}
                         <span className="text-amber-500 text-xs sm:text-sm">▼</span>
                       </div>
                     </div>
@@ -503,13 +529,18 @@ export default function AdminTahminmatik() {
                       </>
                     )}
 
+                    {/* 🔴 KİLİT EKRANLARI (Gelecek Maçlar veya Arşive Kaldırılan Geçmiş Maçlar) */}
                     {!isUnlocked && (
                       <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-4">
                          <span className="text-4xl sm:text-5xl mb-3">⏳</span>
                          <span className="text-amber-500 text-lg sm:text-xl font-black tracking-widest mb-1 drop-shadow-md">ZAMAN KİLİDİ AKTİF</span>
                          <span className="text-slate-300 text-[10px] sm:text-xs mb-2">Bu maç {match.date} tarihinde oynanacaktır.</span>
                          <span className="text-slate-400 text-[9px] sm:text-[11px] mt-1 bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-700">
-                           Sistem <strong className="text-white font-black mx-1">{unlockTimeStr}</strong> itibariyle otomatik açılacaktır.
+                           {isArchived ? (
+                             <strong className="text-red-400 font-black">BU MAÇ OYNANDI VE ARŞİVE KALDIRILDI.</strong>
+                           ) : (
+                             <>Sistem maç günü <strong className="text-white font-black mx-1">OTOMATİK</strong> olarak açılacaktır.</>
+                           )}
                          </span>
                          <button onClick={() => toggleExpand(match.id)} className="mt-6 border border-slate-600 text-slate-400 hover:bg-slate-800 hover:text-white px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold transition-colors">
                            KARTI GİZLE ▲
