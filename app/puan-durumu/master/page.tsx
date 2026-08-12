@@ -126,9 +126,6 @@ export default function MasterPuanDurumuPage() {
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
       if (activeTab === 'total') {
-        
-        // 🔴 EKREM: YENİ TREND MOTORU
-        // Adım 1: Sadece ilk 3 haftanın toplamını bularak "Referans (Eski) Sıralama"yı çıkarıyoruz
         const referenceList = Object.keys(allPlayersMasterList).map(id => {
           const w1 = masterWeek1Data[id]?.puan || 0;
           const w2 = masterWeek2Data[id]?.puan || 0;
@@ -141,7 +138,6 @@ export default function MasterPuanDurumuPage() {
         const prevRanks: Record<string, number> = {};
         referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-        // Adım 2: 4. haftanın canlı ve bitmiş puanlarını ekleyerek "Güncel (Yeni) Sıralama"yı çıkarıyoruz
         const baseList = Object.keys(allPlayersMasterList).map(id => {
           const w1 = masterWeek1Data[id]?.puan || 0;
           const w2 = masterWeek2Data[id]?.puan || 0;
@@ -156,19 +152,18 @@ export default function MasterPuanDurumuPage() {
           return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
         }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
 
-        // Adım 3: İki sıralamayı kıyasla ve farkı bul (Kaç kişi solladı?)
         const finalRows = baseList.map((player, index) => {
           const currentRank = index + 1;
           const prevRank = prevRanks[player.id];
           let trend = 'same';
-          let trendDiff = 0; // 🔴 Fark Sayısı
+          let trendDiff = 0; 
           
           if (currentRank < prevRank) {
             trend = 'up';
-            trendDiff = prevRank - currentRank; // Örn: 10'dan 8'e çıktı = 2 kişi solladı
+            trendDiff = prevRank - currentRank; 
           } else if (currentRank > prevRank) {
             trend = 'down';
-            trendDiff = currentRank - prevRank; // Örn: 3'ten 4'e düştü = 1 kişi geriledi
+            trendDiff = currentRank - prevRank; 
           }
           
           return { ...player, currentRank, prevRank, trend, trendDiff };
@@ -269,7 +264,6 @@ export default function MasterPuanDurumuPage() {
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-slate-300 font-medium text-sm w-5 text-right">{row.currentRank || idx + 1}</span>
                         
-                        {/* 🔴 EKREM: Sayısal Değerli Özel Trend Okları */}
                         <div className="w-10 flex items-center justify-start">
                           {activeTab === 'total' && row.trend === 'up' && (
                             <span className="text-emerald-400 text-xs font-bold animate-bounce flex items-center gap-0.5">
