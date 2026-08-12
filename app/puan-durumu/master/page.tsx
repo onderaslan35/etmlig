@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
-import { supabase } from '@/utils/supabase'; // 🔴 EKREM: Veritabanı bağlantısı buraya eklendi!
+import { supabase } from '@/utils/supabase'; 
 
 const allPlayersMasterList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
@@ -25,7 +25,6 @@ const masterWeek1Data: Record<string, { name: string; puan: number }> = { "26273
 const masterWeek2Data: Record<string, { name: string; puan: number }> = { "262756": { name: "EYÜP KARACAOĞLU 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 19 }, "262709": { name: "SALİH KARACAOĞLU", puan: 13 }, "262755": { name: "DOĞAÇ ALKAN", puan: 13 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 12 }, "262790": { name: "CUMALİ SÖKER", puan: 12 }, "262728": { name: "ÖNDER ASLAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 9 }, "262711": { name: "RIDVAN DOGER", puan: 8 }, "262717": { name: "MURAT ALİ", puan: 7 }, "262737": { name: "ŞAHİN GEZGİNCİ", puan: 7 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 6 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 6 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 6 }, "262786": { name: "SEDAT DİŞLİ", puan: 6 }, "262816": { name: "SEDAT SEDAT", puan: 6 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 4 }, "262702": { name: "MURAT KARA", puan: 2 }, "262703": { name: "CEMALETTİN BELLİ", puan: 2 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 2 }, "262730": { name: "ÖNDER IŞIK", puan: 2 }, "262736": { name: "MEHMET ALİ KARA", puan: 2 }, "262740": { name: "ABDULLAH DİK", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262763": { name: "MUSTAFA ELMAS", puan: 2 }, "262708": { name: "BAYRAM YILMAZ", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262725": { name: "İLYAS KAZDAL", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 }, "262758": { name: "MELİH PINAR", puan: 1 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 } };
 const masterWeek3Data: Record<string, { name: string; puan: number }> = { "262816": { name: "SEDAT SEDAT 🏔️ (+3 PUAN HAFTANIN PUAN LİDERİ) 🎯 (+3 PUAN HAFTANIN SKOR LİDERİ)", puan: 31 }, "262733": { name: "MUHSİN ASİLKAN", puan: 19 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 11 }, "262707": { name: "HAKAN AYAN", puan: 11 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 }, "262763": { name: "MUSTAFA ELMAS", puan: 11 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 11 }, "262734": { name: "LEVENT YILDIRIM", puan: 9 }, "262755": { name: "DOĞAÇ ALKAN", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 8 }, "262813": { name: "KEMAL ERSOY", puan: 8 }, "262702": { name: "MURAT KARA", puan: 7 }, "262711": { name: "RIDVAN DOGER", puan: 7 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 7 }, "262786": { name: "SEDAT DİŞLİ", puan: 7 }, "351925": { name: "ALİOS GÖZTEPE", puan: 7 }, "262725": { name: "İLYAS KAZDAL", puan: 6 }, "262726": { name: "HUDAVER TOPARDIC", puan: 6 }, "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 }, "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 }, "262782": { name: "YUSUF ERBAY", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 }, "262731": { name: "FATİH AYAN", puan: 2 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 } };
 
-// 🔴 EKREM: 4. Hafta tahmin havuzu. Sistem okumaları buradan yapacak.
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
   "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
@@ -84,33 +83,26 @@ export default function MasterPuanDurumuPage() {
   
   const availableWeeks = [1, 2, 3, 4];
 
-  // 🔴 EKREM: YENİ NESİL ÇELİK KASA VE SEYYAR KASA MOTORU
   const loadLeaderboard = async () => {
     try {
-      // 1. Veritabanındaki tüm maçları çek
       const { data: dbMatches, error } = await supabase.from('live_matches').select('*');
       
-      let w4Base: Record<string, number> = {}; // Kalıcı Puanlar (Çelik Kasa)
-      let w4Live: Record<string, number> = {}; // Canlı Puanlar (Seyyar Kasa)
+      let w4Base: Record<string, number> = {}; 
+      let w4Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      // Herkesi sıfırdan başlat
       Object.keys(allPlayersMasterList).forEach(id => {
         w4Base[id] = 0;
         w4Live[id] = 0;
       });
 
-      // 2. Maçları tek tek analiz et
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
           if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const matchIndex = dbMatch.id - 1; // 4. Hafta 1. Maç => index 0
+            const matchIndex = dbMatch.id - 1; 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            
-            // Tahmini bilenleri bul
             const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
             
-            // Puan hesapla
             let points = 1;
             if(winnerIds.length === 1) points = 12;
             else if(winnerIds.length === 2) points = 6;
@@ -119,12 +111,11 @@ export default function MasterPuanDurumuPage() {
             else if(winnerIds.length === 5) points = 3;
             else if(winnerIds.length === 6) points = 2;
 
-            // Puanları dağıt
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') {
-                w4Base[wId] += points; // MAÇ BİTMİŞ, ÇELİK KASAYA AT! (Ebedi silinmez)
+                w4Base[wId] += points; 
               } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
-                w4Live[wId] += points; // MAÇ CANLI, SEYYAR KASAYA AT!
+                w4Live[wId] += points; 
                 isAnyMatchLive = true;
               }
             });
@@ -134,47 +125,65 @@ export default function MasterPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 3. Tabloyu oluştur
       if (activeTab === 'total') {
+        
+        // 🔴 EKREM: YENİ TREND MOTORU
+        // Adım 1: Sadece ilk 3 haftanın toplamını bularak "Referans (Eski) Sıralama"yı çıkarıyoruz
+        const referenceList = Object.keys(allPlayersMasterList).map(id => {
+          const w1 = masterWeek1Data[id]?.puan || 0;
+          const w2 = masterWeek2Data[id]?.puan || 0;
+          const w3 = masterWeek3Data[id]?.puan || 0;
+          const basePuan = w1 + w2 + w3;
+          const finalName = allPlayersMasterList[id];
+          return { id, name: finalName, basePuan };
+        }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
+
+        const prevRanks: Record<string, number> = {};
+        referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+        // Adım 2: 4. haftanın canlı ve bitmiş puanlarını ekleyerek "Güncel (Yeni) Sıralama"yı çıkarıyoruz
         const baseList = Object.keys(allPlayersMasterList).map(id => {
           const w1 = masterWeek1Data[id]?.puan || 0;
           const w2 = masterWeek2Data[id]?.puan || 0;
           const w3 = masterWeek3Data[id]?.puan || 0;
-          const w4B = w4Base[id] || 0; // Çelik kasadan gelen kalıcı 4. hafta puanı!
+          const w4B = w4Base[id] || 0; 
           
           const basePuan = w1 + w2 + w3 + w4B;
-          const liveExtra = w4Live[id] || 0; // Seyyar kasadan gelen canlı puan!
+          const liveExtra = w4Live[id] || 0; 
           
           const finalName = allPlayersMasterList[id];
 
           return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
         }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
 
-        const prevRanks: Record<string, number> = {};
-        const noLiveList = [...baseList].sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
-        noLiveList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
-
+        // Adım 3: İki sıralamayı kıyasla ve farkı bul (Kaç kişi solladı?)
         const finalRows = baseList.map((player, index) => {
           const currentRank = index + 1;
           const prevRank = prevRanks[player.id];
           let trend = 'same';
-          if (currentRank < prevRank) trend = 'up';
-          else if (currentRank > prevRank) trend = 'down';
-          return { ...player, currentRank, prevRank, trend };
+          let trendDiff = 0; // 🔴 Fark Sayısı
+          
+          if (currentRank < prevRank) {
+            trend = 'up';
+            trendDiff = prevRank - currentRank; // Örn: 10'dan 8'e çıktı = 2 kişi solladı
+          } else if (currentRank > prevRank) {
+            trend = 'down';
+            trendDiff = currentRank - prevRank; // Örn: 3'ten 4'e düştü = 1 kişi geriledi
+          }
+          
+          return { ...player, currentRank, prevRank, trend, trendDiff };
         });
 
         setTableRows(finalRows);
       } else {
-        // Hafta 4 Seçildiyse
         if(activeTab === 'week4') {
           const list = Object.keys(allPlayersMasterList).map(id => {
-            const basePuan = w4Base[id] || 0; // Çelik kasa
-            const liveExtra = w4Live[id] || 0; // Seyyar kasa
-            return { id, name: allPlayersMasterList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none' };
+            const basePuan = w4Base[id] || 0; 
+            const liveExtra = w4Live[id] || 0; 
+            return { id, name: allPlayersMasterList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none', trendDiff: 0 };
           });
           setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         } else {
-          // Hafta 1, 2, 3 seçildiyse eski sistem
           let dataMap = masterWeek1Data;
           if(activeTab === 'week2') dataMap = masterWeek2Data;
           if(activeTab === 'week3') dataMap = masterWeek3Data;
@@ -182,7 +191,7 @@ export default function MasterPuanDurumuPage() {
           const list = Object.keys(allPlayersMasterList).map(id => {
             const rawObj = dataMap[id];
             const basePuan = rawObj ? rawObj.puan : 0;
-            return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: basePuan, liveExtra: 0, trend: 'none' };
+            return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: basePuan, liveExtra: 0, trend: 'none', trendDiff: 0 };
           });
           setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         }
@@ -194,7 +203,7 @@ export default function MasterPuanDurumuPage() {
 
   useEffect(() => {
     loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 5000); // Her 5 saniyede bir veritabanını tarar!
+    const interval = setInterval(loadLeaderboard, 5000); 
     return () => clearInterval(interval);
   }, [activeTab]);
 
@@ -251,17 +260,32 @@ export default function MasterPuanDurumuPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr><th className="px-6 py-3.5 w-20 text-center">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
+                <tr><th className="px-6 py-3.5 w-24 text-center">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-3.5 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
-                        {activeTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce">▲</span>}
-                        {activeTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-sm">▼</span>}
-                        {activeTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
+                        <span className="text-slate-300 font-medium text-sm w-5 text-right">{row.currentRank || idx + 1}</span>
+                        
+                        {/* 🔴 EKREM: Sayısal Değerli Özel Trend Okları */}
+                        <div className="w-10 flex items-center justify-start">
+                          {activeTab === 'total' && row.trend === 'up' && (
+                            <span className="text-emerald-400 text-xs font-bold animate-bounce flex items-center gap-0.5">
+                              ▲ <span className="text-[10px]">{row.trendDiff}</span>
+                            </span>
+                          )}
+                          {activeTab === 'total' && row.trend === 'down' && (
+                            <span className="text-red-500 text-xs font-bold flex items-center gap-0.5">
+                              ▼ <span className="text-[10px]">{row.trendDiff}</span>
+                            </span>
+                          )}
+                          {activeTab === 'total' && row.trend === 'same' && (
+                            <span className="text-slate-600 text-[10px] ml-1">▶</span>
+                          )}
+                        </div>
+
                       </div>
                     </td>
                     <td className="px-6 py-3.5">
