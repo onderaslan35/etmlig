@@ -4,7 +4,6 @@ import React, { useState } from "react";
 
 // 🔴 EKREM - YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
-  // 🌟 SENİN ELLERİNLE BULDUĞUN WIKIPEDIA (Special:FilePath) LİNKLERİ
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
   "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
@@ -35,19 +34,48 @@ const localTeamLogos: Record<string, string> = {
   "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
   "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
-  
-  // 🆕 SON EKLENENLER
   "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
   "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
-
-  // 🌟 EKREM'İN BULUT LİNKLERİ
   "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
   "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
+  
+  // 🔴 SENİN GÖNDERDİĞİN LİNKLERDEN ÇIKARILAN YEPYENİ WIKIPEDIA LOGOLARI (1. ve 2. Hafta Eksikleri)
+  "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
+  "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
+  "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
+  "SABAH FK": "https://en.wikipedia.org/wiki/Special:FilePath/Sabah_FC_(Azerbaijan).png",
+  "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
+  "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
+  "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
+  "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
+  "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
+  "KIZILYILDIZ": "https://en.wikipedia.org/wiki/Special:FilePath/Red_Star_Belgrade_crest.svg",
+  "LEVADIA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Levadia_Tallinnin.png",
+  "LEVSKI SOFYA": "https://en.wikipedia.org/wiki/Special:FilePath/Levski_Sofia_crest_(2026).svg",
+  "UNIVERSITATEA CRAIOVA": "https://ro.wikipedia.org/wiki/Special:FilePath/CS_Universitatea_Craiova.svg",
+  "POLISSYA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Polissya_Zhytomyr.png",
+  "KOPENAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
+  "KOPENHAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
+  "SANTA COLOMA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Santa_Coloma_logo.svg",
+  "RAPID WIEN": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Rapid_Wien_Logo.svg",
+  "FCSB": "https://tr.wikipedia.org/wiki/Special:FilePath/Fcsb-logo.svg",
+  "AUDA RIGA": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Auda_logo.png",
+  "BRANN": "https://en.wikipedia.org/wiki/Special:FilePath/Brann_logo.svg",
+  "PAKSI FC": "https://tr.wikipedia.org/wiki/Special:FilePath/Paksi_FC_(Logo).svg",
+  "PANATHINAIKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Panathinaikos.svg",
+  "ZELEZNICAR PANCEVO": "https://en.wikipedia.org/wiki/Special:FilePath/FK_%C5%BDelezni%C4%8Dar_Pan%C4%8Devo_logo.png",
+  "MIDTJYLLAND": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Midtjylland.png",
+  "HAJDUK SPLIT": "https://tr.wikipedia.org/wiki/Special:FilePath/Hajduk_Split.png",
+  "PATOS": "https://en.wikipedia.org/wiki/Special:FilePath/Pafos_FC_crest.svg", // Pafos FC
+  "CSKA SOFYA": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_Sofia_logo.svg",
+  "ST GALLEN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_St._Gallen_logo.svg",
+  "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
+  "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
 
-  // 🔴 SENİN SAĞLAM YEREL LOGOLARIN (Kusursuz Şeffaf Çalışanlar)
+  // 🔴 SENİN YEREL LOGOLARIN
   "ÇORUM FK": "/logos/corum-fk.png", 
   "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png",
@@ -57,25 +85,24 @@ const localTeamLogos: Record<string, string> = {
   "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
 
-  // DİĞERLERİ İÇİN FALLBACK
-  "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png", "KUPS": "/logos/kups.png",
-  "GORNİK ZABRZE": "/logos/gornik.png", "THUN": "/logos/thun.png", "HEART": "/logos/heart.png",
-  "LARNE FC": "/logos/larne.png", "KIZILYILDIZ": "/logos/kizilyildiz.png", "GOTEBORG": "/logos/goteborg.png",
-  "LEVADIA FC": "/logos/levadia.png", "LEVSKI SOFYA": "/logos/levski.png", "UNIVERSITATEA CRAIOVA": "/logos/craiova.png",
-  "KOPENAG": "/logos/kopenhag.png", "KOPENHAG": "/logos/kopenhag.png", "RAPID WIEN": "/logos/rapid-wien.png",
-  "AJAX": "/logos/ajax.png", "PANATHINAIKOS": "/logos/panathinaikos.png", "BRAGA": "/logos/braga.png",
-  "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/logos/twente.png",
-  "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png", 
-  "IBERIA 1999": "/logos/iberia.png",
-  "CSKA 1948": "/logos/cska-1948.png", "PAIDE LINNAMEESKOND": "/logos/paide.png", "DEBRECEN": "/logos/debrecen.png",
-  "SHELBOURNE": "/logos/shelbourne.png", "DINAMO MINSK": "/logos/dinamo-minsk.png", "PATOS": "/logos/patos.png",
-  "ZELEZNICAR PANCEVO": "/logos/zeleznicar.png", "PAKSI FC": "/logos/paksi.png", "UNIVERSITATEA CLUJ": "/logos/cluj.png",
-  "BRANN": "/logos/brann.png", "AUDA RIGA": "/logos/auda.png", "SANTA COLOMA FC": "/logos/santa-coloma.png",
-  "POLISSYA": "/logos/polissya.png", "INTER TURKU": "/logos/inter-turku.png", "FCSB": "/logos/fcsb.png",
-  "VOJVODINA": "/logos/vojvodina.png", "NEC NIJMEGEN": "/logos/nec.png", "CSKA SOFYA": "/logos/cska-sofya.png",
-  "HAJDUK SPLIT": "/logos/hajduk.png", "FERENCVAROS": "/logos/ferencvaros.png", "ST GALLEN": "/logos/st-gallen.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "USG": "/logos/usg.png", 
-  "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "MIDTJYLLAND": "/logos/midtjylland.png"
+  // DİĞERLERİ İÇİN FALLBACK (Geriye Kalanlar)
+  "UNIVERSITATEA CLUJ": "/logos/cluj.png",
+  "INTER TURKU": "/logos/inter-turku.png",
+  "VOJVODINA": "/logos/vojvodina.png",
+  "NEC NIJMEGEN": "/logos/nec.png",
+  "FERENCVAROS": "/logos/ferencvaros.png",
+  "HAMMARBY": "/logos/hammarby.png", 
+  "OLIMPIC LYON": "/logos/lyon.png", 
+  "USG": "/logos/usg.png", 
+  "BODO-GLIMT": "/logos/bodo.png", 
+  "GENT": "/logos/gent.png",
+  "AJAX": "/logos/ajax.png", 
+  "BRAGA": "/logos/braga.png",
+  "PAOK": "/logos/paok.png", 
+  "ANDERLECHT": "/logos/anderlecht.png", 
+  "TWENTE": "/logos/twente.png",
+  "BENFICA": "/logos/benfica.png", 
+  "ARSENAL": "/logos/arsenal.png"
 };
 
 const allPlayersList: Record<string, string> = {
@@ -231,7 +258,6 @@ export default function MacArsiviPage() {
     );
   };
 
-  // 🔴 EKMEL MÜDAHALESİ: ŞEFFAF NEON ETİKET SİSTEMİ 🔴
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -401,7 +427,6 @@ export default function MacArsiviPage() {
                         {match.weekLabel}
                       </span>
                       
-                      {/* 🔴 NEON ETİKET BURADA DEVREYE GİRİYOR */}
                       <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                         🏆 {match.category}
                       </span>
