@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL LOGO BANKASI (Orta tire düzeltmesi yapıldı!)
+// 🔴 EKREM - YEREL LOGO BANKASI (Senin isimlendirmene göre alt tireli güncellendi!)
 const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
   "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", "PARIS SAINT-GERMAIN": "/logos/psg.svg",
-  "ASTON VILLA": "/logos/aston-villa.svg", "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
+  "ASTON VILLA": "/logos/aston_villa.svg", "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
   "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
   "KONYASPOR": "/logos/konyaspor.png", "ÇAYKUR RİZE": "/logos/caykur-rize.png", "BAŞAKŞEHİR": "/logos/basaksehir.png",
   "IBERIA 1999": "/logos/iberia.png", "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png",
@@ -324,6 +324,7 @@ export default function LiveMatchCard() {
 
                 <div className="flex items-center justify-between px-2 sm:px-6">
                   
+                  {/* 🔴 EKREM: EV SAHİBİ ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                       <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
@@ -373,6 +374,7 @@ export default function LiveMatchCard() {
                     )}
                   </div>
 
+                  {/* 🔴 EKREM: DEPLASMAN ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                       <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
