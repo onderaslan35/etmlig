@@ -76,8 +76,8 @@ const week4PredictionsData: Record<string, string[]> = {
 };
 
 export default function SkorDurumuPage() {
-  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME 4. HAFTA YAPILDI 🔴
-  const [activeTab, setActiveTab] = useState<string>('week4');
+  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME TOTAL YAPILDI 🔴
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');

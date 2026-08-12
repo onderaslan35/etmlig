@@ -145,12 +145,16 @@ const week4PredictionsData: Record<string, string[]> = {
   "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"],
   "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"],
   "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"]
+  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
+  "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
+  "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
+  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
 // 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
   { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
   { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
@@ -181,7 +185,6 @@ const isTffMatchCheck = (category: string) => {
   return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
 };
 
-// 🔴 EKMEL MÜDAHALESİ: ELITE THEME MOTORU EKLENDİ 🔴
 const getEliteTheme = (category: string) => {
   const upCat = category.toUpperCase();
   if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -399,10 +402,7 @@ export default function LiveMatchCard() {
           const baseMinute = dbMatch.base_minute || '';
           const startedAt = dbMatch.started_at || null;
 
-          const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
           const isTffMatch = isTffMatchCheck(match.category);
-
-          // 🔴 EKMEL MÜDAHALESİ: TEMA KARTA UYGULANIYOR 🔴
           const theme = getEliteTheme(match.category);
 
           let currentWinners: string[] = [];
@@ -443,8 +443,7 @@ export default function LiveMatchCard() {
           return (
             <div 
               key={match.id} 
-              // 🔴 EKMEL MÜDAHALESİ: DIŞ ÇERÇEVEYE TEMA UYGULANIYOR 🔴
-              className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : 'bg-slate-950 border-blue-500/20 shadow-[0_0_15px_rgba(30,58,138,0.3)]'}`}
+              className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : 'bg-slate-950 border-slate-700/50 shadow-[0_0_15px_rgba(0,0,0,0.3)]'}`}
             >
               {/* CETVEL GÖRÜNÜMÜ */}
               <div
@@ -456,10 +455,13 @@ export default function LiveMatchCard() {
                   <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
                 </div>
                 
+                {/* 🔴 EKMEL MÜDAHALESİ: KUTU İÇİNDE TİRE (-) 🔴 */}
                 <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
-                  <span className={`text-xs sm:text-sm font-black bg-slate-950 px-3 py-1 rounded-md border shadow-inner whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500 border-red-500/50 animate-pulse' : 'text-amber-400 border-slate-700/50'}`}>
-                    {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
-                  </span>
+                  <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50'}`}>
+                    <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-amber-400'}`}>
+                      {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="flex-1 flex items-center gap-2 justify-start text-left">
@@ -476,7 +478,6 @@ export default function LiveMatchCard() {
               {isExpanded && (
                 <div className="relative flex-grow overflow-hidden animate-fadeIn">
                   
-                  {/* 🔴 EKMEL MÜDAHALESİ: İÇ ARKA PLANA TEMA UYGULANIYOR 🔴 */}
                   {theme.bgImg && (
                     <>
                       <div 
@@ -511,9 +512,9 @@ export default function LiveMatchCard() {
 
                       <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-32 sm:w-40 z-30">
                         
-                        {/* 🔴 EKMEL MÜDAHALESİ: KUPA İPTALİ VE TEMALI YAZI 🔴 */}
-                        <div className="text-center w-full mb-1 px-1 overflow-hidden">
-                          <span className={`${theme.catText} text-[8.5px] sm:text-[10px] font-black uppercase tracking-wider block leading-tight whitespace-nowrap truncate`}>
+                        {/* 🔴 EKMEL MÜDAHALESİ: NEON KATEGORİ, TAM METİN, MERKEZDE 🔴 */}
+                        <div className="text-center w-full mb-2 px-1 flex justify-center">
+                          <span className={`inline-block px-3 py-1.5 rounded-lg border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug shadow-[0_0_15px_currentColor]`}>
                             {match.category}
                           </span>
                         </div>
@@ -543,7 +544,6 @@ export default function LiveMatchCard() {
                           </div>
                         )}
 
-                        {/* 🔴 EKMEL MÜDAHALESİ: TEMALI SKOR TABLOSU 🔴 */}
                         <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                           <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
                           <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
@@ -568,7 +568,6 @@ export default function LiveMatchCard() {
 
                     </div>
                   
-                    {/* 🔴 EKMEL MÜDAHALESİ: TEMALI ALT BİLGİ VE LİSTE BÖLÜMÜ 🔴 */}
                     <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative`}>
                       <div className="flex justify-between items-center w-full">
                         <div className="text-left flex-1">

@@ -81,7 +81,8 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function TffPuanDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('week4');
+  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME TOTAL YAPILDI 🔴
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
@@ -261,6 +262,7 @@ export default function TffPuanDurumuPage() {
         </div>
       </div>
 
+      {/* 🔴 EKMEL MÜDAHALESİ: KUPA KORUMALI VE MOBİL UYUMLU TABLO YAPISI 🔴 */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
