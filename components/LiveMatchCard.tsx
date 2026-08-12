@@ -91,7 +91,7 @@ const allPlayersList: Record<string, string> = {
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUST ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -193,9 +193,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-indigo-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
       containerBg: "bg-[#050b14]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-indigo-950/80",
       badgeText: "text-indigo-300",
-      badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-indigo-400/80",
       catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
       scoreBorder: "border-white/30",
       colonText: "text-white/50",
@@ -210,9 +210,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-orange-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
       containerBg: "bg-[#140805]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-orange-950/80",
       badgeText: "text-orange-400",
-      badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-orange-500/80",
       catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
       scoreBorder: "border-orange-600/40",
       colonText: "text-orange-400/50",
@@ -227,9 +227,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-emerald-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
       containerBg: "bg-[#05140b]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-emerald-950/80",
       badgeText: "text-emerald-400",
-      badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-emerald-500/80",
       catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
       scoreBorder: "border-emerald-600/40",
       colonText: "text-emerald-400/50",
@@ -244,9 +244,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-red-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
       containerBg: "bg-[#140505]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-red-950/80",
       badgeText: "text-red-400",
-      badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-red-500/80",
       catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
       scoreBorder: "border-red-600/40",
       colonText: "text-red-400/50",
@@ -261,9 +261,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-blue-500/30",
       containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
       containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-blue-950/80",
       badgeText: "text-cyan-400",
-      badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-cyan-500/80",
       catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
       scoreBorder: "border-blue-600/40",
       colonText: "text-blue-400/50",
@@ -381,8 +381,9 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-4 items-center">
       
-      <div className="w-full max-w-lg md:max-w-none text-center mb-2 border-b border-slate-800/80 pb-3">
-        <span className="text-slate-300 font-black tracking-[0.2em] uppercase text-sm sm:text-base drop-shadow-sm">
+      {/* 🔴 EKMEL MÜDAHALESİ: MASAÜSTÜNDE VE MOBİLDE DAHA BELİRGİN BAŞLIK 🔴 */}
+      <div className="w-full max-w-lg md:max-w-none text-center mb-2 border-b border-slate-700/80 pb-3">
+        <span className="text-slate-300 font-black tracking-[0.25em] uppercase text-sm sm:text-lg drop-shadow-md">
           {todaysMatchesList.length > 1 ? "GÜNÜN MAÇLARI" : "GÜNÜN MAÇI"}
         </span>
       </div>
@@ -402,7 +403,9 @@ export default function LiveMatchCard() {
           const baseMinute = dbMatch.base_minute || '';
           const startedAt = dbMatch.started_at || null;
 
+          const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
           const isTffMatch = isTffMatchCheck(match.category);
+
           const theme = getEliteTheme(match.category);
 
           let currentWinners: string[] = [];
@@ -445,39 +448,51 @@ export default function LiveMatchCard() {
               key={match.id} 
               className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : 'bg-slate-950 border-slate-700/50 shadow-[0_0_15px_rgba(0,0,0,0.3)]'}`}
             >
-              {/* CETVEL GÖRÜNÜMÜ */}
-              <div
-                onClick={() => toggleMatchExpansion(match.id)}
-                className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/50 relative z-20"
-              >
-                <div className="flex-1 flex items-center gap-2 justify-end text-right">
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{match.homeTeam}</span>
-                  <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
-                </div>
-                
-                {/* 🔴 EKMEL MÜDAHALESİ: KUTU İÇİNDE TİRE (-) 🔴 */}
-                <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
-                  <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50'}`}>
-                    <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-amber-400'}`}>
-                      {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
-                    </span>
+              
+              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON AÇIKSA CETVELİ GİZLE (!) 🔴 */}
+              {!isExpanded && (
+                <div
+                  onClick={() => toggleMatchExpansion(match.id)}
+                  className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/50 relative z-20"
+                >
+                  <div className="flex-1 flex items-center gap-2 justify-end text-right">
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{match.homeTeam}</span>
+                    <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
+                  </div>
+                  
+                  <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
+                    {/* 🔴 EKMEL MÜDAHALESİ: TERTEMİZ SKOR KUTUCUĞU 🔴 */}
+                    <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50'}`}>
+                      <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-amber-400'}`}>
+                        {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 flex items-center gap-2 justify-start text-left">
+                    <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{match.awayTeam}</span>
+                  </div>
+                  
+                  <div className="ml-2 text-slate-500 text-[10px]">
+                    ▼
                   </div>
                 </div>
-                
-                <div className="flex-1 flex items-center gap-2 justify-start text-left">
-                  <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{match.awayTeam}</span>
-                </div>
-                
-                <div className="ml-2 text-slate-500 text-[10px]">
-                  {isExpanded ? '▲' : '▼'}
-                </div>
-              </div>
+              )}
 
               {/* AÇIK KART GÖRÜNÜMÜ */}
               {isExpanded && (
                 <div className="relative flex-grow overflow-hidden animate-fadeIn">
                   
+                  {/* Akordeonu geri kapatmak için tıkla */}
+                  <button 
+                    onClick={() => toggleMatchExpansion(match.id)}
+                    className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors"
+                    title="Kapat"
+                  >
+                    ✕
+                  </button>
+
                   {theme.bgImg && (
                     <>
                       <div 
@@ -510,11 +525,11 @@ export default function LiveMatchCard() {
                         <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-32 sm:w-40 z-30">
+                      <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
                         
-                        {/* 🔴 EKMEL MÜDAHALESİ: NEON KATEGORİ, TAM METİN, MERKEZDE 🔴 */}
-                        <div className="text-center w-full mb-2 px-1 flex justify-center">
-                          <span className={`inline-block px-3 py-1.5 rounded-lg border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug shadow-[0_0_15px_currentColor]`}>
+                        {/* 🔴 EKMEL MÜDAHALESİ: NEON KATEGORİ ETİKETİ 🔴 */}
+                        <div className="text-center w-full mb-1 flex justify-center">
+                          <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] leading-snug text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                             {match.category}
                           </span>
                         </div>

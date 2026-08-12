@@ -81,8 +81,7 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function DfoPuanDurumuPage() {
-  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME 4. HAFTA YAPILDI 🔴
-  const [activeTab, setActiveTab] = useState<string>('week4');
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
@@ -109,7 +108,6 @@ export default function DfoPuanDurumuPage() {
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
             
-            // DFO PUAN SİSTEMİ (SADECE UEFA VE DİĞER LİGLER EKLENİR)
             let isTff = false;
             if (dbMatch.category) isTff = isTffMatchCheck(dbMatch.category);
 
@@ -262,7 +260,6 @@ export default function DfoPuanDurumuPage() {
         </div>
       </div>
 
-      {/* 🔴 EKMEL MÜDAHALESİ: KUPA KORUMALI VE MOBİL UYUMLU TABLO YAPISI 🔴 */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
@@ -301,7 +298,6 @@ export default function DfoPuanDurumuPage() {
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
                       <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
                         
-                        {/* 🔴 KUPA (🏆) KORUMA KALKANI */}
                         {(() => {
                           const trophyCount = (row.name.match(/🏆/g) || []).length;
                           const cleanName = row.name.replace(/🏆/g, '').trim();
@@ -321,7 +317,6 @@ export default function DfoPuanDurumuPage() {
                           );
                         })()}
                         
-                        {/* Rozetler (CANLI / MAÇ vb.) */}
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
                             +{row.liveExtra} CANLI
