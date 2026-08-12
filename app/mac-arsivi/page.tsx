@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Bütün Linklerinle Kusursuzlaştırıldı)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Yeni Eklediğin Linklerle Kusursuzlaştırıldı)
 const localTeamLogos: Record<string, string> = {
   // 🌟 SENİN ELLERİNLE BULDUĞUN WIKIPEDIA (Special:FilePath) LİNKLERİ
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -28,6 +28,14 @@ const localTeamLogos: Record<string, string> = {
   "AMED SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Amed_SK.png",
   "MARDİN 1969": "https://tr.wikipedia.org/wiki/Special:FilePath/Mardin_1969_SK.png",
   "ANTALYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Antalyaspor.svg",
+  "BATMAN PETROL SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Batman_Petrolspor.png",
+  "KEÇİÖRENGÜCÜ": "https://tr.wikipedia.org/wiki/Special:FilePath/Ankara_Ke%C3%A7i%C3%B6reng%C3%BCc%C3%BC_SK.png",
+  "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
+  "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
+  "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
+  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
+  "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
+  "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
   
   // 🌟 EKREM'İN BULUT LİNKLERİ
   "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
@@ -35,18 +43,18 @@ const localTeamLogos: Record<string, string> = {
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
 
-  // 🔴 SENİN SAĞLAM YEREL LOGOLARIN (Mükemmel Çalışanlar)
+  // 🔴 SENİN SAĞLAM YEREL LOGOLARIN (Kusursuz Şeffaf Çalışanlar)
   "ÇORUM FK": "/logos/corum-fk.png", 
   "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png",
-  "PENDİKSPOR": "/logos/pendikspor.png", "BATMAN PETROL SPOR": "/logos/batman.png",
+  "PENDİKSPOR": "/logos/pendikspor.png", 
   "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png",
   "KOCAELİSPOR": "/logos/kocaelispor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "EYÜPSPOR": "/logos/eyupspor.png", "KEÇİÖRENGÜCÜ": "/logos/keciorengucu.png", 
+  "EYÜPSPOR": "/logos/eyupspor.png", 
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
 
-  // DİĞERLERİ İÇİN FALLBACK (Uygulama patlamasın diye yedekler)
+  // DİĞERLERİ İÇİN FALLBACK (Yedekler)
   "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png", "KUPS": "/logos/kups.png",
   "GORNİK ZABRZE": "/logos/gornik.png", "THUN": "/logos/thun.png", "HEART": "/logos/heart.png",
   "LARNE FC": "/logos/larne.png", "KIZILYILDIZ": "/logos/kizilyildiz.png", "GOTEBORG": "/logos/goteborg.png",
@@ -54,8 +62,8 @@ const localTeamLogos: Record<string, string> = {
   "KOPENAG": "/logos/kopenhag.png", "KOPENHAG": "/logos/kopenhag.png", "RAPID WIEN": "/logos/rapid-wien.png",
   "AJAX": "/logos/ajax.png", "PANATHINAIKOS": "/logos/panathinaikos.png", "BRAGA": "/logos/braga.png",
   "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/logos/twente.png",
-  "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png", "MANCHESTER CITY": "/logos/man-city.png",
-  "SAMSUNSPOR": "/logos/samsunspor.png", "GÖZTEPE": "/logos/goztepe.png", "IBERIA 1999": "/logos/iberia.png",
+  "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png", 
+  "IBERIA 1999": "/logos/iberia.png",
   "CSKA 1948": "/logos/cska-1948.png", "PAIDE LINNAMEESKOND": "/logos/paide.png", "DEBRECEN": "/logos/debrecen.png",
   "SHELBOURNE": "/logos/shelbourne.png", "DINAMO MINSK": "/logos/dinamo-minsk.png", "PATOS": "/logos/patos.png",
   "ZELEZNICAR PANCEVO": "/logos/zeleznicar.png", "PAKSI FC": "/logos/paksi.png", "UNIVERSITATEA CLUJ": "/logos/cluj.png",
@@ -63,8 +71,8 @@ const localTeamLogos: Record<string, string> = {
   "POLISSYA": "/logos/polissya.png", "INTER TURKU": "/logos/inter-turku.png", "FCSB": "/logos/fcsb.png",
   "VOJVODINA": "/logos/vojvodina.png", "NEC NIJMEGEN": "/logos/nec.png", "CSKA SOFYA": "/logos/cska-sofya.png",
   "HAJDUK SPLIT": "/logos/hajduk.png", "FERENCVAROS": "/logos/ferencvaros.png", "ST GALLEN": "/logos/st-gallen.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLIMPIYAKOS": "/logos/olimpiyakos.png", "SPARTA PRAG": "/logos/sparta-prag.png",
-  "OLIMPIC LYON": "/logos/lyon.png", "USG": "/logos/usg.png", "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "MIDTJYLLAND": "/logos/midtjylland.png"
+  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "USG": "/logos/usg.png", 
+  "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "MIDTJYLLAND": "/logos/midtjylland.png"
 };
 
 const allPlayersList: Record<string, string> = {
@@ -220,7 +228,6 @@ export default function MacArsiviPage() {
     );
   };
 
-  // 🔴 EKREM: Bütün maçların arkaplan ve temalarını belirleyen Altın Standart Zekası!
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -337,7 +344,6 @@ export default function MacArsiviPage() {
           </div>
         </div>
 
-        {/* 🔴 EKREM: Şampiyonlar Ligi Altın Standardı ARTIK TÜM MAÇLAR İÇİN TEK ÇATI ALTINDA! */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {currentMatches.map((match) => {
             const isWinnersOpen = !!openWinnersMap[match.id];
