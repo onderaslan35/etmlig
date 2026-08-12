@@ -81,7 +81,6 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function TffPuanDurumuPage() {
-  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME TOTAL YAPILDI 🔴
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -109,7 +108,6 @@ export default function TffPuanDurumuPage() {
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
             
-            // TFF PUAN SİSTEMİ
             let isTff = false;
             if (dbMatch.category) isTff = isTffMatchCheck(dbMatch.category);
 
@@ -120,7 +118,8 @@ export default function TffPuanDurumuPage() {
               else if(winnerIds.length === 3) points = 5;
               else if(winnerIds.length === 4) points = 4;
               else if(winnerIds.length === 5) points = 3;
-              else if(winnerIds.length >= 6) points = 2;
+              else if(winnerIds.length === 6) points = 2;
+              else points = 1; // 7 ve üzeri kişi bilirse 1 puan
 
               winnerIds.forEach(wId => {
                 if (dbMatch.status === 'FINISHED') {

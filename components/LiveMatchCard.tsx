@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Tüm Eksikler Tamamlandı!)
+// Tüm şeffaf Wikipedia Logoları
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -84,7 +84,7 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  // YEREL LOGOLAR
+  // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -165,7 +165,7 @@ const week4PredictionsData: Record<string, string[]> = {
 
 // 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
   { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
   { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
@@ -204,9 +204,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-indigo-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
       containerBg: "bg-[#050b14]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-indigo-950/80",
       badgeText: "text-indigo-300",
-      badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-indigo-400/80",
       catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
       scoreBorder: "border-white/30",
       colonText: "text-white/50",
@@ -221,9 +221,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-orange-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
       containerBg: "bg-[#140805]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-orange-950/80",
       badgeText: "text-orange-400",
-      badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-orange-500/80",
       catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
       scoreBorder: "border-orange-600/40",
       colonText: "text-orange-400/50",
@@ -238,9 +238,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-emerald-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
       containerBg: "bg-[#05140b]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-emerald-950/80",
       badgeText: "text-emerald-400",
-      badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-emerald-500/80",
       catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
       scoreBorder: "border-emerald-600/40",
       colonText: "text-emerald-400/50",
@@ -255,9 +255,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-red-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
       containerBg: "bg-[#140505]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-red-950/80",
       badgeText: "text-red-400",
-      badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-red-500/80",
       catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
       scoreBorder: "border-red-600/40",
       colonText: "text-red-400/50",
@@ -272,9 +272,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-blue-500/30",
       containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
       containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
+      badgeBg: "bg-blue-950/80",
       badgeText: "text-cyan-400",
-      badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
+      badgeBorder: "border-cyan-500/80",
       catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
       scoreBorder: "border-blue-600/40",
       colonText: "text-blue-400/50",
@@ -329,13 +329,15 @@ export default function LiveMatchCard() {
               const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
               const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][match.id - 1] === targetScore);
               
+              // 🔴 EKMEL MÜDAHALESİ: 7 KİŞİ VE ÜZERİ İÇİN 1 PUAN KURALI DÜZELTİLDİ! 🔴
               let points = 1;
               if(winnerIds.length === 1) points = 12;
               else if(winnerIds.length === 2) points = 6;
               else if(winnerIds.length === 3) points = 5;
               else if(winnerIds.length === 4) points = 4;
               else if(winnerIds.length === 5) points = 3;
-              else if(winnerIds.length >= 6) points = 2;
+              else if(winnerIds.length === 6) points = 2;
+              else points = 1; // 7 ve üzeri kişi bilirse 1 puan
 
               winnerIds.forEach(wId => {
                 if(!currentBoard[wId]) currentBoard[wId] = { dfo: 0, tff: 0, master: 0, skor: 0 };
@@ -393,7 +395,7 @@ export default function LiveMatchCard() {
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-4 items-center">
       
       <div className="w-full max-w-lg md:max-w-none text-center mb-2 border-b border-slate-700/80 pb-3">
-        <span className="text-slate-300 font-black tracking-[0.25em] uppercase text-sm sm:text-lg drop-shadow-md">
+        <span className="text-slate-300 font-black tracking-[0.25em] uppercase text-lg sm:text-xl drop-shadow-md">
           {todaysMatchesList.length > 1 ? "GÜNÜN MAÇLARI" : "GÜNÜN MAÇI"}
         </span>
       </div>
@@ -428,13 +430,15 @@ export default function LiveMatchCard() {
           }
           const winnersCount = currentWinners.length;
 
+          // 🔴 EKMEL MÜDAHALESİ: EKRANA YANSIYAN PUAN DA DÜZELTİLDİ 🔴
           let displayPoints = 1;
           if(winnersCount === 1) displayPoints = 12;
           else if(winnersCount === 2) displayPoints = 6;
           else if(winnersCount === 3) displayPoints = 5;
           else if(winnersCount === 4) displayPoints = 4;
           else if(winnersCount === 5) displayPoints = 3;
-          else if(winnersCount >= 6) displayPoints = 2;
+          else if(winnersCount === 6) displayPoints = 2;
+          else if(winnersCount >= 7) displayPoints = 1;
           else displayPoints = 0;
 
           let countdownText = "";
@@ -459,7 +463,7 @@ export default function LiveMatchCard() {
               className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : 'bg-slate-950 border-slate-700/50 shadow-[0_0_15px_rgba(0,0,0,0.3)]'}`}
             >
               
-              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON AÇIKSA CETVELİ GİZLE (!) 🔴 */}
+              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON KAPALIYKEN ÇIKAN CETVEL */}
               {!isExpanded && (
                 <div
                   onClick={() => toggleMatchExpansion(match.id)}
@@ -471,7 +475,6 @@ export default function LiveMatchCard() {
                   </div>
                   
                   <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
-                    {/* 🔴 EKMEL MÜDAHALESİ: TERTEMİZ SKOR KUTUCUĞU 🔴 */}
                     <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50'}`}>
                       <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-amber-400'}`}>
                         {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
@@ -490,11 +493,10 @@ export default function LiveMatchCard() {
                 </div>
               )}
 
-              {/* AÇIK KART GÖRÜNÜMÜ */}
+              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON AÇIK KART (İP GİBİ NEON YAZI) */}
               {isExpanded && (
                 <div className="relative flex-grow overflow-hidden animate-fadeIn">
                   
-                  {/* Akordeonu geri kapatmak için tıkla */}
                   <button 
                     onClick={() => toggleMatchExpansion(match.id)}
                     className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors"
@@ -520,13 +522,20 @@ export default function LiveMatchCard() {
 
                   <div className="relative z-10 flex flex-col h-full">
                     
-                    <div className="w-full text-center pt-3 pb-1 border-b border-slate-800/30">
+                    <div className="w-full text-center pt-3 pb-1">
                       <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
                         {match.weekLabel}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between px-2 sm:px-6 pt-6 pb-4">
+                    {/* 🔴 İP GİBİ NEON KATEGORİ YAZISI TAM LOGOLARIN ÜSTÜNDE 🔴 */}
+                    <div className="w-full text-center px-2 mt-2 relative z-30">
+                      <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                        {match.category}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
                       
                       <div className="flex flex-col items-center justify-center flex-1 gap-3">
                         <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
@@ -536,13 +545,6 @@ export default function LiveMatchCard() {
                       </div>
 
                       <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
-                        
-                        {/* 🔴 EKMEL MÜDAHALESİ: NEON KATEGORİ ETİKETİ 🔴 */}
-                        <div className="text-center w-full mb-1 flex justify-center">
-                          <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] leading-snug text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                            {match.category}
-                          </span>
-                        </div>
 
                         {matchStatus === 'NOT_STARTED' && (
                           <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">

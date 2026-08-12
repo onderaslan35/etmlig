@@ -242,6 +242,7 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function DfoPuanDurumuPage() {
+  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME TOTAL YAPILDI 🔴
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -273,13 +274,15 @@ export default function DfoPuanDurumuPage() {
             if (dbMatch.category) isTff = isTffMatchCheck(dbMatch.category);
 
             if (!isTff) {
+              // 🔴 EKMEL MÜDAHALESİ: 7 KİŞİ VE ÜZERİ İÇİN 1 PUAN KURALI 🔴
               let points = 1;
               if(winnerIds.length === 1) points = 12;
               else if(winnerIds.length === 2) points = 6;
               else if(winnerIds.length === 3) points = 5;
               else if(winnerIds.length === 4) points = 4;
               else if(winnerIds.length === 5) points = 3;
-              else if(winnerIds.length >= 6) points = 2;
+              else if(winnerIds.length === 6) points = 2;
+              else points = 1; // 7 ve üzeri kişi bilirse 1 puan alır!
 
               winnerIds.forEach(wId => {
                 if (dbMatch.status === 'FINISHED') {
