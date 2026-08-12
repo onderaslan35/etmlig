@@ -150,7 +150,7 @@ const week2Matches = [
   { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ
+// 3. HA HAFTA MAÇ VERİLERİ
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -347,7 +347,9 @@ export default function MacArsiviPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 🔴 EKMEL MÜDAHALESİ: items-start EKLENDİ! 🔴 */}
+        {/* Kartlar artık birbirini esnetip ekranı bozmayacak, bağımsız uzayacaklar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           {currentMatches.map((match) => {
             const isWinnersOpen = !!openWinnersMap[match.id];
             const isTffMatch = isTffMatchCheck(match.category);
@@ -464,19 +466,23 @@ export default function MacArsiviPage() {
                     </div>
                   </div>
                   
+                  {/* 🔴 EKMEL MÜDAHALESİ: İÇ SCROLL EKLENDİ! 🔴 */}
                   {isWinnersOpen && winnersCount > 0 && (
                     <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
                       <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
                         <span>BİLEN YARIŞMACILAR (A-Z)</span>
                         <span className="text-amber-400 font-bold bg-amber-900/20 px-2 py-0.5 rounded border border-amber-700/30">Kişi Başı: {displayPoints} Puan</span>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
+                      
+                      {/* Kart devasa uzamasın diye max-h (maksimum yükseklik) ve kaydırma çubuğu kondu */}
+                      <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
                         {currentWinners.map((winner: string, idx: number) => (
                           <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-slate-900/60 text-white border-slate-600/50 shadow-[0_0_10px_rgba(0,0,0,0.4)]">
                             {winner}
                           </span>
                         ))}
                       </div>
+                      
                     </div>
                   )}
                 </div>
