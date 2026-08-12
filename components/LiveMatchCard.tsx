@@ -180,7 +180,7 @@ export default function LiveMatchCard() {
         const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
         const isWinnersOpen = openWinnersMap[match.id] !== false;
 
-        // 🔴 EKMEL MANTIĞI: Şampiyonlar Ligi Tema Dedektörü
+        // 🔴 ŞAMPİYONLAR LİGİ TEMA DEDEKTÖRÜ
         const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
 
         let currentWinners: string[] = [];
@@ -228,103 +228,109 @@ export default function LiveMatchCard() {
             }`}
           >
             
-            {/* Üst Kısım (Sadece bu bölümün arka planı değişecek, alt taraf korunacak) */}
-            <div className="p-4 sm:p-6 relative flex-grow z-10 overflow-hidden">
+            {/* 🔴 EKMEL BÖLGESİ: BURASI TAMAMEN YENİLENDİ VE NETLEŞTİRİLDİ */}
+            <div className="p-4 sm:p-6 relative flex-grow overflow-hidden">
               
-              {/* 🔴 EKMEL MANTIĞI: Senin .png uzantılı orijinal dosyan arka plana çakıldı! */}
+              {/* Orijinal cl-bg.png veya cl-bg.jpg Dosyası (Karartma veya blur yok!) */}
               {isChampionsLeague && (
-                <div 
-                  className="absolute inset-0 z-0 opacity-100"
-                  style={{ 
-                    backgroundImage: "url('/logos/cl-bg.png')",
-                    backgroundSize: 'cover', 
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                  }}
-                ></div>
+                <>
+                  <div 
+                    className="absolute inset-0 z-0 opacity-100"
+                    style={{ 
+                      // 🔴 DİKKAT: .jpg kullanıyorsan aşağıdaki satırı "url('/logos/cl-bg.jpg')" yap! 
+                      // Şu an Maç Arşivinde sorunsuz çalışan PNG uzantısına göre ayarladım.
+                      backgroundImage: "url('/logos/cl-bg.png')",
+                      backgroundSize: 'cover', 
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                  ></div>
+                  {/* Yazıların bir tık daha okunaklı olması için Maç Arşivindeki gibi çook hafif bir gölgelendirme (Zift gibi karartma değil) */}
+                  <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
+                </>
               )}
 
-              {/* İçeriklerin net okunabilmesi için görselin üzerine çok hafif bir karartma */}
-              {isChampionsLeague && <div className="absolute inset-0 bg-blue-950/40 z-0"></div>}
-
-              {/* Hafta Etiketi */}
-              <div className={`absolute top-0 right-0 ${isChampionsLeague ? 'bg-indigo-900/80 text-indigo-200 border-indigo-500/50' : 'bg-blue-900/80 text-blue-200 border-blue-500/50'} font-black px-3 py-1 rounded-bl-xl text-[10px] border-b border-l shadow-md backdrop-blur-sm z-20`}>
-                {match.weekLabel}
-              </div>
-
-              {/* Kategori (Kupa İsmi) */}
-              <div className="text-center mb-6 mt-3 relative z-20">
-                <span className={`${isChampionsLeague ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]'} text-xs sm:text-sm font-bold uppercase tracking-wider flex justify-center items-center gap-2`}>
-                  🏆 {match.category}
-                </span>
-              </div>
-
-              {/* Takımlar ve Skor Alanı */}
-              <div className="flex items-center justify-between px-2 sm:px-6 relative z-20">
-                
-                {/* Ev Sahibi */}
-                <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                  <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
-                    <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
-                  </div>
-                  <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+              {/* İÇERİKLER (z-10 verilerek resmin üstüne çıkartıldı) */}
+              <div className="relative z-10">
+                {/* Hafta Etiketi */}
+                <div className={`absolute -top-4 sm:-top-6 -right-4 sm:-right-6 ${isChampionsLeague ? 'bg-indigo-900/80 text-indigo-200 border-indigo-500/50' : 'bg-blue-900/80 text-blue-200 border-blue-500/50'} font-black px-3 py-1 rounded-bl-xl text-[10px] border-b border-l shadow-md backdrop-blur-sm`}>
+                  {match.weekLabel}
                 </div>
 
-                {/* Skor / Zaman Orta Alan */}
-                <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32 z-10">
+                {/* Kategori (Kupa İsmi) */}
+                <div className="text-center mb-6 mt-3">
+                  <span className={`${isChampionsLeague ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]'} text-xs sm:text-sm font-bold uppercase tracking-wider flex justify-center items-center gap-2`}>
+                    🏆 {match.category}
+                  </span>
+                </div>
+
+                {/* Takımlar ve Skor Alanı */}
+                <div className="flex items-center justify-between px-2 sm:px-6">
                   
-                  {matchStatus === 'NOT_STARTED' && (
-                    <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                      <span className="text-amber-400 text-xs sm:text-sm font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                  {/* Ev Sahibi */}
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
+                      <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
                     </div>
-                  )}
-
-                  {matchStatus === 'LIVE' && (
-                    <div className="bg-red-950/80 border border-red-700 px-4 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
-                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      <span className="text-red-500 text-xs font-black tracking-widest">CANLI {currentDisplayMinute}'</span>
-                    </div>
-                  )}
-
-                  {matchStatus === 'HT' && (
-                    <div className="bg-amber-950/80 border border-amber-700 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                      <span className="text-amber-500 text-[10px] sm:text-xs font-black tracking-widest">İY (BİTTİ)</span>
-                    </div>
-                  )}
-
-                  {matchStatus === 'FINISHED' && (
-                    <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                      <span className="text-slate-400 text-xs font-black tracking-widest">MS (BİTTİ)</span>
-                    </div>
-                  )}
-
-                  <div className={`w-full bg-[#080d1a]/80 border ${isChampionsLeague ? 'border-white/30' : 'border-blue-600/40'} py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                    <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
-                    <span className={`text-lg sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                    <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                    <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                   </div>
 
-                  {matchStatus === 'NOT_STARTED' && countdownText && (
-                    <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1.5 rounded-lg text-center shadow-md">
-                      <span className="text-[#38bdf8] text-[10px] sm:text-[11px] font-mono font-bold tracking-widest drop-shadow-sm">
-                        {countdownText}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                  {/* Skor / Zaman Orta Alan */}
+                  <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32">
+                    
+                    {matchStatus === 'NOT_STARTED' && (
+                      <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
+                        <span className="text-amber-400 text-xs sm:text-sm font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                      </div>
+                    )}
 
-                {/* Deplasman */}
-                <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                  <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
-                    <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                    {matchStatus === 'LIVE' && (
+                      <div className="bg-red-950/80 border border-red-700 px-4 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span className="text-red-500 text-xs font-black tracking-widest">CANLI {currentDisplayMinute}'</span>
+                      </div>
+                    )}
+
+                    {matchStatus === 'HT' && (
+                      <div className="bg-amber-950/80 border border-amber-700 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
+                        <span className="text-amber-500 text-[10px] sm:text-xs font-black tracking-widest">İY (BİTTİ)</span>
+                      </div>
+                    )}
+
+                    {matchStatus === 'FINISHED' && (
+                      <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
+                        <span className="text-slate-400 text-xs font-black tracking-widest">MS (BİTTİ)</span>
+                      </div>
+                    )}
+
+                    <div className={`w-full bg-[#080d1a]/80 border ${isChampionsLeague ? 'border-white/30' : 'border-blue-600/40'} py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                      <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                      <span className={`text-lg sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                      <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                    </div>
+
+                    {matchStatus === 'NOT_STARTED' && countdownText && (
+                      <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1.5 rounded-lg text-center shadow-md">
+                        <span className="text-[#38bdf8] text-[10px] sm:text-[11px] font-mono font-bold tracking-widest drop-shadow-sm">
+                          {countdownText}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+
+                  {/* Deplasman */}
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
+                      <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                    </div>
+                    <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* 🔴 EKMEL BÖLGESİ: BURASI KESİNLİKLE DEĞİŞMEZ! Orijinal Lacivert Alt Bölüm */}
-            <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-4 py-3 w-full backdrop-blur-md z-10">
+            <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-4 py-3 w-full backdrop-blur-md z-10 relative">
               <div className="flex justify-between items-center w-full">
                 <div className="text-left flex-1">
                   {matchStatus === 'NOT_STARTED' ? (
