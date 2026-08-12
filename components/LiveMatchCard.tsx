@@ -3,12 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL LOGO BANKASI (Basit ve risksiz isimlere geçildi!)
+// 🔴 EKREM'İN B PLANI: Paris ve Aston Villa direkt Wikipedia'dan canlı çekiliyor!
 const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
   "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", 
-  "PARIS SG": "/logos/paris.svg", // Takım adı Paris SG yapıldı, dosya adı paris.svg arayacak!
-  "ASTON VILLA": "/logos/aston.svg", // Dosya adı aston.svg arayacak!
+  
+  // İŞTE B PLANIMIZ: Direkt URL'ler!
+  "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo.svg",
+  
   "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
   "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
   "KONYASPOR": "/logos/konyaspor.png", "ÇAYKUR RİZE": "/logos/caykur-rize.png", "BAŞAKŞEHİR": "/logos/basaksehir.png",
@@ -99,7 +102,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// 🔴 EKREM - 4. HAFTA TÜM FİKSTÜR (Takım adı PARIS SG yapıldı!)
+// 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -326,6 +329,7 @@ export default function LiveMatchCard() {
 
                 <div className="flex items-center justify-between px-2 sm:px-6">
                   
+                  {/* 🔴 EKREM: EV SAHİBİ ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                       <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
@@ -375,6 +379,7 @@ export default function LiveMatchCard() {
                     )}
                   </div>
 
+                  {/* 🔴 EKREM: DEPLASMAN ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                       <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
