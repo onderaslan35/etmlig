@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Tam donanımlı şeffaf sözlük)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
   "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", 
@@ -116,7 +116,7 @@ const week3Matches = [
   { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["DOĞAÇ ALKAN", "MEHMET ALİ KARA"] }
 ];
 
-// 4. HAFTA MAÇ VERİLERİ 
+// 4. HAFTA MAÇ VERİLERİ
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "0 - 1", winnersCount: 4, earnedPoints: 4, winners: ["MUSTAFA GÜMÜŞÇÜ", "RIDVAN DOGER", "SEDAT SEDAT", "ŞENOL CAN ÇAKICI"] },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", score: "- : -" },
@@ -169,7 +169,7 @@ export default function MacArsiviPage() {
     );
   };
 
-  // 🔴 EKREM: Bütün arşiv maçlarını "Altın Şablon" için dinamik renklendiren zekâ!
+  // 🔴 EKREM: Bütün maçların arkaplan ve temalarını belirleyen Altın Standart Zekası!
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -241,9 +241,9 @@ export default function MacArsiviPage() {
         bottomBar: "bg-[#140505]/90 border-red-900/30"
       };
     }
-    // DEFAULT (Süper Kupa vb.)
+    // DİĞER (Süper Kupa vb.)
     return {
-        bgImg: null, // Görsel yoksa degrade
+        bgImg: null,
         containerBorder: "border-blue-500/30",
         containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
         containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
@@ -294,7 +294,7 @@ export default function MacArsiviPage() {
             const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
             const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
-            // Skor ve Maç Durumu Analizi
+            // Skor Analizi
             const scoreText = match.score || "- : -";
             const isFinished = scoreText.includes("-") && !scoreText.includes("- : -") && !scoreText.includes("-:-");
             let homeScore = "-";
@@ -310,7 +310,7 @@ export default function MacArsiviPage() {
             const displayPoints = (match as any).earnedPoints || 0;
             const currentWinners = (match as any).winners || [];
 
-            // Altın Şablon Renk Motoru
+            // Temayı Çağır
             const theme = getEliteTheme(match.category);
 
             return (
@@ -318,7 +318,7 @@ export default function MacArsiviPage() {
                 key={match.id} 
                 className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}
               >
-                <div className="p-4 sm:p-6 relative flex-grow overflow-hidden">
+                <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
                   
                   {theme.bgImg && (
                     <>
@@ -335,58 +335,48 @@ export default function MacArsiviPage() {
                     </>
                   )}
 
-                  <div className="relative z-10">
+                  <div className="relative z-10 flex flex-col h-full justify-between">
                     
-                    {/* 🔴 EKREM: Sol Üst Köşeye TARİH rozeti eklendi! */}
-                    <div className={`absolute -top-4 sm:-top-6 -left-4 sm:-left-6 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} font-black px-3 py-1 rounded-br-xl text-[10px] border-b border-r shadow-md backdrop-blur-sm z-20`}>
-                      📅 {match.date}
-                    </div>
-
-                    <div className={`absolute -top-4 sm:-top-6 -right-4 sm:-right-6 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} font-black px-3 py-1 rounded-bl-xl text-[10px] border-b border-l shadow-md backdrop-blur-sm z-20`}>
-                      {match.weekLabel.toUpperCase()}
-                    </div>
-
-                    <div className="text-center mb-6 mt-3">
-                      <span className={`${theme.catText} text-xs sm:text-sm font-bold uppercase tracking-wider flex justify-center items-center gap-2`}>
+                    {/* 🔴 EKREM: ÜST BİLGİ ALANI (Merkezlenmiş, Üst Üste Binmez Mobil Dostu!) */}
+                    <div className="flex flex-col items-center justify-center mb-4 sm:mb-6 gap-1.5 sm:gap-2">
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
+                        {match.weekLabel}
+                      </span>
+                      
+                      <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded border text-center shadow-sm backdrop-blur-sm flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                         🏆 {match.category}
+                      </span>
+                      
+                      {/* Tarih ve Saat (Zarif font) */}
+                      <span className={`${theme.catText} text-[9px] sm:text-[10px] font-medium tracking-widest mt-0.5 opacity-90`}>
+                        {match.date} <span className="opacity-50 mx-1">|</span> {match.time}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between px-2 sm:px-6">
+                    {/* 🔴 ORTA ALAN: Çerçevesiz Logolar ve Sade Skor */}
+                    <div className="flex items-center justify-between px-1 sm:px-4">
                       
-                      {/* 🔴 EV SAHİBİ: ÇERÇEVESİZ ÖZGÜR LOGO */}
-                      <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                      <div className="flex flex-col items-center justify-center flex-1 gap-2 sm:gap-3">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
                           <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+                        <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md leading-tight">{match.homeTeam}</span>
                       </div>
 
-                      {/* 🔴 SKOR TABELASI */}
-                      <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32 z-30">
-                        {!isFinished ? (
-                          <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                            <span className="text-amber-400 text-xs sm:text-sm font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
-                          </div>
-                        ) : (
-                          <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                            <span className="text-slate-400 text-xs font-black tracking-widest">MS (BİTTİ)</span>
-                          </div>
-                        )}
-
-                        <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                      <div className="flex flex-col items-center justify-center mx-2 sm:mx-4 w-24 sm:w-32 z-30">
+                        {/* SKOR (MS Bitti veya Saat gibi kalabalık yazılar silindi, sadece asil skor var!) */}
+                        <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 sm:py-4 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                           <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
                           <span className={`text-lg sm:text-xl font-bold ${theme.colonText}`}>:</span>
                           <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                         </div>
                       </div>
 
-                      {/* 🔴 DEPLASMAN: ÇERÇEVESİZ ÖZGÜR LOGO */}
-                      <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                      <div className="flex flex-col items-center justify-center flex-1 gap-2 sm:gap-3">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
                           <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                        <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md leading-tight">{match.awayTeam}</span>
                       </div>
 
                     </div>
@@ -397,9 +387,9 @@ export default function MacArsiviPage() {
                   <div className="flex justify-between items-center w-full">
                     <div className="text-left flex-1">
                       {!isFinished ? (
-                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Henüz oynanmadı</span>
+                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Henüz oynanmadı</span>
                       ) : winnersCount === 0 ? (
-                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Bu skoru bilen yok</span>
+                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Bu skoru bilen yok</span>
                       ) : (
                         <span className="text-[10px] sm:text-xs font-medium text-blue-200">
                           <strong className="text-amber-400">{winnersCount} kişi</strong> tam isabetli
@@ -423,7 +413,7 @@ export default function MacArsiviPage() {
                   {isWinnersOpen && winnersCount > 0 && (
                     <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
                       <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
-                        <span>CANLI SKOR BİLENLER (A-Z)</span>
+                        <span>BİLEN YARIŞMACILAR (A-Z)</span>
                         <span className="text-amber-400 font-bold bg-amber-900/20 px-2 py-0.5 rounded border border-amber-700/30">Kişi Başı: {displayPoints} Puan</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2">
