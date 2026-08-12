@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
-import { supabase } from '@/utils/supabase';
+import { supabase } from '@/utils/supabase'; 
 
-const allPlayersList: Record<string, string> = {
+const allPlayersSkorList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
@@ -21,9 +21,9 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-const skorWeek1Data: Record<string, number> = { "262755": 6, "262736": 4, "262719": 4, "262756": 4, "262754": 4, "262732": 4, "262786": 3, "262731": 3, "262717": 3, "262726": 3, "262747": 3, "262718": 3, "262750": 2, "262771": 2, "262816": 2, "262728": 2, "262714": 2, "262709": 2, "262790": 1, "262733": 1, "262721": 1 };
-const skorWeek2Data: Record<string, number> = { "262790": 4, "262728": 4, "262756": 3, "262726": 3, "262714": 3, "262755": 2, "262709": 2, "262711": 2, "262717": 2, "262737": 2, "262705": 2, "262816": 2, "262763": 2, "262736": 2, "262786": 2, "262754": 1, "262732": 1, "262721": 1, "262733": 1 };
-const skorWeek3Data: Record<string, number> = { "262816": 5, "262721": 4, "262754": 4, "262733": 3, "262707": 3, "262763": 3, "262813": 3, "351925": 3, "262702": 3, "262782": 3, "262771": 2, "262706": 2, "262734": 2, "262756": 2, "262755": 2, "262726": 2, "262728": 2, "262736": 1, "262786": 1, "262790": 1, "262732": 1, "262714": 1, "262709": 1 };
+const skorWeek1Data: Record<string, { name: string; puan: number }> = { "262736": { name: "MEHMET ALİ KARA", puan: 5 }, "262719": { name: "UĞUR VARDAR", puan: 4 }, "262755": { name: "DOĞAÇ ALKAN", puan: 4 }, "262726": { name: "HUDAVER TOPARDIC", puan: 3 }, "262731": { name: "FATİH AYAN", puan: 3 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 3 }, "262786": { name: "SEDAT DİŞLİ", puan: 3 }, "262709": { name: "SALİH KARACAOĞLU", puan: 2 }, "262717": { name: "MURAT ALİ", puan: 2 }, "262728": { name: "ÖNDER ASLAN", puan: 2 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262740": { name: "ABDULLAH DİK", puan: 2 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 2 }, "262750": { name: "MAHMUT CBR", puan: 2 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 2 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 2 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 2 }, "262790": { name: "CUMALİ SÖKER", puan: 2 }, "262813": { name: "KEMAL ERSOY", puan: 2 }, "262816": { name: "SEDAT SEDAT", puan: 2 }, "262702": { name: "MURAT KARA", puan: 1 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 1 }, "262707": { name: "HAKAN AYAN", puan: 1 }, "262714": { name: "İSMAİL EKER 🏆", puan: 1 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 1 }, "262733": { name: "MUHSİN ASİLKAN", puan: 1 }, "262744": { name: "İLYAS UYGUN", puan: 1 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 }, "262782": { name: "YUSUF ERBAY", puan: 1 }, "351925": { name: "ALİOS GÖZTEPE", puan: 1 } };
+const skorWeek2Data: Record<string, { name: string; puan: number }> = { "262756": { name: "EYÜP KARACAOĞLU", puan: 4 }, "262709": { name: "SALİH KARACAOĞLU", puan: 3 }, "262728": { name: "ÖNDER ASLAN", puan: 3 }, "262755": { name: "DOĞAÇ ALKAN", puan: 3 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 3 }, "262790": { name: "CUMALİ SÖKER", puan: 3 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 2 }, "262711": { name: "RIDVAN DOGER", puan: 2 }, "262714": { name: "İSMAİL EKER 🏆", puan: 2 }, "262717": { name: "MURAT ALİ", puan: 2 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 2 }, "262726": { name: "HUDAVER TOPARDIC", puan: 2 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262737": { name: "ŞAHİN GEZGİNCİ", puan: 2 }, "262738": { name: "MEVLÜT EVLER", puan: 2 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 2 }, "262786": { name: "SEDAT DİŞLİ", puan: 2 }, "262816": { name: "SEDAT SEDAT", puan: 2 }, "262702": { name: "MURAT KARA", puan: 1 }, "262703": { name: "CEMALETTİN BELLİ", puan: 1 }, "262708": { name: "BAYRAM YILMAZ", puan: 1 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262725": { name: "İLYAS KAZDAL", puan: 1 }, "262730": { name: "ÖNDER IŞIK", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 }, "262736": { name: "MEHMET ALİ KARA", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262740": { name: "ABDULLAH DİK", puan: 1 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 1 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 }, "262758": { name: "MELİH PINAR", puan: 1 }, "262763": { name: "MUSTAFA ELMAS", puan: 1 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 } };
+const skorWeek3Data: Record<string, { name: string; puan: number }> = { "262816": { name: "SEDAT SEDAT", puan: 6 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 3 }, "262707": { name: "HAKAN AYAN", puan: 3 }, "262733": { name: "MUHSİN ASİLKAN", puan: 3 }, "262755": { name: "DOĞAÇ ALKAN", puan: 3 }, "262763": { name: "MUSTAFA ELMAS", puan: 3 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 3 }, "262813": { name: "KEMAL ERSOY", puan: 3 }, "262702": { name: "MURAT KARA", puan: 2 }, "262711": { name: "RIDVAN DOGER", puan: 2 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 2 }, "262725": { name: "İLYAS KAZDAL", puan: 2 }, "262726": { name: "HUDAVER TOPARDIC", puan: 2 }, "262730": { name: "ÖNDER IŞIK", puan: 2 }, "262734": { name: "LEVENT YILDIRIM", puan: 2 }, "262736": { name: "MEHMET ALİ KARA", puan: 2 }, "262738": { name: "MEVLÜT EVLER", puan: 2 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 2 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 2 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 2 }, "262786": { name: "SEDAT DİŞLİ", puan: 2 }, "351925": { name: "ALİOS GÖZTEPE", puan: 2 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 1 }, "262709": { name: "SALİH KARACAOĞLU", puan: 1 }, "262714": { name: "İSMAİL EKER 🏆", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 1 }, "262728": { name: "ÖNDER ASLAN", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262740": { name: "ABDULLAH DİK", puan: 1 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 1 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 }, "262782": { name: "YUSUF ERBAY", puan: 1 } };
 
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
@@ -76,11 +76,12 @@ const week4PredictionsData: Record<string, string[]> = {
 };
 
 export default function SkorDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('total');
+  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME 4. HAFTA YAPILDI 🔴
+  const [activeTab, setActiveTab] = useState<string>('week4');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
+  
   const availableWeeks = [1, 2, 3, 4];
 
   const loadLeaderboard = async () => {
@@ -91,7 +92,10 @@ export default function SkorDurumuPage() {
       let w4Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(allPlayersList).forEach(id => { w4Base[id] = 0; w4Live[id] = 0; });
+      Object.keys(allPlayersSkorList).forEach(id => {
+        w4Base[id] = 0;
+        w4Live[id] = 0;
+      });
 
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
@@ -100,12 +104,16 @@ export default function SkorDurumuPage() {
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
             
-            // 🔴 EKREM MANTIĞI: TÜM MAÇLAR 1 SKOR PUANI VERİR!
-            const points = 1;
+            // SKOR TABLOSU: HER BİLEN SADECE 1 (BİR) PUAN/SKOR ALIR
+            let points = 1;
 
             winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') w4Base[wId] += points; 
-              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') { w4Live[wId] += points; isAnyMatchLive = true; }
+              if (dbMatch.status === 'FINISHED') {
+                w4Base[wId] += points; 
+              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
+                w4Live[wId] += points; 
+                isAnyMatchLive = true;
+              }
             });
           }
         });
@@ -114,77 +122,120 @@ export default function SkorDurumuPage() {
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
       if (activeTab === 'total') {
-        const referenceList = Object.keys(allPlayersList).map(id => {
-          const w1 = skorWeek1Data[id] || 0; const w2 = skorWeek2Data[id] || 0; const w3 = skorWeek3Data[id] || 0;
-          return { id, name: allPlayersList[id], baseSkor: w1 + w2 + w3 };
-        }).sort((a, b) => b.baseSkor - a.baseSkor || a.name.localeCompare(b.name, 'tr'));
+        const referenceList = Object.keys(allPlayersSkorList).map(id => {
+          const w1 = skorWeek1Data[id]?.puan || 0;
+          const w2 = skorWeek2Data[id]?.puan || 0;
+          const w3 = skorWeek3Data[id]?.puan || 0;
+          const basePuan = w1 + w2 + w3;
+          const finalName = allPlayersSkorList[id];
+          return { id, name: finalName, basePuan };
+        }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
 
         const prevRanks: Record<string, number> = {};
         referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-        const baseList = Object.keys(allPlayersList).map(id => {
-          const w1 = skorWeek1Data[id] || 0; const w2 = skorWeek2Data[id] || 0; const w3 = skorWeek3Data[id] || 0;
+        const baseList = Object.keys(allPlayersSkorList).map(id => {
+          const w1 = skorWeek1Data[id]?.puan || 0;
+          const w2 = skorWeek2Data[id]?.puan || 0;
+          const w3 = skorWeek3Data[id]?.puan || 0;
           const w4B = w4Base[id] || 0; 
-          const baseSkor = w1 + w2 + w3 + w4B;
+          
+          const basePuan = w1 + w2 + w3 + w4B;
           const liveExtra = w4Live[id] || 0; 
-          return { id, name: allPlayersList[id], baseSkor, liveExtra, skor: baseSkor + liveExtra };
-        }).sort((a, b) => b.skor - a.skor || a.name.localeCompare(b.name, 'tr'));
+          
+          const finalName = allPlayersSkorList[id];
+
+          return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
+        }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
 
         const finalRows = baseList.map((player, index) => {
-          const currentRank = index + 1; const prevRank = prevRanks[player.id];
-          let trend = 'same'; let trendDiff = 0; 
-          if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-          else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+          const currentRank = index + 1;
+          const prevRank = prevRanks[player.id];
+          let trend = 'same';
+          let trendDiff = 0; 
+          
+          if (currentRank < prevRank) {
+            trend = 'up';
+            trendDiff = prevRank - currentRank; 
+          } else if (currentRank > prevRank) {
+            trend = 'down';
+            trendDiff = currentRank - prevRank; 
+          }
+          
           return { ...player, currentRank, prevRank, trend, trendDiff };
         });
+
         setTableRows(finalRows);
       } else {
         if(activeTab === 'week4') {
-          const list = Object.keys(allPlayersList).map(id => {
-            const baseSkor = w4Base[id] || 0; const liveExtra = w4Live[id] || 0; 
-            return { id, name: allPlayersList[id], skor: baseSkor + liveExtra, liveExtra, trend: 'none', trendDiff: 0 };
+          const list = Object.keys(allPlayersSkorList).map(id => {
+            const basePuan = w4Base[id] || 0; 
+            const liveExtra = w4Live[id] || 0; 
+            return { id, name: allPlayersSkorList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none', trendDiff: 0 };
           });
-          setTableRows(list.sort((a, b) => b.skor - a.skor || a.name.localeCompare(b.name, 'tr')));
+          setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         } else {
           let dataMap = skorWeek1Data;
           if(activeTab === 'week2') dataMap = skorWeek2Data;
           if(activeTab === 'week3') dataMap = skorWeek3Data;
-          const list = Object.keys(allPlayersList).map(id => {
-            const baseSkor = dataMap[id] || 0;
-            return { id, name: allPlayersList[id], skor: baseSkor, liveExtra: 0, trend: 'none', trendDiff: 0 };
+
+          const list = Object.keys(allPlayersSkorList).map(id => {
+            const rawObj = dataMap[id];
+            const basePuan = rawObj ? rawObj.puan : 0;
+            return { id, name: rawObj ? rawObj.name : allPlayersSkorList[id], puan: basePuan, liveExtra: 0, trend: 'none', trendDiff: 0 };
           });
-          setTableRows(list.sort((a, b) => b.skor - a.skor || a.name.localeCompare(b.name, 'tr')));
+          setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         }
       }
     } catch (error) {
-      console.log("Supabase hatasi");
+      console.log("Supabase verileri okunurken hata oluştu");
     }
   };
 
-  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
+  useEffect(() => {
+    loadLeaderboard();
+    const interval = setInterval(loadLeaderboard, 5000); 
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
-  const selectTab = (tabKey: string) => { setActiveTab(tabKey); setIsWeekMenuOpen(false); };
+  const selectTab = (tabKey: string) => {
+    setActiveTab(tabKey);
+    setIsWeekMenuOpen(false);
+  };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center min-h-screen">
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md tracking-wider">ELİT TAHMİN SKOR LİGİ</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase drop-shadow-md">
+          ELİT TAHMİN SKOR LİGİ
+        </h1>
       </div>
-      <div className="w-full mb-6"><LiveMatchCard /></div>
+
+      <div className="w-full mb-6">
+        <LiveMatchCard />
+      </div>
+
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>TOPLAM SKOR DURUMU</button>
+        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
+          TOPLAM SKOR DURUMU
+        </button>
         <div className="w-full relative">
           <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            <span>📅 {activeTab === 'total' ? 'TOPLAM SKOR DURUMU' : `${activeTab.replace('week', '')}. HAFTA SKOR DURUMU`}</span>
+            <span>📅 {activeTab === 'total' ? 'TOPLAM SKOR DURUMU' : `SKOR ${activeTab.replace('week', '')}. HAFTA TABLOSU`}</span>
             <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
           </button>
+          
           {isWeekMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
               <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
                 {availableWeeks.map((weekNum) => {
                   const weekKey = `week${weekNum}`;
                   return (
-                    <button key={weekNum} onClick={() => selectTab(weekKey)} className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}>
+                    <button 
+                      key={weekNum} 
+                      onClick={() => selectTab(weekKey)} 
+                      className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}
+                    >
                       {weekNum}
                     </button>
                   );
@@ -194,40 +245,91 @@ export default function SkorDurumuPage() {
           )}
         </div>
       </div>
+
+      {/* 🔴 EKMEL MÜDAHALESİ: KUPA KORUMALI VE MOBİL UYUMLU TABLO YAPISI 🔴 */}
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr><th className="px-6 py-3.5 text-center w-24">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right w-28">SKOR</th></tr>
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
+                <tr>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">{activeTab === 'total' ? 'TOPLAM SKOR' : 'HAFTALIK SKOR'}</th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {tableRows.map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-3.5 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-slate-300 font-medium text-sm w-5 text-right">{r.currentRank || i + 1}</span>
-                        <div className="w-10 flex items-center justify-start">
-                          {activeTab === 'total' && r.trend === 'up' && <span className="text-emerald-400 text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[10px]">{r.trendDiff}</span></span>}
-                          {activeTab === 'total' && r.trend === 'down' && <span className="text-red-500 text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[10px]">{r.trendDiff}</span></span>}
-                          {activeTab === 'total' && r.trend === 'same' && <span className="text-slate-600 text-[10px] ml-1">▶</span>}
+                {tableRows.map((row, idx) => (
+                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
+                      <div className="flex items-center justify-center gap-0.5 sm:gap-2">
+                        <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank || idx + 1}</span>
+                        
+                        <div className="w-6 sm:w-10 flex items-center justify-start">
+                          {activeTab === 'total' && row.trend === 'up' && (
+                            <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">
+                              ▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
+                            </span>
+                          )}
+                          {activeTab === 'total' && row.trend === 'down' && (
+                            <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">
+                              ▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
+                            </span>
+                          )}
+                          {activeTab === 'total' && row.trend === 'same' && (
+                            <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>
+                          )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-200 font-semibold">{r.name}</span>
-                        {r.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">+{r.liveExtra} CANLI SKOR</span>}
-                        {r.liveExtra > 0 && activeTab !== 'total' && <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-sm ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>+{r.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}</span>}
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
+                      <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
+                        
+                        {/* 🔴 KUPA (🏆) KORUMA KALKANI */}
+                        {(() => {
+                          const trophyCount = (row.name.match(/🏆/g) || []).length;
+                          const cleanName = row.name.replace(/🏆/g, '').trim();
+                          
+                          return (
+                            <>
+                              <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>
+                                {cleanName}
+                              </span>
+                              
+                              {trophyCount > 0 && (
+                                <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">
+                                  {'🏆'.repeat(trophyCount)}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
+                        
+                        {/* Rozetler (CANLI / MAÇ vb.) */}
+                        {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
+                          <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
+                            +{row.liveExtra} CANLI
+                          </span>
+                        )}
+
+                        {row.liveExtra > 0 && activeTab !== 'total' && (
+                          <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
+                            +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${r.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>{r.skor}</td>
+                    <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-bold text-sm sm:text-base whitespace-nowrap ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                      {row.puan}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : (<div className="py-12 text-center text-slate-500">⏳ Veriler bulunamadı.</div>)}
+        ) : (
+          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler bulunamadı.</div>
+        )}
       </div>
     </div>
   );
