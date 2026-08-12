@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Tüm Eksikler Tamamlandı!)
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -72,16 +73,25 @@ const localTeamLogos: Record<string, string> = {
   "ST GALLEN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_St._Gallen_logo.svg",
   "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
   "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
-  "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_G%C3%B6teborg_logo.svg",
-  "UNIVERSITATEA CLUJ": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Universitatea_Cluj_logo.svg",
+  "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
+  "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
+  "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
+  "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
+  "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
+  "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
+  "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
+  "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
+  "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
+
+  // YEREL LOGOLAR
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
-  "VOJVODINA": "/logos/vojvodina.png", "NEC NIJMEGEN": "/logos/nec.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "USG": "/logos/usg.png", 
-  "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
+  "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
+  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", 
+  "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png"
 };
@@ -91,7 +101,7 @@ const allPlayersList: Record<string, string> = {
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUST ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -99,7 +109,8 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -193,9 +204,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-indigo-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
       containerBg: "bg-[#050b14]",
-      badgeBg: "bg-indigo-950/80",
+      badgeBg: "bg-transparent backdrop-blur-sm",
       badgeText: "text-indigo-300",
-      badgeBorder: "border-indigo-400/80",
+      badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
       catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
       scoreBorder: "border-white/30",
       colonText: "text-white/50",
@@ -210,9 +221,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-orange-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
       containerBg: "bg-[#140805]",
-      badgeBg: "bg-orange-950/80",
+      badgeBg: "bg-transparent backdrop-blur-sm",
       badgeText: "text-orange-400",
-      badgeBorder: "border-orange-500/80",
+      badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
       catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
       scoreBorder: "border-orange-600/40",
       colonText: "text-orange-400/50",
@@ -227,9 +238,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-emerald-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
       containerBg: "bg-[#05140b]",
-      badgeBg: "bg-emerald-950/80",
+      badgeBg: "bg-transparent backdrop-blur-sm",
       badgeText: "text-emerald-400",
-      badgeBorder: "border-emerald-500/80",
+      badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
       catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
       scoreBorder: "border-emerald-600/40",
       colonText: "text-emerald-400/50",
@@ -244,9 +255,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-red-500/50",
       containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
       containerBg: "bg-[#140505]",
-      badgeBg: "bg-red-950/80",
+      badgeBg: "bg-transparent backdrop-blur-sm",
       badgeText: "text-red-400",
-      badgeBorder: "border-red-500/80",
+      badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
       catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
       scoreBorder: "border-red-600/40",
       colonText: "text-red-400/50",
@@ -261,9 +272,9 @@ const getEliteTheme = (category: string) => {
       containerBorder: "border-blue-500/30",
       containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
       containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-      badgeBg: "bg-blue-950/80",
+      badgeBg: "bg-transparent backdrop-blur-sm",
       badgeText: "text-cyan-400",
-      badgeBorder: "border-cyan-500/80",
+      badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
       catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
       scoreBorder: "border-blue-600/40",
       colonText: "text-blue-400/50",
@@ -381,7 +392,6 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-4 items-center">
       
-      {/* 🔴 EKMEL MÜDAHALESİ: MASAÜSTÜNDE VE MOBİLDE DAHA BELİRGİN BAŞLIK 🔴 */}
       <div className="w-full max-w-lg md:max-w-none text-center mb-2 border-b border-slate-700/80 pb-3">
         <span className="text-slate-300 font-black tracking-[0.25em] uppercase text-sm sm:text-lg drop-shadow-md">
           {todaysMatchesList.length > 1 ? "GÜNÜN MAÇLARI" : "GÜNÜN MAÇI"}
@@ -561,7 +571,7 @@ export default function LiveMatchCard() {
 
                         <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                           <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
-                          <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
+                          <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
                           <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                         </div>
 
