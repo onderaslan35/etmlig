@@ -32,7 +32,22 @@ const localTeamLogos: Record<string, string> = {
   "GAZİANTEP FK": "/logos/gaziantep.png", "SARIYER": "/logos/sariyer.png"
 };
 
-// 1. HAFTA MAÇ VERİLERİ
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+};
+
 const week1Matches = [
   { id: 1, weekLabel: "1. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME", date: "21.07.2026", time: "20:00", homeTeam: "IBERIA 1999", awayTeam: "SLOVAN BRATISLAVA", score: "0 - 2", winnersCount: 13, earnedPoints: 1, winners: ["MUSTAFA GÜMÜŞÇÜ", "CUMALİ SÖKER", "SEDAT SEDAT", "ÖNDER ASLAN", "FATİH AYAN", "MEHMET ALİ KARA", "İSMAİL EKER", "HUDAVER TOPARDIC", "MURAT ALİ", "SAVAŞ ÇAĞLAYAN", "MUSTAFA ELMAS", "UĞUR GÜRBÜZ", "R. İLHAN KARACA"] },
   { id: 2, weekLabel: "1. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME", date: "21.07.2026", time: "21:00", homeTeam: "SABAH FK", awayTeam: "KUPS", score: "1 - 0", winnersCount: 2, earnedPoints: 6, winners: ["EYÜP KARACAOĞLU", "ÖNDER ASLAN"] },
@@ -60,7 +75,6 @@ const week1Matches = [
   { id: 24, weekLabel: "1. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME", date: "23.07.2026", time: "22:00", homeTeam: "SPARTAK TRNAVA", awayTeam: "CSKA 1948", score: "2 - 0", winnersCount: 3, earnedPoints: 5, winners: ["MEHMET ALİ KARA", "İSMAİL EKER", "HUDAVER TOPARDIC"] }
 ];
 
-// 2. HAFTA MAÇ VERİLERİ
 const week2Matches = [
   { id: 1, weekLabel: "2. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "18:00", homeTeam: "KUPS", awayTeam: "SABAH FK", score: "0 - 2", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA GÜMÜŞÇÜ", "CUMALİ SÖKER", "SEDAT SEDAT"] },
   { id: 2, weekLabel: "2. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "28.07.2026", time: "21:00", homeTeam: "DINAMO ZAGREB", awayTeam: "THUN", score: "3 - 2", winnersCount: 0, earnedPoints: 0, winners: [] },
@@ -88,7 +102,6 @@ const week2Matches = [
   { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -116,7 +129,6 @@ const week3Matches = [
   { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["DOĞAÇ ALKAN", "MEHMET ALİ KARA"] }
 ];
 
-// 4. HAFTA MAÇ VERİLERİ
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "0 - 1", winnersCount: 4, earnedPoints: 4, winners: ["MUSTAFA GÜMÜŞÇÜ", "RIDVAN DOGER", "SEDAT SEDAT", "ŞENOL CAN ÇAKICI"] },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", score: "- : -" },
@@ -169,7 +181,7 @@ export default function MacArsiviPage() {
     );
   };
 
-  // 🔴 EKREM: Bütün maçların arkaplan ve temalarını belirleyen Altın Standart Zekası!
+  // 🔴 EKREM: Dinamik Tema Motoru
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -241,7 +253,6 @@ export default function MacArsiviPage() {
         bottomBar: "bg-[#140505]/90 border-red-900/30"
       };
     }
-    // DİĞER (Süper Kupa vb.)
     return {
         bgImg: null,
         containerBorder: "border-blue-500/30",
@@ -294,7 +305,6 @@ export default function MacArsiviPage() {
             const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
             const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
-            // Skor Analizi
             const scoreText = match.score || "- : -";
             const isFinished = scoreText.includes("-") && !scoreText.includes("- : -") && !scoreText.includes("-:-");
             let homeScore = "-";
@@ -310,7 +320,6 @@ export default function MacArsiviPage() {
             const displayPoints = (match as any).earnedPoints || 0;
             const currentWinners = (match as any).winners || [];
 
-            // Temayı Çağır
             const theme = getEliteTheme(match.category);
 
             return (
@@ -337,8 +346,8 @@ export default function MacArsiviPage() {
 
                   <div className="relative z-10 flex flex-col h-full justify-between">
                     
-                    {/* 🔴 EKREM: ÜST BİLGİ ALANI (Merkezlenmiş, Üst Üste Binmez Mobil Dostu!) */}
-                    <div className="flex flex-col items-center justify-center mb-4 sm:mb-6 gap-1.5 sm:gap-2">
+                    {/* 🔴 EKREM: ÜST BİLGİ ALANI (Sıkıştırılmış, ortalanmış, boşluklar tıraşlanmış) */}
+                    <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
                       <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
                         {match.weekLabel}
                       </span>
@@ -347,36 +356,35 @@ export default function MacArsiviPage() {
                         🏆 {match.category}
                       </span>
                       
-                      {/* Tarih ve Saat (Zarif font) */}
-                      <span className={`${theme.catText} text-[9px] sm:text-[10px] font-medium tracking-widest mt-0.5 opacity-90`}>
+                      <span className={`${theme.catText} text-[10px] sm:text-[11px] font-semibold tracking-widest mt-0.5 opacity-90`}>
                         {match.date} <span className="opacity-50 mx-1">|</span> {match.time}
                       </span>
                     </div>
 
-                    {/* 🔴 ORTA ALAN: Çerçevesiz Logolar ve Sade Skor */}
-                    <div className="flex items-center justify-between px-1 sm:px-4">
+                    {/* 🔴 ORTA ALAN: DEVASA LOGOLAR VE SADE SKOR */}
+                    <div className="flex items-center justify-between px-0 sm:px-4">
                       
-                      <div className="flex flex-col items-center justify-center flex-1 gap-2 sm:gap-3">
-                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                      <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
+                        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                           <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md leading-tight">{match.homeTeam}</span>
+                        <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.homeTeam}</span>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center mx-2 sm:mx-4 w-24 sm:w-32 z-30">
-                        {/* SKOR (MS Bitti veya Saat gibi kalabalık yazılar silindi, sadece asil skor var!) */}
-                        <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 sm:py-4 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                          <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
-                          <span className={`text-lg sm:text-xl font-bold ${theme.colonText}`}>:</span>
-                          <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                      <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30">
+                        {/* 🔴 EKREM: Üstteki gereksiz "⏱ Saat" ve "MS (BİTTİ)" haplarını kaldırdık, skor sadeleşti! */}
+                        <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                          <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                          <span className={`text-base sm:text-2xl font-bold ${theme.colonText}`}>:</span>
+                          <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center flex-1 gap-2 sm:gap-3">
-                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                      <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
+                        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                           <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md leading-tight">{match.awayTeam}</span>
+                        <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.awayTeam}</span>
                       </div>
 
                     </div>
