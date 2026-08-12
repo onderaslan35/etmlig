@@ -30,7 +30,9 @@ export default function SkorDurumuPage() {
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
+  
+  // 🔴 EKMEL MANTIĞI: Skor Durumu İçin Ortalanmış Yapı (Sadece Aktif Haftalar)
+  const availableWeeks = [1, 2, 3, 4];
 
   const loadLeaderboard = () => {
     const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
@@ -111,12 +113,20 @@ export default function SkorDurumuPage() {
           </button>
           {isWeekMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                {totalWeeks.map((weekNum) => (
-                  <button key={weekNum} onClick={() => selectTab(`week${weekNum}`)} className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === `week${weekNum}` ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}>
-                    {weekNum}
-                  </button>
-                ))}
+              {/* 🔴 EKMEL MANTIĞI: Skor Durumu İçin Ortalanmış, Kutuyu Bozmayan Tasarım */}
+              <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
+                {availableWeeks.map((weekNum) => {
+                  const weekKey = `week${weekNum}`;
+                  return (
+                    <button 
+                      key={weekNum} 
+                      onClick={() => selectTab(weekKey)} 
+                      className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}
+                    >
+                      {weekNum}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
