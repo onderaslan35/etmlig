@@ -2,53 +2,27 @@
 
 import React, { useState } from "react";
 
-// 🔴 EKMEL - YEREL (LOCAL) LOGO BANKASI
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Çerçeveler yıkıldı, Bulut bağlantısı eklendi!)
 const localTeamLogos: Record<string, string> = {
-  "FENERBAHÇE": "/logos/fenerbahce.png",
-  "GALATASARAY": "/logos/galatasaray.png",
-  "BEŞİKTAŞ": "/logos/besiktas.png",
-  "TRABZONSPOR": "/logos/trabzonspor.png",
-  "STURM GRAZ": "/logos/sturm-graz.png",
-  "PARIS SAINT-GERMAIN": "/logos/psg.png",
-  "ASTON VILLA": "/logos/aston-villa.png",
-  "KARABAĞ FK": "/logos/karabag.png",
-  "DINAMO KIEV": "/logos/dinamo-kiev.png",
-  "HRADEC KRALOVE": "/logos/hradec.png",
-  "ÇORUM FK": "/logos/corum-fk.png",
-  "KASIMPAŞA": "/logos/kasimpasa.png",
-  "KONYASPOR": "/logos/konyaspor.png",
-  "ÇAYKUR RİZE": "/logos/caykur-rize.png",
-  "BAŞAKŞEHİR": "/logos/basaksehir.png",
-  "IBERIA 1999": "/logos/iberia.png",
-  "SLOVAN BRATISLAVA": "/logos/slovan.png",
-  "SABAH FK": "/logos/sabah.png",
-  "KUPS": "/logos/kups.png",
-  "GORNİK ZABRZE": "/logos/gornik.png",
-  "THUN": "/logos/thun.png",
-  "DINAMO ZAGREB": "/logos/dinamo-zagreb.png",
-  "HEART": "/logos/heart.png",
-  "LARNE FC": "/logos/larne.png",
-  "KIZILYILDIZ": "/logos/kizilyildiz.png",
-  "GOTEBORG": "/logos/goteborg.png",
-  "LEVADIA FC": "/logos/levadia.png",
-  "LEVSKI SOFYA": "/logos/levski.png",
-  "UNIVERSITATEA CRAIOVA": "/logos/craiova.png",
-  "KOPENAG": "/logos/kopenhag.png",
-  "KOPENHAG": "/logos/kopenhag.png",
-  "RAPID WIEN": "/logos/rapid-wien.png",
-  "AJAX": "/logos/ajax.png",
-  "PANATHINAIKOS": "/logos/panathinaikos.png",
-  "BRAGA": "/logos/braga.png",
-  "PAOK": "/logos/paok.png",
-  "ANDERLECHT": "/logos/anderlecht.png",
-  "TWENTE": "/logos/twente.png",
-  "BENFICA": "/logos/benfica.png",
-  "SİVASSPOR": "/logos/sivasspor.png",
-  "ANTALYASPOR": "/logos/antalyaspor.png",
-  "KAYSERİSPOR": "/logos/kayserispor.png",
-  "PENDİKSPOR": "/logos/pendikspor.png",
-  "BATMAN PETROL SPOR": "/logos/batman.png",
-  "ESENLER EROKSPOR": "/logos/erokspor.png",
+  "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
+  "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", 
+  
+  "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/fr/0/00/Logo_Aston_Villa_FC_2024.svg",
+  
+  "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
+  "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
+  "KONYASPOR": "/logos/konyaspor.png", "ÇAYKUR RİZE": "/logos/caykur-rize.png", "BAŞAKŞEHİR": "/logos/basaksehir.png",
+  "IBERIA 1999": "/logos/iberia.png", "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png",
+  "KUPS": "/logos/kups.png", "GORNİK ZABRZE": "/logos/gornik.png", "THUN": "/logos/thun.png",
+  "DINAMO ZAGREB": "/logos/dinamo-zagreb.png", "HEART": "/logos/heart.png", "LARNE FC": "/logos/larne.png",
+  "KIZILYILDIZ": "/logos/kizilyildiz.png", "GOTEBORG": "/logos/goteborg.png", "LEVADIA FC": "/logos/levadia.png",
+  "LEVSKI SOFYA": "/logos/levski.png", "UNIVERSITATEA CRAIOVA": "/logos/craiova.png", "KOPENAG": "/logos/kopenhag.png",
+  "KOPENHAG": "/logos/kopenhag.png", "RAPID WIEN": "/logos/rapid-wien.png", "AJAX": "/logos/ajax.png",
+  "PANATHINAIKOS": "/logos/panathinaikos.png", "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png",
+  "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+  "SİVASSPOR": "/logos/sivasspor.png", "ANTALYASPOR": "/logos/antalyaspor.png", "KAYSERİSPOR": "/logos/kayserispor.png",
+  "PENDİKSPOR": "/logos/pendikspor.png", "BATMAN PETROL SPOR": "/logos/batman.png", "ESENLER EROKSPOR": "/logos/erokspor.png",
   "EROKSPOR": "/logos/erokspor.png"
 };
 
@@ -108,7 +82,7 @@ const week2Matches = [
   { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HA Cup MAÇ VERİLERİ
+// 3. HAFTA MAÇ VERİLERİ
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -136,10 +110,10 @@ const week3Matches = [
   { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["DOĞAÇ ALKAN", "MEHMET ALİ KARA"] }
 ];
 
-// 🔴 EKMEL - 4. HAFTA MAÇ VERİLERİ (1. Maç Mühürlendi, 2. Maç Aktif)
+// 4. HAFTA MAÇ VERİLERİ (1. Maç arşivde, 2. maç otonom bekliyor)
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "0 - 1", winnersCount: 4, earnedPoints: 4, winners: ["MUSTAFA GÜMÜŞÇÜ", "RIDVAN DOGER", "SEDAT SEDAT", "ŞENOL CAN ÇAKICI"] },
-  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA", score: "- : -" },
+  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", score: "- : -" },
   { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", score: "- : -" },
   { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", score: "- : -" },
   { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", score: "- : -" },
@@ -275,11 +249,10 @@ export default function MacArsiviPage() {
             const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
             const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
-            // 🔴 EKMEL MANTIĞI: 4. HAFTA 1. VE 2. MAÇ İÇİN YAPAY ZEKA ARŞİV OKUYUCUSU
+            // YZ Arşiv Okuyucusu (Özel Kart)
             if (selectedWeek === 4 && (match.id === 1 || match.id === 2)) {
               const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
               
-              // Skoru ayrıştır
               const scoreParts = match.score ? match.score.split(match.score.includes('-') ? '-' : ':').map(s => s.trim()) : ['-', '-'];
               const homeScore = scoreParts[0] || '-';
               const awayScore = scoreParts[1] || '-';
@@ -299,7 +272,6 @@ export default function MacArsiviPage() {
                   }`}
                 >
                   <div className="p-4 sm:p-6 relative flex-grow overflow-hidden">
-                    {/* ŞL İçin Özel Arka Plan (cl-bg.png) */}
                     {isChampionsLeague && (
                       <>
                         <div 
@@ -327,15 +299,14 @@ export default function MacArsiviPage() {
                       </div>
 
                       <div className="flex items-center justify-between px-2 sm:px-6">
-                        {/* Ev Sahibi */}
+                        {/* 🔴 EKREM: ÖZEL KARTLARDA (W4 M1, M2) ÇERÇEVESİZ ÖZGÜR LOGO */}
                         <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                          <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
-                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                          <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
                           <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                         </div>
 
-                        {/* Skor / Saat Alanı */}
                         <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32">
                           {!isFinished ? (
                             <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
@@ -354,10 +325,10 @@ export default function MacArsiviPage() {
                           </div>
                         </div>
 
-                        {/* Deplasman */}
+                        {/* 🔴 EKREM: ÖZEL KARTLARDA (W4 M1, M2) ÇERÇEVESİZ ÖZGÜR LOGO */}
                         <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                          <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
-                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                          <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
                           <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
                         </div>
@@ -365,7 +336,6 @@ export default function MacArsiviPage() {
                     </div>
                   </div>
 
-                  {/* Alt Lacivert Tablo */}
                   <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-4 py-3 w-full backdrop-blur-md z-10 relative">
                     <div className="flex justify-between items-center w-full">
                       <div className="text-left flex-1">
@@ -412,7 +382,7 @@ export default function MacArsiviPage() {
               );
             }
 
-            // 🔴 EKMEL MANTIĞI BİTİŞİ: ARŞİVİN GERİ KALAN TÜM MAÇLARI ESKİ MİMARİSİYLE KUSURSUZCA ÇIKMAYA DEVAM EDER
+            // DİĞER TÜM MAÇLARIN STANDART ARŞİV KUTUSU
             const { bgImage, cardBgClass, badgeClass, tagClass } = getMatchThemeStyle(match.category);
             
             return (
@@ -447,9 +417,11 @@ export default function MacArsiviPage() {
                   </div>
 
                   <div className="flex items-center justify-between px-1 my-3">
+                    
+                    {/* 🔴 EKREM: STANDART ARŞİV KARTINDA ÇERÇEVESİZ ÖZGÜR LOGO */}
                     <div className="flex flex-col items-center flex-1">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/40 border border-slate-600/40 rounded-full flex items-center justify-center mb-1.5 shadow-lg overflow-hidden relative">
-                        <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain transform scale-[1.20] drop-shadow-xl" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-1.5 relative z-10">
+                        <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.8)] hover:scale-110 transition-transform duration-300" />
                       </div>
                       <span className="text-[9px] sm:text-[10px] font-extrabold text-white text-center uppercase leading-tight drop-shadow">{match.homeTeam}</span>
                     </div>
@@ -460,9 +432,10 @@ export default function MacArsiviPage() {
                       </div>
                     </div>
 
+                    {/* 🔴 EKREM: STANDART ARŞİV KARTINDA ÇERÇEVESİZ ÖZGÜR LOGO */}
                     <div className="flex flex-col items-center flex-1">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/40 border border-slate-600/40 rounded-full flex items-center justify-center mb-1.5 shadow-lg overflow-hidden relative">
-                        <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain transform scale-[1.20] drop-shadow-xl" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-1.5 relative z-10">
+                        <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.8)] hover:scale-110 transition-transform duration-300" />
                       </div>
                       <span className="text-[9px] sm:text-[10px] font-extrabold text-white text-center uppercase leading-tight drop-shadow">{match.awayTeam}</span>
                     </div>
