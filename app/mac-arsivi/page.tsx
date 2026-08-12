@@ -57,7 +57,7 @@ const localTeamLogos: Record<string, string> = {
   "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
 
-  // DİĞERLERİ İÇİN FALLBACK (Yedekler - Sen Link Verdikçe Bunlar Değişecek)
+  // DİĞERLERİ İÇİN FALLBACK
   "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png", "KUPS": "/logos/kups.png",
   "GORNİK ZABRZE": "/logos/gornik.png", "THUN": "/logos/thun.png", "HEART": "/logos/heart.png",
   "LARNE FC": "/logos/larne.png", "KIZILYILDIZ": "/logos/kizilyildiz.png", "GOTEBORG": "/logos/goteborg.png",
@@ -78,7 +78,23 @@ const localTeamLogos: Record<string, string> = {
   "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "MIDTJYLLAND": "/logos/midtjylland.png"
 };
 
-// 🔴 EKMEL MÜDAHALESİ: 1. HAFTA KATEGORİ ETİKETLERİ DÜZELTİLDİ 🔴
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+};
+
+// 1. HAFTA MAÇ VERİLERİ
 const week1Matches = [
   { id: 1, weekLabel: "1. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", date: "21.07.2026", time: "20:00", homeTeam: "IBERIA 1999", awayTeam: "SLOVAN BRATISLAVA", score: "0 - 2", winnersCount: 13, earnedPoints: 1, winners: ["MUSTAFA GÜMÜŞÇÜ", "CUMALİ SÖKER", "SEDAT SEDAT", "ÖNDER ASLAN", "FATİH AYAN", "MEHMET ALİ KARA", "İSMAİL EKER", "HUDAVER TOPARDIC", "MURAT ALİ", "SAVAŞ ÇAĞLAYAN", "MUSTAFA ELMAS", "UĞUR GÜRBÜZ", "R. İLHAN KARACA"] },
   { id: 2, weekLabel: "1. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", date: "21.07.2026", time: "21:00", homeTeam: "SABAH FK", awayTeam: "KUPS", score: "1 - 0", winnersCount: 2, earnedPoints: 6, winners: ["EYÜP KARACAOĞLU", "ÖNDER ASLAN"] },
@@ -215,6 +231,7 @@ export default function MacArsiviPage() {
     );
   };
 
+  // 🔴 EKMEL MÜDAHALESİ: ŞEFFAF NEON ETİKET SİSTEMİ 🔴
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -223,9 +240,9 @@ export default function MacArsiviPage() {
         containerBorder: "border-indigo-500/50",
         containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
         containerBg: "bg-[#050b14]",
-        badgeBg: "bg-indigo-900/80",
-        badgeText: "text-indigo-200",
-        badgeBorder: "border-indigo-500/50",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-indigo-300",
+        badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
         catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
         scoreBorder: "border-white/30",
         colonText: "text-white/50",
@@ -240,9 +257,9 @@ export default function MacArsiviPage() {
         containerBorder: "border-orange-500/50",
         containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
         containerBg: "bg-[#140805]",
-        badgeBg: "bg-orange-900/80",
-        badgeText: "text-orange-200",
-        badgeBorder: "border-orange-500/50",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-orange-400",
+        badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
         catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
         scoreBorder: "border-orange-600/40",
         colonText: "text-orange-400/50",
@@ -257,9 +274,9 @@ export default function MacArsiviPage() {
         containerBorder: "border-emerald-500/50",
         containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
         containerBg: "bg-[#05140b]",
-        badgeBg: "bg-emerald-900/80",
-        badgeText: "text-emerald-200",
-        badgeBorder: "border-emerald-500/50",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-emerald-400",
+        badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
         catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
         scoreBorder: "border-emerald-600/40",
         colonText: "text-emerald-400/50",
@@ -274,9 +291,9 @@ export default function MacArsiviPage() {
         containerBorder: "border-red-500/50",
         containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
         containerBg: "bg-[#140505]",
-        badgeBg: "bg-red-900/80",
-        badgeText: "text-red-200",
-        badgeBorder: "border-red-500/50",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-red-400",
+        badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
         catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
         scoreBorder: "border-red-600/40",
         colonText: "text-red-400/50",
@@ -291,9 +308,9 @@ export default function MacArsiviPage() {
         containerBorder: "border-blue-500/30",
         containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
         containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-        badgeBg: "bg-blue-900/80",
-        badgeText: "text-blue-200",
-        badgeBorder: "border-blue-500/50",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-cyan-400",
+        badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
         catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
         scoreBorder: "border-blue-600/40",
         colonText: "text-blue-400/50",
@@ -384,7 +401,8 @@ export default function MacArsiviPage() {
                         {match.weekLabel}
                       </span>
                       
-                      <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded border text-center shadow-sm backdrop-blur-sm flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                      {/* 🔴 NEON ETİKET BURADA DEVREYE GİRİYOR */}
+                      <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                         🏆 {match.category}
                       </span>
                       
