@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKMEL - YEREL LOGO BANKASI (Tüm 4. Hafta Takımları)
+// 🔴 EKREM - YEREL LOGO BANKASI (SVG'ler eklendi!)
 const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
-  "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", "PARIS SAINT-GERMAIN": "/logos/psg.png",
-  "ASTON VILLA": "/logos/aston-villa.png", "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
+  "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", "PARIS SAINT-GERMAIN": "/logos/psg.svg",
+  "ASTON VILLA": "/logos/aston_villa.svg", "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
   "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
   "KONYASPOR": "/logos/konyaspor.png", "ÇAYKUR RİZE": "/logos/caykur-rize.png", "BAŞAKŞEHİR": "/logos/basaksehir.png",
   "IBERIA 1999": "/logos/iberia.png", "SLOVAN BRATISLAVA": "/logos/slovan.png", "SABAH FK": "/logos/sabah.png",
@@ -97,7 +97,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// 🔴 EKMEL - 4. HAFTA TÜM FİKSTÜR (Takvim Motoru Buradan Beslenir)
+// 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA" },
@@ -125,7 +125,6 @@ const week4Matches = [
   { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
-// TFF - DFO Ayrıştırıcı
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category.toUpperCase();
   return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
@@ -143,14 +142,12 @@ export default function LiveMatchCard() {
   }, []);
 
   useEffect(() => {
-    // 🔴 EKMEL - TAKVİM MOTORU: Sistemin uyanıp "Bugün günlerden ne?" dediği an.
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
-    const todayFormatted = `${dd}.${mm}.${yyyy}`; // Örn: 12.08.2026
+    const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
-    // O güne ait tüm maçları süzüp alır (Yarın 2 maç varsa 2'sini de alır)
     const todaysMatches = week4Matches.filter(m => m.date === todayFormatted);
     setTodaysMatchesList(todaysMatches);
     
@@ -158,20 +155,18 @@ export default function LiveMatchCard() {
 
     const fetchFromDB = async () => {
       try {
-        // O günkü maçların güncel durumlarını Supabase'den çek
         const { data, error } = await supabase.from('live_matches').select('*');
         if (data) {
           const map: Record<number, any> = {};
           data.forEach(row => map[row.id] = row);
           setLiveMatchesData(map);
           
-          // Liderlik Tablosunu Dinamik Güncelleme (Çoklu Maç Desteğiyle)
           let currentBoard: Record<string, any> = {}; 
           let hasLiveScores = false;
 
           todaysMatches.forEach(match => {
             const dbMatch = map[match.id];
-            if (dbMatch && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+            if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
               hasLiveScores = true;
               const isTff = isTffMatchCheck(match.category);
               const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
@@ -313,7 +308,6 @@ export default function LiveMatchCard() {
 
               <div className="relative z-10">
                 
-                {/* 🔴 EKMEL - SOL ÜST KÖŞE: GÜNÜN MAÇI ETİKETİ */}
                 <div className="absolute -top-4 sm:-top-6 -left-4 sm:-left-6 bg-amber-500 text-slate-950 font-black px-3 py-1 rounded-br-xl text-[10px] border-b border-r border-amber-400 shadow-md backdrop-blur-sm z-20 flex items-center gap-1">
                   <span className="animate-pulse">🔥</span> BUGÜNÜN MAÇI
                 </div>
@@ -330,14 +324,15 @@ export default function LiveMatchCard() {
 
                 <div className="flex items-center justify-between px-2 sm:px-6">
                   
+                  {/* 🔴 EKREM: EV SAHİBİ ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                    <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
-                      <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                    <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                      <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
                     <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32">
+                  <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32 z-30">
                     
                     {matchStatus === 'NOT_STARTED' && (
                       <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
@@ -379,12 +374,14 @@ export default function LiveMatchCard() {
                     )}
                   </div>
 
+                  {/* 🔴 EKREM: DEPLASMAN ÇERÇEVESİZ ÖZGÜR LOGO */}
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                    <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-white/10 border ${isChampionsLeague ? 'border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'border-blue-400/30 shadow-[0_0_20px_rgba(0,0,0,0.5)]'} rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm relative`}>
-                      <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-cover scale-[1.02] drop-shadow-lg" />
+                    <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                      <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
                     <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
                   </div>
+
                 </div>
               </div>
             </div>
