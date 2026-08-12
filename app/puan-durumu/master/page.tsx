@@ -7,11 +7,11 @@ import { supabase } from '@/utils/supabase';
 const allPlayersMasterList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
   "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
@@ -109,7 +109,7 @@ export default function MasterPuanDurumuPage() {
             else if(winnerIds.length === 3) points = 5;
             else if(winnerIds.length === 4) points = 4;
             else if(winnerIds.length === 5) points = 3;
-            else if(winnerIds.length === 6) points = 2;
+            else if(winnerIds.length >= 6) points = 2;
 
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') {
@@ -253,7 +253,6 @@ export default function MasterPuanDurumuPage() {
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
-            {/* 🔴 EKMEL MÜDAHALESİ: MOBİL UYUMLU, DAR VE ŞIK TABLO YAPISI 🔴 */}
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
                 <tr>
@@ -288,10 +287,30 @@ export default function MasterPuanDurumuPage() {
                     </td>
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
                       <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
-                        {/* İsimler asla aşağı kaymayacak, uzunsa 3 nokta (...) ile kesilecek */}
-                        <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink">{row.name}</span>
                         
-                        {/* Rozetler asla ezilmeyecek (flex-shrink-0) */}
+                        {/* 🔴 EKMEL MÜDAHALESİ: KUPA (🏆) KORUMA KALKANI 🔴 */}
+                        {(() => {
+                          const trophyCount = (row.name.match(/🏆/g) || []).length;
+                          const cleanName = row.name.replace(/🏆/g, '').trim();
+                          
+                          return (
+                            <>
+                              {/* Sadece yazılar daralır ve kesilir */}
+                              <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>
+                                {cleanName}
+                              </span>
+                              
+                              {/* Kupalar asla daralmaz, asla kaybolmaz */}
+                              {trophyCount > 0 && (
+                                <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">
+                                  {'🏆'.repeat(trophyCount)}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
+                        
+                        {/* Rozetler (CANLI / MAÇ vb.) */}
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
                             +{row.liveExtra} CANLI

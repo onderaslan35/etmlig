@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -100,8 +99,7 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -154,7 +152,6 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -192,7 +189,6 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  // 🔴 EKMEL MÜDAHALESİ: AKORDEON (KAPALI/AÇIK) SİSTEMİ İÇİN STATE
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
@@ -295,21 +291,18 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-4 items-center">
       
-      {/* 🔴 EKMEL MÜDAHALESİ: GÜNÜN MAÇLARI ÜST BAŞLIĞI */}
       <div className="w-full max-w-lg md:max-w-none text-center mb-2 border-b border-slate-800/80 pb-3">
         <span className="text-slate-300 font-black tracking-[0.2em] uppercase text-sm sm:text-base drop-shadow-sm">
           {todaysMatchesList.length > 1 ? "GÜNÜN MAÇLARI" : "GÜNÜN MAÇI"}
         </span>
       </div>
 
-      {/* Grid: Bilgisayarda yan yana (kolon), mobilde alt alta */}
       <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {todaysMatchesList.map((match) => {
           const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
           const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
           const isWinnersOpen = openWinnersMap[match.id] !== false;
           
-          // Akordeon açık mı kapalı mı?
           const isExpanded = !!expandedMatches[match.id];
 
           const dbMatch = liveMatchesData[match.id] || {};
@@ -366,7 +359,7 @@ export default function LiveMatchCard() {
                   : 'bg-slate-950 border-blue-500/20 shadow-[0_0_15px_rgba(30,58,138,0.3)]'
               }`}
             >
-              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON BAŞLIĞI (CETVEL GÖRÜNÜMÜ) */}
+              {/* CETVEL GÖRÜNÜMÜ */}
               <div
                 onClick={() => toggleMatchExpansion(match.id)}
                 className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/50"
@@ -378,7 +371,8 @@ export default function LiveMatchCard() {
                 
                 <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
                   <span className={`text-xs sm:text-sm font-black bg-slate-950 px-3 py-1 rounded-md border shadow-inner whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500 border-red-500/50 animate-pulse' : 'text-amber-400 border-slate-700/50'}`}>
-                    {homeScore} - {awayScore}
+                    {/* 🔴 EKMEL MÜDAHALESİ: OYNANMADIYSA TERTEMİZ TEK BİR ÇİZGİ */}
+                    {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
                   </span>
                 </div>
                 
@@ -392,7 +386,7 @@ export default function LiveMatchCard() {
                 </div>
               </div>
 
-              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON İÇERİĞİ (DEVASA KART) */}
+              {/* AÇIK KART GÖRÜNÜMÜ */}
               {isExpanded && (
                 <div className="relative flex-grow overflow-hidden animate-fadeIn">
                   
@@ -413,7 +407,6 @@ export default function LiveMatchCard() {
 
                   <div className="relative z-10 flex flex-col h-full">
                     
-                    {/* YENİ ÜST ORTA ETİKET */}
                     <div className="w-full text-center pt-3 pb-1 border-b border-slate-800/30">
                       <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
                         {match.weekLabel}
@@ -431,10 +424,10 @@ export default function LiveMatchCard() {
 
                       <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-32 sm:w-40 z-30">
                         
-                        {/* KATEGORİ ARTIK TAM SAATİN/SKORUN ÜSTÜNDE */}
-                        <div className="text-center w-full mb-1">
-                          <span className={`${isChampionsLeague ? 'text-indigo-300 drop-shadow-md' : 'text-amber-500 drop-shadow-sm'} text-[8px] sm:text-[9px] font-black uppercase tracking-wider block leading-tight`}>
-                            🏆 {match.category}
+                        {/* 🔴 EKMEL MÜDAHALESİ: KUPA İPTALİ VE TEK SATIR (TRUNCATE) */}
+                        <div className="text-center w-full mb-1 px-1 overflow-hidden">
+                          <span className={`${isChampionsLeague ? 'text-indigo-300 drop-shadow-md' : 'text-amber-500 drop-shadow-sm'} text-[8.5px] sm:text-[10px] font-black uppercase tracking-wider block leading-tight whitespace-nowrap truncate`}>
+                            {match.category}
                           </span>
                         </div>
 
