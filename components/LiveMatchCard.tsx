@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Tüm Wikipedia Şeffaf Logoları Entegre Edildi)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -79,7 +79,7 @@ const localTeamLogos: Record<string, string> = {
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png",
+  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "NEC NIJMEGEN": "/logos/nec.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "USG": "/logos/usg.png", 
   "BODO-GLIMT": "/logos/bodo.png", "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
@@ -100,7 +100,8 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -146,7 +147,11 @@ const week4PredictionsData: Record<string, string[]> = {
   "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"],
   "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"],
   "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"]
+  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
+  "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
+  "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
+  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
 // 4. HAFTA TÜM FİKSTÜR
@@ -186,7 +191,10 @@ export default function LiveMatchCard() {
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
+  
+  // 🔴 EKMEL MÜDAHALESİ: AKORDEON (KAPALI/AÇIK) SİSTEMİ İÇİN STATE
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
+  const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
@@ -263,6 +271,10 @@ export default function LiveMatchCard() {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
   };
 
+  const toggleMatchExpansion = (matchId: number) => {
+    setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
+
   const getDisplayMinute = (baseMinute: string, startedAt: number | null) => {
     if (!startedAt || !baseMinute || baseMinute === 'İY' || baseMinute === 'MS') return baseMinute;
     const elapsedMins = Math.floor((now - startedAt) / 60000);
@@ -281,210 +293,252 @@ export default function LiveMatchCard() {
   if (todaysMatchesList.length === 0) return null;
 
   return (
-    // 🔴 EKMEL MÜDAHALESİ: KARTLAR ARTIK MASAÜSTÜNDE YAN YANA (grid-cols-2)
-    <div className="w-full max-w-6xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-      {todaysMatchesList.map((match) => {
-        const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
-        const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
-        const isWinnersOpen = openWinnersMap[match.id] !== false;
+    <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-4 items-center">
+      
+      {/* 🔴 EKMEL MÜDAHALESİ: GÜNÜN MAÇLARI ÜST BAŞLIĞI */}
+      <div className="w-full max-w-lg md:max-w-none text-center mb-2 border-b border-slate-800/80 pb-3">
+        <span className="text-slate-300 font-black tracking-[0.2em] uppercase text-sm sm:text-base drop-shadow-sm">
+          {todaysMatchesList.length > 1 ? "GÜNÜN MAÇLARI" : "GÜNÜN MAÇI"}
+        </span>
+      </div>
 
-        const dbMatch = liveMatchesData[match.id] || {};
-        const matchStatus = dbMatch.status || 'NOT_STARTED';
-        const homeScore = dbMatch.home_score || '-';
-        const awayScore = dbMatch.away_score || '-';
-        const baseMinute = dbMatch.base_minute || '';
-        const startedAt = dbMatch.started_at || null;
+      {/* Grid: Bilgisayarda yan yana (kolon), mobilde alt alta */}
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        {todaysMatchesList.map((match) => {
+          const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
+          const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
+          const isWinnersOpen = openWinnersMap[match.id] !== false;
+          
+          // Akordeon açık mı kapalı mı?
+          const isExpanded = !!expandedMatches[match.id];
 
-        const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
-        const isTffMatch = isTffMatchCheck(match.category);
+          const dbMatch = liveMatchesData[match.id] || {};
+          const matchStatus = dbMatch.status || 'NOT_STARTED';
+          const homeScore = dbMatch.home_score || '-';
+          const awayScore = dbMatch.away_score || '-';
+          const baseMinute = dbMatch.base_minute || '';
+          const startedAt = dbMatch.started_at || null;
 
-        let currentWinners: string[] = [];
-        if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'HT') && homeScore !== '-' && awayScore !== '-') {
-          const targetScore = `${homeScore}-${awayScore}`;
-          currentWinners = Object.keys(week4PredictionsData)
-            .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
-            .map(id => allPlayersList[id])
-            .sort((a, b) => a.localeCompare(b, 'tr'));
-        }
-        const winnersCount = currentWinners.length;
+          const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+          const isTffMatch = isTffMatchCheck(match.category);
 
-        let displayPoints = 1;
-        if(winnersCount === 1) displayPoints = 12;
-        else if(winnersCount === 2) displayPoints = 6;
-        else if(winnersCount === 3) displayPoints = 5;
-        else if(winnersCount === 4) displayPoints = 4;
-        else if(winnersCount === 5) displayPoints = 3;
-        else if(winnersCount === 6) displayPoints = 2;
-        else if(winnersCount === 0) displayPoints = 0;
-
-        let countdownText = "";
-        if (matchStatus === 'NOT_STARTED') {
-          const matchDateParts = match.date.split('.');
-          const matchTimeParts = match.time.split(':');
-          const matchTargetDate = new Date(parseInt(matchDateParts[2]), parseInt(matchDateParts[1]) - 1, parseInt(matchDateParts[0]), parseInt(matchTimeParts[0]), parseInt(matchTimeParts[1]), 0).getTime();
-          const distance = matchTargetDate - now;
-          if (distance > 0) {
-            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((distance % (1000 * 60)) / 1000);
-            countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+          let currentWinners: string[] = [];
+          if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'HT') && homeScore !== '-' && awayScore !== '-') {
+            const targetScore = `${homeScore}-${awayScore}`;
+            currentWinners = Object.keys(week4PredictionsData)
+              .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
+              .map(id => allPlayersList[id])
+              .sort((a, b) => a.localeCompare(b, 'tr'));
           }
-        }
+          const winnersCount = currentWinners.length;
 
-        const currentDisplayMinute = getDisplayMinute(baseMinute, startedAt);
+          let displayPoints = 1;
+          if(winnersCount === 1) displayPoints = 12;
+          else if(winnersCount === 2) displayPoints = 6;
+          else if(winnersCount === 3) displayPoints = 5;
+          else if(winnersCount === 4) displayPoints = 4;
+          else if(winnersCount === 5) displayPoints = 3;
+          else if(winnersCount === 6) displayPoints = 2;
+          else if(winnersCount === 0) displayPoints = 0;
 
-        return (
-          <div 
-            key={match.id} 
-            className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${
-              isChampionsLeague 
-                ? 'border-indigo-500/50 shadow-[0_0_40px_rgba(79,70,229,0.4)] bg-[#050b14]' 
-                : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14] border-blue-500/30 shadow-[0_0_30px_rgba(30,58,138,0.5)]'
-            }`}
-          >
-            <div className="p-4 sm:p-6 relative flex-grow overflow-hidden">
-              
-              {isChampionsLeague && (
-                <>
-                  <div 
-                    className="absolute inset-0 z-0 opacity-100"
-                    style={{ 
-                      backgroundImage: "url('/logos/cl-bg.png')",
-                      backgroundSize: 'cover', 
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
-                    }}
-                  ></div>
-                  <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
-                </>
-              )}
+          let countdownText = "";
+          if (matchStatus === 'NOT_STARTED') {
+            const matchDateParts = match.date.split('.');
+            const matchTimeParts = match.time.split(':');
+            const matchTargetDate = new Date(parseInt(matchDateParts[2]), parseInt(matchDateParts[1]) - 1, parseInt(matchDateParts[0]), parseInt(matchTimeParts[0]), parseInt(matchTimeParts[1]), 0).getTime();
+            const distance = matchTargetDate - now;
+            if (distance > 0) {
+              const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+              const s = Math.floor((distance % (1000 * 60)) / 1000);
+              countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+          }
 
-              <div className="relative z-10">
+          const currentDisplayMinute = getDisplayMinute(baseMinute, startedAt);
+
+          return (
+            <div 
+              key={match.id} 
+              className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+                isChampionsLeague 
+                  ? 'border-indigo-500/40 shadow-[0_0_20px_rgba(79,70,229,0.2)] bg-[#050b14]' 
+                  : 'bg-slate-950 border-blue-500/20 shadow-[0_0_15px_rgba(30,58,138,0.3)]'
+              }`}
+            >
+              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON BAŞLIĞI (CETVEL GÖRÜNÜMÜ) */}
+              <div
+                onClick={() => toggleMatchExpansion(match.id)}
+                className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/50"
+              >
+                <div className="flex-1 flex items-center gap-2 justify-end text-right">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{match.homeTeam}</span>
+                  <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
+                </div>
                 
-                <div className="absolute -top-4 sm:-top-6 -left-4 sm:-left-6 bg-amber-500 text-slate-950 font-black px-3 py-1 rounded-br-xl text-[10px] border-b border-r border-amber-400 shadow-md backdrop-blur-sm z-20 flex items-center gap-1">
-                  <span className="animate-pulse">🔥</span> BUGÜNÜN MAÇI
-                </div>
-
-                <div className={`absolute -top-4 sm:-top-6 -right-4 sm:-right-6 ${isChampionsLeague ? 'bg-indigo-900/80 text-indigo-200 border-indigo-500/50' : 'bg-blue-900/80 text-blue-200 border-blue-500/50'} font-black px-3 py-1 rounded-bl-xl text-[10px] border-b border-l shadow-md backdrop-blur-sm`}>
-                  {match.weekLabel}
-                </div>
-
-                <div className="text-center mb-6 mt-3">
-                  <span className={`${isChampionsLeague ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]'} text-xs sm:text-sm font-bold uppercase tracking-wider flex justify-center items-center gap-2`}>
-                    🏆 {match.category}
+                <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
+                  <span className={`text-xs sm:text-sm font-black bg-slate-950 px-3 py-1 rounded-md border shadow-inner whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500 border-red-500/50 animate-pulse' : 'text-amber-400 border-slate-700/50'}`}>
+                    {homeScore} - {awayScore}
                   </span>
                 </div>
+                
+                <div className="flex-1 flex items-center gap-2 justify-start text-left">
+                  <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{match.awayTeam}</span>
+                </div>
+                
+                <div className="ml-2 text-slate-500 text-[10px]">
+                  {isExpanded ? '▲' : '▼'}
+                </div>
+              </div>
 
-                <div className="flex items-center justify-between px-2 sm:px-6">
+              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON İÇERİĞİ (DEVASA KART) */}
+              {isExpanded && (
+                <div className="relative flex-grow overflow-hidden animate-fadeIn">
                   
-                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                    <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                      <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                    </div>
-                    <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
-                  </div>
+                  {isChampionsLeague && (
+                    <>
+                      <div 
+                        className="absolute inset-0 z-0 opacity-100"
+                        style={{ 
+                          backgroundImage: "url('/logos/cl-bg.png')",
+                          backgroundSize: 'cover', 
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      ></div>
+                      <div className="absolute inset-0 bg-slate-900/60 z-0"></div>
+                    </>
+                  )}
 
-                  <div className="flex flex-col items-center justify-center gap-2.5 mx-2 sm:mx-4 w-28 sm:w-32 z-30">
+                  <div className="relative z-10 flex flex-col h-full">
                     
-                    {matchStatus === 'NOT_STARTED' && (
-                      <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                        <span className="text-amber-400 text-xs sm:text-sm font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
-                      </div>
-                    )}
-
-                    {matchStatus === 'LIVE' && (
-                      <div className="bg-red-950/80 border border-red-700 px-4 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
-                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                        <span className="text-red-500 text-xs font-black tracking-widest">CANLI {currentDisplayMinute}'</span>
-                      </div>
-                    )}
-
-                    {matchStatus === 'HT' && (
-                      <div className="bg-amber-950/80 border border-amber-700 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                        <span className="text-amber-500 text-[10px] sm:text-xs font-black tracking-widest">İY (BİTTİ)</span>
-                      </div>
-                    )}
-
-                    {matchStatus === 'FINISHED' && (
-                      <div className="bg-slate-900/80 border border-slate-600/80 px-4 py-1 rounded-full shadow-sm backdrop-blur-md">
-                        <span className="text-slate-400 text-xs font-black tracking-widest">MS (BİTTİ)</span>
-                      </div>
-                    )}
-
-                    <div className={`w-full bg-[#080d1a]/80 border ${isChampionsLeague ? 'border-white/30' : 'border-blue-600/40'} py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                      <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
-                      <span className={`text-lg sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                      <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
-                    </div>
-
-                    {matchStatus === 'NOT_STARTED' && countdownText && (
-                      <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1.5 rounded-lg text-center shadow-md">
-                        <span className="text-[#38bdf8] text-[10px] sm:text-[11px] font-mono font-bold tracking-widest drop-shadow-sm">
-                          {countdownText}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                    <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                      <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                    </div>
-                    <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-4 py-3 w-full backdrop-blur-md z-10 relative">
-              <div className="flex justify-between items-center w-full">
-                <div className="text-left flex-1">
-                  {matchStatus === 'NOT_STARTED' ? (
-                    <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
-                  ) : winnersCount === 0 ? (
-                    <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
-                  ) : (
-                    <span className="text-[10px] sm:text-xs font-medium text-blue-200">
-                      <strong className="text-blue-400">{winnersCount} kişi</strong> tam isabetli
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex-0 text-center px-1">
-                  <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${isTffMatch ? 'text-red-400 bg-red-950/90 border-red-500/80' : 'text-cyan-300 bg-cyan-950/90 border-cyan-400/80'}`}>
-                    {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
-                  </span>
-                </div>
-
-                <div className="text-right flex-1">
-                  {winnersCount > 0 && (
-                    <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
-                      {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {isWinnersOpen && winnersCount > 0 && (
-                <div className="w-full mt-3 p-3 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
-                  <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
-                    <span>CANLI SKOR BİLENLER (A-Z)</span>
-                    <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
-                    {currentWinners.map((winner: string, idx: number) => (
-                      <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-                        {winner}
+                    {/* YENİ ÜST ORTA ETİKET */}
+                    <div className="w-full text-center pt-3 pb-1 border-b border-slate-800/30">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
+                        {match.weekLabel}
                       </span>
-                    ))}
+                    </div>
+
+                    <div className="flex items-center justify-between px-2 sm:px-6 pt-6 pb-4">
+                      
+                      <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                          <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                        </div>
+                        <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-32 sm:w-40 z-30">
+                        
+                        {/* KATEGORİ ARTIK TAM SAATİN/SKORUN ÜSTÜNDE */}
+                        <div className="text-center w-full mb-1">
+                          <span className={`${isChampionsLeague ? 'text-indigo-300 drop-shadow-md' : 'text-amber-500 drop-shadow-sm'} text-[8px] sm:text-[9px] font-black uppercase tracking-wider block leading-tight`}>
+                            🏆 {match.category}
+                          </span>
+                        </div>
+
+                        {matchStatus === 'NOT_STARTED' && (
+                          <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                            <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                          </div>
+                        )}
+
+                        {matchStatus === 'LIVE' && (
+                          <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            <span className="text-red-500 text-[10px] font-black tracking-widest">CANLI {currentDisplayMinute}'</span>
+                          </div>
+                        )}
+
+                        {matchStatus === 'HT' && (
+                          <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                            <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">İY (BİTTİ)</span>
+                          </div>
+                        )}
+
+                        {matchStatus === 'FINISHED' && (
+                          <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                            <span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
+                          </div>
+                        )}
+
+                        <div className={`w-full bg-[#080d1a]/80 border ${isChampionsLeague ? 'border-white/30' : 'border-blue-600/40'} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                          <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                          <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                          <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                        </div>
+
+                        {matchStatus === 'NOT_STARTED' && countdownText && (
+                          <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
+                            <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
+                              {countdownText}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                          <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                        </div>
+                        <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                      </div>
+
+                    </div>
+                  
+                    <div className="bg-[#050b14]/90 border-t border-blue-900/30 px-3 py-2.5 w-full backdrop-blur-md z-10 relative">
+                      <div className="flex justify-between items-center w-full">
+                        <div className="text-left flex-1">
+                          {matchStatus === 'NOT_STARTED' ? (
+                            <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
+                          ) : winnersCount === 0 ? (
+                            <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
+                          ) : (
+                            <span className="text-[9px] sm:text-[10px] font-medium text-blue-200">
+                              <strong className="text-blue-400">{winnersCount} kişi</strong> tam isabetli
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex-0 text-center px-1">
+                          <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${isTffMatch ? 'text-red-400 bg-red-950/90 border-red-500/80' : 'text-cyan-300 bg-cyan-950/90 border-cyan-400/80'}`}>
+                            {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
+                          </span>
+                        </div>
+
+                        <div className="text-right flex-1">
+                          {winnersCount > 0 && (
+                            <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">
+                              {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {isWinnersOpen && winnersCount > 0 && (
+                        <div className="w-full mt-2 p-2.5 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
+                          <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
+                            <span>CANLI SKOR BİLENLER (A-Z)</span>
+                            <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 mt-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                            {currentWinners.map((winner: string, idx: number) => (
+                              <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                                {winner}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
