@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Yeni Eklediğin Linklerle Kusursuzlaştırıldı)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   // 🌟 SENİN ELLERİNLE BULDUĞUN WIKIPEDIA (Special:FilePath) LİNKLERİ
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
-  "HRADEC KRALOVE": "https://tr.wikipedia.org/wiki/Special:FilePath/Hradec_Kralove_CoA_CZ.svg",
   "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
   "KASIMPAŞA": "https://de.wikipedia.org/wiki/Special:FilePath/Kasimpasa_Logo.svg",
   "TRABZONSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Trabzonspor_2022.svg",
@@ -37,6 +36,11 @@ const localTeamLogos: Record<string, string> = {
   "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
   "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
   
+  // 🆕 SON EKLENENLER
+  "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
+  "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
+  "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
+
   // 🌟 EKREM'İN BULUT LİNKLERİ
   "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
   "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
@@ -50,8 +54,7 @@ const localTeamLogos: Record<string, string> = {
   "PENDİKSPOR": "/logos/pendikspor.png", 
   "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png",
-  "KOCAELİSPOR": "/logos/kocaelispor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "EYÜPSPOR": "/logos/eyupspor.png", 
+  "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
 
   // DİĞERLERİ İÇİN FALLBACK (Yedekler)
