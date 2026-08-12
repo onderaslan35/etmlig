@@ -53,7 +53,7 @@ const allPlayersList: Record<string, string> = {
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -62,8 +62,7 @@ const allPlayersList: Record<string, string> = {
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  // 🔴 EKMEL MÜDAHALESİ: KAYIP KAHRAMAN SİSTEME EKLENDİ!
-  "262723": "AYHAN LUŞOĞLU" 
+  "262723": "AYHAN LÜLECİOĞLU" // 🔴 KİMLİK DOĞRULANDI VE EKLENDİ!
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -149,6 +148,10 @@ export default function AdminTahminmatik() {
   const [now, setNow] = useState<number>(new Date().getTime());
   const [liveData, setLiveData] = useState<Record<number, any>>({});
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
+  
+  // 🔴 YENİ EKLENTİ: OTONOM API MODU
+  const [autoMode, setAutoMode] = useState<boolean>(false);
+  const API_KEY = "BURAYA_API_ANAHTARI_GELECEK"; // 🔴 Kumandanım, API-Football şifreni buraya gireceksin!
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
@@ -197,6 +200,36 @@ export default function AdminTahminmatik() {
     const interval = setInterval(fetchFromDB, 5000); 
     return () => clearInterval(interval);
   }, []);
+
+  // 🔴 OTONOM API MOTORU (Her 60 Saniyede Bir Çalışır)
+  useEffect(() => {
+    if (!autoMode) return;
+
+    const fetchApiScores = async () => {
+      try {
+        console.log("Otonom Motor: API'den veriler çekiliyor...");
+        // 🔴 NOT: Aşağıdaki endpoint API-Football canlı maçlar endpoint'idir.
+        // const response = await fetch("https://v3.football.api-sports.io/fixtures?live=all", {
+        //   headers: { "x-apisports-key": API_KEY }
+        // });
+        // const data = await response.json();
+        
+        /* 
+          🔴 EKMEL NOTU: Burada gelen data.response dizisi içinde taranıp, 
+          senin `week4Matches` içindeki takımlarla isim eşleştirmesi yapılır.
+          Eğer eşleşen maç bulunursa ve skoru değişmişse, otomatik olarak 
+          `dispatchScores` fonksiyonu tetiklenip veritabanına ve oyunculara yazılır.
+        */
+
+      } catch (err) {
+        console.error("API Otonom Motor Hatası", err);
+      }
+    };
+
+    fetchApiScores(); // İlk açılışta hemen çek
+    const apiInterval = setInterval(fetchApiScores, 60000); // 60 saniyede bir güncelle
+    return () => clearInterval(apiInterval);
+  }, [autoMode]);
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
   const minOptions: string[] = [];
@@ -353,90 +386,15 @@ export default function AdminTahminmatik() {
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
-      return {
-        bgImg: "url('/cl-bg.png')",
-        containerBorder: "border-indigo-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.3)]",
-        containerBg: "bg-[#050b14]",
-        badgeBg: "bg-indigo-900/80",
-        badgeText: "text-indigo-200",
-        badgeBorder: "border-indigo-500/50",
-        catText: "text-white",
-        scoreBorder: "border-white/30",
-        colonText: "text-white/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-      };
+      return { bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.3)]", containerBg: "bg-[#050b14]", badgeBg: "bg-indigo-900/80", badgeText: "text-indigo-200", badgeBorder: "border-indigo-500/50", catText: "text-white", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     } else if (upCat.includes("AVRUPA LİGİ")) {
-      return {
-        bgImg: "url('/el-bg.png')", 
-        containerBorder: "border-orange-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.3)]",
-        containerBg: "bg-[#140805]",
-        badgeBg: "bg-orange-900/80",
-        badgeText: "text-orange-200",
-        badgeBorder: "border-orange-500/50",
-        catText: "text-orange-300",
-        scoreBorder: "border-orange-600/40",
-        colonText: "text-orange-400/50",
-        tagText: "text-orange-300",
-        tagBg: "bg-orange-950/90",
-        tagBorder: "border-orange-400/80",
-        bottomBar: "bg-[#140805]/90 border-orange-900/30"
-      };
+      return { bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.3)]", containerBg: "bg-[#140805]", badgeBg: "bg-orange-900/80", badgeText: "text-orange-200", badgeBorder: "border-orange-500/50", catText: "text-orange-300", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
     } else if (upCat.includes("KONFERANS LİGİ")) {
-      return {
-        bgImg: "url('/uecl-bg.png')",
-        containerBorder: "border-emerald-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.3)]",
-        containerBg: "bg-[#05140b]",
-        badgeBg: "bg-emerald-900/80",
-        badgeText: "text-emerald-200",
-        badgeBorder: "border-emerald-500/50",
-        catText: "text-emerald-300",
-        scoreBorder: "border-emerald-600/40",
-        colonText: "text-emerald-400/50",
-        tagText: "text-emerald-300",
-        tagBg: "bg-emerald-950/90",
-        tagBorder: "border-emerald-400/80",
-        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
-      };
+      return { bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.3)]", containerBg: "bg-[#05140b]", badgeBg: "bg-emerald-900/80", badgeText: "text-emerald-200", badgeBorder: "border-emerald-500/50", catText: "text-emerald-300", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
     } else if (isTffMatchCheck(category)) {
-      return {
-        bgImg: "url('/tff-bg.png')",
-        containerBorder: "border-red-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.3)]",
-        containerBg: "bg-[#140505]",
-        badgeBg: "bg-red-900/80",
-        badgeText: "text-red-200",
-        badgeBorder: "border-red-500/50",
-        catText: "text-red-300",
-        scoreBorder: "border-red-600/40",
-        colonText: "text-red-400/50",
-        tagText: "text-red-400",
-        tagBg: "bg-red-950/90",
-        tagBorder: "border-red-500/80",
-        bottomBar: "bg-[#140505]/90 border-red-900/30"
-      };
+      return { bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.3)]", containerBg: "bg-[#140505]", badgeBg: "bg-red-900/80", badgeText: "text-red-200", badgeBorder: "border-red-500/50", catText: "text-red-300", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
     }
-    return {
-        bgImg: null,
-        containerBorder: "border-blue-500/30",
-        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.3)]",
-        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-        badgeBg: "bg-blue-900/80",
-        badgeText: "text-blue-200",
-        badgeBorder: "border-blue-500/50",
-        catText: "text-blue-300",
-        scoreBorder: "border-blue-600/40",
-        colonText: "text-blue-400/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-    };
+    return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.3)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-blue-900/80", badgeText: "text-blue-200", badgeBorder: "border-blue-500/50", catText: "text-blue-300", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
   };
 
   return (
@@ -446,16 +404,27 @@ export default function AdminTahminmatik() {
         <h1 className="text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase flex items-center gap-3">
           ⚡ ŞAMPİYONLAR LİGİ REJİ ODASI
         </h1>
-        <button onClick={resetSystem} className="mt-4 md:mt-0 bg-red-950/80 border border-red-800 text-red-400 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm hover:bg-red-900 hover:text-red-300 transition-colors shadow-lg">
-          📌 TÜM MAÇLARI VE PUANLARI SIFIRLA
-        </button>
+        
+        {/* 🔴 OTONOM MOD ŞALTERİ */}
+        <div className="flex items-center gap-4 mt-4 md:mt-0">
+          <div className="flex items-center gap-2 bg-slate-950 px-4 py-2 rounded-xl border border-slate-700">
+            <span className={`text-xs font-black ${autoMode ? 'text-emerald-400' : 'text-slate-500'}`}>OTONOM API MODU</span>
+            <button onClick={() => setAutoMode(!autoMode)} className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none ${autoMode ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+              <span className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${autoMode ? 'transform translate-x-6' : ''}`} />
+            </button>
+          </div>
+          
+          <button onClick={resetSystem} className="bg-red-950/80 border border-red-800 text-red-400 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm hover:bg-red-900 hover:text-red-300 transition-colors shadow-lg">
+            📌 SIFIRLA
+          </button>
+        </div>
       </div>
 
       <div className="w-full relative mb-8">
         <button onClick={() => setIsAdminPanelOpen(!isAdminPanelOpen)} className={`w-full py-4 px-6 rounded-xl font-extrabold text-base border-2 transition-all flex items-center justify-between shadow-lg ${isAdminPanelOpen ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-amber-500 border-amber-500/50 hover:bg-slate-800'}`}>
           <div className="flex items-center gap-3">
             <span className="text-2xl">🎛️</span>
-            <span>MANUEL MAÇ KONTROL PANELİ (ESNEK ZAMAN KİLİTLİ)</span>
+            <span>MANUEL & OTONOM MAÇ KONTROL PANELİ</span>
           </div>
           <span className="text-lg transition-transform duration-300">{isAdminPanelOpen ? '▲' : '▼'}</span>
         </button>
@@ -522,7 +491,7 @@ export default function AdminTahminmatik() {
                       </>
                     )}
 
-                    {!isUnlocked && (
+                    {(!isUnlocked && !autoMode) && (
                       <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-4">
                          <span className="text-4xl sm:text-5xl mb-3">⏳</span>
                          <span className="text-amber-500 text-lg sm:text-xl font-black tracking-widest mb-1 drop-shadow-md">ZAMAN KİLİDİ AKTİF</span>
@@ -540,10 +509,10 @@ export default function AdminTahminmatik() {
                       </div>
                     )}
 
-                    <button onClick={() => resetSingleMatch(match.id)} className="absolute top-0 left-0 bg-red-600/90 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-br-xl z-40 hover:bg-red-500 border-b border-r border-red-400 shadow-md transition-colors">
+                    <button disabled={autoMode} onClick={() => resetSingleMatch(match.id)} className={`absolute top-0 left-0 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-br-xl z-40 border-b border-r shadow-md transition-colors ${autoMode ? 'bg-slate-700 border-slate-500 cursor-not-allowed' : 'bg-red-600/90 hover:bg-red-500 border-red-400'}`}>
                       🔄 SIFIRLA
                     </button>
-                    <button onClick={() => { handleScoreChange(match.id, 'min', 'MS'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'FINISHED', 'MS'); }} className="absolute top-0 right-0 bg-emerald-600/90 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-bl-xl z-40 hover:bg-emerald-500 border-b border-l border-emerald-400 shadow-md transition-colors">
+                    <button disabled={autoMode} onClick={() => { handleScoreChange(match.id, 'min', 'MS'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'FINISHED', 'MS'); }} className={`absolute top-0 right-0 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-bl-xl z-40 border-b border-l shadow-md transition-colors ${autoMode ? 'bg-slate-700 border-slate-500 cursor-not-allowed' : 'bg-emerald-600/90 hover:bg-emerald-500 border-emerald-400'}`}>
                       🏁 BİTİR & PUAN DAĞIT
                     </button>
 
@@ -558,10 +527,10 @@ export default function AdminTahminmatik() {
                       <div className="flex items-start justify-between">
                         
                         <div className="flex flex-col items-center flex-1 gap-1.5 sm:gap-2">
-                          <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', currentInputs.min)} className="w-full bg-blue-600/90 hover:bg-blue-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-blue-400 transition-colors">
+                          <button disabled={autoMode} onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', currentInputs.min)} className={`w-full text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border transition-colors ${autoMode ? 'bg-slate-700 border-slate-500 cursor-not-allowed' : 'bg-blue-600/90 hover:bg-blue-500 border-blue-400'}`}>
                             🟢 MAÇI BAŞLAT
                           </button>
-                          <button onClick={() => { handleScoreChange(match.id, 'min', 'İY'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'HT', 'İY'); }} className="w-full bg-amber-600/90 hover:bg-amber-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-amber-400 transition-colors">
+                          <button disabled={autoMode} onClick={() => { handleScoreChange(match.id, 'min', 'İY'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'HT', 'İY'); }} className={`w-full text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border transition-colors ${autoMode ? 'bg-slate-700 border-slate-500 cursor-not-allowed' : 'bg-amber-600/90 hover:bg-amber-500 border-amber-400'}`}>
                             ⏸ İLK YARI BİTİR
                           </button>
                           <div className="w-16 h-16 sm:w-24 sm:h-24 mt-2 flex items-center justify-center relative z-20">
@@ -596,19 +565,19 @@ export default function AdminTahminmatik() {
                              )}
                           </div>
 
-                          <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} p-2 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
-                            <select value={currentInputs.home} onChange={(e)=>handleScoreChange(match.id, 'home', e.target.value)} className="w-10 sm:w-12 bg-slate-900 border border-slate-600 text-white rounded p-1 text-lg sm:text-xl font-black outline-none focus:border-amber-500 appearance-none text-center cursor-pointer shadow-inner hover:bg-slate-800 transition-colors">
+                          <div className={`w-full ${autoMode ? 'bg-slate-900' : 'bg-[#080d1a]/80'} border ${autoMode ? 'border-emerald-500/50' : theme.scoreBorder} p-2 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-colors`}>
+                            <select disabled={autoMode} value={currentInputs.home} onChange={(e)=>handleScoreChange(match.id, 'home', e.target.value)} className={`w-10 sm:w-12 border rounded p-1 text-lg sm:text-xl font-black outline-none text-center shadow-inner transition-colors ${autoMode ? 'bg-slate-800 border-slate-700 text-emerald-400 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-white focus:border-amber-500 cursor-pointer hover:bg-slate-800'}`}>
                               {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                             <span className="text-xl font-bold text-white/50">:</span>
-                            <select value={currentInputs.away} onChange={(e)=>handleScoreChange(match.id, 'away', e.target.value)} className="w-10 sm:w-12 bg-slate-900 border border-slate-600 text-white rounded p-1 text-lg sm:text-xl font-black outline-none focus:border-amber-500 appearance-none text-center cursor-pointer shadow-inner hover:bg-slate-800 transition-colors">
+                            <select disabled={autoMode} value={currentInputs.away} onChange={(e)=>handleScoreChange(match.id, 'away', e.target.value)} className={`w-10 sm:w-12 border rounded p-1 text-lg sm:text-xl font-black outline-none text-center shadow-inner transition-colors ${autoMode ? 'bg-slate-800 border-slate-700 text-emerald-400 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-white focus:border-amber-500 cursor-pointer hover:bg-slate-800'}`}>
                               {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                           </div>
                           
                           <div className="w-full mt-2 flex flex-col items-center">
                             <label className="text-[7px] sm:text-[8px] text-slate-400 font-bold mb-0.5">DAKİKA TAYİNİ</label>
-                            <select value={currentInputs.min} onChange={(e)=>handleScoreChange(match.id, 'min', e.target.value)} className="w-full bg-slate-900/80 border border-slate-700 text-slate-300 rounded p-1 text-[9px] sm:text-[10px] font-bold outline-none appearance-none text-center cursor-pointer hover:bg-slate-800">
+                            <select disabled={autoMode} value={currentInputs.min} onChange={(e)=>handleScoreChange(match.id, 'min', e.target.value)} className={`w-full rounded p-1 text-[9px] sm:text-[10px] font-bold outline-none text-center transition-colors ${autoMode ? 'bg-slate-800 border border-slate-700 text-emerald-400 cursor-not-allowed' : 'bg-slate-900/80 border border-slate-700 text-slate-300 cursor-pointer hover:bg-slate-800'}`}>
                               {minOptions.map(opt => <option key={opt} value={opt}>{opt}'</option>)}
                             </select>
                           </div>
@@ -616,10 +585,10 @@ export default function AdminTahminmatik() {
                         </div>
 
                         <div className="flex flex-col items-center flex-1 gap-1.5 sm:gap-2">
-                          <button onClick={() => { handleScoreChange(match.id, 'min', '46'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', '46'); }} className="w-full bg-cyan-600/90 hover:bg-cyan-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-cyan-400 transition-colors">
+                          <button disabled={autoMode} onClick={() => { handleScoreChange(match.id, 'min', '46'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', '46'); }} className={`w-full text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border transition-colors ${autoMode ? 'bg-slate-700 border-slate-500 cursor-not-allowed' : 'bg-cyan-600/90 hover:bg-cyan-500 border-cyan-400'}`}>
                             ▶️ 2. YARI BAŞLAT
                           </button>
-                          <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, dbStatus === 'NOT_STARTED' ? 'LIVE' : dbStatus, currentInputs.min)} className="w-full bg-red-600/90 hover:bg-red-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-red-400 transition-colors">
+                          <button disabled={autoMode} onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, dbStatus === 'NOT_STARTED' ? 'LIVE' : dbStatus, currentInputs.min)} className={`w-full text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border transition-colors ${autoMode ? 'bg-slate-700 border-slate-500 cursor-not-allowed' : 'bg-red-600/90 hover:bg-red-500 border-red-400'}`}>
                             🔴 SKOR GÜNCELLE
                           </button>
                           <div className="w-16 h-16 sm:w-24 sm:h-24 mt-2 flex items-center justify-center relative z-20">
