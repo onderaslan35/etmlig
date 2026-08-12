@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM'İN B PLANI: Paris ve Aston Villa direkt Wikipedia'dan canlı çekiliyor!
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (PSG ve Aston Villa %100 Wikipedia'dan!)
 const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "/logos/fenerbahce.png", "GALATASARAY": "/logos/galatasaray.png", "BEŞİKTAŞ": "/logos/besiktas.png",
   "TRABZONSPOR": "/logos/trabzonspor.png", "STURM GRAZ": "/logos/sturm-graz.png", 
   
-  // İŞTE B PLANIMIZ: Direkt URL'ler!
+  // 🔴 İŞTE VİZYON: Her iki takım da doğrudan Wikipedia'nın şeffaf SVG sunucusundan canlı çekiliyor!
   "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
-  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo.svg",
+  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/fr/0/00/Logo_Aston_Villa_FC_2024.svg",
   
   "KARABAĞ FK": "/logos/karabag.png", "DINAMO KIEV": "/logos/dinamo-kiev.png",
   "HRADEC KRALOVE": "/logos/hradec.png", "ÇORUM FK": "/logos/corum-fk.png", "KASIMPAŞA": "/logos/kasimpasa.png",
@@ -22,7 +22,7 @@ const localTeamLogos: Record<string, string> = {
   "LEVSKI SOFYA": "/logos/levski.png", "UNIVERSITATEA CRAIOVA": "/logos/craiova.png", "KOPENAG": "/logos/kopenhag.png",
   "KOPENHAG": "/logos/kopenhag.png", "RAPID WIEN": "/logos/rapid-wien.png", "AJAX": "/logos/ajax.png",
   "PANATHINAIKOS": "/logos/panathinaikos.png", "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png",
-  "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+  "ANDERLECHT": "/logos/anderlecht.png", "TWENTE": "/twente.png", "BENFICA": "/logos/benfica.png",
   "SİVASSPOR": "/logos/sivasspor.png", "ANTALYASPOR": "/logos/antalyaspor.png", "KAYSERİSPOR": "/logos/kayserispor.png",
   "PENDİKSPOR": "/logos/pendikspor.png", "BATMAN PETROL SPOR": "/logos/batman.png", "ESENLER EROKSPOR": "/logos/erokspor.png",
   "EROKSPOR": "/logos/erokspor.png", "ALANYASPOR": "/logos/alanyaspor.png", "GENÇLERBİRLİĞİ": "/logos/genclerbirligi.png",
