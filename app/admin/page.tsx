@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Maç Arşivi ile Birebir Aynı)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -42,13 +42,26 @@ const localTeamLogos: Record<string, string> = {
   "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
-  "ÇORUM FK": "/logos/corum-fk.png", 
-  "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
-  "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", 
-  "BOLUSPOR": "/logos/boluspor.png", "İSTANBULSPOR": "/logos/istanbulspor.png", 
-  "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png",
-  "ARSENAL": "/logos/arsenal.png" // Fallback
+  "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
+  "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
+  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
+  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", "ARSENAL": "/logos/arsenal.png"
+};
+
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -101,32 +114,32 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// 🔴 EKREM: 4. Haftanın 24 Maçı (Arşivdeki Şablon)
+// 4. HAFTANIN OTONOM LİSTESİ
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
-  { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
-  { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
-  { id: 5, weekLabel: "4. HAFTA 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
-  { id: 6, weekLabel: "4. HAFTA 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
-  { id: 7, weekLabel: "4. HAFTA 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
-  { id: 8, weekLabel: "4. HAFTA 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
-  { id: 9, weekLabel: "4. HAFTA 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
-  { id: 10, weekLabel: "4. HAFTA 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
-  { id: 11, weekLabel: "4. HAFTA 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
-  { id: 12, weekLabel: "4. HAFTA 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
-  { id: 13, weekLabel: "4. HAFTA 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
-  { id: 14, weekLabel: "4. HAFTA 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
-  { id: 15, weekLabel: "4. HAFTA 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
-  { id: 16, weekLabel: "4. HAFTA 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
-  { id: 17, weekLabel: "4. HAfta 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
-  { id: 18, weekLabel: "4. HAFTA 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
-  { id: 19, weekLabel: "4. HAFTA 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
-  { id: 20, weekLabel: "4. HAFTA 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
-  { id: 21, weekLabel: "4. HAFTA 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
-  { id: 22, weekLabel: "4. HAFTA 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
-  { id: 23, weekLabel: "4. HAFTA 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
-  { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
+  { id: 1, title: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 2, title: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
+  { id: 3, title: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 4, title: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 5, title: "4. HAFTA 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
+  { id: 6, title: "4. HAFTA 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
+  { id: 7, title: "4. HAFTA 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
+  { id: 8, title: "4. HAFTA 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
+  { id: 9, title: "4. HAFTA 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
+  { id: 10, title: "4. HAFTA 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
+  { id: 11, title: "4. HAFTA 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
+  { id: 12, title: "4. HAFTA 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
+  { id: 13, title: "4. HAFTA 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
+  { id: 14, title: "4. HAFTA 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
+  { id: 15, title: "4. HAFTA 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
+  { id: 16, title: "4. HAFTA 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
+  { id: 17, title: "4. HAFTA 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
+  { id: 18, title: "4. HAFTA 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
+  { id: 19, title: "4. HAFTA 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
+  { id: 20, title: "4. HAFTA 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
+  { id: 21, title: "4. HAFTA 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
+  { id: 22, title: "4. HAFTA 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
+  { id: 23, title: "4. HAFTA 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
+  { id: 24, title: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
 export default function AdminTahminmatik() {
@@ -134,14 +147,34 @@ export default function AdminTahminmatik() {
   const [matchInputs, setMatchInputs] = useState<Record<number, { home: string, away: string, min: string }>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   const [liveData, setLiveData] = useState<Record<number, any>>({});
+  
+  // 🔴 AKILLI VİTRİN: Sadece bugünün maçları açık gelecek
+  const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
-  // 🔴 Otonom Saat İçin Motor (Saniyede bir çalışır)
+  // 1 Saniyelik Otonom Motor (Zaman Kilitleri ve Canlı Saat için)
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 🔴 Canlı Veritabanını Dinleme Motoru
+  // Bugünün Maçlarını Akıllı Vitrinde Aç
+  useEffect(() => {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const todayFormatted = `${dd}.${mm}.${yyyy}`; // Örn: 12.08.2026
+
+    const initialExpanded: Record<number, boolean> = {};
+    week4Matches.forEach(m => {
+      if (m.date === todayFormatted) {
+        initialExpanded[m.id] = true;
+      }
+    });
+    setExpandedMatches(initialExpanded);
+  }, []);
+
+  // Canlı Veritabanı Dinleyici
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
@@ -150,7 +183,6 @@ export default function AdminTahminmatik() {
           const map: Record<number, any> = {};
           data.forEach(row => {
             map[row.id] = row;
-            // Admin panelini DB'den gelen son durumla senkronize et
             setMatchInputs(prev => {
               if (prev[row.id]?.home === row.home_score && prev[row.id]?.away === row.away_score && prev[row.id]?.min === row.base_minute) return prev;
               return {
@@ -171,12 +203,15 @@ export default function AdminTahminmatik() {
   }, []);
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
-  
   const minOptions: string[] = [];
   for(let i=1; i<=45; i++) minOptions.push(i.toString());
   for(let i=1; i<=15; i++) minOptions.push(`45+${i}`);
   for(let i=46; i<=90; i++) minOptions.push(i.toString());
   for(let i=1; i<=15; i++) minOptions.push(`90+${i}`);
+
+  const toggleExpand = (matchId: number) => {
+    setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
 
   const handleScoreChange = (matchId: number, type: 'home' | 'away' | 'min', value: string) => {
     setMatchInputs(prev => ({
@@ -188,40 +223,30 @@ export default function AdminTahminmatik() {
     }));
   };
 
+  // 🔴 Puan Dağıtma ve Kaydetme Merkezi
   const dispatchScores = async (matchId: number, h: string, a: string, status: 'LIVE' | 'HT' | 'FINISHED' | 'NOT_STARTED', baseMinute: string) => {
-    
-    // YENİ OTONOM SİSTEM: Duruma göre started_at belirle
     let startedAt = 0;
     const currentDbMatch = liveData[matchId];
 
     if (status === 'LIVE') {
       if (currentDbMatch?.status === 'LIVE' && currentDbMatch?.base_minute === baseMinute) {
-         startedAt = currentDbMatch.started_at; // Eskiden çalışıyorsa devam et
+         startedAt = currentDbMatch.started_at; 
       } else {
-         startedAt = Date.now(); // İlk defa veya yeni dakika ile başlıyorsa sıfırla
+         startedAt = Date.now(); 
       }
     } else {
-      startedAt = 0; // İY, MS veya Henüz Başlamadı ise saati durdur
+      startedAt = 0; 
     }
 
     try {
-      const { error } = await supabase
-        .from('live_matches')
-        .upsert({
-          id: matchId,
-          home_score: h,
-          away_score: a,
-          status: status,
-          base_minute: baseMinute,
-          started_at: startedAt
-        });
-
+      const { error } = await supabase.from('live_matches').upsert({
+          id: matchId, home_score: h, away_score: a, status: status, base_minute: baseMinute, started_at: startedAt
+      });
       if (error) alert("Supabase Hatası: " + error.message);
     } catch (e) {
       console.log("Supabase hatası.");
     }
 
-    // 🔴 PUAN DAĞITIM ALGORİTMASI (Senkronize)
     const targetScore = `${h}-${a}`;
     const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchId - 1] === targetScore);
     
@@ -231,18 +256,17 @@ export default function AdminTahminmatik() {
     else if(winnerIds.length === 3) points = 5;
     else if(winnerIds.length === 4) points = 4;
     else if(winnerIds.length === 5) points = 3;
-    else if(winnerIds.length === 6) points = 2;
-    else if(winnerIds.length === 0) points = 0;
+    else if(winnerIds.length >= 6) points = 2;
+    
+    // Maç resetlendiğinde veya başlamadığında sıfır puan
+    if(winnerIds.length === 0 || h === "-" || a === "-") points = 0;
 
-    // Supabase başarılıysa, localStorage ve Event'leri tetikle
     const currentBoard: Record<string, any> = {}; 
-
     winnerIds.forEach(wId => {
-      currentBoard[wId] = { dfo: points, master: points, skor: 1 };
+      if(points > 0) currentBoard[wId] = { dfo: points, master: points, skor: 1 };
     });
 
     const signalData = { status, homeScore: h, awayScore: a, baseMinute: baseMinute, startedAt: startedAt };
-    
     localStorage.setItem('elitTahmin_AdminSignal', JSON.stringify(signalData));
     localStorage.setItem('elitTahmin_Leaderboard', JSON.stringify(currentBoard));
     
@@ -250,9 +274,19 @@ export default function AdminTahminmatik() {
     window.dispatchEvent(new Event('leaderboardUpdate')); 
   };
 
+  // 🔴 Sol Üst Köşe SIFIRLA Butonu İşlevi
+  const resetSingleMatch = async (matchId: number) => {
+    try {
+      await supabase.from('live_matches').upsert({
+        id: matchId, home_score: '-', away_score: '-', status: 'NOT_STARTED', base_minute: '1', started_at: 0
+      });
+    } catch(e) {}
+    setMatchInputs(prev => ({...prev, [matchId]: {home: "-", away: "-", min: "1"}}));
+    dispatchScores(matchId, '-', '-', 'NOT_STARTED', '1'); 
+  };
+
   const resetSystem = async () => {
     try {
-      // Sadece 1. maçı değil, haftanın tüm maçlarını sıfırla
       for(let i=1; i<=24; i++){
         await supabase.from('live_matches').upsert({
           id: i, home_score: '-', away_score: '-', status: 'NOT_STARTED', base_minute: '1', started_at: 0
@@ -267,7 +301,6 @@ export default function AdminTahminmatik() {
     setMatchInputs({});
   };
 
-  // 🔴 Otonom Saat Hesaplayıcı (Senin Ekranda Göreceğin Canlı Saat)
   const getDisplayMinute = (baseMinute: string, startedAt: number | null, status: string) => {
     if (status !== 'LIVE' || !startedAt || !baseMinute || baseMinute === 'İY' || baseMinute === 'MS') return baseMinute;
     const elapsedMins = Math.floor((now - startedAt) / 60000);
@@ -281,6 +314,20 @@ export default function AdminTahminmatik() {
     const total = base + extra + elapsedMins;
     if (base <= 45) { return total > 45 ? `45+${total - 45}` : `${total}`; } 
     else { return total > 90 ? `90+${total - 90}` : `${total}`; }
+  };
+
+  // 🔴 ZAMAN KİLİDİ HESAPLAYICISI (Maça 1 dakika kala açılır)
+  const getUnlockStatus = (matchDate: string, matchTime: string) => {
+    const [d, m, y] = matchDate.split('.');
+    const [h, min] = matchTime.split(':');
+    const matchTimeMs = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), 0).getTime();
+    const unlockTimeMs = matchTimeMs - 60000; // 1 Dakika Önce
+    const isUnlocked = now >= unlockTimeMs;
+    
+    const hUnl = new Date(unlockTimeMs).getHours().toString().padStart(2, '0');
+    const mUnl = new Date(unlockTimeMs).getMinutes().toString().padStart(2, '0');
+    
+    return { isUnlocked, unlockTimeStr: `${hUnl}:${mUnl}` };
   };
 
   // 🔴 ALTIN STANDART TEMA MOTORU
@@ -314,7 +361,7 @@ export default function AdminTahminmatik() {
         <button onClick={() => setIsAdminPanelOpen(!isAdminPanelOpen)} className={`w-full py-4 px-6 rounded-xl font-extrabold text-base border-2 transition-all flex items-center justify-between shadow-lg ${isAdminPanelOpen ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-amber-500 border-amber-500/50 hover:bg-slate-800'}`}>
           <div className="flex items-center gap-3">
             <span className="text-2xl">🎛️</span>
-            <span>MANUEL MAÇ KONTROL PANELİ (YÖNETMEN MODU)</span>
+            <span>MANUEL MAÇ KONTROL PANELİ (OTONOM ZAMAN KİLİTLİ)</span>
           </div>
           <span className="text-lg transition-transform duration-300">{isAdminPanelOpen ? '▲' : '▼'}</span>
         </button>
@@ -322,8 +369,8 @@ export default function AdminTahminmatik() {
         {isAdminPanelOpen && (
           <div className="absolute top-full left-0 right-0 mt-3 z-40 bg-slate-950/95 border-2 border-amber-500/50 p-4 sm:p-6 rounded-2xl shadow-2xl backdrop-blur-xl animate-fadeIn max-h-[80vh] overflow-y-auto">
             
-            {/* 🔴 ALTIN STANDART İZGARASI (24 MAÇ) */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+            {/* 🔴 ALTIN STANDART İZGARASI */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 items-start">
               {week4Matches.map((match) => { 
                 const currentInputs = matchInputs[match.id] || { home: "-", away: "-", min: "1" };
                 const dbStatus = liveData[match.id]?.status || 'NOT_STARTED';
@@ -332,114 +379,195 @@ export default function AdminTahminmatik() {
                 
                 const displayMinute = getDisplayMinute(dbBaseMin, dbStartedAt, dbStatus);
                 const theme = getEliteTheme(match.category);
+                const { isUnlocked, unlockTimeStr } = getUnlockStatus(match.date, match.time);
                 
                 const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
                 const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
-                return (
-                  <div key={match.id} className={`flex flex-col relative rounded-2xl border overflow-hidden p-4 sm:p-6 transition-all duration-300 ${theme.containerBorder} ${theme.containerBg} ${theme.containerShadow}`}>
-                    
-                    {/* ÜST BİLGİ BARLARI */}
-                    <div className="flex flex-col items-center justify-center mb-4 gap-2 z-10 relative">
-                      <span className="text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md">
-                        {match.weekLabel}
-                      </span>
-                      <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded border text-center shadow-sm flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                        🏆 {match.category}
-                      </span>
-                    </div>
+                const isExpanded = expandedMatches[match.id];
 
-                    {/* DÖRT ATLI KONTROL BUTONLARI VE LOGOLAR */}
-                    <div className="flex items-start justify-between relative z-10">
+                // 🔴 GİZLİ GÖZ: Canlı Skor Bilenler Önizlemesi
+                const isPreviewActive = currentInputs.home !== "-" && currentInputs.away !== "-";
+                let previewWinners: string[] = [];
+                let previewPoints = 0;
+                if (isPreviewActive) {
+                   const target = `${currentInputs.home}-${currentInputs.away}`;
+                   const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][match.id - 1] === target);
+                   previewWinners = winnerIds.map(id => allPlayersList[id]).sort((a,b) => a.localeCompare(b, 'tr'));
+                   
+                   if(winnerIds.length === 1) previewPoints = 12;
+                   else if(winnerIds.length === 2) previewPoints = 6;
+                   else if(winnerIds.length === 3) previewPoints = 5;
+                   else if(winnerIds.length === 4) previewPoints = 4;
+                   else if(winnerIds.length === 5) previewPoints = 3;
+                   else if(winnerIds.length >= 6) previewPoints = 2;
+                }
+
+                // EĞER KART KAPALIYSA (Akordeon İnce Bar)
+                if (!isExpanded) {
+                  return (
+                    <div key={match.id} className="w-full bg-slate-900 border border-slate-700/50 rounded-xl flex items-center justify-between p-3 sm:p-4 shadow-sm hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => toggleExpand(match.id)}>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-[9px] sm:text-[10px] font-bold bg-black/60 px-2 py-1 rounded text-slate-300">{match.title.split(' ').slice(0,2).join(' ')}</span>
+                        <span className="text-[10px] sm:text-xs font-black text-amber-500 whitespace-nowrap">{match.homeTeam} - {match.awayTeam}</span>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-4">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">{match.date} | {match.time}</span>
+                        {!isUnlocked && <span className="text-[10px] text-red-500 font-bold" title="Zaman Kilidi Aktif">🔒</span>}
+                        <span className="text-amber-500 text-xs sm:text-sm">▼</span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // 🔴 EĞER KART AÇIKSA (Altın Standart Otonom Reji Kartı)
+                return (
+                  <div key={match.id} className={`flex flex-col relative rounded-2xl border overflow-hidden p-4 sm:p-6 transition-all duration-500 ${theme.containerBorder} ${theme.containerBg} ${theme.containerShadow}`}>
+                    
+                    {/* ARKA PLAN BÜYÜSÜ */}
+                    {theme.bgImg && (
+                      <>
+                        <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}></div>
+                        <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
+                      </>
+                    )}
+
+                    {/* 🔴 ZAMAN KİLİDİ EKRANI (Maça 1 dk kalana kadar devrede) */}
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-4">
+                         <span className="text-4xl sm:text-5xl mb-3">⏳</span>
+                         <span className="text-amber-500 text-lg sm:text-xl font-black tracking-widest mb-1 drop-shadow-md">ZAMAN KİLİDİ AKTİF</span>
+                         <span className="text-slate-300 text-[10px] sm:text-xs mb-2">Bu maç {match.date} tarihinde oynanacaktır.</span>
+                         <span className="text-slate-400 text-[9px] sm:text-[11px] mt-1 bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                           Sistem <strong className="text-white font-black mx-1">{unlockTimeStr}</strong> itibariyle otomatik açılacaktır.
+                         </span>
+                         <button onClick={() => toggleExpand(match.id)} className="mt-6 border border-slate-600 text-slate-400 hover:bg-slate-800 hover:text-white px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold transition-colors">
+                           KARTI GİZLE ▲
+                         </button>
+                      </div>
+                    )}
+
+                    {/* KÖŞE TAŞLARI (Sol Üst: Sıfırla | Sağ Üst: Bitir) */}
+                    <button onClick={() => resetSingleMatch(match.id)} className="absolute top-0 left-0 bg-red-600/90 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-br-xl z-40 hover:bg-red-500 border-b border-r border-red-400 shadow-md transition-colors">
+                      🔄 SIFIRLA
+                    </button>
+                    <button onClick={() => { handleScoreChange(match.id, 'min', 'MS'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'FINISHED', 'MS'); }} className="absolute top-0 right-0 bg-emerald-600/90 text-white font-black text-[8px] sm:text-[9px] px-3 py-1.5 rounded-bl-xl z-40 hover:bg-emerald-500 border-b border-l border-emerald-400 shadow-md transition-colors">
+                      🏁 BİTİR & PUAN DAĞIT
+                    </button>
+
+                    {/* GÖRÜNÜR KART İÇERİĞİ */}
+                    <div className="relative z-10 flex flex-col h-full mt-4 sm:mt-2">
                       
-                      {/* EV SAHİBİ KISMI */}
-                      <div className="flex flex-col items-center flex-1 gap-2">
-                        <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', currentInputs.min)} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-black py-1.5 rounded shadow-md border border-blue-400">
-                          🟢 MAÇI BAŞLAT
-                        </button>
-                        <button onClick={() => { handleScoreChange(match.id, 'min', 'İY'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'HT', 'İY'); }} className="w-full bg-amber-600 hover:bg-amber-500 text-white text-[9px] sm:text-[10px] font-black py-1.5 rounded shadow-md border border-amber-400">
-                          ⏸ İLK YARI BİTİR
-                        </button>
-                        <div className="w-16 h-16 sm:w-24 sm:h-24 mt-2 flex items-center justify-center">
-                          <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" />
-                        </div>
-                        <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide mt-1">{match.homeTeam}</span>
+                      <div className="flex flex-col items-center justify-center mb-4 gap-1.5 sm:gap-2">
+                        <span className={`text-[9px] sm:text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded border text-center shadow-sm flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                          🏆 {match.category}
+                        </span>
                       </div>
 
-                      {/* MERKEZ (SKOR SEÇİCİ VE OTONOM SAAT) */}
-                      <div className="flex flex-col items-center justify-center mx-2 w-32 sm:w-40 z-30 pt-2">
+                      <div className="flex items-start justify-between">
                         
-                        {/* OTONOM SAAT GÖSTERGESİ */}
-                        <div className="w-full flex flex-col items-center mb-3">
-                           <span className={`text-[10px] sm:text-xs font-semibold tracking-widest ${theme.catText} mb-1 opacity-80`}>
-                             {match.date} | {match.time}
-                           </span>
-                           {dbStatus === 'LIVE' ? (
-                             <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full flex items-center gap-1.5 animate-pulse shadow-lg">
-                               <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                               <span className="text-red-500 text-xs font-black tracking-widest">{displayMinute}'</span>
-                             </div>
-                           ) : dbStatus === 'HT' ? (
-                             <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-lg">
-                               <span className="text-amber-500 text-xs font-black tracking-widest">İY</span>
-                             </div>
-                           ) : dbStatus === 'FINISHED' ? (
-                             <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-lg">
-                               <span className="text-slate-400 text-xs font-black tracking-widest">MS</span>
-                             </div>
+                        {/* 🔴 SOL TARAF: Ev Sahibi Logosu ve Atlı Butonları */}
+                        <div className="flex flex-col items-center flex-1 gap-1.5 sm:gap-2">
+                          <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', currentInputs.min)} className="w-full bg-blue-600/90 hover:bg-blue-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-blue-400 transition-colors">
+                            🟢 MAÇI BAŞLAT
+                          </button>
+                          <button onClick={() => { handleScoreChange(match.id, 'min', 'İY'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'HT', 'İY'); }} className="w-full bg-amber-600/90 hover:bg-amber-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-amber-400 transition-colors">
+                            ⏸ İLK YARI BİTİR
+                          </button>
+                          <div className="w-16 h-16 sm:w-24 sm:h-24 mt-2 flex items-center justify-center relative z-20">
+                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                          </div>
+                          <span className="text-white font-extrabold text-[10px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1 mt-1">{match.homeTeam}</span>
+                        </div>
+
+                        {/* 🔴 MERKEZ: Otonom Saat ve Açılır Skor Menüleri */}
+                        <div className="flex flex-col items-center justify-center mx-2 w-32 sm:w-40 z-30 pt-2">
+                          
+                          <div className="w-full flex flex-col items-center mb-3">
+                             <span className={`text-[9px] sm:text-[10px] font-semibold tracking-widest ${theme.catText} mb-1 opacity-80`}>
+                               {match.date} | {match.time}
+                             </span>
+                             {dbStatus === 'LIVE' ? (
+                               <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full flex items-center gap-1.5 animate-pulse shadow-lg">
+                                 <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                 <span className="text-red-500 text-xs sm:text-sm font-black tracking-widest">{displayMinute}'</span>
+                               </div>
+                             ) : dbStatus === 'HT' ? (
+                               <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-lg">
+                                 <span className="text-amber-500 text-xs sm:text-sm font-black tracking-widest">İY</span>
+                               </div>
+                             ) : dbStatus === 'FINISHED' ? (
+                               <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-lg">
+                                 <span className="text-slate-400 text-xs sm:text-sm font-black tracking-widest">MS</span>
+                               </div>
+                             ) : (
+                               <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-lg">
+                                 <span className="text-slate-400 text-[9px] sm:text-[10px] font-bold">BAŞLAMADI</span>
+                               </div>
+                             )}
+                          </div>
+
+                          <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} p-2 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
+                            <select value={currentInputs.home} onChange={(e)=>handleScoreChange(match.id, 'home', e.target.value)} className="w-10 sm:w-12 bg-slate-900 border border-slate-600 text-white rounded p-1 text-lg sm:text-xl font-black outline-none focus:border-amber-500 appearance-none text-center cursor-pointer shadow-inner hover:bg-slate-800 transition-colors">
+                              {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                            <span className="text-xl font-bold text-white/50">:</span>
+                            <select value={currentInputs.away} onChange={(e)=>handleScoreChange(match.id, 'away', e.target.value)} className="w-10 sm:w-12 bg-slate-900 border border-slate-600 text-white rounded p-1 text-lg sm:text-xl font-black outline-none focus:border-amber-500 appearance-none text-center cursor-pointer shadow-inner hover:bg-slate-800 transition-colors">
+                              {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                          </div>
+                          
+                          <div className="w-full mt-2 flex flex-col items-center">
+                            <label className="text-[7px] sm:text-[8px] text-slate-400 font-bold mb-0.5">DAKİKA TAYİNİ</label>
+                            <select value={currentInputs.min} onChange={(e)=>handleScoreChange(match.id, 'min', e.target.value)} className="w-full bg-slate-900/80 border border-slate-700 text-slate-300 rounded p-1 text-[9px] sm:text-[10px] font-bold outline-none appearance-none text-center cursor-pointer hover:bg-slate-800">
+                              {minOptions.map(opt => <option key={opt} value={opt}>{opt}'</option>)}
+                            </select>
+                          </div>
+
+                        </div>
+
+                        {/* 🔴 SAĞ TARAF: Deplasman Logosu ve Atlı Butonları */}
+                        <div className="flex flex-col items-center flex-1 gap-1.5 sm:gap-2">
+                          <button onClick={() => { handleScoreChange(match.id, 'min', '46'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', '46'); }} className="w-full bg-cyan-600/90 hover:bg-cyan-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-cyan-400 transition-colors">
+                            ▶️ 2. YARI BAŞLAT
+                          </button>
+                          <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, dbStatus === 'NOT_STARTED' ? 'LIVE' : dbStatus, currentInputs.min)} className="w-full bg-red-600/90 hover:bg-red-500 text-white text-[8px] sm:text-[9px] font-black py-1.5 rounded shadow-sm border border-red-400 transition-colors">
+                            🔴 SKOR GÜNCELLE
+                          </button>
+                          <div className="w-16 h-16 sm:w-24 sm:h-24 mt-2 flex items-center justify-center relative z-20">
+                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                          </div>
+                          <span className="text-white font-extrabold text-[10px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1 mt-1">{match.awayTeam}</span>
+                        </div>
+
+                      </div>
+
+                      {/* 🔴 GİZLİ GÖZ: Anlık Canlı Bilenler Önizlemesi */}
+                      {isPreviewActive && (
+                        <div className="w-full mt-5 p-3 bg-slate-950/80 rounded-xl border border-slate-700/60 shadow-inner">
+                           <div className="flex justify-between items-center border-b border-slate-700/50 pb-1.5 mb-2">
+                              <span className="text-[9px] sm:text-[10px] text-amber-400 font-extrabold tracking-wider">GİZLİ GÖZ (KİM BİLDİ?)</span>
+                              <span className="text-[9px] sm:text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-600">Kişi Başı: {previewPoints} P</span>
+                           </div>
+                           {previewWinners.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                 {previewWinners.map(w => (
+                                    <span key={w} className="text-[8px] sm:text-[9px] font-medium bg-emerald-900/40 border border-emerald-500/40 text-emerald-100 px-1.5 py-0.5 rounded shadow-sm">
+                                      {w}
+                                    </span>
+                                 ))}
+                              </div>
                            ) : (
-                             <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-lg">
-                               <span className="text-slate-400 text-[10px] font-bold">BAŞLAMADI</span>
-                             </div>
+                              <span className="text-[9px] text-slate-500 italic font-medium">Bu skoru şu an kimse tahmin etmemiş.</span>
                            )}
                         </div>
-
-                        {/* AÇILIR AKORDEON (SELECT) SKORLAR */}
-                        <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} p-2 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
-                          <select value={currentInputs.home} onChange={(e)=>handleScoreChange(match.id, 'home', e.target.value)} className="w-10 sm:w-12 bg-slate-900 border border-slate-600 text-white rounded p-1 text-lg sm:text-xl font-black outline-none focus:border-amber-500 appearance-none text-center cursor-pointer shadow-inner">
-                            {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          </select>
-                          <span className="text-xl font-bold text-white/50">:</span>
-                          <select value={currentInputs.away} onChange={(e)=>handleScoreChange(match.id, 'away', e.target.value)} className="w-10 sm:w-12 bg-slate-900 border border-slate-600 text-white rounded p-1 text-lg sm:text-xl font-black outline-none focus:border-amber-500 appearance-none text-center cursor-pointer shadow-inner">
-                            {scoreOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          </select>
-                        </div>
-                        
-                        {/* GÜNCELLE BUTONU (Ortada, skora müdahale için) */}
-                        <button onClick={() => dispatchScores(match.id, currentInputs.home, currentInputs.away, dbStatus, currentInputs.min)} className="w-full mt-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black py-2 rounded-lg shadow-md border border-indigo-400 transition-all flex items-center justify-center gap-1">
-                          🔄 SKORU GÜNCELLE
-                        </button>
-
-                        {/* MANUEL DAKİKA SEÇİCİ (Geç kalırsan elinle düzeltmek için) */}
-                        <div className="w-full mt-2 flex flex-col items-center">
-                          <label className="text-[8px] text-slate-400 font-bold mb-0.5">MANUEL DAKİKA GİR</label>
-                          <select value={currentInputs.min} onChange={(e)=>handleScoreChange(match.id, 'min', e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-slate-300 rounded p-1 text-[10px] font-bold outline-none appearance-none text-center cursor-pointer">
-                            {minOptions.map(opt => <option key={opt} value={opt}>{opt}'</option>)}
-                          </select>
-                        </div>
-
-                      </div>
-
-                      {/* DEPLASMAN KISMI */}
-                      <div className="flex flex-col items-center flex-1 gap-2">
-                        <button onClick={() => { handleScoreChange(match.id, 'min', '46'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'LIVE', '46'); }} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-[9px] sm:text-[10px] font-black py-1.5 rounded shadow-md border border-cyan-400">
-                          ▶️ 2. YARIYI BAŞLAT
-                        </button>
-                        <button onClick={() => { handleScoreChange(match.id, 'min', 'MS'); dispatchScores(match.id, currentInputs.home, currentInputs.away, 'FINISHED', 'MS'); }} className="w-full bg-red-600 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-black py-1.5 rounded shadow-md border border-red-400">
-                          🛑 MAÇI BİTİR (MS)
-                        </button>
-                        <div className="w-16 h-16 sm:w-24 sm:h-24 mt-2 flex items-center justify-center">
-                          <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" />
-                        </div>
-                        <span className="text-white font-extrabold text-[10px] sm:text-xs text-center uppercase tracking-wide mt-1">{match.awayTeam}</span>
-                      </div>
+                      )}
 
                     </div>
                   </div>
                 );
               })}
             </div>
-
           </div>
         )}
       </div>
