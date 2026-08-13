@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// Tüm şeffaf Wikipedia Logoları
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -159,11 +158,10 @@ const week4PredictionsData: Record<string, string[]> = {
   "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
+  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
-// 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -191,100 +189,6 @@ const week4Matches = [
   { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
-const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category.toUpperCase();
-  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
-};
-
-const getEliteTheme = (category: string) => {
-  const upCat = category.toUpperCase();
-  if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
-    return {
-      bgImg: "url('/cl-bg.png')",
-      containerBorder: "border-indigo-500/50",
-      containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
-      containerBg: "bg-[#050b14]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
-      badgeText: "text-indigo-300",
-      badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
-      catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-      scoreBorder: "border-white/30",
-      colonText: "text-white/50",
-      tagText: "text-cyan-300",
-      tagBg: "bg-cyan-950/90",
-      tagBorder: "border-cyan-400/80",
-      bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-    };
-  } else if (upCat.includes("AVRUPA LİGİ")) {
-    return {
-      bgImg: "url('/el-bg.png')", 
-      containerBorder: "border-orange-500/50",
-      containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
-      containerBg: "bg-[#140805]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
-      badgeText: "text-orange-400",
-      badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
-      catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
-      scoreBorder: "border-orange-600/40",
-      colonText: "text-orange-400/50",
-      tagText: "text-orange-300",
-      tagBg: "bg-orange-950/90",
-      tagBorder: "border-orange-400/80",
-      bottomBar: "bg-[#140805]/90 border-orange-900/30"
-    };
-  } else if (upCat.includes("KONFERANS LİGİ")) {
-    return {
-      bgImg: "url('/uecl-bg.png')",
-      containerBorder: "border-emerald-500/50",
-      containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
-      containerBg: "bg-[#05140b]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
-      badgeText: "text-emerald-400",
-      badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
-      catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
-      scoreBorder: "border-emerald-600/40",
-      colonText: "text-emerald-400/50",
-      tagText: "text-emerald-300",
-      tagBg: "bg-emerald-950/90",
-      tagBorder: "border-emerald-400/80",
-      bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
-    };
-  } else if (isTffMatchCheck(category)) {
-    return {
-      bgImg: "url('/tff-bg.png')",
-      containerBorder: "border-red-500/50",
-      containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
-      containerBg: "bg-[#140505]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
-      badgeText: "text-red-400",
-      badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
-      catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
-      scoreBorder: "border-red-600/40",
-      colonText: "text-red-400/50",
-      tagText: "text-red-400",
-      tagBg: "bg-red-950/90",
-      tagBorder: "border-red-500/80",
-      bottomBar: "bg-[#140505]/90 border-red-900/30"
-    };
-  }
-  return {
-      bgImg: null,
-      containerBorder: "border-blue-500/30",
-      containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
-      containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-      badgeBg: "bg-transparent backdrop-blur-sm",
-      badgeText: "text-cyan-400",
-      badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
-      catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
-      scoreBorder: "border-blue-600/40",
-      colonText: "text-blue-400/50",
-      tagText: "text-cyan-300",
-      tagBg: "bg-cyan-950/90",
-      tagBorder: "border-cyan-400/80",
-      bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-  };
-};
-
 export default function LiveMatchCard() {
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
@@ -297,6 +201,100 @@ export default function LiveMatchCard() {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const isTffMatchCheck = (category: string) => {
+    const uppercaseCat = category.toUpperCase();
+    return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
+  };
+
+  const getEliteTheme = (category: string) => {
+    const upCat = category.toUpperCase();
+    if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
+      return {
+        bgImg: "url('/cl-bg.png')",
+        containerBorder: "border-indigo-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
+        containerBg: "bg-[#050b14]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-indigo-300",
+        badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
+        scoreBorder: "border-white/30",
+        colonText: "text-white/50",
+        tagText: "text-cyan-300",
+        tagBg: "bg-cyan-950/90",
+        tagBorder: "border-cyan-400/80",
+        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+      };
+    } else if (upCat.includes("AVRUPA LİGİ")) {
+      return {
+        bgImg: "url('/el-bg.png')", 
+        containerBorder: "border-orange-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
+        containerBg: "bg-[#140805]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-orange-400",
+        badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
+        scoreBorder: "border-orange-600/40",
+        colonText: "text-orange-400/50",
+        tagText: "text-orange-300",
+        tagBg: "bg-orange-950/90",
+        tagBorder: "border-orange-400/80",
+        bottomBar: "bg-[#140805]/90 border-orange-900/30"
+      };
+    } else if (upCat.includes("KONFERANS LİGİ")) {
+      return {
+        bgImg: "url('/uecl-bg.png')",
+        containerBorder: "border-emerald-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
+        containerBg: "bg-[#05140b]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-emerald-400",
+        badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
+        scoreBorder: "border-emerald-600/40",
+        colonText: "text-emerald-400/50",
+        tagText: "text-emerald-300",
+        tagBg: "bg-emerald-950/90",
+        tagBorder: "border-emerald-400/80",
+        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
+      };
+    } else if (isTffMatchCheck(category)) {
+      return {
+        bgImg: "url('/tff-bg.png')",
+        containerBorder: "border-red-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
+        containerBg: "bg-[#140505]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-red-400",
+        badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
+        scoreBorder: "border-red-600/40",
+        colonText: "text-red-400/50",
+        tagText: "text-red-400",
+        tagBg: "bg-red-950/90",
+        tagBorder: "border-red-500/80",
+        bottomBar: "bg-[#140505]/90 border-red-900/30"
+      };
+    }
+    return {
+        bgImg: null,
+        containerBorder: "border-blue-500/30",
+        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
+        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-cyan-400",
+        badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
+        scoreBorder: "border-blue-600/40",
+        colonText: "text-blue-400/50",
+        tagText: "text-cyan-300",
+        tagBg: "bg-cyan-950/90",
+        tagBorder: "border-cyan-400/80",
+        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+    };
+  };
 
   useEffect(() => {
     const today = new Date();
@@ -373,19 +371,11 @@ export default function LiveMatchCard() {
     setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
   };
 
-  const getDisplayMinute = (baseMinute: string, startedAt: number | null) => {
-    if (!startedAt || !baseMinute || baseMinute === 'İY' || baseMinute === 'MS') return baseMinute;
-    const elapsedMins = Math.floor((now - startedAt) / 60000);
-    let base = 0; let extra = 0;
-    if (baseMinute.includes('+')) {
-      const parts = baseMinute.split('+');
-      base = parseInt(parts[0]); extra = parseInt(parts[1]);
-    } else {
-      base = parseInt(baseMinute);
-    }
-    const total = base + extra + elapsedMins;
-    if (base <= 45) { return total > 45 ? `45+${total - 45}` : `${total}`; } 
-    else { return total > 90 ? `90+${total - 90}` : `${total}`; }
+  // Otonom zamanlayıcı fonksiyonu
+  const getMatchTimeMs = (dateStr: string, timeStr: string) => {
+    const [d, m, y] = dateStr.split('.');
+    const [hr, min] = timeStr.split(':');
+    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr), parseInt(min), 0).getTime();
   };
 
   if (todaysMatchesList.length === 0) return null;
@@ -408,11 +398,25 @@ export default function LiveMatchCard() {
           const isExpanded = !!expandedMatches[match.id];
 
           const dbMatch = liveMatchesData[match.id] || {};
-          const matchStatus = dbMatch.status || 'NOT_STARTED';
-          const homeScore = dbMatch.home_score || '-';
-          const awayScore = dbMatch.away_score || '-';
-          const baseMinute = dbMatch.base_minute || '';
-          const startedAt = dbMatch.started_at || null;
+          let matchStatus = dbMatch.status || 'NOT_STARTED';
+          let homeScore = dbMatch.home_score || '-';
+          let awayScore = dbMatch.away_score || '-';
+
+          // 🔴 EKMEL MÜDAHALESİ: OTONOM ZAMANLAYICI KONTROLÜ 🔴
+          const matchTimeMs = getMatchTimeMs(match.date, match.time);
+          const twoHoursMs = 2 * 60 * 60 * 1000;
+          
+          if (matchStatus !== 'FINISHED') {
+            if (now >= matchTimeMs && now < matchTimeMs + twoHoursMs) {
+              matchStatus = 'LIVE';
+              if (homeScore === '-') homeScore = '0';
+              if (awayScore === '-') awayScore = '0';
+            } else if (now >= matchTimeMs + twoHoursMs) {
+              matchStatus = 'WAITING_APPROVAL'; // 2 saati geçmiş, canlı bitti onay bekliyor
+              if (homeScore === '-') homeScore = '0';
+              if (awayScore === '-') awayScore = '0';
+            }
+          }
 
           const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
           const isTffMatch = isTffMatchCheck(match.category);
@@ -420,7 +424,7 @@ export default function LiveMatchCard() {
           const theme = getEliteTheme(match.category);
 
           let currentWinners: string[] = [];
-          if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'HT') && homeScore !== '-' && awayScore !== '-') {
+          if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
             const targetScore = `${homeScore}-${awayScore}`;
             currentWinners = Object.keys(week4PredictionsData)
               .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
@@ -440,11 +444,8 @@ export default function LiveMatchCard() {
           else displayPoints = 0;
 
           let countdownText = "";
-          if (matchStatus === 'NOT_STARTED') {
-            const matchDateParts = match.date.split('.');
-            const matchTimeParts = match.time.split(':');
-            const matchTargetDate = new Date(parseInt(matchDateParts[2]), parseInt(matchDateParts[1]) - 1, parseInt(matchDateParts[0]), parseInt(matchTimeParts[0]), parseInt(matchTimeParts[1]), 0).getTime();
-            const distance = matchTargetDate - now;
+          if (now < matchTimeMs) {
+            const distance = matchTimeMs - now;
             if (distance > 0) {
               const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
               const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -452,8 +453,6 @@ export default function LiveMatchCard() {
               countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
             }
           }
-
-          const currentDisplayMinute = getDisplayMinute(baseMinute, startedAt);
 
           return (
             <div 
@@ -465,7 +464,6 @@ export default function LiveMatchCard() {
               }`}
             >
               
-              {/* 🔴 ARKA PLAN (KAPALI VE AÇIK DURUMDA SÜREKLİ GÖRÜNÜR) 🔴 */}
               {theme.bgImg && (
                 <>
                   <div 
@@ -477,12 +475,10 @@ export default function LiveMatchCard() {
                       backgroundRepeat: 'no-repeat'
                     }}
                   ></div>
-                  {/* Kart kapalıyken üzerine hafif şeffaf film çeker, açılınca filmi biraz açar */}
                   <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
                 </>
               )}
 
-              {/* KAPALI DURUM (CETVEL MODU) */}
               {!isExpanded && (
                 <div
                   onClick={() => toggleMatchExpansion(match.id)}
@@ -496,7 +492,7 @@ export default function LiveMatchCard() {
                   <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
                     <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'}`}>
                       <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-slate-200 group-hover:text-white'}`}>
-                        {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
+                        {now < matchTimeMs ? '-' : `${homeScore} - ${awayScore}`}
                       </span>
                     </div>
                   </div>
@@ -512,7 +508,6 @@ export default function LiveMatchCard() {
                 </div>
               )}
 
-              {/* AÇIK KART (GENİŞ MOD) */}
               {isExpanded && (
                 <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
                   
@@ -549,7 +544,7 @@ export default function LiveMatchCard() {
 
                       <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
 
-                        {matchStatus === 'NOT_STARTED' && (
+                        {now < matchTimeMs && (
                           <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                             <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                           </div>
@@ -558,13 +553,13 @@ export default function LiveMatchCard() {
                         {matchStatus === 'LIVE' && (
                           <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                            <span className="text-red-500 text-[10px] font-black tracking-widest">CANLI {currentDisplayMinute}'</span>
+                            <span className="text-red-500 text-[10px] font-black tracking-widest">CANLI</span>
                           </div>
                         )}
 
-                        {matchStatus === 'HT' && (
+                        {matchStatus === 'WAITING_APPROVAL' && (
                           <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                            <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">İY (BİTTİ)</span>
+                            <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span>
                           </div>
                         )}
 
@@ -580,7 +575,7 @@ export default function LiveMatchCard() {
                           <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                         </div>
 
-                        {matchStatus === 'NOT_STARTED' && countdownText && (
+                        {now < matchTimeMs && countdownText && (
                           <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
                             <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
                               {countdownText}
@@ -601,7 +596,7 @@ export default function LiveMatchCard() {
                     <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative`}>
                       <div className="flex justify-between items-center w-full">
                         <div className="text-left flex-1">
-                          {matchStatus === 'NOT_STARTED' ? (
+                          {now < matchTimeMs ? (
                             <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
                           ) : winnersCount === 0 ? (
                             <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
@@ -630,7 +625,7 @@ export default function LiveMatchCard() {
                       {isWinnersOpen && winnersCount > 0 && (
                         <div className="w-full mt-2 p-2.5 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
                           <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
-                            <span>CANLI SKOR BİLENLER (A-Z)</span>
+                            <span>BİLEN YARIŞMACILAR (A-Z)</span>
                             <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
