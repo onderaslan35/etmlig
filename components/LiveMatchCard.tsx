@@ -162,6 +162,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
+// 4. HAFTA TÜM FİKSTÜR
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -371,7 +372,6 @@ export default function LiveMatchCard() {
     setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
   };
 
-  // Otonom zamanlayıcı fonksiyonu
   const getMatchTimeMs = (dateStr: string, timeStr: string) => {
     const [d, m, y] = dateStr.split('.');
     const [hr, min] = timeStr.split(':');
@@ -402,7 +402,6 @@ export default function LiveMatchCard() {
           let homeScore = dbMatch.home_score || '-';
           let awayScore = dbMatch.away_score || '-';
 
-          // 🔴 EKMEL MÜDAHALESİ: OTONOM ZAMANLAYICI KONTROLÜ 🔴
           const matchTimeMs = getMatchTimeMs(match.date, match.time);
           const twoHoursMs = 2 * 60 * 60 * 1000;
           
@@ -412,7 +411,7 @@ export default function LiveMatchCard() {
               if (homeScore === '-') homeScore = '0';
               if (awayScore === '-') awayScore = '0';
             } else if (now >= matchTimeMs + twoHoursMs) {
-              matchStatus = 'WAITING_APPROVAL'; // 2 saati geçmiş, canlı bitti onay bekliyor
+              matchStatus = 'WAITING_APPROVAL'; 
               if (homeScore === '-') homeScore = '0';
               if (awayScore === '-') awayScore = '0';
             }
@@ -444,7 +443,7 @@ export default function LiveMatchCard() {
           else displayPoints = 0;
 
           let countdownText = "";
-          if (now < matchTimeMs) {
+          if (now < matchTimeMs && matchStatus === 'NOT_STARTED') {
             const distance = matchTimeMs - now;
             if (distance > 0) {
               const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -491,8 +490,9 @@ export default function LiveMatchCard() {
                   
                   <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
                     <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'}`}>
+                      {/* 🔴 EKMEL MÜDAHALESİ: ERKEN SKOR GİRİŞİ DÜZELTİLDİ 🔴 */}
                       <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-slate-200 group-hover:text-white'}`}>
-                        {now < matchTimeMs ? '-' : `${homeScore} - ${awayScore}`}
+                        {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
                       </span>
                     </div>
                   </div>
@@ -544,7 +544,7 @@ export default function LiveMatchCard() {
 
                       <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
 
-                        {now < matchTimeMs && (
+                        {matchStatus === 'NOT_STARTED' && (
                           <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                             <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                           </div>
@@ -575,7 +575,7 @@ export default function LiveMatchCard() {
                           <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                         </div>
 
-                        {now < matchTimeMs && countdownText && (
+                        {matchStatus === 'NOT_STARTED' && countdownText && (
                           <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
                             <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
                               {countdownText}
@@ -596,7 +596,7 @@ export default function LiveMatchCard() {
                     <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative`}>
                       <div className="flex justify-between items-center w-full">
                         <div className="text-left flex-1">
-                          {now < matchTimeMs ? (
+                          {matchStatus === 'NOT_STARTED' ? (
                             <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
                           ) : winnersCount === 0 ? (
                             <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
