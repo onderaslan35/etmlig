@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (Tüm Eksikler Tamamlandı!)
+// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (TÜM EKSİKLER TAMAMLANDI!) 🔴
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -74,8 +74,6 @@ const localTeamLogos: Record<string, string> = {
   "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
   "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
-  
-  // 🔴 YENİ EKLENEN KUSURSUZ WIKIPEDIA LOGOLARI 🔴
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
   "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
@@ -86,7 +84,7 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  // YEREL LOGOLAR
+  // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -111,7 +109,8 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -390,7 +389,7 @@ export default function MacArsiviPage() {
         tagBg: "bg-red-950/90",
         tagBorder: "border-red-500/80",
         bottomBar: "bg-[#140505]/90 border-red-900/30"
-      };
+    };
     }
     return {
         bgImg: null,
@@ -468,12 +467,14 @@ export default function MacArsiviPage() {
                     .sort((a, b) => a.localeCompare(b, 'tr'));
                   winnersCount = currentWinners.length;
                   
+                  // 🔴 EKMEL MÜDAHALESİ: 7 KİŞİ VE ÜZERİ 1 PUAN ALIR KURALI DÜZELTİLDİ 🔴
                   if(winnersCount === 1) displayPoints = 12;
                   else if(winnersCount === 2) displayPoints = 6;
                   else if(winnersCount === 3) displayPoints = 5;
                   else if(winnersCount === 4) displayPoints = 4;
                   else if(winnersCount === 5) displayPoints = 3;
-                  else if(winnersCount >= 6) displayPoints = 2;
+                  else if(winnersCount === 6) displayPoints = 2;
+                  else if(winnersCount >= 7) displayPoints = 1;
                   else displayPoints = 0;
                 }
               }
