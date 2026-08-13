@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// VERİLER VE TEMALAR
+// VERİLER VE TEMALAR (Canlı Sistem İçin)
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -96,12 +96,33 @@ const localTeamLogos: Record<string, string> = {
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png"
 };
 
+const TEAMS = Object.keys(localTeamLogos).sort();
+
+const CATEGORIES = [
+  "UEFA ŞAMPİYONLAR LİGİ",
+  "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME",
+  "UEFA AVRUPA LİGİ",
+  "UEFA AVRUPA LİGİ ÖN ELEME",
+  "UEFA KONFERANS LİGİ",
+  "UEFA KONFERANS LİGİ ÖN ELEME",
+  "UEFA SÜPER KUPA",
+  "TÜRKİYE SÜPER LİG",
+  "TÜRKİYE 1.LİG",
+  "TÜRKİYE SÜPER KUPA",
+  "İNGİLTERE PREMIER LİG",
+  "İNGİLTERE SÜPER KUPA",
+  "İSPANYA LA LIGA",
+  "İTALYA SERIE A",
+  "ALMANYA BUNDESLIGA",
+  "FRANSA LIGUE 1"
+];
+
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -117,6 +138,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"], "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"], "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
+// Şimdilik Canlı Panel 4. Haftayı kullanmaya devam ediyor.
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -143,6 +165,11 @@ const week4Matches = [
   { id: 23, weekLabel: "4. HAFTA 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
   { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
+
+const isTffMatchCheck = (category: string) => {
+  const uppercaseCat = category.toUpperCase();
+  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
+};
 
 const getEliteTheme = (category: string) => {
   const upCat = category.toUpperCase();
@@ -191,7 +218,7 @@ const getEliteTheme = (category: string) => {
       tagBorder: "border-emerald-400/80",
       bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
     };
-  } else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("TÜRKİYE SÜPER KUPA")) {
+  } else if (isTffMatchCheck(category)) {
     return {
       bgImg: "url('/tff-bg.png')",
       containerBorder: "border-red-500/50",
@@ -231,19 +258,43 @@ const checkHasStarted = (dateStr: string, timeStr: string) => {
   return now >= matchDate;
 };
 
+// --- YENİ BÜLTEN TİPLERİ ---
+type BulletinMatch = {
+  category: string;
+  date: string;
+  time: string;
+  home_team: string;
+  away_team: string;
+};
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  // SEKMELER (Canlı / Bülten)
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
+
+  // --- CANLI RADAR STATE'LERİ ---
   const [dbMatches, setDbMatches] = useState<Record<number, any>>({});
   const [localScores, setLocalScores] = useState<Record<number, { home: string, away: string }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeMessage, setActiveMessage] = useState('');
-  
-  // Ajanın saniye sayacı
   const [botCounter, setBotCounter] = useState(0);
+
+  // --- BÜLTEN YÖNETİCİSİ STATE'LERİ ---
+  const [selectedWeek, setSelectedWeek] = useState(5);
+  // 24 adet boş maç kutusu
+  const [bulletinMatches, setBulletinMatches] = useState<BulletinMatch[]>(
+    Array(24).fill(null).map(() => ({
+      category: 'TÜRKİYE SÜPER LİG', // Varsayılan Kategori
+      date: '21.08.2026',           // Varsayılan Tarih
+      time: '21:30',
+      home_team: '',
+      away_team: ''
+    }))
+  );
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -297,9 +348,7 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 SİBER AJAN (BOT) GÖREVİ BAŞLATIYOR 🔴
   const sendAgentToField = async () => {
-    // Sadece "CANLI" maçı olanlar için ajanı yolla
     const liveMatchExists = Object.values(dbMatches).some(m => m.status === 'LIVE' || m.status === 'HT');
     if (!liveMatchExists) return;
 
@@ -311,18 +360,14 @@ export default function AdminPage() {
       if (data.success && data.scores) {
         let updatedAny = false;
         
-        // Ajanın getirdiği skorlarla bizim canlı maçları karşılaştır
         for (const [matchKey, scrapedScore] of Object.entries(data.scores)) {
           const [scrapedHome, scrapedAway] = (scrapedScore as string).split('-');
           
           for (const m of week4Matches) {
             const dbMatch = dbMatches[m.id];
-            // Sadece canlı maçları güncelle
             if (dbMatch && (dbMatch.status === 'LIVE' || dbMatch.status === 'HT')) {
-              // Eşleşme var mı? (Örn: "KARABAĞ FK-DINAMO KIEV" vs "KARABAĞ FK-DINAMO KIEV")
               const ourMatchKey = `${m.homeTeam}-${m.awayTeam}`;
               if (ourMatchKey === matchKey) {
-                // Eğer ajanın getirdiği skor, bizimkinden farklıysa OTONOM GÜNCELLE!
                 if (dbMatch.home_score !== scrapedHome || dbMatch.away_score !== scrapedAway) {
                   await supabase.from('live_matches').upsert({ 
                     id: m.id, home_score: scrapedHome, away_score: scrapedAway, status: 'LIVE' 
@@ -334,10 +379,8 @@ export default function AdminPage() {
             }
           }
         }
-        
-        if (updatedAny) {
-          fetchMatches(); // Ekranı yenile
-        } else {
+        if (updatedAny) fetchMatches();
+        else {
           setActiveMessage("✅ Ajan Döndü: Yeni bir skor değişimi yok.");
           setTimeout(() => setActiveMessage(''), 2000);
         }
@@ -347,24 +390,19 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 OTONOM KALP: 10 Saniyede Bir Saat Kontrolü, 60 Saniyede Bir (6 turda bir) Ajan Gönderimi 🔴
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && activeTab === 'live') {
       const interval = setInterval(() => {
-        fetchMatches(); // Her 10 saniyede saat/DB kontrolü
+        fetchMatches(); 
         setBotCounter(prev => {
           const next = prev + 1;
-          if (next >= 6) { // 10 sn * 6 = 60 saniyede bir ajanı gönder
-            sendAgentToField();
-            return 0;
-          }
+          if (next >= 6) { sendAgentToField(); return 0; }
           return next;
         });
       }, 10000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, dbMatches]);
-
+  }, [isAuthenticated, dbMatches, activeTab]);
 
   const handleScoreChange = (id: number, type: 'home' | 'away', value: string) => {
     setLocalScores(prev => ({
@@ -380,13 +418,9 @@ export default function AdminPage() {
 
     try {
       const { error } = await supabase.from('live_matches').upsert({ 
-        id: id,
-        home_score: hScore, 
-        away_score: aScore,
-        status: 'LIVE'
+        id: id, home_score: hScore, away_score: aScore, status: 'LIVE'
       });
       if (error) throw error;
-      
       setActiveMessage(`✅ Maç ${id} CANLI olarak güncellendi!`);
       setTimeout(() => setActiveMessage(''), 2000);
       fetchMatches();
@@ -398,26 +432,16 @@ export default function AdminPage() {
   const finalizeMatch = async (id: number, homeTeam: string, awayTeam: string) => {
     const hScore = localScores[id]?.home || '-';
     const aScore = localScores[id]?.away || '-';
-    
-    if (hScore === '-' || aScore === '-') {
-      alert("HATA: Maç skoru boşken ('-') maçı onaylayıp bitiremezsiniz!");
-      return;
-    }
+    if (hScore === '-' || aScore === '-') { alert("HATA: Maç skoru boşken ('-') maçı onaylayıp bitiremezsiniz!"); return; }
 
-    const isConfirmed = window.confirm(`DİKKAT: ${homeTeam} ${hScore} - ${aScore} ${awayTeam} maçını onaylıyor ve puanları dağıtıyorsunuz.\n\nEmin misiniz?`);
-    
-    if (isConfirmed) {
+    if (window.confirm(`DİKKAT: ${homeTeam} ${hScore} - ${aScore} ${awayTeam} maçını onaylıyor musunuz?`)) {
       setActiveMessage(`Maç ${id} onaylanıyor...`);
       try {
         const { error } = await supabase.from('live_matches').upsert({ 
-          id: id,
-          home_score: hScore, 
-          away_score: aScore,
-          status: 'FINISHED' 
+          id: id, home_score: hScore, away_score: aScore, status: 'FINISHED' 
         });
         if (error) throw error;
-        
-        setActiveMessage(`✅ Maç ${id} tamamlandı ve puanlar mühürlendi!`);
+        setActiveMessage(`✅ Maç ${id} tamamlandı!`);
         setTimeout(() => setActiveMessage(''), 3000);
         fetchMatches();
       } catch (e) {
@@ -427,42 +451,61 @@ export default function AdminPage() {
   };
 
   const resetSingleMatch = async (id: number, homeTeam: string, awayTeam: string) => {
-    const isConfirmed = window.confirm(`DİKKAT: ${homeTeam} - ${awayTeam} maçına ait CANLI SKOR ve PUAN DAĞITIMI veritabanından tamamen silinecek!\n\nEmin misiniz?`);
-    if (isConfirmed) {
+    if (window.confirm(`DİKKAT: ${homeTeam} - ${awayTeam} silinecek. Emin misiniz?`)) {
       setActiveMessage(`Maç ${id} siliniyor...`);
       try {
         await supabase.from('live_matches').delete().eq('id', id);
-        
-        setLocalScores(prev => ({
-          ...prev,
-          [id]: { home: '-', away: '-' }
-        }));
-
-        setActiveMessage(`✅ Maç ${id} tamamen sıfırlandı!`);
+        setLocalScores(prev => ({ ...prev, [id]: { home: '-', away: '-' } }));
+        setActiveMessage(`✅ Maç ${id} sıfırlandı!`);
         setTimeout(() => setActiveMessage(''), 3000);
         fetchMatches();
-      } catch (e) {
-        setActiveMessage(`❌ Silme hatası`);
-      }
+      } catch (e) { setActiveMessage(`❌ Silme hatası`); }
     }
   };
 
-  const resetAllWeekData = async () => {
-    const isConfirmed = window.confirm(`🚨 DİKKAT NÜKLEER İŞLEM! 🚨\n\n4. Haftaya ait BÜTÜN maç skorları, canlı yayınlar ve puanlar VERİTABANINDAN SİLİNECEK!\n\nGerçekten tüm haftayı sıfırlamak istiyor musunuz?`);
-    if (isConfirmed) {
-      setActiveMessage(`Tüm hafta verileri siliniyor... Lütfen bekleyin.`);
-      try {
-        const matchIds = Array.from({length: 24}, (_, i) => i + 1);
-        await supabase.from('live_matches').delete().in('id', matchIds);
-        
-        setActiveMessage(`✅ 4. HAFTA TERTEMİZ SIFIRLANDI!`);
-        setTimeout(() => setActiveMessage(''), 4000);
-        fetchMatches();
-      } catch (e) {
-        setActiveMessage(`❌ Nükleer sıfırlama hatası`);
-      }
+  // --- YENİ: BÜLTEN YÖNETİM FONKSİYONLARI ---
+  const handleBulletinChange = (index: number, field: keyof BulletinMatch, value: string) => {
+    const newMatches = [...bulletinMatches];
+    newMatches[index] = { ...newMatches[index], [field]: value };
+    setBulletinMatches(newMatches);
+  };
+
+  const saveBulletinToDatabase = async () => {
+    // Boş takım var mı kontrol et
+    const emptyMatchIndex = bulletinMatches.findIndex(m => !m.home_team || !m.away_team);
+    if (emptyMatchIndex !== -1) {
+      alert(`HATA: ${emptyMatchIndex + 1}. Maçın takımları eksik! Bütün maçların takımlarını seçmelisiniz.`);
+      return;
+    }
+
+    const isConfirmed = window.confirm(`🚨 DİKKAT: ${selectedWeek}. Hafta Bülteni (24 Maç) Veritabanına Yüklenecek!\n\nEmin misiniz?`);
+    if (!isConfirmed) return;
+
+    setActiveMessage("Bülten veritabanına mühürleniyor... Lütfen bekleyin.");
+
+    try {
+      const payload = bulletinMatches.map((m, index) => ({
+        week_num: selectedWeek,
+        match_index: index + 1,
+        category: m.category,
+        match_date: m.date,
+        match_time: m.time,
+        home_team: m.home_team,
+        away_team: m.away_team,
+        league_type: isTffMatchCheck(m.category) ? 'TFF' : 'DFO' // 🔴 EKMEL OTOMATİK TFF/DFO ALGISI
+      }));
+
+      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
+      if (error) throw error;
+
+      setActiveMessage(`✅ BAŞARILI! ${selectedWeek}. Hafta Bülteni Sitede Yayına Hazır!`);
+      setTimeout(() => setActiveMessage(''), 5000);
+    } catch (error) {
+      setActiveMessage(`❌ HATA: Bülten yüklenirken bir sorun oluştu!`);
+      console.error(error);
     }
   };
+
 
   if (!isAuthenticated) {
     return (
@@ -483,186 +526,255 @@ export default function AdminPage() {
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
   return (
-    <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans">
+    <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24">
       <div className="max-w-[1400px] mx-auto">
         
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm relative overflow-hidden">
+        {/* ÜST BİLGİ PANELİ */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm relative overflow-hidden">
           <div className="absolute inset-0 w-full h-full bg-blue-500/5 opacity-20 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px)' }}></div>
           
-          <div className="relative z-10">
-            <h1 className="text-2xl font-black text-amber-500 tracking-wider">🛠 ETML OPERASYON MERKEZİ 2.0</h1>
-            <p className="text-slate-400 text-sm mt-1">Komutan: <span className="text-white font-bold">{username}</span> | Görsel Kontrol ve Otonom Ajan <span className="text-purple-400 font-bold animate-pulse">SAHADA</span></p>
+          <div className="relative z-10 text-center md:text-left">
+            <h1 className="text-2xl font-black text-amber-500 tracking-wider">🛠 ETML OPERASYON MERKEZİ 3.0</h1>
+            <p className="text-slate-400 text-sm mt-1">Komutan: <span className="text-white font-bold">{username}</span> | Tam Yetki <span className="text-emerald-400 font-bold">AÇIK</span></p>
           </div>
-          <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 mt-4 md:mt-0">
-            {activeMessage && <div className="text-sm font-bold text-emerald-400 animate-pulse bg-emerald-950/80 px-4 py-2 rounded-lg border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]">{activeMessage}</div>}
-            
-            <button onClick={sendAgentToField} className="bg-purple-900/80 hover:bg-purple-800 text-purple-200 px-4 py-2.5 rounded-xl text-sm font-bold border border-purple-700 transition-colors shadow-lg flex items-center gap-2">
-              <span className="animate-pulse">🕵️‍♀️</span> Ajanı Zorla Yolla
-            </button>
-            
-            <button onClick={resetAllWeekData} className="bg-red-900 hover:bg-red-800 text-white px-4 py-2.5 rounded-xl text-sm font-black border border-red-700 transition-colors shadow-[0_0_15px_rgba(220,38,38,0.5)]">
-              🚨 4. HAFTAYI SIFIRLA
-            </button>
+          <div className="relative z-10 mt-4 md:mt-0 h-10 flex items-center">
+             {activeMessage && <div className="text-sm font-bold text-emerald-400 animate-pulse bg-emerald-950/80 px-4 py-2 rounded-lg border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]">{activeMessage}</div>}
           </div>
         </div>
 
-        <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-          {week4Matches.map(match => {
-            const dbMatch = dbMatches[match.id];
-            const status = dbMatch?.status || 'NOT_STARTED';
-            const isFinished = status === 'FINISHED';
-            
-            const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
-            const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
-            const theme = getEliteTheme(match.category);
-            const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+        {/* ANA SEKMELER (TABS) */}
+        <div className="w-full flex gap-2 mb-8 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+          <button 
+            onClick={() => setActiveTab('live')}
+            className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+          >
+            📡 CANLI SKOR & RADAR (4. HAFTA)
+          </button>
+          <button 
+            onClick={() => setActiveTab('bulletin')}
+            className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+          >
+            📅 YENİ BÜLTEN & ARŞİV MERKEZİ
+          </button>
+        </div>
 
-            const hScore = localScores[match.id]?.home || '-';
-            const aScore = localScores[match.id]?.away || '-';
-            
-            let currentWinners: string[] = [];
-            if (hScore !== '-' && aScore !== '-') {
-              const targetScore = `${hScore}-${aScore}`;
-              currentWinners = Object.keys(week4PredictionsData)
-                .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
-                .map(id => allPlayersList[id])
-                .sort((a, b) => a.localeCompare(b, 'tr'));
-            }
-            
-            const winnersCount = currentWinners.length;
-            let displayPoints = 1;
-            if(winnersCount === 1) displayPoints = 12;
-            else if(winnersCount === 2) displayPoints = 6;
-            else if(winnersCount === 3) displayPoints = 5;
-            else if(winnersCount === 4) displayPoints = 4;
-            else if(winnersCount === 5) displayPoints = 3;
-            else if(winnersCount === 6) displayPoints = 2;
-            else if(winnersCount >= 7) displayPoints = 1;
-            else displayPoints = 0;
+        {/* ========================================= */}
+        {/* TAB 1: CANLI SKOR YÖNETİMİ (Eski Kısım) */}
+        {/* ========================================= */}
+        {activeTab === 'live' && (
+          <>
+            <div className="flex justify-end gap-4 mb-6">
+              <button onClick={sendAgentToField} className="bg-purple-900/80 hover:bg-purple-800 text-purple-200 px-4 py-2 rounded-xl text-sm font-bold border border-purple-700 shadow-lg flex items-center gap-2"><span className="animate-pulse">🕵️‍♀️</span> Ajanı Zorla Yolla</button>
+              <button onClick={fetchMatches} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold border border-slate-600 shadow-lg flex items-center gap-2"><span className="animate-spin-slow">🔄</span> Yenile</button>
+            </div>
 
-            return (
-              <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
+            <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
+              {week4Matches.map(match => {
+                const dbMatch = dbMatches[match.id];
+                const status = dbMatch?.status || 'NOT_STARTED';
+                const isFinished = status === 'FINISHED';
                 
-                {theme.bgImg && (
-                  <>
-                    <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
-                    <div className="absolute inset-0 bg-slate-900/70 z-0"></div>
-                  </>
-                )}
+                const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
+                const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
+                const theme = getEliteTheme(match.category);
+                const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
 
-                <div className="relative z-10 flex flex-col h-full">
-                  
-                  <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
-                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
-                      {match.weekLabel}
-                    </span>
-                    {isFinished ? (
-                      <span className="text-[9px] font-black text-emerald-500 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-800/50">ONAYLANDI</span>
-                    ) : status === 'LIVE' ? (
-                      <span className="text-[9px] font-black text-red-500 bg-red-950/50 px-2 py-1 rounded border border-red-800/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">CANLI YAYINDA</span>
-                    ) : (
-                      <span className="text-[9px] font-black text-slate-500 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">BEKLEMEDE</span>
+                const hScore = localScores[match.id]?.home || '-';
+                const aScore = localScores[match.id]?.away || '-';
+                
+                let currentWinners: string[] = [];
+                if (hScore !== '-' && aScore !== '-') {
+                  const targetScore = `${hScore}-${aScore}`;
+                  currentWinners = Object.keys(week4PredictionsData)
+                    .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
+                    .map(id => allPlayersList[id])
+                    .sort((a, b) => a.localeCompare(b, 'tr'));
+                }
+                
+                const winnersCount = currentWinners.length;
+                let displayPoints = 1;
+                if(winnersCount === 1) displayPoints = 12;
+                else if(winnersCount === 2) displayPoints = 6;
+                else if(winnersCount === 3) displayPoints = 5;
+                else if(winnersCount === 4) displayPoints = 4;
+                else if(winnersCount === 5) displayPoints = 3;
+                else if(winnersCount === 6) displayPoints = 2;
+                else if(winnersCount >= 7) displayPoints = 1;
+                else displayPoints = 0;
+
+                return (
+                  <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
+                    {theme.bgImg && (
+                      <>
+                        <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
+                        <div className="absolute inset-0 bg-slate-900/70 z-0"></div>
+                      </>
                     )}
-                  </div>
-
-                  <div className="w-full text-center px-2 mt-1">
-                    <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                      {match.category}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between px-4 pt-3 pb-4">
-                    
-                    <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                      <div className="w-16 h-16 flex items-center justify-center relative z-20">
-                        <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-lg" />
+                    <div className="relative z-10 flex flex-col h-full">
+                      
+                      <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
+                        <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{match.weekLabel}</span>
+                        {isFinished ? <span className="text-[9px] font-black text-emerald-500 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-800/50">ONAYLANDI</span> : status === 'LIVE' ? <span className="text-[9px] font-black text-red-500 bg-red-950/50 px-2 py-1 rounded border border-red-800/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">CANLI YAYINDA</span> : <span className="text-[9px] font-black text-slate-500 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">BEKLEMEDE</span>}
                       </div>
-                      <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
-                    </div>
 
-                    <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
-                      <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                        
-                        <select 
-                          value={hScore} 
-                          onChange={e => handleScoreChange(match.id, 'home', e.target.value)} 
-                          disabled={isFinished} 
-                          className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner ${status === 'LIVE' ? 'text-amber-400' : ''}`}
-                          style={{ textAlignLast: 'center' }}
-                        >
-                          {scoreOptions.map(opt => (
-                            <option key={`h-${opt}`} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-
-                        <span className={`text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                        
-                        <select 
-                          value={aScore} 
-                          onChange={e => handleScoreChange(match.id, 'away', e.target.value)} 
-                          disabled={isFinished} 
-                          className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner ${status === 'LIVE' ? 'text-amber-400' : ''}`}
-                          style={{ textAlignLast: 'center' }}
-                        >
-                          {scoreOptions.map(opt => (
-                            <option key={`a-${opt}`} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-
+                      <div className="w-full text-center px-2 mt-1">
+                        <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                      <div className="w-16 h-16 flex items-center justify-center relative z-20">
-                        <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-lg" />
+                      <div className="flex items-center justify-between px-4 pt-3 pb-4">
+                        <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                          <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                          <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
+                          <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                            <select value={hScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} disabled={isFinished} className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner ${status === 'LIVE' ? 'text-amber-400' : ''}`} style={{ textAlignLast: 'center' }}>
+                              {scoreOptions.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
+                            </select>
+                            <span className={`text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                            <select value={aScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} disabled={isFinished} className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner ${status === 'LIVE' ? 'text-amber-400' : ''}`} style={{ textAlignLast: 'center' }}>
+                              {scoreOptions.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                          <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                          <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                        </div>
                       </div>
-                      <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
-                    </div>
 
+                      {!isFinished && (
+                        <div className="grid grid-cols-3 gap-2 px-4 pb-4 z-20 relative">
+                          <button onClick={() => updateMatchScoreOnly(match.id)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-2.5 rounded-lg border border-slate-600 shadow-md">Skoru Güncelle</button>
+                          <button onClick={() => resetSingleMatch(match.id, match.homeTeam, match.awayTeam)} className="bg-red-900/80 hover:bg-red-800 text-red-200 text-[10px] font-bold py-2.5 rounded-lg border border-red-700 shadow-md">Resetle</button>
+                          <button onClick={() => finalizeMatch(match.id, match.homeTeam, match.awayTeam)} className="bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] font-black py-2.5 rounded-lg border border-emerald-600 shadow-md">Onayla</button>
+                        </div>
+                      )}
+
+                      <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative mt-auto`}>
+                        <div className="flex justify-between items-center w-full mb-2">
+                          <span className="text-[10px] font-bold text-slate-300">ANLIK RADAR</span>
+                          <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>Kişi Başı: {displayPoints} Puan</span>
+                        </div>
+                        {(hScore === '-' || aScore === '-') ? (
+                          <span className="text-[10px] font-medium text-slate-500 italic block text-center py-2">Skor bekleniyor...</span>
+                        ) : winnersCount === 0 ? (
+                          <span className="text-[10px] font-medium text-slate-500 italic block text-center py-2">Şu anki skoru bilen yok.</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto pr-1 custom-scrollbar">
+                            {currentWinners.map((w, idx) => (<span key={idx} className="bg-blue-900/60 text-white border border-blue-500/50 px-1.5 py-0.5 rounded text-[9px] font-medium shadow-sm">{w}</span>))}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          </>
+        )}
 
-                  {!isFinished && (
-                    <div className="grid grid-cols-3 gap-2 px-4 pb-4 z-20 relative">
-                      <button onClick={() => updateMatchScoreOnly(match.id)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-2.5 rounded-lg border border-slate-600 transition-colors shadow-md">
-                        Skoru Güncelle
-                      </button>
-                      <button onClick={() => resetSingleMatch(match.id, match.homeTeam, match.awayTeam)} className="bg-red-900/80 hover:bg-red-800 text-red-200 text-[10px] font-bold py-2.5 rounded-lg border border-red-700 transition-colors shadow-md">
-                        Maçı Resetle
-                      </button>
-                      <button onClick={() => finalizeMatch(match.id, match.homeTeam, match.awayTeam)} className="bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] font-black py-2.5 rounded-lg border border-emerald-600 transition-colors shadow-md shadow-emerald-900/50">
-                        Onayla & Bitir
-                      </button>
-                    </div>
-                  )}
+        {/* ========================================= */}
+        {/* TAB 2: YENİ BÜLTEN & ARŞİV OLUŞTURUCU */}
+        {/* ========================================= */}
+        {activeTab === 'bulletin' && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            
+            {/* Üst Kısım: Hafta Seçimi */}
+            <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-6 mb-6">
+              <div>
+                <h2 className="text-xl font-black text-indigo-400">📅 MAÇ BÜLTENİ EDİTÖRÜ</h2>
+                <p className="text-slate-500 text-sm mt-1">24 maçlık yeni bülteni tasarla ve veritabanına kaydet.</p>
+              </div>
+              <div className="mt-4 md:mt-0 flex items-center gap-3">
+                <span className="text-slate-300 font-bold uppercase tracking-widest text-sm">Hangi Hafta?</span>
+                <select 
+                  value={selectedWeek} 
+                  onChange={e => setSelectedWeek(Number(e.target.value))}
+                  className="bg-indigo-950 border border-indigo-500/50 text-indigo-300 font-black text-xl px-4 py-2 rounded-xl outline-none"
+                >
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(w => <option key={w} value={w}>{w}. HAFTA</option>)}
+                </select>
+              </div>
+            </div>
 
-                  <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative mt-auto`}>
-                    <div className="flex justify-between items-center w-full mb-2">
-                      <span className="text-[10px] font-bold text-slate-300">ANLIK RADAR</span>
-                      <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                        Kişi Başı: {displayPoints} Puan
+            {/* 24 Maçlık Izgara */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {bulletinMatches.map((match, idx) => {
+                const matchNum = idx + 1;
+                const isTff = isTffMatchCheck(match.category);
+
+                return (
+                  <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden group">
+                    {/* Arka plan sönük logo (Opsiyonel Estetik) */}
+                    <div className="absolute top-0 left-0 w-1 h-full bg-slate-800 group-hover:bg-indigo-500 transition-colors"></div>
+
+                    <div className="flex justify-between items-center pl-2 border-b border-slate-800 pb-2">
+                      <span className="font-black text-slate-300 text-sm tracking-widest">{selectedWeek}. HAFTA / {matchNum}. MAÇ</span>
+                      <span className={`text-[10px] font-black tracking-widest px-2 py-1 rounded shadow-sm ${isTff ? 'bg-red-950/80 text-red-400 border border-red-500/50' : 'bg-blue-950/80 text-blue-400 border border-blue-500/50'}`}>
+                        {isTff ? '[TFF OTOMATİK]' : '[DFO OTOMATİK]'}
                       </span>
                     </div>
-                    
-                    {(hScore === '-' || aScore === '-') ? (
-                      <span className="text-[10px] font-medium text-slate-500 italic block text-center py-2">Skor bekleniyor...</span>
-                    ) : winnersCount === 0 ? (
-                      <span className="text-[10px] font-medium text-slate-500 italic block text-center py-2">Şu anki skoru bilen yok.</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto pr-1 custom-scrollbar">
-                        {currentWinners.map((winner: string, idx: number) => (
-                          <span key={idx} className="bg-blue-900/60 text-white border border-blue-500/50 px-1.5 py-0.5 rounded text-[9px] font-medium shadow-sm">
-                            {winner}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                    {/* Kategori, Tarih, Saat */}
+                    <div className="grid grid-cols-12 gap-3 pl-2">
+                      <div className="col-span-12 md:col-span-6">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Kategori / Turnuva</label>
+                        <select value={match.category} onChange={e => handleBulletinChange(idx, 'category', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500">
+                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className="col-span-6 md:col-span-3">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Tarih</label>
+                        <input type="text" value={match.date} onChange={e => handleBulletinChange(idx, 'date', e.target.value)} placeholder="DD.MM.YYYY" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500 text-center" />
+                      </div>
+                      <div className="col-span-6 md:col-span-3">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Saat</label>
+                        <input type="text" value={match.time} onChange={e => handleBulletinChange(idx, 'time', e.target.value)} placeholder="HH:MM" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500 text-center" />
+                      </div>
+                    </div>
+
+                    {/* Ev Sahibi & Deplasman */}
+                    <div className="grid grid-cols-2 gap-4 pl-2 items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800/50">
+                      
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">🏠 EV SAHİBİ</label>
+                        <select value={match.home_team} onChange={e => handleBulletinChange(idx, 'home_team', e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2.5 text-xs font-bold text-white outline-none focus:border-indigo-500">
+                          <option value="">-- TAKIM SEÇ --</option>
+                          {TEAMS.map(t => <option key={`h-${t}`} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">✈️ DEPLASMAN</label>
+                        <select value={match.away_team} onChange={e => handleBulletinChange(idx, 'away_team', e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2.5 text-xs font-bold text-white outline-none focus:border-indigo-500 text-right" style={{ direction: 'rtl' }}>
+                          <option value="">-- TAKIM SEÇ --</option>
+                          {TEAMS.map(t => <option key={`a-${t}`} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DEV KAYDET BUTONU */}
+            <div className="mt-10 pt-6 border-t border-slate-800 flex justify-center sticky bottom-4 z-50">
+              <button 
+                onClick={saveBulletinToDatabase}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-lg md:text-xl px-12 py-5 rounded-2xl shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:scale-105 border border-indigo-400/50 flex items-center gap-3 tracking-widest"
+              >
+                <span>🚀 {selectedWeek}. HAFTA BÜLTENİNİ YAYINLA VE KAYDET</span>
+              </button>
+            </div>
+
+          </div>
+        )}
+
       </div>
     </div>
   );
