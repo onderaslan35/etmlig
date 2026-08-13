@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// VERİLER VE TEMALAR (LiveMatchCard ile Birebir Aynı)
+// VERİLER VE TEMALAR
 // ----------------------------------------------------
 
 const localTeamLogos: Record<string, string> = {
@@ -302,7 +302,6 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase.from('live_matches').select('*').order('id', { ascending: true });
       if (data) {
-        // ÇİFT KAYITLARI SİLEN DEDUPLICATION SÜZGECİ
         const unique: Record<number, any> = {};
         data.forEach(match => {
           unique[match.id] = match;
@@ -313,8 +312,9 @@ export default function AdminPage() {
         const scores: Record<number, { home: string, away: string }> = {};
         week4Matches.forEach(m => {
           scores[m.id] = { 
-            home: unique[m.id] && unique[m.id].home_score !== '-' ? unique[m.id].home_score : '0', 
-            away: unique[m.id] && unique[m.id].away_score !== '-' ? unique[m.id].away_score : '0' 
+            // 🔴 EKMEL MÜDAHALESİ: Eğer maçın skoru yoksa default boş ('-') gelir. '0' YAZMAZ! 🔴
+            home: unique[m.id] && unique[m.id].home_score && unique[m.id].home_score !== '-' ? unique[m.id].home_score : '-', 
+            away: unique[m.id] && unique[m.id].away_score && unique[m.id].away_score !== '-' ? unique[m.id].away_score : '-' 
           };
         });
         setLocalScores(scores);
@@ -335,8 +335,8 @@ export default function AdminPage() {
 
   const updateMatchScoreOnly = async (id: number) => {
     setActiveMessage(`Maç ${id} skoru güncelleniyor...`);
-    const hScore = localScores[id]?.home || '0';
-    const aScore = localScores[id]?.away || '0';
+    const hScore = localScores[id]?.home || '-';
+    const aScore = localScores[id]?.away || '-';
 
     try {
       const { error } = await supabase.from('live_matches').upsert({ 
@@ -356,9 +356,14 @@ export default function AdminPage() {
   };
 
   const finalizeMatch = async (id: number, homeTeam: string, awayTeam: string) => {
-    const hScore = localScores[id]?.home || '0';
-    const aScore = localScores[id]?.away || '0';
+    const hScore = localScores[id]?.home || '-';
+    const aScore = localScores[id]?.away || '-';
     
+    if (hScore === '-' || aScore === '-') {
+      alert("HATA: Maç skoru boşken ('-') maçı onaylayıp bitiremezsiniz!");
+      return;
+    }
+
     const isConfirmed = window.confirm(`DİKKAT: ${homeTeam} ${hScore} - ${aScore} ${awayTeam} maçını onaylıyor ve puanları dağıtıyorsunuz.\n\nEmin misiniz?`);
     
     if (isConfirmed) {
@@ -381,7 +386,6 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 EKMEL MÜDAHALESİ: TEKİL MAÇ RESETLEME 🔴
   const resetSingleMatch = async (id: number, homeTeam: string, awayTeam: string) => {
     const isConfirmed = window.confirm(`DİKKAT: ${homeTeam} - ${awayTeam} maçına ait CANLI SKOR ve PUAN DAĞITIMI veritabanından tamamen silinecek!\n\nEmin misiniz?`);
     if (isConfirmed) {
@@ -391,7 +395,7 @@ export default function AdminPage() {
         
         setLocalScores(prev => ({
           ...prev,
-          [id]: { home: '0', away: '0' }
+          [id]: { home: '-', away: '-' }
         }));
 
         setActiveMessage(`✅ Maç ${id} tamamen sıfırlandı!`);
@@ -403,7 +407,6 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 EKMEL MÜDAHALESİ: HAFTALIK NÜKLEER BUTON 🔴
   const resetAllWeekData = async () => {
     const isConfirmed = window.confirm(`🚨 DİKKAT NÜKLEER İŞLEM! 🚨\n\n4. Haftaya ait BÜTÜN maç skorları, canlı yayınlar ve puanlar VERİTABANINDAN SİLİNECEK!\n\nGerçekten tüm haftayı sıfırlamak istiyor musunuz?`);
     if (isConfirmed) {
@@ -437,11 +440,13 @@ export default function AdminPage() {
     );
   }
 
+  // Akordiyon menü (Select) için 0'dan 15'e kadar sayılar
+  const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
+
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans">
       <div className="max-w-[1400px] mx-auto">
         
-        {/* ÜST KUMANDA MENÜSÜ */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm">
           <div>
             <h1 className="text-2xl font-black text-amber-500 tracking-wider">🛠 ETML OPERASYON MERKEZİ 2.0</h1>
@@ -460,7 +465,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* 🔴 BİREBİR MAÇ KARTLARI DİZİLİMİ 🔴 */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
           {week4Matches.map(match => {
             const dbMatch = dbMatches[match.id];
@@ -473,15 +477,18 @@ export default function AdminPage() {
             const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
             const isTffMatch = isTffMatchCheck(match.category);
 
-            // Anlık "KİM BİLDİ" Radarı (Henüz güncellemeden admin kutularındaki sayıya göre hesaplar)
-            const hScore = localScores[match.id]?.home || '0';
-            const aScore = localScores[match.id]?.away || '0';
-            const targetScore = `${hScore}-${aScore}`;
-
-            const currentWinners = Object.keys(week4PredictionsData)
-              .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
-              .map(id => allPlayersList[id])
-              .sort((a, b) => a.localeCompare(b, 'tr'));
+            const hScore = localScores[match.id]?.home || '-';
+            const aScore = localScores[match.id]?.away || '-';
+            
+            // 🔴 EKMEL MÜDAHALESİ: SADECE RAKAM GİRİLDİĞİNDE RADAR ÇALIŞIR 🔴
+            let currentWinners: string[] = [];
+            if (hScore !== '-' && aScore !== '-') {
+              const targetScore = `${hScore}-${aScore}`;
+              currentWinners = Object.keys(week4PredictionsData)
+                .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
+                .map(id => allPlayersList[id])
+                .sort((a, b) => a.localeCompare(b, 'tr'));
+            }
             
             const winnersCount = currentWinners.length;
             let displayPoints = 1;
@@ -497,7 +504,6 @@ export default function AdminPage() {
             return (
               <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                 
-                {/* ARKA PLAN */}
                 {theme.bgImg && (
                   <>
                     <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
@@ -507,7 +513,6 @@ export default function AdminPage() {
 
                 <div className="relative z-10 flex flex-col h-full">
                   
-                  {/* BAŞLIK & STATÜ */}
                   <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
                     <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
                       {match.weekLabel}
@@ -527,7 +532,6 @@ export default function AdminPage() {
                     </span>
                   </div>
 
-                  {/* KART GÖVDESİ (LOGOLAR & İNPUTLAR) */}
                   <div className="flex items-center justify-between px-4 pt-3 pb-4">
                     
                     <div className="flex flex-col items-center justify-center flex-1 gap-2">
@@ -539,11 +543,34 @@ export default function AdminPage() {
 
                     <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
                       <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                        <input type="number" min="0" max="15" value={hScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} disabled={isFinished} 
-                               className="w-12 h-10 text-center bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50" />
+                        
+                        {/* 🔴 EKMEL MÜDAHALESİ: POP-UP (SELECT) VE KUSURSUZ MERKEZ HİZALAMA 🔴 */}
+                        <select 
+                          value={hScore} 
+                          onChange={e => handleScoreChange(match.id, 'home', e.target.value)} 
+                          disabled={isFinished} 
+                          className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner"
+                          style={{ textAlignLast: 'center' }}
+                        >
+                          {scoreOptions.map(opt => (
+                            <option key={`h-${opt}`} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+
                         <span className={`text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                        <input type="number" min="0" max="15" value={aScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} disabled={isFinished} 
-                               className="w-12 h-10 text-center bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50" />
+                        
+                        <select 
+                          value={aScore} 
+                          onChange={e => handleScoreChange(match.id, 'away', e.target.value)} 
+                          disabled={isFinished} 
+                          className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner"
+                          style={{ textAlignLast: 'center' }}
+                        >
+                          {scoreOptions.map(opt => (
+                            <option key={`a-${opt}`} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+
                       </div>
                     </div>
 
@@ -556,7 +583,6 @@ export default function AdminPage() {
 
                   </div>
 
-                  {/* KONTROL BUTONLARI */}
                   {!isFinished && (
                     <div className="grid grid-cols-3 gap-2 px-4 pb-4 z-20 relative">
                       <button onClick={() => updateMatchScoreOnly(match.id)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-2.5 rounded-lg border border-slate-600 transition-colors shadow-md">
@@ -571,16 +597,17 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  {/* ANLIK İSTİHBARAT RADARI (BİLENLER) */}
                   <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative mt-auto`}>
                     <div className="flex justify-between items-center w-full mb-2">
-                      <span className="text-[10px] font-bold text-slate-300">ANLIK RADAR (Girdiğin Skora Göre)</span>
+                      <span className="text-[10px] font-bold text-slate-300">ANLIK RADAR</span>
                       <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
                         Kişi Başı: {displayPoints} Puan
                       </span>
                     </div>
                     
-                    {winnersCount === 0 ? (
+                    {(hScore === '-' || aScore === '-') ? (
+                      <span className="text-[10px] font-medium text-slate-500 italic block text-center py-2">Skor bekleniyor...</span>
+                    ) : winnersCount === 0 ? (
                       <span className="text-[10px] font-medium text-slate-500 italic block text-center py-2">Şu an girdiğin skoru bilen yok.</span>
                     ) : (
                       <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto pr-1 custom-scrollbar">
