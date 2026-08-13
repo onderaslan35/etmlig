@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// VERİLER VE TEMALAR (Canlı Sistem İçin)
+// VERİLER VE TEMALAR
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -95,34 +95,102 @@ const localTeamLogos: Record<string, string> = {
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png"
 };
-
 const TEAMS = Object.keys(localTeamLogos).sort();
 
+// 🔴 EKMEL: Kullanıcının Kesin Kategori Listesi (İstediğin zaman buraya virgülle yenisini ekleyebilirsin)
 const CATEGORIES = [
-  "UEFA ŞAMPİYONLAR LİGİ",
-  "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME",
-  "UEFA AVRUPA LİGİ",
-  "UEFA AVRUPA LİGİ ÖN ELEME",
-  "UEFA KONFERANS LİGİ",
-  "UEFA KONFERANS LİGİ ÖN ELEME",
-  "UEFA SÜPER KUPA",
-  "TÜRKİYE SÜPER LİG",
+  "BUNDESLIGA",
+  "COPA DEL REY",
+  "COPPA ITALIA",
+  "COUPE DE FRANCE",
+  "DFB POKAL",
+  "EREDIVISIE",
+  "FA CUP",
+  "FIFA DÜNYA KUPASI",
+  "LA LIGA",
+  "LIGUE 1",
+  "PORTEKİZ LİGİ",
+  "PREMIER LEAGUE",
+  "SCOTTISH PREMIER LEAGUE",
+  "SERIE A",
   "TÜRKİYE 1.LİG",
+  "TÜRKİYE KADINLAR SÜPER LİG",
+  "TÜRKİYE KUPASI",
   "TÜRKİYE SÜPER KUPA",
-  "İNGİLTERE PREMIER LİG",
-  "İNGİLTERE SÜPER KUPA",
-  "İSPANYA LA LIGA",
-  "İTALYA SERIE A",
-  "ALMANYA BUNDESLIGA",
-  "FRANSA LIGUE 1"
+  "TÜRKİYE SÜPER LİG",
+  "UEFA AVRUPA LİGİ GURUP AŞAMASI",
+  "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR İLK MAÇ",
+  "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ",
+  "UEFA A.L. ÖN ELEME 3.TUR İLK MAÇ",
+  "UEFA A.L. ÖN ELEME 3.TUR RÖVANŞ",
+  "UEFA A.L. PLAY OFF İLK MAÇ",
+  "UEFA A.L. PLAY OFF RÖVANŞ",
+  "UEFA AVRUPA ULUSLAR LİGİ",
+  "UEFA KADINLAR ŞAMPİYONLAR LİGİ",
+  "UEFA KONFERANS LİGİ GURUP AŞAMASI",
+  "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR İLK MAÇ",
+  "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ",
+  "UEFA K.L. ÖN ELEME 3.TUR İLK MAÇ",
+  "UEFA K.L. ÖN ELEME 3.TUR RÖVANŞ",
+  "UEFA K.L. PLAY OFF İLK MAÇ",
+  "UEFA K.L. PLAY OFF RÖVANŞ",
+  "UEFA ŞAMPİYONLAR LİGİ GURUP AŞAMASI",
+  "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ",
+  "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ",
+  "UEFA Ş.L. ÖN ELEME 3.TUR İLK MAÇ",
+  "UEFA Ş.L. ÖN ELEME 3.TUR RÖVANŞ",
+  "UEFA Ş.L. PLAY OFF İLK MAÇ",
+  "UEFA Ş.L. PLAY OFF RÖVANŞ"
 ];
 
+// 🔴 EKMEL: Kategori TFF'ye ait mi kontrolü (Artık Liste Çok Net!)
+const isTffMatchCheck = (category: string) => {
+  const tffKeywords = [
+    "TÜRKİYE 1.LİG",
+    "TÜRKİYE KADINLAR SÜPER LİG",
+    "TÜRKİYE KUPASI",
+    "TÜRKİYE SÜPER KUPA",
+    "TÜRKİYE SÜPER LİG"
+  ];
+  return tffKeywords.includes(category.trim().toUpperCase());
+};
+
+// 🔴 EKMEL: OTONOM ZAMAN HESAPLAYICI (Kural: 5. Hafta = 18 Ağustos)
+const getDatesForWeek = (weekNum: number): string[] => {
+  const dates = [];
+  // 5. hafta, 18.08.2026'dan başlıyor. Aradaki hafta farkını hesapla.
+  const weekDiff = weekNum - 5; 
+  const startDate = new Date(2026, 7, 18); // Aylar 0 indexlidir. 7 = Ağustos.
+  startDate.setDate(startDate.getDate() + (weekDiff * 7));
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    dates.push(`${day}.${month}.${year}`);
+  }
+  return dates;
+};
+
+// SAAT LİSTESİ: 12:00'dan 23:45'e kadar (15'er dk arayla)
+const TIME_OPTIONS: string[] = [];
+for (let h = 12; h <= 23; h++) {
+  for (let m = 0; m < 60; m += 15) {
+    TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  }
+}
+
+// ----------------------------------------------------
+// Eski Veriler (4. Hafta Testi için hala gerekli)
+// ----------------------------------------------------
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTFA ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -138,12 +206,11 @@ const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"], "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"], "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
-// Şimdilik Canlı Panel 4. Haftayı kullanmaya devam ediyor.
 const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
-  { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
   { id: 5, weekLabel: "4. HAFTA 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
   { id: 6, weekLabel: "4. HAFTA 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
   { id: 7, weekLabel: "4. HAFTA 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
@@ -166,11 +233,6 @@ const week4Matches = [
   { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
-const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category.toUpperCase();
-  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
-};
-
 const getEliteTheme = (category: string) => {
   const upCat = category.toUpperCase();
   if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
@@ -188,7 +250,7 @@ const getEliteTheme = (category: string) => {
       tagBorder: "border-cyan-400/80",
       bottomBar: "bg-[#050b14]/90 border-blue-900/30"
     };
-  } else if (upCat.includes("AVRUPA LİGİ")) {
+  } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
     return {
       bgImg: "url('/el-bg.png')", 
       containerBorder: "border-orange-500/50",
@@ -203,7 +265,7 @@ const getEliteTheme = (category: string) => {
       tagBorder: "border-orange-400/80",
       bottomBar: "bg-[#140805]/90 border-orange-900/30"
     };
-  } else if (upCat.includes("KONFERANS LİGİ")) {
+  } else if (upCat.includes("KONFERANS") || upCat.includes("K.L.")) {
     return {
       bgImg: "url('/uecl-bg.png')",
       containerBorder: "border-emerald-500/50",
@@ -250,15 +312,6 @@ const getEliteTheme = (category: string) => {
   };
 };
 
-const checkHasStarted = (dateStr: string, timeStr: string) => {
-  const [day, month, year] = dateStr.split('.');
-  const [hour, minute] = timeStr.split(':');
-  const now = new Date();
-  const matchDate = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
-  return now >= matchDate;
-};
-
-// --- YENİ BÜLTEN TİPLERİ ---
 type BulletinMatch = {
   category: string;
   date: string;
@@ -273,28 +326,38 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // SEKMELER (Canlı / Bülten)
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
 
-  // --- CANLI RADAR STATE'LERİ ---
+  // CANLI
   const [dbMatches, setDbMatches] = useState<Record<number, any>>({});
   const [localScores, setLocalScores] = useState<Record<number, { home: string, away: string }>>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [activeMessage, setActiveMessage] = useState('');
-  const [botCounter, setBotCounter] = useState(0);
 
-  // --- BÜLTEN YÖNETİCİSİ STATE'LERİ ---
+  // BÜLTEN
   const [selectedWeek, setSelectedWeek] = useState(5);
-  // 24 adet boş maç kutusu
+  // Haftaya göre otomatik tarihler
+  const currentWeekDates = getDatesForWeek(selectedWeek);
+
   const [bulletinMatches, setBulletinMatches] = useState<BulletinMatch[]>(
     Array(24).fill(null).map(() => ({
-      category: 'TÜRKİYE SÜPER LİG', // Varsayılan Kategori
-      date: '21.08.2026',           // Varsayılan Tarih
-      time: '21:30',
+      category: CATEGORIES[0], 
+      date: currentWeekDates[0], // Haftanın ilk günü default
+      time: '19:00',
       home_team: '',
       away_team: ''
     }))
   );
+
+  // Hafta değiştiğinde, 24 maçın tarihlerini yeni haftanın ilk gününe sıfırla (Eski tarih kalmasın diye)
+  useEffect(() => {
+    const newDates = getDatesForWeek(selectedWeek);
+    setBulletinMatches(prev => prev.map(m => {
+      if (!newDates.includes(m.date)) {
+        return { ...m, date: newDates[0] };
+      }
+      return m;
+    }));
+  }, [selectedWeek]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,13 +371,12 @@ export default function AdminPage() {
 
   const fetchMatches = async () => {
     try {
-      const { data, error } = await supabase.from('live_matches').select('*').order('id', { ascending: true });
+      const { data } = await supabase.from('live_matches').select('*').order('id', { ascending: true });
       if (data) {
         const unique: Record<number, any> = {};
         data.forEach(match => { unique[match.id] = match; });
-        
-        let autoStartedAny = false;
         const scores: Record<number, { home: string, away: string }> = {};
+        let autoStartedAny = false;
 
         for (const m of week4Matches) {
           const hasStarted = checkHasStarted(m.date, m.time);
@@ -332,19 +394,16 @@ export default function AdminPage() {
             };
           }
         }
-        
         setDbMatches(unique);
         setLocalScores(scores);
 
-        if (autoStartedAny) {
-          setActiveMessage("⏰ Sistem saati gelen maçları otonom olarak 0-0 başlattı!");
-          setTimeout(() => setActiveMessage(''), 4000);
+        if(autoStartedAny) {
+           setActiveMessage("⏰ Sistem saati gelen maçları otonom olarak 0-0 başlattı!");
+           setTimeout(() => setActiveMessage(''), 4000);
         }
       }
     } catch (e) {
       console.log('Veri çekme hatası');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -359,10 +418,8 @@ export default function AdminPage() {
 
       if (data.success && data.scores) {
         let updatedAny = false;
-        
         for (const [matchKey, scrapedScore] of Object.entries(data.scores)) {
           const [scrapedHome, scrapedAway] = (scrapedScore as string).split('-');
-          
           for (const m of week4Matches) {
             const dbMatch = dbMatches[m.id];
             if (dbMatch && (dbMatch.status === 'LIVE' || dbMatch.status === 'HT')) {
@@ -394,59 +451,40 @@ export default function AdminPage() {
     if (isAuthenticated && activeTab === 'live') {
       const interval = setInterval(() => {
         fetchMatches(); 
-        setBotCounter(prev => {
-          const next = prev + 1;
-          if (next >= 6) { sendAgentToField(); return 0; }
-          return next;
-        });
       }, 10000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, dbMatches, activeTab]);
 
   const handleScoreChange = (id: number, type: 'home' | 'away', value: string) => {
-    setLocalScores(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [type]: value }
-    }));
+    setLocalScores(prev => ({ ...prev, [id]: { ...prev[id], [type]: value } }));
   };
 
   const updateMatchScoreOnly = async (id: number) => {
     setActiveMessage(`Maç ${id} skoru güncelleniyor...`);
     const hScore = localScores[id]?.home || '-';
     const aScore = localScores[id]?.away || '-';
-
     try {
-      const { error } = await supabase.from('live_matches').upsert({ 
-        id: id, home_score: hScore, away_score: aScore, status: 'LIVE'
-      });
-      if (error) throw error;
+      await supabase.from('live_matches').upsert({ id: id, home_score: hScore, away_score: aScore, status: 'LIVE' });
       setActiveMessage(`✅ Maç ${id} CANLI olarak güncellendi!`);
       setTimeout(() => setActiveMessage(''), 2000);
       fetchMatches();
-    } catch (e) {
-      setActiveMessage(`❌ Güncelleme hatası`);
-    }
+    } catch (e) { setActiveMessage(`❌ Güncelleme hatası`); }
   };
 
   const finalizeMatch = async (id: number, homeTeam: string, awayTeam: string) => {
     const hScore = localScores[id]?.home || '-';
     const aScore = localScores[id]?.away || '-';
-    if (hScore === '-' || aScore === '-') { alert("HATA: Maç skoru boşken ('-') maçı onaylayıp bitiremezsiniz!"); return; }
+    if (hScore === '-' || aScore === '-') return alert("Maç skoru boş!");
 
     if (window.confirm(`DİKKAT: ${homeTeam} ${hScore} - ${aScore} ${awayTeam} maçını onaylıyor musunuz?`)) {
       setActiveMessage(`Maç ${id} onaylanıyor...`);
       try {
-        const { error } = await supabase.from('live_matches').upsert({ 
-          id: id, home_score: hScore, away_score: aScore, status: 'FINISHED' 
-        });
-        if (error) throw error;
+        await supabase.from('live_matches').upsert({ id: id, home_score: hScore, away_score: aScore, status: 'FINISHED' });
         setActiveMessage(`✅ Maç ${id} tamamlandı!`);
         setTimeout(() => setActiveMessage(''), 3000);
         fetchMatches();
-      } catch (e) {
-        setActiveMessage(`❌ Onaylama hatası`);
-      }
+      } catch (e) { setActiveMessage(`❌ Onaylama hatası`); }
     }
   };
 
@@ -463,7 +501,7 @@ export default function AdminPage() {
     }
   };
 
-  // --- YENİ: BÜLTEN YÖNETİM FONKSİYONLARI ---
+  // --- BÜLTEN ---
   const handleBulletinChange = (index: number, field: keyof BulletinMatch, value: string) => {
     const newMatches = [...bulletinMatches];
     newMatches[index] = { ...newMatches[index], [field]: value };
@@ -471,7 +509,6 @@ export default function AdminPage() {
   };
 
   const saveBulletinToDatabase = async () => {
-    // Boş takım var mı kontrol et
     const emptyMatchIndex = bulletinMatches.findIndex(m => !m.home_team || !m.away_team);
     if (emptyMatchIndex !== -1) {
       alert(`HATA: ${emptyMatchIndex + 1}. Maçın takımları eksik! Bütün maçların takımlarını seçmelisiniz.`);
@@ -481,7 +518,7 @@ export default function AdminPage() {
     const isConfirmed = window.confirm(`🚨 DİKKAT: ${selectedWeek}. Hafta Bülteni (24 Maç) Veritabanına Yüklenecek!\n\nEmin misiniz?`);
     if (!isConfirmed) return;
 
-    setActiveMessage("Bülten veritabanına mühürleniyor... Lütfen bekleyin.");
+    setActiveMessage("Bülten veritabanına mühürleniyor...");
 
     try {
       const payload = bulletinMatches.map((m, index) => ({
@@ -492,17 +529,16 @@ export default function AdminPage() {
         match_time: m.time,
         home_team: m.home_team,
         away_team: m.away_team,
-        league_type: isTffMatchCheck(m.category) ? 'TFF' : 'DFO' // 🔴 EKMEL OTOMATİK TFF/DFO ALGISI
+        league_type: isTffMatchCheck(m.category) ? 'TFF' : 'DFO'
       }));
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
 
-      setActiveMessage(`✅ BAŞARILI! ${selectedWeek}. Hafta Bülteni Sitede Yayına Hazır!`);
+      setActiveMessage(`✅ BAŞARILI! ${selectedWeek}. Hafta Bülteni Kaydedildi!`);
       setTimeout(() => setActiveMessage(''), 5000);
     } catch (error) {
       setActiveMessage(`❌ HATA: Bülten yüklenirken bir sorun oluştu!`);
-      console.error(error);
     }
   };
 
@@ -529,7 +565,6 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24">
       <div className="max-w-[1400px] mx-auto">
         
-        {/* ÜST BİLGİ PANELİ */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm relative overflow-hidden">
           <div className="absolute inset-0 w-full h-full bg-blue-500/5 opacity-20 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px)' }}></div>
           
@@ -542,25 +577,15 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* ANA SEKMELER (TABS) */}
         <div className="w-full flex gap-2 mb-8 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
-          <button 
-            onClick={() => setActiveTab('live')}
-            className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
-          >
+          <button onClick={() => setActiveTab('live')} className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
             📡 CANLI SKOR & RADAR (4. HAFTA)
           </button>
-          <button 
-            onClick={() => setActiveTab('bulletin')}
-            className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
-          >
+          <button onClick={() => setActiveTab('bulletin')} className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
             📅 YENİ BÜLTEN & ARŞİV MERKEZİ
           </button>
         </div>
 
-        {/* ========================================= */}
-        {/* TAB 1: CANLI SKOR YÖNETİMİ (Eski Kısım) */}
-        {/* ========================================= */}
         {activeTab === 'live' && (
           <>
             <div className="flex justify-end gap-4 mb-6">
@@ -683,11 +708,10 @@ export default function AdminPage() {
         {activeTab === 'bulletin' && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
             
-            {/* Üst Kısım: Hafta Seçimi */}
             <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-6 mb-6">
               <div>
                 <h2 className="text-xl font-black text-indigo-400">📅 MAÇ BÜLTENİ EDİTÖRÜ</h2>
-                <p className="text-slate-500 text-sm mt-1">24 maçlık yeni bülteni tasarla ve veritabanına kaydet.</p>
+                <p className="text-slate-500 text-sm mt-1">Siber zamanlayıcı ile hata riski %0. TFF/DFO otomatik mühürlü.</p>
               </div>
               <div className="mt-4 md:mt-0 flex items-center gap-3">
                 <span className="text-slate-300 font-bold uppercase tracking-widest text-sm">Hangi Hafta?</span>
@@ -696,12 +720,11 @@ export default function AdminPage() {
                   onChange={e => setSelectedWeek(Number(e.target.value))}
                   className="bg-indigo-950 border border-indigo-500/50 text-indigo-300 font-black text-xl px-4 py-2 rounded-xl outline-none"
                 >
-                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(w => <option key={w} value={w}>{w}. HAFTA</option>)}
+                  {[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(w => <option key={w} value={w}>{w}. HAFTA</option>)}
                 </select>
               </div>
             </div>
 
-            {/* 24 Maçlık Izgara */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {bulletinMatches.map((match, idx) => {
                 const matchNum = idx + 1;
@@ -709,7 +732,6 @@ export default function AdminPage() {
 
                 return (
                   <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden group">
-                    {/* Arka plan sönük logo (Opsiyonel Estetik) */}
                     <div className="absolute top-0 left-0 w-1 h-full bg-slate-800 group-hover:bg-indigo-500 transition-colors"></div>
 
                     <div className="flex justify-between items-center pl-2 border-b border-slate-800 pb-2">
@@ -719,27 +741,28 @@ export default function AdminPage() {
                       </span>
                     </div>
 
-                    {/* Kategori, Tarih, Saat */}
                     <div className="grid grid-cols-12 gap-3 pl-2">
                       <div className="col-span-12 md:col-span-6">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Kategori / Turnuva</label>
-                        <select value={match.category} onChange={e => handleBulletinChange(idx, 'category', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500">
+                        <select value={match.category} onChange={e => handleBulletinChange(idx, 'category', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-200 outline-none focus:border-indigo-500">
                           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                       <div className="col-span-6 md:col-span-3">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Tarih</label>
-                        <input type="text" value={match.date} onChange={e => handleBulletinChange(idx, 'date', e.target.value)} placeholder="DD.MM.YYYY" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500 text-center" />
+                        <select value={match.date} onChange={e => handleBulletinChange(idx, 'date', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-xs font-bold text-emerald-400 outline-none focus:border-indigo-500 text-center cursor-pointer">
+                          {currentWeekDates.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
                       </div>
                       <div className="col-span-6 md:col-span-3">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Saat</label>
-                        <input type="text" value={match.time} onChange={e => handleBulletinChange(idx, 'time', e.target.value)} placeholder="HH:MM" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500 text-center" />
+                        <select value={match.time} onChange={e => handleBulletinChange(idx, 'time', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-xs font-bold text-amber-400 outline-none focus:border-indigo-500 text-center cursor-pointer">
+                          {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
                       </div>
                     </div>
 
-                    {/* Ev Sahibi & Deplasman */}
                     <div className="grid grid-cols-2 gap-4 pl-2 items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800/50">
-                      
                       <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">🏠 EV SAHİBİ</label>
                         <select value={match.home_team} onChange={e => handleBulletinChange(idx, 'home_team', e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2.5 text-xs font-bold text-white outline-none focus:border-indigo-500">
@@ -747,7 +770,6 @@ export default function AdminPage() {
                           {TEAMS.map(t => <option key={`h-${t}`} value={t}>{t}</option>)}
                         </select>
                       </div>
-                      
                       <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">✈️ DEPLASMAN</label>
                         <select value={match.away_team} onChange={e => handleBulletinChange(idx, 'away_team', e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2.5 text-xs font-bold text-white outline-none focus:border-indigo-500 text-right" style={{ direction: 'rtl' }}>
@@ -755,14 +777,12 @@ export default function AdminPage() {
                           {TEAMS.map(t => <option key={`a-${t}`} value={t}>{t}</option>)}
                         </select>
                       </div>
-
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* DEV KAYDET BUTONU */}
             <div className="mt-10 pt-6 border-t border-slate-800 flex justify-center sticky bottom-4 z-50">
               <button 
                 onClick={saveBulletinToDatabase}
