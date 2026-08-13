@@ -193,10 +193,8 @@ const week4Matches = [
 export default function TahminlerPage() {
   const [selectedWeek, setSelectedWeek] = useState(4);
   const [searchTerm, setSearchTerm] = useState('');
-  // 🔴 3 Farklı Sıralama Modu: DEFAULT (Orijinal Liste), ASC (A-Z), DESC (Z-A)
   const [sortMode, setSortMode] = useState<'DEFAULT' | 'ASC' | 'DESC'>('DEFAULT');
 
-  // Excel'den gelen orijinal sıralama kimliği
   const exactOrder = [
     "262731", "262758", "262763", "262744", "262813", "351925", "262732", "262754", 
     "262733", "262774", "262771", "262730", "262707", "262816", "262719", "262725", 
@@ -206,7 +204,6 @@ export default function TahminlerPage() {
     "262755", "262704", "262747", "262723", "262709", "262739", "262782"
   ];
 
-  // 🔴 EKMEL SIRALAMA ALGORİTMASI 🔴
   const activePlayers = Object.entries(allPlayersList)
     .filter(([id, name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
@@ -216,16 +213,13 @@ export default function TahminlerPage() {
       const hasA = predsA.some(s => s !== "-" && s !== "");
       const hasB = predsB.some(s => s !== "-" && s !== "");
 
-      // KURAL 1: Tahmin yapmayanlar kayıtsız şartsız EN ALTA düşer!
       if (hasA && !hasB) return -1;
       if (!hasA && hasB) return 1;
 
-      // KURAL 2: İkisi de tahmin yapmamışsa kendi içlerinde A-Z sıralanır.
       if (!hasA && !hasB) {
         return a[1].localeCompare(b[1], 'tr');
       }
 
-      // KURAL 3: Modlara Göre Sıralama (Tahmin yapanlar için)
       if (sortMode === 'DEFAULT') {
         const idxA = exactOrder.indexOf(a[0]);
         const idxB = exactOrder.indexOf(b[0]);
@@ -246,6 +240,26 @@ export default function TahminlerPage() {
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-100 p-2 sm:p-6 font-sans">
+      
+      {/* 🔴 EKMEL MÜDAHALESİ: ŞIK VE İNCE SCROLLBAR TASARIMI 🔴 */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 10px;
+          width: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(10, 17, 32, 0.8);
+          border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(245, 158, 11, 0.4);
+          border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(245, 158, 11, 0.8);
+        }
+      `}} />
+
       <div className="max-w-[1400px] mx-auto">
         
         {/* Üst Menü */}
@@ -277,19 +291,14 @@ export default function TahminlerPage() {
           </div>
         </div>
 
-        {/* 🔴 DONDURULMUŞ MATRİS TABLOSU (FREEZE PANES) 🔴 */}
         <div 
           className="w-full bg-[#0a1120] border border-slate-800 rounded-xl shadow-2xl overflow-auto max-h-[75vh] custom-scrollbar" 
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          
           <table className="w-full text-left text-xs whitespace-nowrap border-separate" style={{ borderSpacing: 0 }}>
             
             <thead className="sticky top-0 z-40 shadow-xl bg-[#0a1120]">
-              
-              {/* Maç Numaraları */}
               <tr>
-                {/* Sol Üst Köşe (En üstte kalması için z-50) */}
                 <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-800 p-2 min-w-[160px] shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
                   <div className="text-[10px] font-black text-amber-500 tracking-widest pl-2">
                     {selectedWeek}. HAFTA
@@ -303,11 +312,13 @@ export default function TahminlerPage() {
                     </span>
                   </th>
                 ))}
+
+                {/* 🔴 EKMEL MÜDAHALESİ: HAYALET SÜTUN (KAYDIRMA BOŞLUĞU İÇİN) 🔴 */}
+                <th rowSpan={2} className="min-w-[60vw] bg-transparent border-none pointer-events-none"></th>
+
               </tr>
 
-              {/* Takım Logoları ve Sıralama Butonu */}
               <tr>
-                {/* İkinci Sol Üst Köşe ve BUTON */}
                 <th className="sticky left-0 z-50 bg-[#0c1526] border-b border-r border-slate-700 p-0 shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
                   <div className="flex items-center justify-between px-3 py-2 w-full h-full">
                     <span className="font-bold text-slate-300">OYUNCU İSMİ</span>
@@ -335,7 +346,6 @@ export default function TahminlerPage() {
               </tr>
             </thead>
 
-            {/* TABLO GÖVDESİ */}
             <tbody>
               {activePlayers.map(([id, name], idx) => {
                 const predictions = week4PredictionsData[id] || Array(24).fill("-");
@@ -347,7 +357,6 @@ export default function TahminlerPage() {
                 return (
                   <tr key={id} className={`transition-colors group ${!hasPredicted ? 'opacity-50 hover:opacity-100' : 'hover:bg-slate-800/40'}`}>
                     
-                    {/* SOLA DONDURULMUŞ İSİM (Z-30) - Arka planı katı olmalı ki alttan yazılar sızmasın */}
                     <td className="sticky left-0 z-30 bg-[#0a1120] group-hover:bg-[#0c1526] border-b border-r border-slate-700/80 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.4)] transition-colors">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-xs text-slate-200">{cleanName}</span>
@@ -360,7 +369,6 @@ export default function TahminlerPage() {
                       </div>
                     </td>
 
-                    {/* TAHMİNLER (Kayan Bölüm) */}
                     {week4Matches.map((match, pIdx) => {
                       const score = predictions[pIdx] || "-";
                       const isFilled = score !== "-" && score !== "";
@@ -379,7 +387,10 @@ export default function TahminlerPage() {
                         </td>
                       );
                     })}
-                    
+
+                    {/* 🔴 HAYALET SÜTUN HÜCRESİ 🔴 */}
+                    <td className="min-w-[60vw] bg-transparent border-none pointer-events-none"></td>
+
                   </tr>
                 );
               })}
