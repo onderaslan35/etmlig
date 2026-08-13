@@ -21,9 +21,85 @@ const allPlayersMasterList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-const masterWeek1Data: Record<string, { name: string; puan: number }> = { "262736": { name: "MEHMET ALİ KARA 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 34 }, "262755": { name: "DOĞAÇ ALKAN 🎯 (+3 PUAN HAFTANIN SKOR BONUSU)", puan: 24 }, "262719": { name: "UĞUR VARDAR", puan: 23 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 17 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 14 }, "262786": { name: "SEDAT DİŞLİ", puan: 12 }, "262717": { name: "MURAT ALİ", puan: 11 }, "262731": { name: "FATİH AYAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 10 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 10 }, "262750": { name: "MAHMUT CBR", puan: 9 }, "262728": { name: "ÖNDER ASLAN", puan: 8 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 8 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 8 }, "262716": { name: "BİROL DEMİREL", puan: 7 }, "262733": { name: "MUHSİN ASİLKAN", puan: 7 }, "262790": { name: "CUMALİ SÖKER", puan: 7 }, "262816": { name: "SEDAT SEDAT", puan: 7 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 4 }, "262813": { name: "KEMAL ERSOY", puan: 4 }, "262718": { name: "BEKİR KARADAĞ", puan: 3 }, "262702": { name: "MURAT KARA", puan: 1 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 1 }, "262707": { name: "HAKAN AYAN", puan: 1 }, "262714": { name: "İSMAİL EKER 🏆", puan: 1 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 1 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 1 }, "262744": { name: "İLYAS UYGUN", puan: 1 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 }, "262782": { name: "YUSUF ERBAY", puan: 1 }, "262787": { name: "MUSTAFA TUCİ", puan: 1 } };
-const masterWeek2Data: Record<string, { name: string; puan: number }> = { "262756": { name: "EYÜP KARACAOĞLU 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 19 }, "262709": { name: "SALİH KARACAOĞLU", puan: 13 }, "262755": { name: "DOĞAÇ ALKAN", puan: 13 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 12 }, "262790": { name: "CUMALİ SÖKER", puan: 12 }, "262728": { name: "ÖNDER ASLAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 9 }, "262711": { name: "RIDVAN DOGER", puan: 8 }, "262717": { name: "MURAT ALİ", puan: 7 }, "262737": { name: "ŞAHİN GEZGİNCİ", puan: 7 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 6 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 6 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 6 }, "262786": { name: "SEDAT DİŞLİ", puan: 6 }, "262816": { name: "SEDAT SEDAT", puan: 6 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 4 }, "262702": { name: "MURAT KARA", puan: 2 }, "262703": { name: "CEMALETTİN BELLİ", puan: 2 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 2 }, "262730": { name: "ÖNDER IŞIK", puan: 2 }, "262736": { name: "MEHMET ALİ KARA", puan: 2 }, "262740": { name: "ABDULLAH DİK", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262763": { name: "MUSTAFA ELMAS", puan: 2 }, "262708": { name: "BAYRAM YILMAZ", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262725": { name: "İLYAS KAZDAL", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 }, "262758": { name: "MELİH PINAR", puan: 1 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 } };
-const masterWeek3Data: Record<string, { name: string; puan: number }> = { "262816": { name: "SEDAT SEDAT 🏔️ (+3 PUAN HAFTANIN PUAN LİDERİ) 🎯 (+3 PUAN HAFTANIN SKOR LİDERİ)", puan: 31 }, "262733": { name: "MUHSİN ASİLKAN", puan: 19 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 11 }, "262707": { name: "HAKAN AYAN", puan: 11 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 }, "262763": { name: "MUSTAFA ELMAS", puan: 11 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 11 }, "262734": { name: "LEVENT YILDIRIM", puan: 9 }, "262755": { name: "DOĞAÇ ALKAN", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 8 }, "262813": { name: "KEMAL ERSOY", puan: 8 }, "262702": { name: "MURAT KARA", puan: 7 }, "262711": { name: "RIDVAN DOGER", puan: 7 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 7 }, "262786": { name: "SEDAT DİŞLİ", puan: 7 }, "351925": { name: "ALİOS GÖZTEPE", puan: 7 }, "262725": { name: "İLYAS KAZDAL", puan: 6 }, "262726": { name: "HUDAVER TOPARDIC", puan: 6 }, "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 }, "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 }, "262782": { name: "YUSUF ERBAY", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 }, "262731": { name: "FATİH AYAN", puan: 2 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 } };
+const masterWeek1Data: Record<string, { name: string; puan: number }> = {
+  "262736": { name: "MEHMET ALİ KARA", puan: 34 }, "262755": { name: "DOĞAÇ ALKAN", puan: 24 },
+  "262719": { name: "UĞUR VARDAR", puan: 23 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 17 },
+  "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 14 }, "262786": { name: "SEDAT DİŞLİ", puan: 12 },
+  "262731": { name: "FATİH AYAN", puan: 11 }, "262717": { name: "MURAT ALİ", puan: 11 },
+  "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 10 }, "262726": { name: "HUDAVER TOPARDIC", puan: 10 },
+  "262750": { name: "MAHMUT CBR", puan: 9 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 8 },
+  "262771": { name: "ULAŞ ADIGÜZEL", puan: 8 }, "262728": { name: "ÖNDER ASLAN", puan: 8 },
+  "262816": { name: "SEDAT SEDAT", puan: 7 }, "262716": { name: "BİROL DEMİREL", puan: 7 },
+  "262790": { name: "CUMALİ SÖKER", puan: 7 }, "262733": { name: "MUHSİN ASİLKAN", puan: 7 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 4 },
+  "262813": { name: "KEMAL ERSOY", puan: 4 }, "262740": { name: "ABDULLAH DİK", puan: 4 },
+  "262718": { name: "BEKİR KARADAĞ", puan: 3 }, "262707": { name: "HAKAN AYAN", puan: 1 },
+  "262782": { name: "YUSUF ERBAY", puan: 1 }, "262702": { name: "MURAT KARA", puan: 1 },
+  "262714": { name: "İSMAİL EKER 🏆", puan: 1 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 },
+  "262706": { name: "GAZİ AYAN 🏆🏆", puan: 1 }, "262787": { name: "MUSTAFA TUCİ", puan: 1 },
+  "262744": { name: "İLYAS UYGUN", puan: 1 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 },
+  "262715": { name: "ŞEMSETTIN DÜGER", puan: 1 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 1 },
+  "351925": { name: "ALİOS GÖZTEPE", puan: 0 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 0 },
+  "262705": { name: "AHMET BİRCAN 🏆", puan: 0 }, "262708": { name: "BAYRAM YILMAZ", puan: 0 },
+  "262711": { name: "RIDVAN DOGER", puan: 0 }, "262712": { name: "MURAT AYDEMİR", puan: 0 },
+  "262734": { name: "LEVENT YILDIRIM", puan: 0 }
+}; 
+
+const masterWeek2Data: Record<string, { name: string; puan: number }> = {
+  "262756": { name: "EYÜP KARACAOĞLU", puan: 19 }, "262755": { name: "DOĞAÇ ALKAN", puan: 13 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 13 }, "262790": { name: "CUMALİ SÖKER", puan: 12 },
+  "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 12 }, "262728": { name: "ÖNDER ASLAN", puan: 11 },
+  "262726": { name: "HUDAVER TOPARDIC", puan: 9 }, "262711": { name: "RIDVAN DOGER", puan: 8 },
+  "262717": { name: "MURAT ALİ", puan: 7 }, "262737": { name: "ŞAHİN GEZGİNCİ", puan: 7 },
+  "262705": { name: "AHMET BİRCAN 🏆", puan: 6 }, "262816": { name: "SEDAT SEDAT", puan: 6 },
+  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 6 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 6 },
+  "262786": { name: "SEDAT DİŞLİ", puan: 6 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 },
+  "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 4 },
+  "262763": { name: "MUSTAFA ELMAS", puan: 2 }, "262736": { name: "MEHMET ALİ KARA", puan: 2 },
+  "262740": { name: "ABDULLAH DİK", puan: 2 }, "262702": { name: "MURAT KARA", puan: 2 },
+  "262703": { name: "CEMALETTİN BELLİ", puan: 2 }, "262730": { name: "ÖNDER IŞIK", puan: 2 },
+  "262715": { name: "ŞEMSETTIN DÜGER", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 },
+  "262725": { name: "İLYAS KAZDAL", puan: 1 }, "262758": { name: "MELİH PINAR", puan: 1 },
+  "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 },
+  "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 },
+  "262708": { name: "BAYRAM YILMAZ", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 },
+  "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262813": { name: "KEMAL ERSOY", puan: 0 },
+  "262712": { name: "MURAT AYDEMİR", puan: 0 }, "262734": { name: "LEVENT YILDIRIM", puan: 0 },
+  "351925": { name: "ALİOS GÖZTEPE", puan: 0 }, "262744": { name: "İLYAS UYGUN", puan: 0 },
+  "262718": { name: "BEKİR KARADAĞ", puan: 0 }, "262704": { name: "YAPAY ZEKA", puan: 0 },
+  "262733": { name: "MUHSİN ASİLKAN", puan: 0 }, "262707": { name: "HAKAN AYAN", puan: 0 },
+  "262750": { name: "MAHMUT CBR", puan: 0 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 0 },
+  "262706": { name: "GAZİ AYAN 🏆🏆", puan: 0 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 0 },
+  "262719": { name: "UĞUR VARDAR", puan: 0 }, "262782": { name: "YUSUF ERBAY", puan: 0 },
+  "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 0 }
+}; 
+
+const masterWeek3Data: Record<string, { name: string; puan: number }> = {
+  "262816": { name: "SEDAT SEDAT", puan: 31 }, "262733": { name: "MUHSİN ASİLKAN", puan: 19 },
+  "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 }, "262707": { name: "HAKAN AYAN", puan: 11 },
+  "262763": { name: "MUSTAFA ELMAS", puan: 11 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 11 },
+  "262706": { name: "GAZİ AYAN 🏆🏆", puan: 11 }, "262734": { name: "LEVENT YILDIRIM", puan: 9 },
+  "262813": { name: "KEMAL ERSOY", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 8 },
+  "262755": { name: "DOĞAÇ ALKAN", puan: 8 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 7 },
+  "351925": { name: "ALİOS GÖZTEPE", puan: 7 }, "262702": { name: "MURAT KARA", puan: 7 },
+  "262786": { name: "SEDAT DİŞLİ", puan: 7 }, "262711": { name: "RIDVAN DOGER", puan: 7 },
+  "262726": { name: "HUDAVER TOPARDIC", puan: 6 }, "262725": { name: "İLYAS KAZDAL", puan: 6 },
+  "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 },
+  "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 },
+  "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262782": { name: "YUSUF ERBAY", puan: 4 },
+  "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 },
+  "262740": { name: "ABDULLAH DİK", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 },
+  "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 },
+  "262731": { name: "FATİH AYAN", puan: 2 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 2 },
+  "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 },
+  "262716": { name: "BİROL DEMİREL", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 },
+  "262790": { name: "CUMALİ SÖKER", puan: 0 }, "262719": { name: "UĞUR VARDAR", puan: 0 },
+  "262708": { name: "BAYRAM YILMAZ", puan: 0 }, "262744": { name: "İLYAS UYGUN", puan: 0 },
+  "262758": { name: "MELİH PINAR", puan: 0 }, "262718": { name: "BEKİR KARADAĞ", puan: 0 },
+  "262750": { name: "MAHMUT CBR", puan: 0 }, "262717": { name: "MURAT ALİ", puan: 0 },
+  "262703": { name: "CEMALETTİN BELLİ", puan: 0 }
+};
 
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
@@ -71,8 +147,8 @@ const week4PredictionsData: Record<string, string[]> = {
   "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
+  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
 export default function MasterPuanDurumuPage() {
@@ -97,7 +173,13 @@ export default function MasterPuanDurumuPage() {
       });
 
       if (dbMatches) {
-        dbMatches.forEach(dbMatch => {
+        // ÇİFT KAYIT SÜZGECİ (DEDUPLICATION)
+        const uniqueMatches: Record<number, any> = {};
+        dbMatches.forEach(row => {
+          uniqueMatches[row.id] = row; 
+        });
+
+        Object.values(uniqueMatches).forEach(dbMatch => {
           if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = dbMatch.id - 1; 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
@@ -109,7 +191,8 @@ export default function MasterPuanDurumuPage() {
             else if(winnerIds.length === 3) points = 5;
             else if(winnerIds.length === 4) points = 4;
             else if(winnerIds.length === 5) points = 3;
-            else if(winnerIds.length >= 6) points = 2;
+            else if(winnerIds.length === 6) points = 2;
+            else points = 1;
 
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') {
@@ -288,19 +371,16 @@ export default function MasterPuanDurumuPage() {
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
                       <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
                         
-                        {/* 🔴 EKMEL MÜDAHALESİ: KUPA (🏆) KORUMA KALKANI 🔴 */}
                         {(() => {
                           const trophyCount = (row.name.match(/🏆/g) || []).length;
                           const cleanName = row.name.replace(/🏆/g, '').trim();
                           
                           return (
                             <>
-                              {/* Sadece yazılar daralır ve kesilir */}
                               <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>
                                 {cleanName}
                               </span>
                               
-                              {/* Kupalar asla daralmaz, asla kaybolmaz */}
                               {trophyCount > 0 && (
                                 <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">
                                   {'🏆'.repeat(trophyCount)}
@@ -310,7 +390,6 @@ export default function MasterPuanDurumuPage() {
                           );
                         })()}
                         
-                        {/* Rozetler (CANLI / MAÇ vb.) */}
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
                             +{row.liveExtra} CANLI
