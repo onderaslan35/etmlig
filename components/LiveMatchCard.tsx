@@ -73,9 +73,9 @@ const localTeamLogos: Record<string, string> = {
   "ST GALLEN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_St._Gallen_logo.svg",
   "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
   "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
+  "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
-  "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
@@ -458,42 +458,63 @@ export default function LiveMatchCard() {
           return (
             <div 
               key={match.id} 
-              className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : theme.containerBorder + ' bg-slate-950 shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText}`}
+              className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+                isExpanded 
+                  ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
+                  : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
+              }`}
             >
               
-              {/* 🔴 EKMEL MÜDAHALESİ: AKORDEON KAPALIYKEN ÇIKAN NEON CETVEL 🔴 */}
+              {/* 🔴 ARKA PLAN (KAPALI VE AÇIK DURUMDA SÜREKLİ GÖRÜNÜR) 🔴 */}
+              {theme.bgImg && (
+                <>
+                  <div 
+                    className="absolute inset-0 z-0 opacity-100"
+                    style={{ 
+                      backgroundImage: theme.bgImg,
+                      backgroundSize: 'cover', 
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                  ></div>
+                  {/* Kart kapalıyken üzerine hafif şeffaf film çeker, açılınca filmi biraz açar */}
+                  <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
+                </>
+              )}
+
+              {/* KAPALI DURUM (CETVEL MODU) */}
               {!isExpanded && (
                 <div
                   onClick={() => toggleMatchExpansion(match.id)}
-                  className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between bg-slate-950/90 hover:bg-black/50 transition-colors border-b border-black/50 relative z-20"
+                  className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between border-b border-black/50 relative z-20 group"
                 >
                   <div className="flex-1 flex items-center gap-2 justify-end text-right">
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase tracking-wide truncate">{match.homeTeam}</span>
-                    <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase tracking-wide truncate group-hover:text-white transition-colors">{match.homeTeam}</span>
+                    <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
                   </div>
                   
                   <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
-                    <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50'}`}>
-                      <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-slate-200'}`}>
+                    <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'}`}>
+                      <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-slate-200 group-hover:text-white'}`}>
                         {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
                       </span>
                     </div>
                   </div>
                   
                   <div className="flex-1 flex items-center gap-2 justify-start text-left">
-                    <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md" />
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase tracking-wide truncate">{match.awayTeam}</span>
+                    <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase tracking-wide truncate group-hover:text-white transition-colors">{match.awayTeam}</span>
                   </div>
                   
-                  <div className="ml-2 opacity-50 text-[10px]">
+                  <div className="ml-2 opacity-50 text-[10px] text-white group-hover:opacity-100 transition-opacity">
                     ▼
                   </div>
                 </div>
               )}
 
-              {/* AÇIK KART (İP GİBİ NEON YAZI) */}
+              {/* AÇIK KART (GENİŞ MOD) */}
               {isExpanded && (
-                <div className="relative flex-grow overflow-hidden animate-fadeIn">
+                <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
                   
                   <button 
                     onClick={() => toggleMatchExpansion(match.id)}
@@ -502,21 +523,6 @@ export default function LiveMatchCard() {
                   >
                     ✕
                   </button>
-
-                  {theme.bgImg && (
-                    <>
-                      <div 
-                        className="absolute inset-0 z-0 opacity-100"
-                        style={{ 
-                          backgroundImage: theme.bgImg,
-                          backgroundSize: 'cover', 
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat'
-                        }}
-                      ></div>
-                      <div className="absolute inset-0 bg-slate-900/60 z-0"></div>
-                    </>
-                  )}
 
                   <div className="relative z-10 flex flex-col h-full">
                     
