@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// VERİLER VE TEMALAR
+// VERİLER VE TEMALAR (YENİ TAKIMLAR BURAYA EKLENİR)
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -85,6 +85,10 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
+  
+  // 🔴 YENİ EKLENEN TAKIMLAR BURAYA YAZILIYOR 🔴
+  "FK KAUNO ZALGIRIS": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Kauno_%C5%BDalgiris_logo.png",
+
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -95,6 +99,8 @@ const localTeamLogos: Record<string, string> = {
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png"
 };
+
+// Bu satır o listeyi alır ve açılır menü için otomatik alfabetik sıraya dizer!
 const TEAMS = Object.keys(localTeamLogos).sort();
 
 const CATEGORIES = [
@@ -152,7 +158,7 @@ for (let h = 12; h <= 23; h++) {
 }
 
 // ----------------------------------------------------
-// 🔴 4. HAFTA SABİT VERİLERİ (BUNLAR ASLA SİLİNEMEZ)
+// 🔴 4. HAFTA SABİT VERİLERİ 
 // ----------------------------------------------------
 const week4Matches = [
   { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
@@ -269,7 +275,6 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 HİBRİT RADAR SİSTEMİ: 4. HAFTA SABİT / DİĞERLERİ DİNAMİK 🔴
   const fetchRadarData = async () => {
     if (!isAuthenticated) return;
     try {
@@ -277,9 +282,8 @@ export default function AdminPage() {
       const isWeek4 = radarWeek === 4;
 
       if (isWeek4) {
-        // ESKİ DÜZENİ GERİ GETİR (4. HAFTA İÇİN SADECE)
         matchesDataToProcess = week4Matches.map(m => ({
-          globalId: m.id, // 1'den 24'e kadar
+          globalId: m.id, 
           match_index: m.id,
           weekLabel: m.weekLabel,
           category: m.category,
@@ -289,7 +293,6 @@ export default function AdminPage() {
           away_team: m.awayTeam
         }));
       } else {
-        // YENİ BÜLTEN SİSTEMİ (5, 6, 7. HAFTALAR İÇİN)
         const { data: bData, error: bError } = await supabase
           .from('matches_bulletin')
           .select('*')
@@ -297,7 +300,7 @@ export default function AdminPage() {
           .order('match_index', { ascending: true });
 
         if (bError || !bData || bData.length === 0) {
-          setLiveRadarMatches([]); // O hafta girilmemişse boş
+          setLiveRadarMatches([]); 
           setDbScores({});
           return;
         }
@@ -316,7 +319,6 @@ export default function AdminPage() {
 
       setLiveRadarMatches(matchesDataToProcess);
 
-      // MAÇ SKORLARINI ÇEK
       const { data: sData } = await supabase.from('live_matches').select('*');
       
       const uniqueScores: Record<number, any> = {};
@@ -583,7 +585,6 @@ export default function AdminPage() {
                   const hScore = localScores[globalMatchId]?.home || '-';
                   const aScore = localScores[globalMatchId]?.away || '-';
                   
-                  // TAHMİN BİLENLERİ BUL (Eğer sistemde o haftanın tahmini varsa)
                   let currentWinners: string[] = [];
                   if (hScore !== '-' && aScore !== '-') {
                     const targetScore = `${hScore}-${aScore}`;
