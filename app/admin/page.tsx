@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// VERİLER VE TEMALAR (Değişmedi, Sabit)
+// VERİLER VE TEMALAR
 // ----------------------------------------------------
-
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -110,7 +109,7 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
   "262723": "AYHAN LUŞOĞLU"
 };
 
@@ -144,11 +143,6 @@ const week4Matches = [
   { id: 23, weekLabel: "4. HAFTA 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
   { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
-
-const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category.toUpperCase();
-  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
-};
 
 const getEliteTheme = (category: string) => {
   const upCat = category.toUpperCase();
@@ -197,7 +191,7 @@ const getEliteTheme = (category: string) => {
       tagBorder: "border-emerald-400/80",
       bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
     };
-  } else if (isTffMatchCheck(category)) {
+  } else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("TÜRKİYE SÜPER KUPA")) {
     return {
       bgImg: "url('/tff-bg.png')",
       containerBorder: "border-red-500/50",
@@ -229,7 +223,6 @@ const getEliteTheme = (category: string) => {
   };
 };
 
-// 🔴 EKMEL: SAAT KONTROL YARDIMCISI (Otonom Başlangıç)
 const checkHasStarted = (dateStr: string, timeStr: string) => {
   const [day, month, year] = dateStr.split('.');
   const [hour, minute] = timeStr.split(':');
@@ -248,6 +241,9 @@ export default function AdminPage() {
   const [localScores, setLocalScores] = useState<Record<number, { home: string, away: string }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeMessage, setActiveMessage] = useState('');
+  
+  // Ajanın saniye sayacı
+  const [botCounter, setBotCounter] = useState(0);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,11 +269,8 @@ export default function AdminPage() {
           const hasStarted = checkHasStarted(m.date, m.time);
           const dbMatch = unique[m.id];
           
-          // 🔴 EKMEL OTONOM SİSTEM: Maç vakti geldi ama DB'de yoksa veya "0-0" yazılmadıysa Otonom Başlat!
           if (hasStarted && (!dbMatch || dbMatch.home_score === '-' || !dbMatch.home_score)) {
             supabase.from('live_matches').upsert({ id: m.id, home_score: '0', away_score: '0', status: 'LIVE' }).then();
-            
-            // Arayüzü anında güncelle
             unique[m.id] = { id: m.id, home_score: '0', away_score: '0', status: 'LIVE' };
             scores[m.id] = { home: '0', away: '0' };
             autoStartedAny = true;
@@ -304,13 +297,74 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 EKMEL OTONOM KALP ATIŞI: Sayfa açık olduğu sürece her 10 saniyede bir saat kontrolü yapar.
+  // 🔴 SİBER AJAN (BOT) GÖREVİ BAŞLATIYOR 🔴
+  const sendAgentToField = async () => {
+    // Sadece "CANLI" maçı olanlar için ajanı yolla
+    const liveMatchExists = Object.values(dbMatches).some(m => m.status === 'LIVE' || m.status === 'HT');
+    if (!liveMatchExists) return;
+
+    try {
+      setActiveMessage("🕵️‍♀️ Siber Ajan dışarıda skor arıyor...");
+      const res = await fetch('/api/livescore');
+      const data = await res.json();
+
+      if (data.success && data.scores) {
+        let updatedAny = false;
+        
+        // Ajanın getirdiği skorlarla bizim canlı maçları karşılaştır
+        for (const [matchKey, scrapedScore] of Object.entries(data.scores)) {
+          const [scrapedHome, scrapedAway] = (scrapedScore as string).split('-');
+          
+          for (const m of week4Matches) {
+            const dbMatch = dbMatches[m.id];
+            // Sadece canlı maçları güncelle
+            if (dbMatch && (dbMatch.status === 'LIVE' || dbMatch.status === 'HT')) {
+              // Eşleşme var mı? (Örn: "KARABAĞ FK-DINAMO KIEV" vs "KARABAĞ FK-DINAMO KIEV")
+              const ourMatchKey = `${m.homeTeam}-${m.awayTeam}`;
+              if (ourMatchKey === matchKey) {
+                // Eğer ajanın getirdiği skor, bizimkinden farklıysa OTONOM GÜNCELLE!
+                if (dbMatch.home_score !== scrapedHome || dbMatch.away_score !== scrapedAway) {
+                  await supabase.from('live_matches').upsert({ 
+                    id: m.id, home_score: scrapedHome, away_score: scrapedAway, status: 'LIVE' 
+                  });
+                  updatedAny = true;
+                  setActiveMessage(`🚨 AJAN MÜDAHALESİ: ${m.homeTeam} maçı ${scrapedHome}-${scrapedAway} yapıldı!`);
+                }
+              }
+            }
+          }
+        }
+        
+        if (updatedAny) {
+          fetchMatches(); // Ekranı yenile
+        } else {
+          setActiveMessage("✅ Ajan Döndü: Yeni bir skor değişimi yok.");
+          setTimeout(() => setActiveMessage(''), 2000);
+        }
+      }
+    } catch (error) {
+      console.log("Ajan başarısız");
+    }
+  };
+
+  // 🔴 OTONOM KALP: 10 Saniyede Bir Saat Kontrolü, 60 Saniyede Bir (6 turda bir) Ajan Gönderimi 🔴
   useEffect(() => {
     if (isAuthenticated) {
-      const interval = setInterval(fetchMatches, 10000);
+      const interval = setInterval(() => {
+        fetchMatches(); // Her 10 saniyede saat/DB kontrolü
+        setBotCounter(prev => {
+          const next = prev + 1;
+          if (next >= 6) { // 10 sn * 6 = 60 saniyede bir ajanı gönder
+            sendAgentToField();
+            return 0;
+          }
+          return next;
+        });
+      }, 10000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, dbMatches]);
+
 
   const handleScoreChange = (id: number, type: 'home' | 'away', value: string) => {
     setLocalScores(prev => ({
@@ -433,18 +487,17 @@ export default function AdminPage() {
       <div className="max-w-[1400px] mx-auto">
         
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm relative overflow-hidden">
-          {/* Cyberpunk Tarama Efekti */}
           <div className="absolute inset-0 w-full h-full bg-blue-500/5 opacity-20 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px)' }}></div>
           
           <div className="relative z-10">
             <h1 className="text-2xl font-black text-amber-500 tracking-wider">🛠 ETML OPERASYON MERKEZİ 2.0</h1>
-            <p className="text-slate-400 text-sm mt-1">Komutan: <span className="text-white font-bold">{username}</span> | Görsel Kontrol ve Otonom Radar <span className="text-emerald-400 font-bold animate-pulse">AKTİF</span></p>
+            <p className="text-slate-400 text-sm mt-1">Komutan: <span className="text-white font-bold">{username}</span> | Görsel Kontrol ve Otonom Ajan <span className="text-purple-400 font-bold animate-pulse">SAHADA</span></p>
           </div>
           <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 mt-4 md:mt-0">
             {activeMessage && <div className="text-sm font-bold text-emerald-400 animate-pulse bg-emerald-950/80 px-4 py-2 rounded-lg border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]">{activeMessage}</div>}
             
-            <button onClick={fetchMatches} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold border border-slate-600 transition-colors shadow-lg flex items-center gap-2">
-              <span className="animate-spin-slow">🔄</span> Manuel Yenile
+            <button onClick={sendAgentToField} className="bg-purple-900/80 hover:bg-purple-800 text-purple-200 px-4 py-2.5 rounded-xl text-sm font-bold border border-purple-700 transition-colors shadow-lg flex items-center gap-2">
+              <span className="animate-pulse">🕵️‍♀️</span> Ajanı Zorla Yolla
             </button>
             
             <button onClick={resetAllWeekData} className="bg-red-900 hover:bg-red-800 text-white px-4 py-2.5 rounded-xl text-sm font-black border border-red-700 transition-colors shadow-[0_0_15px_rgba(220,38,38,0.5)]">
