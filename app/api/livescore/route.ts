@@ -3,60 +3,102 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-// BİZİM SİSTEMDEKİ İSİM : DIŞ SİTEDEKİ İSİM (Küçük harflerle eşleşme)
+// BİZİM SİSTEMDEKİ İSİM : DIŞ SİTELERDEKİ OLASI İSİMLER (Genişletilmiş)
 const teamDictionary: Record<string, string[]> = {
-  "KARABAĞ FK": ["qarabag", "qarabağ", "qarabag fk"],
-  "DINAMO KIEV": ["dynamo kyiv", "dinamo kiev"],
-  "BEŞİKTAŞ": ["besiktas", "beşiktaş"],
+  "KARABAĞ FK": ["qarabag", "qarabağ", "qarabag fk", "karabağ"],
+  "DINAMO KIEV": ["dynamo kyiv", "dinamo kiev", "dinamo kyiv"],
+  "BEŞİKTAŞ": ["besiktas", "beşiktaş", "besiktas jk"],
   "HRADEC KRALOVE": ["hradec kralove", "fc hradec kralove"],
   "STURM GRAZ": ["sturm graz", "sk sturm graz"],
-  "FENERBAHÇE": ["fenerbahce", "fenerbahçe"],
-  "PARIS SG": ["psg", "paris saint germain", "paris sg"],
-  "ASTON VILLA": ["aston villa"]
+  "FENERBAHÇE": ["fenerbahce", "fenerbahçe", "fenerbahce sk"],
+  "PARIS SG": ["psg", "paris saint germain", "paris sg", "paris"],
+  "ASTON VILLA": ["aston villa"],
+  "GALATASARAY": ["galatasaray", "galatasaray sk"],
+  "TRABZONSPOR": ["trabzonspor"]
 };
 
+// İstihbarat Timi'nin sızacağı çoklu kaynaklar (Hedefler)
+const SOURCES = [
+  { url: 'https://m.mackolik.com/canli-sonuclar', name: 'Kaynak 1 (Yerel)' },
+  { url: 'https://www.bbc.com/sport/football/scores-fixtures', name: 'Kaynak 2 (Global)' },
+  { url: 'https://www.skysports.com/football/live-scores', name: 'Kaynak 3 (Yedek)' }
+];
+
 export async function GET() {
-  try {
-    // Güvenilir, hafif ve kazıması kolay bir canlı skor sitesine sızıyoruz
-    // Not: Bu deneysel bir URL'dir. Gerçekte BBC Sport, Google vb. kullanılabilir.
-    // Şimdilik test amaçlı global bir spor haberleri arama sayfası mantığı kullanıyoruz.
-    const response = await axios.get('https://www.livescore.com/en/', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
-    });
+  const liveScores: Record<string, string> = {};
+  let successfulSource = "Bulunamadı";
+  let agentLog = "";
 
-    const $ = cheerio.load(response.data);
-    const liveScores: Record<string, string> = {};
+  for (const source of SOURCES) {
+    try {
+      // Ajanımız sivil (gerçek bir tarayıcı) gibi davranmak için kılık değiştiriyor
+      const response = await axios.get(source.url, {
+        headers: { 
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7'
+        },
+        timeout: 5000 // 5 saniye içinde cevap alamazsa diğer siteye geçer
+      });
 
-    // Sitedeki maç bloklarını tarama (Site tasarımına göre değişebilir, şu an genel bir yakalayıcı)
-    $('.MatchRow_container__3sS5w').each((i, element) => {
-      const homeTeamRaw = $(element).find('.MatchRowTimeScore_home__1yq9O').text().toLowerCase().trim();
-      const awayTeamRaw = $(element).find('.MatchRowTimeScore_away__1Kz5T').text().toLowerCase().trim();
-      const scoreStr = $(element).find('.MatchRowTimeScore_score__1_Q6_').text().trim(); // "1 - 0" veya "0 - 0"
+      const $ = cheerio.load(response.data);
+      let foundMatches = 0;
 
-      if (scoreStr && scoreStr.includes('-')) {
-        const scores = scoreStr.split('-');
-        const hScore = scores[0].trim();
-        const aScore = scores[1].trim();
+      // GENEL TARAMA ALGORİTMASI: Sitedeki tüm yazıları metin olarak alıp parçalamaya çalışıyoruz.
+      // Çünkü her sitenin class (sınıf) isimleri farklıdır. Bordo Bereli ajanımız anahtar kelime arar.
+      
+      const pageText = $('body').text().toLowerCase();
 
-        // Sözlükte eşleşme arama
-        let matchedHome = "";
-        let matchedAway = "";
-
-        Object.keys(teamDictionary).forEach(ourTeam => {
-          if (teamDictionary[ourTeam].some(alias => homeTeamRaw.includes(alias))) matchedHome = ourTeam;
-          if (teamDictionary[ourTeam].some(alias => awayTeamRaw.includes(alias))) matchedAway = ourTeam;
+      Object.keys(teamDictionary).forEach(homeTeam => {
+        teamDictionary[homeTeam].forEach(homeAlias => {
+          Object.keys(teamDictionary).forEach(awayTeam => {
+            if (homeTeam === awayTeam) return;
+            
+            teamDictionary[awayTeam].forEach(awayAlias => {
+              // Eğer sayfada hem ev sahibi hem deplasman takımı adı geçiyorsa
+              if (pageText.includes(homeAlias) && pageText.includes(awayAlias)) {
+                // Etrafındaki skor sayılarını bulmak için çok basit bir RegExp kullanıyoruz
+                // Örneğin: "besiktas 1 - 0 hradec" veya "besiktas 1-0 hradec"
+                const regex = new RegExp(`${homeAlias}.*?(\\d)\\s*-\\s*(\\d).*?${awayAlias}`, 'i');
+                const match = pageText.match(regex);
+                
+                if (match) {
+                  liveScores[`${homeTeam}-${awayTeam}`] = `${match[1]}-${match[2]}`;
+                  foundMatches++;
+                }
+              }
+            });
+          });
         });
+      });
 
-        if (matchedHome && matchedAway) {
-          liveScores[`${matchedHome}-${matchedAway}`] = `${hScore}-${aScore}`;
-        }
+      if (foundMatches > 0) {
+        successfulSource = source.name;
+        agentLog = `Ajan ${source.name} hedefine sızdı ve ${foundMatches} maç skoru buldu!`;
+        break; // Skor bulduysa diğer siteleri yormaya gerek yok, döngüden çık.
+      } else {
+        agentLog += `[${source.name}: Skor Yok] `;
       }
-    });
 
-    return NextResponse.json({ success: true, scores: liveScores });
-
-  } catch (error) {
-    console.error("Ajan sahada vuruldu:", error);
-    return NextResponse.json({ success: false, error: "İstihbarat alınamadı" });
+    } catch (error) {
+      agentLog += `[${source.name}: Kalkanlara Çarptı] `;
+      continue; // Bu site engellediyse/çöktüyse hemen sonrakine geç
+    }
   }
+
+  // Eğer ajan tüm kaynakları gezip hiçbir şey bulamadıysa (Siteler JavaScript kalkanı veya Cloudflare açtıysa)
+  if (Object.keys(liveScores).length === 0) {
+    return NextResponse.json({ 
+      success: false, 
+      scores: {}, 
+      message: "🚨 Ajan tüm kaynakları taradı ancak skor bulamadı. Siteler anti-bot kalkanı açmış olabilir.",
+      log: agentLog
+    });
+  }
+
+  return NextResponse.json({ 
+    success: true, 
+    scores: liveScores, 
+    message: agentLog
+  });
 }
