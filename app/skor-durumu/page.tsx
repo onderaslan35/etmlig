@@ -27,9 +27,16 @@ const week4Matches = [
 ];
 
 export default function SkorDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('master'); // 'master', 'dfo', 'tff'
+  const [mainTab, setMainTab] = useState<string>('master'); // 'master', 'dfo', 'tff'
+  const [subTab, setSubTab] = useState<string>('total'); // 'total', 'week1', 'week2', 'week3', 'week4'
+  const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+
+  const getAvailableWeeks = (tab: string) => {
+    if (tab === 'tff') return [3, 4];
+    return [1, 2, 3, 4];
+  };
 
   const loadLeaderboard = async () => {
     try {
@@ -74,40 +81,133 @@ export default function SkorDurumuPage() {
       }
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      const baseList = Object.keys(allPlayersMasterList).map(id => {
-        let baseSkor = 0; let liveSkor = 0;
-        if (activeTab === 'master') {
-          baseSkor = (w1Skor[id]||0) + (w2Skor[id]||0) + (w3DfoSkor[id]||0) + (w3TffSkor[id]||0) + w4MasterBase[id];
-          liveSkor = w4MasterLive[id];
-        } else if (activeTab === 'dfo') {
-          baseSkor = (w1Skor[id]||0) + (w2Skor[id]||0) + (w3DfoSkor[id]||0) + w4DfoBase[id];
-          liveSkor = w4DfoLive[id];
-        } else if (activeTab === 'tff') {
-          baseSkor = (w3TffSkor[id]||0) + w4TffBase[id];
-          liveSkor = w4TffLive[id];
-        }
-        
-        return { id, name: allPlayersMasterList[id], skor: baseSkor + liveSkor, liveExtra: liveSkor };
-      }).sort((a, b) => b.skor - a.skor || a.name.localeCompare(b.name, 'tr'));
+      if (subTab === 'total') {
+        // GEÇMİŞ HAFTALAR (TREND HESAPLAMASI İÇİN)
+        const referenceList = Object.keys(allPlayersMasterList).map(id => {
+          let prevSkor = 0;
+          if (mainTab === 'master') prevSkor = (w1Skor[id]||0) + (w2Skor[id]||0) + (w3DfoSkor[id]||0) + (w3TffSkor[id]||0);
+          else if (mainTab === 'dfo') prevSkor = (w1Skor[id]||0) + (w2Skor[id]||0) + (w3DfoSkor[id]||0);
+          else if (mainTab === 'tff') prevSkor = (w3TffSkor[id]||0);
+          return { id, name: allPlayersMasterList[id], prevSkor };
+        }).sort((a, b) => b.prevSkor - a.prevSkor || a.name.localeCompare(b.name, 'tr'));
 
-      const finalRows = baseList.map((player, index) => ({ ...player, currentRank: index + 1 }));
-      setTableRows(finalRows);
+        const prevRanks: Record<string, number> = {};
+        referenceList.forEach((p, index) => { prevRanks[p.id] = index + 1; });
+
+        // ŞİMDİKİ DURUM (GEÇMİŞ + HAFTA 4)
+        const baseList = Object.keys(allPlayersMasterList).map(id => {
+          let baseSkor = 0; let liveSkor = 0;
+          if (mainTab === 'master') {
+            baseSkor = (w1Skor[id]||0) + (w2Skor[id]||0) + (w3DfoSkor[id]||0) + (w3TffSkor[id]||0) + w4MasterBase[id];
+            liveSkor = w4MasterLive[id];
+          } else if (mainTab === 'dfo') {
+            baseSkor = (w1Skor[id]||0) + (w2Skor[id]||0) + (w3DfoSkor[id]||0) + w4DfoBase[id];
+            liveSkor = w4DfoLive[id];
+          } else if (mainTab === 'tff') {
+            baseSkor = (w3TffSkor[id]||0) + w4TffBase[id];
+            liveSkor = w4TffLive[id];
+          }
+          return { id, name: allPlayersMasterList[id], baseSkor, liveExtra: liveSkor, skor: baseSkor + liveSkor };
+        }).sort((a, b) => b.skor - a.skor || a.name.localeCompare(b.name, 'tr'));
+
+        const finalRows = baseList.map((player, index) => {
+          const currentRank = index + 1;
+          const prevRank = prevRanks[player.id];
+          let trend = 'same', trendDiff = 0; 
+          if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+          else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+          return { ...player, currentRank, prevRank, trend, trendDiff };
+        });
+        setTableRows(finalRows);
+      } else {
+        // HAFTALIK SEKMELER (OK YOK)
+        const list = Object.keys(allPlayersMasterList).map(id => {
+          let theSkor = 0; let liveExtra = 0;
+          if (subTab === 'week1' && mainTab !== 'tff') theSkor = w1Skor[id] || 0;
+          else if (subTab === 'week2' && mainTab !== 'tff') theSkor = w2Skor[id] || 0;
+          else if (subTab === 'week3') {
+            if (mainTab === 'master') theSkor = (w3DfoSkor[id]||0) + (w3TffSkor[id]||0);
+            else if (mainTab === 'dfo') theSkor = w3DfoSkor[id] || 0;
+            else if (mainTab === 'tff') {
+              // 🔴 Kullanıcı "Mazakalı Bayram'ın DFO'da skoru yok, TFF'de var" diyerek veriyi teyit etmişti.
+              // Eğer oyuncu w3TffSkor listesinde yoksa 0 döndürür.
+              theSkor = w3TffSkor[id] || 0;
+            }
+          } else if (subTab === 'week4') {
+            if (mainTab === 'master') { theSkor = w4MasterBase[id]; liveExtra = w4MasterLive[id]; }
+            else if (mainTab === 'dfo') { theSkor = w4DfoBase[id]; liveExtra = w4DfoLive[id]; }
+            else if (mainTab === 'tff') { theSkor = w4TffBase[id]; liveExtra = w4TffLive[id]; }
+          }
+          return { id, name: allPlayersMasterList[id], skor: theSkor + liveExtra, liveExtra, trend: 'none', trendDiff: 0 };
+        }).sort((a, b) => b.skor - a.skor || a.name.localeCompare(b.name, 'tr'));
+        setTableRows(list.map((player, index) => ({ ...player, currentRank: index + 1 })));
+      }
 
     } catch (e) {}
   };
 
-  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
+  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [mainTab, subTab]);
+
+  const selectSubTab = (tabKey: string) => { setSubTab(tabKey); setIsWeekMenuOpen(false); };
+  
+  const getMainColorText = () => {
+    if (mainTab === 'master') return 'text-amber-500';
+    if (mainTab === 'dfo') return 'text-blue-500';
+    return 'text-red-500';
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="flex flex-col items-center text-center mb-5 mt-1"><h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">GÜNCEL SKOR TABLOSU (ANALİZ MERKEZİ)</h1></div>
+      <div className="flex flex-col items-center text-center mb-5 mt-1">
+        <h1 className={`text-xl md:text-2xl font-extrabold text-center tracking-wider uppercase drop-shadow-md ${getMainColorText()}`}>
+          {mainTab === 'master' ? 'MASTER' : mainTab === 'dfo' ? 'DFO' : 'TFF'} SKOR ANALİZ MERKEZİ
+        </h1>
+      </div>
+      
       <div className="w-full mb-6"><LiveMatchCard /></div>
       
-      <div className="w-full flex justify-center mb-6">
-        <div className="flex bg-slate-900 border border-slate-700 rounded-xl overflow-hidden p-1 gap-1">
-          <button onClick={() => setActiveTab('master')} className={`px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${activeTab === 'master' ? 'bg-amber-500 text-black shadow-md' : 'text-slate-400 hover:text-white'}`}>MASTER SKOR</button>
-          <button onClick={() => setActiveTab('dfo')} className={`px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${activeTab === 'dfo' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>DFO SKOR</button>
-          <button onClick={() => setActiveTab('tff')} className={`px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${activeTab === 'tff' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>TFF SKOR</button>
+      {/* 🔴 ÇATI SİSTEMİ (PODIUM) 🔴 */}
+      <div className="max-w-xl flex flex-col items-center mb-6 space-y-2 w-full">
+        {/* ÇATI: MASTER */}
+        <button onClick={() => {setMainTab('master'); setSubTab('total');}} className={`w-full py-3 rounded-xl font-black text-sm md:text-base transition-all duration-200 border uppercase tracking-wider ${mainTab === 'master' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-[1.02]' : 'bg-slate-900 text-amber-500/50 border-slate-800 hover:bg-slate-800'}`}>
+          MASTER SKOR
+        </button>
+        
+        {/* SOL/SAĞ: DFO ve TFF */}
+        <div className="flex w-full gap-2">
+          <button onClick={() => {setMainTab('dfo'); setSubTab('total');}} className={`flex-1 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all border uppercase tracking-wider ${mainTab === 'dfo' ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.4)] scale-[1.02]' : 'bg-slate-900 text-blue-500/50 border-slate-800 hover:bg-slate-800'}`}>
+            DFO SKOR
+          </button>
+          <button onClick={() => {setMainTab('tff'); setSubTab('total');}} className={`flex-1 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all border uppercase tracking-wider ${mainTab === 'tff' ? 'bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(185,28,28,0.4)] scale-[1.02]' : 'bg-slate-900 text-red-500/50 border-slate-800 hover:bg-slate-800'}`}>
+            TFF SKOR
+          </button>
+        </div>
+
+        {/* HAFTALAR AKORDİYONU */}
+        <div className="w-full relative mt-2">
+          <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className="w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800">
+            <span>📅 {subTab === 'total' ? 'TOPLAM SKOR DURUMU' : `${subTab.replace('week', '')}. HAFTA SKORLARI`}</span>
+            <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
+          </button>
+          {isWeekMenuOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
+              <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
+                <button onClick={() => selectSubTab('total')} className={`w-auto px-4 py-1.5 text-xs font-bold rounded-lg border transition-all ${subTab === 'total' ? 'bg-emerald-600 text-white border-emerald-400 scale-105' : 'bg-slate-950/90 text-slate-300 border-slate-800'}`}>TOPLAM</button>
+                {getAvailableWeeks(mainTab).map(w => {
+                  const weekKey = `week${w}`;
+                  let activeClass = 'bg-slate-950/90 text-slate-300 border-slate-800';
+                  if (subTab === weekKey) {
+                    if (mainTab === 'master') activeClass = 'bg-amber-500 text-slate-950 border-amber-400 scale-105';
+                    else if (mainTab === 'dfo') activeClass = 'bg-blue-600 text-white border-blue-400 scale-105';
+                    else if (mainTab === 'tff') activeClass = 'bg-red-700 text-white border-red-500 scale-105';
+                  }
+                  return (
+                    <button key={w} onClick={() => selectSubTab(weekKey)} className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeClass}`}>{w}</button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -116,23 +216,56 @@ export default function SkorDurumuPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
-                <tr><th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th><th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th><th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">DOĞRU SKOR</th></tr>
+                <tr>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
+                    {mainTab === 'tff' ? (
+                      <span className="bg-red-700 text-white px-2 py-1 rounded-md shadow-sm border border-red-500">
+                        {subTab === 'total' ? 'TOPLAM SKOR' : 'HAFTALIK SKOR'}
+                      </span>
+                    ) : (
+                      subTab === 'total' ? 'TOPLAM SKOR' : 'HAFTALIK SKOR'
+                    )}
+                  </th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
                   <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center font-medium text-slate-300">{row.currentRank}</td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full">
-                      <div className="flex items-center gap-1.5 overflow-hidden">
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
+                      <div className="flex items-center justify-center gap-0.5 sm:gap-2">
+                        <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank}</span>
+                        {/* 🔴 TREND OKLARI (Sadece Total sekmesinde çalışır) 🔴 */}
+                        <div className="w-6 sm:w-10 flex items-center justify-start">
+                          {subTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
+                          {subTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
+                          {subTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
+                      <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
                         {(() => {
                           const trophyCount = (row.name.match(/🏆/g) || []).length;
                           const cleanName = row.name.replace(/🏆/g, '').trim();
-                          return ( <><span className="text-slate-200 font-semibold truncate flex-shrink" title={cleanName}>{cleanName}</span>{trophyCount > 0 && <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">{'🏆'.repeat(trophyCount)}</span>}</> );
+                          return ( <><span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>{cleanName}</span>{trophyCount > 0 && <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">{'🏆'.repeat(trophyCount)}</span>}</> );
                         })()}
-                        {row.liveExtra > 0 && adminStatus === 'LIVE' && <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 animate-pulse flex-shrink-0">+{row.liveExtra} CANLI</span>}
+                        {row.liveExtra > 0 && subTab === 'total' && adminStatus === 'LIVE' && <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">+{row.liveExtra} CANLI</span>}
+                        {row.liveExtra > 0 && subTab !== 'total' && <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>+{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}</span>}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right font-bold text-sm sm:text-base text-amber-400">{row.skor} SKOR</td>
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
+                      {mainTab === 'tff' ? (
+                        <span className="bg-red-700/20 text-red-400 border border-red-700/50 px-2 sm:px-3 py-1 rounded-md font-bold text-sm sm:text-base">
+                          {row.skor} SKOR
+                        </span>
+                      ) : (
+                        <span className={`font-bold text-sm sm:text-base ${mainTab === 'master' ? 'text-amber-400' : 'text-blue-400'}`}>
+                          {row.skor} SKOR
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
