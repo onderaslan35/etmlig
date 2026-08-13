@@ -25,7 +25,7 @@ const dfoWeek1Data: Record<string, { name: string; puan: number }> = {
   "262756": { name: "EYÜP KARACAOĞLU", puan: 13 },
   "262755": { name: "DOĞAÇ ALKAN", puan: 12 },
   "262736": { name: "MEHMET ALİ KARA", puan: 12 },
-  "262816": { name: "SEDAT SEDAT", puan: 11 },
+  "262816": { name: "SEDAT SEDAT", puan: 7 }, // 🔴 Sedat Sedat: 1. Hafta (7 Puan)
   "262726": { name: "HUDAVER TOPARDIC", puan: 9 },
   "262786": { name: "SEDAT DİŞLİ", puan: 9 },
   "262709": { name: "SALİH KARACAOĞLU", puan: 8 },
@@ -80,7 +80,7 @@ const dfoWeek2Data: Record<string, { name: string; puan: number }> = {
   "262756": { name: "EYÜP KARACAOĞLU", puan: 12 },
   "262755": { name: "DOĞAÇ ALKAN", puan: 12 },
   "262736": { name: "MEHMET ALİ KARA", puan: 11 },
-  "262816": { name: "SEDAT SEDAT", puan: 11 },
+  "262816": { name: "SEDAT SEDAT", puan: 6 }, // 🔴 Sedat Sedat: 2. Hafta (6 Puan)
   "262726": { name: "HUDAVER TOPARDIC", puan: 8 },
   "262786": { name: "SEDAT DİŞLİ", puan: 8 },
   "262709": { name: "SALİH KARACAOĞLU", puan: 8 },
@@ -135,7 +135,7 @@ const dfoWeek3Data: Record<string, { name: string; puan: number }> = {
   "262756": { name: "EYÜP KARACAOĞLU", puan: 12 },
   "262755": { name: "DOĞAÇ ALKAN", puan: 12 },
   "262736": { name: "MEHMET ALİ KARA", puan: 11 },
-  "262816": { name: "SEDAT SEDAT", puan: 11 },
+  "262816": { name: "SEDAT SEDAT", puan: 16 }, // 🔴 Sedat Sedat: 3. Hafta (16 PUAN). Toplam Base: 29 + 4 (Fenerbahce) = 33! 🔴
   "262726": { name: "HUDAVER TOPARDIC", puan: 8 },
   "262786": { name: "SEDAT DİŞLİ", puan: 8 },
   "262709": { name: "SALİH KARACAOĞLU", puan: 8 },
@@ -242,7 +242,6 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function DfoPuanDurumuPage() {
-  // 🔴 EKMEL MÜDAHALESİ: DEFAULT SEKME TOTAL YAPILDI 🔴
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -274,7 +273,6 @@ export default function DfoPuanDurumuPage() {
             if (dbMatch.category) isTff = isTffMatchCheck(dbMatch.category);
 
             if (!isTff) {
-              // 🔴 EKMEL MÜDAHALESİ: 7 KİŞİ VE ÜZERİ İÇİN 1 PUAN KURALI 🔴
               let points = 1;
               if(winnerIds.length === 1) points = 12;
               else if(winnerIds.length === 2) points = 6;
