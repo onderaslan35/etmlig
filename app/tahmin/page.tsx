@@ -1,8 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabase';
-import Link from 'next/link';
+import React, { useState } from 'react';
 
 // Tüm şeffaf Wikipedia Logoları
 const localTeamLogos: Record<string, string> = {
@@ -98,21 +96,23 @@ const localTeamLogos: Record<string, string> = {
 };
 
 const allPlayersList: Record<string, string> = {
-  "262816": "SEDAT SEDAT", "262733": "MUHSİN ASİLKAN", "262786": "SEDAT DİŞLİ", "262725": "İLYAS KAZDAL",
-  "262738": "MEVLÜT EVLER", "262763": "MUSTAFA ELMAS", "262711": "RIDVAN DOGER", "351925": "ALİOS GÖZTEPE",
-  "262726": "HUDAVER TOPARDIC", "262721": "MUSTAFA GÜMÜŞÇÜ", "262771": "ULAŞ ADIGÜZEL", "262709": "SALİH KARACAOĞLU",
-  "262706": "GAZİ AYAN 🏆🏆", "262753": "YUSUF KIZILTUĞ", "262734": "LEVENT YILDIRIM", "262730": "ÖNDER IŞIK",
-  "262774": "ŞENOL CAN ÇAKICI", "262740": "ABDULLAH DİK", "262731": "FATİH AYAN", "262755": "DOĞAÇ ALKAN",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262732": "R. İLHAN KARACA 🏆🏆", "262813": "KEMAL ERSOY", "262707": "HAKAN AYAN",
-  "262772": "CEMAL SİVRİKAYA 🏆", "262723": "AYHAN LUŞOĞLU", "262716": "BİROL DEMİREL", "262754": "OSMAN ALİ AYDIN 🏆",
-  "262714": "İSMAİL EKER 🏆", "262782": "YUSUF ERBAY", "262739": "UĞUR GÜRBÜZ", "262728": "ÖNDER ASLAN",
-  "262758": "MELİH PINAR", "262744": "İLYAS UYGUN", "262718": "BEKİR KARADAĞ", "262749": "B.VEYSELOĞLU EROL",
-  "262736": "MEHMET ALİ KARA", "262702": "MURAT KARA", "262719": "UĞUR VARDAR", "262756": "EYÜP KARACAOĞLU",
-  "262790": "CUMALİ SÖKER", "262705": "AHMET BİRCAN 🏆", "262750": "MAHMUT CBR", "262770": "OZKAYA MAZAKALI BAYRAM",
-  "262717": "MURAT ALİ", "262703": "CEMALETTİN BELLİ", "262708": "BAYRAM YILMAZ", "262715": "ŞEMSETTİN DÜGER",
-  "262787": "MUSTAFA TUCİ", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
+// 🔴 EKMEL - YENİ VE KUSURSUZ 25 SÜTUNLUK VERİ 🔴
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
   "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
@@ -159,8 +159,8 @@ const week4PredictionsData: Record<string, string[]> = {
   "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
+  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
 // 4. HAFTA TÜM FİKSTÜR
@@ -195,110 +195,86 @@ export default function TahminlerPage() {
   const [selectedWeek, setSelectedWeek] = useState(4);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 🔴 EKMEL MÜDAHALESİ: Gönderdiğin resimdeki sıraya birebir uyumlu (Manuel Sıralama Önceliği)
+  // 🔴 EKMEL MÜDAHALESİ: Alfabetik Sıralama (Kayıp Askerler Geri Döndü!) 🔴
   const activePlayers = Object.entries(allPlayersList)
     .filter(([id, name]) => 
-      name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      id.includes(searchTerm)
+      name.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .sort((a, b) => {
-      const exactOrder = [
-        "262816", "262733", "262786", "262725", "262738", "262763", "262711", "351925",
-        "262726", "262721", "262771", "262709", "262706", "262753", "262734", "262730",
-        "262774", "262740", "262731", "262755", "262747", "262732", "262813", "262707",
-        "262772", "262723", "262716", "262754", "262714", "262782", "262739", "262728",
-        "262758", "262744", "262718", "262749", "262736", "262702", "262719", "262756",
-        "262790", "262705", "262750", "262770", "262717", "262703", "262708"
-      ];
-      const indexA = exactOrder.indexOf(a[0]);
-      const indexB = exactOrder.indexOf(b[0]);
-      
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return a[1].localeCompare(b[1], 'tr');
-    });
+    .sort((a, b) => a[1].localeCompare(b[1], 'tr')); // Standart, sorunsuz A'dan Z'ye sıralama
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-2 sm:p-6 font-sans">
+    <div className="min-h-screen bg-[#050b14] text-slate-100 p-2 sm:p-6 font-sans">
       <div className="max-w-[1400px] mx-auto">
         
-        {/* 🔴 ÜST BAŞLIK VE MENÜ GERİ GELDİ 🔴 */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-amber-400 tracking-wider flex items-center gap-2">
-              📝 RESMİ DEKLARASYON
+        {/* 🔴 Orijinal Üst Menü 🔴 */}
+        <div className="flex flex-col items-center mb-8 gap-4 bg-transparent p-4">
+          <div className="text-center">
+            <h1 className="text-xl sm:text-2xl font-black text-amber-500 tracking-widest flex items-center justify-center gap-2 drop-shadow-md">
+               RESMİ DEKLARASYON
             </h1>
-            <p className="text-slate-400 text-xs mt-1">Yarışmacıların haftalık tahmin arşivi</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center max-w-2xl">
             <input 
               type="text" 
-              placeholder="Yarışmacı veya ID ara..." 
+              placeholder="Yarışmacı ara..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-950 border border-slate-700 text-sm px-4 py-2 rounded-xl outline-none focus:border-amber-500 transition-colors w-full sm:w-64"
+              className="bg-slate-900 border border-slate-700 text-sm px-4 py-2.5 rounded-lg outline-none focus:border-amber-500 transition-colors w-full shadow-inner"
             />
             <select
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-xl cursor-pointer outline-none transition-all shadow w-full sm:w-auto"
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-lg cursor-pointer outline-none transition-all shadow w-full sm:w-auto"
             >
-              <option value={4}>4. HAFTA TAHMİNLERİ</option>
-              <option value={3} disabled>3. HAFTA (Yakında)</option>
-              <option value={2} disabled>2. HAFTA (Yakında)</option>
-              <option value={1} disabled>1. HAFTA (Yakında)</option>
+              <option value={4}>4. HAFTA BÜLTENİ</option>
+              <option value={3} disabled>3. HAFTA BÜLTENİ</option>
+              <option value={2} disabled>2. HAFTA BÜLTENİ</option>
+              <option value={1} disabled>1. HAFTA BÜLTENİ</option>
             </select>
           </div>
         </div>
 
-        {/* 🔴 DONDURULMUŞ MATRİS TABLOSU (FREEZE PANES) 🔴 */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl relative max-h-[75vh] custom-scrollbar overflow-auto">
+        {/* 🔴 DONDURULMUŞ MATRİS TABLOSU (ID GİZLENDİ) 🔴 */}
+        <div className="bg-[#0a1120] border border-slate-800 rounded-xl overflow-hidden shadow-2xl relative max-h-[70vh] custom-scrollbar overflow-auto mx-auto max-w-[100%]">
           
           <table className="w-full text-left text-xs whitespace-nowrap border-collapse min-w-max">
             
-            {/* TAVANA DONDURULMUŞ BAŞLIK */}
-            <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
+            <thead className="sticky top-0 z-40 shadow-xl">
               
-              {/* "4. Hafta" yazısı ve Maç Numaraları */}
+              {/* Maç Numaraları */}
               <tr>
-                {/* Sol Üst Köşe (En üstte kalması için z-50) */}
-                <th colSpan={2} className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-2">
+                {/* Sol Üst Köşe */}
+                <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-800 p-2 min-w-[180px] shadow-[2px_0_5px_rgba(0,0,0,0.3)]">
                   <div className="text-[10px] font-black text-amber-500 tracking-widest pl-2">
                     {selectedWeek}. HAFTA
                   </div>
                 </th>
                 
-                {/* Maç Numaraları */}
                 {week4Matches.map((match, idx) => (
-                  <th key={`num-${match.id}`} className="border-b border-slate-800 border-r border-slate-800/50 p-1 text-center min-w-[50px]">
-                    <span className="bg-slate-800 text-slate-400 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                  <th key={`num-${match.id}`} className="bg-[#080d1a] border-b border-slate-800 border-r border-slate-800/50 p-1.5 text-center min-w-[50px]">
+                    <span className="text-slate-400 text-[10px] font-bold">
                       {idx + 1}
                     </span>
                   </th>
                 ))}
               </tr>
 
-              {/* Takım Logoları (ALT ALTA YERLEŞİM) */}
+              {/* Takım Logoları (İç İçe, Ferah ve Orantılı) */}
               <tr>
-                {/* İkinci Sol Üst Köşe */}
-                <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-700 px-4 py-3 font-bold text-slate-300 w-48 shadow-[2px_0_5px_rgba(0,0,0,0.3)]">
-                  TAHMİNCİLER
-                </th>
-                <th className="sticky left-[192px] z-50 bg-[#0a1120] border-b border-r border-slate-700 px-3 py-3 font-bold text-slate-400 text-center w-20 shadow-[2px_0_5px_rgba(0,0,0,0.3)]">
-                  ID
+                {/* İkinci Sol Üst Köşe (Sadece Oyuncu İsmi) */}
+                <th className="sticky left-0 z-50 bg-[#0c1526] border-b border-r border-slate-700 px-4 py-3 font-bold text-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
+                  OYUNCU İSMİ
                 </th>
                 
-                {/* 🔴 EKMEL MÜDAHALESİ: LOGOLAR ALT ALTA DİZİLDİ (flex-col) 🔴 */}
                 {week4Matches.map((match) => (
-                  <th key={`logo-${match.id}`} className="border-b border-slate-700 border-r border-slate-800/50 px-1 py-1 bg-slate-900 align-middle">
-                    <div className="flex flex-col justify-center items-center gap-0.5">
-                      <div className="w-5 h-5 flex items-center justify-center bg-slate-100 rounded-full p-0.5 shadow-inner">
-                        <img src={localTeamLogos[match.homeTeam] || "/logos/default.png"} alt={match.homeTeam} className="w-full h-full object-contain" title={match.homeTeam} />
+                  <th key={`logo-${match.id}`} className="border-b border-slate-700 border-r border-slate-800/50 px-2 py-2 bg-[#0c1526] align-middle">
+                    <div className="flex justify-center items-center gap-1.5 opacity-90 hover:opacity-100 transition-opacity">
+                      <div className="w-6 h-6 flex items-center justify-center p-0.5">
+                        <img src={localTeamLogos[match.homeTeam] || "/logos/default.png"} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={match.homeTeam} />
                       </div>
-                      <div className="w-5 h-5 flex items-center justify-center bg-slate-100 rounded-full p-0.5 shadow-inner">
-                        <img src={localTeamLogos[match.awayTeam] || "/logos/default.png"} alt={match.awayTeam} className="w-full h-full object-contain" title={match.awayTeam} />
+                      <div className="w-6 h-6 flex items-center justify-center p-0.5">
+                        <img src={localTeamLogos[match.awayTeam] || "/logos/default.png"} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={match.awayTeam} />
                       </div>
                     </div>
                   </th>
@@ -307,19 +283,19 @@ export default function TahminlerPage() {
             </thead>
 
             {/* TABLO GÖVDESİ */}
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-slate-800/40">
               {activePlayers.map(([id, name], idx) => {
                 const predictions = week4PredictionsData[id] || Array(24).fill("-");
                 const cleanName = name.replace(/🏆/g, '').trim();
                 const trophyCount = (name.match(/🏆/g) || []).length;
                 
                 return (
-                  <tr key={id} className="hover:bg-slate-800/60 transition-colors group">
+                  <tr key={id} className="hover:bg-slate-800/40 transition-colors group">
                     
-                    {/* SOLA DONDURULMUŞ İSİM (Sütun 1) */}
-                    <td className="sticky left-0 z-30 bg-slate-900 group-hover:bg-slate-800 border-r border-slate-800 px-4 py-2.5 shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
+                    {/* SOLA DONDURULMUŞ İSİM */}
+                    <td className="sticky left-0 z-30 bg-[#0a1120] group-hover:bg-[#0c1526] border-r border-slate-700/80 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.3)] transition-colors">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-[11px] text-slate-200">{cleanName}</span>
+                        <span className="font-bold text-xs text-slate-200">{cleanName}</span>
                         {trophyCount > 0 && (
                           <span className="text-[10px] tracking-tighter">
                             {'🏆'.repeat(trophyCount)}
@@ -328,12 +304,7 @@ export default function TahminlerPage() {
                       </div>
                     </td>
 
-                    {/* SOLA DONDURULMUŞ ID (Sütun 2) */}
-                    <td className="sticky left-[192px] z-30 bg-slate-900/95 group-hover:bg-slate-800 border-r border-slate-800 px-3 py-2.5 text-center shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
-                      <span className="font-mono text-[10px] font-bold text-amber-500/80 bg-amber-950/30 px-1.5 py-0.5 rounded border border-amber-900/30">
-                        {id}
-                      </span>
-                    </td>
+                    {/* 🔴 ID SÜTUNU KOMPLE KALDIRILDI 🔴 */}
 
                     {/* TAHMİNLER (Kayan Bölüm) */}
                     {week4Matches.map((match, pIdx) => {
@@ -341,9 +312,9 @@ export default function TahminlerPage() {
                       const hasPredicted = score !== "-" && score !== "";
                       
                       return (
-                        <td key={`${id}-${pIdx}`} className="border-r border-slate-800/40 text-center px-1 py-2">
+                        <td key={`${id}-${pIdx}`} className="border-r border-slate-800/40 text-center px-1 py-3 bg-[#050b14]/50 group-hover:bg-slate-800/20 transition-colors">
                           {hasPredicted ? (
-                            <span className="inline-block min-w-[36px] font-black text-[11px] text-slate-300 tracking-wider">
+                            <span className="inline-block min-w-[36px] font-black text-xs text-amber-500/90 tracking-wider">
                               {score}
                             </span>
                           ) : (
