@@ -84,6 +84,12 @@ const getEliteTheme = (category: string) => {
   return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-blue-600/40" };
 };
 
+// 🔴 TEST KULLANICILARI VE ŞİFRELERİ BURADA TANIMLANDI 🔴
+const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
+  'mankoman': { pass: '123456', name: 'MANKOMAN' },
+  '353535': { pass: '1925', name: 'ADAM KRAL' }
+};
+
 export default function TahminlerPortal() {
   const [view, setView] = useState<'lobby' | 'declaration' | 'entry'>('lobby');
   
@@ -94,6 +100,7 @@ export default function TahminlerPortal() {
   // Giriş ve Modal State'leri
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState(''); // Yarışmacı adını tutmak için
   const [loginError, setLoginError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -129,17 +136,20 @@ export default function TahminlerPortal() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🔴 GİZLİ TEST MODU (ŞİMDİLİK SADECE MANKOMAN GİREBİLİR) 🔴
+  // 🔴 GÜNCELLENMİŞ GİRİŞ SİSTEMİ (ADAM KRAL VE MANKOMAN AKTİF) 🔴
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
-    // İstediğin ID'leri daha sonra buraya ekleyeceğiz, şimdilik sadece mankoman
-    if (username === 'mankoman' && password === '123456') { 
-      await fetchBulletinAndPredictions(username);
+    const userKey = username.trim();
+    const account = TEST_ACCOUNTS[userKey];
+
+    if (account && password === account.pass) { 
+      setDisplayName(account.name);
+      await fetchBulletinAndPredictions(userKey);
       setView('entry');
     } else {
-      setLoginError('Sistem şu an yapılandırma ve test aşamasındadır. Yalnızca Kurucu girişine izin verilmektedir.');
+      setLoginError('Sistem şu an yapılandırma ve test aşamasındadır. Yalnızca kayıtlı yetkili girişine izin verilmektedir.');
     }
   };
 
@@ -191,7 +201,7 @@ export default function TahminlerPortal() {
 
     try {
       const payload = Object.keys(predictions).map(matchIndex => ({
-        user_id: username, 
+        user_id: username.trim(), 
         week_num: 5,
         match_index: Number(matchIndex),
         predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
@@ -215,7 +225,7 @@ export default function TahminlerPortal() {
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
       
-      {/* ===================== RESMİ TEBRİKLER MODALI (TAMAM BUTONLU) ===================== */}
+      {/* ===================== RESMİ TEBRİKLER MODALI (YENİ MESAJ) ===================== */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
@@ -223,7 +233,7 @@ export default function TahminlerPortal() {
             <div className="text-6xl mb-6 mt-2 drop-shadow-lg">🏆</div>
             <h3 className="text-3xl font-black text-emerald-400 mb-3 tracking-widest">TEBRİKLER!</h3>
             <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">
-              Tahminleriniz karargaha resmi olarak mühürlenip iletilmiştir. Süre bitene kadar sisteme tekrar girerek skorlarınızı güncelleyebilirsiniz.
+              Tahminleriniz sisteme kaydedilmiştir. Başarılar dileriz. Süre bitene kadar sisteme tekrar girerek skorlarınızı güncelleyebilirsiniz.
             </p>
             <button 
               onClick={() => { 
@@ -374,7 +384,7 @@ export default function TahminlerPortal() {
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
               <div>
                 <h2 className="text-2xl font-black text-amber-500 tracking-widest">5. HAFTA GÖREV KAĞIDI</h2>
-                <p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{username.toUpperCase()}</span></p>
+                <p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p>
               </div>
               <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">
                 Oturumu Kapat
