@@ -97,7 +97,6 @@ const localTeamLogos: Record<string, string> = {
 };
 const TEAMS = Object.keys(localTeamLogos).sort();
 
-// 🔴 EKMEL: Kullanıcının Kesin Kategori Listesi (İstediğin zaman buraya virgülle yenisini ekleyebilirsin)
 const CATEGORIES = [
   "BUNDESLIGA",
   "COPA DEL REY",
@@ -143,7 +142,6 @@ const CATEGORIES = [
   "UEFA Ş.L. PLAY OFF RÖVANŞ"
 ];
 
-// 🔴 EKMEL: Kategori TFF'ye ait mi kontrolü (Artık Liste Çok Net!)
 const isTffMatchCheck = (category: string) => {
   const tffKeywords = [
     "TÜRKİYE 1.LİG",
@@ -155,12 +153,10 @@ const isTffMatchCheck = (category: string) => {
   return tffKeywords.includes(category.trim().toUpperCase());
 };
 
-// 🔴 EKMEL: OTONOM ZAMAN HESAPLAYICI (Kural: 5. Hafta = 18 Ağustos)
 const getDatesForWeek = (weekNum: number): string[] => {
   const dates = [];
-  // 5. hafta, 18.08.2026'dan başlıyor. Aradaki hafta farkını hesapla.
   const weekDiff = weekNum - 5; 
-  const startDate = new Date(2026, 7, 18); // Aylar 0 indexlidir. 7 = Ağustos.
+  const startDate = new Date(2026, 7, 18); 
   startDate.setDate(startDate.getDate() + (weekDiff * 7));
 
   for (let i = 0; i < 7; i++) {
@@ -174,7 +170,15 @@ const getDatesForWeek = (weekNum: number): string[] => {
   return dates;
 };
 
-// SAAT LİSTESİ: 12:00'dan 23:45'e kadar (15'er dk arayla)
+// 🔴 İŞTE BURASI! Vercel'in bulamadığı ve sistemi durduran kayıp zamanlayıcı fonksiyonu tam buraya eklendi.
+const checkHasStarted = (dateStr: string, timeStr: string) => {
+  const [day, month, year] = dateStr.split('.');
+  const [hour, minute] = timeStr.split(':');
+  const now = new Date();
+  const matchDate = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
+  return now >= matchDate;
+};
+
 const TIME_OPTIONS: string[] = [];
 for (let h = 12; h <= 23; h++) {
   for (let m = 0; m < 60; m += 15) {
@@ -183,7 +187,7 @@ for (let h = 12; h <= 23; h++) {
 }
 
 // ----------------------------------------------------
-// Eski Veriler (4. Hafta Testi için hala gerekli)
+// Eski Veriler (4. Hafta Testi için)
 // ----------------------------------------------------
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
@@ -335,20 +339,18 @@ export default function AdminPage() {
 
   // BÜLTEN
   const [selectedWeek, setSelectedWeek] = useState(5);
-  // Haftaya göre otomatik tarihler
   const currentWeekDates = getDatesForWeek(selectedWeek);
 
   const [bulletinMatches, setBulletinMatches] = useState<BulletinMatch[]>(
     Array(24).fill(null).map(() => ({
       category: CATEGORIES[0], 
-      date: currentWeekDates[0], // Haftanın ilk günü default
+      date: currentWeekDates[0],
       time: '19:00',
       home_team: '',
       away_team: ''
     }))
   );
 
-  // Hafta değiştiğinde, 24 maçın tarihlerini yeni haftanın ilk gününe sıfırla (Eski tarih kalmasın diye)
   useEffect(() => {
     const newDates = getDatesForWeek(selectedWeek);
     setBulletinMatches(prev => prev.map(m => {
@@ -501,7 +503,6 @@ export default function AdminPage() {
     }
   };
 
-  // --- BÜLTEN ---
   const handleBulletinChange = (index: number, field: keyof BulletinMatch, value: string) => {
     const newMatches = [...bulletinMatches];
     newMatches[index] = { ...newMatches[index], [field]: value };
@@ -618,6 +619,7 @@ export default function AdminPage() {
                 
                 const winnersCount = currentWinners.length;
                 let displayPoints = 1;
+                // EKMEL KURALLARI: Puan Dağılım Sistemi
                 if(winnersCount === 1) displayPoints = 12;
                 else if(winnersCount === 2) displayPoints = 6;
                 else if(winnersCount === 3) displayPoints = 5;
@@ -702,9 +704,6 @@ export default function AdminPage() {
           </>
         )}
 
-        {/* ========================================= */}
-        {/* TAB 2: YENİ BÜLTEN & ARŞİV OLUŞTURUCU */}
-        {/* ========================================= */}
         {activeTab === 'bulletin' && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
             
