@@ -112,7 +112,6 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🔴 EKMEL MÜDAHALESİ: YENİ GÖNDERDİĞİN 25 SÜTUNLUK VERİ BLOĞU 🔴
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
   "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
@@ -194,13 +193,56 @@ const week4Matches = [
 export default function TahminlerPage() {
   const [selectedWeek, setSelectedWeek] = useState(4);
   const [searchTerm, setSearchTerm] = useState('');
+  // 🔴 3 Farklı Sıralama Modu: DEFAULT (Orijinal Liste), ASC (A-Z), DESC (Z-A)
+  const [sortMode, setSortMode] = useState<'DEFAULT' | 'ASC' | 'DESC'>('DEFAULT');
 
-  // Sadece aktif haftanın oyuncularını A'dan Z'ye sırala
+  // Excel'den gelen orijinal sıralama kimliği
+  const exactOrder = [
+    "262731", "262758", "262763", "262744", "262813", "351925", "262732", "262754", 
+    "262733", "262774", "262771", "262730", "262707", "262816", "262719", "262725", 
+    "262711", "262718", "262721", "262726", "262702", "262738", "262750", "262705", 
+    "262706", "262716", "262736", "262714", "262749", "262753", "262740", "262790", 
+    "262786", "262734", "262756", "262703", "262772", "262717", "262728", "262770", 
+    "262755", "262704", "262747", "262723", "262709", "262739", "262782"
+  ];
+
+  // 🔴 EKMEL SIRALAMA ALGORİTMASI 🔴
   const activePlayers = Object.entries(allPlayersList)
-    .filter(([id, name]) => 
-      name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => a[1].localeCompare(b[1], 'tr')); 
+    .filter(([id, name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const predsA = week4PredictionsData[a[0]] || [];
+      const predsB = week4PredictionsData[b[0]] || [];
+      
+      const hasA = predsA.some(s => s !== "-" && s !== "");
+      const hasB = predsB.some(s => s !== "-" && s !== "");
+
+      // KURAL 1: Tahmin yapmayanlar kayıtsız şartsız EN ALTA düşer!
+      if (hasA && !hasB) return -1;
+      if (!hasA && hasB) return 1;
+
+      // KURAL 2: İkisi de tahmin yapmamışsa kendi içlerinde A-Z sıralanır.
+      if (!hasA && !hasB) {
+        return a[1].localeCompare(b[1], 'tr');
+      }
+
+      // KURAL 3: Modlara Göre Sıralama (Tahmin yapanlar için)
+      if (sortMode === 'DEFAULT') {
+        const idxA = exactOrder.indexOf(a[0]);
+        const idxB = exactOrder.indexOf(b[0]);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a[1].localeCompare(b[1], 'tr');
+      } else if (sortMode === 'ASC') {
+        return a[1].localeCompare(b[1], 'tr');
+      } else {
+        return b[1].localeCompare(a[1], 'tr');
+      }
+    });
+
+  const toggleSortMode = () => {
+    setSortMode(prev => prev === 'DEFAULT' ? 'ASC' : prev === 'ASC' ? 'DESC' : 'DEFAULT');
+  };
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-100 p-2 sm:p-6 font-sans">
@@ -235,13 +277,12 @@ export default function TahminlerPage() {
           </div>
         </div>
 
-        {/* 🔴 EKMEL MÜDAHALESİ: ÖZGÜRLÜĞÜNE KAVUŞMUŞ, KAYDIRILABİLİR, ID'SİZ DONDURULMUŞ TABLO 🔴 */}
+        {/* 🔴 DONDURULMUŞ MATRİS TABLOSU (FREEZE PANES) 🔴 */}
         <div 
           className="w-full bg-[#0a1120] border border-slate-800 rounded-xl shadow-2xl overflow-auto max-h-[75vh] custom-scrollbar" 
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           
-          {/* border-collapse yerine border-separate kullanıldı ki freeze/sticky özelliği dokunmatikte bozulmasın! */}
           <table className="w-full text-left text-xs whitespace-nowrap border-separate" style={{ borderSpacing: 0 }}>
             
             <thead className="sticky top-0 z-40 shadow-xl bg-[#0a1120]">
@@ -249,7 +290,7 @@ export default function TahminlerPage() {
               {/* Maç Numaraları */}
               <tr>
                 {/* Sol Üst Köşe (En üstte kalması için z-50) */}
-                <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-800 p-2 min-w-[160px] shadow-[2px_0_5px_rgba(0,0,0,0.3)]">
+                <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-800 p-2 min-w-[160px] shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
                   <div className="text-[10px] font-black text-amber-500 tracking-widest pl-2">
                     {selectedWeek}. HAFTA
                   </div>
@@ -264,11 +305,19 @@ export default function TahminlerPage() {
                 ))}
               </tr>
 
-              {/* Takım Logoları (Alt alta diziliş korundu) */}
+              {/* Takım Logoları ve Sıralama Butonu */}
               <tr>
-                {/* İkinci Sol Üst Köşe (Sadece Oyuncu İsmi var, ID sütunu silindi) */}
-                <th className="sticky left-0 z-50 bg-[#0c1526] border-b border-r border-slate-700 px-4 py-3 font-bold text-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
-                  OYUNCU İSMİ
+                {/* İkinci Sol Üst Köşe ve BUTON */}
+                <th className="sticky left-0 z-50 bg-[#0c1526] border-b border-r border-slate-700 p-0 shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
+                  <div className="flex items-center justify-between px-3 py-2 w-full h-full">
+                    <span className="font-bold text-slate-300">OYUNCU İSMİ</span>
+                    <button 
+                      onClick={toggleSortMode}
+                      className="text-amber-500 hover:text-amber-300 bg-slate-950 border border-slate-700/80 px-2 py-1 rounded text-[9px] tracking-wider transition-colors ml-2"
+                    >
+                      {sortMode === 'DEFAULT' ? 'SIRA: LİSTE' : sortMode === 'ASC' ? 'SIRA: A-Z' : 'SIRA: Z-A'}
+                    </button>
+                  </div>
                 </th>
                 
                 {week4Matches.map((match) => (
@@ -293,11 +342,13 @@ export default function TahminlerPage() {
                 const cleanName = name.replace(/🏆/g, '').trim();
                 const trophyCount = (name.match(/🏆/g) || []).length;
                 
+                const hasPredicted = predictions.some(s => s !== "-" && s !== "");
+                
                 return (
-                  <tr key={id} className="hover:bg-slate-800/40 transition-colors group">
+                  <tr key={id} className={`transition-colors group ${!hasPredicted ? 'opacity-50 hover:opacity-100' : 'hover:bg-slate-800/40'}`}>
                     
-                    {/* SOLA DONDURULMUŞ İSİM (Z-30) */}
-                    <td className="sticky left-0 z-30 bg-[#0a1120] group-hover:bg-[#0c1526] border-b border-r border-slate-700/80 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.3)] transition-colors">
+                    {/* SOLA DONDURULMUŞ İSİM (Z-30) - Arka planı katı olmalı ki alttan yazılar sızmasın */}
+                    <td className="sticky left-0 z-30 bg-[#0a1120] group-hover:bg-[#0c1526] border-b border-r border-slate-700/80 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.4)] transition-colors">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-xs text-slate-200">{cleanName}</span>
                         {trophyCount > 0 && (
@@ -305,17 +356,18 @@ export default function TahminlerPage() {
                             {'🏆'.repeat(trophyCount)}
                           </span>
                         )}
+                        {!hasPredicted && <span className="ml-auto text-[9px] text-red-500 font-bold tracking-widest">(PAS)</span>}
                       </div>
                     </td>
 
                     {/* TAHMİNLER (Kayan Bölüm) */}
                     {week4Matches.map((match, pIdx) => {
                       const score = predictions[pIdx] || "-";
-                      const hasPredicted = score !== "-" && score !== "";
+                      const isFilled = score !== "-" && score !== "";
                       
                       return (
                         <td key={`${id}-${pIdx}`} className="border-b border-r border-slate-800/40 text-center px-1 py-3 bg-[#050b14] group-hover:bg-slate-800/20 transition-colors">
-                          {hasPredicted ? (
+                          {isFilled ? (
                             <span className="inline-block min-w-[36px] font-black text-xs text-amber-500/90 tracking-wider">
                               {score}
                             </span>
