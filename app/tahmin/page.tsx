@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// TEMA VE LOGO MOTORU (RADAR EKRANINDAN TRANSFER EDİLDİ)
+// TEMA VE LOGO MOTORU 
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -91,16 +91,16 @@ export default function TahminlerPortal() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isTimeUp, setIsTimeUp] = useState(false);
 
-  // Giriş State'leri
+  // Giriş ve Modal State'leri
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Bülten State'i
   const [bulletin, setBulletin] = useState<any[]>([]);
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
 
   // 🔴 72 SAATLİK GERİ SAYIM MOTORU 🔴
   useEffect(() => {
@@ -129,33 +129,46 @@ export default function TahminlerPortal() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🔴 MANKOMAN KİLİDİ (GİZLİ TEST MODU) 🔴
+  // 🔴 GİZLİ TEST MODU (ŞİMDİLİK SADECE MANKOMAN GİREBİLİR) 🔴
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
+    // İstediğin ID'leri daha sonra buraya ekleyeceğiz, şimdilik sadece mankoman
     if (username === 'mankoman' && password === '123456') { 
-      fetchBulletinForEntry();
+      await fetchBulletinAndPredictions(username);
       setView('entry');
     } else {
       setLoginError('Sistem şu an yapılandırma ve test aşamasındadır. Yalnızca Kurucu girişine izin verilmektedir.');
     }
   };
 
-  // 5. Hafta Bültenini Getir
-  const fetchBulletinForEntry = async () => {
-    const { data, error } = await supabase
-      .from('matches_bulletin')
-      .select('*')
-      .eq('week_num', 5) 
-      .order('match_index', { ascending: true });
+  // 🔴 HAFIZALI SİSTEM: KULLANICININ ESKİ TAHMİNLERİNİ ÇEKER 🔴
+  const fetchBulletinAndPredictions = async (currentUsername: string) => {
+    // 1. Önce Adminin hazırladığı boş bülteni çek
+    const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5).order('match_index', { ascending: true });
+    
+    // 2. Yarışmacının daha önce kaydettiği tahminleri çek
+    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5).eq('user_id', currentUsername);
 
-    if (data) {
-      setBulletin(data);
+    if (bData) {
+      setBulletin(bData);
       const initialPreds: Record<number, { home: string, away: string }> = {};
-      data.forEach(m => {
-        initialPreds[m.match_index] = { home: '-', away: '-' };
+      
+      bData.forEach(m => {
+        // Bu maç için adamın önceden verdiği bir skor var mı?
+        const existingPred = pData?.find(p => p.match_index === m.match_index);
+        
+        if (existingPred && existingPred.predicted_score) {
+          // Varsa o skoru kutuya koy (Örn: "2-1")
+          const [h, a] = existingPred.predicted_score.split('-');
+          initialPreds[m.match_index] = { home: h || '-', away: a || '-' };
+        } else {
+          // Yoksa boş bırak
+          initialPreds[m.match_index] = { home: '-', away: '-' };
+        }
       });
+      
       setPredictions(initialPreds);
     }
   };
@@ -174,10 +187,7 @@ export default function TahminlerPortal() {
       return;
     }
 
-    if(!window.confirm('Tahminlerinizi mühürleyip göndermek istediğinize emin misiniz?')) return;
-
     setIsSaving(true);
-    setSaveMessage('Tahminler şifrelenerek karargaha iletiliyor...');
 
     try {
       const payload = Object.keys(predictions).map(matchIndex => ({
@@ -191,14 +201,11 @@ export default function TahminlerPortal() {
       
       if(error) throw error;
 
-      setSaveMessage('✅ TAHMİNLER BAŞARIYLA KARARGAHA İLETİLDİ!');
-      setTimeout(() => {
-        setView('lobby');
-        setSaveMessage('');
-      }, 3000);
+      // 🔴 İŞLEM BAŞARILIYSA EKRANI KARART VE TEBRİKLER PANOSUNU AÇ 🔴
+      setShowSuccessModal(true);
 
     } catch (e) {
-      setSaveMessage('❌ Kayıt sırasında bir hata oluştu!');
+      alert('❌ Kayıt sırasında bir hata oluştu!');
     }
     setIsSaving(false);
   };
@@ -207,11 +214,37 @@ export default function TahminlerPortal() {
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
+      
+      {/* ===================== RESMİ TEBRİKLER MODALI (TAMAM BUTONLU) ===================== */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
+            <div className="text-6xl mb-6 mt-2 drop-shadow-lg">🏆</div>
+            <h3 className="text-3xl font-black text-emerald-400 mb-3 tracking-widest">TEBRİKLER!</h3>
+            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">
+              Tahminleriniz karargaha resmi olarak mühürlenip iletilmiştir. Süre bitene kadar sisteme tekrar girerek skorlarınızı güncelleyebilirsiniz.
+            </p>
+            <button 
+              onClick={() => { 
+                setShowSuccessModal(false); 
+                setView('lobby'); 
+                setUsername(''); 
+                setPassword(''); 
+              }} 
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] uppercase tracking-widest transition-all hover:scale-105"
+            >
+              TAMAM
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-[1400px] mx-auto pt-10">
         
         {/* ===================== KÖK DİZİN (KARŞILAMA LOBİSİ) ===================== */}
         {view === 'lobby' && (
-          <div>
+          <div className="animate-fade-in-up">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
                 ETM LİGİ MERKEZ PORTALI
@@ -282,7 +315,7 @@ export default function TahminlerPortal() {
 
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-6"></div>
 
-                {/* LOGİN FORMU (SADECE MANKOMAN GİREBİLİR) */}
+                {/* LOGİN FORMU */}
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                   <input 
                     type="text" 
@@ -318,15 +351,14 @@ export default function TahminlerPortal() {
 
         {/* ===================== RESMİ DEKLARASYON (ARŞİV EKRANI) ===================== */}
         {view === 'declaration' && (
-          <div>
+          <div className="animate-fade-in-up">
             <button onClick={() => setView('lobby')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
               <span>⬅</span> Lobiye Dön
             </button>
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center min-h-[500px] flex flex-col items-center justify-center">
               <h2 className="text-3xl font-black text-indigo-400 tracking-widest mb-4">RESMİ DEKLARASYON ARŞİVİ</h2>
               <p className="text-slate-400 max-w-2xl mb-8">
-                Kumandanım, eski kodundaki o devasa tabloyu buraya yapıştırabiliriz. 
-                Sayfa düzeni ve "Ayrı bir kutunun içi" mantığı tam olarak burada tasarlandı. 
+                Eski kodundaki o devasa tabloyu buraya yapıştırabiliriz. 
                 Şu an tablo kod kalabalığı yapmasın diye burayı temiz bir oda olarak bıraktım.
               </p>
               <div className="w-full max-w-4xl h-64 border-2 border-dashed border-slate-700 rounded-xl flex items-center justify-center text-slate-600 font-black text-xl">
@@ -336,26 +368,19 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== YENİ VİZYON: ELİT TAHMİN GİRİŞ PORTALI ===================== */}
+        {/* ===================== ELİT TAHMİN GİRİŞ PORTALI ===================== */}
         {view === 'entry' && (
-          <div className="w-full">
+          <div className="w-full animate-fade-in-up">
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
               <div>
                 <h2 className="text-2xl font-black text-amber-500 tracking-widest">5. HAFTA GÖREV KAĞIDI</h2>
                 <p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{username.toUpperCase()}</span></p>
               </div>
-              <button onClick={() => setView('lobby')} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">
+              <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">
                 Oturumu Kapat
               </button>
             </div>
 
-            {saveMessage && (
-              <div className={`w-full py-4 text-center font-black text-lg mb-6 rounded-xl border ${saveMessage.includes('✅') ? 'bg-emerald-950 border-emerald-500 text-emerald-400' : 'bg-red-950 border-red-500 text-red-400'}`}>
-                {saveMessage}
-              </div>
-            )}
-
-            {/* RADAR TASARIMININ AYNISI BURAYA GELDİ */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
               {bulletin.map((match) => {
                 const theme = getEliteTheme(match.category);
