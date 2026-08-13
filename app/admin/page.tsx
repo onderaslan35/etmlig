@@ -87,11 +87,15 @@ export default function AdminPage() {
     const aScore = localScores[id]?.away || '0';
 
     try {
-      await supabase.from('live_matches').update({ 
+      // 🔴 EKMEL MÜDAHALESİ: UPSERT KOMUTU (Veritabanında satır yoksa zorla var eder!)
+      const { error } = await supabase.from('live_matches').upsert({ 
+        id: id,
         home_score: hScore, 
         away_score: aScore,
-        status: 'LIVE' // Güncelleme yapılınca statü otomatik canlı kalır
-      }).eq('id', id);
+        status: 'LIVE'
+      });
+      
+      if (error) throw error;
       
       setActiveMessage(`✅ Maç ${id} skoru güncellendi!`);
       setTimeout(() => setActiveMessage(''), 2000);
@@ -105,17 +109,20 @@ export default function AdminPage() {
     const hScore = localScores[id]?.home || '0';
     const aScore = localScores[id]?.away || '0';
     
-    // 🔴 EKMEL MÜDAHALESİ: ONAY EKRANI 🔴
     const isConfirmed = window.confirm(`DİKKAT: ${homeTeam} ${hScore} - ${aScore} ${awayTeam} maçını onaylıyor ve puanları dağıtıyorsunuz.\n\nEmin misiniz? Bu işlem geri alınamaz.`);
     
     if (isConfirmed) {
       setActiveMessage(`Maç ${id} onaylanıyor...`);
       try {
-        await supabase.from('live_matches').update({ 
+        // 🔴 EKMEL MÜDAHALESİ: UPSERT KOMUTU
+        const { error } = await supabase.from('live_matches').upsert({ 
+          id: id,
           home_score: hScore, 
           away_score: aScore,
           status: 'FINISHED' 
-        }).eq('id', id);
+        });
+
+        if (error) throw error;
         
         setActiveMessage(`✅ Maç ${id} tamamlandı ve puanlar mühürlendi!`);
         setTimeout(() => setActiveMessage(''), 3000);
