@@ -27,7 +27,7 @@ const ALL_CLUBS = [
 const UNIQUE_CLUBS = [...new Set(ALL_CLUBS)].sort();
 
 // ----------------------------------------------------
-// LOGOLAR (ESKİ VE YENİSİ BİR ARADA)
+// LOGOLAR 
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -177,7 +177,7 @@ const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "DİNÇER KARACA 🏆🏆", // Dündar değil Dinçer (Bordo Bereli Komutan)
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "DİNÇER KARACA 🏆🏆", 
   "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
@@ -240,7 +240,6 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 CANLI RADAR VERİ ÇEKME 🔴
   const fetchRadarData = async () => {
     if (!isAuthenticated) return;
     try {
@@ -331,7 +330,6 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, activeTab, radarWeek]); 
 
-  // 🔴 SİBER AJAN VE SKOR GÜNCELLEMELERİ 🔴
   const sendAgentToField = async () => {
     const liveMatchExists = Object.values(dbScores).some(m => m.status === 'LIVE' || m.status === 'HT');
     if (!liveMatchExists) return;
@@ -414,7 +412,6 @@ export default function AdminPage() {
     }
   };
 
-  // 🔴 HAFIZALI EDİTÖR SİSTEMİ 🔴
   useEffect(() => {
     const fetchBulletinMemory = async () => {
       if (!isAuthenticated) return;
@@ -550,7 +547,6 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* ===================== CANLI RADAR TABI (ESKİ KODLAR GERİ GELDİ) ===================== */}
         {activeTab === 'live' && (
           <>
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
@@ -694,7 +690,7 @@ export default function AdminPage() {
           </>
         )}
 
-        {/* ===================== BÜLTEN EDİTÖRÜ TABI (AKILLI FİLTRE BURADA) ===================== */}
+        {/* ===================== BÜLTEN EDİTÖRÜ TABI ===================== */}
         {activeTab === 'bulletin' && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
             
@@ -717,6 +713,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {bulletinMatches.map((match, idx) => {
                 const matchNum = idx + 1;
+                const isTff = isTffMatchCheck(match.category); // <-- İŞTE BU KOD GERİ GELDİ
                 const homeOptions = getAvailableTeams(idx, 'home', match.category);
                 const awayOptions = getAvailableTeams(idx, 'away', match.category);
 
@@ -724,8 +721,12 @@ export default function AdminPage() {
                   <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1 h-full bg-slate-800 group-hover:bg-indigo-500 transition-colors"></div>
 
+                    {/* 🔴 KAYBOLAN TFF/DFO ETİKETLERİ BURAYA EKLENDİ 🔴 */}
                     <div className="flex justify-between items-center pl-2 border-b border-slate-800 pb-2">
                       <span className="font-black text-slate-300 text-sm tracking-widest">{bulletinWeek}. HAFTA / {matchNum}. MAÇ</span>
+                      <span className={`text-[10px] font-black tracking-widest px-2 py-1 rounded shadow-sm ${isTff ? 'bg-red-950/80 text-red-400 border border-red-500/50' : 'bg-blue-950/80 text-blue-400 border border-blue-500/50'}`}>
+                        {isTff ? '[TFF OTOMATİK]' : '[DFO OTOMATİK]'}
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-12 gap-3 pl-2">
