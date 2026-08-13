@@ -112,7 +112,7 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🔴 EKMEL - YENİ VE KUSURSUZ 25 SÜTUNLUK VERİ 🔴
+// 🔴 EKMEL MÜDAHALESİ: YENİ GÖNDERDİĞİN 25 SÜTUNLUK VERİ BLOĞU 🔴
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
   "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
@@ -195,18 +195,18 @@ export default function TahminlerPage() {
   const [selectedWeek, setSelectedWeek] = useState(4);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 🔴 EKMEL MÜDAHALESİ: Alfabetik Sıralama (Kayıp Askerler Geri Döndü!) 🔴
+  // Sadece aktif haftanın oyuncularını A'dan Z'ye sırala
   const activePlayers = Object.entries(allPlayersList)
     .filter(([id, name]) => 
       name.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .sort((a, b) => a[1].localeCompare(b[1], 'tr')); // Standart, sorunsuz A'dan Z'ye sıralama
+    .sort((a, b) => a[1].localeCompare(b[1], 'tr')); 
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-100 p-2 sm:p-6 font-sans">
       <div className="max-w-[1400px] mx-auto">
         
-        {/* 🔴 Orijinal Üst Menü 🔴 */}
+        {/* Üst Menü */}
         <div className="flex flex-col items-center mb-8 gap-4 bg-transparent p-4">
           <div className="text-center">
             <h1 className="text-xl sm:text-2xl font-black text-amber-500 tracking-widest flex items-center justify-center gap-2 drop-shadow-md">
@@ -235,17 +235,21 @@ export default function TahminlerPage() {
           </div>
         </div>
 
-        {/* 🔴 DONDURULMUŞ MATRİS TABLOSU (ID GİZLENDİ) 🔴 */}
-        <div className="bg-[#0a1120] border border-slate-800 rounded-xl overflow-hidden shadow-2xl relative max-h-[70vh] custom-scrollbar overflow-auto mx-auto max-w-[100%]">
+        {/* 🔴 EKMEL MÜDAHALESİ: ÖZGÜRLÜĞÜNE KAVUŞMUŞ, KAYDIRILABİLİR, ID'SİZ DONDURULMUŞ TABLO 🔴 */}
+        <div 
+          className="w-full bg-[#0a1120] border border-slate-800 rounded-xl shadow-2xl overflow-auto max-h-[75vh] custom-scrollbar" 
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           
-          <table className="w-full text-left text-xs whitespace-nowrap border-collapse min-w-max">
+          {/* border-collapse yerine border-separate kullanıldı ki freeze/sticky özelliği dokunmatikte bozulmasın! */}
+          <table className="w-full text-left text-xs whitespace-nowrap border-separate" style={{ borderSpacing: 0 }}>
             
-            <thead className="sticky top-0 z-40 shadow-xl">
+            <thead className="sticky top-0 z-40 shadow-xl bg-[#0a1120]">
               
               {/* Maç Numaraları */}
               <tr>
-                {/* Sol Üst Köşe */}
-                <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-800 p-2 min-w-[180px] shadow-[2px_0_5px_rgba(0,0,0,0.3)]">
+                {/* Sol Üst Köşe (En üstte kalması için z-50) */}
+                <th className="sticky left-0 z-50 bg-[#0a1120] border-b border-r border-slate-800 p-2 min-w-[160px] shadow-[2px_0_5px_rgba(0,0,0,0.3)]">
                   <div className="text-[10px] font-black text-amber-500 tracking-widest pl-2">
                     {selectedWeek}. HAFTA
                   </div>
@@ -260,16 +264,16 @@ export default function TahminlerPage() {
                 ))}
               </tr>
 
-              {/* Takım Logoları (İç İçe, Ferah ve Orantılı) */}
+              {/* Takım Logoları (Alt alta diziliş korundu) */}
               <tr>
-                {/* İkinci Sol Üst Köşe (Sadece Oyuncu İsmi) */}
+                {/* İkinci Sol Üst Köşe (Sadece Oyuncu İsmi var, ID sütunu silindi) */}
                 <th className="sticky left-0 z-50 bg-[#0c1526] border-b border-r border-slate-700 px-4 py-3 font-bold text-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.4)]">
                   OYUNCU İSMİ
                 </th>
                 
                 {week4Matches.map((match) => (
-                  <th key={`logo-${match.id}`} className="border-b border-slate-700 border-r border-slate-800/50 px-2 py-2 bg-[#0c1526] align-middle">
-                    <div className="flex justify-center items-center gap-1.5 opacity-90 hover:opacity-100 transition-opacity">
+                  <th key={`logo-${match.id}`} className="bg-[#0c1526] border-b border-slate-700 border-r border-slate-800/50 px-2 py-2 align-middle">
+                    <div className="flex flex-col justify-center items-center gap-1.5 opacity-90 hover:opacity-100 transition-opacity">
                       <div className="w-6 h-6 flex items-center justify-center p-0.5">
                         <img src={localTeamLogos[match.homeTeam] || "/logos/default.png"} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={match.homeTeam} />
                       </div>
@@ -283,7 +287,7 @@ export default function TahminlerPage() {
             </thead>
 
             {/* TABLO GÖVDESİ */}
-            <tbody className="divide-y divide-slate-800/40">
+            <tbody>
               {activePlayers.map(([id, name], idx) => {
                 const predictions = week4PredictionsData[id] || Array(24).fill("-");
                 const cleanName = name.replace(/🏆/g, '').trim();
@@ -292,8 +296,8 @@ export default function TahminlerPage() {
                 return (
                   <tr key={id} className="hover:bg-slate-800/40 transition-colors group">
                     
-                    {/* SOLA DONDURULMUŞ İSİM */}
-                    <td className="sticky left-0 z-30 bg-[#0a1120] group-hover:bg-[#0c1526] border-r border-slate-700/80 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.3)] transition-colors">
+                    {/* SOLA DONDURULMUŞ İSİM (Z-30) */}
+                    <td className="sticky left-0 z-30 bg-[#0a1120] group-hover:bg-[#0c1526] border-b border-r border-slate-700/80 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.3)] transition-colors">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-xs text-slate-200">{cleanName}</span>
                         {trophyCount > 0 && (
@@ -304,15 +308,13 @@ export default function TahminlerPage() {
                       </div>
                     </td>
 
-                    {/* 🔴 ID SÜTUNU KOMPLE KALDIRILDI 🔴 */}
-
                     {/* TAHMİNLER (Kayan Bölüm) */}
                     {week4Matches.map((match, pIdx) => {
                       const score = predictions[pIdx] || "-";
                       const hasPredicted = score !== "-" && score !== "";
                       
                       return (
-                        <td key={`${id}-${pIdx}`} className="border-r border-slate-800/40 text-center px-1 py-3 bg-[#050b14]/50 group-hover:bg-slate-800/20 transition-colors">
+                        <td key={`${id}-${pIdx}`} className="border-b border-r border-slate-800/40 text-center px-1 py-3 bg-[#050b14] group-hover:bg-slate-800/20 transition-colors">
                           {hasPredicted ? (
                             <span className="inline-block min-w-[36px] font-black text-xs text-amber-500/90 tracking-wider">
                               {score}
