@@ -353,30 +353,38 @@ export default function TahminlerPortal() {
 
   const ghostColumns = Array.from({ length: 10 });
 
-  // 🔴 SİBER FOTOĞRAF ÇEKİM PROTOKOLÜ (JPEG EXPORT) 🔴
+  // 🔴 SİBER FOTOĞRAF ÇEKİM PROTOKOLÜ (GÜNCELLENDİ) 🔴
   const downloadJPEG = async () => {
     setIsDownloading(true);
     try {
-      // Sadece indir tuşuna basıldığında fotoğraf motorunu çağırır (sayfayı ağırlaştırmaz)
-      const html2canvas = (await import('html2canvas')).default;
+      // ÇÖZÜM 1: Çizim yapabilmesi için React'a nefes alma payı veriyoruz
+      await new Promise(resolve => setTimeout(resolve, 300));
       
+      const html2canvas = (await import('html2canvas')).default;
       const element = document.getElementById('jpeg-export-container');
-      if (!element) return;
+      
+      if (!element) throw new Error("Stüdyo elementi bulunamadı");
 
       const canvas = await html2canvas(element, {
-        backgroundColor: '#050b14', // Arka plan rengini ETM Ligi teması yapar
-        scale: 2, // Fotoğraf kalitesini HD yapar
-        useCORS: true // Logoların fotoğrafta görünmesini sağlar
+        backgroundColor: '#050b14', 
+        scale: 2, 
+        useCORS: true,
+        logging: false
       });
 
       const image = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");
       link.href = image;
       link.download = "ETM_Lig_4_Hafta_Tahminler.jpg";
+      
+      // ÇÖZÜM 2: Cihaz güvenlik duvarını geçmek için linki dökümana göm, tıkla ve sil
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+
     } catch (error) {
       console.error("Fotoğraf oluşturulamadı:", error);
-      alert("Fotoğraf indirilirken bir hata oluştu.");
+      alert("Tarayıcınız güvenlik nedeniyle fotoğraf oluşturmayı engelledi. Lütfen sayfayı yenileyip tekrar deneyin.");
     }
     setIsDownloading(false);
   };
@@ -519,7 +527,7 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== RESMİ DEKLARASYON (DEV MATRİS TABLOSU) ===================== */}
+        {/* ===================== RESMİ DEKLARASYON ===================== */}
         {view === 'declaration' && (
           <div className="animate-fade-in-up w-full">
             
@@ -535,7 +543,7 @@ export default function TahminlerPortal() {
               
               <div className="flex flex-wrap md:flex-nowrap gap-3 items-center w-full md:w-auto relative">
                 
-                {/* 🔴 YENİ: TAHMİNLERİ İNDİR BUTONU (JPEG) 🔴 */}
+                {/* 🔴 TAHMİNLERİ İNDİR BUTONU (JPEG) 🔴 */}
                 <button 
                   onClick={downloadJPEG}
                   disabled={isDownloading}
@@ -582,7 +590,7 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 GÖRÜNEN TABLO ALANI (DEĞİŞMEDİ, HAYALET SÜTUNLAR DURUYOR) 🔴 */}
+            {/* 🔴 GÖRÜNEN TABLO ALANI 🔴 */}
             <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
               <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                 <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -675,9 +683,9 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Sadece Tahmin Gönderenler, Tam Boy, Görünmez) 🔴 */}
-            <div className="absolute left-[-9999px] top-[-9999px]">
-              <div id="jpeg-export-container" className="bg-[#050b14] p-8 w-max">
+            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Özel Geniş Alan Atandı) 🔴 */}
+            <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', zIndex: -1 }}>
+              <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
                 <div className="text-center mb-6 border-b border-slate-800 pb-4">
                   <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - 4. HAFTA TAHMİNLERİ</h2>
                   <p className="text-slate-400 mt-2 text-sm font-medium">* Sadece tahmin gönderen yarışmacılar A'dan Z'ye sıralanmıştır.</p>
