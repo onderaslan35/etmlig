@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from "react";
 import { supabase } from '@/utils/supabase';
@@ -219,7 +219,7 @@ const week2Matches = [
   { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ (🔴 EKMEL MÜDAHALESİ: VANSPOR YERİNE MARDİN 1969 🔴)
+// 3. HAFTA MAÇ VERİLERİ
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -280,16 +280,47 @@ export default function MacArsiviPage() {
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
+  // 🔴 EKMEL - BÜLTEN VERİLERİNİ TUTACAK STATE 🔴
+  const [bulletinData, setBulletinData] = useState<Record<number, any>>({});
 
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
-        const { data, error } = await supabase.from('live_matches').select('*');
-        if (data) {
-          const map: Record<number, any> = {};
-          data.forEach(row => map[row.id] = row);
-          setLiveMatchesData(map);
+        // Canlı maç skorları (4. hafta için vs)
+        const { data: liveData } = await supabase.from('live_matches').select('*');
+        if (liveData) {
+          const liveMap: Record<number, any> = {};
+          liveData.forEach(row => liveMap[row.id] = row);
+          setLiveMatchesData(liveMap);
         }
+
+        // 🔴 YENİ BÜLTEN TABLOSU (Admin panelinden girilen maçlar) 🔴
+        const { data: bultenData } = await supabase.from('matches_bulletin').select('*');
+        if (bultenData) {
+           // Haftalara göre maçları grupla
+           const bultenMap: Record<number, any[]> = {};
+           bultenData.forEach(row => {
+              if(!bultenMap[row.week_num]) bultenMap[row.week_num] = [];
+              bultenMap[row.week_num].push({
+                 id: row.match_index,
+                 weekLabel: `${row.week_num}. Hafta - ${row.match_index}. MAÇ`,
+                 category: row.category,
+                 date: row.match_date,
+                 time: row.match_time,
+                 homeTeam: row.home_team,
+                 awayTeam: row.away_team,
+                 score: "- : -" // Başlangıçta boş
+              });
+           });
+           
+           // Maçları kendi içinde id'ye göre sırala
+           Object.keys(bultenMap).forEach(week => {
+             bultenMap[Number(week)].sort((a,b) => a.id - b.id);
+           });
+           
+           setBulletinData(bultenMap);
+        }
+
       } catch (e) {
         console.log("Supabase baglantisi bekleniyor...");
       }
@@ -299,16 +330,21 @@ export default function MacArsiviPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // 🔴 HAFTAYA GÖRE MAÇ LİSTESİNİ ÇEK 🔴
   const currentMatches =
     selectedWeek === 1 ? week1Matches :
     selectedWeek === 2 ? week2Matches :
-    selectedWeek === 3 ? week3Matches : week4Matches;
+    selectedWeek === 3 ? week3Matches : 
+    selectedWeek === 4 ? week4Matches :
+    // 5. ve sonrası haftalar için veritabanına bak, boşsa boş dizi dön
+    (bulletinData[selectedWeek] || []);
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   };
 
   const isTffMatchCheck = (category: string) => {
+    if(!category) return false;
     const uppercaseCat = category.toUpperCase();
     return (
       uppercaseCat.includes("TÜRKİYE SÜPER LİG") ||
@@ -316,13 +352,17 @@ export default function MacArsiviPage() {
       uppercaseCat.includes("TÜRKİYE 1.LİG") ||
       uppercaseCat.includes("TÜRKİYE SÜPER KUPA") ||
       uppercaseCat.includes("TÜRKİYE KADINLAR SÜPER LİG") ||
-      uppercaseCat.includes("TFF 1. LİG")
+      uppercaseCat.includes("TFF")
     );
   };
 
+  // 🔴 RENK MOTORU 🔴
   const getEliteTheme = (category: string) => {
+    if(!category) return { bgImg: null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
+
     const upCat = category.toUpperCase();
-    if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
+    
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
       return {
         bgImg: "url('/cl-bg.png')",
         containerBorder: "border-indigo-500/50",
@@ -339,7 +379,7 @@ export default function MacArsiviPage() {
         tagBorder: "border-cyan-400/80",
         bottomBar: "bg-[#050b14]/90 border-blue-900/30"
       };
-    } else if (upCat.includes("AVRUPA LİGİ")) {
+    } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
       return {
         bgImg: "url('/el-bg.png')", 
         containerBorder: "border-orange-500/50",
@@ -356,7 +396,7 @@ export default function MacArsiviPage() {
         tagBorder: "border-orange-400/80",
         bottomBar: "bg-[#140805]/90 border-orange-900/30"
       };
-    } else if (upCat.includes("KONFERANS LİGİ")) {
+    } else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) {
       return {
         bgImg: "url('/uecl-bg.png')",
         containerBorder: "border-emerald-500/50",
@@ -432,179 +472,194 @@ export default function MacArsiviPage() {
               <option value={2}>2. HAFTA BÜLTENİ</option>
               <option value={3}>3. HAFTA BÜLTENİ</option>
               <option value={4}>4. HAFTA BÜLTENİ</option>
+              {/* 🔴 5. HAFTA MENÜYE EKLENDİ 🔴 */}
+              <option value={5}>5. HAFTA BÜLTENİ</option>
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          {currentMatches.map((match) => {
-            const isWinnersOpen = !!openWinnersMap[match.id];
-            const isTffMatch = isTffMatchCheck(match.category);
-            const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
-            const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
+        {/* EĞER SEÇİLİ HAFTA İÇİN MAÇ YOKSA UYARI VER */}
+        {currentMatches.length === 0 ? (
+           <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
+              <span className="text-5xl mb-4 block opacity-50">🏟️</span>
+              <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedWeek}. HAFTA BÜLTENİ HAZIRLANIYOR</h2>
+              <p className="text-slate-500 text-sm">Bu haftanın maç programı yönetici tarafından henüz yayınlanmadı.</p>
+           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {currentMatches.map((match) => {
+              const isWinnersOpen = !!openWinnersMap[match.id];
+              const isTffMatch = isTffMatchCheck(match.category);
+              const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
+              const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
-            let homeScore = "-";
-            let awayScore = "-";
-            let matchStatus = "NOT_STARTED";
-            let currentWinners: string[] = (match as any).winners || [];
-            let winnersCount = (match as any).winnersCount || 0;
-            let displayPoints = (match as any).earnedPoints || 0;
-            let isFinished = false;
+              let homeScore = "-";
+              let awayScore = "-";
+              let matchStatus = "NOT_STARTED";
+              let currentWinners: string[] = (match as any).winners || [];
+              let winnersCount = (match as any).winnersCount || 0;
+              let displayPoints = (match as any).earnedPoints || 0;
+              let isFinished = false;
 
-            if (selectedWeek === 4) {
-              const dbMatch = liveMatchesData[match.id];
-              if (dbMatch && dbMatch.status !== 'NOT_STARTED') {
-                matchStatus = dbMatch.status;
-                homeScore = dbMatch.home_score;
-                awayScore = dbMatch.away_score;
-                isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE');
-                
-                if (isFinished && homeScore !== '-' && awayScore !== '-') {
-                  const targetScore = `${homeScore}-${awayScore}`;
-                  currentWinners = Object.keys(week4PredictionsData)
-                    .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
-                    .map(id => allPlayersList[id])
-                    .sort((a, b) => a.localeCompare(b, 'tr'));
-                  winnersCount = currentWinners.length;
+              // Eğer 4. veya 5. hafta ise canlı/veri tabanından oku (Eski haftalar statik kalır)
+              if (selectedWeek >= 4) {
+                const dbMatch = liveMatchesData[match.id];
+                if (dbMatch && dbMatch.status !== 'NOT_STARTED') {
+                  matchStatus = dbMatch.status;
+                  homeScore = dbMatch.home_score;
+                  awayScore = dbMatch.away_score;
+                  isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE');
                   
-                  // 🔴 EKMEL MÜDAHALESİ: 7 KİŞİ VE ÜZERİ 1 PUAN ALIR KURALI DÜZELTİLDİ 🔴
-                  if(winnersCount === 1) displayPoints = 12;
-                  else if(winnersCount === 2) displayPoints = 6;
-                  else if(winnersCount === 3) displayPoints = 5;
-                  else if(winnersCount === 4) displayPoints = 4;
-                  else if(winnersCount === 5) displayPoints = 3;
-                  else if(winnersCount === 6) displayPoints = 2;
-                  else if(winnersCount >= 7) displayPoints = 1;
-                  else displayPoints = 0;
+                  if (isFinished && homeScore !== '-' && awayScore !== '-') {
+                    const targetScore = `${homeScore}-${awayScore}`;
+                    // Şimdilik 4. haftanın tahminlerini okuyor, ileride 5. hafta verisi geldiğinde oradan çekecek
+                    const predictionsToUse = selectedWeek === 4 ? week4PredictionsData : {};
+                    
+                    currentWinners = Object.keys(predictionsToUse)
+                      .filter(id => predictionsToUse[id] && predictionsToUse[id][match.id - 1] === targetScore)
+                      .map(id => allPlayersList[id])
+                      .sort((a, b) => a.localeCompare(b, 'tr'));
+                    winnersCount = currentWinners.length;
+                    
+                    if(winnersCount === 1) displayPoints = 12;
+                    else if(winnersCount === 2) displayPoints = 6;
+                    else if(winnersCount === 3) displayPoints = 5;
+                    else if(winnersCount === 4) displayPoints = 4;
+                    else if(winnersCount === 5) displayPoints = 3;
+                    else if(winnersCount === 6) displayPoints = 2;
+                    else if(winnersCount >= 7) displayPoints = 1;
+                    else displayPoints = 0;
+                  }
+                }
+              } else {
+                const scoreText = match.score || "- : -";
+                isFinished = scoreText.includes("-") && !scoreText.includes("- : -") && !scoreText.includes("-:-");
+                if (isFinished) {
+                  const parts = scoreText.split("-").map(s => s.trim());
+                  homeScore = parts[0] || "-";
+                  awayScore = parts[1] || "-";
                 }
               }
-            } else {
-              const scoreText = match.score || "- : -";
-              isFinished = scoreText.includes("-") && !scoreText.includes("- : -") && !scoreText.includes("-:-");
-              if (isFinished) {
-                const parts = scoreText.split("-").map(s => s.trim());
-                homeScore = parts[0] || "-";
-                awayScore = parts[1] || "-";
-              }
-            }
 
-            const theme = getEliteTheme(match.category);
+              const theme = getEliteTheme(match.category);
 
-            return (
-              <div 
-                key={match.id} 
-                className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}
-              >
-                <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
-                  
-                  {theme.bgImg && (
-                    <>
-                      <div 
-                        className="absolute inset-0 z-0 opacity-100"
-                        style={{ 
-                          backgroundImage: theme.bgImg,
-                          backgroundSize: 'cover', 
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat'
-                        }}
-                      ></div>
-                      <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
-                    </>
-                  )}
-
-                  <div className="relative z-10 flex flex-col h-full justify-between">
+              return (
+                <div 
+                  key={match.id} 
+                  className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}
+                >
+                  <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
                     
-                    <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
-                      <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
-                        {match.weekLabel}
-                      </span>
+                    {theme.bgImg && (
+                      <>
+                        <div 
+                          className="absolute inset-0 z-0 opacity-100"
+                          style={{ 
+                            backgroundImage: theme.bgImg,
+                            backgroundSize: 'cover', 
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat'
+                          }}
+                        ></div>
+                        <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
+                      </>
+                    )}
+
+                    <div className="relative z-10 flex flex-col h-full justify-between">
                       
-                      <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                        🏆 {match.category}
-                      </span>
-                      
-                      <span className={`${theme.catText} text-[10px] sm:text-[11px] font-semibold tracking-widest mt-0.5 opacity-90`}>
-                        {match.date} <span className="opacity-50 mx-1">|</span> {match.time}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between px-0 sm:px-4">
-                      
-                      <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                          <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                        </div>
-                        <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.homeTeam}</span>
-                      </div>
-
-                      <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30">
-                        <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                          <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
-                          <span className={`text-base sm:text-2xl font-bold ${theme.colonText}`}>:</span>
-                          <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                          <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                        </div>
-                        <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.awayTeam}</span>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
-                  <div className="flex justify-between items-center w-full">
-                    <div className="text-left flex-1">
-                      {!isFinished ? (
-                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Henüz oynanmadı</span>
-                      ) : winnersCount === 0 ? (
-                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Bu skoru bilen yok</span>
-                      ) : (
-                        <span className="text-[10px] sm:text-xs font-medium text-blue-200">
-                          <strong className="text-amber-400">{winnersCount} kişi</strong> tam isabetli
+                      <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
+                        <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
+                          {match.weekLabel}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex-0 text-center px-1">
-                      <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                        {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
-                      </span>
-                    </div>
-                    <div className="text-right flex-1">
-                      {winnersCount > 0 && (
-                        <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
-                          {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
-                        </button>
-                      )}
+                        
+                        <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                          🏆 {match.category}
+                        </span>
+                        
+                        <span className={`${theme.catText} text-[10px] sm:text-[11px] font-semibold tracking-widest mt-0.5 opacity-90`}>
+                          {match.date} <span className="opacity-50 mx-1">|</span> {match.time}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between px-0 sm:px-4">
+                        
+                        <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
+                          <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                          </div>
+                          <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.homeTeam}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30">
+                          <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                            <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                            <span className={`text-base sm:text-2xl font-bold ${theme.colonText}`}>:</span>
+                            <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
+                          <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
+                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                          </div>
+                          <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.awayTeam}</span>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
-                  
-                  {isWinnersOpen && winnersCount > 0 && (
-                    <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
-                      <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
-                        <span>BİLEN YARIŞMACILAR (A-Z)</span>
-                        <span className="text-amber-400 font-bold bg-amber-900/20 px-2 py-0.5 rounded border border-amber-700/30">Kişi Başı: {displayPoints} Puan</span>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
-                        {currentWinners.map((winner: string, idx: number) => (
-                          <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-slate-900/60 text-white border-slate-600/50 shadow-[0_0_10px_rgba(0,0,0,0.4)]">
-                            {winner}
+
+                  <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
+                    <div className="flex justify-between items-center w-full">
+                      <div className="text-left flex-1">
+                        {!isFinished ? (
+                          <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Henüz oynanmadı</span>
+                        ) : winnersCount === 0 ? (
+                          <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Bu skoru bilen yok</span>
+                        ) : (
+                          <span className="text-[10px] sm:text-xs font-medium text-blue-200">
+                            <strong className="text-amber-400">{winnersCount} kişi</strong> tam isabetli
                           </span>
-                        ))}
+                        )}
                       </div>
-                      
+                      <div className="flex-0 text-center px-1">
+                        <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
+                          {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
+                        </span>
+                      </div>
+                      <div className="text-right flex-1">
+                        {winnersCount > 0 && (
+                          <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
+                            {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
+                    
+                    {isWinnersOpen && winnersCount > 0 && (
+                      <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
+                        <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
+                          <span>BİLEN YARIŞMACILAR (A-Z)</span>
+                          <span className="text-amber-400 font-bold bg-amber-900/20 px-2 py-0.5 rounded border border-amber-700/30">Kişi Başı: {displayPoints} Puan</span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+                          {currentWinners.map((winner: string, idx: number) => (
+                            <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-slate-900/60 text-white border-slate-600/50 shadow-[0_0_10px_rgba(0,0,0,0.4)]">
+                              {winner}
+                            </span>
+                          ))}
+                        </div>
+                        
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
+
       </div>
     </div>
   );
