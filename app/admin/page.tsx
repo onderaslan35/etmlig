@@ -143,16 +143,41 @@ const week4Matches = [
   { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
-const week4PredictionsData: Record<string, string[]> = {
-  // Veriyi kısaltmamak adına mevcut tahminleri varsayalım (örnek amaçlı tutulmuştur, Canlı sekmesinde 4. hafta işlemleri için kullanılır).
+// 🔴 SAAT SEÇENEKLERİ (00:00 EN BAŞTA, SONRA 23:45'TEN 12:00'A DOĞRU İNER)
+const generateTimeOptions = () => {
+  const times = ["00:00"];
+  for (let h = 23; h >= 12; h--) {
+      for (let m = 45; m >= 0; m -= 15) {
+          times.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+      }
+  }
+  return times;
+};
+const timeOptionsArr = generateTimeOptions();
+
+// 🔴 TARİH SEÇENEKLERİ MOTORU (Sonsuz Algoritma)
+const generateWeekDates = (weekNum: number) => {
+  const baseDate = new Date(2026, 7, 18); // 18 Ağustos 2026 (5. Hafta Başı)
+  const diffDays = (weekNum - 5) * 7;
+  baseDate.setDate(baseDate.getDate() + diffDays);
+  
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+      const d = new Date(baseDate);
+      d.setDate(d.getDate() + i);
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const year = d.getFullYear();
+      dates.push(`${day}.${month}.${year}`);
+  }
+  return dates;
 };
 
 export default function AdminRadarPortal() {
   
-  // 🔴 ÇİFT ÇEKİRDEKLİ YAPI İÇİN TAB YÖNETİMİ 🔴
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
 
-  // --- CANLI OPERASYON STATELERİ (ESKİ SİSTEM) ---
+  // --- CANLI OPERASYON STATELERİ ---
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({
     1: { home: "0", away: "1" }, 2: { home: "2", away: "1" }, 3: { home: "2", away: "0" }, 4: { home: "1", away: "0" },
   });
@@ -163,24 +188,33 @@ export default function AdminRadarPortal() {
     1: true, 2: true, 3: true, 4: true 
   });
 
-  // --- BÜLTEN ÜRETİM FABRİKASI STATELERİ (YENİ SİSTEM) ---
+  // --- BÜLTEN ÜRETİM FABRİKASI STATELERİ ---
   const [bulletinWeek, setBulletinWeek] = useState<number>(5);
+  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const categoriesList = [
     "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME", "UEFA AVRUPA LİGİ ÖN ELEME", "UEFA KONFERANS LİGİ ÖN ELEME", 
     "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", 
     "İNGİLTERE SÜPER KUPA", "UEFA SÜPER KUPA", "İNGİLTERE PREMIER LİG"
   ];
+  
   const [bulletinMatches, setBulletinMatches] = useState(
     Array.from({ length: 24 }, (_, i) => ({
       match_index: i + 1,
       category: 'TÜRKİYE SÜPER LİG',
-      match_date: '17.08.2026',
+      match_date: generateWeekDates(5)[0], // İlk güne sabitlenmiş başlar
       match_time: '21:00',
       home_team: '',
       away_team: ''
     }))
   );
+
+  // Hafta değiştiğinde tarihleri sıfırla
+  useEffect(() => {
+    const newDates = generateWeekDates(bulletinWeek);
+    setCurrentWeekDates(newDates);
+    setBulletinMatches(prev => prev.map(m => ({ ...m, match_date: newDates[0] })));
+  }, [bulletinWeek]);
 
   // --- CANLI OPERASYON FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -299,9 +333,50 @@ export default function AdminRadarPortal() {
   };
 
   // --- YENİ SİSTEM FONKSİYONLARI ---
+  
+  // 🔴 AKILLI TAKIM KİLİTLEME MOTORU 🔴
+  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
+    const currentMatch = bulletinMatches[currentIndex];
+    const cat = currentMatch.category.toUpperCase();
+    const allTeams = Object.keys(localTeamLogos).sort();
+    
+    // Eğer TFF liglerinden biri değilse, kilitleme yapma (Avrupa maçları serbest)
+    if (!cat.includes("TÜRKİYE SÜPER LİG") && !cat.includes("TÜRKİYE 1.LİG")) {
+        const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
+        return allTeams.filter(t => t !== opponent); // Sadece kendi rakibi olmasın yeter
+    }
+
+    // TFF ligleri için aynı ligdeki "KULLANILMIŞ" takımları bul
+    const usedTeamsInThisLeague = new Set<string>();
+    
+    bulletinMatches.forEach((m, idx) => {
+        if (idx !== currentIndex && m.category === currentMatch.category) {
+            if (m.home_team) usedTeamsInThisLeague.add(m.home_team);
+            if (m.away_team) usedTeamsInThisLeague.add(m.away_team);
+        }
+    });
+
+    return allTeams.filter(team => {
+        // Zaten bu ligde başka maça atanmışsa listeden çıkar
+        if (usedTeamsInThisLeague.has(team)) return false;
+        // Aynı maçta hem ev sahibi hem deplasman aynı takım olamaz
+        const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
+        if (team === opponent) return false;
+        
+        return true;
+    });
+  };
+
   const handleBulletinChange = (index: number, field: string, value: string) => {
     const newMatches = [...bulletinMatches];
     (newMatches[index] as any)[field] = value;
+    
+    // Kategori değiştiğinde takımları sıfırla ki yanlış ligin takımı o kutuda kalmasın
+    if (field === 'category') {
+        newMatches[index].home_team = '';
+        newMatches[index].away_team = '';
+    }
+    
     setBulletinMatches(newMatches);
   };
 
@@ -314,7 +389,6 @@ export default function AdminRadarPortal() {
   };
 
   const saveBulletinToDB = async () => {
-    // Boş takım var mı kontrolü
     const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim());
     if (hasEmpty) {
        if(!window.confirm("Bazı takımlar boş bırakılmış. Yine de kaydedilsin mi? (Boş olanlar Maç Arşivinde eksik görünür)")) return;
@@ -345,13 +419,6 @@ export default function AdminRadarPortal() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24">
-      
-      {/* TAKIMLAR İÇİN OTOMATİK TAMAMLAMA LİSTESİ */}
-      <datalist id="team-list">
-         {Object.keys(localTeamLogos).sort().map(team => (
-            <option key={team} value={team} />
-         ))}
-      </datalist>
 
       <div className="max-w-7xl mx-auto">
         
@@ -407,7 +474,6 @@ export default function AdminRadarPortal() {
                 if (homeScore !== "-" && awayScore !== "-") {
                   const targetScore = `${homeScore}-${awayScore}`;
                   // Gerçek projede week4PredictionsData'dan okunur.
-                  // Burada kod uzamasın diye mockup veriyoruz, çünkü asıl olay bülten.
                   currentWinners = []; 
                   winnersCount = currentWinners.length;
                   displayPoints = 0;
@@ -513,6 +579,8 @@ export default function AdminRadarPortal() {
                     <option value={6}>6. HAFTA</option>
                     <option value={7}>7. HAFTA</option>
                     <option value={8}>8. HAFTA</option>
+                    <option value={9}>9. HAFTA</option>
+                    <option value={10}>10. HAFTA</option>
                  </select>
               </div>
             </div>
@@ -534,60 +602,67 @@ export default function AdminRadarPortal() {
                         <tr className="bg-slate-950 border-y border-slate-700">
                            <th className="p-3 text-amber-500 font-black text-sm w-16 text-center">NO</th>
                            <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest w-48">Kategori / LİG</th>
-                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest w-32">Tarih</th>
-                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest w-24">Saat</th>
-                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest">Ev Sahibi</th>
-                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest">Deplasman</th>
+                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest w-36">Tarih</th>
+                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest w-32">Saat</th>
+                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest">Ev Sahibi (Seçilen Eksilir)</th>
+                           <th className="p-3 text-slate-400 font-bold text-xs uppercase tracking-widest">Deplasman (Seçilen Eksilir)</th>
                         </tr>
                      </thead>
                      <tbody>
                         {bulletinMatches.map((m, idx) => (
                            <tr key={m.match_index} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
                               <td className="p-2 text-center font-black text-slate-500">{m.match_index}</td>
+                              
                               <td className="p-2">
                                  <select 
                                    value={m.category} 
                                    onChange={e => handleBulletinChange(idx, 'category', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded outline-none focus:border-indigo-500"
+                                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-xs px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer"
                                  >
                                     {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                  </select>
                               </td>
+
                               <td className="p-2">
-                                 <input 
-                                   type="text" 
-                                   placeholder="GG.AA.YYYY" 
+                                 <select 
                                    value={m.match_date} 
                                    onChange={e => handleBulletinChange(idx, 'match_date', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded outline-none focus:border-indigo-500 text-center"
-                                 />
+                                   className="w-full bg-slate-950 border border-slate-700 text-emerald-400 font-bold text-xs px-2 py-2 rounded outline-none focus:border-indigo-500 text-center cursor-pointer"
+                                 >
+                                    {currentWeekDates.map(d => <option key={d} value={d}>{d}</option>)}
+                                 </select>
                               </td>
+
                               <td className="p-2">
-                                 <input 
-                                   type="text" 
-                                   placeholder="SS:DD" 
+                                 <select 
                                    value={m.match_time} 
                                    onChange={e => handleBulletinChange(idx, 'match_time', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded outline-none focus:border-indigo-500 text-center"
-                                 />
+                                   className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-bold text-xs px-2 py-2 rounded outline-none focus:border-indigo-500 text-center cursor-pointer"
+                                 >
+                                    {timeOptionsArr.map(t => <option key={t} value={t}>{t}</option>)}
+                                 </select>
                               </td>
+
                               <td className="p-2">
-                                 <input 
-                                   list="team-list"
-                                   placeholder="Ev Sahibi Takım" 
+                                 <select 
                                    value={m.home_team} 
                                    onChange={e => handleBulletinChange(idx, 'home_team', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded outline-none focus:border-indigo-500 uppercase"
-                                 />
+                                   className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer uppercase"
+                                 >
+                                    <option value="">-- TAKIM SEÇİNİZ --</option>
+                                    {getAvailableTeams(idx, true).map(t => <option key={`h-${t}`} value={t}>{t}</option>)}
+                                 </select>
                               </td>
+
                               <td className="p-2">
-                                 <input 
-                                   list="team-list"
-                                   placeholder="Deplasman Takım" 
+                                 <select 
                                    value={m.away_team} 
                                    onChange={e => handleBulletinChange(idx, 'away_team', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded outline-none focus:border-indigo-500 uppercase"
-                                 />
+                                   className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer uppercase"
+                                 >
+                                    <option value="">-- TAKIM SEÇİNİZ --</option>
+                                    {getAvailableTeams(idx, false).map(t => <option key={`a-${t}`} value={t}>{t}</option>)}
+                                 </select>
                               </td>
                            </tr>
                         ))}
