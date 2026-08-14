@@ -24,11 +24,10 @@ const ALL_CLUBS = [
   ...LEAGUE_TEAMS["LIGUE 1"], ...LEAGUE_TEAMS["SERIE A"],
   ...LEAGUE_TEAMS["LA LIGA"], ...LEAGUE_TEAMS["DİĞER AVRUPA"]
 ];
-// Bu değişken geçici olarak "Filtresiz" durumu sağlamak için tüm takımları tutuyor
 const UNIQUE_CLUBS = [...new Set(ALL_CLUBS)].sort();
 
 // ----------------------------------------------------
-// LOGOLAR (BÜTÜN KIRIK LİNKLER PNG OLARAK GÜNCELLENDİ)
+// LOGOLAR 
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -110,9 +109,29 @@ const CATEGORIES = [
   "ŞAMPİYONLAR LİGİ PLAY-OFF İLK MAÇ"
 ];
 
+// 🔴 OYUNCULAR (ADAM KRAL VE MANKOMAN DAHİL) 🔴
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "DİNÇER KARACA 🏆🏆", 
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU",
+  "mankoman": "MANKOMAN (ADMİN)",
+  "353535": "ADAM KRAL"
+};
+
 const isCategoryDFO = (cat: string) => cat.includes("ŞAMPİYONLAR") || cat.includes("AVRUPA LİGİ") || cat.includes("KONFERANS") || cat.includes("A.L.") || cat.includes("K.L.") || cat.includes("Ş.L.");
 const isCategoryNational = (cat: string) => cat === "FIFA DÜNYA KUPASI" || cat === "UEFA AVRUPA ULUSLAR LİGİ";
-const isTffMatchCheck = (category: string) => ["TÜRKİYE 1.LİG", "TÜRKİYE KADINLAR SÜPER LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE SÜPER LİG"].includes(category.trim().toUpperCase());
+const isTffMatchCheck = (category: string) => ["TÜRKİYE 1.LİG", "TÜRKİYE KADINLAR SÜPER LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE SÜPER LİG"].includes(category?.trim().toUpperCase() || '');
 
 const getDatesForWeek = (weekNum: number): string[] => {
   const dates = [];
@@ -146,66 +165,24 @@ for (let h = 12; h <= 23; h++) {
   }
 }
 
-const week4Matches = [
-  { id: 1, weekLabel: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
-  { id: 2, weekLabel: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, weekLabel: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
-  { id: 4, weekLabel: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
-  { id: 5, weekLabel: "4. HAFTA 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
-  { id: 6, weekLabel: "4. HAFTA 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
-  { id: 7, weekLabel: "4. HAFTA 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
-  { id: 8, weekLabel: "4. HAFTA 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
-  { id: 9, weekLabel: "4. HAFTA 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
-  { id: 10, weekLabel: "4. HAFTA 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
-  { id: 11, weekLabel: "4. HAFTA 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
-  { id: 12, weekLabel: "4. HAFTA 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
-  { id: 13, weekLabel: "4. HAFTA 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
-  { id: 14, weekLabel: "4. HAFTA 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
-  { id: 15, weekLabel: "4. HAFTA 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
-  { id: 16, weekLabel: "4. HAFTA 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
-  { id: 17, weekLabel: "4. HAFTA 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
-  { id: 18, weekLabel: "4. HAFTA 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
-  { id: 19, weekLabel: "4. HAFTA 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
-  { id: 20, weekLabel: "4. HAFTA 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
-  { id: 21, weekLabel: "4. HAFTA 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
-  { id: 22, weekLabel: "4. HAFTA 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
-  { id: 23, weekLabel: "4. HAFTA 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
-  { id: 24, weekLabel: "4. HAFTA 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
-];
-
-const allPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "DİNÇER KARACA 🏆🏆", 
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
-};
-
-const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"]
-};
-
 const getEliteTheme = (category: string) => {
-  const upCat = category.toUpperCase();
+  const upCat = category?.toUpperCase() || '';
   if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
     return { bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-white/30", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
   } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
     return { bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-orange-600/40", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
   } else if (upCat.includes("KONFERANS") || upCat.includes("K.L.")) {
     return { bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-emerald-600/40", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
-  } else if (isTffMatchCheck(category)) {
+  } else if (isTffMatchCheck(upCat)) {
     return { bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-red-600/40", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
   }
   return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-blue-600/40", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+};
+
+const formatDateTime = (isoString: string) => {
+  if (!isoString) return 'Bilinmiyor';
+  const d = new Date(isoString);
+  return d.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
 type BulletinMatch = { category: string; date: string; time: string; home_team: string; away_team: string; };
@@ -216,9 +193,18 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
+  // 🔴 AKTİF SEKME: 'intel' (İSTİHBARAT) EKLENDİ 🔴
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'intel'>('live');
   const [activeMessage, setActiveMessage] = useState('');
 
+  // İstihbarat (Intel) State'leri
+  const [intelWeek, setIntelWeek] = useState<number>(5);
+  const [intelData, setIntelData] = useState<any[]>([]); 
+  const [missingUsers, setMissingUsers] = useState<any[]>([]);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [intelBulletin, setIntelBulletin] = useState<any[]>([]);
+
+  // Radar/Bülten State'leri
   const [radarWeek, setRadarWeek] = useState<number>(4); 
   const [liveRadarMatches, setLiveRadarMatches] = useState<any[]>([]); 
   const [dbScores, setDbScores] = useState<Record<number, any>>({});
@@ -240,47 +226,91 @@ export default function AdminPage() {
     }
   };
 
+  // 🔴 İSTİHBARAT (GELEN TAHMİNLER) VERİ ÇEKME MOTORU 🔴
+  const fetchIntelData = async () => {
+    setActiveMessage(`⏳ ${intelWeek}. Hafta İstihbarat Raporu Çekiliyor...`);
+    
+    // O haftanın bültenini çek (maçları göstermek için)
+    const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', intelWeek).order('match_index', { ascending: true });
+    // O haftanın yollanan tahminlerini çek
+    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', intelWeek);
+
+    if (!bData || bData.length === 0) {
+      setIntelData([]);
+      setMissingUsers([]);
+      setIntelBulletin([]);
+      setActiveMessage(`❌ ${intelWeek}. Hafta bülteni veritabanında yok!`);
+      return;
+    }
+
+    setIntelBulletin(bData);
+
+    const grouped: Record<string, any> = {};
+    
+    // Tahminleri yarışmacıya göre grupla
+    pData?.forEach(row => {
+      if (!grouped[row.user_id]) {
+        grouped[row.user_id] = {
+          user_id: row.user_id,
+          name: allPlayersList[row.user_id] || `GİZLİ AJAN (${row.user_id})`,
+          predictions: {},
+          lastUpdate: row.created_at
+        };
+      }
+      grouped[row.user_id].predictions[row.match_index] = row.predicted_score;
+      // En son güncelleme tarihini bul
+      if (new Date(row.created_at) > new Date(grouped[row.user_id].lastUpdate)) {
+        grouped[row.user_id].lastUpdate = row.created_at;
+      }
+    });
+
+    const submitted = Object.values(grouped).sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
+    
+    // Tahmin yollamayan (eksik) askerleri tespit et
+    const submittedIds = Object.keys(grouped);
+    const missing = Object.entries(allPlayersList)
+      .filter(([id]) => !submittedIds.includes(id))
+      .map(([id, name]) => ({ id, name }));
+
+    setIntelData(submitted);
+    setMissingUsers(missing);
+    setActiveMessage(`✅ İstihbarat raporu güncellendi!`);
+    setTimeout(() => setActiveMessage(''), 3000);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'intel') {
+      fetchIntelData();
+    }
+  }, [isAuthenticated, activeTab, intelWeek]);
+
+
   const fetchRadarData = async () => {
     if (!isAuthenticated) return;
     try {
       let matchesDataToProcess: any[] = [];
-      const isWeek4 = radarWeek === 4;
+      const { data: bData, error: bError } = await supabase
+        .from('matches_bulletin')
+        .select('*')
+        .eq('week_num', radarWeek)
+        .order('match_index', { ascending: true });
 
-      if (isWeek4) {
-        matchesDataToProcess = week4Matches.map(m => ({
-          globalId: m.id, 
-          match_index: m.id,
-          weekLabel: m.weekLabel,
-          category: m.category,
-          date: m.date,
-          time: m.time,
-          home_team: m.homeTeam,
-          away_team: m.awayTeam
-        }));
-      } else {
-        const { data: bData, error: bError } = await supabase
-          .from('matches_bulletin')
-          .select('*')
-          .eq('week_num', radarWeek)
-          .order('match_index', { ascending: true });
-
-        if (bError || !bData || bData.length === 0) {
-          setLiveRadarMatches([]); 
-          setDbScores({});
-          return;
-        }
-
-        matchesDataToProcess = bData.map(m => ({
-          globalId: ((radarWeek - 1) * 24) + m.match_index,
-          match_index: m.match_index,
-          weekLabel: `${radarWeek}. HAFTA ${m.match_index}. MAÇ`,
-          category: m.category,
-          date: m.match_date,
-          time: m.match_time,
-          home_team: m.home_team,
-          away_team: m.away_team
-        }));
+      if (bError || !bData || bData.length === 0) {
+        setLiveRadarMatches([]); 
+        setDbScores({});
+        return;
       }
+
+      matchesDataToProcess = bData.map(m => ({
+        globalId: ((radarWeek - 1) * 24) + m.match_index,
+        match_index: m.match_index,
+        weekLabel: `${radarWeek}. HAFTA ${m.match_index}. MAÇ`,
+        category: m.category,
+        date: m.match_date,
+        time: m.match_time,
+        home_team: m.home_team,
+        away_team: m.away_team
+      }));
 
       setLiveRadarMatches(matchesDataToProcess);
 
@@ -536,23 +566,167 @@ export default function AdminPage() {
         
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 shadow-xl">
           <div className="relative z-10 text-center md:text-left">
-            <h1 className="text-2xl font-black text-amber-500 tracking-wider">🛠 ETML OPERASYON MERKEZİ 5.1</h1>
-            <p className="text-slate-400 text-sm mt-1">Radar Temaları, Tüm Takımlar & Hafızalı Editör <span className="text-emerald-400 font-bold">AKTİF</span></p>
+            <h1 className="text-2xl font-black text-amber-500 tracking-wider">🛠 ETML OPERASYON MERKEZİ 5.2</h1>
+            <p className="text-slate-400 text-sm mt-1">Radar Temaları, Tüm Takımlar & <span className="text-emerald-400 font-bold">İSTİHBARAT AĞI AKTİF</span></p>
           </div>
           <div className="relative z-10 mt-4 md:mt-0 h-10 flex items-center">
              {activeMessage && <div className="text-sm font-bold text-emerald-400 animate-pulse bg-emerald-950/80 px-4 py-2 rounded-lg border border-emerald-500 shadow-lg">{activeMessage}</div>}
           </div>
         </div>
 
-        <div className="w-full flex gap-2 mb-8 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
-          <button onClick={() => setActiveTab('live')} className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+        {/* 🔴 YENİ EKLENEN İSTİHBARAT SEKME BUTONU 🔴 */}
+        <div className="w-full flex flex-wrap gap-2 mb-8 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+          <button onClick={() => setActiveTab('live')} className={`flex-1 py-3 px-2 rounded-lg font-black text-xs md:text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
             📡 CANLI SKOR RADARI
           </button>
-          <button onClick={() => setActiveTab('bulletin')} className={`flex-1 py-3 rounded-lg font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
-            📅 YENİ BÜLTEN & ARŞİV MERKEZİ
+          <button onClick={() => setActiveTab('bulletin')} className={`flex-1 py-3 px-2 rounded-lg font-black text-xs md:text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            📅 BÜLTEN & ARŞİV
+          </button>
+          <button onClick={() => setActiveTab('intel')} className={`flex-1 py-3 px-2 rounded-lg font-black text-xs md:text-sm tracking-widest transition-all ${activeTab === 'intel' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            🕵️‍♂️ İSTİHBARAT MERKEZİ
           </button>
         </div>
 
+        {/* ===================== İSTİHBARAT MERKEZİ (YENİ KONTROL PANELİ) ===================== */}
+        {activeTab === 'intel' && (
+          <div className="animate-fade-in-up">
+            
+            <div className="flex justify-between items-center mb-6 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="text-emerald-500 font-bold uppercase tracking-widest text-sm">HEDEF HAFTA:</span>
+                <select 
+                  value={intelWeek} 
+                  onChange={e => setIntelWeek(Number(e.target.value))}
+                  className="bg-emerald-950 border border-emerald-500/50 text-emerald-300 font-black text-lg px-4 py-1.5 rounded-xl outline-none shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                >
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(w => <option key={w} value={w}>{w}. HAFTA RAPORU</option>)}
+                </select>
+              </div>
+              <button onClick={fetchIntelData} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold border border-slate-600 shadow-lg flex items-center gap-2">
+                <span className="animate-spin-slow">🔄</span> Verileri Güncelle
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center shadow-lg">
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">Toplam Yarışmacı</p>
+                <p className="text-4xl font-black text-white">{Object.keys(allPlayersList).length}</p>
+              </div>
+              <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-6 text-center shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                <p className="text-emerald-500/80 font-bold uppercase tracking-widest text-xs mb-2">Tahmin Gönderenler</p>
+                <p className="text-4xl font-black text-emerald-400">{intelData.length}</p>
+              </div>
+              <div className="bg-red-950/40 border border-red-500/30 rounded-2xl p-6 text-center shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                <p className="text-red-500/80 font-bold uppercase tracking-widest text-xs mb-2">Eksik (Bekleyenler)</p>
+                <p className="text-4xl font-black text-red-400">{missingUsers.length}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              
+              {/* SOL SÜTUN: GÖNDERENLER (AJAN DETAYLARI) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-emerald-400 font-black tracking-widest mb-6 flex items-center gap-2">
+                  <span className="text-2xl">✅</span> GÖREVİ TAMAMLAYANLAR
+                </h3>
+                
+                {intelData.length === 0 ? (
+                  <p className="text-slate-500 italic text-center py-10">Henüz bu hafta için tahmin gönderen asker yok.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {intelData.map(user => (
+                      <div key={user.user_id} className="border border-emerald-500/20 bg-[#050b14] rounded-xl overflow-hidden shadow-md">
+                        
+                        {/* Başlık (Tıklanabilir) */}
+                        <div 
+                          onClick={() => setExpandedUser(expandedUser === user.user_id ? null : user.user_id)}
+                          className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer hover:bg-emerald-900/20 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                            <div className="w-8 h-8 rounded-full bg-emerald-900 flex items-center justify-center text-emerald-300 font-black border border-emerald-500/50">
+                              {user.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="text-white font-bold text-sm">{user.name}</p>
+                              <p className="text-slate-500 text-[10px] tracking-widest">ID: {user.user_id}</p>
+                            </div>
+                          </div>
+                          <div className="text-right flex flex-col items-end">
+                            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-950 px-2 py-1 rounded border border-emerald-800">
+                              GÖNDERİM ONAYLI
+                            </span>
+                            <span className="text-[9px] text-slate-400 mt-1 italic">
+                              {formatDateTime(user.lastUpdate)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Detay Paneli (Akoridon) */}
+                        {expandedUser === user.user_id && (
+                          <div className="border-t border-emerald-900/30 bg-slate-900/80 p-4">
+                            <p className="text-[10px] font-black text-amber-500 tracking-widest mb-3 border-b border-slate-800 pb-2">
+                              NİHAİ TAHMİN RAPORU (24 MAÇ)
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                              {intelBulletin.map((match) => {
+                                const predictedScore = user.predictions[match.match_index] || '-';
+                                const isMissing = predictedScore === '-' || predictedScore === '---' || predictedScore === '';
+                                
+                                return (
+                                  <div key={match.match_index} className="flex justify-between items-center py-1.5 border-b border-slate-800/50">
+                                    <span className="text-[10px] text-slate-400 font-medium truncate pr-2">
+                                      {match.match_index}. {match.home_team} - {match.away_team}
+                                    </span>
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded ${isMissing ? 'bg-red-950/50 text-red-500 border border-red-900' : 'bg-slate-950 text-amber-400 border border-slate-700'}`}>
+                                      {predictedScore}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* SAĞ SÜTUN: GİRMEYENLER (EKSİKLER) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-red-400 font-black tracking-widest mb-6 flex items-center gap-2">
+                  <span className="text-2xl">🚨</span> KAYIP BİRLİKLER (BEKLEYENLER)
+                </h3>
+                
+                {missingUsers.length === 0 ? (
+                  <div className="bg-emerald-950/30 border border-emerald-500/30 p-6 rounded-xl text-center">
+                    <span className="text-4xl block mb-2">🏆</span>
+                    <p className="text-emerald-400 font-bold">MÜKEMMEL OPERASYON!</p>
+                    <p className="text-emerald-500/70 text-sm">Bütün yarışmacılar tahminlerini eksiksiz gönderdi.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                    {missingUsers.map((user, idx) => (
+                      <div key={idx} className="bg-[#050b14] border border-red-900/50 rounded-lg p-3 flex items-center gap-3">
+                        <div className="w-6 h-6 rounded bg-red-950 flex items-center justify-center text-red-500 font-bold text-xs">
+                          !
+                        </div>
+                        <div className="truncate">
+                          <p className="text-slate-300 font-bold text-xs truncate">{user.name}</p>
+                          <p className="text-slate-500 text-[9px] tracking-wider">ID: {user.id}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ===================== CANLI RADAR TABI ===================== */}
         {activeTab === 'live' && (
           <>
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
@@ -576,7 +750,7 @@ export default function AdminPage() {
               <div className="w-full py-20 text-center bg-slate-900/30 rounded-2xl border border-slate-800 border-dashed">
                 <span className="text-4xl block mb-4">📭</span>
                 <h3 className="text-xl font-bold text-slate-400">Veritabanında Kayıt Yok</h3>
-                <p className="text-slate-500 mt-2">{radarWeek}. Hafta bülteni henüz sisteme girilmemiş. "Yeni Bülten" sekmesinden hazırlayabilirsin.</p>
+                <p className="text-slate-500 mt-2">{radarWeek}. Hafta bülteni henüz sisteme girilmemiş. "Bülten & Arşiv" sekmesinden hazırlayabilirsin.</p>
               </div>
             ) : (
               <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
@@ -624,7 +798,7 @@ export default function AdminPage() {
                           <div className="absolute inset-0 bg-slate-900/70 z-0"></div>
                         </>
                       )}
-                      <div className="relative z-10 flex flex-col h-full">
+                      <div className="relative z-10 flex flex-col h-full py-2">
                         
                         <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
                           <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{match.weekLabel}</span>
@@ -632,11 +806,11 @@ export default function AdminPage() {
                           {isFinished ? <span className="text-[9px] font-black text-emerald-500 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-800/50">ONAYLANDI</span> : status === 'LIVE' ? <span className="text-[9px] font-black text-red-500 bg-red-950/50 px-2 py-1 rounded border border-red-800/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">CANLI YAYINDA</span> : <span className="text-[9px] font-black text-slate-500 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">BEKLEMEDE</span>}
                         </div>
 
-                        <div className="w-full text-center px-2 mt-1">
+                        <div className="w-full text-center px-2 mt-1 mb-2">
                           <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
                         </div>
 
-                        <div className="flex items-center justify-between px-4 pt-3 pb-4">
+                        <div className="flex items-center justify-between px-4 pb-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
                             <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={match.home_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
                             <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.home_team}</span>
@@ -644,11 +818,11 @@ export default function AdminPage() {
 
                           <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                              <select value={hScore} onChange={e => handleScoreChange(globalMatchId, 'home', e.target.value)} disabled={isFinished} className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner ${status === 'LIVE' ? 'text-amber-400' : ''}`} style={{ textAlignLast: 'center' }}>
+                              <select value={hScore} onChange={e => handleScoreChange(globalMatchId, 'home', e.target.value)} disabled={isFinished} className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner text-center ${status === 'LIVE' ? 'text-amber-400' : ''}`} style={{ textAlignLast: 'center' }}>
                                 {scoreOptions.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
                               </select>
                               <span className={`text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                              <select value={aScore} onChange={e => handleScoreChange(globalMatchId, 'away', e.target.value)} disabled={isFinished} className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner ${status === 'LIVE' ? 'text-amber-400' : ''}`} style={{ textAlignLast: 'center' }}>
+                              <select value={aScore} onChange={e => handleScoreChange(globalMatchId, 'away', e.target.value)} disabled={isFinished} className={`w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-white outline-none focus:border-amber-500 disabled:opacity-50 cursor-pointer appearance-none shadow-inner text-center ${status === 'LIVE' ? 'text-amber-400' : ''}`} style={{ textAlignLast: 'center' }}>
                                 {scoreOptions.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
                               </select>
                             </div>
