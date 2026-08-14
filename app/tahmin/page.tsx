@@ -213,6 +213,9 @@ export default function TahminlerPortal() {
   const [bulletin, setBulletin] = useState<any[]>([]);
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [isSaving, setIsSaving] = useState(false);
+  
+  // FOTOĞRAF İNDİRME STATE'İ
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const targetDate = new Date('2026-08-17T21:00:00+03:00').getTime();
@@ -350,35 +353,40 @@ export default function TahminlerPortal() {
 
   const ghostColumns = Array.from({ length: 10 });
 
-  // 🔴 SİBER KANIT İNDİRME PROTOKOLÜ (CSV EXPORT) 🔴
-  const downloadCSV = () => {
-    // Türkçe karakterlerin Excel'de bozulmaması için BOM (Byte Order Mark) ekliyoruz.
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-    
-    // 1. Satır: Sütun Başlıkları
-    const headers = [
-      "OYUNCU İSMİ", 
-      ...week4Matches.map(m => `${m.id}. MAC (${m.homeTeam} - ${m.awayTeam})`)
-    ];
-    csvContent += headers.join(";") + "\r\n";
+  // 🔴 SİBER FOTOĞRAF ÇEKİM PROTOKOLÜ (JPEG EXPORT) 🔴
+  const downloadJPEG = async () => {
+    setIsDownloading(true);
+    try {
+      // Sadece indir tuşuna basıldığında fotoğraf motorunu çağırır (sayfayı ağırlaştırmaz)
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const element = document.getElementById('jpeg-export-container');
+      if (!element) return;
 
-    // 2. Satır ve Sonrası: Oyuncu İsimleri ve Skorlar
-    finalPlayersList.forEach(id => {
-      const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen";
-      const preds = week4PredictionsData[id] || Array(24).fill('PAS');
-      const row = [playerName, ...preds];
-      csvContent += row.join(";") + "\r\n";
-    });
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#050b14', // Arka plan rengini ETM Ligi teması yapar
+        scale: 2, // Fotoğraf kalitesini HD yapar
+        useCORS: true // Logoların fotoğrafta görünmesini sağlar
+      });
 
-    // İndirme Tetikleyicisi
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ETM_Lig_4_Hafta_Resmi_Deklarasyon_Kanit.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const image = canvas.toDataURL("image/jpeg", 0.9);
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = "ETM_Lig_4_Hafta_Tahminler.jpg";
+      link.click();
+    } catch (error) {
+      console.error("Fotoğraf oluşturulamadı:", error);
+      alert("Fotoğraf indirilirken bir hata oluştu.");
+    }
+    setIsDownloading(false);
   };
+
+  // Gizli stüdyo için "PAS" geçenleri filtreleyip, sadece tahmin gönderenleri A'dan Z'ye sıraladığımız temiz liste
+  const activePlayersForJPEG = useMemo(() => {
+    return Object.keys(TEST_ACCOUNTS)
+      .filter(id => id !== 'mankoman' && week4PredictionsData[id])
+      .sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -527,13 +535,14 @@ export default function TahminlerPortal() {
               
               <div className="flex flex-wrap md:flex-nowrap gap-3 items-center w-full md:w-auto relative">
                 
-                {/* 🔴 YENİ EKLENEN KANIT İNDİRME BUTONU 🔴 */}
+                {/* 🔴 YENİ: TAHMİNLERİ İNDİR BUTONU (JPEG) 🔴 */}
                 <button 
-                  onClick={downloadCSV}
-                  title="Tüm skorları Excel dosyası olarak cihazınıza indirin"
-                  className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] whitespace-nowrap transition-all gap-2 text-sm"
+                  onClick={downloadJPEG}
+                  disabled={isDownloading}
+                  title="Tahmin tablosunu fotoğraf (JPEG) olarak cihazınıza indirin"
+                  className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] whitespace-nowrap transition-all gap-2 text-sm disabled:opacity-50"
                 >
-                  <span className="text-lg">💾</span> KANIT İNDİR
+                  <span className="text-lg">📸</span> {isDownloading ? 'FOTOĞRAF HAZIRLANIYOR...' : 'TAHMİNLERİ İNDİR'}
                 </button>
 
                 <div className="relative flex-1 md:min-w-[250px]">
@@ -573,7 +582,7 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 TABLO ALANI 🔴 */}
+            {/* 🔴 GÖRÜNEN TABLO ALANI (DEĞİŞMEDİ, HAYALET SÜTUNLAR DURUYOR) 🔴 */}
             <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
               <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                 <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -661,6 +670,67 @@ export default function TahminlerPortal() {
                         <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
                       </tr>
                     )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Sadece Tahmin Gönderenler, Tam Boy, Görünmez) 🔴 */}
+            <div className="absolute left-[-9999px] top-[-9999px]">
+              <div id="jpeg-export-container" className="bg-[#050b14] p-8 w-max">
+                <div className="text-center mb-6 border-b border-slate-800 pb-4">
+                  <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - 4. HAFTA TAHMİNLERİ</h2>
+                  <p className="text-slate-400 mt-2 text-sm font-medium">* Sadece tahmin gönderen yarışmacılar A'dan Z'ye sıralanmıştır.</p>
+                </div>
+                <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
+                  <thead className="bg-slate-950">
+                    <tr>
+                      <th className="bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
+                        <span className="text-amber-500 font-black tracking-widest text-lg">YARIŞMACI / MAÇ NO</span>
+                      </th>
+                      {week4Matches.map(m => (
+                        <th key={`exp-m1-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px] text-lg">{m.id}</th>
+                      ))}
+                    </tr>
+                    <tr>
+                      <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
+                        <span className="text-white font-black tracking-widest text-sm uppercase">EV SAHİBİ TAKIM</span>
+                      </th>
+                      {week4Matches.map(m => (
+                        <th key={`exp-home-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
+                           {m.homeTeam}
+                        </th>
+                      ))}
+                    </tr>
+                    <tr>
+                      <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
+                        <span className="text-white font-black tracking-widest text-sm uppercase">DEPLASMAN TAKIM</span>
+                      </th>
+                      {week4Matches.map(m => (
+                        <th key={`exp-away-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
+                           {m.awayTeam}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  
+                  <tbody>
+                    {activePlayersForJPEG.map(id => {
+                      const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
+                      const preds = week4PredictionsData[id];
+                      return (
+                        <tr key={`exp-${id}`}>
+                          <td className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold text-slate-300 tracking-wide">
+                            {playerName}
+                          </td>
+                          {preds.map((score, idx) => (
+                            <td key={`exp-sc-${idx}`} className="border-b border-r border-slate-800 p-2 font-black text-amber-500 bg-[#0a1120] text-base">
+                              {score}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
