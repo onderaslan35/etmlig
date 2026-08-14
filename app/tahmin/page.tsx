@@ -74,18 +74,96 @@ const isTffMatchCheck = (category: string) => {
 };
 
 const getEliteTheme = (category: string) => {
-  const upCat = category?.toUpperCase() || '';
-  if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
-    return { bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-white/30" };
-  } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
-    return { bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-orange-600/40" };
-  } else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) {
-    return { bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-emerald-600/40" };
-  } else if (isTffMatchCheck(upCat)) {
-    return { bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-red-600/40" };
-  }
-  return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-blue-600/40" };
-};
+    if(!category) return { bgImg: null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
+
+    const upCat = category.toUpperCase();
+    
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
+      return {
+        bgImg: "url('/cl-bg.png')",
+        containerBorder: "border-indigo-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
+        containerBg: "bg-[#050b14]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-indigo-300",
+        badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
+        scoreBorder: "border-white/30",
+        colonText: "text-white/50",
+        tagText: "text-cyan-300",
+        tagBg: "bg-cyan-950/90",
+        tagBorder: "border-cyan-400/80",
+        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+      };
+    } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
+      return {
+        bgImg: "url('/el-bg.png')", 
+        containerBorder: "border-orange-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
+        containerBg: "bg-[#140805]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-orange-400",
+        badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
+        scoreBorder: "border-orange-600/40",
+        colonText: "text-orange-400/50",
+        tagText: "text-orange-300",
+        tagBg: "bg-orange-950/90",
+        tagBorder: "border-orange-400/80",
+        bottomBar: "bg-[#140805]/90 border-orange-900/30"
+      };
+    } else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) {
+      return {
+        bgImg: "url('/uecl-bg.png')",
+        containerBorder: "border-emerald-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
+        containerBg: "bg-[#05140b]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-emerald-400",
+        badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
+        scoreBorder: "border-emerald-600/40",
+        colonText: "text-emerald-400/50",
+        tagText: "text-emerald-300",
+        tagBg: "bg-emerald-950/90",
+        tagBorder: "border-emerald-400/80",
+        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
+      };
+    } else if (isTffMatchCheck(upCat)) {
+      return {
+        bgImg: "url('/tff-bg.png')",
+        containerBorder: "border-red-500/50",
+        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
+        containerBg: "bg-[#140505]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-red-400",
+        badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
+        scoreBorder: "border-red-600/40",
+        colonText: "text-red-400/50",
+        tagText: "text-red-400",
+        tagBg: "bg-red-950/90",
+        tagBorder: "border-red-500/80",
+        bottomBar: "bg-[#140505]/90 border-red-900/30"
+    };
+    }
+    return {
+        bgImg: null,
+        containerBorder: "border-blue-500/30",
+        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
+        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
+        badgeBg: "bg-transparent backdrop-blur-sm",
+        badgeText: "text-cyan-400",
+        badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
+        catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
+        scoreBorder: "border-blue-600/40",
+        colonText: "text-blue-400/50",
+        tagText: "text-cyan-300",
+        tagBg: "bg-cyan-950/90",
+        tagBorder: "border-cyan-400/80",
+        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+    };
+  };
 
 // 🔴 58 YARIŞMACI + MANKOMAN + ADAM KRAL 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
