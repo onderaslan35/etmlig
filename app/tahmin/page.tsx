@@ -150,30 +150,30 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
 
 // 🔴 4. HAFTA MAÇ LİSTESİ VE TAHMİNLERİ 🔴
 const week4Matches = [
-  { id: 1, homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
-  { id: 2, homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
-  { id: 4, homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
-  { id: 5, homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
-  { id: 6, homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
-  { id: 7, homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
-  { id: 8, homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
-  { id: 9, homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
-  { id: 10, homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
-  { id: 11, homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
-  { id: 12, homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
-  { id: 13, homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
-  { id: 14, homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
-  { id: 15, homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
-  { id: 16, homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
-  { id: 17, homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
-  { id: 18, homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
-  { id: 19, homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
-  { id: 20, homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
-  { id: 21, homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
-  { id: 22, homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
-  { id: 23, homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
-  { id: 24, homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
+  { id: 1, homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME" },
+  { id: 2, homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", category: "UEFA SÜPER KUPA" },
+  { id: 3, homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", category: "UEFA KONFERANS LİGİ ÖN ELEME" },
+  { id: 4, homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", category: "UEFA AVRUPA LİGİ ÖN ELEME" },
+  { id: 5, homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", category: "TÜRKİYE SÜPER LİG" },
+  { id: 6, homeTeam: "EROKSPOR", awayTeam: "SARIYER", category: "TÜRKİYE 1.LİG" },
+  { id: 7, homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR", category: "TÜRKİYE SÜPER LİG" },
+  { id: 8, homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE", category: "TÜRKİYE SÜPER LİG" },
+  { id: 9, homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR", category: "TÜRKİYE 1.LİG" },
+  { id: 10, homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR", category: "TÜRKİYE 1.LİG" },
+  { id: 11, homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR", category: "TÜRKİYE SÜPER LİG" },
+  { id: 12, homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE", category: "TÜRKİYE SÜPER LİG" },
+  { id: 13, homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK", category: "TÜRKİYE 1.LİG" },
+  { id: 14, homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK", category: "TÜRKİYE 1.LİG" },
+  { id: 15, homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY", category: "İNGİLTERE SÜPER KUPA" },
+  { id: 16, homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR", category: "TÜRKİYE SÜPER LİG" },
+  { id: 17, homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR", category: "TÜRKİYE 1.LİG" },
+  { id: 18, homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR", category: "TÜRKİYE SÜPER LİG" },
+  { id: 19, homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR", category: "TÜRKİYE SÜPER LİG" },
+  { id: 20, homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR", category: "TÜRKİYE 1.LİG" },
+  { id: 21, homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR", category: "TÜRKİYE 1.LİG" },
+  { id: 22, homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", category: "TÜRKİYE 1.LİG" },
+  { id: 23, homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", category: "TÜRKİYE SÜPER KUPA" },
+  { id: 24, homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", category: "TÜRKİYE 1.LİG" }
 ];
 
 const week4PredictionsData: Record<string, string[]> = {
@@ -195,7 +195,7 @@ const normalizeTurkish = (text: string) => {
 };
 
 export default function TahminlerPortal() {
-  const [view, setView] = useState<'lobby' | 'declaration' | 'entry'>('lobby');
+  const [view, setView] = useState<'lobby' | 'declaration' | 'entry' | 'tahminmatik'>('lobby');
   
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isTimeUp, setIsTimeUp] = useState(false);
@@ -214,8 +214,10 @@ export default function TahminlerPortal() {
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [isSaving, setIsSaving] = useState(false);
   
-  // FOTOĞRAF İNDİRME STATE'İ
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // 🔴 TAHMİNMATİK MOTORU İÇİN STATE 🔴
+  const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
 
   useEffect(() => {
     const targetDate = new Date('2026-08-17T21:00:00+03:00').getTime();
@@ -289,13 +291,18 @@ export default function TahminlerPortal() {
     }));
   };
 
-  // 🔴 YENİ EKLENEN TAHMİNMATİK OTOMATİK DOLDURMA MOTORU 🔴
-  const handleTahminMatik = () => {
+  // 🔴 TAHMİNMATİK KONTROLÜ 🔴
+  const handleTahminmatikChange = (matchId: number, type: 'home' | 'away', val: string) => {
+    setTahminmatikScores(prev => ({
+      ...prev,
+      [matchId]: { ...(prev[matchId] || { home: '-', away: '-' }), [type]: val }
+    }));
+  };
+
+  const handleTahminMatikRastgele = () => {
     const newPreds = { ...predictions };
     Object.keys(newPreds).forEach(matchIndex => {
-      // Sadece boş olanları ('-') doldurur. Dolu skorlara dokunmaz.
       if (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-') {
-        // 0 ile 3 arası mantıklı rastgele futbol skoru
         const randomHome = Math.floor(Math.random() * 4).toString();
         const randomAway = Math.floor(Math.random() * 4).toString();
         newPreds[Number(matchIndex)] = { home: randomHome, away: randomAway };
@@ -307,7 +314,7 @@ export default function TahminlerPortal() {
   const savePredictions = async () => {
     const missing = Object.values(predictions).some(p => p.home === '-' || p.away === '-');
     if (missing) {
-      alert('Lütfen tüm maçların skorlarını doldurun veya TAHMİNMATİK kullanın!');
+      alert('Lütfen tüm maçların skorlarını doldurun veya RASTGELE DOLDUR kullanın!');
       return;
     }
 
@@ -333,7 +340,7 @@ export default function TahminlerPortal() {
     setIsSaving(false);
   };
 
-  const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
+  const scoreOptionsArr = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
   const toggleSortOrder = () => {
     if (sortOrder === 'A-Z') setSortOrder('Z-A');
@@ -368,22 +375,18 @@ export default function TahminlerPortal() {
 
   const ghostColumns = Array.from({ length: 10 });
 
-  // 🔴 YENİ NESİL ZIRHLI FOTOĞRAF MOTORU (html-to-image) 🔴
   const downloadJPEG = async () => {
     setIsDownloading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Animasyon nefes alma payı
-      
+      await new Promise(resolve => setTimeout(resolve, 500)); 
       const htmlToImage = await import('html-to-image');
       const element = document.getElementById('jpeg-export-container');
-      
       if (!element) throw new Error("Stüdyo elementi bulunamadı");
 
-      // LAB renk hatasını ve tarayıcı sınırlarını aşan yeni motor
       const dataUrl = await htmlToImage.toJpeg(element, { 
         quality: 0.95, 
         backgroundColor: '#050b14',
-        pixelRatio: 1.5 // Cam gibi HD okuma için
+        pixelRatio: 1.5 
       });
 
       const link = document.createElement("a");
@@ -445,74 +448,92 @@ export default function TahminlerPortal() {
               <p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 max-w-5xl mx-auto">
+            {/* 🔴 YENİ 3'LÜ DEV LOBİ EKRANI (DEKLARASYON + TAHMİNMATİK + GİRİŞLER) 🔴 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
               
+              {/* 1. KART: RESMİ DEKLARASYON */}
               <div 
                 onClick={() => setView('declaration')}
                 className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all duration-300 group shadow-[0_0_30px_rgba(79,70,229,0.1)] hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"
               >
-                <div className="w-24 h-24 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <span className="text-5xl">📜</span>
+                <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <span className="text-4xl">📜</span>
                 </div>
-                <h2 className="text-2xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
-                <p className="text-slate-400 text-sm">Geçmiş haftaların tahmin arşivini ve resmi oyuncu listelerini inceleyin.</p>
+                <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
+                <p className="text-slate-400 text-xs">Geçmiş haftaların tahmin arşivini ve resmi oyuncu listelerini inceleyin.</p>
                 <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                   Arşive Giriş Yap
                 </div>
               </div>
 
+              {/* 2. KART: YENİ EKLENEN TAHMİNMATİK EFSANESİ */}
+              <div 
+                onClick={() => setView('tahminmatik')}
+                className="bg-slate-900/50 border-2 border-emerald-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-emerald-900/20 hover:border-emerald-500 transition-all duration-300 group shadow-[0_0_30px_rgba(16,185,129,0.1)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)]"
+              >
+                <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_currentColor]">
+                  <span className="text-4xl drop-shadow-md">⚡</span>
+                </div>
+                <h2 className="text-xl font-black text-emerald-400 tracking-widest mb-3">TAHMİNMATİK</h2>
+                <p className="text-slate-400 text-xs">İstediğiniz skoru seçin, kimlerin o skoru tahmin ettiğini anında bulun.</p>
+                <div className="mt-8 px-6 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                  Tahminmatik'i Aç
+                </div>
+              </div>
+
+              {/* 3. KART: 5. HAFTA GİRİŞLERİ (DOKUNULMADI, AYNEN KALDI) */}
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)]">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4">
-                  <span className="text-amber-500 font-black tracking-widest text-sm bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
+                  <span className="text-amber-500 font-black tracking-widest text-[11px] sm:text-xs bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)] whitespace-nowrap">
                     5. HAFTA GİRİŞLERİ
                   </span>
                 </div>
 
-                <div className="text-center mb-6 mt-4">
-                  <p className="text-xs text-slate-400 font-bold tracking-widest mb-1">AÇILIŞ: <span className="text-slate-200">14.08.2026 - 21:00</span></p>
-                  <p className="text-xs text-red-400 font-bold tracking-widest">KAPANIŞ: <span className="text-red-300">17.08.2026 - 21:00</span></p>
+                <div className="text-center mb-5 mt-4">
+                  <p className="text-[10px] text-slate-400 font-bold tracking-widest mb-1">AÇILIŞ: <span className="text-slate-200">14.08.2026 - 21:00</span></p>
+                  <p className="text-[10px] text-red-400 font-bold tracking-widest">KAPANIŞ: <span className="text-red-300">17.08.2026 - 21:00</span></p>
                 </div>
 
-                <div className="flex justify-center gap-3 mb-8">
+                <div className="flex justify-center gap-2 mb-6">
                   <div className="flex flex-col items-center">
-                    <div className="bg-slate-950 border border-slate-700 w-14 h-16 rounded-xl flex items-center justify-center shadow-inner">
-                      <span className="text-2xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
+                    <div className="bg-slate-950 border border-slate-700 w-12 h-14 rounded-xl flex items-center justify-center shadow-inner">
+                      <span className="text-xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Gün</span>
+                    <span className="text-[8px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Gün</span>
                   </div>
-                  <span className="text-2xl font-black text-slate-600 mt-3">:</span>
+                  <span className="text-xl font-black text-slate-600 mt-3">:</span>
                   <div className="flex flex-col items-center">
-                    <div className="bg-slate-950 border border-slate-700 w-14 h-16 rounded-xl flex items-center justify-center shadow-inner">
-                      <span className="text-2xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <div className="bg-slate-950 border border-slate-700 w-12 h-14 rounded-xl flex items-center justify-center shadow-inner">
+                      <span className="text-xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Saat</span>
+                    <span className="text-[8px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Saat</span>
                   </div>
-                  <span className="text-2xl font-black text-slate-600 mt-3">:</span>
+                  <span className="text-xl font-black text-slate-600 mt-3">:</span>
                   <div className="flex flex-col items-center">
-                    <div className="bg-slate-950 border border-slate-700 w-14 h-16 rounded-xl flex items-center justify-center shadow-inner">
-                      <span className="text-2xl font-black text-amber-400">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    <div className="bg-slate-950 border border-slate-700 w-12 h-14 rounded-xl flex items-center justify-center shadow-inner">
+                      <span className="text-xl font-black text-amber-400">{String(timeLeft.minutes).padStart(2, '0')}</span>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Dakika</span>
+                    <span className="text-[8px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Dk</span>
                   </div>
-                  <span className="text-2xl font-black text-slate-600 mt-3">:</span>
+                  <span className="text-xl font-black text-slate-600 mt-3">:</span>
                   <div className="flex flex-col items-center">
-                    <div className="bg-slate-950 border border-slate-700 w-14 h-16 rounded-xl flex items-center justify-center shadow-inner">
-                      <span className="text-2xl font-black text-red-400 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    <div className="bg-slate-950 border border-slate-700 w-12 h-14 rounded-xl flex items-center justify-center shadow-inner">
+                      <span className="text-xl font-black text-red-400 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Saniye</span>
+                    <span className="text-[8px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Sn</span>
                   </div>
                 </div>
 
-                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-6"></div>
+                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-5"></div>
 
-                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <form onSubmit={handleLogin} className="flex flex-col gap-3">
                   <input 
                     type="text" 
                     placeholder="Yarışmacı ID" 
                     value={username} 
                     onChange={e => setUsername(e.target.value)} 
                     disabled={isTimeUp}
-                    className="bg-slate-950 border border-slate-700 px-4 py-3 rounded-xl text-white outline-none focus:border-amber-500 text-center font-black tracking-widest disabled:opacity-50" 
+                    className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none focus:border-amber-500 text-center font-black tracking-widest text-sm disabled:opacity-50" 
                   />
                   <input 
                     type="password" 
@@ -520,20 +541,100 @@ export default function TahminlerPortal() {
                     value={password} 
                     onChange={e => setPassword(e.target.value)} 
                     disabled={isTimeUp}
-                    className="bg-slate-950 border border-slate-700 px-4 py-3 rounded-xl text-white outline-none focus:border-amber-500 text-center tracking-widest disabled:opacity-50" 
+                    className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none focus:border-amber-500 text-center tracking-widest text-sm disabled:opacity-50" 
                   />
-                  {loginError && <p className="text-xs text-red-400 font-bold text-center bg-red-950/50 py-2 rounded-lg border border-red-500/30">{loginError}</p>}
+                  {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-1.5 rounded-lg border border-red-500/30">{loginError}</p>}
                   
                   <button 
                     type="submit" 
                     disabled={isTimeUp}
-                    className="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] mt-2 tracking-widest flex items-center justify-center gap-2"
+                    className="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] mt-1 tracking-widest flex items-center justify-center gap-2 text-sm"
                   >
-                    {isTimeUp ? 'SÜRE DOLDU - KAPALI' : 'SİSTEME GİRİŞ YAP'}
+                    {isTimeUp ? 'KAPALI' : 'GİRİŞ YAP'}
                   </button>
                 </form>
-
               </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ===================== YENİ TAHMİNMATİK EKRANI ===================== */}
+        {view === 'tahminmatik' && (
+          <div className="animate-fade-in-up w-full max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)] relative z-50">
+              <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors">
+                <span>⬅</span> Lobiye Dön
+              </button>
+              
+              <div className="text-center">
+                <h2 className="text-2xl md:text-3xl font-black text-emerald-500 tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] uppercase flex items-center justify-center gap-3">
+                  <span className="text-3xl md:text-4xl">⚡</span> 4. HAFTA TAHMİNMATİK
+                </h2>
+                <p className="text-slate-400 text-xs md:text-sm mt-2">İstediğiniz skoru seçin, kimlerin doğru tahmin ettiğini görün!</p>
+              </div>
+              
+              <div className="w-[120px] hidden md:block"></div> {/* Ortalama için boşluk */}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {week4Matches.map(match => {
+                 const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
+                 const isComplete = tScore.home !== '-' && tScore.away !== '-';
+                 const targetScore = `${tScore.home}-${tScore.away}`;
+                 
+                 const predictors = isComplete 
+                   ? Object.keys(week4PredictionsData)
+                       .filter(uid => week4PredictionsData[uid][match.id - 1] === targetScore)
+                       .map(uid => TEST_ACCOUNTS[uid]?.name || "Bilinmeyen")
+                       .sort((a,b) => a.localeCompare(b, 'tr'))
+                   : [];
+
+                 return (
+                   <div key={match.id} className="bg-[#0b1120] border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col">
+                      <div className="flex justify-between items-center bg-slate-950/80 px-4 py-2.5 border-b border-slate-800/80">
+                         <span className="text-xs font-bold text-slate-300 tracking-widest">4. HAFTA {match.id}. MAÇ</span>
+                         <span className="text-[9px] font-black text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-700 tracking-widest uppercase">{match.category}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center p-5 sm:p-6 bg-gradient-to-b from-[#0b1120] to-slate-900/50">
+                         <div className="flex-1 text-right pr-3 sm:pr-6 font-black text-[10px] sm:text-xs md:text-sm text-slate-200 uppercase tracking-widest drop-shadow-sm">{match.homeTeam}</div>
+                         
+                         <div className="flex items-center gap-2 sm:gap-3">
+                           <select value={tScore.home} onChange={e => handleTahminmatikChange(match.id, 'home', e.target.value)} className="bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg sm:text-xl px-1 sm:px-2 py-1 rounded-lg outline-none focus:border-amber-500 text-center w-12 sm:w-14 appearance-none shadow-inner cursor-pointer" style={{textAlignLast: 'center'}}>
+                             {scoreOptionsArr.map(o => <option key={o} value={o}>{o}</option>)}
+                           </select>
+                           <span className="text-slate-500 font-black text-lg sm:text-xl">-</span>
+                           <select value={tScore.away} onChange={e => handleTahminmatikChange(match.id, 'away', e.target.value)} className="bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg sm:text-xl px-1 sm:px-2 py-1 rounded-lg outline-none focus:border-amber-500 text-center w-12 sm:w-14 appearance-none shadow-inner cursor-pointer" style={{textAlignLast: 'center'}}>
+                             {scoreOptionsArr.map(o => <option key={o} value={o}>{o}</option>)}
+                           </select>
+                         </div>
+                         
+                         <div className="flex-1 text-left pl-3 sm:pl-6 font-black text-[10px] sm:text-xs md:text-sm text-slate-200 uppercase tracking-widest drop-shadow-sm">{match.awayTeam}</div>
+                      </div>
+                      
+                      <div className="bg-slate-950/50 border-t border-slate-800/80 p-4 min-h-[90px]">
+                         <div className="flex items-center gap-2 mb-3">
+                             <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
+                             <span className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest">SKORU BİLENLER [{predictors.length} KİŞİ]</span>
+                         </div>
+                         <div className="flex items-center justify-center border-t border-slate-800/50 pt-3">
+                             {!isComplete ? (
+                                 <span className="text-slate-600 text-[10px] sm:text-xs italic tracking-wide">Skor girilmesi bekleniyor...</span>
+                             ) : predictors.length === 0 ? (
+                                 <span className="text-slate-500 text-[10px] sm:text-xs font-medium tracking-wide">Bu skoru tahmin eden yarışmacı bulunamadı.</span>
+                             ) : (
+                                 <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+                                     {predictors.map((p, i) => (
+                                         <span key={i} className="bg-slate-900 border border-slate-700 px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold text-slate-300 shadow-sm uppercase tracking-wider">{p}</span>
+                                     ))}
+                                 </div>
+                             )}
+                         </div>
+                      </div>
+                   </div>
+                 );
+              })}
             </div>
           </div>
         )}
@@ -542,7 +643,6 @@ export default function TahminlerPortal() {
         {view === 'declaration' && (
           <div className="animate-fade-in-up w-full">
             
-            {/* Üst Menü */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)] relative z-50">
               <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors">
                 <span>⬅</span> Lobiye Dön
@@ -554,7 +654,6 @@ export default function TahminlerPortal() {
               
               <div className="flex flex-wrap md:flex-nowrap gap-3 items-center w-full md:w-auto relative">
                 
-                {/* 🔴 TAHMİNLERİ İNDİR BUTONU (JPEG) 🔴 */}
                 <button 
                   onClick={downloadJPEG}
                   disabled={isDownloading}
@@ -601,7 +700,6 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 GÖRÜNEN TABLO ALANI 🔴 */}
             <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
               <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                 <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -694,7 +792,7 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Kesik Fotoğraf Çıkarma Hatası Düzeltildi) 🔴 */}
+            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU 🔴 */}
             <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, opacity: 0, pointerEvents: 'none' }}>
               <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
                 <div className="text-center mb-6 border-b border-slate-800 pb-4">
@@ -807,11 +905,11 @@ export default function TahminlerPortal() {
                         <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
                           <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                             <select value={hScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
-                              {scoreOptions.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
+                              {scoreOptionsArr.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
                             </select>
                             <span className="text-xl font-bold text-slate-500">:</span>
                             <select value={aScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
-                              {scoreOptions.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
+                              {scoreOptionsArr.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
                             </select>
                           </div>
                         </div>
@@ -828,13 +926,13 @@ export default function TahminlerPortal() {
               })}
             </div>
 
-            {/* 🔴 TAHMİNMATİK VE KAYDET BUTONLARI BURADA 🔴 */}
+            {/* 🔴 "TAHMİNMATİK" KELİMESİ KARIŞMASIN DİYE "RASTGELE DOLDUR" YAPILDI 🔴 */}
             <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
               <button 
-                onClick={handleTahminMatik}
+                onClick={handleTahminMatikRastgele}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all hover:scale-105 border border-indigo-400/50 flex items-center gap-2"
               >
-                🎲 TAHMİNMATİK (Rastgele Doldur)
+                🎲 RASTGELE DOLDUR
               </button>
               
               <button 
