@@ -26,7 +26,7 @@ const week4Matches = [
 
 // 🔴 SIFIR HATA: VİKİPEDİ HAM LİNKLERİ 🔴
 const topLevelLogos = {
-  tff: 'https://upload.wikimedia.org/wikipedia/en/7/70/Turkish_Football_Federation_crest.svg',
+  tff: 'https://upload.wikimedia.org/wikipedia/commons/e/e3/T%C3%BCrkiye_Futbol_Federasyonu_logo.png',
   superLig: 'https://upload.wikimedia.org/wikipedia/tr/b/b3/Trendyol_S%C3%BCper_Lig_logo.png'
 };
 
@@ -132,34 +132,42 @@ export default function TffPuanDurumuPage() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 text-slate-100 flex flex-col items-center">
       
-      {/* 🔴 ÇİFT KATLI ŞEREF KÜRSÜSÜ 🔴 */}
+      {/* 🔴 ÇİFT KATLI ŞEREF KÜRSÜSÜ (Vikipedi Hotlink Zırhlı & Kutu Korumalı) 🔴 */}
       <div className="flex flex-col items-center text-center mb-8 mt-4 w-full">
         
         {/* ZİRVE KATI (Yazının Üstü): Sol Baş TFF, Sağ Baş Süper Lig */}
-        <div className="flex justify-between items-center w-full max-w-[850px] px-2 sm:px-8 mb-3 z-10">
-          <img src={topLevelLogos.tff} alt="TFF" title="TFF" className="h-14 sm:h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] hover:scale-110 transition-transform cursor-pointer" />
-          <img src={topLevelLogos.superLig} alt="Trendyol Süper Lig" title="Trendyol Süper Lig" className="h-14 sm:h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform cursor-pointer" />
+        <div className="flex justify-between items-end w-full max-w-[850px] px-2 sm:px-8 mb-2 z-10 relative">
+          <div className="bg-white/10 p-2 sm:p-3 rounded-2xl border border-red-500/40 shadow-[0_0_25px_rgba(220,38,38,0.4)] backdrop-blur-md">
+            <img src={topLevelLogos.tff} alt="TFF" title="TFF" referrerPolicy="no-referrer" crossOrigin="anonymous" className="h-14 sm:h-20 w-auto object-contain hover:scale-110 transition-transform cursor-pointer drop-shadow-xl" />
+          </div>
+          <div className="bg-white/10 p-2 sm:p-3 rounded-2xl border border-cyan-500/40 shadow-[0_0_25px_rgba(6,182,212,0.3)] backdrop-blur-md">
+            <img src={topLevelLogos.superLig} alt="Trendyol Süper Lig" title="Trendyol Süper Lig" referrerPolicy="no-referrer" crossOrigin="anonymous" className="h-14 sm:h-20 w-auto object-contain hover:scale-110 transition-transform cursor-pointer drop-shadow-xl" />
+          </div>
         </div>
 
         {/* MERKEZ KAT: Kanatlar ve Yazı */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-[1000px] bg-slate-900/50 py-5 px-6 rounded-[2.5rem] border border-slate-800/80 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-md relative -mt-6 pt-8">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-[1000px] bg-slate-900/70 py-6 px-6 rounded-[2.5rem] border border-slate-700/80 shadow-[0_0_40px_rgba(0,0,0,0.6)] backdrop-blur-lg relative -mt-8 pt-10">
           
           {/* Sol Kanat (Kupalar & Kadınlar) */}
-          <div className="flex items-center justify-center gap-3 sm:gap-5">
+          <div className="flex items-center justify-center gap-3 sm:gap-4">
             {leftKanatLogolar.map(logo => (
-              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" />
+              <div key={logo.id} className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-white/10 rounded-xl border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:bg-white/20 transition-all cursor-pointer group">
+                <img src={logo.src} alt={logo.alt} title={logo.alt} referrerPolicy="no-referrer" crossOrigin="anonymous" className="max-h-full max-w-full p-1.5 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+              </div>
             ))}
           </div>
 
           {/* MERKEZ BAŞLIK */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-widest uppercase mx-2 whitespace-nowrap" style={{ textShadow: '0 0 15px rgba(220,38,38,1), 0 0 30px rgba(220,38,38,0.8)' }}>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-widest uppercase mx-2 whitespace-nowrap z-20" style={{ textShadow: '0 0 15px rgba(220,38,38,1), 0 0 30px rgba(220,38,38,0.8)' }}>
             TFF <span className="text-red-500">PUAN DURUMU</span>
           </h1>
 
           {/* Sağ Kanat (Ligler) */}
-          <div className="flex items-center justify-center gap-3 sm:gap-5">
+          <div className="flex items-center justify-center gap-3 sm:gap-4">
             {rightKanatLogolar.map(logo => (
-              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" />
+              <div key={logo.id} className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-white/10 rounded-xl border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:bg-white/20 transition-all cursor-pointer group">
+                <img src={logo.src} alt={logo.alt} title={logo.alt} referrerPolicy="no-referrer" crossOrigin="anonymous" className="max-h-full max-w-full p-1.5 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+              </div>
             ))}
           </div>
 
