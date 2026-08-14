@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (TÜM EKSİKLER TAMAMLANDI!) 🔴
+// 🔴 YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -113,7 +113,7 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// İsimden ID'yi bulan ters sözlük (Puan dağıtımı için gerekli)
+// 🔴 İsimden ID bulan ters sözlük (Puanları veritabanında doğru kişiye yazmak için)
 const getPlayerIdByName = (name: string) => {
   return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
 };
@@ -196,7 +196,8 @@ const week4Matches = [
 ];
 
 export default function AdminRadarPortal() {
-  // 🔴 1. ADIM: İLK 4 MAÇ ÇİVİ GİBİ ÇAKILDI
+  
+  // 🔴 İLK 4 MAÇIN SKORLARI ÇİVİ GİBİ ÇAKILDI
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({
     1: { home: "0", away: "1" },
     2: { home: "2", away: "1" },
@@ -206,6 +207,11 @@ export default function AdminRadarPortal() {
 
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({
     1: true, 2: true, 3: true, 4: true
+  });
+  
+  // 🔴 İLK 4 MAÇ TAMAMEN KİLİTLENDİ
+  const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({
+    1: true, 2: true, 3: true, 4: true 
   });
 
   const toggleWinners = (matchId: number) => {
@@ -224,35 +230,26 @@ export default function AdminRadarPortal() {
   const isTffMatchCheck = (category: string) => {
     const uppercaseCat = category.toUpperCase();
     return (
-      uppercaseCat.includes("TÜRKİYE SÜPER LİG") ||
-      uppercaseCat.includes("TÜRKİYE KUPASI") ||
-      uppercaseCat.includes("TÜRKİYE 1.LİG") ||
-      uppercaseCat.includes("TÜRKİYE SÜPER KUPA") ||
-      uppercaseCat.includes("TÜRKİYE KADINLAR SÜPER LİG") ||
-      uppercaseCat.includes("TFF 1. LİG")
+      uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE KUPASI") || 
+      uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA") || 
+      uppercaseCat.includes("TÜRKİYE KADINLAR SÜPER LİG") || uppercaseCat.includes("TFF 1. LİG")
     );
   };
 
   // 🔴 SUPABASE PUAN DAĞITIM VE RESETLEME MOTORU 🔴
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     
-    // 2. ADIM: RESETLE BUTONU (GERÇEKTEN SIFIRLIYOR)
     if (action === 'Resetle') {
-      setAdminScores(prev => ({
-        ...prev,
-        [matchId]: { home: "-", away: "-" }
-      }));
-      setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); // Akordiyonu da kapat
-      alert(`${matchId}. Maçın skoru başarıyla sıfırlandı. Ekrandan kaldırıldı.`);
+      setAdminScores(prev => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
+      setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); 
       return;
     }
 
     if (action === 'Skoru Güncelle') {
-      alert(`${matchId}. Maçın ekrandaki skoru güncellendi.`);
+      alert(`${matchId}. Maçın skoru şimdilik ekranda güncellendi. Puan dağıtmak için "Maçı Bitir" butonunu kullanın.`);
       return;
     }
 
-    // 3. ADIM: MAÇI ONAYLA VE PUANLARI VERİTABANINA DAĞIT
     if (action === 'Maçı Onayla (Puan Dağıt)') {
       if (currentWinners.length === 0) {
         alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
@@ -260,46 +257,66 @@ export default function AdminRadarPortal() {
       }
 
       const isTff = isTffMatchCheck(matchData.category);
-      const leagueTarget = isTff ? 'tff_points' : 'dfo_points'; // Puanın yazılacağı sütun adı
+      const leagueTarget = isTff ? 'tff_points' : 'dfo_points'; 
       const leagueName = isTff ? 'TFF' : 'DFO';
 
-      const confirmMsg = `${currentWinners.length} kişiye kişi başı ${displayPoints} puan dağıtılacak.\nHedef: MASTER Puan Durumu ve ${leagueName} Puan Durumu.\nOnaylıyor musun Kumandanım?`;
+      const confirmMsg = `${currentWinners.length} kişiye kişi başı ${displayPoints} puan dağıtılacak.\n\nHedef Tablolar: MASTER Puan Durumu ve ${leagueName} Puan Durumu.\n\nOnaylıyor musun Kumandanım?`;
       if (!window.confirm(confirmMsg)) return;
 
       try {
-        // Döngüyle her bilenin puanını Supabase'e ekle
         let successCount = 0;
+        let errorMessage = "";
+
         for (const winnerName of currentWinners) {
           const userId = getPlayerIdByName(winnerName);
           if (!userId) continue;
 
-          // ⚠️ ÖNEMLİ NOT: "leaderboard" yazan yerleri, senin veritabanındaki tablonun adıyla değiştir (Örn: profiles, users vb.)
-          const { data: userRecord } = await supabase
-            .from('leaderboard') 
-            .select('master_points, dfo_points, tff_points')
+          // ⚠️ KONTROL: 'profiles' yazan yer kendi tablo adınla değişmelidir
+          const { data: userRecord, error: selectError } = await supabase
+            .from('profiles') // 🔴 BURADAKİ 'profiles' YAZISINI KENDİ TABLO ADINLA DEĞİŞTİR
+            .select(`master_points, ${leagueTarget}`)
             .eq('user_id', userId)
             .single();
 
-          if (userRecord) {
-            const newMasterScore = (userRecord.master_points || 0) + displayPoints;
-            const newLeagueScore = (userRecord[leagueTarget] || 0) + displayPoints;
+          if (selectError) {
+            errorMessage = selectError.message;
+            break; 
+          }
 
-            await supabase
-              .from('leaderboard') // Burayı da değiştir
-              .update({
-                master_points: newMasterScore,
-                [leagueTarget]: newLeagueScore
-              })
+          if (userRecord) {
+            // TS HATASINI EZMEK İÇİN EKLENEN SUSTURUCULAR:
+            const newMasterScore = ((userRecord as any).master_points || 0) + displayPoints;
+            const newLeagueScore = ((userRecord as any)[leagueTarget] || 0) + displayPoints;
+
+            // TS mızmızlanmasını atlatmak için update nesnesini ayrı tanımlıyoruz:
+            const updatePayload: any = {
+              master_points: newMasterScore,
+              [leagueTarget]: newLeagueScore
+            };
+
+            const { error: updateError } = await supabase
+              .from('profiles') // 🔴 BURAYI DA KENDİ TABLO ADINLA DEĞİŞTİRMEYİ UNUTMA
+              .update(updatePayload)
               .eq('user_id', userId);
             
+            if (updateError) {
+              errorMessage = updateError.message;
+              break;
+            }
             successCount++;
           }
         }
         
-        alert(`✅ İŞLEM BAŞARILI!\n${successCount} yarışmacının MASTER ve ${leagueName} tablolarına ${displayPoints} puan eklendi!`);
-      } catch (error) {
-        alert("❌ HATA: Puanlar Supabase'e aktarılamadı. Lütfen veritabanındaki tablo isimlerini kontrol et.");
-        console.error("Supabase Hatası:", error);
+        if (errorMessage) {
+           alert(`❌ HATA! Supabase tablo adın veya sütunların kodla uyuşmuyor.\n\nHata Mesajı: ${errorMessage}\n\nLütfen VScode'da 'profiles' tablo adını veya puan sütunlarını kendi veritabanındaki isimlerle değiştir.`);
+        } else if (successCount > 0) {
+           alert(`✅ İŞLEM BAŞARILI!\n${successCount} aslan parçasının MASTER ve ${leagueName} tablolarına ${displayPoints} puan eklendi!`);
+           setDistributedMatches(prev => ({...prev, [matchId]: true})); // MAÇI KİLİTLE
+        } else {
+           alert(`⚠️ İşlem bitti fakat güncellenecek kullanıcı ID'si bulunamadı. Veritabanındaki ID'ler eşleşmiyor olabilir.`);
+        }
+      } catch (error: any) {
+        alert("❌ BEKLENMEYEN HATA: " + error.message);
       }
     }
   };
@@ -338,11 +355,11 @@ export default function AdminRadarPortal() {
               🔴 KÖK KOMUTA MERKEZİ / ADMİN RADARI
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">
-              4. Hafta Manuel Skor Yönetimi ve Puan Dağıtım Paneli
+              4. Hafta Manuel Skor Yönetimi ve Gerçek Puan Dağıtım Paneli
             </p>
           </div>
           <div>
-            <div className="bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg shadow text-xs sm:text-sm">
+            <div className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg shadow-lg text-xs sm:text-sm tracking-widest border border-amber-600">
               4. HAFTA YÖNETİMİ
             </div>
           </div>
@@ -382,6 +399,7 @@ export default function AdminRadarPortal() {
             }
 
             const theme = getEliteTheme(match.category);
+            const isLocked = distributedMatches[match.id];
 
             return (
               <div 
@@ -423,11 +441,11 @@ export default function AdminRadarPortal() {
 
                       <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                         <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                          <select value={homeScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="bg-transparent text-xl sm:text-4xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
+                          <select disabled={isLocked} value={homeScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="bg-transparent text-xl sm:text-4xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] disabled:opacity-80">
                             {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                           </select>
                           <span className={`text-base sm:text-2xl font-bold ${theme.colonText}`}>:</span>
-                          <select value={awayScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="bg-transparent text-xl sm:text-4xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
+                          <select disabled={isLocked} value={awayScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="bg-transparent text-xl sm:text-4xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] disabled:opacity-80">
                             {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                           </select>
                         </div>
@@ -442,11 +460,18 @@ export default function AdminRadarPortal() {
 
                     </div>
                     
-                    {/* ADMİN BUTONLARI - ARTIK SUPABASE MOTORUNA BAĞLI */}
-                    <div className="flex justify-center gap-2 mt-5">
-                      <button onClick={() => handleAction('Skoru Güncelle', match.id, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all">Skoru Güncelle</button>
-                      <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.id, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all">Maçı Bitir (Dağıt)</button>
-                      <button onClick={() => handleAction('Resetle', match.id, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all">Resetle</button>
+                    <div className="flex justify-center gap-2 mt-5 h-[32px] items-center">
+                      {isLocked ? (
+                        <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner w-full text-center">
+                          ✅ BU MAÇIN PUANLARI DAĞITILDI
+                        </div>
+                      ) : (
+                        <>
+                          <button onClick={() => handleAction('Skoru Güncelle', match.id, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all">Skoru Güncelle</button>
+                          <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.id, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">Maçı Bitir (Dağıt)</button>
+                          <button onClick={() => handleAction('Resetle', match.id, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all">Resetle</button>
+                        </>
+                      )}
                     </div>
 
                   </div>
