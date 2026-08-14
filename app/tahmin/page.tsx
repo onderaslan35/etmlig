@@ -353,21 +353,21 @@ export default function TahminlerPortal() {
 
   const ghostColumns = Array.from({ length: 10 });
 
-  // 🔴 SİBER FOTOĞRAF ÇEKİM PROTOKOLÜ (GÜNCELLENDİ) 🔴
+  // 🔴 SİBER FOTOĞRAF ÇEKİM PROTOKOLÜ (TARAYICI KALKANI KIRILDI) 🔴
   const downloadJPEG = async () => {
     setIsDownloading(true);
     try {
-      // ÇÖZÜM 1: Çizim yapabilmesi için React'a nefes alma payı veriyoruz
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const html2canvas = (await import('html2canvas')).default;
       const element = document.getElementById('jpeg-export-container');
       
       if (!element) throw new Error("Stüdyo elementi bulunamadı");
 
+      // Mobil Safari/Chrome hata vermesin diye kalite 1.5'e çekildi, RAM şişmesi engellendi
       const canvas = await html2canvas(element, {
         backgroundColor: '#050b14', 
-        scale: 2, 
+        scale: 1.5, 
         useCORS: true,
         logging: false
       });
@@ -377,14 +377,14 @@ export default function TahminlerPortal() {
       link.href = image;
       link.download = "ETM_Lig_4_Hafta_Tahminler.jpg";
       
-      // ÇÖZÜM 2: Cihaz güvenlik duvarını geçmek için linki dökümana göm, tıkla ve sil
+      // DOM Exception yememek için link dökümana eklenir, tıklanır ve silinir
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Fotoğraf oluşturulamadı:", error);
-      alert("Tarayıcınız güvenlik nedeniyle fotoğraf oluşturmayı engelledi. Lütfen sayfayı yenileyip tekrar deneyin.");
+      alert("HATA: Cihaz hafızası veya tarayıcı engeline takıldı. Lütfen sayfayı yenileyip tekrar deneyin. Detay: " + error.message);
     }
     setIsDownloading(false);
   };
@@ -683,8 +683,8 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Özel Geniş Alan Atandı) 🔴 */}
-            <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', zIndex: -1 }}>
+            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Şeffaflık ile Tarayıcı Kandırıldı) 🔴 */}
+            <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -9999 }}>
               <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
                 <div className="text-center mb-6 border-b border-slate-800 pb-4">
                   <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - 4. HAFTA TAHMİNLERİ</h2>
