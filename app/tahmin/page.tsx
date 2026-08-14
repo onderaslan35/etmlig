@@ -348,8 +348,37 @@ export default function TahminlerPortal() {
     return [...submittedIds, ...missingIds];
   }, [searchTerm, sortOrder]);
 
-  // 🔴 HAYALET SÜTUNLAR İÇİN 10 ADET BOŞ DİZİ (Tablet/Geniş Ekran Kaydırması İçin) 🔴
   const ghostColumns = Array.from({ length: 10 });
+
+  // 🔴 SİBER KANIT İNDİRME PROTOKOLÜ (CSV EXPORT) 🔴
+  const downloadCSV = () => {
+    // Türkçe karakterlerin Excel'de bozulmaması için BOM (Byte Order Mark) ekliyoruz.
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    
+    // 1. Satır: Sütun Başlıkları
+    const headers = [
+      "OYUNCU İSMİ", 
+      ...week4Matches.map(m => `${m.id}. MAC (${m.homeTeam} - ${m.awayTeam})`)
+    ];
+    csvContent += headers.join(";") + "\r\n";
+
+    // 2. Satır ve Sonrası: Oyuncu İsimleri ve Skorlar
+    finalPlayersList.forEach(id => {
+      const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen";
+      const preds = week4PredictionsData[id] || Array(24).fill('PAS');
+      const row = [playerName, ...preds];
+      csvContent += row.join(";") + "\r\n";
+    });
+
+    // İndirme Tetikleyicisi
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "ETM_Lig_4_Hafta_Resmi_Deklarasyon_Kanit.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -496,7 +525,17 @@ export default function TahminlerPortal() {
                 <h2 className="text-3xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_10px_rgba(245,158,11,0.4)] uppercase">RESMİ DEKLARASYON</h2>
               </div>
               
-              <div className="flex gap-3 items-center w-full md:w-auto relative">
+              <div className="flex flex-wrap md:flex-nowrap gap-3 items-center w-full md:w-auto relative">
+                
+                {/* 🔴 YENİ EKLENEN KANIT İNDİRME BUTONU 🔴 */}
+                <button 
+                  onClick={downloadCSV}
+                  title="Tüm skorları Excel dosyası olarak cihazınıza indirin"
+                  className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] whitespace-nowrap transition-all gap-2 text-sm"
+                >
+                  <span className="text-lg">💾</span> KANIT İNDİR
+                </button>
+
                 <div className="relative flex-1 md:min-w-[250px]">
                   <input 
                     type="text" 
@@ -540,7 +579,6 @@ export default function TahminlerPortal() {
                 <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
                   
                   <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
-                    {/* Satır 1: Maç Numaraları */}
                     <tr>
                       <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
                         <span className="text-amber-500 font-black tracking-widest">4. HAFTA</span>
@@ -548,13 +586,11 @@ export default function TahminlerPortal() {
                       {week4Matches.map(m => (
                         <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th>
                       ))}
-                      {/* HAYALET SÜTUNLAR (Satır 1) */}
                       {ghostColumns.map((_, i) => (
                         <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                       ))}
                     </tr>
                     
-                    {/* Satır 2: Ev Sahibi Logoları */}
                     <tr>
                       <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
                         <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
@@ -566,13 +602,11 @@ export default function TahminlerPortal() {
                           </div>
                         </th>
                       ))}
-                      {/* HAYALET SÜTUNLAR (Satır 2) */}
                       {ghostColumns.map((_, i) => (
                         <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                       ))}
                     </tr>
 
-                    {/* Satır 3: Deplasman Logoları ve Tıklanabilir Sıralama */}
                     <tr>
                       <th 
                         onClick={toggleSortOrder}
@@ -593,7 +627,6 @@ export default function TahminlerPortal() {
                           </div>
                         </th>
                       ))}
-                      {/* HAYALET SÜTUNLAR (Satır 3) */}
                       {ghostColumns.map((_, i) => (
                         <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                       ))}
@@ -608,17 +641,14 @@ export default function TahminlerPortal() {
 
                       return (
                         <tr key={id} className={`hover:bg-slate-800/50 transition-colors group ${isMissing ? 'opacity-70' : ''}`}>
-                          {/* İsim Sütunu (Sağa Kaydırınca Sola Yapışır) */}
                           <td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900 transition-colors">
                             <span className={isMissing ? 'text-red-400 line-through' : 'text-slate-300'}>{playerName}</span>
                           </td>
-                          {/* Skor Sütunları */}
                           {preds.map((score, idx) => (
                             <td key={idx} className={`border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] group-hover:bg-slate-800/80 ${isMissing ? 'text-red-500 text-[10px]' : 'text-amber-500'}`}>
                               {score}
                             </td>
                           ))}
-                          {/* HAYALET SÜTUNLAR (Skorların Yanı) */}
                           {ghostColumns.map((_, i) => (
                             <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td>
                           ))}
@@ -626,7 +656,6 @@ export default function TahminlerPortal() {
                       );
                     })}
                     
-                    {/* Eğer arama sonucu boşsa */}
                     {finalPlayersList.length === 0 && (
                       <tr>
                         <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
