@@ -219,7 +219,7 @@ const week2Matches = [
   { id: 24, weekLabel: "2. Hafta - 24. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", date: "30.07.2026", time: "22:30", homeTeam: "BENFICA", awayTeam: "ST GALLEN", score: "5 - 0", winnersCount: 1, earnedPoints: 12, winners: ["SALİH KARACAOĞLU"] }
 ];
 
-// 3. HAFTA MAÇ VERİLERİ
+// 3. HAFTA MAÇ VERİLERİ 
 const week3Matches = [
   { id: 1, weekLabel: "3. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:00", homeTeam: "OLIMPIYAKOS", awayTeam: "NEC NIJMEGEN", score: "0 - 0", winnersCount: 0, earnedPoints: 0, winners: [] },
   { id: 2, weekLabel: "3. Hafta - 2. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", date: "05.08.2026", time: "20:30", homeTeam: "SPARTA PRAG", awayTeam: "OLIMPIC LYON", score: "2 - 1", winnersCount: 3, earnedPoints: 5, winners: ["MUSTAFA ELMAS", "ALİOS GÖZTEPE", "MEVLÜT EVLER"] },
@@ -247,7 +247,7 @@ const week3Matches = [
   { id: 24, weekLabel: "3. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "10.08.2026", time: "21:30", homeTeam: "PENDİKSPOR", awayTeam: "BATMAN PETROL SPOR", score: "2 - 2", winnersCount: 2, earnedPoints: 6, winners: ["DOĞAÇ ALKAN", "MEHMET ALİ KARA"] }
 ];
 
-// 4. HAFTA MAÇ VERİLERİ 
+// 4. HAFTA MAÇ VERİLERİ (STATİK DESTEK)
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", score: "- : -" },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", score: "- : -" },
@@ -276,17 +276,16 @@ const week4Matches = [
 ];
 
 export default function MacArsiviPage() {
+  // 🔴 5. HAFTA ARTIK ARŞİV AÇILIR MENÜSÜNDE YOK (MAKSİMUM 4) 🔴
   const [selectedWeek, setSelectedWeek] = useState<number>(4);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
-  // 🔴 EKMEL - BÜLTEN VERİLERİNİ TUTACAK STATE 🔴
   const [bulletinData, setBulletinData] = useState<Record<number, any>>({});
 
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
-        // Canlı maç skorları (4. hafta için vs)
         const { data: liveData } = await supabase.from('live_matches').select('*');
         if (liveData) {
           const liveMap: Record<number, any> = {};
@@ -294,10 +293,8 @@ export default function MacArsiviPage() {
           setLiveMatchesData(liveMap);
         }
 
-        // 🔴 YENİ BÜLTEN TABLOSU (Admin panelinden girilen maçlar) 🔴
         const { data: bultenData } = await supabase.from('matches_bulletin').select('*');
         if (bultenData) {
-           // Haftalara göre maçları grupla
            const bultenMap: Record<number, any[]> = {};
            bultenData.forEach(row => {
               if(!bultenMap[row.week_num]) bultenMap[row.week_num] = [];
@@ -309,11 +306,10 @@ export default function MacArsiviPage() {
                  time: row.match_time,
                  homeTeam: row.home_team,
                  awayTeam: row.away_team,
-                 score: "- : -" // Başlangıçta boş
+                 score: "- : -" 
               });
            });
            
-           // Maçları kendi içinde id'ye göre sırala
            Object.keys(bultenMap).forEach(week => {
              bultenMap[Number(week)].sort((a,b) => a.id - b.id);
            });
@@ -330,13 +326,11 @@ export default function MacArsiviPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🔴 HAFTAYA GÖRE MAÇ LİSTESİNİ ÇEK 🔴
   const currentMatches =
     selectedWeek === 1 ? week1Matches :
     selectedWeek === 2 ? week2Matches :
     selectedWeek === 3 ? week3Matches : 
     selectedWeek === 4 ? week4Matches :
-    // 5. ve sonrası haftalar için veritabanına bak, boşsa boş dizi dön
     (bulletinData[selectedWeek] || []);
 
   const toggleWinners = (matchId: number) => {
@@ -356,7 +350,6 @@ export default function MacArsiviPage() {
     );
   };
 
-  // 🔴 RENK MOTORU 🔴
   const getEliteTheme = (category: string) => {
     if(!category) return { bgImg: null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
 
@@ -449,6 +442,12 @@ export default function MacArsiviPage() {
     };
   };
 
+  // ÇAKIŞMAYI ÖNLEYEN EŞSİZ ID MOTORU
+  const getUniqueMatchId = (week: number, index: number) => {
+    if (week === 4) return index; 
+    return (week * 100) + index;
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans">
       <div className="max-w-5xl mx-auto">
@@ -468,17 +467,15 @@ export default function MacArsiviPage() {
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
               className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm"
             >
+              {/* 🔴 SADECE 1, 2, 3 ve 4. HAFTALAR GÖRÜNÜR 🔴 */}
               <option value={1}>1. HAFTA BÜLTENİ</option>
               <option value={2}>2. HAFTA BÜLTENİ</option>
               <option value={3}>3. HAFTA BÜLTENİ</option>
               <option value={4}>4. HAFTA BÜLTENİ</option>
-              {/* 🔴 5. HAFTA MENÜYE EKLENDİ 🔴 */}
-              <option value={5}>5. HAFTA BÜLTENİ</option>
             </select>
           </div>
         </div>
 
-        {/* EĞER SEÇİLİ HAFTA İÇİN MAÇ YOKSA UYARI VER */}
         {currentMatches.length === 0 ? (
            <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
               <span className="text-5xl mb-4 block opacity-50">🏟️</span>
@@ -501,9 +498,9 @@ export default function MacArsiviPage() {
               let displayPoints = match.earnedPoints || 0;
               let isFinished = false;
 
-              // Eğer 4. veya 5. hafta ise canlı/veri tabanından oku (Eski haftalar statik kalır)
               if (selectedWeek >= 4) {
-                const dbMatch = liveMatchesData[match.id];
+                const uniqueId = getUniqueMatchId(selectedWeek, match.id);
+                const dbMatch = liveMatchesData[uniqueId];
                 if (dbMatch && dbMatch.status !== 'NOT_STARTED') {
                   matchStatus = dbMatch.status;
                   homeScore = dbMatch.home_score;
@@ -512,7 +509,6 @@ export default function MacArsiviPage() {
                   
                   if (isFinished && homeScore !== '-' && awayScore !== '-') {
                     const targetScore = `${homeScore}-${awayScore}`;
-                    // Şimdilik 4. haftanın tahminlerini okuyor, ileride 5. hafta verisi geldiğinde oradan çekecek
                     const predictionsToUse = selectedWeek === 4 ? week4PredictionsData : {};
                     
                     currentWinners = Object.keys(predictionsToUse)
