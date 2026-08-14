@@ -241,17 +241,17 @@ export default function AdminRadarPortal() {
       const homeScore = adminScores[matchId]?.home || "-";
       const awayScore = adminScores[matchId]?.away || "-";
 
+      // UPSERT kullanıyoruz ki satır yoksa sıfırdan oluştursun ve hata vermesin!
       const { error: liveError } = await supabase
         .from('live_matches')
-        .update({ home_score: homeScore, away_score: awayScore, status: 'FINISHED' })
-        .eq('id', matchId);
+        .upsert({ id: matchId, home_score: homeScore, away_score: awayScore, status: 'LIVE' }, { onConflict: 'id' });
 
       if (liveError) alert("Canlı skor tablosu güncellenirken hata: " + liveError.message);
-      else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek.`);
+      else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek. (Sayfada görmek için CTRL+F5 ile yenileyebilirsin).`);
       return;
     }
 
-    // 2️⃣ MAÇI ONAYLA (DAĞIT): Hem 'points' (fiş) hem 'standings' (kasa) güncellenir.
+    // 2️⃣ MAÇI ONAYLA (DAĞIT): Hem 'points' (fiş) hem 'standings' (kasa) hem 'live_matches' güncellenir.
     if (action === 'Maçı Onayla (Puan Dağıt)') {
       if (currentWinners.length === 0) {
         alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
@@ -267,6 +267,11 @@ export default function AdminRadarPortal() {
       try {
         const homeScore = adminScores[matchId]?.home || "0";
         const awayScore = adminScores[matchId]?.away || "0";
+
+        // ÖNCE CANLI SKORU "BİTTİ" OLARAK İŞARETLE
+        await supabase
+            .from('live_matches')
+            .upsert({ id: matchId, home_score: homeScore, away_score: awayScore, status: 'FINISHED' }, { onConflict: 'id' });
 
         // MOTOR 1: FİŞ KESME
         const inserts = currentWinners.map(winnerName => {
@@ -331,7 +336,7 @@ export default function AdminRadarPortal() {
       return;
     }
 
-    // 3️⃣ İPTAL ET VE GERİ AL (RESET): Dağıtılan puanları geri çeker, fişleri siler, UI kilidini açar!
+    // 3️⃣ İPTAL ET VE GERİ AL (RESET): Dağıtılan puanları geri çeker, fişleri siler, canlı skoru iptal eder!
     if (action === 'Geri Al' || action === 'Resetle') {
       
       const isLocked = distributedMatches[matchId];
@@ -384,7 +389,7 @@ export default function AdminRadarPortal() {
       }
 
       // Canlı skoru da sıfırla
-      await supabase.from('live_matches').update({ home_score: '-', away_score: '-', status: 'NOT_STARTED' }).eq('id', matchId);
+      await supabase.from('live_matches').upsert({ id: matchId, home_score: '-', away_score: '-', status: 'NOT_STARTED' }, { onConflict: 'id' });
 
       // Ekranı sıfırla ve kilidi aç
       setAdminScores(prev => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
@@ -429,7 +434,7 @@ export default function AdminRadarPortal() {
               🔴 KÖK KOMUTA MERKEZİ / ADMİN RADARI
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">
-              4. Hafta Çift Motorlu Puan Dağıtım, Fiş Kesme ve Canlı Skor Paneli
+              4. Hafta Tam Teşekküllü Yönetim (Canlı Skor, Puan Dağıtım, Geri Al)
             </p>
           </div>
           <div>
@@ -534,7 +539,6 @@ export default function AdminRadarPortal() {
 
                     </div>
                     
-                    {/* 🔴 YENİ EKLENEN "İPTAL ET / GERİ AL" BUTONU */}
                     <div className="flex justify-center gap-2 mt-5 min-h-[32px] items-center">
                       {isLocked ? (
                         <div className="flex flex-col gap-2 w-full mt-2">
