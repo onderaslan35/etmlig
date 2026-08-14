@@ -113,7 +113,6 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🔴 İsimden ID bulan ters sözlük
 const getPlayerIdByName = (name: string) => {
   return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
 };
@@ -171,7 +170,7 @@ const week4PredictionsData: Record<string, string[]> = {
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABA FK", awayTeam: "DINAMO KIEV" },
+  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
   { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
   { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
   { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
@@ -234,20 +233,25 @@ export default function AdminRadarPortal() {
     );
   };
 
-  // 🔴 ÇİFT MOTORLU DAĞITIM SİSTEMİ (HEM FİŞ KESER HEM ANA KASAYI GÜNCELLER) 🔴
+  // 🔴 HER ŞEYİ ÇÖZEN YENİ MOTOR: CANLI SKOR + ÇİFT DAĞITIM + TAM GERİ ALMA 🔴
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     
-    if (action === 'Resetle') {
-      setAdminScores(prev => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
-      setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); 
-      return;
-    }
-
+    // 1️⃣ SKORU GÜNCELLE: "live_matches" tablosunu günceller (Canlı puan durumuna anında yansır)
     if (action === 'Skoru Güncelle') {
-      alert(`${matchId}. Maçın skoru ekranda güncellendi. Sistemi işlemek için "Maçı Bitir" butonunu kullanın.`);
+      const homeScore = adminScores[matchId]?.home || "-";
+      const awayScore = adminScores[matchId]?.away || "-";
+
+      const { error: liveError } = await supabase
+        .from('live_matches')
+        .update({ home_score: homeScore, away_score: awayScore, status: 'FINISHED' })
+        .eq('id', matchId);
+
+      if (liveError) alert("Canlı skor tablosu güncellenirken hata: " + liveError.message);
+      else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek.`);
       return;
     }
 
+    // 2️⃣ MAÇI ONAYLA (DAĞIT): Hem 'points' (fiş) hem 'standings' (kasa) güncellenir.
     if (action === 'Maçı Onayla (Puan Dağıt)') {
       if (currentWinners.length === 0) {
         alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
@@ -257,14 +261,14 @@ export default function AdminRadarPortal() {
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
 
-      const confirmMsg = `${currentWinners.length} aslan parçasına ${displayPoints} puan verilecek.\n\nHem 'points' tablosuna fiş kesilecek, hem de 'standings' tablosundaki (MASTER ve ${leagueName}) puanları güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
+      const confirmMsg = `${currentWinners.length} kişiye ${displayPoints} puan dağıtılacak.\n\nMotor 1: 'points' tablosuna fiş kesilecek.\nMotor 2: 'standings' tablosundaki (MASTER ve ${leagueName}) bakiyesi güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
       if (!window.confirm(confirmMsg)) return;
 
       try {
         const homeScore = adminScores[matchId]?.home || "0";
         const awayScore = adminScores[matchId]?.away || "0";
 
-        // 🚀 MOTOR 1: FİŞ KESME ('points' tablosuna Insert)
+        // MOTOR 1: FİŞ KESME
         const inserts = currentWinners.map(winnerName => {
           const userId = getPlayerIdByName(winnerName);
           return {
@@ -286,57 +290,108 @@ export default function AdminRadarPortal() {
 
         if (insertError) {
            alert(`❌ HATA! Fişler eklenemedi.\nMesaj: ${insertError.message}`);
-           return; // Fiş kesilemezse dur, kasa güncellenmesin.
+           return; 
         }
 
-        // 🚀 MOTOR 2: ANA KASAYI GÜNCELLEME ('standings' tablosu)
+        // MOTOR 2: ANA KASAYI GÜNCELLEME (standings)
         let standingsUpdateSuccess = 0;
 
         for (const winnerName of currentWinners) {
           const userId = getPlayerIdByName(winnerName);
           if (!userId) continue;
 
-          // 2.1 - Kendi Ligini (DFO veya TFF) Bul ve Puan Ekle
-          const { data: leagueRecord } = await supabase
-            .from('standings')
-            .select('points')
-            .eq('user_id', userId)
-            .eq('league_type', leagueName)
-            .single();
-
-          if (leagueRecord) {
-            await supabase
-              .from('standings')
-              .update({ points: leagueRecord.points + displayPoints })
-              .eq('user_id', userId)
-              .eq('league_type', leagueName);
-          }
-
-          // 2.2 - MASTER Ligini Bul ve Puan Ekle
-          const { data: masterRecord } = await supabase
-            .from('standings')
-            .select('points')
-            .eq('user_id', userId)
-            .eq('league_type', 'MASTER')
-            .single();
-
-          if (masterRecord) {
-            await supabase
-              .from('standings')
-              .update({ points: masterRecord.points + displayPoints })
-              .eq('user_id', userId)
-              .eq('league_type', 'MASTER');
-          }
+          const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
           
-          standingsUpdateSuccess++;
+          if (stData) {
+            // LİG PUANI EKLE (TFF veya DFO)
+            const lRow = stData.find(r => r.league_type === leagueName);
+            if (lRow) {
+              await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
+            } else {
+              await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
+            }
+
+            // MASTER PUANI EKLE
+            const mRow = stData.find(r => r.league_type === 'MASTER');
+            if (mRow) {
+              await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
+            } else {
+              await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
+            }
+            standingsUpdateSuccess++;
+          }
         }
 
-        alert(`✅ ÇİFT MOTOR İŞLEMİ BAŞARILI!\n\n1. Motor: ${inserts.length} adet fiş 'points' tablosuna kesildi.\n2. Motor: ${standingsUpdateSuccess} yarışmacının 'standings' tablosundaki (MASTER ve ${leagueName}) puanlarına +${displayPoints} eklendi!`);
-        setDistributedMatches(prev => ({...prev, [matchId]: true})); // MAÇI KİLİTLE
+        alert(`✅ ÇİFT MOTOR İŞLEMİ BAŞARILI!\n\n1. Motor: ${inserts.length} adet fiş kesildi.\n2. Motor: ${standingsUpdateSuccess} yarışmacının kasasına +${displayPoints} eklendi!`);
+        setDistributedMatches(prev => ({...prev, [matchId]: true})); 
 
       } catch (error: any) {
         alert("❌ BEKLENMEYEN HATA: " + error.message);
       }
+      return;
+    }
+
+    // 3️⃣ İPTAL ET VE GERİ AL (RESET): Dağıtılan puanları geri çeker, fişleri siler, UI kilidini açar!
+    if (action === 'Geri Al' || action === 'Resetle') {
+      
+      const isLocked = distributedMatches[matchId];
+
+      if (isLocked) {
+        const confirmUndo = window.confirm(`DİKKAT: Bu maçın puanları daha önce dağıtılmıştı!\n\nEğer onaylarsan; bu maçtan kazanılan puanlar 'standings' (kasa) tablosundan DÜŞÜLECEK, 'points' tablosundaki fişler SİLİNECEK ve maç tekrar MÜDAHALEYE AÇILACAK.\n\nBunu yapmak istediğine emin misin?`);
+        if (!confirmUndo) return;
+
+        try {
+          const isTff = isTffMatchCheck(matchData.category);
+          const leagueName = isTff ? 'TFF' : 'DFO';
+
+          // 1. O maçın fişlerini bul
+          const { data: existingPoints } = await supabase
+              .from('points')
+              .select('*')
+              .eq('hafta', 4)
+              .eq('ev_sahibi', matchData.homeTeam)
+              .eq('deplasman', matchData.awayTeam);
+
+          if (existingPoints && existingPoints.length > 0) {
+              // 2. Fişteki puanları kasadan düş
+              for (const row of existingPoints) {
+                  const pts = row.puan;
+                  const uid = row.username;
+                  
+                  const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
+                  
+                  if (stData) {
+                    const lRow = stData.find(r => r.league_type === leagueName);
+                    if (lRow) await supabase.from('standings').update({ points: Math.max(0, lRow.points - pts) }).eq('id', lRow.id);
+                    
+                    const mRow = stData.find(r => r.league_type === 'MASTER');
+                    if (mRow) await supabase.from('standings').update({ points: Math.max(0, mRow.points - pts) }).eq('id', mRow.id);
+                  }
+              }
+
+              // 3. Fişleri tamamen sil
+              await supabase.from('points')
+                  .delete()
+                  .eq('hafta', 4)
+                  .eq('ev_sahibi', matchData.homeTeam)
+                  .eq('deplasman', matchData.awayTeam);
+          }
+          alert("✅ GERİ ALMA BAŞARILI! Puanlar kasadan düşüldü ve fişler silindi.");
+        } catch (error: any) {
+          alert("❌ HATA: " + error.message);
+          return;
+        }
+      }
+
+      // Canlı skoru da sıfırla
+      await supabase.from('live_matches').update({ home_score: '-', away_score: '-', status: 'NOT_STARTED' }).eq('id', matchId);
+
+      // Ekranı sıfırla ve kilidi aç
+      setAdminScores(prev => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
+      setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); 
+      setDistributedMatches(prev => ({ ...prev, [matchId]: false })); 
+      
+      if(!isLocked) alert("✅ Skor sıfırlandı.");
     }
   };
 
@@ -374,7 +429,7 @@ export default function AdminRadarPortal() {
               🔴 KÖK KOMUTA MERKEZİ / ADMİN RADARI
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">
-              4. Hafta Çift Motorlu Puan Dağıtım ve Fiş Kesme Paneli
+              4. Hafta Çift Motorlu Puan Dağıtım, Fiş Kesme ve Canlı Skor Paneli
             </p>
           </div>
           <div>
@@ -479,10 +534,16 @@ export default function AdminRadarPortal() {
 
                     </div>
                     
-                    <div className="flex justify-center gap-2 mt-5 h-[32px] items-center">
+                    {/* 🔴 YENİ EKLENEN "İPTAL ET / GERİ AL" BUTONU */}
+                    <div className="flex justify-center gap-2 mt-5 min-h-[32px] items-center">
                       {isLocked ? (
-                        <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner w-full text-center">
-                          ✅ BU MAÇIN PUANLARI DAĞITILDI
+                        <div className="flex flex-col gap-2 w-full mt-2">
+                          <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner text-center">
+                            ✅ BU MAÇIN PUANLARI DAĞITILDI
+                          </div>
+                          <button onClick={() => handleAction('Geri Al', match.id, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mx-auto w-3/4">
+                            İptal Et & Puanları Geri Al
+                          </button>
                         </div>
                       ) : (
                         <>
