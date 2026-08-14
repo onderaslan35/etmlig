@@ -150,7 +150,7 @@ export default function TffPuanDurumuPage() {
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
                   {/* 🔴 KIPKIRMIZI ESTETİK: TABLO BAŞLIĞI 🔴 */}
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
-                    <span className="bg-red-700 text-white px-2 py-1 rounded-md shadow-sm border border-red-500">
+                    <span className="bg-red-600 text-white px-3 py-1.5 rounded-lg shadow-[0_0_12px_rgba(220,38,38,0.6)] border border-red-400 font-black tracking-widest">
                       {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                     </span>
                   </th>
@@ -182,7 +182,7 @@ export default function TffPuanDurumuPage() {
                     </td>
                     {/* 🔴 KIPKIRMIZI ESTETİK: TABLO İÇİ RAKAMLAR 🔴 */}
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
-                      <span className="bg-red-700/20 text-red-400 border border-red-700/50 px-2 sm:px-3 py-1 rounded-md font-bold text-sm sm:text-base">
+                      <span className="bg-red-600 text-white border border-red-400 px-3 sm:px-4 py-1.5 rounded-lg font-black text-sm sm:text-base shadow-[0_0_10px_rgba(220,38,38,0.5)]">
                         {row.puan}
                       </span>
                     </td>
