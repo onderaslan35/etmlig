@@ -129,7 +129,7 @@ const getPlayerIdByName = (name: string) => {
   return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
 };
 
-// 🔴 GEÇİCİ KÖPRÜ: 4. Hafta veritabanında yoksa buradan okunacak (Çünkü eski sistem statikti)
+// 🔴 GEÇİCİ KÖPRÜ: 4. Hafta veritabanında yoksa buradan okunacak
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -157,8 +157,6 @@ const week4Matches = [
   { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
-
-// 🔴 SAAT SEÇENEKLERİ
 const generateTimeOptions = () => {
   const times = ["00:00"];
   for (let h = 23; h >= 12; h--) {
@@ -170,9 +168,8 @@ const generateTimeOptions = () => {
 };
 const timeOptionsArr = generateTimeOptions();
 
-// 🔴 TARİH SEÇENEKLERİ MOTORU
 const generateWeekDates = (weekNum: number) => {
-  const baseDate = new Date(2026, 7, 18); // 18 Ağustos 2026
+  const baseDate = new Date(2026, 7, 18);
   const diffDays = (weekNum - 5) * 7;
   baseDate.setDate(baseDate.getDate() + diffDays);
   
@@ -194,7 +191,7 @@ export default function AdminRadarPortal() {
 
   // --- CANLI OPERASYON STATELERİ ---
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
-  const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]); // Veritabanından çekilen bülten
+  const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
@@ -231,7 +228,7 @@ export default function AdminRadarPortal() {
     }))
   );
 
-  // 🔴 VERİTABANINDAN CANLI MAÇLARI VE TAHMİNLERİ ÇEK (Eksik Hafta 4 İçin Köprü Eklendi) 🔴
+  // 🔴 YENİ: VERİTABANINI YALNIZCA SEKMEYE VEYA HAFTAYA TIKLADIĞINDA ÇEKER (Otomatik ezmeyi durdurduk) 🔴
   useEffect(() => {
     const fetchLiveAdminData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
@@ -240,34 +237,36 @@ export default function AdminRadarPortal() {
 
       let currentBulten = bultenData || [];
 
-      // 🔴 GEÇİCİ KÖPRÜ: 4. Hafta seçildiyse ve veritabanında yoksa, statik listeyi kullan!
       if (selectedLiveWeek === 4 && currentBulten.length === 0) {
          currentBulten = week4Matches.map(m => ({
-            match_index: m.id,
-            week_num: 4,
-            category: m.category,
-            match_date: m.date,
-            match_time: m.time,
-            home_team: m.homeTeam,
-            away_team: m.awayTeam
+            match_index: m.id, week_num: 4, category: m.category, match_date: m.date, match_time: m.time, home_team: m.homeTeam, away_team: m.awayTeam
          }));
       }
 
       setLiveMatchesDB(currentBulten);
 
-      // Skorları state'e oturt
       const initialScores: Record<number, { home: string, away: string }> = {};
+      const lockedMatches: Record<number, boolean> = {};
+
       currentBulten.forEach(m => {
          const liveInfo = liveData?.find(l => l.id === m.match_index);
          if (liveInfo) {
-           initialScores[m.match_index] = { home: liveInfo.home_score !== '-' ? liveInfo.home_score : "0", away: liveInfo.away_score !== '-' ? liveInfo.away_score : "0" };
+           // EĞER SKOR '-' İSE BUNU KORU, '0' YAPMA!
+           initialScores[m.match_index] = { 
+             home: liveInfo.home_score, 
+             away: liveInfo.away_score 
+           };
+           // EĞER MAÇ BİTTİYSE KİLİTLİ (Dağıtıldı) OLARAK İŞARETLE!
+           if (liveInfo.status === 'FINISHED') {
+              lockedMatches[m.match_index] = true;
+           }
          } else {
-           initialScores[m.match_index] = { home: "0", away: "0" };
+           initialScores[m.match_index] = { home: "-", away: "-" };
          }
       });
       setAdminScores(initialScores);
+      setDistributedMatches(lockedMatches); // Kilitler sayfayı yenileyince uçmaz!
 
-      // Tahminleri yarışmacıya göre grupla
       if (pData) {
          const pMap: Record<string, Record<number, string>> = {};
          pData.forEach(row => {
@@ -279,8 +278,6 @@ export default function AdminRadarPortal() {
     };
     
     if (activeTab === 'live') fetchLiveAdminData();
-    const interval = setInterval(() => { if (activeTab === 'live') fetchLiveAdminData() }, 10000);
-    return () => clearInterval(interval);
   }, [activeTab, selectedLiveWeek]);
 
 
@@ -292,9 +289,11 @@ export default function AdminRadarPortal() {
 
   // --- CANLI OPERASYON FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  
   const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
-    setAdminScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "0", away: "0" }), [team]: score } }));
+    setAdminScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "-", away: "-" }), [team]: score } }));
   };
+  
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
   
   const isTffMatchCheck = (category: string) => {
@@ -306,9 +305,10 @@ export default function AdminRadarPortal() {
   };
 
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
+    const homeScore = adminScores[matchId]?.home || "-";
+    const awayScore = adminScores[matchId]?.away || "-";
+
     if (action === 'Skoru Güncelle') {
-      const homeScore = adminScores[matchId]?.home || "0";
-      const awayScore = adminScores[matchId]?.away || "0";
       const { error: liveError } = await supabase.from('live_matches').upsert({ id: matchId, home_score: homeScore, away_score: awayScore, status: 'LIVE' }, { onConflict: 'id' });
       if (liveError) alert("Canlı skor tablosu güncellenirken hata: " + liveError.message);
       else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek.`);
@@ -316,48 +316,58 @@ export default function AdminRadarPortal() {
     }
 
     if (action === 'Maçı Onayla (Puan Dağıt)') {
-      if (currentWinners.length === 0) {
-        alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
+      if (homeScore === "-" || awayScore === "-") {
+        alert("Lütfen önce takımların skorunu girin!");
         return;
       }
+
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
-      const confirmMsg = `${currentWinners.length} kişiye ${displayPoints} puan dağıtılacak.\n\nMotor 1: 'points' tablosuna fiş kesilecek.\nMotor 2: 'standings' tablosundaki (MASTER ve ${leagueName}) bakiyesi güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
+      
+      // 🔴 EĞER BİLEN YOKSA BİLE MAÇI BİTİREBİLMELİ 🔴
+      const confirmMsg = currentWinners.length === 0
+        ? `Bu skoru bilen aslan parçası çıkmadı.\n\nPuan dağıtılmayacak ama maç "BİTTİ" olarak işaretlenip kilitlenecek.\n\nOnaylıyor musun Kumandanım?`
+        : `${currentWinners.length} kişiye ${displayPoints} puan dağıtılacak.\n\nMotor 1: 'points' tablosuna fiş kesilecek.\nMotor 2: 'standings' tablosundaki (MASTER ve ${leagueName}) bakiyesi güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
+      
       if (!window.confirm(confirmMsg)) return;
 
       try {
-        const homeScore = adminScores[matchId]?.home || "0";
-        const awayScore = adminScores[matchId]?.away || "0";
+        // Önce Maçı Bitti Olarak İşaretle
         await supabase.from('live_matches').upsert({ id: matchId, home_score: homeScore, away_score: awayScore, status: 'FINISHED' }, { onConflict: 'id' });
 
-        const inserts = currentWinners.map(winnerName => {
-          const userId = getPlayerIdByName(winnerName);
-          return {
-            hafta: selectedLiveWeek, user_name: winnerName, username: userId, kategori: leagueName, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
-            gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
-          };
-        });
+        // Eğer bilen varsa puanları dağıt
+        if (currentWinners.length > 0) {
+          const inserts = currentWinners.map(winnerName => {
+            const userId = getPlayerIdByName(winnerName);
+            return {
+              hafta: selectedLiveWeek, user_name: winnerName, username: userId, kategori: leagueName, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
+              gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
+            };
+          });
 
-        const { error: insertError } = await supabase.from('points').insert(inserts);
-        if (insertError) { alert(`❌ HATA! Fişler eklenemedi.\nMesaj: ${insertError.message}`); return; }
+          const { error: insertError } = await supabase.from('points').insert(inserts);
+          if (insertError) { alert(`❌ HATA! Fişler eklenemedi.\nMesaj: ${insertError.message}`); return; }
 
-        let standingsUpdateSuccess = 0;
-        for (const winnerName of currentWinners) {
-          const userId = getPlayerIdByName(winnerName);
-          if (!userId) continue;
-          const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
-          if (stData) {
-            const lRow = stData.find(r => r.league_type === leagueName);
-            if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
-            else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
+          let standingsUpdateSuccess = 0;
+          for (const winnerName of currentWinners) {
+            const userId = getPlayerIdByName(winnerName);
+            if (!userId) continue;
+            const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
+            if (stData) {
+              const lRow = stData.find(r => r.league_type === leagueName);
+              if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
+              else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
 
-            const mRow = stData.find(r => r.league_type === 'MASTER');
-            if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
-            else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
-            standingsUpdateSuccess++;
+              const mRow = stData.find(r => r.league_type === 'MASTER');
+              if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
+              else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
+              standingsUpdateSuccess++;
+            }
           }
+          alert(`✅ ÇİFT MOTOR İŞLEMİ BAŞARILI!\n\n1. Motor: ${inserts.length} adet fiş kesildi.\n2. Motor: ${standingsUpdateSuccess} yarışmacının kasasına +${displayPoints} eklendi!`);
+        } else {
+           alert("✅ Maç başarıyla BİTİRİLDİ. Bu skoru bilen çıkmadığı için kasa kapalı.");
         }
-        alert(`✅ ÇİFT MOTOR İŞLEMİ BAŞARILI!\n\n1. Motor: ${inserts.length} adet fiş kesildi.\n2. Motor: ${standingsUpdateSuccess} yarışmacının kasasına +${displayPoints} eklendi!`);
         setDistributedMatches(prev => ({...prev, [matchId]: true})); 
       } catch (error: any) { alert("❌ BEKLENMEYEN HATA: " + error.message); }
       return;
@@ -390,11 +400,13 @@ export default function AdminRadarPortal() {
           alert("✅ GERİ ALMA BAŞARILI! Puanlar kasadan düşüldü ve fişler silindi.");
         } catch (error: any) { alert("❌ HATA: " + error.message); return; }
       }
+      
+      // 🔴 SKORU "0-0" YERİNE "-:-" OLARAK SIFIRLA
       await supabase.from('live_matches').upsert({ id: matchId, home_score: '-', away_score: '-', status: 'NOT_STARTED' }, { onConflict: 'id' });
-      setAdminScores(prev => ({ ...prev, [matchId]: { home: "0", away: "0" } }));
+      setAdminScores(prev => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
       setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); 
       setDistributedMatches(prev => ({ ...prev, [matchId]: false })); 
-      if(!isLocked) alert("✅ Skor sıfırlandı.");
+      if(!isLocked) alert("✅ Skor başarıyla sıfırlandı.");
     }
   };
 
@@ -409,8 +421,6 @@ export default function AdminRadarPortal() {
     return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
   };
 
-  // --- 🔴 YENİ SİSTEM: AKILLI TAKIM KİLİTLEME MOTORU 🔴 ---
-  
   const getLeagueKey = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("TÜRKİYE SÜPER LİG")) return "TÜRKİYE SÜPER LİG";
@@ -429,13 +439,11 @@ export default function AdminRadarPortal() {
     const leagueKey = getLeagueKey(currentMatch.category);
     const baseTeams = LEAGUE_TEAMS[leagueKey] || [];
     
-    // Avrupa maçlarında kilitleme yok
     if (leagueKey === "ÇEŞİTLİ AVRUPA TAKIMLARI") {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
         return baseTeams.filter(t => t !== opponent);
     }
 
-    // Türkiye ve diğer dar ligler için kilitleme motoru
     const usedTeamsInThisLeague = new Set<string>();
     
     bulletinMatches.forEach((m, idx) => {
@@ -569,8 +577,8 @@ export default function AdminRadarPortal() {
                 const homeLogoUrl = localTeamLogos[match.home_team] || "/logos/default.png";
                 const awayLogoUrl = localTeamLogos[match.away_team] || "/logos/default.png";
 
-                const homeScore = adminScores[match.match_index]?.home || "0";
-                const awayScore = adminScores[match.match_index]?.away || "0";
+                const homeScore = adminScores[match.match_index]?.home || "-";
+                const awayScore = adminScores[match.match_index]?.away || "-";
                 
                 let currentWinners: string[] = [];
                 let winnersCount = 0;
