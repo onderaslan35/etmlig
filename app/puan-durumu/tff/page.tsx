@@ -24,20 +24,22 @@ const week4Matches = [
   { id: 1, category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI" }, { id: 2, category: "UEFA SÜPER KUPA" }, { id: 3, category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ" }, { id: 4, category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ" }, { id: 5, category: "TÜRKİYE SÜPER LİG" }, { id: 6, category: "TÜRKİYE 1.LİG" }, { id: 7, category: "TÜRKİYE SÜPER LİG" }, { id: 8, category: "TÜRKİYE SÜPER LİG" }, { id: 9, category: "TÜRKİYE 1.LİG" }, { id: 10, category: "TÜRKİYE 1.LİG" }, { id: 11, category: "TÜRKİYE SÜPER LİG" }, { id: 12, category: "TÜRKİYE SÜPER LİG" }, { id: 13, category: "TÜRKİYE 1.LİG" }, { id: 14, category: "TÜRKİYE 1.LİG" }, { id: 15, category: "İNGİLTERE SÜPER KUPA" }, { id: 16, category: "TÜRKİYE SÜPER LİG" }, { id: 17, category: "TÜRKİYE 1.LİG" }, { id: 18, category: "TÜRKİYE SÜPER LİG" }, { id: 19, category: "TÜRKİYE SÜPER LİG" }, { id: 20, category: "TÜRKİYE 1.LİG" }, { id: 21, category: "TÜRKİYE 1.LİG" }, { id: 22, category: "TÜRKİYE 1.LİG" }, { id: 23, category: "TÜRKİYE SÜPER KUPA" }, { id: 24, category: "TÜRKİYE 1.LİG" }
 ];
 
-// 🔴 KESİNLİKLE KIRILMAYAN RAW (HAM) VİKİPEDİ LİNKLERİ 🔴
-const leftLogos = [
-  { id: 'superlig', src: 'https://upload.wikimedia.org/wikipedia/tr/b/b3/Trendyol_S%C3%BCper_Lig_logo.png', alt: 'Trendyol Süper Lig' },
-  { id: '1lig', src: 'https://upload.wikimedia.org/wikipedia/tr/c/c2/Trendyol_1._Lig_logo.png', alt: 'Trendyol 1. Lig' },
-  { id: 'zkupa', src: 'https://upload.wikimedia.org/wikipedia/tr/7/75/Ziraat_T%C3%BCrkiye_Kupas%C4%B1_logo.png', alt: 'Ziraat Türkiye Kupası' }
+// 🔴 SIFIR HATA: VİKİPEDİ HAM LİNKLERİ 🔴
+const topLevelLogos = {
+  tff: 'https://upload.wikimedia.org/wikipedia/en/7/70/Turkish_Football_Federation_crest.svg',
+  superLig: 'https://upload.wikimedia.org/wikipedia/tr/b/b3/Trendyol_S%C3%BCper_Lig_logo.png'
+};
+
+const leftKanatLogolar = [
+  { id: 'kadinlar', src: 'https://upload.wikimedia.org/wikipedia/tr/4/4c/Turkcell_Kad%C4%B1n_Futbol_S%C3%BCper_Ligi_logo.png', alt: 'Kadınlar Süper Ligi' },
+  { id: 'skupa', src: 'https://upload.wikimedia.org/wikipedia/tr/e/ee/2026_S%C3%BCper_Kupa.png', alt: 'TFF Süper Kupa' },
+  { id: 'zkupa', src: 'https://upload.wikimedia.org/wikipedia/tr/6/61/Ziraat_T%C3%BCrkiye_Kupas%C4%B1_logosu.png', alt: 'Ziraat Türkiye Kupası' }
 ];
 
-const tffLogo = 'https://upload.wikimedia.org/wikipedia/commons/e/e3/T%C3%BCrkiye_Futbol_Federasyonu_logo.png';
-
-const rightLogos = [
-  { id: 'skupa', src: 'https://upload.wikimedia.org/wikipedia/tr/3/31/TFF_S%C3%BCper_Kupa.png', alt: 'TFF Süper Kupa' },
-  { id: 'kadinlar', src: 'https://upload.wikimedia.org/wikipedia/tr/4/4c/Turkcell_Kad%C4%B1n_Futbol_S%C3%BCper_Ligi_logo.png', alt: 'Kadınlar Süper Ligi' },
-  { id: '2lig', src: 'https://upload.wikimedia.org/wikipedia/tr/b/be/TFF_2._Lig_logo.png', alt: 'TFF 2. Lig' },
-  { id: '3lig', src: 'https://upload.wikimedia.org/wikipedia/tr/f/fa/TFF_3._Lig_logo.png', alt: 'TFF 3. Lig' }
+const rightKanatLogolar = [
+  { id: '1lig', src: 'https://upload.wikimedia.org/wikipedia/tr/c/c2/Trendyol_1._Lig_logo.png', alt: 'Trendyol 1. Lig' },
+  { id: '2lig', src: 'https://upload.wikimedia.org/wikipedia/tr/2/25/Spor_Toto_2._Lig_logo.png', alt: 'Nesine 2. Lig' },
+  { id: '3lig', src: 'https://upload.wikimedia.org/wikipedia/tr/f/fa/TFF_3._Lig_logo.png', alt: 'Nesine 3. Lig' }
 ];
 
 export default function TffPuanDurumuPage() {
@@ -130,32 +132,34 @@ export default function TffPuanDurumuPage() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 text-slate-100 flex flex-col items-center">
       
-      {/* 🔴 SİMETRİK ŞEREF KÜRSÜSÜ (YENİ TASARIM) 🔴 */}
-      <div className="flex flex-col items-center text-center mb-8 mt-2 w-full">
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 w-full px-4 bg-slate-900/40 py-6 rounded-[2rem] border border-slate-800/60 shadow-[0_0_30px_rgba(0,0,0,0.4)] backdrop-blur-sm">
+      {/* 🔴 ÇİFT KATLI ŞEREF KÜRSÜSÜ 🔴 */}
+      <div className="flex flex-col items-center text-center mb-8 mt-4 w-full">
+        
+        {/* ZİRVE KATI (Yazının Üstü): Sol Baş TFF, Sağ Baş Süper Lig */}
+        <div className="flex justify-between items-center w-full max-w-[850px] px-2 sm:px-8 mb-3 z-10">
+          <img src={topLevelLogos.tff} alt="TFF" title="TFF" className="h-14 sm:h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] hover:scale-110 transition-transform cursor-pointer" />
+          <img src={topLevelLogos.superLig} alt="Trendyol Süper Lig" title="Trendyol Süper Lig" className="h-14 sm:h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform cursor-pointer" />
+        </div>
+
+        {/* MERKEZ KAT: Kanatlar ve Yazı */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-[1000px] bg-slate-900/50 py-5 px-6 rounded-[2.5rem] border border-slate-800/80 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-md relative -mt-6 pt-8">
           
-          {/* Sol Grup */}
-          <div className="flex items-center justify-center gap-2 sm:gap-4">
-            {leftLogos.map(logo => (
-              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-8 sm:h-10 md:h-12 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          {/* Sol Kanat (Kupalar & Kadınlar) */}
+          <div className="flex items-center justify-center gap-3 sm:gap-5">
+            {leftKanatLogolar.map(logo => (
+              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" />
             ))}
           </div>
-          
-          {/* TFF Sol Logo */}
-          <img src={tffLogo} alt="TFF" title="TFF" className="h-10 sm:h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:scale-110 transition-transform mx-1 sm:mx-2 cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
 
-          {/* ANA BAŞLIK */}
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-widest uppercase mx-1 sm:mx-2 whitespace-nowrap" style={{ textShadow: '0 0 15px rgba(220,38,38,1), 0 0 30px rgba(220,38,38,0.8)' }}>
+          {/* MERKEZ BAŞLIK */}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-widest uppercase mx-2 whitespace-nowrap" style={{ textShadow: '0 0 15px rgba(220,38,38,1), 0 0 30px rgba(220,38,38,0.8)' }}>
             TFF <span className="text-red-500">PUAN DURUMU</span>
           </h1>
 
-          {/* TFF Sağ Logo */}
-          <img src={tffLogo} alt="TFF" title="TFF" className="h-10 sm:h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:scale-110 transition-transform mx-1 sm:mx-2 cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-
-          {/* Sağ Grup */}
-          <div className="flex items-center justify-center gap-2 sm:gap-4">
-            {rightLogos.map(logo => (
-              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-8 sm:h-10 md:h-12 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          {/* Sağ Kanat (Ligler) */}
+          <div className="flex items-center justify-center gap-3 sm:gap-5">
+            {rightKanatLogolar.map(logo => (
+              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" />
             ))}
           </div>
 
