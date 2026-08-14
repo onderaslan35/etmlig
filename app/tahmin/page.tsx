@@ -148,6 +148,38 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
 };
 
+// 🔴 4. HAFTA İÇİN SABİT VERİLER (RESMİ DEKLARASYON TABLOSU İÇİN) 🔴
+const week4Matches = [
+  { id: 1, homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 2, homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
+  { id: 3, homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 4, homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 5, homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
+  { id: 6, homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
+  { id: 7, homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
+  { id: 8, homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
+  { id: 9, homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
+  { id: 10, homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
+  { id: 11, homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
+  { id: 12, homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
+  { id: 13, homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
+  { id: 14, homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
+  { id: 15, homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
+  { id: 16, homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
+  { id: 17, homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
+  { id: 18, homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
+  { id: 19, homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
+  { id: 20, homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
+  { id: 21, homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
+  { id: 22, homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
+  { id: 23, homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
+  { id: 24, homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
+];
+
+const week4PredictionsData: Record<string, string[]> = {
+  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"], "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
+};
+
 export default function TahminlerPortal() {
   const [view, setView] = useState<'lobby' | 'declaration' | 'entry'>('lobby');
   
@@ -161,6 +193,9 @@ export default function TahminlerPortal() {
   const [displayName, setDisplayName] = useState(''); 
   const [loginError, setLoginError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Deklarasyon Arama State'i
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Bülten State'i
   const [bulletin, setBulletin] = useState<any[]>([]);
@@ -193,12 +228,11 @@ export default function TahminlerPortal() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🔴 GÜNCELLENMİŞ GİRİŞ SİSTEMİ (BOŞLUK SAVAR EKLENDİ) 🔴
+  // 🔴 GÜNCELLENMİŞ GİRİŞ SİSTEMİ 🔴
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
-    // DİKKAT: .trim() ile klavyenin attığı gereksiz görünmez boşlukları siliyoruz!
     const userKey = username.trim();
     const passKey = password.trim(); 
     
@@ -213,7 +247,7 @@ export default function TahminlerPortal() {
     }
   };
 
-  // 🔴 HAFIZALI SİSTEM: KULLANICININ ESKİ TAHMİNLERİNİ ÇEKER 🔴
+  // 🔴 HAFIZALI SİSTEM 🔴
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
     const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5).order('match_index', { ascending: true });
     const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5).eq('user_id', currentUsername);
@@ -273,6 +307,16 @@ export default function TahminlerPortal() {
   };
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
+
+  // Deklarasyon tablosu için yarışmacıları filtrele (Sadece 4. hafta tahmini olanları göster)
+  const filteredPlayersForDeclaration = Object.keys(week4PredictionsData).filter(id => {
+    const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
+    return playerName.toLowerCase().includes(searchTerm.toLowerCase());
+  }).sort((a, b) => {
+    const nameA = TEST_ACCOUNTS[a]?.name || "";
+    const nameB = TEST_ACCOUNTS[b]?.name || "";
+    return nameA.localeCompare(nameB, 'tr');
+  });
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -411,22 +455,110 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== RESMİ DEKLARASYON (ARŞİV EKRANI) ===================== */}
+        {/* ===================== RESMİ DEKLARASYON (DEV MATRİS TABLOSU) ===================== */}
         {view === 'declaration' && (
-          <div className="animate-fade-in-up">
-            <button onClick={() => setView('lobby')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
-              <span>⬅</span> Lobiye Dön
-            </button>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center min-h-[500px] flex flex-col items-center justify-center">
-              <h2 className="text-3xl font-black text-indigo-400 tracking-widest mb-4">RESMİ DEKLARASYON ARŞİVİ</h2>
-              <p className="text-slate-400 max-w-2xl mb-8">
-                Eski kodundaki o devasa tabloyu buraya yapıştırabiliriz. 
-                Şu an tablo kod kalabalığı yapmasın diye burayı temiz bir oda olarak bıraktım.
-              </p>
-              <div className="w-full max-w-4xl h-64 border-2 border-dashed border-slate-700 rounded-xl flex items-center justify-center text-slate-600 font-black text-xl">
-                [ ESKİ TABLO BURAYA GELECEK ]
+          <div className="animate-fade-in-up w-full">
+            
+            {/* Üst Menü */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+              <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors">
+                <span>⬅</span> Lobiye Dön
+              </button>
+              
+              <div className="text-center">
+                <h2 className="text-3xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_10px_rgba(245,158,11,0.4)] uppercase">RESMİ DEKLARASYON</h2>
+              </div>
+              
+              <div className="flex gap-3">
+                <input 
+                  type="text" 
+                  placeholder="Yarışmacı ara..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="bg-slate-950 border border-slate-700 px-4 py-2 rounded-lg text-white text-sm outline-none focus:border-amber-500 min-w-[200px]"
+                />
+                <div className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg flex items-center cursor-pointer shadow-md">
+                  4. HAFTA BÜLTENİ ▼
+                </div>
               </div>
             </div>
+
+            {/* Devasa Tablo Alanı */}
+            <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto custom-scrollbar pb-4">
+                <table className="w-full text-xs text-center border-collapse whitespace-nowrap">
+                  <thead>
+                    {/* Satır 1: Maç Numaraları */}
+                    <tr>
+                      <th className="sticky left-0 z-30 bg-slate-950 border border-slate-800 p-3 min-w-[200px] text-left">
+                        <span className="text-amber-500 font-black tracking-widest">4. HAFTA</span>
+                      </th>
+                      {week4Matches.map(m => (
+                        <th key={m.id} className="p-2 border border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th>
+                      ))}
+                    </tr>
+                    
+                    {/* Satır 2: Ev Sahibi Logoları */}
+                    <tr>
+                      <th className="sticky left-0 z-30 bg-slate-950 border border-slate-800 p-3 text-left">
+                        <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
+                      </th>
+                      {week4Matches.map(m => (
+                        <th key={`home-${m.id}`} className="p-1 border border-slate-800 bg-slate-900/50">
+                          <div className="w-6 h-6 mx-auto flex items-center justify-center">
+                            <img src={localTeamLogos[m.homeTeam] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+
+                    {/* Satır 3: Deplasman Logoları */}
+                    <tr>
+                      <th className="sticky left-0 z-30 bg-slate-950 border border-slate-800 p-3 text-right">
+                        <span className="text-amber-500 font-bold text-[9px] uppercase tracking-widest border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30">SIRA / LİSTE</span>
+                      </th>
+                      {week4Matches.map(m => (
+                        <th key={`away-${m.id}`} className="p-1 border border-slate-800 bg-slate-900/50">
+                          <div className="w-6 h-6 mx-auto flex items-center justify-center">
+                            <img src={localTeamLogos[m.awayTeam] || "/logos/default.png"} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  
+                  <tbody>
+                    {filteredPlayersForDeclaration.map(id => {
+                      const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
+                      const preds = week4PredictionsData[id] || Array(24).fill('-');
+
+                      return (
+                        <tr key={id} className="hover:bg-slate-800/50 transition-colors group">
+                          {/* İsim Sütunu (Sabit) */}
+                          <td className="sticky left-0 z-20 bg-slate-950 border border-slate-800 p-3 text-left font-bold text-slate-300 uppercase tracking-wide group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                            {playerName}
+                          </td>
+                          {/* Skor Sütunları */}
+                          {preds.map((score, idx) => (
+                            <td key={idx} className="border border-slate-800 p-2 font-black text-amber-500 bg-[#0a1120] group-hover:bg-slate-800/80">
+                              {score}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                    
+                    {/* Eğer arama sonucu boşsa */}
+                    {filteredPlayersForDeclaration.length === 0 && (
+                      <tr>
+                        <td colSpan={25} className="py-8 text-slate-500 italic">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )}
 
