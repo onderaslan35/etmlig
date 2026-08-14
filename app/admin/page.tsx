@@ -171,7 +171,7 @@ const week4PredictionsData: Record<string, string[]> = {
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABA FK", awayTeam: "DINAMO KIEV" },
   { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
   { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
   { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
@@ -197,7 +197,6 @@ const week4Matches = [
 
 export default function AdminRadarPortal() {
   
-  // 🔴 İLK 4 MAÇIN SKORLARI ÇİVİ GİBİ ÇAKILDI
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({
     1: { home: "0", away: "1" },
     2: { home: "2", away: "1" },
@@ -209,7 +208,6 @@ export default function AdminRadarPortal() {
     1: true, 2: true, 3: true, 4: true
   });
   
-  // 🔴 İLK 4 MAÇ KİLİTLİ
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({
     1: true, 2: true, 3: true, 4: true 
   });
@@ -236,7 +234,7 @@ export default function AdminRadarPortal() {
     );
   };
 
-  // 🔴 YEPYENİ FİŞ EKLEME (INSERT) MOTORU 🔴
+  // 🔴 ÇİFT MOTORLU DAĞITIM SİSTEMİ (HEM FİŞ KESER HEM ANA KASAYI GÜNCELLER) 🔴
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     
     if (action === 'Resetle') {
@@ -252,21 +250,21 @@ export default function AdminRadarPortal() {
 
     if (action === 'Maçı Onayla (Puan Dağıt)') {
       if (currentWinners.length === 0) {
-        alert("Bu skoru bilen aslan parçası yok. Eklenecek puan bulunamadı.");
+        alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
         return;
       }
 
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
 
-      const confirmMsg = `${currentWinners.length} aslan parçasına ${displayPoints} puanlık fiş kesilecek.\n\nHedef Kategori: ${leagueName}\n\nOnaylıyor musun Kumandanım?`;
+      const confirmMsg = `${currentWinners.length} aslan parçasına ${displayPoints} puan verilecek.\n\nHem 'points' tablosuna fiş kesilecek, hem de 'standings' tablosundaki (MASTER ve ${leagueName}) puanları güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
       if (!window.confirm(confirmMsg)) return;
 
       try {
         const homeScore = adminScores[matchId]?.home || "0";
         const awayScore = adminScores[matchId]?.away || "0";
 
-        // Toplu Fiş (Insert) Dizisi Hazırlama
+        // 🚀 MOTOR 1: FİŞ KESME ('points' tablosuna Insert)
         const inserts = currentWinners.map(winnerName => {
           const userId = getPlayerIdByName(winnerName);
           return {
@@ -284,17 +282,58 @@ export default function AdminRadarPortal() {
           };
         });
 
-        // Supabase Toplu Insert İşlemi
-        const { error: insertError } = await supabase
-          .from('points')
-          .insert(inserts);
+        const { error: insertError } = await supabase.from('points').insert(inserts);
 
         if (insertError) {
-           alert(`❌ HATA! Fişler eklenemedi.\n\nHata Mesajı: ${insertError.message}`);
-        } else {
-           alert(`✅ İŞLEM BAŞARILI!\n${inserts.length} aslan parçasının puan fişi ${leagueName} kategorisiyle points tablosuna işlendi!`);
-           setDistributedMatches(prev => ({...prev, [matchId]: true})); // MAÇI KİLİTLE
+           alert(`❌ HATA! Fişler eklenemedi.\nMesaj: ${insertError.message}`);
+           return; // Fiş kesilemezse dur, kasa güncellenmesin.
         }
+
+        // 🚀 MOTOR 2: ANA KASAYI GÜNCELLEME ('standings' tablosu)
+        let standingsUpdateSuccess = 0;
+
+        for (const winnerName of currentWinners) {
+          const userId = getPlayerIdByName(winnerName);
+          if (!userId) continue;
+
+          // 2.1 - Kendi Ligini (DFO veya TFF) Bul ve Puan Ekle
+          const { data: leagueRecord } = await supabase
+            .from('standings')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('league_type', leagueName)
+            .single();
+
+          if (leagueRecord) {
+            await supabase
+              .from('standings')
+              .update({ points: leagueRecord.points + displayPoints })
+              .eq('user_id', userId)
+              .eq('league_type', leagueName);
+          }
+
+          // 2.2 - MASTER Ligini Bul ve Puan Ekle
+          const { data: masterRecord } = await supabase
+            .from('standings')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('league_type', 'MASTER')
+            .single();
+
+          if (masterRecord) {
+            await supabase
+              .from('standings')
+              .update({ points: masterRecord.points + displayPoints })
+              .eq('user_id', userId)
+              .eq('league_type', 'MASTER');
+          }
+          
+          standingsUpdateSuccess++;
+        }
+
+        alert(`✅ ÇİFT MOTOR İŞLEMİ BAŞARILI!\n\n1. Motor: ${inserts.length} adet fiş 'points' tablosuna kesildi.\n2. Motor: ${standingsUpdateSuccess} yarışmacının 'standings' tablosundaki (MASTER ve ${leagueName}) puanlarına +${displayPoints} eklendi!`);
+        setDistributedMatches(prev => ({...prev, [matchId]: true})); // MAÇI KİLİTLE
+
       } catch (error: any) {
         alert("❌ BEKLENMEYEN HATA: " + error.message);
       }
@@ -335,7 +374,7 @@ export default function AdminRadarPortal() {
               🔴 KÖK KOMUTA MERKEZİ / ADMİN RADARI
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">
-              4. Hafta Manuel Skor Yönetimi ve Fiş İşleme Paneli
+              4. Hafta Çift Motorlu Puan Dağıtım ve Fiş Kesme Paneli
             </p>
           </div>
           <div>
