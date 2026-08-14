@@ -113,7 +113,7 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🔴 İsimden ID bulan ters sözlük (Puanları veritabanında doğru kişiye yazmak için)
+// 🔴 İsimden ID bulan ters sözlük
 const getPlayerIdByName = (name: string) => {
   return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
 };
@@ -197,7 +197,6 @@ const week4Matches = [
 
 export default function AdminRadarPortal() {
   
-  // 🔴 İLK 4 MAÇIN SKORLARI ÇİVİ GİBİ ÇAKILDI
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({
     1: { home: "0", away: "1" },
     2: { home: "2", away: "1" },
@@ -209,7 +208,6 @@ export default function AdminRadarPortal() {
     1: true, 2: true, 3: true, 4: true
   });
   
-  // 🔴 İLK 4 MAÇ TAMAMEN KİLİTLENDİ
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({
     1: true, 2: true, 3: true, 4: true 
   });
@@ -271,9 +269,9 @@ export default function AdminRadarPortal() {
           const userId = getPlayerIdByName(winnerName);
           if (!userId) continue;
 
-          // ⚠️ KONTROL: 'profiles' yazan yer kendi tablo adınla değişmelidir
+          // 🔴 DEĞİŞİKLİK BURADA: Tablo adı 'points' yapıldı
           const { data: userRecord, error: selectError } = await supabase
-            .from('profiles') // 🔴 BURADAKİ 'profiles' YAZISINI KENDİ TABLO ADINLA DEĞİŞTİR
+            .from('points') 
             .select(`master_points, ${leagueTarget}`)
             .eq('user_id', userId)
             .single();
@@ -284,18 +282,17 @@ export default function AdminRadarPortal() {
           }
 
           if (userRecord) {
-            // TS HATASINI EZMEK İÇİN EKLENEN SUSTURUCULAR:
             const newMasterScore = ((userRecord as any).master_points || 0) + displayPoints;
             const newLeagueScore = ((userRecord as any)[leagueTarget] || 0) + displayPoints;
 
-            // TS mızmızlanmasını atlatmak için update nesnesini ayrı tanımlıyoruz:
             const updatePayload: any = {
               master_points: newMasterScore,
               [leagueTarget]: newLeagueScore
             };
 
+            // 🔴 DEĞİŞİKLİK BURADA: Tablo adı 'points' yapıldı
             const { error: updateError } = await supabase
-              .from('profiles') // 🔴 BURAYI DA KENDİ TABLO ADINLA DEĞİŞTİRMEYİ UNUTMA
+              .from('points') 
               .update(updatePayload)
               .eq('user_id', userId);
             
@@ -308,10 +305,10 @@ export default function AdminRadarPortal() {
         }
         
         if (errorMessage) {
-           alert(`❌ HATA! Supabase tablo adın veya sütunların kodla uyuşmuyor.\n\nHata Mesajı: ${errorMessage}\n\nLütfen VScode'da 'profiles' tablo adını veya puan sütunlarını kendi veritabanındaki isimlerle değiştir.`);
+           alert(`❌ HATA! Supabase tablo adın veya sütunların kodla uyuşmuyor.\n\nHata Mesajı: ${errorMessage}`);
         } else if (successCount > 0) {
            alert(`✅ İŞLEM BAŞARILI!\n${successCount} aslan parçasının MASTER ve ${leagueName} tablolarına ${displayPoints} puan eklendi!`);
-           setDistributedMatches(prev => ({...prev, [matchId]: true})); // MAÇI KİLİTLE
+           setDistributedMatches(prev => ({...prev, [matchId]: true})); 
         } else {
            alert(`⚠️ İşlem bitti fakat güncellenecek kullanıcı ID'si bulunamadı. Veritabanındaki ID'ler eşleşmiyor olabilir.`);
         }
