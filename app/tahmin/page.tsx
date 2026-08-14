@@ -84,10 +84,68 @@ const getEliteTheme = (category: string) => {
   return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", scoreBorder: "border-blue-600/40" };
 };
 
-// 🔴 TEST KULLANICILARI VE ŞİFRELERİ BURADA TANIMLANDI 🔴
+// 🔴 58 YARIŞMACI + MANKOMAN + ADAM KRAL (GÜVENLİKLİ ŞİFRE KASASI) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
-  'mankoman': { pass: '123456', name: 'MANKOMAN' },
-  '353535': { pass: '1925', name: 'ADAM KRAL' }
+  "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
+  "353535": { pass: "19250", name: "ADAM KRAL" },
+  "262740": { pass: "49400", name: "ABDULLAH DİK" },
+  "262705": { pass: "14050", name: "AHMET BİRCAN 🏆" },
+  "351925": { pass: "19250", name: "ALİOS GÖZTEPE" },
+  "262735": { pass: "19250", name: "AYGÜN AKKEÇELİ" },
+  "262723": { pass: "32230", name: "AYHAN LUŞOĞLU" },
+  "262749": { pass: "58490", name: "B.VEYSELOĞLU EROL" },
+  "262708": { pass: "17080", name: "BAYRAM YILMAZ" },
+  "262718": { pass: "27180", name: "BEKİR KARADAĞ" },
+  "262716": { pass: "25160", name: "BİROL DEMİREL" },
+  "262772": { pass: "81720", name: "CEMAL SİVRİKAYA 🏆" },
+  "262703": { pass: "12030", name: "CEMALETTİN BELLİ" },
+  "262790": { pass: "99880", name: "CUMALİ SÖKER" },
+  "350909": { pass: "19070", name: "DİNÇER ÖZER" },
+  "262755": { pass: "64550", name: "DOĞAÇ ALKAN" },
+  "262756": { pass: "65560", name: "EYÜP KARACAOĞLU" },
+  "262731": { pass: "40310", name: "FATİH AYAN" },
+  "262706": { pass: "15060", name: "GAZİ AYAN 🏆🏆" },
+  "262707": { pass: "16070", name: "HAKAN AYAN" },
+  "262726": { pass: "35260", name: "HUDAVER TOPARDIC" },
+  "262762": { pass: "71620", name: "İLHAN DANIŞ" },
+  "262725": { pass: "34250", name: "İLYAS KAZDAL" },
+  "262744": { pass: "53440", name: "İLYAS UYGUN" },
+  "262714": { pass: "23140", name: "İSMAİL EKER 🏆" },
+  "262813": { pass: "28620", name: "KEMAL ERSOY" },
+  "262734": { pass: "43340", name: "LEVENT YILDIRIM" },
+  "262750": { pass: "59500", name: "MAHMUT CBR" },
+  "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
+  "262758": { pass: "67580", name: "MELİH PINAR" },
+  "262738": { pass: "47380", name: "MEVLÜT EVLER" },
+  "262701": { pass: "10010", name: "MUHAMMET OKUMUŞ" },
+  "262733": { pass: "42330", name: "MUHSİN ASİLKAN" },
+  "262717": { pass: "26170", name: "MURAT ALİ" },
+  "262712": { pass: "21120", name: "MURAT AYDEMİR" },
+  "262702": { pass: "11020", name: "MURAT KARA" },
+  "262763": { pass: "72630", name: "MUSTAFA ELMAS" },
+  "262721": { pass: "30210", name: "MUSTAFA GÜMÜŞÇÜ" },
+  "262787": { pass: "96870", name: "MUSTAFA TUCİ" },
+  "262745": { pass: "54450", name: "OĞUZ YILDIRIMKAYA" },
+  "262754": { pass: "63540", name: "OSMAN ALİ AYDIN 🏆" },
+  "262770": { pass: "79700", name: "OZKAYA MAZAKALI BAYRAM" },
+  "262728": { pass: "35280", name: "ÖNDER ASLAN" },
+  "262730": { pass: "39300", name: "ÖNDER IŞIK" },
+  "262732": { pass: "41320", name: "R. İLHAN KARACA 🏆🏆" },
+  "262711": { pass: "20110", name: "RIDVAN DOGER" },
+  "262741": { pass: "50410", name: "SABAHATTİN ÇAYLAK" },
+  "262709": { pass: "18090", name: "SALİH KARACAOĞLU" },
+  "262747": { pass: "56470", name: "SAVAŞ ÇAĞLAYAN" },
+  "262786": { pass: "95860", name: "SEDAT DİŞLİ" },
+  "262816": { pass: "61820", name: "SEDAT SEDAT" },
+  "262737": { pass: "46370", name: "ŞAHİN GEZGİNCİ" },
+  "262715": { pass: "24150", name: "ŞEMSETTIN DÜGER" },
+  "262774": { pass: "83740", name: "ŞENOL CAN ÇAKICI" },
+  "262739": { pass: "48390", name: "UĞUR GÜRBÜZ" },
+  "262719": { pass: "28190", name: "UĞUR VARDAR" },
+  "262771": { pass: "80710", name: "ULAŞ ADIGÜZEL" },
+  "262704": { pass: "13040", name: "YAPAY ZEKA" },
+  "262782": { pass: "91820", name: "YUSUF ERBAY" },
+  "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
 };
 
 export default function TahminlerPortal() {
@@ -100,7 +158,7 @@ export default function TahminlerPortal() {
   // Giriş ve Modal State'leri
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState(''); // Yarışmacı adını tutmak için
+  const [displayName, setDisplayName] = useState(''); 
   const [loginError, setLoginError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -111,7 +169,6 @@ export default function TahminlerPortal() {
 
   // 🔴 72 SAATLİK GERİ SAYIM MOTORU 🔴
   useEffect(() => {
-    // Kapanış Tarihi: 17 Ağustos 2026 - 21:00
     const targetDate = new Date('2026-08-17T21:00:00+03:00').getTime();
 
     const interval = setInterval(() => {
@@ -136,15 +193,18 @@ export default function TahminlerPortal() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🔴 GÜNCELLENMİŞ GİRİŞ SİSTEMİ (ADAM KRAL VE MANKOMAN AKTİF) 🔴
+  // 🔴 GÜNCELLENMİŞ GİRİŞ SİSTEMİ (BOŞLUK SAVAR EKLENDİ) 🔴
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
+    // DİKKAT: .trim() ile klavyenin attığı gereksiz görünmez boşlukları siliyoruz!
     const userKey = username.trim();
+    const passKey = password.trim(); 
+    
     const account = TEST_ACCOUNTS[userKey];
 
-    if (account && password === account.pass) { 
+    if (account && passKey === account.pass) { 
       setDisplayName(account.name);
       await fetchBulletinAndPredictions(userKey);
       setView('entry');
@@ -155,10 +215,7 @@ export default function TahminlerPortal() {
 
   // 🔴 HAFIZALI SİSTEM: KULLANICININ ESKİ TAHMİNLERİNİ ÇEKER 🔴
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
-    // 1. Önce Adminin hazırladığı boş bülteni çek
     const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5).order('match_index', { ascending: true });
-    
-    // 2. Yarışmacının daha önce kaydettiği tahminleri çek
     const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5).eq('user_id', currentUsername);
 
     if (bData) {
@@ -166,15 +223,11 @@ export default function TahminlerPortal() {
       const initialPreds: Record<number, { home: string, away: string }> = {};
       
       bData.forEach(m => {
-        // Bu maç için adamın önceden verdiği bir skor var mı?
         const existingPred = pData?.find(p => p.match_index === m.match_index);
-        
         if (existingPred && existingPred.predicted_score) {
-          // Varsa o skoru kutuya koy (Örn: "2-1")
           const [h, a] = existingPred.predicted_score.split('-');
           initialPreds[m.match_index] = { home: h || '-', away: a || '-' };
         } else {
-          // Yoksa boş bırak
           initialPreds[m.match_index] = { home: '-', away: '-' };
         }
       });
@@ -211,7 +264,6 @@ export default function TahminlerPortal() {
       
       if(error) throw error;
 
-      // 🔴 İŞLEM BAŞARILIYSA EKRANI KARART VE TEBRİKLER PANOSUNU AÇ 🔴
       setShowSuccessModal(true);
 
     } catch (e) {
@@ -225,7 +277,7 @@ export default function TahminlerPortal() {
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
       
-      {/* ===================== RESMİ TEBRİKLER MODALI (YENİ MESAJ) ===================== */}
+      {/* ===================== RESMİ TEBRİKLER MODALI ===================== */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
