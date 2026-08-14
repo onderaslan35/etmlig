@@ -15,7 +15,6 @@ export default function Navbar() {
     { name: 'SKOR DURUMU', href: '/skor-durumu' },
     { name: 'MAÇ ARŞİVİ', href: '/mac-arsivi' },
     { name: 'TAHMİNLER', href: '/tahmin' },
-    { name: '⚡ TAHMİNMATİK', href: '/tahminmatik', isHighlight: true },
   ];
 
   return (
