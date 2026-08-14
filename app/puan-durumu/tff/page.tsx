@@ -24,12 +24,16 @@ const week4Matches = [
   { id: 1, category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI" }, { id: 2, category: "UEFA SÜPER KUPA" }, { id: 3, category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ" }, { id: 4, category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ" }, { id: 5, category: "TÜRKİYE SÜPER LİG" }, { id: 6, category: "TÜRKİYE 1.LİG" }, { id: 7, category: "TÜRKİYE SÜPER LİG" }, { id: 8, category: "TÜRKİYE SÜPER LİG" }, { id: 9, category: "TÜRKİYE 1.LİG" }, { id: 10, category: "TÜRKİYE 1.LİG" }, { id: 11, category: "TÜRKİYE SÜPER LİG" }, { id: 12, category: "TÜRKİYE SÜPER LİG" }, { id: 13, category: "TÜRKİYE 1.LİG" }, { id: 14, category: "TÜRKİYE 1.LİG" }, { id: 15, category: "İNGİLTERE SÜPER KUPA" }, { id: 16, category: "TÜRKİYE SÜPER LİG" }, { id: 17, category: "TÜRKİYE 1.LİG" }, { id: 18, category: "TÜRKİYE SÜPER LİG" }, { id: 19, category: "TÜRKİYE SÜPER LİG" }, { id: 20, category: "TÜRKİYE 1.LİG" }, { id: 21, category: "TÜRKİYE 1.LİG" }, { id: 22, category: "TÜRKİYE 1.LİG" }, { id: 23, category: "TÜRKİYE SÜPER KUPA" }, { id: 24, category: "TÜRKİYE 1.LİG" }
 ];
 
-// 🔴 RESMİ LOGOLAR (ŞEREF KÜRSÜSÜ) 🔴
-const officialLogos = [
-  { id: 'tff', src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/T%C3%BCrkiye_Futbol_Federasyonu_logo.png/200px-T%C3%BCrkiye_Futbol_Federasyonu_logo.png', alt: 'TFF' },
+// 🔴 KESİNLİKLE KIRILMAYAN RAW (HAM) VİKİPEDİ LİNKLERİ 🔴
+const leftLogos = [
   { id: 'superlig', src: 'https://upload.wikimedia.org/wikipedia/tr/b/b3/Trendyol_S%C3%BCper_Lig_logo.png', alt: 'Trendyol Süper Lig' },
   { id: '1lig', src: 'https://upload.wikimedia.org/wikipedia/tr/c/c2/Trendyol_1._Lig_logo.png', alt: 'Trendyol 1. Lig' },
-  { id: 'zkupa', src: 'https://upload.wikimedia.org/wikipedia/tr/7/75/Ziraat_T%C3%BCrkiye_Kupas%C4%B1_logo.png', alt: 'Ziraat Türkiye Kupası' },
+  { id: 'zkupa', src: 'https://upload.wikimedia.org/wikipedia/tr/7/75/Ziraat_T%C3%BCrkiye_Kupas%C4%B1_logo.png', alt: 'Ziraat Türkiye Kupası' }
+];
+
+const tffLogo = 'https://upload.wikimedia.org/wikipedia/commons/e/e3/T%C3%BCrkiye_Futbol_Federasyonu_logo.png';
+
+const rightLogos = [
   { id: 'skupa', src: 'https://upload.wikimedia.org/wikipedia/tr/3/31/TFF_S%C3%BCper_Kupa.png', alt: 'TFF Süper Kupa' },
   { id: 'kadinlar', src: 'https://upload.wikimedia.org/wikipedia/tr/4/4c/Turkcell_Kad%C4%B1n_Futbol_S%C3%BCper_Ligi_logo.png', alt: 'Kadınlar Süper Ligi' },
   { id: '2lig', src: 'https://upload.wikimedia.org/wikipedia/tr/b/be/TFF_2._Lig_logo.png', alt: 'TFF 2. Lig' },
@@ -124,26 +128,41 @@ export default function TffPuanDurumuPage() {
   const selectTab = (tabKey: string) => { setActiveTab(tabKey); setIsWeekMenuOpen(false); };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="flex flex-col items-center text-center mb-5 mt-1 space-y-4 w-full">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
-        
-        {/* 🔴 RESMİ LOGOLAR ŞEREF KÜRSÜSÜ 🔴 */}
-        <div className="w-full flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 shadow-[0_0_20px_rgba(0,0,0,0.5)] backdrop-blur-sm max-w-4xl">
-          {officialLogos.map(logo => (
-            <div key={logo.id} className="relative group">
-              <img 
-                src={logo.src} 
-                alt={logo.alt} 
-                title={logo.alt} 
-                className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform duration-300 opacity-90 group-hover:opacity-100 cursor-pointer" 
-              />
-            </div>
-          ))}
+    <div className="max-w-[1400px] mx-auto p-4 text-slate-100 flex flex-col items-center">
+      
+      {/* 🔴 SİMETRİK ŞEREF KÜRSÜSÜ (YENİ TASARIM) 🔴 */}
+      <div className="flex flex-col items-center text-center mb-8 mt-2 w-full">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 w-full px-4 bg-slate-900/40 py-6 rounded-[2rem] border border-slate-800/60 shadow-[0_0_30px_rgba(0,0,0,0.4)] backdrop-blur-sm">
+          
+          {/* Sol Grup */}
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
+            {leftLogos.map(logo => (
+              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-8 sm:h-10 md:h-12 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            ))}
+          </div>
+          
+          {/* TFF Sol Logo */}
+          <img src={tffLogo} alt="TFF" title="TFF" className="h-10 sm:h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:scale-110 transition-transform mx-1 sm:mx-2 cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+
+          {/* ANA BAŞLIK */}
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-widest uppercase mx-1 sm:mx-2 whitespace-nowrap" style={{ textShadow: '0 0 15px rgba(220,38,38,1), 0 0 30px rgba(220,38,38,0.8)' }}>
+            TFF <span className="text-red-500">PUAN DURUMU</span>
+          </h1>
+
+          {/* TFF Sağ Logo */}
+          <img src={tffLogo} alt="TFF" title="TFF" className="h-10 sm:h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:scale-110 transition-transform mx-1 sm:mx-2 cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+
+          {/* Sağ Grup */}
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
+            {rightLogos.map(logo => (
+              <img key={logo.id} src={logo.src} alt={logo.alt} title={logo.alt} className="h-8 sm:h-10 md:h-12 w-auto object-contain drop-shadow-xl hover:scale-110 transition-transform cursor-pointer opacity-90 hover:opacity-100" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            ))}
+          </div>
+
         </div>
       </div>
       
-      <div className="w-full mb-6"><LiveMatchCard /></div>
+      <div className="w-full mb-6 max-w-5xl"><LiveMatchCard /></div>
       
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
@@ -169,7 +188,7 @@ export default function TffPuanDurumuPage() {
         </div>
       </div>
 
-      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-w-5xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
