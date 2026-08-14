@@ -113,6 +113,11 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
+// İsimden ID'yi bulan ters sözlük (Puan dağıtımı için gerekli)
+const getPlayerIdByName = (name: string) => {
+  return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
+};
+
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
   "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
@@ -163,14 +168,6 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// MAÇ VERİLERİ (1'DEN 4'E KADAR AYNI BIRAKILDI)
-const week1Matches = [
-  // ... (Gereksiz uzunluğu azaltmak için sadece 4. haftayı dolu veriyorum, diğerleri orijinalindeki gibi durabilir, 
-  // ancak ana sayfan 4. hafta seçili geleceği için direkt onu kullanacaksın)
-];
-const week2Matches = [];
-const week3Matches = [];
-
 const week4Matches = [
   { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
@@ -199,13 +196,17 @@ const week4Matches = [
 ];
 
 export default function AdminRadarPortal() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(4);
-  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
-  
-  // ADMİNİN MANUEL GİRECEĞİ SKORLARIN TUTULDUĞU STATE
-  const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
+  // 🔴 1. ADIM: İLK 4 MAÇ ÇİVİ GİBİ ÇAKILDI
+  const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({
+    1: { home: "0", away: "1" },
+    2: { home: "2", away: "1" },
+    3: { home: "2", away: "0" },
+    4: { home: "1", away: "0" },
+  });
 
-  const currentMatches = week4Matches;
+  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({
+    1: true, 2: true, 3: true, 4: true
+  });
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -220,10 +221,6 @@ export default function AdminRadarPortal() {
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
-  const handleAction = (action: string, matchId: number) => {
-    alert(`İşlem: ${action}\nMaç No: ${matchId}`);
-  };
-
   const isTffMatchCheck = (category: string) => {
     const uppercaseCat = category.toUpperCase();
     return (
@@ -236,92 +233,98 @@ export default function AdminRadarPortal() {
     );
   };
 
+  // 🔴 SUPABASE PUAN DAĞITIM VE RESETLEME MOTORU 🔴
+  const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
+    
+    // 2. ADIM: RESETLE BUTONU (GERÇEKTEN SIFIRLIYOR)
+    if (action === 'Resetle') {
+      setAdminScores(prev => ({
+        ...prev,
+        [matchId]: { home: "-", away: "-" }
+      }));
+      setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); // Akordiyonu da kapat
+      alert(`${matchId}. Maçın skoru başarıyla sıfırlandı. Ekrandan kaldırıldı.`);
+      return;
+    }
+
+    if (action === 'Skoru Güncelle') {
+      alert(`${matchId}. Maçın ekrandaki skoru güncellendi.`);
+      return;
+    }
+
+    // 3. ADIM: MAÇI ONAYLA VE PUANLARI VERİTABANINA DAĞIT
+    if (action === 'Maçı Onayla (Puan Dağıt)') {
+      if (currentWinners.length === 0) {
+        alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
+        return;
+      }
+
+      const isTff = isTffMatchCheck(matchData.category);
+      const leagueTarget = isTff ? 'tff_points' : 'dfo_points'; // Puanın yazılacağı sütun adı
+      const leagueName = isTff ? 'TFF' : 'DFO';
+
+      const confirmMsg = `${currentWinners.length} kişiye kişi başı ${displayPoints} puan dağıtılacak.\nHedef: MASTER Puan Durumu ve ${leagueName} Puan Durumu.\nOnaylıyor musun Kumandanım?`;
+      if (!window.confirm(confirmMsg)) return;
+
+      try {
+        // Döngüyle her bilenin puanını Supabase'e ekle
+        let successCount = 0;
+        for (const winnerName of currentWinners) {
+          const userId = getPlayerIdByName(winnerName);
+          if (!userId) continue;
+
+          // ⚠️ ÖNEMLİ NOT: "leaderboard" yazan yerleri, senin veritabanındaki tablonun adıyla değiştir (Örn: profiles, users vb.)
+          const { data: userRecord } = await supabase
+            .from('leaderboard') 
+            .select('master_points, dfo_points, tff_points')
+            .eq('user_id', userId)
+            .single();
+
+          if (userRecord) {
+            const newMasterScore = (userRecord.master_points || 0) + displayPoints;
+            const newLeagueScore = (userRecord[leagueTarget] || 0) + displayPoints;
+
+            await supabase
+              .from('leaderboard') // Burayı da değiştir
+              .update({
+                master_points: newMasterScore,
+                [leagueTarget]: newLeagueScore
+              })
+              .eq('user_id', userId);
+            
+            successCount++;
+          }
+        }
+        
+        alert(`✅ İŞLEM BAŞARILI!\n${successCount} yarışmacının MASTER ve ${leagueName} tablolarına ${displayPoints} puan eklendi!`);
+      } catch (error) {
+        alert("❌ HATA: Puanlar Supabase'e aktarılamadı. Lütfen veritabanındaki tablo isimlerini kontrol et.");
+        console.error("Supabase Hatası:", error);
+      }
+    }
+  };
+
   const getEliteTheme = (category: string) => {
     const upCat = category.toUpperCase();
     if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
       return {
-        bgImg: "url('/cl-bg.png')",
-        containerBorder: "border-indigo-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
-        containerBg: "bg-[#050b14]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-indigo-300",
-        badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-        scoreBorder: "border-white/30",
-        colonText: "text-white/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+        bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30"
       };
     } else if (upCat.includes("AVRUPA LİGİ")) {
       return {
-        bgImg: "url('/el-bg.png')", 
-        containerBorder: "border-orange-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
-        containerBg: "bg-[#140805]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-orange-400",
-        badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
-        scoreBorder: "border-orange-600/40",
-        colonText: "text-orange-400/50",
-        tagText: "text-orange-300",
-        tagBg: "bg-orange-950/90",
-        tagBorder: "border-orange-400/80",
-        bottomBar: "bg-[#140805]/90 border-orange-900/30"
+        bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30"
       };
     } else if (upCat.includes("KONFERANS LİGİ")) {
       return {
-        bgImg: "url('/uecl-bg.png')",
-        containerBorder: "border-emerald-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
-        containerBg: "bg-[#05140b]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-emerald-400",
-        badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
-        scoreBorder: "border-emerald-600/40",
-        colonText: "text-emerald-400/50",
-        tagText: "text-emerald-300",
-        tagBg: "bg-emerald-950/90",
-        tagBorder: "border-emerald-400/80",
-        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
+        bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
       };
     } else if (isTffMatchCheck(category)) {
       return {
-        bgImg: "url('/tff-bg.png')",
-        containerBorder: "border-red-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
-        containerBg: "bg-[#140505]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-red-400",
-        badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
-        scoreBorder: "border-red-600/40",
-        colonText: "text-red-400/50",
-        tagText: "text-red-400",
-        tagBg: "bg-red-950/90",
-        tagBorder: "border-red-500/80",
-        bottomBar: "bg-[#140505]/90 border-red-900/30"
+        bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30"
       };
     }
     return {
-        bgImg: null,
-        containerBorder: "border-blue-500/30",
-        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
-        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-cyan-400",
-        badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
-        scoreBorder: "border-blue-600/40",
-        colonText: "text-blue-400/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
+        bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30"
     };
   };
 
@@ -339,24 +342,19 @@ export default function AdminRadarPortal() {
             </p>
           </div>
           <div>
-            <select
-              value={selectedWeek}
-              onChange={(e) => setSelectedWeek(Number(e.target.value))}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm"
-            >
-              <option value={4}>4. HAFTA YÖNETİMİ</option>
-            </select>
+            <div className="bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg shadow text-xs sm:text-sm">
+              4. HAFTA YÖNETİMİ
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          {currentMatches.map((match) => {
+          {week4Matches.map((match) => {
             const isWinnersOpen = !!openWinnersMap[match.id];
             const isTffMatch = isTffMatchCheck(match.category);
             const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
             const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
 
-            // Manuel girilen skorları çek
             const homeScore = adminScores[match.id]?.home || "-";
             const awayScore = adminScores[match.id]?.away || "-";
             
@@ -364,7 +362,6 @@ export default function AdminRadarPortal() {
             let winnersCount = 0;
             let displayPoints = 0;
 
-            // Eğer skor girildiyse RADAR motorunu çalıştır
             if (homeScore !== "-" && awayScore !== "-") {
               const targetScore = `${homeScore}-${awayScore}`;
               currentWinners = Object.keys(week4PredictionsData)
@@ -374,7 +371,6 @@ export default function AdminRadarPortal() {
               
               winnersCount = currentWinners.length;
               
-              // Puan dağıtım algoritması
               if(winnersCount === 1) displayPoints = 12;
               else if(winnersCount === 2) displayPoints = 6;
               else if(winnersCount === 3) displayPoints = 5;
@@ -398,12 +394,7 @@ export default function AdminRadarPortal() {
                     <>
                       <div 
                         className="absolute inset-0 z-0 opacity-100"
-                        style={{ 
-                          backgroundImage: theme.bgImg,
-                          backgroundSize: 'cover', 
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat'
-                        }}
+                        style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}
                       ></div>
                       <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
                     </>
@@ -419,10 +410,6 @@ export default function AdminRadarPortal() {
                       <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                         🏆 {match.category}
                       </span>
-                      
-                      <span className={`${theme.catText} text-[10px] sm:text-[11px] font-semibold tracking-widest mt-0.5 opacity-90`}>
-                        {match.date} <span className="opacity-50 mx-1">|</span> {match.time}
-                      </span>
                     </div>
 
                     <div className="flex items-center justify-between px-0 sm:px-4">
@@ -434,15 +421,14 @@ export default function AdminRadarPortal() {
                         <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.homeTeam}</span>
                       </div>
 
-                      {/* MANUEL AÇILIR KUTU (AKORDİYON) SKOR SEÇİMİ */}
                       <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                         <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                           <select value={homeScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="bg-transparent text-xl sm:text-4xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
-                            {scoreOptions.map(opt => <option key={opt} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
+                            {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                           </select>
                           <span className={`text-base sm:text-2xl font-bold ${theme.colonText}`}>:</span>
                           <select value={awayScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="bg-transparent text-xl sm:text-4xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
-                            {scoreOptions.map(opt => <option key={opt} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
+                            {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                           </select>
                         </div>
                       </div>
@@ -456,11 +442,11 @@ export default function AdminRadarPortal() {
 
                     </div>
                     
-                    {/* ADMİN KONTROL BUTONLARI EKLENDİ */}
+                    {/* ADMİN BUTONLARI - ARTIK SUPABASE MOTORUNA BAĞLI */}
                     <div className="flex justify-center gap-2 mt-5">
-                      <button onClick={() => handleAction('Skoru Güncelle', match.id)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all">Skoru Güncelle</button>
-                      <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.id)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all">Maçı Bitir (Dağıt)</button>
-                      <button onClick={() => handleAction('Resetle', match.id)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all">Resetle</button>
+                      <button onClick={() => handleAction('Skoru Güncelle', match.id, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all">Skoru Güncelle</button>
+                      <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.id, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all">Maçı Bitir (Dağıt)</button>
+                      <button onClick={() => handleAction('Resetle', match.id, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all">Resetle</button>
                     </div>
 
                   </div>
