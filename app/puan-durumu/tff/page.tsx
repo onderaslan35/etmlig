@@ -148,11 +148,9 @@ export default function TffPuanDurumuPage() {
                 <tr>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  {/* 🔴 KIPKIRMIZI ESTETİK: TABLO BAŞLIĞI 🔴 */}
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
-                    <span className="bg-red-600 text-white px-3 py-1.5 rounded-lg shadow-[0_0_12px_rgba(220,38,38,0.6)] border border-red-400 font-black tracking-widest">
-                      {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
-                    </span>
+                  {/* 🔴 STANDART TABLO BAŞLIĞI (MASTER FORMATI) 🔴 */}
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap pr-4 sm:pr-8">
+                    {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                   </th>
                 </tr>
               </thead>
@@ -180,9 +178,12 @@ export default function TffPuanDurumuPage() {
                         {row.liveExtra > 0 && activeTab !== 'total' && <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>+{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}</span>}
                       </div>
                     </td>
-                    {/* 🔴 KIPKIRMIZI ESTETİK: TABLO İÇİ RAKAMLAR 🔴 */}
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
-                      <span className="bg-red-600 text-white border border-red-400 px-3 sm:px-4 py-1.5 rounded-lg font-black text-sm sm:text-base shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+                    {/* 🔴 BEYAZ YAZI - KIRMIZI NEON PARLAMA ESTETİĞİ 🔴 */}
+                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap pr-4 sm:pr-8">
+                      <span
+                        className="text-white font-black text-base sm:text-xl tracking-wider"
+                        style={{ textShadow: '0 0 10px rgba(239,68,68,1), 0 0 20px rgba(220,38,38,0.9), 0 0 30px rgba(153,27,27,0.8)' }}
+                      >
                         {row.puan}
                       </span>
                     </td>
