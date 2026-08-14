@@ -487,7 +487,7 @@ export default function MacArsiviPage() {
            </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {currentMatches.map((match) => {
+            {currentMatches.map((match: any) => {
               const isWinnersOpen = !!openWinnersMap[match.id];
               const isTffMatch = isTffMatchCheck(match.category);
               const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
@@ -496,9 +496,9 @@ export default function MacArsiviPage() {
               let homeScore = "-";
               let awayScore = "-";
               let matchStatus = "NOT_STARTED";
-              let currentWinners: string[] = (match as any).winners || [];
-              let winnersCount = (match as any).winnersCount || 0;
-              let displayPoints = (match as any).earnedPoints || 0;
+              let currentWinners: string[] = match.winners || [];
+              let winnersCount = match.winnersCount || 0;
+              let displayPoints = match.earnedPoints || 0;
               let isFinished = false;
 
               // Eğer 4. veya 5. hafta ise canlı/veri tabanından oku (Eski haftalar statik kalır)
@@ -535,7 +535,7 @@ export default function MacArsiviPage() {
                 const scoreText = match.score || "- : -";
                 isFinished = scoreText.includes("-") && !scoreText.includes("- : -") && !scoreText.includes("-:-");
                 if (isFinished) {
-                  const parts = scoreText.split("-").map(s => s.trim());
+                  const parts = scoreText.split("-").map((s: string) => s.trim());
                   homeScore = parts[0] || "-";
                   awayScore = parts[1] || "-";
                 }
