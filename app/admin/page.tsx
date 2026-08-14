@@ -197,6 +197,7 @@ const week4Matches = [
 
 export default function AdminRadarPortal() {
   
+  // 🔴 İLK 4 MAÇIN SKORLARI ÇİVİ GİBİ ÇAKILDI
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({
     1: { home: "0", away: "1" },
     2: { home: "2", away: "1" },
@@ -208,6 +209,7 @@ export default function AdminRadarPortal() {
     1: true, 2: true, 3: true, 4: true
   });
   
+  // 🔴 İLK 4 MAÇ KİLİTLİ
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({
     1: true, 2: true, 3: true, 4: true 
   });
@@ -234,7 +236,7 @@ export default function AdminRadarPortal() {
     );
   };
 
-  // 🔴 SUPABASE PUAN DAĞITIM VE RESETLEME MOTORU 🔴
+  // 🔴 YEPYENİ FİŞ EKLEME (INSERT) MOTORU 🔴
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     
     if (action === 'Resetle') {
@@ -244,73 +246,54 @@ export default function AdminRadarPortal() {
     }
 
     if (action === 'Skoru Güncelle') {
-      alert(`${matchId}. Maçın skoru şimdilik ekranda güncellendi. Puan dağıtmak için "Maçı Bitir" butonunu kullanın.`);
+      alert(`${matchId}. Maçın skoru ekranda güncellendi. Sistemi işlemek için "Maçı Bitir" butonunu kullanın.`);
       return;
     }
 
     if (action === 'Maçı Onayla (Puan Dağıt)') {
       if (currentWinners.length === 0) {
-        alert("Bu skoru bilen aslan parçası yok. Dağıtılacak puan bulunamadı.");
+        alert("Bu skoru bilen aslan parçası yok. Eklenecek puan bulunamadı.");
         return;
       }
 
       const isTff = isTffMatchCheck(matchData.category);
-      const leagueTarget = isTff ? 'tff_points' : 'dfo_points'; 
       const leagueName = isTff ? 'TFF' : 'DFO';
 
-      const confirmMsg = `${currentWinners.length} kişiye kişi başı ${displayPoints} puan dağıtılacak.\n\nHedef Tablolar: MASTER Puan Durumu ve ${leagueName} Puan Durumu.\n\nOnaylıyor musun Kumandanım?`;
+      const confirmMsg = `${currentWinners.length} aslan parçasına ${displayPoints} puanlık fiş kesilecek.\n\nHedef Kategori: ${leagueName}\n\nOnaylıyor musun Kumandanım?`;
       if (!window.confirm(confirmMsg)) return;
 
       try {
-        let successCount = 0;
-        let errorMessage = "";
+        const homeScore = adminScores[matchId]?.home || "0";
+        const awayScore = adminScores[matchId]?.away || "0";
 
-        for (const winnerName of currentWinners) {
+        // Toplu Fiş (Insert) Dizisi Hazırlama
+        const inserts = currentWinners.map(winnerName => {
           const userId = getPlayerIdByName(winnerName);
-          if (!userId) continue;
+          return {
+            hafta: 4,
+            user_name: winnerName,
+            username: userId,
+            kategori: leagueName,
+            ev_sahibi: matchData.homeTeam,
+            deplasman: matchData.awayTeam,
+            gercek_ev: parseInt(homeScore, 10),
+            gercek_dep: parseInt(awayScore, 10),
+            tahmin_ev: homeScore,
+            tahmin_dep: awayScore,
+            puan: displayPoints
+          };
+        });
 
-          // 🔴 DEĞİŞİKLİK BURADA: Tablo adı 'points' yapıldı
-          const { data: userRecord, error: selectError } = await supabase
-            .from('points') 
-            .select(`master_points, ${leagueTarget}`)
-            .eq('user_id', userId)
-            .single();
+        // Supabase Toplu Insert İşlemi
+        const { error: insertError } = await supabase
+          .from('points')
+          .insert(inserts);
 
-          if (selectError) {
-            errorMessage = selectError.message;
-            break; 
-          }
-
-          if (userRecord) {
-            const newMasterScore = ((userRecord as any).master_points || 0) + displayPoints;
-            const newLeagueScore = ((userRecord as any)[leagueTarget] || 0) + displayPoints;
-
-            const updatePayload: any = {
-              master_points: newMasterScore,
-              [leagueTarget]: newLeagueScore
-            };
-
-            // 🔴 DEĞİŞİKLİK BURADA: Tablo adı 'points' yapıldı
-            const { error: updateError } = await supabase
-              .from('points') 
-              .update(updatePayload)
-              .eq('user_id', userId);
-            
-            if (updateError) {
-              errorMessage = updateError.message;
-              break;
-            }
-            successCount++;
-          }
-        }
-        
-        if (errorMessage) {
-           alert(`❌ HATA! Supabase tablo adın veya sütunların kodla uyuşmuyor.\n\nHata Mesajı: ${errorMessage}`);
-        } else if (successCount > 0) {
-           alert(`✅ İŞLEM BAŞARILI!\n${successCount} aslan parçasının MASTER ve ${leagueName} tablolarına ${displayPoints} puan eklendi!`);
-           setDistributedMatches(prev => ({...prev, [matchId]: true})); 
+        if (insertError) {
+           alert(`❌ HATA! Fişler eklenemedi.\n\nHata Mesajı: ${insertError.message}`);
         } else {
-           alert(`⚠️ İşlem bitti fakat güncellenecek kullanıcı ID'si bulunamadı. Veritabanındaki ID'ler eşleşmiyor olabilir.`);
+           alert(`✅ İŞLEM BAŞARILI!\n${inserts.length} aslan parçasının puan fişi ${leagueName} kategorisiyle points tablosuna işlendi!`);
+           setDistributedMatches(prev => ({...prev, [matchId]: true})); // MAÇI KİLİTLE
         }
       } catch (error: any) {
         alert("❌ BEKLENMEYEN HATA: " + error.message);
@@ -352,7 +335,7 @@ export default function AdminRadarPortal() {
               🔴 KÖK KOMUTA MERKEZİ / ADMİN RADARI
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">
-              4. Hafta Manuel Skor Yönetimi ve Gerçek Puan Dağıtım Paneli
+              4. Hafta Manuel Skor Yönetimi ve Fiş İşleme Paneli
             </p>
           </div>
           <div>
