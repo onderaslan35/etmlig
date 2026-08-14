@@ -1,6 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
@@ -186,7 +184,6 @@ export default function MasterPuanDurumuPage() {
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
             
-            // EKMEL KURALLARI: 12, 6, 5, 4, 3, 2, 1 Puan Dağılım Sistemi Birebir Devrede
             let points = 1;
             if(winnerIds.length === 1) points = 12;
             else if(winnerIds.length === 2) points = 6;
