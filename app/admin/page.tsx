@@ -129,7 +129,36 @@ const getPlayerIdByName = (name: string) => {
   return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
 };
 
-// 🔴 SAAT SEÇENEKLERİ (00:00 EN BAŞTA, SONRA 23:45'TEN 12:00'A DOĞRU İNER)
+// 🔴 GEÇİCİ KÖPRÜ: 4. Hafta veritabanında yoksa buradan okunacak (Çünkü eski sistem statikti)
+const week4Matches = [
+  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
+  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
+  { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
+  { id: 7, weekLabel: "4. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
+  { id: 8, weekLabel: "4. Hafta - 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
+  { id: 9, weekLabel: "4. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
+  { id: 10, weekLabel: "4. Hafta - 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
+  { id: 11, weekLabel: "4. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
+  { id: 12, weekLabel: "4. Hafta - 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
+  { id: 13, weekLabel: "4. Hafta - 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
+  { id: 14, weekLabel: "4. Hafta - 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
+  { id: 15, weekLabel: "4. Hafta - 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
+  { id: 16, weekLabel: "4. Hafta - 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
+  { id: 17, weekLabel: "4. Hafta - 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
+  { id: 18, weekLabel: "4. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
+  { id: 19, weekLabel: "4. Hafta - 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
+  { id: 20, weekLabel: "4. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
+  { id: 21, weekLabel: "4. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
+  { id: 22, weekLabel: "4. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
+  { id: 23, weekLabel: "4. Hafta - 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
+  { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
+];
+
+
+// 🔴 SAAT SEÇENEKLERİ
 const generateTimeOptions = () => {
   const times = ["00:00"];
   for (let h = 23; h >= 12; h--) {
@@ -141,7 +170,7 @@ const generateTimeOptions = () => {
 };
 const timeOptionsArr = generateTimeOptions();
 
-// 🔴 TARİH SEÇENEKLERİ MOTORU (Sonsuz Algoritma: 5. Hafta 18 Ağustos'tan başlar)
+// 🔴 TARİH SEÇENEKLERİ MOTORU
 const generateWeekDates = (weekNum: number) => {
   const baseDate = new Date(2026, 7, 18); // 18 Ağustos 2026
   const diffDays = (weekNum - 5) * 7;
@@ -169,14 +198,13 @@ export default function AdminRadarPortal() {
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
-  const [predictionsDB, setPredictionsDB] = useState<Record<string, Record<number, string>>>({}); // Canlı tahminler
+  const [predictionsDB, setPredictionsDB] = useState<Record<string, Record<number, string>>>({}); 
 
   // --- BÜLTEN ÜRETİM FABRİKASI STATELERİ ---
   const [bulletinWeek, setBulletinWeek] = useState<number>(5);
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   
-  // Tüm kategori başlıkları (Kombine edilmiş geniş liste)
   const categoriesList = [
     "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG",
     "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", "FRANSA LIGUE 1", "İTALYA SERIE A", "İSPANYA LA LIGA",
@@ -203,33 +231,41 @@ export default function AdminRadarPortal() {
     }))
   );
 
-  // 🔴 VERİTABANINDAN CANLI MAÇLARI VE TAHMİNLERİ ÇEK (Canlı Sekmesi İçin) 🔴
+  // 🔴 VERİTABANINDAN CANLI MAÇLARI VE TAHMİNLERİ ÇEK (Eksik Hafta 4 İçin Köprü Eklendi) 🔴
   useEffect(() => {
     const fetchLiveAdminData = async () => {
-      // Seçili haftanın bültenini çek
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
-      // Canlı skorları çek
       const { data: liveData } = await supabase.from('live_matches').select('*');
-      // Tahminleri çek
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek);
 
-      if (bultenData) {
-        setLiveMatchesDB(bultenData);
-        
-        // Skorları state'e oturt
-        const initialScores: Record<number, { home: string, away: string }> = {};
-        bultenData.forEach(m => {
-           const liveInfo = liveData?.find(l => l.id === m.match_index);
-           if (liveInfo) {
-             initialScores[m.match_index] = { home: liveInfo.home_score !== '-' ? liveInfo.home_score : "0", away: liveInfo.away_score !== '-' ? liveInfo.away_score : "0" };
-           } else {
-             initialScores[m.match_index] = { home: "0", away: "0" };
-           }
-        });
-        setAdminScores(initialScores);
-      } else {
-        setLiveMatchesDB([]);
+      let currentBulten = bultenData || [];
+
+      // 🔴 GEÇİCİ KÖPRÜ: 4. Hafta seçildiyse ve veritabanında yoksa, statik listeyi kullan!
+      if (selectedLiveWeek === 4 && currentBulten.length === 0) {
+         currentBulten = week4Matches.map(m => ({
+            match_index: m.id,
+            week_num: 4,
+            category: m.category,
+            match_date: m.date,
+            match_time: m.time,
+            home_team: m.homeTeam,
+            away_team: m.awayTeam
+         }));
       }
+
+      setLiveMatchesDB(currentBulten);
+
+      // Skorları state'e oturt
+      const initialScores: Record<number, { home: string, away: string }> = {};
+      currentBulten.forEach(m => {
+         const liveInfo = liveData?.find(l => l.id === m.match_index);
+         if (liveInfo) {
+           initialScores[m.match_index] = { home: liveInfo.home_score !== '-' ? liveInfo.home_score : "0", away: liveInfo.away_score !== '-' ? liveInfo.away_score : "0" };
+         } else {
+           initialScores[m.match_index] = { home: "0", away: "0" };
+         }
+      });
+      setAdminScores(initialScores);
 
       // Tahminleri yarışmacıya göre grupla
       if (pData) {
@@ -248,7 +284,6 @@ export default function AdminRadarPortal() {
   }, [activeTab, selectedLiveWeek]);
 
 
-  // Hafta değiştiğinde dinamik tarih listesini güncelle (Bülten sekmesi)
   useEffect(() => {
     const newDates = generateWeekDates(bulletinWeek);
     setCurrentWeekDates(newDates);
@@ -512,6 +547,8 @@ export default function AdminRadarPortal() {
                     <option value={4}>4. HAFTA</option>
                     <option value={5}>5. HAFTA</option>
                     <option value={6}>6. HAFTA</option>
+                    <option value={7}>7. HAFTA</option>
+                    <option value={8}>8. HAFTA</option>
                  </select>
               </div>
             </div>
@@ -528,7 +565,7 @@ export default function AdminRadarPortal() {
                 const isWinnersOpen = !!openWinnersMap[match.match_index];
                 const isTffMatch = isTffMatchCheck(match.category);
                 
-                // 🔴 Logoları artık statik default yerine localTeamLogos'tan çekiyoruz! 🔴
+                // Logoları localTeamLogos'tan çekiyoruz!
                 const homeLogoUrl = localTeamLogos[match.home_team] || "/logos/default.png";
                 const awayLogoUrl = localTeamLogos[match.away_team] || "/logos/default.png";
 
