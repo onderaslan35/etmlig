@@ -353,43 +353,39 @@ export default function TahminlerPortal() {
 
   const ghostColumns = Array.from({ length: 10 });
 
-  // 🔴 SİBER FOTOĞRAF ÇEKİM PROTOKOLÜ (TARAYICI KALKANI KIRILDI) 🔴
+  // 🔴 YENİ NESİL ZIRHLI FOTOĞRAF MOTORU (html-to-image) 🔴
   const downloadJPEG = async () => {
     setIsDownloading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 500)); // Animasyon nefes alma payı
       
-      const html2canvas = (await import('html2canvas')).default;
+      const htmlToImage = await import('html-to-image');
       const element = document.getElementById('jpeg-export-container');
       
       if (!element) throw new Error("Stüdyo elementi bulunamadı");
 
-      // Mobil Safari/Chrome hata vermesin diye kalite 1.5'e çekildi, RAM şişmesi engellendi
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#050b14', 
-        scale: 1.5, 
-        useCORS: true,
-        logging: false
+      // LAB renk hatasını ve tarayıcı sınırlarını aşan yeni motor
+      const dataUrl = await htmlToImage.toJpeg(element, { 
+        quality: 0.95, 
+        backgroundColor: '#050b14',
+        pixelRatio: 1.5 // Cam gibi HD okuma için
       });
 
-      const image = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");
-      link.href = image;
       link.download = "ETM_Lig_4_Hafta_Tahminler.jpg";
+      link.href = dataUrl;
       
-      // DOM Exception yememek için link dökümana eklenir, tıklanır ve silinir
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
     } catch (error: any) {
       console.error("Fotoğraf oluşturulamadı:", error);
-      alert("HATA: Cihaz hafızası veya tarayıcı engeline takıldı. Lütfen sayfayı yenileyip tekrar deneyin. Detay: " + error.message);
+      alert("HATA: Fotoğraf motoru bir engele takıldı. Detay: " + error.message);
     }
     setIsDownloading(false);
   };
 
-  // Gizli stüdyo için "PAS" geçenleri filtreleyip, sadece tahmin gönderenleri A'dan Z'ye sıraladığımız temiz liste
   const activePlayersForJPEG = useMemo(() => {
     return Object.keys(TEST_ACCOUNTS)
       .filter(id => id !== 'mankoman' && week4PredictionsData[id])
@@ -683,8 +679,8 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Şeffaflık ile Tarayıcı Kandırıldı) 🔴 */}
-            <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -9999 }}>
+            {/* 🔴 GİZLİ FOTOĞRAF STÜDYOSU (Çizim Hatalarını Atlamak İçin Yeni Gizleme Metodu) 🔴 */}
+            <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', zIndex: -9999 }}>
               <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
                 <div className="text-center mb-6 border-b border-slate-800 pb-4">
                   <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - 4. HAFTA TAHMİNLERİ</h2>
