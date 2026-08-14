@@ -197,23 +197,19 @@ const normalizeTurkish = (text: string) => {
 export default function TahminlerPortal() {
   const [view, setView] = useState<'lobby' | 'declaration' | 'entry'>('lobby');
   
-  // Geri Sayım State'leri
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isTimeUp, setIsTimeUp] = useState(false);
 
-  // Giriş ve Modal State'leri
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState(''); 
   const [loginError, setLoginError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Deklarasyon Arama, Açılır Menü ve Sıralama State'leri
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); // Varsayılan A'dan Z'ye
+  const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); 
 
-  // Bülten State'i
   const [bulletin, setBulletin] = useState<any[]>([]);
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -321,19 +317,15 @@ export default function TahminlerPortal() {
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
-  // 🔴 SIRA/LİSTE BUTONU DEĞİŞTİRME FONKSİYONU 🔴
   const toggleSortOrder = () => {
     if (sortOrder === 'A-Z') setSortOrder('Z-A');
     else if (sortOrder === 'Z-A') setSortOrder('ZAMAN');
     else setSortOrder('A-Z');
   };
 
-  // 🔴 AKILLI YARIŞMACI FİLTRELEME VE SIRALAMA MOTORU 🔴
   const finalPlayersList = useMemo(() => {
-    // 1. Önce Admin Hariç Tüm Yarışmacıların ID'lerini Al
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
 
-    // 2. Türkçe Karaktere Duyarlı Arama Filtresi (Rıdvan = RIDVAN)
     if (searchTerm) {
       const normalizedSearch = normalizeTurkish(searchTerm);
       allIds = allIds.filter(id => {
@@ -342,25 +334,22 @@ export default function TahminlerPortal() {
       });
     }
 
-    // 3. Tahmin Gönderenler (Verisi Olanlar) ve PAS Geçenler Olarak İkiye Böl
     const submittedIds = allIds.filter(id => week4PredictionsData[id]);
     const missingIds = allIds.filter(id => !week4PredictionsData[id]);
 
-    // 4. Gönderenleri Seçilen Vitese Göre Sırala
     if (sortOrder === 'A-Z') {
       submittedIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
     } else if (sortOrder === 'Z-A') {
       submittedIds.sort((a, b) => TEST_ACCOUNTS[b].name.localeCompare(TEST_ACCOUNTS[a].name, 'tr'));
     }
-    // ZAMAN sıralaması için 4. hafta verisi sabit (hardcoded) olduğu için ID'lerin eklenme sırası veya A-Z korunur.
     
-    // 5. Eksik (PAS) Kalanları da Kendi İçinde A-Z Sırala
     missingIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
 
-    // 6. Pas Geçenleri En Alta Ekleyip Gönder
     return [...submittedIds, ...missingIds];
   }, [searchTerm, sortOrder]);
 
+  // 🔴 HAYALET SÜTUNLAR İÇİN 10 ADET BOŞ DİZİ (Tablet/Geniş Ekran Kaydırması İçin) 🔴
+  const ghostColumns = Array.from({ length: 10 });
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -508,7 +497,6 @@ export default function TahminlerPortal() {
               </div>
               
               <div className="flex gap-3 items-center w-full md:w-auto relative">
-                {/* 🔴 AÇILIR MENÜLÜ (DROPDOWN) ARAMA KUTUSU 🔴 */}
                 <div className="relative flex-1 md:min-w-[250px]">
                   <input 
                     type="text" 
@@ -519,7 +507,6 @@ export default function TahminlerPortal() {
                     onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                     className="w-full bg-slate-950 border border-slate-700 px-4 py-2 rounded-lg text-white text-sm outline-none focus:border-amber-500"
                   />
-                  {/* Dropdown Listesi */}
                   {isSearchFocused && (
                     <div className="absolute top-full left-0 w-full bg-slate-900 border border-slate-700 mt-1 rounded-lg shadow-2xl z-[100] max-h-48 overflow-y-auto custom-scrollbar">
                       {finalPlayersList.map(id => (
@@ -547,12 +534,11 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {/* 🔴 BETON SÜTUNLU DEVASA TABLO (STICKY HEADER & COLUMN) 🔴 */}
+            {/* 🔴 TABLO ALANI 🔴 */}
             <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
               <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                 <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
                   
-                  {/* BETON BAŞLIKLAR (Aşağı Kaydırınca Tepeye Yapışır) */}
                   <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
                     {/* Satır 1: Maç Numaraları */}
                     <tr>
@@ -561,6 +547,10 @@ export default function TahminlerPortal() {
                       </th>
                       {week4Matches.map(m => (
                         <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th>
+                      ))}
+                      {/* HAYALET SÜTUNLAR (Satır 1) */}
+                      {ghostColumns.map((_, i) => (
+                        <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                       ))}
                     </tr>
                     
@@ -575,6 +565,10 @@ export default function TahminlerPortal() {
                             <img src={localTeamLogos[m.homeTeam] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
                           </div>
                         </th>
+                      ))}
+                      {/* HAYALET SÜTUNLAR (Satır 2) */}
+                      {ghostColumns.map((_, i) => (
+                        <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                       ))}
                     </tr>
 
@@ -599,15 +593,18 @@ export default function TahminlerPortal() {
                           </div>
                         </th>
                       ))}
+                      {/* HAYALET SÜTUNLAR (Satır 3) */}
+                      {ghostColumns.map((_, i) => (
+                        <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
+                      ))}
                     </tr>
                   </thead>
                   
                   <tbody>
                     {finalPlayersList.map(id => {
                       const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
-                      // Eğer haftanın verisinde (week4PredictionsData) yoksa PAS yazacak
                       const preds = week4PredictionsData[id] || Array(24).fill('PAS');
-                      const isMissing = preds[0] === 'PAS'; // Tespiti
+                      const isMissing = preds[0] === 'PAS'; 
 
                       return (
                         <tr key={id} className={`hover:bg-slate-800/50 transition-colors group ${isMissing ? 'opacity-70' : ''}`}>
@@ -621,6 +618,10 @@ export default function TahminlerPortal() {
                               {score}
                             </td>
                           ))}
+                          {/* HAYALET SÜTUNLAR (Skorların Yanı) */}
+                          {ghostColumns.map((_, i) => (
+                            <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td>
+                          ))}
                         </tr>
                       );
                     })}
@@ -628,7 +629,7 @@ export default function TahminlerPortal() {
                     {/* Eğer arama sonucu boşsa */}
                     {finalPlayersList.length === 0 && (
                       <tr>
-                        <td colSpan={25} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
+                        <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
                       </tr>
                     )}
                   </tbody>
