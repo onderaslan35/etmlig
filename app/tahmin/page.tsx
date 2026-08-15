@@ -229,37 +229,43 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
 };
 
-const week4Matches = [
-  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30" },
-  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00" },
-  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00" },
-  { id: 4, weekLabel: "4. Hafta - 4. MAÇ", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00" },
-  { id: 5, weekLabel: "4. Hafta - 5. MAÇ", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30" },
-  { id: 6, weekLabel: "4. Hafta - 6. MAÇ", homeTeam: "EROKSPOR", awayTeam: "SARIYER", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30" },
-  { id: 7, weekLabel: "4. Hafta - 7. MAÇ", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00" },
-  { id: 8, weekLabel: "4. Hafta - 8. MAÇ", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00" },
-  { id: 9, weekLabel: "4. Hafta - 9. MAÇ", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00" },
-  { id: 10, weekLabel: "4. Hafta - 10. MAÇ", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00" },
-  { id: 11, weekLabel: "4. Hafta - 11. MAÇ", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30" },
-  { id: 12, weekLabel: "4. Hafta - 12. MAÇ", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30" },
-  { id: 13, weekLabel: "4. Hafta - 13. MAÇ", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30" },
-  { id: 14, weekLabel: "4. Hafta - 14. MAÇ", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30" },
-  { id: 15, weekLabel: "4. Hafta - 15. MAÇ", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00" },
-  { id: 16, weekLabel: "4. Hafta - 16. MAÇ", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00" },
-  { id: 17, weekLabel: "4. Hafta - 17. MAÇ", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00" },
-  { id: 18, weekLabel: "4. Hafta - 18. MAÇ", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30" },
-  { id: 19, weekLabel: "4. Hafta - 19. MAÇ", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30" },
-  { id: 20, weekLabel: "4. Hafta - 20. MAÇ", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00" },
-  { id: 21, weekLabel: "4. Hafta - 21. MAÇ", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30" },
-  { id: 22, weekLabel: "4. Hafta - 22. MAÇ", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30" },
-  { id: 23, weekLabel: "4. Hafta - 23. MAÇ", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30" },
-  { id: 24, weekLabel: "4. Hafta - 24. MAÇ", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30" }
-];
+// MAÇ VERİLERİ SADECE TAHMİNMATİK EKRANI İÇİN (GEÇMİŞ ARŞİV) KULLANILIYOR
+const archiveMatches = {
+  4: [
+    { id: 1, weekLabel: "4. Hafta - 1. MAÇ", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30" },
+    { id: 2, weekLabel: "4. Hafta - 2. MAÇ", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00" },
+    { id: 3, weekLabel: "4. Hafta - 3. MAÇ", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00" },
+    { id: 4, weekLabel: "4. Hafta - 4. MAÇ", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00" },
+    { id: 5, weekLabel: "4. Hafta - 5. MAÇ", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30" },
+    { id: 6, weekLabel: "4. Hafta - 6. MAÇ", homeTeam: "EROKSPOR", awayTeam: "SARIYER", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30" },
+    { id: 7, weekLabel: "4. Hafta - 7. MAÇ", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00" },
+    { id: 8, weekLabel: "4. Hafta - 8. MAÇ", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00" },
+    { id: 9, weekLabel: "4. Hafta - 9. MAÇ", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00" },
+    { id: 10, weekLabel: "4. Hafta - 10. MAÇ", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00" },
+    { id: 11, weekLabel: "4. Hafta - 11. MAÇ", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30" },
+    { id: 12, weekLabel: "4. Hafta - 12. MAÇ", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30" },
+    { id: 13, weekLabel: "4. Hafta - 13. MAÇ", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30" },
+    { id: 14, weekLabel: "4. Hafta - 14. MAÇ", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30" },
+    { id: 15, weekLabel: "4. Hafta - 15. MAÇ", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00" },
+    { id: 16, weekLabel: "4. Hafta - 16. MAÇ", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00" },
+    { id: 17, weekLabel: "4. Hafta - 17. MAÇ", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00" },
+    { id: 18, weekLabel: "4. Hafta - 18. MAÇ", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30" },
+    { id: 19, weekLabel: "4. Hafta - 19. MAÇ", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30" },
+    { id: 20, weekLabel: "4. Hafta - 20. MAÇ", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00" },
+    { id: 21, weekLabel: "4. Hafta - 21. MAÇ", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30" },
+    { id: 22, weekLabel: "4. Hafta - 22. MAÇ", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30" },
+    { id: 23, weekLabel: "4. Hafta - 23. MAÇ", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30" },
+    { id: 24, weekLabel: "4. Hafta - 24. MAÇ", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30" }
+  ],
+  // 5. HAFTA ARŞİV İÇİN BURAYA EKLENEBİLİR (Tahminmatik'te görüntülenmesi isteniyorsa)
+};
 
-const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
+const archivePredictionsData: Record<number, Record<string, string[]>> = {
+  4: {
+    "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
   "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
+  }
 };
 
 // 🔴 TÜRKÇE KARAKTER ZEKA MOTORU 🔴
@@ -299,11 +305,15 @@ export default function TahminlerPortal() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
-  // 🔴 TAHMİNMATİK VE ARŞİV 4. HAFTAYA MÜHÜRLENDİ (5, 6, 7 görünmez) 🔴
-  const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(4);
+  
+  // 🔴 6. HAFTA DEVRİMİ 🔴 
+  // Ana hedef (giriş yapılan) hafta: 6
+  // Tahminmatik ve Arşiv için seçilebilen haftalar
+  const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(5); // Varsayılan arşiv görünümü
 
   useEffect(() => {
-    const targetDate = new Date('2026-08-17T21:00:00+03:00').getTime();
+    // 6. HAFTA KAPANIS TARIHI: 21 Ağustos 2026, Cuma, Saat 21:00
+    const targetDate = new Date('2026-08-21T21:00:00+03:00').getTime();
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -346,8 +356,9 @@ export default function TahminlerPortal() {
   };
 
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
-    const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5).order('match_index', { ascending: true });
-    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5).eq('user_id', currentUsername);
+    // 🔴 HEDEF 6. HAFTA OLARAK GÜNCELLENDİ 🔴
+    const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 6).order('match_index', { ascending: true });
+    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 6).eq('user_id', currentUsername);
 
     if (bData) {
       setBulletin(bData);
@@ -405,7 +416,7 @@ export default function TahminlerPortal() {
     try {
       const payload = Object.keys(predictions).map(matchIndex => ({
         user_id: username.trim(), 
-        week_num: 5,
+        week_num: 6, // 🔴 6. HAFTAYA KAYDEDİYOR
         match_index: Number(matchIndex),
         predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
       }));
@@ -432,6 +443,7 @@ export default function TahminlerPortal() {
 
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
+    const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
 
     if (searchTerm) {
       const normalizedSearch = normalizeTurkish(searchTerm);
@@ -441,8 +453,8 @@ export default function TahminlerPortal() {
       });
     }
 
-    const submittedIds = allIds.filter(id => week4PredictionsData[id]);
-    const missingIds = allIds.filter(id => !week4PredictionsData[id]);
+    const submittedIds = allIds.filter(id => selectedWeekData[id]);
+    const missingIds = allIds.filter(id => !selectedWeekData[id]);
 
     if (sortOrder === 'A-Z') {
       submittedIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
@@ -453,7 +465,7 @@ export default function TahminlerPortal() {
     missingIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
 
     return [...submittedIds, ...missingIds];
-  }, [searchTerm, sortOrder]);
+  }, [searchTerm, sortOrder, selectedTahminWeek]);
 
   const ghostColumns = Array.from({ length: 10 });
 
@@ -472,7 +484,7 @@ export default function TahminlerPortal() {
       });
 
       const link = document.createElement("a");
-      link.download = "ETM_Lig_4_Hafta_Tahminler.jpg";
+      link.download = `ETM_Lig_${selectedTahminWeek}_Hafta_Tahminler.jpg`;
       link.href = dataUrl;
       
       document.body.appendChild(link);
@@ -487,10 +499,11 @@ export default function TahminlerPortal() {
   };
 
   const activePlayersForJPEG = useMemo(() => {
+    const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
     return Object.keys(TEST_ACCOUNTS)
-      .filter(id => id !== 'mankoman' && week4PredictionsData[id])
+      .filter(id => id !== 'mankoman' && selectedWeekData[id])
       .sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
-  }, []);
+  }, [selectedTahminWeek]);
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -563,13 +576,13 @@ export default function TahminlerPortal() {
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)]">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
                   <span className="text-amber-500 font-black tracking-widest text-[11px] sm:text-xs bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)] whitespace-nowrap">
-                    5. HAFTA GİRİŞLERİ
+                    6. HAFTA GİRİŞLERİ
                   </span>
                 </div>
 
                 <div className="text-center mb-5 mt-4">
-                  <p className="text-[10px] text-slate-400 font-bold tracking-widest mb-1">AÇILIŞ: <span className="text-slate-200">14.08.2026 - 21:00</span></p>
-                  <p className="text-[10px] text-red-400 font-bold tracking-widest">KAPANIŞ: <span className="text-red-300">17.08.2026 - 21:00</span></p>
+                  <p className="text-[10px] text-slate-400 font-bold tracking-widest mb-1">AÇILIŞ: <span className="text-slate-200">17.08.2026</span></p>
+                  <p className="text-[10px] text-red-400 font-bold tracking-widest">KAPANIŞ: <span className="text-red-300">21.08.2026 - 21:00</span></p>
                 </div>
 
                 <div className="flex justify-center gap-2 mb-6">
@@ -637,7 +650,7 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== TAHMİNMATİK (4. HAFTAYA MÜHÜRLÜ) ===================== */}
+        {/* ===================== TAHMİNMATİK (ARŞİV) ===================== */}
         {view === 'tahminmatik' && (
           <div className="animate-fade-in-up w-full">
             
@@ -659,14 +672,14 @@ export default function TahminlerPortal() {
                   onChange={(e) => setSelectedTahminWeek(Number(e.target.value))}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm"
                 >
-                  {/* 🔴 SADECE 4. HAFTA GÖRÜNÜR 🔴 */}
-                  <option value={4}>4. HAFTA TAHMİNMATİK</option>
+                  <option value={4}>4. HAFTA</option>
+                  <option value={5}>5. HAFTA</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {selectedTahminWeek === 4 ? week4Matches.map(match => {
+              {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] ? archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((match: any) => {
                 const theme = getEliteTheme(match.category);
                 const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
                 const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
@@ -674,10 +687,11 @@ export default function TahminlerPortal() {
                 const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
                 const isComplete = tScore.home !== '-' && tScore.away !== '-';
                 const targetScore = `${tScore.home}-${tScore.away}`;
-                 
+                  
+                const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
                 const predictors = isComplete 
-                   ? Object.keys(week4PredictionsData)
-                       .filter(uid => week4PredictionsData[uid][match.id - 1] === targetScore)
+                   ? Object.keys(selectedWeekData)
+                       .filter(uid => selectedWeekData[uid][match.id - 1] === targetScore)
                        .map(uid => TEST_ACCOUNTS[uid]?.name || "Bilinmeyen")
                        .sort((a,b) => a.localeCompare(b, 'tr'))
                    : [];
@@ -774,15 +788,15 @@ export default function TahminlerPortal() {
               }) : (
                  <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
                     <span className="text-5xl mb-4 block opacity-50">⏳</span>
-                    <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedTahminWeek}. HAFTA TAHMİNLERİ BEKLENİYOR</h2>
-                    <p className="text-slate-500 text-sm">Bu haftanın tahminleri sisteme henüz yüklenmedi.</p>
+                    <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedTahminWeek}. HAFTA TAHMİNLERİ BULUNAMADI</h2>
+                    <p className="text-slate-500 text-sm">Bu haftaya ait tahmin arşivi sisteme henüz yüklenmemiş olabilir.</p>
                  </div>
               )}
             </div>
           </div>
         )}
 
-        {/* ===================== RESMİ DEKLARASYON ===================== */}
+        {/* ===================== RESMİ DEKLARASYON (ARŞİV) ===================== */}
         {view === 'declaration' && (
           <div className="animate-fade-in-up w-full">
             
@@ -799,17 +813,17 @@ export default function TahminlerPortal() {
                 
                 <button 
                   onClick={downloadJPEG}
-                  disabled={isDownloading}
+                  disabled={isDownloading || !archiveMatches[selectedTahminWeek as keyof typeof archiveMatches]}
                   title="Tahmin tablosunu fotoğraf (JPEG) olarak cihazınıza indirin"
                   className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] whitespace-nowrap transition-all gap-2 text-sm disabled:opacity-50"
                 >
-                  <span className="text-lg">📸</span> {isDownloading ? 'FOTOĞRAF HAZIRLANIYOR...' : 'TAHMİNLERİ İNDİR'}
+                  <span className="text-lg">📸</span> {isDownloading ? 'HAZIRLANIYOR...' : 'İNDİR'}
                 </button>
 
-                <div className="relative flex-1 md:min-w-[250px]">
+                <div className="relative flex-1 md:min-w-[200px]">
                   <input 
                     type="text" 
-                    placeholder="Yarışmacı ara (Örn: Rıdvan)" 
+                    placeholder="Yarışmacı ara..." 
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
@@ -837,173 +851,192 @@ export default function TahminlerPortal() {
                   )}
                 </div>
 
-                <div className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg flex items-center shadow-md whitespace-nowrap">
-                  4. HAFTA BÜLTENİ ▼
+                <select
+                  value={selectedTahminWeek}
+                  onChange={(e) => setSelectedTahminWeek(Number(e.target.value))}
+                  className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md"
+                >
+                  <option value={4}>4. HAFTA BÜLTENİ</option>
+                  <option value={5}>5. HAFTA BÜLTENİ</option>
+                </select>
+              </div>
+            </div>
+
+            {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] ? (
+              <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
+                <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
+                  <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
+                    
+                    <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
+                      <tr>
+                        <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
+                          <span className="text-amber-500 font-black tracking-widest">{selectedTahminWeek}. HAFTA</span>
+                        </th>
+                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                          <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th>
+                        ))}
+                        {ghostColumns.map((_, i) => (
+                          <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
+                        ))}
+                      </tr>
+                      
+                      <tr>
+                        <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
+                          <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
+                        </th>
+                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                          <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
+                            <div className="w-6 h-6 mx-auto flex items-center justify-center">
+                              <img src={localTeamLogos[m.homeTeam] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
+                            </div>
+                          </th>
+                        ))}
+                        {ghostColumns.map((_, i) => (
+                          <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
+                        ))}
+                      </tr>
+
+                      <tr>
+                        <th 
+                          onClick={toggleSortOrder}
+                          className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-right cursor-pointer hover:bg-slate-900 transition-colors group"
+                          title="Sıralamayı Değiştirmek İçin Tıkla"
+                        >
+                          <div className="flex justify-end items-center gap-2">
+                             <span className="text-slate-500 text-[8px] uppercase group-hover:text-amber-300">Sırala: {sortOrder}</span>
+                             <span className="text-amber-500 font-bold text-[9px] uppercase tracking-widest border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+                               SIRA / LİSTE
+                             </span>
+                          </div>
+                        </th>
+                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                          <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
+                            <div className="w-6 h-6 mx-auto flex items-center justify-center">
+                              <img src={localTeamLogos[m.awayTeam] || "/logos/default.png"} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
+                            </div>
+                          </th>
+                        ))}
+                        {ghostColumns.map((_, i) => (
+                          <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
+                        ))}
+                      </tr>
+                    </thead>
+                    
+                    <tbody>
+                      {finalPlayersList.map(id => {
+                        const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
+                        const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+                        const preds = selectedWeekData[id] || Array(24).fill('PAS');
+                        const isMissing = preds[0] === 'PAS'; 
+
+                        return (
+                          <tr key={id} className={`hover:bg-slate-800/50 transition-colors group ${isMissing ? 'opacity-70' : ''}`}>
+                            <td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900 transition-colors">
+                              <span className={isMissing ? 'text-red-400 line-through' : 'text-slate-300'}>{playerName}</span>
+                            </td>
+                            {preds.map((score: string, idx: number) => (
+                              <td key={idx} className={`border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] group-hover:bg-slate-800/80 ${isMissing ? 'text-red-500 text-[10px]' : 'text-amber-500'}`}>
+                                {score}
+                              </td>
+                            ))}
+                            {ghostColumns.map((_, i) => (
+                              <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                      
+                      {finalPlayersList.length === 0 && (
+                        <tr>
+                          <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
-              <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
-                <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
-                  
-                  <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
-                    <tr>
-                      <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
-                        <span className="text-amber-500 font-black tracking-widest">4. HAFTA</span>
-                      </th>
-                      {week4Matches.map(m => (
-                        <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th>
-                      ))}
-                      {ghostColumns.map((_, i) => (
-                        <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
-                      ))}
-                    </tr>
-                    
-                    <tr>
-                      <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
-                        <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
-                      </th>
-                      {week4Matches.map(m => (
-                        <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
-                          <div className="w-6 h-6 mx-auto flex items-center justify-center">
-                            <img src={localTeamLogos[m.homeTeam] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
-                          </div>
-                        </th>
-                      ))}
-                      {ghostColumns.map((_, i) => (
-                        <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
-                      ))}
-                    </tr>
-
-                    <tr>
-                      <th 
-                        onClick={toggleSortOrder}
-                        className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-right cursor-pointer hover:bg-slate-900 transition-colors group"
-                        title="Sıralamayı Değiştirmek İçin Tıkla"
-                      >
-                        <div className="flex justify-end items-center gap-2">
-                           <span className="text-slate-500 text-[8px] uppercase group-hover:text-amber-300">Sırala: {sortOrder}</span>
-                           <span className="text-amber-500 font-bold text-[9px] uppercase tracking-widest border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
-                             SIRA / LİSTE
-                           </span>
-                        </div>
-                      </th>
-                      {week4Matches.map(m => (
-                        <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
-                          <div className="w-6 h-6 mx-auto flex items-center justify-center">
-                            <img src={localTeamLogos[m.awayTeam] || "/logos/default.png"} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
-                          </div>
-                        </th>
-                      ))}
-                      {ghostColumns.map((_, i) => (
-                        <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
-                      ))}
-                    </tr>
-                  </thead>
-                  
-                  <tbody>
-                    {finalPlayersList.map(id => {
-                      const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
-                      const preds = week4PredictionsData[id] || Array(24).fill('PAS');
-                      const isMissing = preds[0] === 'PAS'; 
-
-                      return (
-                        <tr key={id} className={`hover:bg-slate-800/50 transition-colors group ${isMissing ? 'opacity-70' : ''}`}>
-                          <td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900 transition-colors">
-                            <span className={isMissing ? 'text-red-400 line-through' : 'text-slate-300'}>{playerName}</span>
-                          </td>
-                          {preds.map((score, idx) => (
-                            <td key={idx} className={`border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] group-hover:bg-slate-800/80 ${isMissing ? 'text-red-500 text-[10px]' : 'text-amber-500'}`}>
-                              {score}
-                            </td>
-                          ))}
-                          {ghostColumns.map((_, i) => (
-                            <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                    
-                    {finalPlayersList.length === 0 && (
-                      <tr>
-                        <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            ) : (
+               <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <span className="text-5xl mb-4 block opacity-50">⏳</span>
+                  <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedTahminWeek}. HAFTA TAHMİNLERİ BULUNAMADI</h2>
+                  <p className="text-slate-500 text-sm">Bu haftaya ait tahmin arşivi sisteme henüz yüklenmemiş olabilir.</p>
+               </div>
+            )}
 
             <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, opacity: 0, pointerEvents: 'none' }}>
               <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
                 <div className="text-center mb-6 border-b border-slate-800 pb-4">
-                  <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - 4. HAFTA TAHMİNLERİ</h2>
+                  <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - {selectedTahminWeek}. HAFTA TAHMİNLERİ</h2>
                   <p className="text-slate-400 mt-2 text-sm font-medium">* Sadece tahmin gönderen yarışmacılar A'dan Z'ye sıralanmıştır.</p>
                 </div>
-                <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
-                  <thead className="bg-slate-950">
-                    <tr>
-                      <th className="bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
-                        <span className="text-amber-500 font-black tracking-widest text-lg">YARIŞMACI / MAÇ NO</span>
-                      </th>
-                      {week4Matches.map(m => (
-                        <th key={`exp-m1-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px] text-lg">{m.id}</th>
-                      ))}
-                    </tr>
-                    <tr>
-                      <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
-                        <span className="text-white font-black tracking-widest text-sm uppercase">EV SAHİBİ TAKIM</span>
-                      </th>
-                      {week4Matches.map(m => (
-                        <th key={`exp-home-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
-                           {m.homeTeam}
+                {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] && (
+                  <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
+                    <thead className="bg-slate-950">
+                      <tr>
+                        <th className="bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
+                          <span className="text-amber-500 font-black tracking-widest text-lg">YARIŞMACI / MAÇ NO</span>
                         </th>
-                      ))}
-                    </tr>
-                    <tr>
-                      <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
-                        <span className="text-white font-black tracking-widest text-sm uppercase">DEPLASMAN TAKIM</span>
-                      </th>
-                      {week4Matches.map(m => (
-                        <th key={`exp-away-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
-                           {m.awayTeam}
+                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                          <th key={`exp-m1-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px] text-lg">{m.id}</th>
+                        ))}
+                      </tr>
+                      <tr>
+                        <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
+                          <span className="text-white font-black tracking-widest text-sm uppercase">EV SAHİBİ TAKIM</span>
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  
-                  <tbody>
-                    {activePlayersForJPEG.map(id => {
-                      const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
-                      const preds = week4PredictionsData[id];
-                      return (
-                        <tr key={`exp-${id}`}>
-                          <td className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold text-slate-300 tracking-wide">
-                            {playerName}
-                          </td>
-                          {preds.map((score, idx) => (
-                            <td key={`exp-sc-${idx}`} className="border-b border-r border-slate-800 p-2 font-black text-amber-500 bg-[#0a1120] text-base">
-                              {score}
+                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                          <th key={`exp-home-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
+                             {m.homeTeam}
+                          </th>
+                        ))}
+                      </tr>
+                      <tr>
+                        <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
+                          <span className="text-white font-black tracking-widest text-sm uppercase">DEPLASMAN TAKIM</span>
+                        </th>
+                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                          <th key={`exp-away-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
+                             {m.awayTeam}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    
+                    <tbody>
+                      {activePlayersForJPEG.map(id => {
+                        const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
+                        const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+                        const preds = selectedWeekData[id];
+                        if(!preds) return null;
+                        
+                        return (
+                          <tr key={`exp-${id}`}>
+                            <td className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold text-slate-300 tracking-wide">
+                              {playerName}
                             </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            {preds.map((score: string, idx: number) => (
+                              <td key={`exp-sc-${idx}`} className="border-b border-r border-slate-800 p-2 font-black text-amber-500 bg-[#0a1120] text-base">
+                                {score}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
 
           </div>
         )}
 
-        {/* ===================== ELİT TAHMİN GİRİŞ PORTALI ===================== */}
+        {/* ===================== ELİT TAHMİN GİRİŞ PORTALI (6. HAFTA) ===================== */}
         {view === 'entry' && (
           <div className="w-full animate-fade-in-up">
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
               <div>
-                <h2 className="text-2xl font-black text-amber-500 tracking-widest">5. HAFTA GÖREV KAĞIDI</h2>
+                <h2 className="text-2xl font-black text-amber-500 tracking-widest">6. HAFTA GÖREV KAĞIDI</h2>
                 <p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p>
               </div>
               <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">
@@ -1011,79 +1044,89 @@ export default function TahminlerPortal() {
               </button>
             </div>
 
-            <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-              {bulletin.map((match) => {
-                const theme = getEliteTheme(match.category);
-                const homeLogoUrl = localTeamLogos[match.home_team] || "/logos/default.png";
-                const awayLogoUrl = localTeamLogos[match.away_team] || "/logos/default.png";
-                const hScore = predictions[match.match_index]?.home || '-';
-                const aScore = predictions[match.match_index]?.away || '-';
+            {bulletin.length === 0 ? (
+               <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto">
+                  <span className="text-5xl mb-4 block opacity-50">🛡️</span>
+                  <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">6. HAFTA BÜLTENİ BEKLENİYOR</h2>
+                  <p className="text-slate-500 text-sm">Merkez Yönetim henüz bu haftanın maç listesini (bülteni) yayınlamadı.</p>
+               </div>
+            ) : (
+              <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
+                {bulletin.map((match) => {
+                  const theme = getEliteTheme(match.category);
+                  const homeLogoUrl = localTeamLogos[match.home_team] || "/logos/default.png";
+                  const awayLogoUrl = localTeamLogos[match.away_team] || "/logos/default.png";
+                  const hScore = predictions[match.match_index]?.home || '-';
+                  const aScore = predictions[match.match_index]?.away || '-';
 
-                return (
-                  <div key={match.match_index} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
-                    {theme.bgImg && (
-                      <>
-                        <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
-                        <div className="absolute inset-0 bg-slate-900/70 z-0"></div>
-                      </>
-                    )}
-                    <div className="relative z-10 flex flex-col h-full py-2">
-                      
-                      <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
-                        <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">5. HAFTA {match.match_index}. MAÇ</span>
-                        <span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.match_date} - {match.match_time}</span>
-                      </div>
-
-                      <div className="w-full text-center px-2 mt-1 mb-2">
-                        <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
-                      </div>
-
-                      <div className="flex items-center justify-between px-4 pb-4 mt-2">
-                        <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                          <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={match.home_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
-                          <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.home_team}</span>
+                  return (
+                    <div key={match.match_index} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
+                      {theme.bgImg && (
+                        <>
+                          <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
+                          <div className="absolute inset-0 bg-slate-900/70 z-0"></div>
+                        </>
+                      )}
+                      <div className="relative z-10 flex flex-col h-full py-2">
+                        
+                        <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
+                          <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">6. HAFTA {match.match_index}. MAÇ</span>
+                          <span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.match_date} - {match.match_time}</span>
                         </div>
 
-                        <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
-                          <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                            <select value={hScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
-                              {scoreOptionsArr.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
-                            </select>
-                            <span className="text-xl font-bold text-slate-500">:</span>
-                            <select value={aScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
-                              {scoreOptionsArr.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
-                            </select>
+                        <div className="w-full text-center px-2 mt-1 mb-2">
+                          <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between px-4 pb-4 mt-2">
+                          <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={match.home_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                            <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.home_team}</span>
+                          </div>
+
+                          <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
+                            <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                              <select value={hScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
+                                {scoreOptionsArr.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
+                              </select>
+                              <span className="text-xl font-bold text-slate-500">:</span>
+                              <select value={aScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
+                                {scoreOptionsArr.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={match.away_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                            <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.away_team}</span>
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                          <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={match.away_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
-                          <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.away_team}</span>
-                        </div>
                       </div>
-
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
-            <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
-              <button 
-                onClick={handleTahminMatikRastgele}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all hover:scale-105 border border-indigo-400/50 flex items-center gap-2"
-              >
-                🎲 RASTGELE DOLDUR
-              </button>
-              
-              <button 
-                onClick={savePredictions}
-                disabled={isSaving}
-                className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.5)] transition-all hover:scale-105 border border-emerald-400/50"
-              >
-                {isSaving ? 'ŞİFRELENİYOR...' : '🚀 TAHMİNLERİMİ MÜHÜRLE'}
-              </button>
-            </div>
+            {bulletin.length > 0 && (
+              <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
+                <button 
+                  onClick={handleTahminMatikRastgele}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all hover:scale-105 border border-indigo-400/50 flex items-center gap-2"
+                >
+                  🎲 RASTGELE DOLDUR
+                </button>
+                
+                <button 
+                  onClick={savePredictions}
+                  disabled={isSaving}
+                  className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.5)] transition-all hover:scale-105 border border-emerald-400/50"
+                >
+                  {isSaving ? 'ŞİFRELENİYOR...' : '🚀 TAHMİNLERİMİ MÜHÜRLE'}
+                </button>
+              </div>
+            )}
 
           </div>
         )}
