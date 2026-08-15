@@ -233,6 +233,9 @@ export default function AdminRadarPortal() {
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   
+  // 🔴 AKTİF ODAKTAKİ SATIRI TUTAN STATE (YENİ EKLENDİ)
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+  
   const categoriesList = [
     "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG",
     "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", "FRANSA LIGUE 1", "İTALYA SERIE A", "İSPANYA LA LIGA",
@@ -800,7 +803,7 @@ export default function AdminRadarPortal() {
                     onClick={copyDateTimeToAll} 
                     className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
                   >
-                     👇 1. Maçın Tarih/Saatini Tümüne Kopyala
+                    👇 1. Maçın Tarih/Saatini Tümüne Kopyala
                   </button>
                </div>
 
@@ -817,15 +820,34 @@ export default function AdminRadarPortal() {
                         </tr>
                      </thead>
                      <tbody>
-                        {bulletinMatches.map((m, idx) => (
-                           <tr key={m.match_index} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                              <td className="p-2 text-center font-black text-slate-500">{m.match_index}</td>
+                        {bulletinMatches.map((m, idx) => {
+                          // 🔴 AKTİF SATIR KONTROLÜ
+                          const isFocused = focusedRowIndex === idx;
+                          
+                          return (
+                           <tr 
+                             key={m.match_index} 
+                             // AKTİF SATIR İSE NEON SINIFLARI, DEĞİLSE NORMAL SINIFLAR
+                             className={`transition-all duration-300 border-b ${
+                               isFocused 
+                                ? 'bg-indigo-950/40 border-indigo-500 shadow-[inset_0_0_20px_rgba(79,70,229,0.3)]' 
+                                : 'border-slate-800/50 hover:bg-slate-800/30'
+                             }`}
+                           >
+                              <td className={`p-2 text-center font-black transition-colors ${isFocused ? 'text-indigo-400' : 'text-slate-500'}`}>
+                                {m.match_index}
+                              </td>
                               
                               <td className="p-2">
                                  <select 
                                    value={m.category} 
                                    onChange={e => handleBulletinChange(idx, 'category', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-[11px] font-bold px-2 py-2.5 rounded outline-none focus:border-indigo-500 cursor-pointer"
+                                   onFocus={() => setFocusedRowIndex(idx)}
+                                   className={`w-full text-[11px] font-bold px-2 py-2.5 rounded outline-none cursor-pointer transition-all ${
+                                     isFocused 
+                                      ? 'bg-slate-900 border border-indigo-400 text-white shadow-[0_0_10px_rgba(79,70,229,0.5)]' 
+                                      : 'bg-slate-950 border border-slate-700 text-slate-300'
+                                   }`}
                                  >
                                     {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                  </select>
@@ -835,7 +857,12 @@ export default function AdminRadarPortal() {
                                  <select 
                                    value={m.match_date} 
                                    onChange={e => handleBulletinChange(idx, 'match_date', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-emerald-400 font-bold text-xs px-2 py-2.5 rounded outline-none focus:border-indigo-500 text-center cursor-pointer"
+                                   onFocus={() => setFocusedRowIndex(idx)}
+                                   className={`w-full font-bold text-xs px-2 py-2.5 rounded outline-none text-center cursor-pointer transition-all ${
+                                     isFocused 
+                                      ? 'bg-slate-900 border border-indigo-400 text-emerald-300 shadow-[0_0_10px_rgba(79,70,229,0.5)]' 
+                                      : 'bg-slate-950 border border-slate-700 text-emerald-400'
+                                   }`}
                                  >
                                     {currentWeekDates.map(d => <option key={d} value={d}>{d}</option>)}
                                  </select>
@@ -845,7 +872,12 @@ export default function AdminRadarPortal() {
                                  <select 
                                    value={m.match_time} 
                                    onChange={e => handleBulletinChange(idx, 'match_time', e.target.value)}
-                                   className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xs px-2 py-2.5 rounded outline-none focus:border-indigo-500 text-center cursor-pointer"
+                                   onFocus={() => setFocusedRowIndex(idx)}
+                                   className={`w-full font-black text-xs px-2 py-2.5 rounded outline-none text-center cursor-pointer transition-all ${
+                                     isFocused 
+                                      ? 'bg-slate-900 border border-indigo-400 text-amber-300 shadow-[0_0_10px_rgba(79,70,229,0.5)]' 
+                                      : 'bg-slate-950 border border-slate-700 text-amber-400'
+                                   }`}
                                  >
                                     {timeOptionsArr.map(t => <option key={t} value={t}>{t}</option>)}
                                  </select>
@@ -855,7 +887,12 @@ export default function AdminRadarPortal() {
                                  <select 
                                    value={m.home_team} 
                                    onChange={e => handleBulletinChange(idx, 'home_team', e.target.value)}
-                                   className="w-full bg-slate-950 border border-emerald-900/50 focus:border-emerald-500 text-white font-bold text-[11px] px-2 py-2.5 rounded outline-none cursor-pointer uppercase shadow-inner"
+                                   onFocus={() => setFocusedRowIndex(idx)}
+                                   className={`w-full text-white font-bold text-[11px] px-2 py-2.5 rounded outline-none cursor-pointer uppercase transition-all ${
+                                     isFocused 
+                                      ? 'bg-slate-900 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)]' 
+                                      : 'bg-slate-950 border border-emerald-900/50 shadow-inner'
+                                   }`}
                                  >
                                     <option value="" className="text-slate-500">-- TAKIM SEÇİNİZ --</option>
                                     {getAvailableTeams(idx, true).map(t => <option key={`h-${t}`} value={t}>{t}</option>)}
@@ -866,14 +903,20 @@ export default function AdminRadarPortal() {
                                  <select 
                                    value={m.away_team} 
                                    onChange={e => handleBulletinChange(idx, 'away_team', e.target.value)}
-                                   className="w-full bg-slate-950 border border-red-900/50 focus:border-red-500 text-white font-bold text-[11px] px-2 py-2.5 rounded outline-none cursor-pointer uppercase shadow-inner"
+                                   onFocus={() => setFocusedRowIndex(idx)}
+                                   className={`w-full text-white font-bold text-[11px] px-2 py-2.5 rounded outline-none cursor-pointer uppercase transition-all ${
+                                     isFocused 
+                                      ? 'bg-slate-900 border border-red-400 shadow-[0_0_15px_rgba(248,113,113,0.4)]' 
+                                      : 'bg-slate-950 border border-red-900/50 shadow-inner'
+                                   }`}
                                  >
                                     <option value="" className="text-slate-500">-- TAKIM SEÇİNİZ --</option>
                                     {getAvailableTeams(idx, false).map(t => <option key={`a-${t}`} value={t}>{t}</option>)}
                                  </select>
                               </td>
                            </tr>
-                        ))}
+                          )
+                        })}
                      </tbody>
                   </table>
                </div>
