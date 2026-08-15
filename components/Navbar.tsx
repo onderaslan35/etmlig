@@ -111,7 +111,7 @@ export default function Navbar() {
                   : 'bg-slate-900/50 text-slate-500 hover:bg-red-950/40 hover:text-red-400 border border-slate-800'
               }`}
             >
-              <span>🛡️</span> YÖNETİM
+              <span>🛡️</span> YÖNETİM & ADMIN
             </Link>
           </div>
         </div>

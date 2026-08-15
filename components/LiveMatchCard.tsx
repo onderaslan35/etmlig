@@ -196,7 +196,6 @@ export default function LiveMatchCard() {
   const [now, setNow] = useState<number>(new Date().getTime());
   
   const [isMainAccordionOpen, setIsMainAccordionOpen] = useState<boolean>(false);
-  
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
@@ -383,285 +382,276 @@ export default function LiveMatchCard() {
   if (todaysMatchesList.length === 0) return null;
 
   return (
-    <div className="w-full max-w-6xl mx-auto mb-8 bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
-      
-      {/* 🔴 İŞTE YENİ ŞEMSİYE BAŞLIĞI - İNCE, KİBAR, ORTALANMIŞ VE İKONSUZ 🔴 */}
-      <button 
-        onClick={() => setIsMainAccordionOpen(!isMainAccordionOpen)}
-        className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
-      >
-        <div className="flex-1"></div> {/* Sol boşluk (Ortalamak için) */}
+    <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-4">
+      <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
         
-        <h2 className="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest drop-shadow-md text-center">
-          GÜNÜN CANLI MAÇLARI
-        </h2>
-        
-        <div className="flex-1 flex justify-end"> {/* Sağ kısım ok işareti */}
-          <div className={`p-1 transition-transform duration-300 ${isMainAccordionOpen ? 'rotate-180' : ''}`}>
-            <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
+        {/* ANA ŞEMSİYE BAŞLIĞI */}
+        <button 
+          onClick={() => setIsMainAccordionOpen(!isMainAccordionOpen)}
+          className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
+        >
+          <div className="flex-1"></div> 
+          <h2 className="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest drop-shadow-md text-center">
+            GÜNÜN CANLI MAÇLARI
+          </h2>
+          <div className="flex-1 flex justify-end">
+            <div className={`p-1 transition-transform duration-300 ${isMainAccordionOpen ? 'rotate-180' : ''}`}>
+              <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
 
-      {/* ŞEMSİYE İÇERİĞİ SADECE "isMainAccordionOpen" TRUE İSE GÖRÜNÜR */}
-      {isMainAccordionOpen && (
-        <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
-          {todaysMatchesList.map((match) => {
-            const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
-            const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
-            const isWinnersOpen = openWinnersMap[match.id] !== false;
-            
-            const isExpanded = !!expandedMatches[match.id];
+        {/* MAÇLAR LİSTESİ */}
+        {isMainAccordionOpen && (
+          <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+            {todaysMatchesList.map((match) => {
+              const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
+              const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
+              const isWinnersOpen = openWinnersMap[match.id] !== false;
+              const isExpanded = !!expandedMatches[match.id];
 
-            const dbMatch = liveMatchesData[match.id] || {};
-            let matchStatus = dbMatch.status || 'NOT_STARTED';
-            let homeScore = dbMatch.home_score || '-';
-            let awayScore = dbMatch.away_score || '-';
+              const dbMatch = liveMatchesData[match.id] || {};
+              let matchStatus = dbMatch.status || 'NOT_STARTED';
+              let homeScore = dbMatch.home_score || '-';
+              let awayScore = dbMatch.away_score || '-';
 
-            const matchTimeMs = getMatchTimeMs(match.date, match.time);
-            const twoHoursMs = 2 * 60 * 60 * 1000;
-            
-            if (matchStatus !== 'FINISHED') {
-              if (now >= matchTimeMs && now < matchTimeMs + twoHoursMs) {
-                matchStatus = 'LIVE';
-                if (homeScore === '-') homeScore = '0';
-                if (awayScore === '-') awayScore = '0';
-              } else if (now >= matchTimeMs + twoHoursMs) {
-                matchStatus = 'WAITING_APPROVAL'; 
-                if (homeScore === '-') homeScore = '0';
-                if (awayScore === '-') awayScore = '0';
+              const matchTimeMs = getMatchTimeMs(match.date, match.time);
+              const twoHoursMs = 2 * 60 * 60 * 1000;
+              
+              if (matchStatus !== 'FINISHED') {
+                if (now >= matchTimeMs && now < matchTimeMs + twoHoursMs) {
+                  matchStatus = 'LIVE';
+                } else if (now >= matchTimeMs + twoHoursMs) {
+                  matchStatus = 'WAITING_APPROVAL'; 
+                }
               }
-            }
 
-            const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
-            const isTffMatch = isTffMatchCheck(match.category);
-
-            const theme = getEliteTheme(match.category);
-
-            let currentWinners: string[] = [];
-            if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
-              const targetScore = `${homeScore}-${awayScore}`;
-              currentWinners = Object.keys(week4PredictionsData)
-                .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
-                .map(id => allPlayersList[id])
-                .sort((a, b) => a.localeCompare(b, 'tr'));
-            }
-            const winnersCount = currentWinners.length;
-
-            let displayPoints = 1;
-            if(winnersCount === 1) displayPoints = 12;
-            else if(winnersCount === 2) displayPoints = 6;
-            else if(winnersCount === 3) displayPoints = 5;
-            else if(winnersCount === 4) displayPoints = 4;
-            else if(winnersCount === 5) displayPoints = 3;
-            else if(winnersCount === 6) displayPoints = 2;
-            else if(winnersCount >= 7) displayPoints = 1;
-            else displayPoints = 0;
-
-            let countdownText = "";
-            if (now < matchTimeMs && matchStatus === 'NOT_STARTED') {
-              const distance = matchTimeMs - now;
-              if (distance > 0) {
-                const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((distance % (1000 * 60)) / 1000);
-                countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+              if (matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL') {
+                 if (homeScore === '-') homeScore = '0';
+                 if (awayScore === '-') awayScore = '0';
               }
-            }
 
-            return (
-              <div 
-                key={match.id} 
-                className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
-                  isExpanded 
-                    ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
-                    : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
-                }`}
-              >
-                
-                {theme.bgImg && (
-                  <>
-                    <div 
-                      className="absolute inset-0 z-0 opacity-100"
-                      style={{ 
-                        backgroundImage: theme.bgImg,
-                        backgroundSize: 'cover', 
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat'
-                      }}
-                    ></div>
-                    <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
-                  </>
-                )}
+              const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+              const isTffMatch = isTffMatchCheck(match.category);
+              const theme = getEliteTheme(match.category);
+              const isFinished = matchStatus === 'FINISHED'; // 🔴 ULTRA İNCE MOD İÇİN KONTROL
 
-                {!isExpanded && (
-                  <div
-                    onClick={() => toggleMatchExpansion(match.id)}
-                    className="cursor-pointer px-3 sm:px-5 py-3 flex items-center justify-between border-b border-black/50 relative z-20 group"
-                  >
-                    <div className="flex-1 flex items-center gap-2 justify-end text-right">
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase tracking-wide truncate group-hover:text-white transition-colors">{match.homeTeam}</span>
-                      <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
-                    </div>
-                    
-                    <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
-                      <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'}`}>
-                        {/* 🔴 SAAT FORMATI EKLENDİ (Örn: 21:30) 🔴 */}
-                        <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-slate-200 group-hover:text-white'}`}>
-                          {matchStatus === 'NOT_STARTED' ? match.time : `${homeScore} - ${awayScore}`}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 flex items-center gap-2 justify-start text-left">
-                      <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase tracking-wide truncate group-hover:text-white transition-colors">{match.awayTeam}</span>
-                    </div>
-                    
-                    <div className="ml-2 opacity-50 text-[10px] text-white group-hover:opacity-100 transition-opacity">
-                      ▼
-                    </div>
-                  </div>
-                )}
+              let currentWinners: string[] = [];
+              if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
+                const targetScore = `${homeScore}-${awayScore}`;
+                currentWinners = Object.keys(week4PredictionsData)
+                  .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
+                  .map(id => allPlayersList[id])
+                  .sort((a, b) => a.localeCompare(b, 'tr'));
+              }
+              const winnersCount = currentWinners.length;
 
-                {isExpanded && (
-                  <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
-                    
-                    <button 
+              let displayPoints = 1;
+              if(winnersCount === 1) displayPoints = 12;
+              else if(winnersCount === 2) displayPoints = 6;
+              else if(winnersCount === 3) displayPoints = 5;
+              else if(winnersCount === 4) displayPoints = 4;
+              else if(winnersCount === 5) displayPoints = 3;
+              else if(winnersCount === 6) displayPoints = 2;
+              else if(winnersCount >= 7) displayPoints = 1;
+              else displayPoints = 0;
+
+              let countdownText = "";
+              if (now < matchTimeMs && matchStatus === 'NOT_STARTED') {
+                const distance = matchTimeMs - now;
+                if (distance > 0) {
+                  const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                  const s = Math.floor((distance % (1000 * 60)) / 1000);
+                  countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                }
+              }
+
+              return (
+                <div 
+                  key={match.id} 
+                  className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+                    isExpanded 
+                      ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
+                      : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
+                  }`}
+                >
+                  {theme.bgImg && (
+                    <>
+                      <div 
+                        className="absolute inset-0 z-0 opacity-100"
+                        style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
+                      ></div>
+                      <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
+                    </>
+                  )}
+
+                  {/* 🔴 KAPALI MOD EKRANI (ULTRA-SLIM MANTIGI BURADA) 🔴 */}
+                  {!isExpanded && (
+                    <div
                       onClick={() => toggleMatchExpansion(match.id)}
-                      className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors"
-                      title="Kapat"
+                      className={`cursor-pointer px-3 sm:px-5 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300 ${
+                        isFinished ? 'py-1.5 bg-slate-900/40' : 'py-3 sm:py-4'
+                      }`}
                     >
-                      ✕
-                    </button>
-
-                    <div className="relative z-10 flex flex-col h-full">
+                      <div className="flex-1 flex items-center gap-2 justify-end text-right">
+                        <span className={`${isFinished ? 'text-[9px] sm:text-[10px] text-slate-400' : 'text-[10px] sm:text-xs text-slate-200'} font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors`}>{match.homeTeam}</span>
+                        <img src={homeLogoUrl} alt={match.homeTeam} className={`${isFinished ? 'w-4 h-4 sm:w-5 sm:h-5 opacity-70' : 'w-5 h-5 sm:w-7 sm:h-7'} object-contain drop-shadow-md group-hover:scale-110 transition-transform`} />
+                      </div>
                       
-                      <div className="w-full text-center pt-3 pb-1">
-                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
-                          {match.weekLabel}
-                        </span>
+                      <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
+                        <div className={`flex items-center justify-center min-w-[60px] px-3 rounded-lg border shadow-inner backdrop-blur-md transition-all ${
+                          isFinished 
+                            ? 'py-0.5 bg-[#080d1a]/50 border-slate-800' 
+                            : matchStatus === 'LIVE' ? 'py-1.5 bg-red-950/50 border-red-500/50 animate-pulse' : 'py-1.5 bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'
+                        }`}>
+                          <span className={`font-black whitespace-nowrap tracking-widest ${
+                            isFinished 
+                              ? 'text-xs text-slate-400 group-hover:text-slate-200' 
+                              : matchStatus === 'LIVE' ? 'text-xs sm:text-sm text-red-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
+                          }`}>
+                            {matchStatus === 'NOT_STARTED' ? match.time : `${homeScore} - ${awayScore}`}
+                          </span>
+                        </div>
                       </div>
-
-                      <div className="w-full text-center px-2 mt-2 relative z-30">
-                        <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                          {match.category}
-                        </span>
+                      
+                      <div className="flex-1 flex items-center gap-2 justify-start text-left">
+                        <img src={awayLogoUrl} alt={match.awayTeam} className={`${isFinished ? 'w-4 h-4 sm:w-5 sm:h-5 opacity-70' : 'w-5 h-5 sm:w-7 sm:h-7'} object-contain drop-shadow-md group-hover:scale-110 transition-transform`} />
+                        <span className={`${isFinished ? 'text-[9px] sm:text-[10px] text-slate-400' : 'text-[10px] sm:text-xs text-slate-200'} font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors`}>{match.awayTeam}</span>
                       </div>
+                      
+                      <div className="ml-2 opacity-50 text-[10px] text-white group-hover:opacity-100 transition-opacity">▼</div>
+                    </div>
+                  )}
 
-                      <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
-                        
-                        <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                          <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                          </div>
-                          <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+                  {/* AÇIK MOD EKRANI (DEV KART - HER MAÇ İÇİN AYNI BÜYÜKLÜKTE) */}
+                  {isExpanded && (
+                    <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
+                      <button 
+                        onClick={() => toggleMatchExpansion(match.id)}
+                        className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors"
+                        title="Kapat"
+                      >
+                        ✕
+                      </button>
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="w-full text-center pt-3 pb-1">
+                          <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
+                            {match.weekLabel}
+                          </span>
+                        </div>
+                        <div className="w-full text-center px-2 mt-2 relative z-30">
+                          <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                            {match.category}
+                          </span>
                         </div>
 
-                        <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
-
-                          {matchStatus === 'NOT_STARTED' && (
-                            <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                              <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                        <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
+                          <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                              <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                             </div>
-                          )}
-
-                          {matchStatus === 'LIVE' && (
-                            <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                              <span className="text-red-500 text-[10px] font-black tracking-widest">CANLI</span>
-                            </div>
-                          )}
-
-                          {matchStatus === 'WAITING_APPROVAL' && (
-                            <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                              <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span>
-                            </div>
-                          )}
-
-                          {matchStatus === 'FINISHED' && (
-                            <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                              <span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
-                            </div>
-                          )}
-
-                          <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                            <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
-                            <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                            <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                            <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                           </div>
 
-                          {matchStatus === 'NOT_STARTED' && countdownText && (
-                            <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
-                              <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
-                                {countdownText}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                          <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                          </div>
-                          <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
-                        </div>
-
-                      </div>
-                    
-                      <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative`}>
-                        <div className="flex justify-between items-center w-full">
-                          <div className="text-left flex-1">
-                            {matchStatus === 'NOT_STARTED' ? (
-                              <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
-                            ) : winnersCount === 0 ? (
-                              <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
-                            ) : (
-                              <span className="text-[9px] sm:text-[10px] font-medium text-blue-200">
-                                <strong className="text-blue-400">{winnersCount} kişi</strong> tam isabetli
-                              </span>
+                          <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
+                            {matchStatus === 'NOT_STARTED' && (
+                              <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                                <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                              </div>
                             )}
-                          </div>
-
-                          <div className="flex-0 text-center px-1">
-                            <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                              {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
-                            </span>
-                          </div>
-
-                          <div className="text-right flex-1">
-                            {winnersCount > 0 && (
-                              <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">
-                                {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
-                              </button>
+                            {matchStatus === 'LIVE' && (
+                              <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                <span className="text-red-500 text-[10px] font-black tracking-widest">CANLI</span>
+                              </div>
                             )}
-                          </div>
-                        </div>
-                        
-                        {isWinnersOpen && winnersCount > 0 && (
-                          <div className="w-full mt-2 p-2.5 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
-                            <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
-                              <span>BİLEN YARIŞMACILAR (A-Z)</span>
-                              <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
+                            {matchStatus === 'WAITING_APPROVAL' && (
+                              <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                                <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span>
+                              </div>
+                            )}
+                            {isFinished && (
+                              <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                                <span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
+                              </div>
+                            )}
+
+                            <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+                              <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                              <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                              <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                             </div>
-                            <div className="flex flex-wrap gap-1.5 mt-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
-                              {currentWinners.map((winner: string, idx: number) => (
-                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-                                  {winner}
+
+                            {matchStatus === 'NOT_STARTED' && countdownText && (
+                              <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
+                                <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
+                                  {countdownText}
                                 </span>
-                              ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                              <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                            </div>
+                            <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                          </div>
+                        </div>
+                      
+                        <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative`}>
+                          <div className="flex justify-between items-center w-full">
+                            <div className="text-left flex-1">
+                              {matchStatus === 'NOT_STARTED' ? (
+                                <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
+                              ) : winnersCount === 0 ? (
+                                <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
+                              ) : (
+                                <span className="text-[9px] sm:text-[10px] font-medium text-blue-200">
+                                  <strong className="text-blue-400">{winnersCount} kişi</strong> tam isabetli
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-0 text-center px-1">
+                              <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
+                                {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
+                              </span>
+                            </div>
+                            <div className="text-right flex-1">
+                              {winnersCount > 0 && (
+                                <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">
+                                  {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                                </button>
+                              )}
                             </div>
                           </div>
-                        )}
+                          
+                          {isWinnersOpen && winnersCount > 0 && (
+                            <div className="w-full mt-2 p-2.5 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
+                              <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
+                                <span>BİLEN YARIŞMACILAR (A-Z)</span>
+                                <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 mt-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                                {currentWinners.map((winner: string, idx: number) => (
+                                  <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                                    {winner}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
