@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
+import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKREM - YEREL & BULUT LOGO BANKASI (TÜM EKSİKLER TAMAMLANDI!) 🔴
+// 🔴 YEREL & BULUT LOGO BANKASI
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -84,7 +85,6 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  // 🔴 İŞTE SENİN BULDUĞUN KUSURSUZ SVG LOGOLAR BURADA 🔴
   "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
   "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
   "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
@@ -293,7 +293,6 @@ const week4Matches = [
 ];
 
 export default function MacArsiviPage() {
-  // 🟢 ARTIK DİNAMİK: VERİTABANINDAKİ HAFTALARI OTOMATİK BULACAK VE EKLENECEK 🟢
   const [selectedWeek, setSelectedWeek] = useState<number>(4);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
@@ -333,7 +332,6 @@ export default function MacArsiviPage() {
            
            setBulletinData(bultenMap);
         }
-
       } catch (e) {
         console.log("Supabase baglantisi bekleniyor...");
       }
@@ -369,122 +367,65 @@ export default function MacArsiviPage() {
 
   const getEliteTheme = (category: string) => {
     if(!category) return { bgImg: null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
-
     const upCat = category.toUpperCase();
     
     if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
-      return {
-        bgImg: "url('/cl-bg.png')",
-        containerBorder: "border-indigo-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
-        containerBg: "bg-[#050b14]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-indigo-300",
-        badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-        scoreBorder: "border-white/30",
-        colonText: "text-white/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-      };
+      return { bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
-      return {
-        bgImg: "url('/el-bg.png')", 
-        containerBorder: "border-orange-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
-        containerBg: "bg-[#140805]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-orange-400",
-        badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
-        scoreBorder: "border-orange-600/40",
-        colonText: "text-orange-400/50",
-        tagText: "text-orange-300",
-        tagBg: "bg-orange-950/90",
-        tagBorder: "border-orange-400/80",
-        bottomBar: "bg-[#140805]/90 border-orange-900/30"
-      };
+      return { bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
     } else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) {
-      return {
-        bgImg: "url('/uecl-bg.png')",
-        containerBorder: "border-emerald-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
-        containerBg: "bg-[#05140b]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-emerald-400",
-        badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
-        scoreBorder: "border-emerald-600/40",
-        colonText: "text-emerald-400/50",
-        tagText: "text-emerald-300",
-        tagBg: "bg-emerald-950/90",
-        tagBorder: "border-emerald-400/80",
-        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
-      };
+      return { bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
     } else if (isTffMatchCheck(category)) {
-      return {
-        bgImg: "url('/tff-bg.png')",
-        containerBorder: "border-red-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
-        containerBg: "bg-[#140505]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-red-400",
-        badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
-        scoreBorder: "border-red-600/40",
-        colonText: "text-red-400/50",
-        tagText: "text-red-400",
-        tagBg: "bg-red-950/90",
-        tagBorder: "border-red-500/80",
-        bottomBar: "bg-[#140505]/90 border-red-900/30"
-    };
+      return { bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
     }
-    return {
-        bgImg: null,
-        containerBorder: "border-blue-500/30",
-        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
-        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-cyan-400",
-        badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
-        scoreBorder: "border-blue-600/40",
-        colonText: "text-blue-400/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-    };
+    return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
   };
 
-  // ÇAKIŞMAYI ÖNLEYEN EŞSİZ ID MOTORU
   const getUniqueMatchId = (week: number, index: number) => {
     if (week === 4) return index; 
     return (week * 100) + index;
   };
 
+  // 🟢 DİNAMİK TARİH MOTORU
+  const getWeekDateRange = (weekNum: number) => {
+    const startDate = new Date(2026, 7, 11 + (weekNum - 4) * 7); // 7 = Ağustos
+    const endDate = new Date(2026, 7, 17 + (weekNum - 4) * 7);
+    
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+    const startStr = startDate.toLocaleDateString('tr-TR', options);
+    const endStr = endDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    
+    return `${startStr} - ${endStr}`;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans relative">
       <div className="max-w-5xl mx-auto">
         
+        {/* 🟢 ANA SAYFAYA DÖN BUTONU EKLENDİ 🟢 */}
+        <div className="mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors font-bold text-xs bg-slate-900/50 border border-slate-800 px-4 py-2 rounded-lg shadow-sm">
+            <span className="text-base leading-none">←</span> Ana Sayfaya Dön
+          </Link>
+        </div>
+
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3 border-b border-slate-800 pb-4">
           <div className="text-center sm:text-left">
             <h1 className="text-xl sm:text-2xl font-bold text-amber-400 tracking-tight flex items-center justify-center sm:justify-start gap-2">
               📂 MAÇ ARŞİVİ & FİKSTÜR
             </h1>
-            <p className="text-slate-400 text-xs mt-0.5">
-              {selectedWeek}. Hafta Müsabakaları ve Programı
+            <p className="text-slate-400 text-xs mt-1 bg-slate-900 inline-block px-3 py-1 rounded-md border border-slate-800">
+              {/* 🟢 DİNAMİK TARİH YAZISI EKLENDİ 🟢 */}
+              <strong className="text-amber-500 mr-1">{selectedWeek}. HAFTA BÜLTENİ:</strong> 
+              {getWeekDateRange(selectedWeek)}
             </p>
           </div>
           <div>
             <select
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm"
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg cursor-pointer outline-none transition-all shadow text-sm"
             >
-              {/* 🟢 DİNAMİK HAFTA LİSTESİ: 1, 2, 3, 4 + Veritabanındaki diğer haftalar (5, 6, 7 vb.) 🟢 */}
               {[1, 2, 3, 4, ...Object.keys(bulletinData).map(Number).filter(w => w > 4)]
                 .sort((a, b) => a - b)
                 .map(week => (
@@ -563,47 +504,31 @@ export default function MacArsiviPage() {
                   className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}
                 >
                   <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
-                    
                     {theme.bgImg && (
                       <>
-                        <div 
-                          className="absolute inset-0 z-0 opacity-100"
-                          style={{ 
-                            backgroundImage: theme.bgImg,
-                            backgroundSize: 'cover', 
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat'
-                          }}
-                        ></div>
+                        <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
                         <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
                       </>
                     )}
-
                     <div className="relative z-10 flex flex-col h-full justify-between">
-                      
                       <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
                         <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
                           {match.weekLabel}
                         </span>
-                        
                         <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                           🏆 {match.category}
                         </span>
-                        
                         <span className={`${theme.catText} text-[10px] sm:text-[11px] font-semibold tracking-widest mt-0.5 opacity-90`}>
                           {match.date} <span className="opacity-50 mx-1">|</span> {match.time}
                         </span>
                       </div>
-
                       <div className="flex items-center justify-between px-0 sm:px-4">
-                        
                         <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                           <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                             <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
                           <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.homeTeam}</span>
                         </div>
-
                         <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30">
                           <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                             <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
@@ -611,18 +536,15 @@ export default function MacArsiviPage() {
                             <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
                           </div>
                         </div>
-
                         <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                           <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
                             <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
                           <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.awayTeam}</span>
                         </div>
-
                       </div>
                     </div>
                   </div>
-
                   <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
                     <div className="flex justify-between items-center w-full">
                       <div className="text-left flex-1">
@@ -649,14 +571,12 @@ export default function MacArsiviPage() {
                         )}
                       </div>
                     </div>
-                    
                     {isWinnersOpen && winnersCount > 0 && (
                       <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
                         <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
                           <span>BİLEN YARIŞMACILAR (A-Z)</span>
                           <span className="text-amber-400 font-bold bg-amber-900/20 px-2 py-0.5 rounded border border-amber-700/30">Kişi Başı: {displayPoints} Puan</span>
                         </div>
-                        
                         <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
                           {currentWinners.map((winner: string, idx: number) => (
                             <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-slate-900/60 text-white border-slate-600/50 shadow-[0_0_10px_rgba(0,0,0,0.4)]">
@@ -664,7 +584,6 @@ export default function MacArsiviPage() {
                             </span>
                           ))}
                         </div>
-                        
                       </div>
                     )}
                   </div>
@@ -673,7 +592,6 @@ export default function MacArsiviPage() {
             })}
           </div>
         )}
-
       </div>
     </div>
   );
