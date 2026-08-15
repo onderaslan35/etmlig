@@ -84,6 +84,23 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
+  // 🔴 İŞTE SENİN BULDUĞUN KUSURSUZ SVG LOGOLAR BURADA 🔴
+  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
+  "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
+  "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
+  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Juventus_FC_-_pictogram_white_%28Italy%2C_2017%29.svg",
+  
+  "MALAGA": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/M%C3%A1laga_CF.svg/200px-M%C3%A1laga_CF.svg.png",
+  "DEPORTIVO LA CORUÑA": "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/RC_Deportivo_La_Coru%C3%B1a_logo.svg/200px-RC_Deportivo_La_Coru%C3%B1a_logo.svg.png",
+  "MONACO": "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/AS_Monaco_FC.svg/200px-AS_Monaco_FC.svg.png",
+  "LILLE": "https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/Lille_OSC_2018_logo.svg/200px-Lille_OSC_2018_logo.svg.png",
+  "NOTTINGHAM FOREST": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e5/Nottingham_Forest_F.C._logo.svg/200px-Nottingham_Forest_F.C._logo.svg.png",
+  "LIVERPOOL": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png",
+  "FULHAM": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Fulham_FC_%28shield%29.svg/200px-Fulham_FC_%28shield%29.svg.png",
+  "EVERTON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Everton_FC_logo.svg/200px-Everton_FC_logo.svg.png",
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
+  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/f1/Olympique_Lyonnais.svg/200px-Olympique_Lyonnais.svg.png",
+
   // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
@@ -276,7 +293,7 @@ const week4Matches = [
 ];
 
 export default function MacArsiviPage() {
-  // 🔴 5. HAFTA ARTIK ARŞİV AÇILIR MENÜSÜNDE YOK (MAKSİMUM 4) 🔴
+  // 🟢 ARTIK DİNAMİK: VERİTABANINDAKİ HAFTALARI OTOMATİK BULACAK VE EKLENECEK 🟢
   const [selectedWeek, setSelectedWeek] = useState<number>(4);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
@@ -467,11 +484,12 @@ export default function MacArsiviPage() {
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
               className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm"
             >
-              {/* 🔴 SADECE 1, 2, 3 ve 4. HAFTALAR GÖRÜNÜR 🔴 */}
-              <option value={1}>1. HAFTA BÜLTENİ</option>
-              <option value={2}>2. HAFTA BÜLTENİ</option>
-              <option value={3}>3. HAFTA BÜLTENİ</option>
-              <option value={4}>4. HAFTA BÜLTENİ</option>
+              {/* 🟢 DİNAMİK HAFTA LİSTESİ: 1, 2, 3, 4 + Veritabanındaki diğer haftalar (5, 6, 7 vb.) 🟢 */}
+              {[1, 2, 3, 4, ...Object.keys(bulletinData).map(Number).filter(w => w > 4)]
+                .sort((a, b) => a - b)
+                .map(week => (
+                  <option key={week} value={week}>{week}. HAFTA BÜLTENİ</option>
+              ))}
             </select>
           </div>
         </div>
