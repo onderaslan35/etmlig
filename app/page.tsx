@@ -1,91 +1,101 @@
 import Link from 'next/link';
 
-export default function HomePage() {
+export default function Home() {
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 text-slate-100 min-h-screen">
-      <div className="text-center mb-12 mt-8">
-        <h2 className="text-amber-500 font-bold tracking-widest text-sm mb-2 uppercase">Elit Tahmin Master Ligi</h2>
-        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
-          Kök Komuta Merkezi
-        </h1>
-        <p className="text-slate-400 mt-4 text-sm md:text-base">Bütün müstakil sayfalar ve yönetim araçları aktif.</p>
-      </div>
+    <div className="min-h-screen bg-[#050b14] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-900 flex flex-col relative overflow-hidden">
+      
+      {/* Arka Plan Efektleri */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[500px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-amber-600/5 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
-      {/* KULLANICI EKRANLARI */}
-      <div className="mb-10">
-        <h3 className="text-amber-400 font-bold text-xs tracking-widest mb-4 uppercase flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-          Kullanıcı ve Sistem Ekranları
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ÜST VİTRİN (HERO SECTION) */}
+      <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 z-10 relative mt-10">
+        
+        <div className="text-center mb-10 max-w-4xl mx-auto animate-fade-in-up">
+          <div className="inline-block mb-4">
+             <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-4 py-1.5 rounded-full text-xs font-black tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+               Resmi Web Platformu
+             </span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight mb-4 drop-shadow-2xl">
+            ELİT TAHMİN <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">MASTER LİGİ</span>
+          </h1>
+          <p className="text-slate-400 text-sm sm:text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+            Avrupa'nın ve Türkiye'nin devler sahnesindeki mücadeleleri kendi aramızda bir şölene dönüştürüyoruz. Strateji, öngörü ve futbol zekasının buluşma noktası.
+          </p>
+        </div>
+
+        {/* 🔴 MANİFESTO (YASAL BİLGİLENDİRME) KARTI 🔴 */}
+        <div className="w-full max-w-3xl bg-slate-900/60 border border-slate-700/50 rounded-2xl p-5 sm:p-8 mb-12 shadow-2xl backdrop-blur-md">
+          <div className="flex items-center gap-3 mb-3 border-b border-slate-700/50 pb-3">
+             <span className="text-2xl">⚠️</span>
+             <h2 className="text-white font-bold text-base sm:text-lg tracking-wide">KAMUOYU BİLGİLENDİRMESİ VE MANİFESTO</h2>
+          </div>
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed text-justify">
+            Bu web sitesi (<strong className="text-amber-400">etmlig.com.tr</strong>) <u>kesinlikle bir bahis, kumar veya şans oyunları platformu değildir.</u> Herhangi bir resmi veya gayriresmi bahis kurumuyla, Spor Toto teşkilatıyla veya finansal bir organizasyonla hiçbir bağlantısı bulunmamaktadır. 
+            <br/><br/>
+            Platformumuz; futbol tutkunu, birbirini sosyal hayattan tanıyan kapalı bir arkadaş grubunun, kendi aralarında futbol bilgisi ve öngörülerini sınamak, eğlenmek ve tatlı bir rekabet ortamı yaratmak amacıyla oluşturdukları <strong>tamamen ücretsiz ve sosyal bir etkinliktir.</strong> Sistemde hiçbir şekilde para yatırma, çekme veya maddi ödül vaadi bulunmamaktadır.
+          </p>
+        </div>
+
+        {/* GİRİŞ KAPILARI (NAVİGASYON) */}
+        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
           
-          <Link href="/puan-durumu/master" className="bg-[#0a1120] border border-slate-800 rounded-2xl p-6 hover:border-amber-500/50 transition-all group shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-lg font-bold text-slate-100 flex items-center gap-2">🏆 Master Puan Durumu</h4>
-              <span className="bg-slate-900 text-[9px] text-slate-400 px-2 py-1 rounded border border-slate-700">MASTER</span>
+          {/* Liderlik Tabloları */}
+          <Link href="/puan-durumu/master" className="group block bg-gradient-to-br from-slate-900 to-[#0a1120] border border-slate-700 hover:border-amber-500/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(245,158,11,0.15)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl group-hover:bg-amber-500/10 transition-all"></div>
+            <div className="text-4xl mb-4 drop-shadow-md">🏆</div>
+            <h3 className="text-lg font-black text-white mb-2 tracking-wide group-hover:text-amber-400 transition-colors">PUAN DURUMLARI</h3>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Master Lig, DFO ve TFF liglerindeki güncel sıralamalar, kazanılan puanlar ve dev rekabet tablosu.
+            </p>
+            <div className="mt-4 text-amber-500 text-xs font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+              Tablolara Git <span className="text-lg leading-none">→</span>
             </div>
-            <p className="text-sm text-slate-500 mb-4">Tüm liglerin (DFO + TFFO) genel toplam puan sıralaması.</p>
-            <span className="text-amber-500 text-xs font-bold group-hover:text-amber-400">Sayfaya Git →</span>
           </Link>
 
-          <Link href="/puan-durumu/dfo" className="bg-[#0a1120] border border-slate-800 rounded-2xl p-6 hover:border-blue-500/50 transition-all group shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-lg font-bold text-slate-100 flex items-center gap-2">🌍 DFO Puan Durumu</h4>
-              <span className="bg-slate-900 text-[9px] text-slate-400 px-2 py-1 rounded border border-slate-700">DFO</span>
+          {/* Maç Arşivi ve Fikstür */}
+          <Link href="/mac-arsivi" className="group block bg-gradient-to-br from-slate-900 to-[#0a1120] border border-slate-700 hover:border-indigo-500/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(79,70,229,0.15)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-all"></div>
+            <div className="text-4xl mb-4 drop-shadow-md">📅</div>
+            <h3 className="text-lg font-black text-white mb-2 tracking-wide group-hover:text-indigo-400 transition-colors">FİKSTÜR & ARŞİV</h3>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Haftanın güncel maç bülteni, oynanacak karşılaşmalar, geçmiş maç sonuçları ve skor detayları.
+            </p>
+            <div className="mt-4 text-indigo-400 text-xs font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+              Bültene Göz At <span className="text-lg leading-none">→</span>
             </div>
-            <p className="text-sm text-slate-500 mb-4">Dünya Futbol Organizasyonları özel puan durumu.</p>
-            <span className="text-amber-500 text-xs font-bold group-hover:text-amber-400">Sayfaya Git →</span>
           </Link>
 
-          <Link href="/puan-durumu/tff" className="bg-[#0a1120] border border-slate-800 rounded-2xl p-6 hover:border-red-500/50 transition-all group shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-lg font-bold text-slate-100 flex items-center gap-2">🇹🇷 TFF Puan Durumu</h4>
-              <span className="bg-slate-900 text-[9px] text-slate-400 px-2 py-1 rounded border border-slate-700">TFFO</span>
+          {/* Tahminmatik / Skorlar */}
+          <Link href="/tahminler" className="group block bg-gradient-to-br from-slate-900 to-[#0a1120] border border-slate-700 hover:border-emerald-500/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(16,185,129,0.15)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-all"></div>
+            <div className="text-4xl mb-4 drop-shadow-md">🎯</div>
+            <h3 className="text-lg font-black text-white mb-2 tracking-wide group-hover:text-emerald-400 transition-colors">TAHMİN KONTROL</h3>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Yarışmacıların haftalık skor öngörüleri, yapılan resmi tahminler ve kimin ne dediği burada.
+            </p>
+            <div className="mt-4 text-emerald-400 text-xs font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+              Tahminleri İncele <span className="text-lg leading-none">→</span>
             </div>
-            <p className="text-sm text-slate-500 mb-4">TFF 1. Lig ve yerli organizasyonlar özel puan durumu.</p>
-            <span className="text-amber-500 text-xs font-bold group-hover:text-amber-400">Sayfaya Git →</span>
-          </Link>
-
-          <Link href="/skor-durumu" className="bg-[#0a1120] border border-slate-800 rounded-2xl p-6 hover:border-emerald-500/50 transition-all group shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-lg font-bold text-slate-100 flex items-center gap-2">⚽ Skor Durumu</h4>
-              <span className="bg-slate-900 text-[9px] text-slate-400 px-2 py-1 rounded border border-slate-700">CANLI / SONUÇLAR</span>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">Haftalık oynanan ve canlı devam eden tüm maç sonuçları ile skorlar.</p>
-            <span className="text-amber-500 text-xs font-bold group-hover:text-amber-400">Sayfaya Git →</span>
           </Link>
 
         </div>
-      </div>
+      </main>
 
-      {/* ADMİN EKRANLARI (FAZLALIKLAR SİLİNDİ) */}
-      <div>
-        <h3 className="text-amber-400 font-bold text-xs tracking-widest mb-4 uppercase flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-          Admin Yönetim Paneli (Mankoman)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          <Link href="/admin" className="bg-[#0a1120] border border-slate-800 rounded-2xl p-6 hover:border-purple-500/50 transition-all group shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-lg font-bold text-slate-100 flex items-center gap-2">⚙️ Admin Paneli Ana Sayfa</h4>
-              <span className="bg-slate-900 text-[9px] text-slate-400 px-2 py-1 rounded border border-slate-700">ADMİN ROOT</span>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">Yönetici genel bakış ve yönetim kontrol merkezi.</p>
-            <span className="text-amber-500 text-xs font-bold group-hover:text-amber-400">Sayfaya Git →</span>
-          </Link>
-
-          <Link href="/admin/tahminler" className="bg-[#0a1120] border border-slate-800 rounded-2xl p-6 hover:border-amber-500/50 transition-all group shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-lg font-bold text-slate-100 flex items-center gap-2">📝 Tahmin Kontrol Paneli</h4>
-              <span className="bg-slate-900 text-[9px] text-slate-400 px-2 py-1 rounded border border-slate-700">TAHMİNLER</span>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">Yarışmacıların haftalık yaptığı skor tahminlerinin arşiv ve gözetleme kulesi.</p>
-            <span className="text-amber-500 text-xs font-bold group-hover:text-amber-400">Sayfaya Git →</span>
-          </Link>
-
+      {/* ALT BİLGİ (FOOTER) & GİZLİ ADMİN GİRİŞİ */}
+      <footer className="mt-auto border-t border-slate-800/60 bg-[#02050a] py-6 z-10 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+           <div className="text-slate-500 text-xs">
+             &copy; 2026 Elit Tahmin Master Ligi. Tüm hakları gizlidir.
+           </div>
+           
+           {/* Normal kullanıcıların pek dikkatini çekmeyecek, senin için gizli admin tüneli */}
+           <Link href="/admin" className="text-slate-700 hover:text-amber-500 text-[10px] font-mono tracking-widest uppercase transition-colors flex items-center gap-1">
+             <span className="w-1.5 h-1.5 rounded-full bg-slate-700 inline-block hover:bg-amber-500"></span> Sistem Yönetimi
+           </Link>
         </div>
-      </div>
+      </footer>
 
     </div>
   );
