@@ -210,7 +210,6 @@ const generateWeekDates = (weekNum: number) => {
   return dates;
 };
 
-// ÇAKIŞMAYI ÖNLEYEN MATEMATİKSEL KİMLİK MOTORU (Örn: 5. Hafta 1. Maç = 501)
 const getUniqueMatchId = (week: number, index: number) => {
     if (week === 4) return index; 
     return (week * 100) + index;
@@ -218,8 +217,11 @@ const getUniqueMatchId = (week: number, index: number) => {
 
 export default function AdminRadarPortal() {
   
-  // 🔴 YENİ EKLENDİ: ŞİFRE KORUMA SİSTEMİ 🔴
+  // 🔴 ÇİFT KADEMELİ ŞİFRE & RÜTBE SİSTEMİ 🔴
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [userRole, setUserRole] = useState<'master' | 'subadmin' | null>(null);
+  
+  const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
@@ -270,19 +272,53 @@ export default function AdminRadarPortal() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
        const auth = sessionStorage.getItem('admin_auth');
-       if (auth === 'true') setIsAuthenticated(true);
+       const role = sessionStorage.getItem('admin_role') as 'master' | 'subadmin' | null;
+       
+       if (auth === 'true' && role) {
+          setIsAuthenticated(true);
+          setUserRole(role);
+       }
     }
   }, []);
 
+  // 🔴 GİRİŞ VE RÜTBE KONTROLÜ MANTIĞI
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'mankoman') {
+    
+    // ==============================================================
+    // 👑 MASTER (GENERAL) HESABI ŞİFRESİ
+    // AŞAĞIDAKİ 'BURAYA_KENDİ_ŞİFRENİ_YAZ' YAZISINI SİL VE KENDİ GİZLİ ŞİFRENİ YAZ (Tırnakları silme!)
+    // ==============================================================
+    if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
        setIsAuthenticated(true);
+       setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
-    } else {
-       alert("❌ Erişim Reddedildi! Hatalı Şifre.");
+       sessionStorage.setItem('admin_role', 'master');
+    } 
+    // ==============================================================
+    // 🛡️ ALT YETKİLİ (SAHA KOMİSERİ) HESABI
+    // Sadece Canlı Skorlara girebilir, Bülten Fabrikasını GÖREMEZ! İstersen şifresini '123456' yerine başka bir şey yapabilirsin.
+    // ==============================================================
+    else if (usernameInput === 'skoradmin' && passwordInput === '123456') {
+       setIsAuthenticated(true);
+       setUserRole('subadmin');
+       sessionStorage.setItem('admin_auth', 'true');
+       sessionStorage.setItem('admin_role', 'subadmin');
+       setActiveTab('live'); // Zorunlu olarak Live sekmesine atar
+    } 
+    else {
+       alert("❌ Erişim Reddedildi! Hatalı Kullanıcı Adı veya Şifre.");
        setPasswordInput('');
     }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin_auth');
+    sessionStorage.removeItem('admin_role');
+    setIsAuthenticated(false);
+    setUserRole(null);
+    setUsernameInput('');
+    setPasswordInput('');
   };
 
   // ----------------------------------------------------
@@ -344,7 +380,7 @@ export default function AdminRadarPortal() {
   // 🟢 2. MOTOR: BÜLTEN FABRİKASININ "ZİHİN ÇİPİ" (HAFIZA) EKLENDİ 🚀
   // ----------------------------------------------------
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || userRole !== 'master') return;
     const loadBulletinData = async () => {
       const newDates = generateWeekDates(bulletinWeek);
       setCurrentWeekDates(newDates);
@@ -382,7 +418,7 @@ export default function AdminRadarPortal() {
     };
 
     loadBulletinData();
-  }, [bulletinWeek, activeTab, isAuthenticated]);
+  }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
   // --- CANLI OPERASYON FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -613,9 +649,16 @@ export default function AdminRadarPortal() {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
           <span className="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">🛡️</span>
           <h1 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-md">Karargah Girişi</h1>
-          <p className="text-slate-400 text-xs mb-8 font-medium">Bu alana sadece üst düzey komuta kademesi erişebilir. Lütfen yetki şifrenizi girin.</p>
+          <p className="text-slate-400 text-xs mb-8 font-medium">Sadece yetkili komuta kademesi erişebilir.</p>
           
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <input 
+              type="text" 
+              value={usernameInput} 
+              onChange={e => setUsernameInput(e.target.value)} 
+              className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600" 
+              placeholder="KULLANICI ADI" 
+            />
             <input 
               type="password" 
               value={passwordInput} 
@@ -625,7 +668,7 @@ export default function AdminRadarPortal() {
             />
             <button 
               type="submit" 
-              className="bg-amber-600 hover:bg-amber-500 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:shadow-[0_0_20px_rgba(245,158,11,0.6)]"
+              className="bg-amber-600 hover:bg-amber-500 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:shadow-[0_0_20px_rgba(245,158,11,0.6)] mt-2"
             >
               KAPIYI AÇ
             </button>
@@ -648,10 +691,10 @@ export default function AdminRadarPortal() {
            
            {/* Güvenli Çıkış Butonu */}
            <button 
-             onClick={() => { sessionStorage.removeItem('admin_auth'); setIsAuthenticated(false); }} 
-             className="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-red-400 z-50"
+             onClick={handleLogout} 
+             className="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-red-400 z-50 flex items-center gap-1"
            >
-             KİLİTLE ÇIK
+             🔒 KİLİTLE ÇIK
            </button>
 
            <button 
@@ -660,12 +703,16 @@ export default function AdminRadarPortal() {
            >
              🔴 CANLI MAÇ & PUAN YÖNETİMİ
            </button>
-           <button 
-             onClick={() => setActiveTab('bulletin')}
-             className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-           >
-             🛠️ YENİ BÜLTEN OLUŞTUR
-           </button>
+           
+           {/* 🛡️ RÜTBE KONTROLÜ: Sadece 'master' ise Bülten butonunu göster */}
+           {userRole === 'master' && (
+             <button 
+               onClick={() => setActiveTab('bulletin')}
+               className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+             >
+               🛠️ YENİ BÜLTEN OLUŞTUR
+             </button>
+           )}
         </div>
 
         {/* ========================================================================================= */}
@@ -830,9 +877,9 @@ export default function AdminRadarPortal() {
         )}
 
         {/* ========================================================================================= */}
-        {/* 2. CEPHE: YENİ BÜLTEN ÜRETİM FABRİKASI */}
+        {/* 2. CEPHE: YENİ BÜLTEN ÜRETİM FABRİKASI (SADECE MASTER GÖREBİLİR) */}
         {/* ========================================================================================= */}
-        {activeTab === 'bulletin' && (
+        {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
               <div className="text-center sm:text-left">
