@@ -218,6 +218,10 @@ const getUniqueMatchId = (week: number, index: number) => {
 
 export default function AdminRadarPortal() {
   
+  // 🔴 YENİ EKLENDİ: ŞİFRE KORUMA SİSTEMİ 🔴
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [passwordInput, setPasswordInput] = useState<string>('');
+
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
 
   // --- CANLI OPERASYON STATELERİ ---
@@ -233,7 +237,7 @@ export default function AdminRadarPortal() {
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   
-  // 🔴 AKTİF ODAKTAKİ SATIRI TUTAN STATE (YENİ EKLENDİ)
+  // 🔴 AKTİF ODAKTAKİ SATIRI TUTAN STATE
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   
   const categoriesList = [
@@ -262,10 +266,30 @@ export default function AdminRadarPortal() {
     }))
   );
 
+  // 🔴 ŞİFRE HATIRLAMA (Session Storage)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+       const auth = sessionStorage.getItem('admin_auth');
+       if (auth === 'true') setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === 'mankoman') {
+       setIsAuthenticated(true);
+       sessionStorage.setItem('admin_auth', 'true');
+    } else {
+       alert("❌ Erişim Reddedildi! Hatalı Şifre.");
+       setPasswordInput('');
+    }
+  };
+
   // ----------------------------------------------------
   // 🟢 1. MOTOR: CANLI MAÇ VERİLERİNİ ÇEK
   // ----------------------------------------------------
   useEffect(() => {
+    if (!isAuthenticated) return;
     const fetchLiveAdminData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
       const { data: liveData } = await supabase.from('live_matches').select('*');
@@ -314,12 +338,13 @@ export default function AdminRadarPortal() {
     };
     
     if (activeTab === 'live') fetchLiveAdminData();
-  }, [activeTab, selectedLiveWeek]);
+  }, [activeTab, selectedLiveWeek, isAuthenticated]);
 
   // ----------------------------------------------------
   // 🟢 2. MOTOR: BÜLTEN FABRİKASININ "ZİHİN ÇİPİ" (HAFIZA) EKLENDİ 🚀
   // ----------------------------------------------------
   useEffect(() => {
+    if (!isAuthenticated) return;
     const loadBulletinData = async () => {
       const newDates = generateWeekDates(bulletinWeek);
       setCurrentWeekDates(newDates);
@@ -331,7 +356,6 @@ export default function AdminRadarPortal() {
           .order('match_index', { ascending: true });
 
         if (data && data.length > 0) {
-          // Eğer veritabanında bu haftaya ait maç varsa, onları forma geri doldur! (Silinmesin)
           const mapped = Array.from({ length: 24 }, (_, i) => {
             const existing = data.find(m => m.match_index === i + 1);
             return {
@@ -345,7 +369,6 @@ export default function AdminRadarPortal() {
           });
           setBulletinMatches(mapped as any);
         } else {
-          // Veritabanında hiçbir şey yoksa yepyeni tertemiz bir şablon aç
           setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
             match_index: i + 1,
             category: 'TÜRKİYE SÜPER LİG',
@@ -359,7 +382,7 @@ export default function AdminRadarPortal() {
     };
 
     loadBulletinData();
-  }, [bulletinWeek, activeTab]);
+  }, [bulletinWeek, activeTab, isAuthenticated]);
 
   // --- CANLI OPERASYON FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -580,14 +603,57 @@ export default function AdminRadarPortal() {
     setIsPublishing(false);
   };
 
+  // ----------------------------------------------------------------------
+  // 🔴 GİRİŞ EKRANI (LOGİN)
+  // ----------------------------------------------------------------------
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-700 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
+          <span className="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">🛡️</span>
+          <h1 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-md">Karargah Girişi</h1>
+          <p className="text-slate-400 text-xs mb-8 font-medium">Bu alana sadece üst düzey komuta kademesi erişebilir. Lütfen yetki şifrenizi girin.</p>
+          
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <input 
+              type="password" 
+              value={passwordInput} 
+              onChange={e => setPasswordInput(e.target.value)} 
+              className="bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-[0.3em] font-black text-lg shadow-inner placeholder:text-slate-600" 
+              placeholder="••••••••" 
+            />
+            <button 
+              type="submit" 
+              className="bg-amber-600 hover:bg-amber-500 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:shadow-[0_0_20px_rgba(245,158,11,0.6)]"
+            >
+              KAPIYI AÇ
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
+  // ----------------------------------------------------------------------
+  // 🟢 ANA ADMIN PANELİ (SADECE ŞİFRE GİRİLİNCE GÖRÜNÜR)
+  // ----------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24">
 
       <div className="max-w-7xl mx-auto">
         
         {/* 🔴 ÜST TAB MENÜSÜ 🔴 */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative">
+           
+           {/* Güvenli Çıkış Butonu */}
+           <button 
+             onClick={() => { sessionStorage.removeItem('admin_auth'); setIsAuthenticated(false); }} 
+             className="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-red-400 z-50"
+           >
+             KİLİTLE ÇIK
+           </button>
+
            <button 
              onClick={() => setActiveTab('live')}
              className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
@@ -821,20 +887,24 @@ export default function AdminRadarPortal() {
                      </thead>
                      <tbody>
                         {bulletinMatches.map((m, idx) => {
-                          // 🔴 AKTİF SATIR KONTROLÜ
+                          // 🔴 AKTİF VE TAMAMLANMIŞ SATIR KONTROLLERİ 🔴
                           const isFocused = focusedRowIndex === idx;
+                          const isFilled = m.home_team.trim() !== "" && m.away_team.trim() !== "";
                           
                           return (
                            <tr 
                              key={m.match_index} 
-                             // AKTİF SATIR İSE NEON SINIFLARI, DEĞİLSE NORMAL SINIFLAR
                              className={`transition-all duration-300 border-b ${
                                isFocused 
                                 ? 'bg-indigo-950/40 border-indigo-500 shadow-[inset_0_0_20px_rgba(79,70,229,0.3)]' 
+                                : isFilled
+                                ? 'bg-emerald-950/10 border-emerald-500/30 shadow-[inset_0_0_10px_rgba(16,185,129,0.05)]'
                                 : 'border-slate-800/50 hover:bg-slate-800/30'
                              }`}
                            >
-                              <td className={`p-2 text-center font-black transition-colors ${isFocused ? 'text-indigo-400' : 'text-slate-500'}`}>
+                              <td className={`p-2 text-center font-black transition-colors ${
+                                isFocused ? 'text-indigo-400' : isFilled ? 'text-emerald-500' : 'text-slate-500'
+                              }`}>
                                 {m.match_index}
                               </td>
                               
@@ -891,6 +961,8 @@ export default function AdminRadarPortal() {
                                    className={`w-full text-white font-bold text-[11px] px-2 py-2.5 rounded outline-none cursor-pointer uppercase transition-all ${
                                      isFocused 
                                       ? 'bg-slate-900 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)]' 
+                                      : isFilled 
+                                      ? 'bg-emerald-950/40 border border-emerald-500/50 text-emerald-100 shadow-inner'
                                       : 'bg-slate-950 border border-emerald-900/50 shadow-inner'
                                    }`}
                                  >
@@ -907,6 +979,8 @@ export default function AdminRadarPortal() {
                                    className={`w-full text-white font-bold text-[11px] px-2 py-2.5 rounded outline-none cursor-pointer uppercase transition-all ${
                                      isFocused 
                                       ? 'bg-slate-900 border border-red-400 shadow-[0_0_15px_rgba(248,113,113,0.4)]' 
+                                      : isFilled 
+                                      ? 'bg-red-950/40 border border-red-500/50 text-red-100 shadow-inner'
                                       : 'bg-slate-950 border border-red-900/50 shadow-inner'
                                    }`}
                                  >
