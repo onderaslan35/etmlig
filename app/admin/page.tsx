@@ -463,13 +463,15 @@ export default function AdminRadarPortal() {
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
     const leagueKey = getLeagueKey(currentMatch.category);
-    const baseTeams = LEAGUE_TEAMS[leagueKey] || [];
-    
+
+    // 🔴 AVRUPA MAÇLARINDA TAM SERBESTLİK (Bütün takımlar)
     if (leagueKey === "ÇEŞİTLİ AVRUPA TAKIMLARI") {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        return baseTeams.filter(t => t !== opponent);
+        const allTeamsInSystem = Array.from(new Set(Object.values(LEAGUE_TEAMS).flat())).sort((a, b) => a.localeCompare(b, 'tr'));
+        return allTeamsInSystem.filter(t => t !== opponent);
     }
 
+    const baseTeams = LEAGUE_TEAMS[leagueKey] || [];
     const usedTeamsInThisLeague = new Set<string>();
     
     bulletinMatches.forEach((m, idx) => {
