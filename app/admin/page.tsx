@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// 🔴 YEREL & BULUT LOGO BANKASI (TÜM AVRUPA DEVLERİ EKLENDİ) 🔴
+// 🔴 YEREL & BULUT LOGO BANKASI (BEMBEYAZ JUVENTUS İLE GÜNCELLENDİ) 🔴
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -90,7 +90,8 @@ const localTeamLogos: Record<string, string> = {
   "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
   "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
   "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
-  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Juventus_FC_-_logo_black_%28Italy%2C_2020%29.svg",
+  // ⚡ BEMBEYAZ JUVENTUS LOGOSU BURADA ⚡
+  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Juventus_FC_-_pictogram_white_%28Italy%2C_2017%29.svg",
   
   // Diğer yedek Avrupa takımları
   "MALAGA": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/M%C3%A1laga_CF.svg/200px-M%C3%A1laga_CF.svg.png",
