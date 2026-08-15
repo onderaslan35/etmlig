@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// 🔴 YEREL & BULUT LOGO BANKASI (BEMBEYAZ JUVENTUS İLE GÜNCELLENDİ) 🔴
+// 🔴 YEREL & BULUT LOGO BANKASI
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -86,14 +86,11 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  // 🔴 İŞTE SENİN BULDUĞUN KUSURSUZ SVG LOGOLAR BURADA 🔴
   "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
   "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
   "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
-  // ⚡ BEMBEYAZ JUVENTUS LOGOSU BURADA ⚡
   "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Juventus_FC_-_pictogram_white_%28Italy%2C_2017%29.svg",
   
-  // Diğer yedek Avrupa takımları
   "MALAGA": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/M%C3%A1laga_CF.svg/200px-M%C3%A1laga_CF.svg.png",
   "DEPORTIVO LA CORUÑA": "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/RC_Deportivo_La_Coru%C3%B1a_logo.svg/200px-RC_Deportivo_La_Coru%C3%B1a_logo.svg.png",
   "MONACO": "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/AS_Monaco_FC.svg/200px-AS_Monaco_FC.svg.png",
@@ -262,6 +259,9 @@ export default function AdminRadarPortal() {
     }))
   );
 
+  // ----------------------------------------------------
+  // 🟢 1. MOTOR: CANLI MAÇ VERİLERİNİ ÇEK
+  // ----------------------------------------------------
   useEffect(() => {
     const fetchLiveAdminData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
@@ -313,12 +313,50 @@ export default function AdminRadarPortal() {
     if (activeTab === 'live') fetchLiveAdminData();
   }, [activeTab, selectedLiveWeek]);
 
-
+  // ----------------------------------------------------
+  // 🟢 2. MOTOR: BÜLTEN FABRİKASININ "ZİHİN ÇİPİ" (HAFIZA) EKLENDİ 🚀
+  // ----------------------------------------------------
   useEffect(() => {
-    const newDates = generateWeekDates(bulletinWeek);
-    setCurrentWeekDates(newDates);
-    setBulletinMatches(prev => prev.map(m => ({ ...m, match_date: newDates[0] })));
-  }, [bulletinWeek]);
+    const loadBulletinData = async () => {
+      const newDates = generateWeekDates(bulletinWeek);
+      setCurrentWeekDates(newDates);
+
+      if (activeTab === 'bulletin') {
+        const { data } = await supabase.from('matches_bulletin')
+          .select('*')
+          .eq('week_num', bulletinWeek)
+          .order('match_index', { ascending: true });
+
+        if (data && data.length > 0) {
+          // Eğer veritabanında bu haftaya ait maç varsa, onları forma geri doldur! (Silinmesin)
+          const mapped = Array.from({ length: 24 }, (_, i) => {
+            const existing = data.find(m => m.match_index === i + 1);
+            return {
+              match_index: i + 1,
+              category: existing?.category || 'TÜRKİYE SÜPER LİG',
+              match_date: existing?.match_date || newDates[0],
+              match_time: existing?.match_time || '21:00',
+              home_team: existing?.home_team || '',
+              away_team: existing?.away_team || ''
+            };
+          });
+          setBulletinMatches(mapped as any);
+        } else {
+          // Veritabanında hiçbir şey yoksa yepyeni tertemiz bir şablon aç
+          setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
+            match_index: i + 1,
+            category: 'TÜRKİYE SÜPER LİG',
+            match_date: newDates[0],
+            match_time: '21:00',
+            home_team: '',
+            away_team: ''
+          })));
+        }
+      }
+    };
+
+    loadBulletinData();
+  }, [bulletinWeek, activeTab]);
 
   // --- CANLI OPERASYON FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -468,7 +506,6 @@ export default function AdminRadarPortal() {
     const currentMatch = bulletinMatches[currentIndex];
     const leagueKey = getLeagueKey(currentMatch.category);
 
-    // 🔴 AVRUPA MAÇLARINDA TAM SERBESTLİK (Bütün takımlar)
     if (leagueKey === "ÇEŞİTLİ AVRUPA TAKIMLARI") {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
         const allTeamsInSystem = Array.from(new Set(Object.values(LEAGUE_TEAMS).flat())).sort((a, b) => a.localeCompare(b, 'tr'));
