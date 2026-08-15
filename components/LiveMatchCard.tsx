@@ -195,7 +195,6 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  // İŞTE BURASI! ANA ŞEMSİYEMİZİ TUTAN DEVLET SIRRI. VARSAYILAN OLARAK KAPALI (false).
   const [isMainAccordionOpen, setIsMainAccordionOpen] = useState<boolean>(false);
   
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
@@ -386,26 +385,21 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
       
-      {/* İŞTE ANA ŞEMSİYE BAŞLIĞI - TIKLANABİLİR VE KAPATILABİLİR */}
+      {/* 🔴 İŞTE YENİ ŞEMSİYE BAŞLIĞI - İNCE, KİBAR, ORTALANMIŞ VE İKONSUZ 🔴 */}
       <button 
         onClick={() => setIsMainAccordionOpen(!isMainAccordionOpen)}
-        className="w-full flex items-center justify-between p-4 sm:p-5 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
+        className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
       >
-        <div className="flex items-center gap-3">
-          <div className="bg-amber-500/20 p-2 sm:p-3 rounded-lg shadow-inner">
-             <span className="text-amber-500 text-lg sm:text-xl">⚡</span>
+        <div className="flex-1"></div> {/* Sol boşluk (Ortalamak için) */}
+        
+        <h2 className="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest drop-shadow-md text-center">
+          GÜNÜN CANLI MAÇLARI
+        </h2>
+        
+        <div className="flex-1 flex justify-end"> {/* Sağ kısım ok işareti */}
+          <div className={`p-1 transition-transform duration-300 ${isMainAccordionOpen ? 'rotate-180' : ''}`}>
+            <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
           </div>
-          <div className="text-left">
-            <h2 className="text-sm sm:text-base font-black text-slate-100 uppercase tracking-widest flex items-center gap-2 drop-shadow-md">
-              GÜNÜN CANLI MAÇLARI
-            </h2>
-            <p className="text-[10px] sm:text-xs text-slate-400 font-medium mt-0.5">
-              Bugün sistemde <span className="text-amber-400 font-bold">{todaysMatchesList.length}</span> karşılaşma bulunuyor. {isMainAccordionOpen ? 'Gizlemek için tıklayın.' : 'Görmek için tıklayın.'}
-            </p>
-          </div>
-        </div>
-        <div className={`p-2 bg-slate-800 rounded-full transition-transform duration-300 shadow-inner ${isMainAccordionOpen ? 'rotate-180' : ''}`}>
-          <span className="text-slate-400 text-xs">▼</span>
         </div>
       </button>
 
@@ -512,9 +506,9 @@ export default function LiveMatchCard() {
                     
                     <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
                       <div className={`flex items-center justify-center min-w-[60px] px-3 py-1.5 rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all ${matchStatus === 'LIVE' ? 'bg-red-950/50 border-red-500/50 animate-pulse' : 'bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'}`}>
-                        {/* 🔴 EKMEL MÜDAHALESİ: ERKEN SKOR GİRİŞİ DÜZELTİLDİ 🔴 */}
+                        {/* 🔴 SAAT FORMATI EKLENDİ (Örn: 21:30) 🔴 */}
                         <span className={`text-xs sm:text-sm font-black whitespace-nowrap tracking-widest ${matchStatus === 'LIVE' ? 'text-red-500' : 'text-slate-200 group-hover:text-white'}`}>
-                          {matchStatus === 'NOT_STARTED' ? '-' : `${homeScore} - ${awayScore}`}
+                          {matchStatus === 'NOT_STARTED' ? match.time : `${homeScore} - ${awayScore}`}
                         </span>
                       </div>
                     </div>
