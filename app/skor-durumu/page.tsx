@@ -256,9 +256,7 @@ export default function SkorDurumuPage() {
         }
 
         return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
-      })
-      // 🔴 SIFIR ÇEKENLERİ GİZLEME FİLTRESİ KALDIRILDI! ARTIK HERKES GÖRÜNECEK 🔴
-      .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
+      }).sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
       // SADECE TOPLAM SEKMEDE TREND OKLARI GÖRÜNSÜN
       if (activeTab === 'total') {
@@ -288,12 +286,17 @@ export default function SkorDurumuPage() {
           }
           return { ...player, currentRank, prevRank, trend, trendDiff };
         });
-        setTableRows(finalRows);
+        
+        // EĞER PUANI 0 İSE LİSTEDE GÖSTERME (FİLTRE BURAYA TAŞINDI)
+        setTableRows(finalRows.filter(p => p.skorAdedi > 0));
+        
       } else {
         const finalRows = baseList.map((player, index) => {
           return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
         });
-        setTableRows(finalRows);
+        
+        // EĞER PUANI 0 İSE LİSTEDE GÖSTERME (FİLTRE BURAYA TAŞINDI)
+        setTableRows(finalRows.filter(p => p.skorAdedi > 0));
       }
 
     } catch (error) {
@@ -403,7 +406,7 @@ export default function SkorDurumuPage() {
                 <tr>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET SKORU</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
