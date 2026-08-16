@@ -162,145 +162,152 @@ export default function SkorDurumuPage() {
   const availableWeeks = [1, 2, 3, 4];
 
   const loadLeaderboard = async () => {
+    let dbMatches: any[] = [];
+    
+    // 🛡️ HATA YAKALAMA ZIRHI 🛡️
+    // Eğer Supabase çökerse, internet giderse veya boş dönerse bile 
+    // sistem tarihi verileri (1, 2, 3) okumaya devam edecek. Asla durmayacak!
     try {
-      const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      
-      let w4BaseDfo: Record<string, number> = {}; 
-      let w4BaseTff: Record<string, number> = {}; 
-      let w4LiveDfo: Record<string, number> = {}; 
-      let w4LiveTff: Record<string, number> = {}; 
-      let isAnyMatchLive = false;
-
-      Object.keys(allPlayersList).forEach(id => {
-        w4BaseDfo[id] = 0; w4BaseTff[id] = 0;
-        w4LiveDfo[id] = 0; w4LiveTff[id] = 0;
-      });
-
-      if (dbMatches) {
-        const uniqueMatches: Record<number, any> = {};
-        dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
-
-        Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
-            const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            
-            const matchIndex = week4Matches.findIndex(
-              wm => wm.home.toLowerCase() === dbMatch.home_team.toLowerCase() &&
-                    wm.away.toLowerCase() === dbMatch.away_team.toLowerCase()
-            );
-
-            if (matchIndex !== -1) {
-              const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
-              
-              Object.keys(week4PredictionsData).forEach(playerId => {
-                if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
-                  if (dbMatch.status === 'FINISHED') {
-                      if (isTff) w4BaseTff[playerId] += 1;
-                      else w4BaseDfo[playerId] += 1;
-                  } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
-                      if (isTff) w4LiveTff[playerId] += 1;
-                      else w4LiveDfo[playerId] += 1;
-                      isAnyMatchLive = true;
-                  }
-                }
-              });
-            }
-          }
-        });
+      const { data, error } = await supabase.from('live_matches').select('*');
+      if (data) {
+         dbMatches = data;
       }
-
-      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-      setWeek4DfoBase(w4BaseDfo);
-      setWeek4TffBase(w4BaseTff);
-      setWeek4DfoLive(w4LiveDfo);
-      setWeek4TffLive(w4LiveTff);
-
-      const baseList = Object.keys(allPlayersList).map(id => {
-        let baseSkor = 0;
-        let liveSkor = 0;
-        
-        if (activeTab === 'total') {
-            if (activeLeague === 'MASTER') {
-                baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
-                liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
-            } else if (activeLeague === 'DFO') {
-                baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0);
-                liveSkor = (w4LiveDfo[id]||0);
-            } else if (activeLeague === 'TFF') {
-                baseSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0);
-                liveSkor = (w4LiveTff[id]||0);
-            }
-        } 
-        else if (activeTab === 'week1') {
-            if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek1Data[id]||0;
-        }
-        else if (activeTab === 'week2') {
-            if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek2Data[id]||0;
-        }
-        else if (activeTab === 'week3') {
-            if (activeLeague === 'MASTER') baseSkor = (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
-            else if (activeLeague === 'DFO') baseSkor = skorWeek3DfoData[id]||0;
-            else if (activeLeague === 'TFF') baseSkor = skorWeek3TffData[id]||0;
-        }
-        else if (activeTab === 'week4') {
-            if (activeLeague === 'MASTER') {
-                baseSkor = (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
-                liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
-            } else if (activeLeague === 'DFO') {
-                baseSkor = (w4BaseDfo[id]||0);
-                liveSkor = (w4LiveDfo[id]||0);
-            } else if (activeLeague === 'TFF') {
-                baseSkor = (w4BaseTff[id]||0);
-                liveSkor = (w4LiveTff[id]||0);
-            }
-        }
-
-        return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
-      }).sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
-
-      // SADECE TOPLAM SEKMEDE TREND OKLARI GÖRÜNSÜN
-      if (activeTab === 'total') {
-        const referenceList = Object.keys(allPlayersList).map(id => {
-           let refSkor = 0;
-           if (activeLeague === 'MASTER') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
-           else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
-           else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
-           return { id, refSkor };
-        }).sort((a, b) => b.refSkor - a.refSkor);
-        
-        const prevRanks: Record<string, number> = {};
-        referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
-
-        const finalRows = baseList.map((player, index) => {
-          const currentRank = index + 1;
-          const prevRank = prevRanks[player.id] || currentRank;
-          let trend = 'same';
-          let trendDiff = 0;
-          
-          if (currentRank < prevRank) {
-            trend = 'up';
-            trendDiff = prevRank - currentRank;
-          } else if (currentRank > prevRank) {
-            trend = 'down';
-            trendDiff = currentRank - prevRank;
-          }
-          return { ...player, currentRank, prevRank, trend, trendDiff };
-        });
-        
-        // EĞER PUANI 0 İSE LİSTEDE GÖSTERME (FİLTRE BURAYA TAŞINDI)
-        setTableRows(finalRows.filter(p => p.skorAdedi > 0));
-        
-      } else {
-        const finalRows = baseList.map((player, index) => {
-          return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
-        });
-        
-        // EĞER PUANI 0 İSE LİSTEDE GÖSTERME (FİLTRE BURAYA TAŞINDI)
-        setTableRows(finalRows.filter(p => p.skorAdedi > 0));
-      }
-
     } catch (error) {
-      console.log("Supabase verileri okunurken hata oluştu");
+      console.log("Canlı maçlar çekilirken bir sorun oluştu, tarihi verilerle devam ediliyor.");
+    }
+    
+    let w4BaseDfo: Record<string, number> = {}; 
+    let w4BaseTff: Record<string, number> = {}; 
+    let w4LiveDfo: Record<string, number> = {}; 
+    let w4LiveTff: Record<string, number> = {}; 
+    let isAnyMatchLive = false;
+
+    Object.keys(allPlayersList).forEach(id => {
+      w4BaseDfo[id] = 0; w4BaseTff[id] = 0;
+      w4LiveDfo[id] = 0; w4LiveTff[id] = 0;
+    });
+
+    if (dbMatches && dbMatches.length > 0) {
+      const uniqueMatches: Record<number, any> = {};
+      dbMatches.forEach(row => { if (row && row.id) uniqueMatches[row.id] = row; });
+
+      Object.values(uniqueMatches).forEach(dbMatch => {
+        // null veya tanımsız değerlere karşı tam koruma
+        if (dbMatch && dbMatch.home_team && dbMatch.away_team && dbMatch.home_score && dbMatch.away_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+          const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+          
+          const matchIndex = week4Matches.findIndex(
+            wm => wm.home.toLowerCase() === dbMatch.home_team.toLowerCase() &&
+                  wm.away.toLowerCase() === dbMatch.away_team.toLowerCase()
+          );
+
+          if (matchIndex !== -1) {
+            const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
+            
+            Object.keys(week4PredictionsData).forEach(playerId => {
+              if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
+                if (dbMatch.status === 'FINISHED') {
+                    if (isTff) w4BaseTff[playerId] += 1;
+                    else w4BaseDfo[playerId] += 1;
+                } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
+                    if (isTff) w4LiveTff[playerId] += 1;
+                    else w4LiveDfo[playerId] += 1;
+                    isAnyMatchLive = true;
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
+    setWeek4DfoBase(w4BaseDfo);
+    setWeek4TffBase(w4BaseTff);
+    setWeek4DfoLive(w4LiveDfo);
+    setWeek4TffLive(w4LiveTff);
+
+    const baseList = Object.keys(allPlayersList).map(id => {
+      let baseSkor = 0;
+      let liveSkor = 0;
+      
+      if (activeTab === 'total') {
+          if (activeLeague === 'MASTER') {
+              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
+              liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
+          } else if (activeLeague === 'DFO') {
+              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0);
+              liveSkor = (w4LiveDfo[id]||0);
+          } else if (activeLeague === 'TFF') {
+              baseSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0);
+              liveSkor = (w4LiveTff[id]||0);
+          }
+      } 
+      else if (activeTab === 'week1') {
+          if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek1Data[id]||0;
+      }
+      else if (activeTab === 'week2') {
+          if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek2Data[id]||0;
+      }
+      else if (activeTab === 'week3') {
+          if (activeLeague === 'MASTER') baseSkor = (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
+          else if (activeLeague === 'DFO') baseSkor = skorWeek3DfoData[id]||0;
+          else if (activeLeague === 'TFF') baseSkor = skorWeek3TffData[id]||0;
+      }
+      else if (activeTab === 'week4') {
+          if (activeLeague === 'MASTER') {
+              baseSkor = (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
+              liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
+          } else if (activeLeague === 'DFO') {
+              baseSkor = (w4BaseDfo[id]||0);
+              liveSkor = (w4LiveDfo[id]||0);
+          } else if (activeLeague === 'TFF') {
+              baseSkor = (w4BaseTff[id]||0);
+              liveSkor = (w4LiveTff[id]||0);
+          }
+      }
+
+      return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
+    }).sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
+
+    if (activeTab === 'total') {
+      const referenceList = Object.keys(allPlayersList).map(id => {
+         let refSkor = 0;
+         if (activeLeague === 'MASTER') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
+         else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
+         else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
+         return { id, refSkor };
+      }).sort((a, b) => b.refSkor - a.refSkor);
+      
+      const prevRanks: Record<string, number> = {};
+      referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      const finalRows = baseList.map((player, index) => {
+        const currentRank = index + 1;
+        const prevRank = prevRanks[player.id] || currentRank;
+        let trend = 'same';
+        let trendDiff = 0;
+        
+        if (currentRank < prevRank) {
+          trend = 'up';
+          trendDiff = prevRank - currentRank;
+        } else if (currentRank > prevRank) {
+          trend = 'down';
+          trendDiff = currentRank - prevRank;
+        }
+        return { ...player, currentRank, prevRank, trend, trendDiff };
+      });
+      
+      // Filtre YOK, sıfırlar dahi herkes görünecek
+      setTableRows(finalRows);
+      
+    } else {
+      const finalRows = baseList.map((player, index) => {
+        return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
+      });
+      
+      // Filtre YOK, sıfırlar dahi herkes görünecek
+      setTableRows(finalRows);
     }
   };
 
@@ -338,9 +345,7 @@ export default function SkorDurumuPage() {
       </div>
 
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        {/* ÜÇGEN DİZİLİMİ - MASTER ORTADA ÜSTTE, DFO VE TFF ALTTA YAN YANA */}
         <div className="w-full flex flex-col gap-2">
-          {/* Üst Satır - Sadece Master */}
           <div className="flex justify-center w-full">
              <button 
                 onClick={() => setActiveLeague('MASTER')} 
@@ -349,7 +354,6 @@ export default function SkorDurumuPage() {
                 MASTER
              </button>
           </div>
-          {/* Alt Satır - DFO ve TFF */}
           <div className="flex justify-center gap-2 w-full">
              <button 
                 onClick={() => setActiveLeague('DFO')} 
@@ -494,7 +498,7 @@ export default function SkorDurumuPage() {
             </table>
           </div>
         ) : (
-          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Henüz tam isabet skor tahmini bulunmuyor.</div>
+          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Henüz veri bulunmuyor.</div>
         )}
       </div>
     </div>
