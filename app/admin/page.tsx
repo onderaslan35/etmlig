@@ -287,8 +287,6 @@ export default function AdminRadarPortal() {
     
     // ==============================================================
     // 👑 MASTER (GENERAL) HESABI ŞİFRESİ
-    // AŞAĞIDAKİ 'BURAYA_KENDİ_ŞİFRENİ_YAZ' YAZISINI SİL VE KENDİ GİZLİ ŞİFRENİ YAZ (Tırnakları silme!)
-    // ==============================================================
     if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
        setIsAuthenticated(true);
        setUserRole('master');
@@ -297,8 +295,6 @@ export default function AdminRadarPortal() {
     } 
     // ==============================================================
     // 🛡️ ALT YETKİLİ (SAHA KOMİSERİ) HESABI
-    // Sadece Canlı Skorlara girebilir, Bülten Fabrikasını GÖREMEZ! İstersen şifresini '123456' yerine başka bir şey yapabilirsin.
-    // ==============================================================
     else if (usernameInput === 'skoradmin' && passwordInput === '123456') {
        setIsAuthenticated(true);
        setUserRole('subadmin');
@@ -377,7 +373,7 @@ export default function AdminRadarPortal() {
   }, [activeTab, selectedLiveWeek, isAuthenticated]);
 
   // ----------------------------------------------------
-  // 🟢 2. MOTOR: BÜLTEN FABRİKASININ "ZİHİN ÇİPİ" (HAFIZA) EKLENDİ 🚀
+  // 🟢 2. MOTOR: BÜLTEN FABRİKASININ "ZİHİN ÇİPİ"
   // ----------------------------------------------------
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
@@ -679,7 +675,7 @@ export default function AdminRadarPortal() {
   }
 
   // ----------------------------------------------------------------------
-  // 🟢 ANA ADMIN PANELİ (SADECE ŞİFRE GİRİLİNCE GÖRÜNÜR)
+  // 🟢 ANA ADMIN PANELİ
   // ----------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24">
@@ -868,6 +864,54 @@ export default function AdminRadarPortal() {
                         </div>
                       </div>
                     </div>
+
+                    {/* 🔴 YENİ EKLENEN "BİLENLERİ GÖR" ÇUBUĞU (MAÇ ARŞİVİNDEN) 🔴 */}
+                    <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="text-left flex-1">
+                          {homeScore === "-" || awayScore === "-" ? (
+                            <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Skor bekleniyor</span>
+                          ) : winnersCount === 0 ? (
+                            <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Bu skoru bilen yok</span>
+                          ) : (
+                            <span className="text-[10px] sm:text-xs font-medium text-blue-200">
+                              <strong className="text-amber-400">{winnersCount} kişi</strong> tam isabetli
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-0 text-center px-1">
+                          <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
+                            {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
+                          </span>
+                        </div>
+                        <div className="text-right flex-1">
+                          {winnersCount > 0 && (
+                            <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
+                              {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Bilenleri Gösteren Akordeon */}
+                      {isWinnersOpen && winnersCount > 0 && (
+                        <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
+                          <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
+                            <span>BİLEN YARIŞMACILAR (A-Z)</span>
+                            <span className="text-amber-400 font-bold bg-amber-900/20 px-2 py-0.5 rounded border border-amber-700/30">Kişi Başı: {displayPoints} Puan</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 mt-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+                            {currentWinners.map((winner: string, idx: number) => (
+                              <span key={idx} className="border px-2 py-1 rounded text-[9px] sm:text-[10px] font-medium transition-all duration-500 bg-slate-900/60 text-white border-slate-600/50 shadow-[0_0_10px_rgba(0,0,0,0.4)]">
+                                {winner}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Bilenleri Gör Çubuğu Bitiş */}
+
                   </div>
                 );
               })}
@@ -934,7 +978,6 @@ export default function AdminRadarPortal() {
                      </thead>
                      <tbody>
                         {bulletinMatches.map((m, idx) => {
-                          // 🔴 AKTİF VE TAMAMLANMIŞ SATIR KONTROLLERİ 🔴
                           const isFocused = focusedRowIndex === idx;
                           const isFilled = m.home_team.trim() !== "" && m.away_team.trim() !== "";
                           
