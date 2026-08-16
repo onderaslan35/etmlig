@@ -86,7 +86,9 @@ const generateWeekDates = (weekNum: number) => {
   return dates;
 };
 
+// 🔴 HATANIN KAYNAĞI BURASIYDI, DÜZELTİLDİ! (4. Hafta için veritabanında id'ler 1,2,3... diye kayıtlı)
 const getUniqueMatchId = (week: number, index: number) => {
+    if (week === 4) return index; 
     return (week * 100) + index;
 };
 
@@ -926,7 +928,6 @@ export default function AdminRadarPortal() {
                 const isLocked = distributedMatches[match.match_index];
 
                 return (
-                  // 🚀 KART TASARIMI MAÇ ARŞİVİ İLE AYNI YAPILDI (Genişlik, Gölge, Arkaplan)
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                     <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
                       {theme.bgImg && (
@@ -949,7 +950,6 @@ export default function AdminRadarPortal() {
                         <div className="flex items-center justify-between px-0 sm:px-4">
                           
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            {/* 🚀 LOGOLAR BÜYÜTÜLDÜ VE EFEKT EKLENDİ */}
                             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
                               <img src={homeLogoUrl} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                             </div>
@@ -957,7 +957,6 @@ export default function AdminRadarPortal() {
                           </div>
 
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
-                            {/* 🚀 SKOR KUTUSU BÜYÜTÜLDÜ (MAÇ ARŞİVİ BOYUTU) */}
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select disabled={isLocked} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
                                 {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
@@ -978,7 +977,7 @@ export default function AdminRadarPortal() {
 
                         </div>
 
-                        {/* 🚀 BUTON KISMI (Maç bitmediyse butonlar burada) */}
+                        {/* 🚀 BUTON İSİMLERİ ASKERİ NİZAMA SOKULDU */}
                         <div className="flex justify-center gap-2 mt-5 min-h-[32px] items-center">
                           {isLocked ? (
                             <div className="w-full text-center">
@@ -986,21 +985,26 @@ export default function AdminRadarPortal() {
                                 ✅ BU MAÇIN PUANLARI DAĞITILDI
                               </div>
                               <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
-                                İptal Et & Puanları Geri Al
+                                İPTAL ET & PUANLARI GERİ AL
                               </button>
                             </div>
                           ) : (
                             <>
-                              <button onClick={() => handleAction('Skoru Güncelle', match.match_index, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all shadow-md">Skoru Kaydet</button>
-                              <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">Maçı Bitir (Dağıt)</button>
-                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">Resetle</button>
+                              <button onClick={() => handleAction('Skoru Güncelle', match.match_index, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all shadow-md">
+                                1. ADIM: CANLIYA YANSIT
+                              </button>
+                              <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">
+                                2. ADIM: MAÇI BİTİR (DAĞIT)
+                              </button>
+                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
+                                SIFIRLA
+                              </button>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* 🚀 ALT KISIM (Bilenler ve Bildirimler - Maç Arşivi ile birebir aynı) */}
                     <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
                       <div className="flex items-center justify-between mb-3 w-full">
                          <div className="flex items-center gap-2">
