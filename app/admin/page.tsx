@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from '@/utils/supabase';
 
 // ----------------------------------------------------
-// 🔴 YEREL & BULUT LOGO BANKASI
+// 🔴 YEREL & BULUT LOGO BANKASI (SON KEZ BURADA!)
 // ----------------------------------------------------
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
@@ -126,93 +126,25 @@ const LEAGUE_TEAMS: Record<string, string[]> = {
   "ÇEŞİTLİ AVRUPA TAKIMLARI": ["AGNATIA", "AJAX", "ANDERLECHT", "AUDA RIGA", "BAŞAKŞEHİR", "BENFICA", "BEŞİKTAŞ", "BRAGA", "BRANN", "CSKA 1948", "CSKA SOFYA", "DINAMO KIEV", "DINAMO ZAGREB", "FENERBAHÇE", "FERENCVAROS", "GORNİK ZABRZE", "GOTEBORG", "HAJDUK SPLIT", "HAMMARBY", "HEART", "IBERIA 1999", "INTER TURKU", "KARABAĞ FK", "KIZILYILDIZ", "KOPENAG", "KUPS", "LARNE FC", "LEVADIA FC", "LEVSKI SOFYA", "MIDTJYLLAND", "NK CELJE", "NK CERCLE", "PAKSI FC", "PANATHINAIKOS", "PAOK", "PATOS", "POLISSYA", "RAPID WIEN", "SABAH FK", "SANTA COLOMA FC", "FCSB", "SLOVAN BRATISLAVA", "SPARTAK TRNAVA", "ST GALLEN", "STURM GRAZ", "THUN", "TWENTE", "UNIVERSITATEA CLUJ", "UNIVERSITATEA CRAIOVA", "VOJVODINA", "ZELEZNICAR PANCEVO", "DINAMO MINSK", "SHELBOURNE", "GENT", "DEBRECEN", "HRADEC KRALOVE", "PAIDE LINNAMEESKOND", "BODO-GLIMT", "USG", "OLIMPIC LYON", "SPARTA PRAG", "NEC NIJMEGEN", "OLIMPIYAKOS", "FK ZALGIRIS", "FK KAUNO ZALGIRIS"]
 };
 
-// 🔴 ANA YARIŞMACI LİSTESİ (Sıfırdan Güncellendi) 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ 🔴
 const staticPlayersList: Record<string, string> = {
-  "262701": "MUHAMMET OKUMUŞ",
-  "262702": "MURAT KARA",
-  "262703": "CEMALETTİN BELLİ",
-  "262704": "YAPAY ZEKA",
-  "262705": "AHMET BİRCAN 🏆",
-  "262706": "GAZİ AYAN 🏆🏆",
-  "262707": "HAKAN AYAN",
-  "262708": "BAYRAM YILMAZ",
-  "262709": "SALİH KARACAOĞLU",
-  "262710": "MUZAFFER ERTUĞRUL",
-  "262711": "RIDVAN DOGER",
-  "262712": "MURAT AYDEMİR",
-  "262713": "VAHİT KÜLCÜ",
-  "262714": "İSMAİL EKER 🏆",
-  "262715": "ŞEMSETTIN DÜGER",
-  "262716": "BİROL DEMİREL",
-  "262717": "MURAT ALİ",
-  "262718": "BEKİR KARADAĞ",
-  "262719": "UĞUR VARDAR",
-  "262720": "HASAN ASLAN",
-  "262721": "MUSTAFA GÜMÜŞÇÜ",
-  "262722": "MUSTAFA ERKAN",
-  "262723": "AYHAN LUŞOĞLU",
-  "262724": "YÜCEL TOMAK",
-  "262725": "İLYAS KAZDAL",
-  "262726": "HUDAVER TOPARDIC",
-  "262727": "YAHŞİ ERKAN🏆",
-  "262728": "ÖNDER ASLAN",
-  "262729": "HAKAN GÜN",
-  "262730": "ÖNDER IŞIK",
-  "262731": "FATİH AYAN",
-  "262732": "R. İLHAN KARACA 🏆🏆",
-  "262733": "MUHSİN ASİLKAN",
-  "262734": "LEVENT YILDIRIM",
-  "262735": "AYGÜN AKKEÇELİ",
-  "262736": "MEHMET ALİ KARA",
-  "262737": "ŞAHİN GEZGİNCİ",
-  "262738": "MEVLÜT EVLER",
-  "262739": "UĞUR GÜRBÜZ",
-  "262740": "ABDULLAH DİK",
-  "262741": "SABAHATTİN ÇAYLAK",
-  "262742": "ZEKERiYYA TOPKAYYA",
-  "262743": "MEHMET ALİ ŞAHİN",
-  "262744": "İLYAS UYGUN",
-  "262745": "OĞUZ YILDIRIMKAYA",
-  "262746": "MEHMET BAYIR",
-  "262747": "SAVAŞ ÇAĞLAYAN",
-  "262748": "YASİN ŞAHİN",
-  "262749": "B.VEYSELOĞLU EROL",
-  "262750": "MAHMUT CBR",
-  "262751": "HÜSEYİN ERBAŞ",
-  "262810": "ADEM BULUT ERTÜRK",
-  "262753": "YUSUF KIZILTUĞ",
-  "262754": "OSMAN ALİ AYDIN 🏆",
-  "262755": "DOĞAÇ ALKAN",
-  "262756": "EYÜP KARACAOĞLU",
-  "262813": "KEMAL ERSOY",
-  "262758": "MELİH PINAR",
-  "262762": "İLHAN DANIŞ",
-  "262763": "MUSTAFA ELMAS",
-  "262770": "OZKAYA MAZAKALI BAYRAM",
-  "262771": "ULAŞ ADIGÜZEL",
-  "262772": "CEMAL SİVRİKAYA 🏆",
-  "262760": "UĞUR NES",
-  "262774": "ŞENOL CAN ÇAKICI",
-  "262776": "CUMA OKUR",
-  "262777": "MİRAÇ TOPAL",
-  "262778": "CENGİZ SAYAN",
-  "262780": "YUSUF KILIÇ",
-  "262781": "KADİR SOLMAZ",
-  "262782": "YUSUF ERBAY",
-  "262783": "YASİN AYAN",
-  "262784": "MEHMET AVCI",
-  "262785": "METE BÜYÜKGÖL 🏆",
-  "262786": "SEDAT DİŞLİ",
-  "262787": "MUSTAFA TUCİ",
-  "262788": "HAKAN ÇİFTÇİ",
-  "262789": "ALİ ABUKAN",
-  "262790": "CUMALİ SÖKER",
-  "351925": "ALİOS GÖZTEPE",
-  "350909": "DİNÇER ÖZER",
-  "262815": "MURAT KAYA",
-  "262816": "SEDAT SEDAT",
-  "262795": "SEFA İÇA",
-  "262796": "D. SERGEN TAŞYÜREK",
+  "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
+  "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
+  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262713": "VAHİT KÜLCÜ", "262714": "İSMAİL EKER 🏆", "262715": "ŞEMSETTIN DÜGER",
+  "262716": "BİROL DEMİREL", "262717": "MURAT ALİ", "262718": "BEKİR KARADAĞ", "262719": "UĞUR VARDAR", "262720": "HASAN ASLAN",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262722": "MUSTAFA ERKAN", "262723": "AYHAN LUŞOĞLU", "262724": "YÜCEL TOMAK", "262725": "İLYAS KAZDAL",
+  "262726": "HUDAVER TOPARDIC", "262727": "YAHŞİ ERKAN🏆", "262728": "ÖNDER ASLAN", "262729": "HAKAN GÜN", "262730": "ÖNDER IŞIK",
+  "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA 🏆🏆", "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ",
+  "262736": "MEHMET ALİ KARA", "262737": "ŞAHİN GEZGİNCİ", "262738": "MEVLÜT EVLER", "262739": "UĞUR GÜRBÜZ", "262740": "ABDULLAH DİK",
+  "262741": "SABAHATTİN ÇAYLAK", "262742": "ZEKERiYYA TOPKAYYA", "262743": "MEHMET ALİ ŞAHİN", "262744": "İLYAS UYGUN", "262745": "OĞUZ YILDIRIMKAYA",
+  "262746": "MEHMET BAYIR", "262747": "SAVAŞ ÇAĞLAYAN", "262748": "YASİN ŞAHİN", "262749": "B.VEYSELOĞLU EROL", "262750": "MAHMUT CBR",
+  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN 🏆", "262755": "DOĞAÇ ALKAN",
+  "262756": "EYÜP KARACAOĞLU", "262813": "KEMAL ERSOY", "262758": "MELİH PINAR", "262762": "İLHAN DANIŞ", "262763": "MUSTAFA ELMAS",
+  "262770": "OZKAYA MAZAKALI BAYRAM", "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA 🏆", "262760": "UĞUR NES", "262774": "ŞENOL CAN ÇAKICI",
+  "262776": "CUMA OKUR", "262777": "MİRAÇ TOPAL", "262778": "CENGİZ SAYAN", "262780": "YUSUF KILIÇ", "262781": "KADİR SOLMAZ",
+  "262782": "YUSUF ERBAY", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL 🏆", "262786": "SEDAT DİŞLİ",
+  "262787": "MUSTAFA TUCİ", "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "262790": "CUMALİ SÖKER", "351925": "ALİOS GÖZTEPE",
+  "350909": "DİNÇER ÖZER", "262815": "MURAT KAYA", "262816": "SEDAT SEDAT", "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK",
   "262797": "ÖMER DOGER"
 };
 
@@ -292,18 +224,19 @@ export default function AdminRadarPortal() {
   const [passwordInput, setPasswordInput] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players'>('live');
-
-  // 🔴 SİSTEMDEKİ TÜM OYUNCULARI TUTAN ANA STATE (Statik + Veritabanı)
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
-  // --- 4. ODA: YARIŞMACI YÖNETİMİ STATELERİ ---
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
   const [newPlayerId, setNewPlayerId] = useState('');
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerPass, setNewPlayerPass] = useState('');
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
-  // --- CANLI OPERASYON STATELERİ ---
+  // ----------------------------------------------------
+  // 🚀 OTOMATİK VERİTABANI YÜKLEME BUTONU STATELERİ
+  // ----------------------------------------------------
+  const [isMigratingTeams, setIsMigratingTeams] = useState(false);
+
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
@@ -311,13 +244,11 @@ export default function AdminRadarPortal() {
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
   const [predictionsDB, setPredictionsDB] = useState<Record<string, Record<number, string>>>({}); 
 
-  // --- BÜLTEN ÜRETİM FABRİKASI STATELERİ ---
   const [bulletinWeek, setBulletinWeek] = useState<number>(5);
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
-  // --- TAHMİN YÖNETİM ODASI STATELERİ ---
   const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(5);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
@@ -413,9 +344,46 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
-  // ----------------------------------------------------
-  // 🟢 1. MOTOR: CANLI MAÇ VERİLERİNİ ÇEK
-  // ----------------------------------------------------
+  // ---------------------------------------------------------------------------------
+  // 🚀 OTOMATİK VERİTABANI YÜKLEME FONKSİYONU (SADECE 1 KERE KULLANILACAK)
+  // ---------------------------------------------------------------------------------
+  const handleMigrateTeamsToDatabase = async () => {
+    const confirm = window.confirm("DİKKAT! Kod içindeki tüm 70 takım ve logoları şimdi Supabase 'teams' tablosuna aktarılacak. İşlem 3-4 saniye sürebilir. Onaylıyor musunuz?");
+    if(!confirm) return;
+
+    setIsMigratingTeams(true);
+
+    try {
+      const payload: any[] = [];
+      
+      // Bütün ligleri tarayıp takımları çıkar
+      Object.keys(LEAGUE_TEAMS).forEach(leagueName => {
+         const takımlar = LEAGUE_TEAMS[leagueName];
+         takımlar.forEach(teamName => {
+            const logo = localTeamLogos[teamName] || "/logos/default.png";
+            payload.push({ team_name: teamName, league: leagueName, logo_url: logo });
+         });
+      });
+
+      // Çeşitli Avrupa takımları ve Manuel eklenenleri de tarayıp ekleyelim (Tekrar etmeyenleri)
+      Object.keys(localTeamLogos).forEach(teamName => {
+         if(!payload.find(p => p.team_name === teamName)) {
+             payload.push({ team_name: teamName, league: "DİĞER", logo_url: localTeamLogos[teamName] });
+         }
+      });
+
+      const { error } = await supabase.from('teams').upsert(payload, { onConflict: 'team_name' });
+      
+      if(error) throw error;
+
+      alert(`✅ MÜKEMMEL! Toplam ${payload.length} takım ve logo başarıyla Supabase'e fırlatıldı! Artık kodlardaki kalabalığı silebilirim!`);
+    } catch (err: any) {
+      alert("❌ AKTARIM HATASI: " + err.message);
+    }
+
+    setIsMigratingTeams(false);
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
     const fetchLiveAdminData = async () => {
@@ -465,9 +433,7 @@ export default function AdminRadarPortal() {
     if (activeTab === 'live') fetchLiveAdminData();
   }, [activeTab, selectedLiveWeek, isAuthenticated]);
 
-  // ----------------------------------------------------
-  // 🟢 2. MOTOR: BÜLTEN FABRİKASI
-  // ----------------------------------------------------
+
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
     const loadBulletinData = async () => {
@@ -504,9 +470,6 @@ export default function AdminRadarPortal() {
     loadBulletinData();
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
-  // ----------------------------------------------------
-  // 🟢 3. MOTOR: TAHMİN YÖNETİMİ ODASI
-  // ----------------------------------------------------
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
     if (activeTab !== 'predictions') return;
@@ -557,10 +520,6 @@ export default function AdminRadarPortal() {
     fetchPredictionData();
   }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
 
-
-  // ----------------------------------------------------
-  // 🟢 4. MOTOR: YARIŞMACI YÖNETİM ODASI FONKSİYONLARI
-  // ----------------------------------------------------
   const handleAddNewPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlayerId || !newPlayerName || !newPlayerPass) {
@@ -603,8 +562,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-
-  // --- CANLI OPERASYON YARDIMCI FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   
   const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
@@ -823,9 +780,6 @@ export default function AdminRadarPortal() {
     setIsPublishing(false);
   };
 
-  // ----------------------------------------------------------------------
-  // 🔴 GİRİŞ EKRANI (LOGİN)
-  // ----------------------------------------------------------------------
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
@@ -862,13 +816,23 @@ export default function AdminRadarPortal() {
     );
   }
 
-  // ----------------------------------------------------------------------
-  // 🟢 ANA ADMIN PANELİ
-  // ----------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
+      
+      {/* 🚀🚀 YENİ EKLENEN TEK SEFERLİK TAKIM AKTARIM BUTONU 🚀🚀 */}
+      {userRole === 'master' && (
+         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
+           <button 
+             onClick={handleMigrateTeamsToDatabase}
+             disabled={isMigratingTeams}
+             className="bg-red-600/90 hover:bg-red-500 text-white px-4 py-1.5 rounded-b-xl text-[10px] font-black tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.5)] border-b border-x border-red-400 animate-pulse transition-all hover:scale-105"
+           >
+             {isMigratingTeams ? '⏳ TAKIMLAR AKTARILIYOR...' : '🚀 BÜTÜN TAKIM VE LOGOLARI VERİTABANINA AKTAR!'}
+           </button>
+         </div>
+      )}
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto pt-6">
         
         {/* 🔴 ÜST TAB MENÜSÜ 🔴 */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative overflow-x-auto custom-scrollbar">
