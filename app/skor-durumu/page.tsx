@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/utils/supabase';
 
 // 🏆 Sabit Oyuncu Listesi
@@ -116,10 +115,6 @@ export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [selectedWeek, setSelectedWeek] = useState<string>('total');
   const [isWeeksOpen, setIsWeeksOpen] = useState(false);
-  const [isLiveOpen, setIsLiveOpen] = useState(false);
-  
-  const [liveMatches, setLiveMatches] = useState<any[]>([]);
-  const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>({});
   
   const [week4DfoScores, setWeek4DfoScores] = useState<Record<string, number>>({});
   const [week4TffScores, setWeek4TffScores] = useState<Record<string, number>>({});
@@ -132,19 +127,6 @@ export default function SkorDurumuPage() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Tüm logoları Supabase'den çek
-  useEffect(() => {
-    const fetchTeams = async () => {
-       const { data } = await supabase.from('teams').select('*');
-       if (data) {
-          const logos: Record<string, string> = {};
-          data.forEach((team: any) => { logos[team.team_name] = team.logo_url; });
-          setTeamLogosMap(logos);
-       }
-    };
-    fetchTeams();
   }, []);
 
   useEffect(() => {
@@ -163,8 +145,6 @@ export default function SkorDurumuPage() {
       }
       
       if (data) {
-        setLiveMatches(data);
-        
         const uniqueMatches: Record<number, any> = {};
         data.forEach(row => { uniqueMatches[row.id] = row; });
 
@@ -290,70 +270,8 @@ export default function SkorDurumuPage() {
           </h1>
         </div>
 
-        {/* 🔴 GÜNÜN CANLI MAÇLARI - ZIRHLI AKORDİYON */}
-        <div className="w-full max-w-4xl mx-auto mb-8">
-          <div className="bg-[#0b1120] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl">
-            <button
-              onClick={() => setIsLiveOpen(!isLiveOpen)}
-              className="w-full flex items-center justify-between bg-[#0f172a] p-4 hover:bg-[#1e293b] transition-colors"
-            >
-              <div className="w-6"></div>
-              <div className="flex-1 flex justify-center items-center">
-                <h2 className="text-sm sm:text-base font-bold text-amber-500 tracking-widest uppercase">
-                  GÜNÜN CANLI MAÇLARI
-                </h2>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-amber-500 transition-transform duration-300 ${isLiveOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            <div className={`grid transition-all duration-500 ease-in-out ${isLiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-              <div className="overflow-hidden">
-                <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 bg-[#0a0f1c]">
-                  {week4Matches.map((match, index) => {
-                    const hTeam = match.homeTeam.toUpperCase();
-                    const aTeam = match.awayTeam.toUpperCase();
-                    
-                    const hLogo = teamLogosMap[hTeam] || "/logos/default.png";
-                    const aLogo = teamLogosMap[aTeam] || "/logos/default.png";
-
-                    const liveData = liveMatches.find(
-                      (m) => m.home_team.toLowerCase() === match.homeTeam.toLowerCase() &&
-                             m.away_team.toLowerCase() === match.awayTeam.toLowerCase()
-                    );
-                    
-                    const displayHomeScore = liveData && liveData.home_score !== '-' ? liveData.home_score : '-';
-                    const displayAwayScore = liveData && liveData.away_score !== '-' ? liveData.away_score : '-';
-
-                    return (
-                      <div key={index} className="bg-slate-900 border border-slate-700/50 rounded-xl p-3 flex flex-col gap-3">
-                         <div className="flex justify-between items-center px-2 border-b border-slate-800/50 pb-2">
-                            <span className="text-[10px] text-slate-400 font-bold">{match.time}</span>
-                            <span className="text-[10px] text-slate-500 font-bold truncate max-w-[150px]">{match.category}</span>
-                         </div>
-                         <div className="flex justify-between items-center px-2">
-                             <div className="flex items-center gap-2 flex-1">
-                                <img src={hLogo} className="w-6 h-6 object-contain" alt={hTeam} />
-                                <span className="text-xs font-bold text-white truncate max-w-[100px]">{hTeam}</span>
-                             </div>
-                             <div className="bg-slate-950 px-3 py-1 rounded border border-slate-700">
-                                <span className="text-sm font-black text-amber-400">{displayHomeScore} - {displayAwayScore}</span>
-                             </div>
-                             <div className="flex items-center gap-2 flex-1 justify-end">
-                                <span className="text-xs font-bold text-white truncate max-w-[100px] text-right">{aTeam}</span>
-                                <img src={aLogo} className="w-6 h-6 object-contain" alt={aTeam} />
-                             </div>
-                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* 🏆 TABLAR */}
-        <div className="flex flex-col gap-4 mb-8">
+        <div className="flex flex-col gap-4 mb-8 mt-4">
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-3xl mx-auto">
               <button 
                 onClick={() => setActiveTab('MASTER')} 
@@ -394,7 +312,7 @@ export default function SkorDurumuPage() {
                 </div>
                 <div className="flex items-center gap-2 text-slate-400">
                    <span className="text-xs font-bold tracking-widest">{isWeeksOpen ? 'KAPAT' : 'HAFTALAR'}</span>
-                   {isWeeksOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                   {isWeeksOpen ? <span className="text-[10px]">▲</span> : <span className="text-[10px]">▼</span>}
                 </div>
              </button>
 
