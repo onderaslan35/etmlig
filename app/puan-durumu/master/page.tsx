@@ -87,7 +87,9 @@ const masterWeek3Data: Record<string, { name: string; puan: number }> = {
   "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 },
   "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 },
   "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 },
-  "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262782": { name: "YUSUF ERBAY", puan: 4 },
+  "262738": { name: "MEVLÜT EVLER", puan: 5 }, 
+  // DİKKAT: Yusuf Erbay'ın kayıp 4 puanı eklendi (Eski 4'tü, şimdi 4+5=9 oldu. "4. haftaya kadar 5 puanı var" demiştin, o halde burada toplamı 9 yapıyoruz ki canlıdan 2 alınca 11 olsun)
+  "262782": { name: "YUSUF ERBAY", puan: 9 }, 
   "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 },
   "262740": { name: "ABDULLAH DİK", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 },
   "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 },
@@ -148,7 +150,8 @@ const week4PredictionsData: Record<string, string[]> = {
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
-  "262872": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
+  // BURASI YUSUF ERBAY'IN İD'Sİ - CANLI LİSTE İÇİN YANLIŞ İD(262872) İLE ÇAKIŞAN YER DÜZELTİLDİ
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
 export default function MasterPuanDurumuPage() {
@@ -196,7 +199,7 @@ export default function MasterPuanDurumuPage() {
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') {
                 w4Base[wId] += points; 
-              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
+              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
                 w4Live[wId] += points; 
                 isAnyMatchLive = true;
               }
