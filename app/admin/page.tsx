@@ -126,23 +126,94 @@ const LEAGUE_TEAMS: Record<string, string[]> = {
   "ÇEŞİTLİ AVRUPA TAKIMLARI": ["AGNATIA", "AJAX", "ANDERLECHT", "AUDA RIGA", "BAŞAKŞEHİR", "BENFICA", "BEŞİKTAŞ", "BRAGA", "BRANN", "CSKA 1948", "CSKA SOFYA", "DINAMO KIEV", "DINAMO ZAGREB", "FENERBAHÇE", "FERENCVAROS", "GORNİK ZABRZE", "GOTEBORG", "HAJDUK SPLIT", "HAMMARBY", "HEART", "IBERIA 1999", "INTER TURKU", "KARABAĞ FK", "KIZILYILDIZ", "KOPENAG", "KUPS", "LARNE FC", "LEVADIA FC", "LEVSKI SOFYA", "MIDTJYLLAND", "NK CELJE", "NK CERCLE", "PAKSI FC", "PANATHINAIKOS", "PAOK", "PATOS", "POLISSYA", "RAPID WIEN", "SABAH FK", "SANTA COLOMA FC", "FCSB", "SLOVAN BRATISLAVA", "SPARTAK TRNAVA", "ST GALLEN", "STURM GRAZ", "THUN", "TWENTE", "UNIVERSITATEA CLUJ", "UNIVERSITATEA CRAIOVA", "VOJVODINA", "ZELEZNICAR PANCEVO", "DINAMO MINSK", "SHELBOURNE", "GENT", "DEBRECEN", "HRADEC KRALOVE", "PAIDE LINNAMEESKOND", "BODO-GLIMT", "USG", "OLIMPIC LYON", "SPARTA PRAG", "NEC NIJMEGEN", "OLIMPIYAKOS", "FK ZALGIRIS", "FK KAUNO ZALGIRIS"]
 };
 
-// --- STATİK VE DİNAMİK YARIŞMACILARIN BİRLEŞTİRİLMESİ İÇİN TEMEL LİSTE ---
-// Kod içindeki sabit liste budur, üzerine Supabase'den gelenler eklenecek.
+// 🔴 ANA YARIŞMACI LİSTESİ (Sıfırdan Güncellendi) 🔴
 const staticPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU", "262741": "SABAHATTİN ÇAYLAK", "262735": "AYGÜN AKKEÇELİ"
+  "262701": "MUHAMMET OKUMUŞ",
+  "262702": "MURAT KARA",
+  "262703": "CEMALETTİN BELLİ",
+  "262704": "YAPAY ZEKA",
+  "262705": "AHMET BİRCAN 🏆",
+  "262706": "GAZİ AYAN 🏆🏆",
+  "262707": "HAKAN AYAN",
+  "262708": "BAYRAM YILMAZ",
+  "262709": "SALİH KARACAOĞLU",
+  "262710": "MUZAFFER ERTUĞRUL",
+  "262711": "RIDVAN DOGER",
+  "262712": "MURAT AYDEMİR",
+  "262713": "VAHİT KÜLCÜ",
+  "262714": "İSMAİL EKER 🏆",
+  "262715": "ŞEMSETTIN DÜGER",
+  "262716": "BİROL DEMİREL",
+  "262717": "MURAT ALİ",
+  "262718": "BEKİR KARADAĞ",
+  "262719": "UĞUR VARDAR",
+  "262720": "HASAN ASLAN",
+  "262721": "MUSTAFA GÜMÜŞÇÜ",
+  "262722": "MUSTAFA ERKAN",
+  "262723": "AYHAN LUŞOĞLU",
+  "262724": "YÜCEL TOMAK",
+  "262725": "İLYAS KAZDAL",
+  "262726": "HUDAVER TOPARDIC",
+  "262727": "YAHŞİ ERKAN🏆",
+  "262728": "ÖNDER ASLAN",
+  "262729": "HAKAN GÜN",
+  "262730": "ÖNDER IŞIK",
+  "262731": "FATİH AYAN",
+  "262732": "R. İLHAN KARACA 🏆🏆",
+  "262733": "MUHSİN ASİLKAN",
+  "262734": "LEVENT YILDIRIM",
+  "262735": "AYGÜN AKKEÇELİ",
+  "262736": "MEHMET ALİ KARA",
+  "262737": "ŞAHİN GEZGİNCİ",
+  "262738": "MEVLÜT EVLER",
+  "262739": "UĞUR GÜRBÜZ",
+  "262740": "ABDULLAH DİK",
+  "262741": "SABAHATTİN ÇAYLAK",
+  "262742": "ZEKERiYYA TOPKAYYA",
+  "262743": "MEHMET ALİ ŞAHİN",
+  "262744": "İLYAS UYGUN",
+  "262745": "OĞUZ YILDIRIMKAYA",
+  "262746": "MEHMET BAYIR",
+  "262747": "SAVAŞ ÇAĞLAYAN",
+  "262748": "YASİN ŞAHİN",
+  "262749": "B.VEYSELOĞLU EROL",
+  "262750": "MAHMUT CBR",
+  "262751": "HÜSEYİN ERBAŞ",
+  "262810": "ADEM BULUT ERTÜRK",
+  "262753": "YUSUF KIZILTUĞ",
+  "262754": "OSMAN ALİ AYDIN 🏆",
+  "262755": "DOĞAÇ ALKAN",
+  "262756": "EYÜP KARACAOĞLU",
+  "262813": "KEMAL ERSOY",
+  "262758": "MELİH PINAR",
+  "262762": "İLHAN DANIŞ",
+  "262763": "MUSTAFA ELMAS",
+  "262770": "OZKAYA MAZAKALI BAYRAM",
+  "262771": "ULAŞ ADIGÜZEL",
+  "262772": "CEMAL SİVRİKAYA 🏆",
+  "262760": "UĞUR NES",
+  "262774": "ŞENOL CAN ÇAKICI",
+  "262776": "CUMA OKUR",
+  "262777": "MİRAÇ TOPAL",
+  "262778": "CENGİZ SAYAN",
+  "262780": "YUSUF KILIÇ",
+  "262781": "KADİR SOLMAZ",
+  "262782": "YUSUF ERBAY",
+  "262783": "YASİN AYAN",
+  "262784": "MEHMET AVCI",
+  "262785": "METE BÜYÜKGÖL 🏆",
+  "262786": "SEDAT DİŞLİ",
+  "262787": "MUSTAFA TUCİ",
+  "262788": "HAKAN ÇİFTÇİ",
+  "262789": "ALİ ABUKAN",
+  "262790": "CUMALİ SÖKER",
+  "351925": "ALİOS GÖZTEPE",
+  "350909": "DİNÇER ÖZER",
+  "262815": "MURAT KAYA",
+  "262816": "SEDAT SEDAT",
+  "262795": "SEFA İÇA",
+  "262796": "D. SERGEN TAŞYÜREK",
+  "262797": "ÖMER DOGER"
 };
 
 // 🔴 GEÇİCİ KÖPRÜ: 4. Hafta veritabanında yoksa buradan okunacak
@@ -220,7 +291,6 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  // 🔴 AKTİF SEKME: DÖRDÜNCÜ ODA EKLENDİ ('players')
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players'>('live');
 
   // 🔴 SİSTEMDEKİ TÜM OYUNCULARI TUTAN ANA STATE (Statik + Veritabanı)
@@ -293,12 +363,10 @@ export default function AdminRadarPortal() {
     }
   }, []);
 
-  // 🔴 TÜM OYUNCULARI VERİTABANINDAN ÇEK VE BİRLEŞTİR (ASLA ESKİ SİSTEMİ BOZMAZ)
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('full_name');
     if (data) {
        setDbPlayersList(data);
-       // Statik listeye veritabanından gelenleri ekle (Ezer)
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
           newMergedMap[p.user_id] = p.full_name;
@@ -341,7 +409,6 @@ export default function AdminRadarPortal() {
     setPasswordInput('');
   };
 
-  // Dinamik getPlayerIdByName fonksiyonu (mergedPlayers kullanır)
   const getPlayerIdByName = (name: string) => {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
@@ -456,7 +523,6 @@ export default function AdminRadarPortal() {
       
       const pMap: Record<string, string[]> = {};
       
-      // mergedPlayers kullanıyoruz ki yeni eklenenler de burada görünsün
       const allUserIds = Object.keys(mergedPlayers);
 
       if (selectedPredictionWeek === 4) {
@@ -515,7 +581,7 @@ export default function AdminRadarPortal() {
        } else {
           alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!`);
           setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
-          fetchAllSystemPlayers(); // Listeyi yenile
+          fetchAllSystemPlayers(); 
        }
     } catch (err: any) {
        alert("❌ Beklenmeyen bir hata oluştu: " + err.message);
@@ -531,7 +597,7 @@ export default function AdminRadarPortal() {
        const { error } = await supabase.from('players').delete().eq('user_id', userId);
        if (error) throw error;
        alert(`✅ ${userName} isimli askerin Karargah ile ilişiği kesildi!`);
-       fetchAllSystemPlayers(); // Listeyi yenile
+       fetchAllSystemPlayers(); 
     } catch (err: any) {
        alert("❌ İhraç işlemi sırasında hata oluştu: " + err.message);
     }
@@ -837,7 +903,6 @@ export default function AdminRadarPortal() {
                  📊 TAHMİN YÖNETİMİ
                </button>
 
-               {/* 🔴 YENİ DÖRDÜNCÜ ODA: YARIŞMACI YÖNETİMİ 🔴 */}
                <button 
                  onClick={() => setActiveTab('players')}
                  className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
@@ -1376,7 +1441,7 @@ export default function AdminRadarPortal() {
         )}
 
         {/* ========================================================================================= */}
-        {/* 4. CEPHE: 🔴 YENİ EKLENEN YARIŞMACI YÖNETİMİ ODASI 🔴 */}
+        {/* 4. CEPHE: YARIŞMACI YÖNETİMİ ODASI */}
         {/* ========================================================================================= */}
         {activeTab === 'players' && userRole === 'master' && (
           <div className="animate-fade-in">
