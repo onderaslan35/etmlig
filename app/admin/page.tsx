@@ -100,7 +100,8 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players'>('live');
+  // 🚀 YENİ EKLENEN SEKME: 'teams'
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players' | 'teams'>('live');
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
@@ -109,12 +110,21 @@ export default function AdminRadarPortal() {
   const [newPlayerPass, setNewPlayerPass] = useState('');
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
-  // ----------------------------------------------------
-  // 🚀 YENİ: VERİTABANINDAN TAKIMLARI VE LOGOLARI ÇEKME MOTORU
-  // ----------------------------------------------------
+  // 🚀 5. ODA: TAKIM YÖNETİMİ STATELERİ
   const [dbTeamsList, setDbTeamsList] = useState<any[]>([]);
   const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>({});
   const [leagueTeamsMap, setLeagueTeamsMap] = useState<Record<string, string[]>>({});
+  
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamLeague, setNewTeamLeague] = useState('TÜRKİYE SÜPER LİG');
+  const [newTeamLogo, setNewTeamLogo] = useState('');
+  const [isTeamLoading, setIsTeamLoading] = useState(false);
+
+  // TAKIM YÖNETİMİ İÇİN TEMEL LİGLER
+  const teamLeagueOptions = [
+    "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", 
+    "FRANSA LIGUE 1", "İTALYA SERIE A", "İSPANYA LA LIGA", "MİLLİ TAKIMLAR", "ÇEŞİTLİ AVRUPA TAKIMLARI", "DİĞER"
+  ];
 
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
@@ -185,22 +195,17 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🚀 YENİ: VERİTABANINDAN TAKIMLARI ÇEK
+  // 🚀 VERİTABANINDAN TAKIMLARI ÇEK
   const fetchAllTeamsFromDB = async () => {
     const { data } = await supabase.from('teams').select('*').order('team_name');
     if (data) {
        setDbTeamsList(data);
-       
-       // Logoları bir sözlüğe (Map) dönüştür
        const logos: Record<string, string> = {};
        const leagues: Record<string, string[]> = {};
 
        data.forEach((team: any) => {
            logos[team.team_name] = team.logo_url;
-           
-           if (!leagues[team.league]) {
-               leagues[team.league] = [];
-           }
+           if (!leagues[team.league]) leagues[team.league] = [];
            leagues[team.league].push(team.team_name);
        });
 
@@ -428,6 +433,51 @@ export default function AdminRadarPortal() {
     }
   };
 
+  // 🚀 5. ODA: YENİ TAKIM EKLEME MOTORU
+  const handleAddNewTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTeamName || !newTeamLeague || !newTeamLogo) {
+       alert("Lütfen Takım Adı, Lig ve Logo alanlarının tümünü doldurun.");
+       return;
+    }
+    setIsTeamLoading(true);
+    try {
+       const { error } = await supabase.from('teams').insert({
+          team_name: newTeamName.trim().toUpperCase(),
+          league: newTeamLeague,
+          logo_url: newTeamLogo.trim()
+       });
+
+       if (error) {
+          if (error.code === '23505') alert("❌ HATA: Bu isimde bir takım zaten sistemde var!");
+          else throw error;
+       } else {
+          alert(`✅ BAŞARILI! ${newTeamName.toUpperCase()} takımı cephaneliğe eklendi! Artık bülten oluştururken kullanabilirsiniz.`);
+          setNewTeamName(''); setNewTeamLogo('');
+          fetchAllTeamsFromDB(); 
+       }
+    } catch (err: any) {
+       alert("❌ Beklenmeyen bir hata oluştu: " + err.message);
+    }
+    setIsTeamLoading(false);
+  };
+
+  // 🚀 5. ODA: TAKIM SİLME MOTORU
+  const handleDeleteTeam = async (teamName: string) => {
+    const confirmDelete = window.confirm(`DİKKAT: ${teamName} takımını veritabanından SİLMEK istediğinize emin misiniz?`);
+    if (!confirmDelete) return;
+
+    try {
+       const { error } = await supabase.from('teams').delete().eq('team_name', teamName);
+       if (error) throw error;
+       alert(`✅ ${teamName} başarıyla silindi!`);
+       fetchAllTeamsFromDB(); 
+    } catch (err: any) {
+       alert("❌ Silme işlemi sırasında hata oluştu: " + err.message);
+    }
+  };
+
+
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   
   const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
@@ -575,14 +625,12 @@ export default function AdminRadarPortal() {
     const currentMatch = bulletinMatches[currentIndex];
     const leagueKey = getLeagueKey(currentMatch.category);
 
-    if (leagueKey === "ÇEŞİTLİ AVRUPA TAKIMLARI") {
+    if (leagueKey === "ÇEŞİTLİ AVRUPA TAKIMLARI" || leagueKey === "DİĞER") {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        // 🚀 Veritabanından gelen listeyi kullan
         const allTeamsInSystem = dbTeamsList.map(t => t.team_name).sort((a, b) => a.localeCompare(b, 'tr'));
         return allTeamsInSystem.filter(t => t !== opponent);
     }
 
-    // 🚀 Veritabanından gelen LİG listesini kullan
     const baseTeams = leagueTeamsMap[leagueKey] || [];
     const usedTeamsInThisLeague = new Set<string>();
     
@@ -689,7 +737,7 @@ export default function AdminRadarPortal() {
       <div className="max-w-7xl mx-auto pt-6">
         
         {/* 🔴 ÜST TAB MENÜSÜ 🔴 */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative overflow-x-auto custom-scrollbar">
+        <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative overflow-x-auto custom-scrollbar flex-wrap">
            
            <button 
              onClick={handleLogout} 
@@ -700,32 +748,40 @@ export default function AdminRadarPortal() {
 
            <button 
              onClick={() => setActiveTab('live')}
-             className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+             className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
            >
-             🔴 CANLI MAÇ YÖNETİMİ
+             🔴 CANLI YÖNETİM
            </button>
            
            {userRole === 'master' && (
              <>
                <button 
                  onClick={() => setActiveTab('bulletin')}
-                 className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
-                 🛠️ BÜLTEN OLUŞTUR
+                 🛠️ BÜLTEN
                </button>
 
                <button 
                  onClick={() => setActiveTab('predictions')}
-                 className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'predictions' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'predictions' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
-                 📊 TAHMİN YÖNETİMİ
+                 📊 TAHMİNLER
                </button>
 
                <button 
                  onClick={() => setActiveTab('players')}
-                 className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
-                 👥 YARIŞMACI YÖNETİMİ
+                 👥 YARIŞMACILAR
+               </button>
+
+               {/* 🚀🚀 YENİ 5. ODA BUTONU: TAKIM YÖNETİMİ 🚀🚀 */}
+               <button 
+                 onClick={() => setActiveTab('teams')}
+                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'teams' ? 'bg-cyan-600 text-white shadow-[0_0_15px_rgba(8,145,178,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+               >
+                 🛡️ TAKIM YÖNETİMİ
                </button>
              </>
            )}
@@ -777,7 +833,6 @@ export default function AdminRadarPortal() {
                 const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase();
                 const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase();
 
-                // 🚀 ARTIK LOGOLARI VERİTABANINDAN ÇEKİYOR
                 const homeLogoUrl = teamLogosMap[homeTeamUpper] || "/logos/default.png";
                 const awayLogoUrl = teamLogosMap[awayTeamUpper] || "/logos/default.png";
 
@@ -1217,7 +1272,6 @@ export default function AdminRadarPortal() {
                                            const hTeam = matchInfo.home_team || "EV";
                                            const aTeam = matchInfo.away_team || "DEP";
                                            
-                                           // 🚀 ARTIK LOGOLARI VERİTABANINDAN ÇEKİYOR
                                            const hLogo = teamLogosMap[hTeam] || "/logos/default.png";
                                            const aLogo = teamLogosMap[aTeam] || "/logos/default.png";
                                            
@@ -1342,7 +1396,7 @@ export default function AdminRadarPortal() {
                  
                  <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                     {dbPlayersList.length === 0 ? (
-                       <div className="text-center py-8 text-slate-500 italic">Veritabanında kayıtlı kimse yok (Henüz dinamik liste boş).</div>
+                       <div className="text-center py-8 text-slate-500 italic">Veritabanında kayıtlı kimse yok.</div>
                     ) : (
                        dbPlayersList.map(p => (
                          <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
@@ -1355,6 +1409,116 @@ export default function AdminRadarPortal() {
                               className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
                             >
                                ❌ İHRAÇ ET
+                            </button>
+                         </div>
+                       ))
+                    )}
+                 </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================================= */}
+        {/* 🚀🚀 5. YEPYENİ CEPHE: TAKIM YÖNETİMİ ODASI 🚀🚀 */}
+        {/* ========================================================================================= */}
+        {activeTab === 'teams' && userRole === 'master' && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl font-black text-cyan-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
+                  <span className="text-3xl">🛡️</span> TAKIM CEPHANELİĞİ
+                </h1>
+                <p className="text-slate-400 text-sm mt-1">
+                  Bültenlerde görünecek yeni takımları ve logolarını buradan ekleyebilir veya silebilirsiniz.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              
+              {/* SOL SÜTUN: YENİ TAKIM EKLEME MERKEZİ */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
+                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-cyan-400 flex items-center gap-2">
+                       <span className="text-xl">➕</span> YENİ TAKIM EKLE
+                    </h2>
+                 </div>
+                 
+                 <form onSubmit={handleAddNewTeam} className="flex flex-col gap-5">
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">TAKIM ADI</label>
+                       <input 
+                         type="text" 
+                         value={newTeamName} 
+                         onChange={e => setNewTeamName(e.target.value)} 
+                         placeholder="Örn: REAL MADRID"
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
+                       />
+                    </div>
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">BAĞLI OLDUĞU LİG (AKILLI KATEGORİ)</label>
+                       <select 
+                         value={newTeamLeague} 
+                         onChange={e => setNewTeamLeague(e.target.value)} 
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-bold tracking-widest shadow-inner cursor-pointer"
+                       >
+                          {teamLeagueOptions.map(l => <option key={l} value={l}>{l}</option>)}
+                       </select>
+                    </div>
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">LOGO LİNKİ (VİKİPEDİ / URL)</label>
+                       <input 
+                         type="text" 
+                         value={newTeamLogo} 
+                         onChange={e => setNewTeamLogo(e.target.value)} 
+                         placeholder="Örn: https://upload.wikimedia.org/.../logo.svg"
+                         className="w-full bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-mono text-sm tracking-tight shadow-inner placeholder:text-slate-600"
+                       />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={isTeamLoading}
+                      className="mt-4 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)] flex justify-center items-center gap-2"
+                    >
+                      {isTeamLoading ? 'KAYDEDİLİYOR...' : 'TAKIMI SİSTEME KAYDET'}
+                    </button>
+                 </form>
+              </div>
+
+              {/* SAĞ SÜTUN: KAYITLI TAKIMLAR (LİSTE VE SİLME) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                 <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-rose-500 flex items-center gap-2">
+                       <span className="text-xl">📋</span> VERİTABANINDAKİ TAKIMLAR
+                    </h2>
+                    <span className="bg-slate-950 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold border border-slate-800">
+                       {dbTeamsList.length} Takım Kayıtlı
+                    </span>
+                 </div>
+                 
+                 <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                    {dbTeamsList.length === 0 ? (
+                       <div className="text-center py-8 text-slate-500 italic">Veritabanında kayıtlı takım yok.</div>
+                    ) : (
+                       dbTeamsList.map(t => (
+                         <div key={t.id} className="bg-slate-950/80 border border-slate-800 p-2 sm:p-3 rounded-xl flex justify-between items-center group hover:border-cyan-900/50 transition-colors gap-2">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                               <div className="w-10 h-10 bg-slate-900 rounded border border-slate-700 flex items-center justify-center flex-shrink-0 p-1">
+                                  <img src={t.logo_url} alt={t.team_name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                               </div>
+                               <div className="flex flex-col overflow-hidden">
+                                  <span className="font-black text-slate-200 text-[11px] sm:text-xs uppercase tracking-wide truncate">{t.team_name}</span>
+                                  <span className="text-[9px] sm:text-[10px] font-bold text-cyan-500/70 tracking-widest mt-0.5 truncate">{t.league}</span>
+                               </div>
+                            </div>
+                            <button 
+                              onClick={() => handleDeleteTeam(t.team_name)}
+                              className="flex-shrink-0 bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-2 py-1.5 rounded-lg text-[9px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                            >
+                               ❌ SİL
                             </button>
                          </div>
                        ))
