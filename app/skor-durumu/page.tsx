@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+// NOT: Kendi bileşen ve veri yollarını kontrol et (genelde standart böyledir)
+import LiveMatchCard from '@/components/LiveMatchCard';
+import { week4Matches, week4PredictionsData } from '@/lib/data'; 
 
-// Sabit Oyuncu Listesi
+// 🏆 Sabit Oyuncu Listesi
 const allPlayersList: Record<string, string> = {
   "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN",
   "262706": "GAZİ AYAN", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
@@ -64,6 +68,12 @@ const skorWeek3TffData: Record<string, number> = {
   "262717": 0, "262703": 0
 };
 
+const isTffMatchCheck = (category: string) => {
+  if (!category) return false;
+  const tffCategories = ["TRENDYOL SÜPER LİG", "TFF 1. LİG", "TURKİYE KUPASI", "TÜRKİYE SÜPER KUPASI"];
+  return tffCategories.includes(category.toUpperCase().trim());
+};
+
 interface PlayerData {
   id: string;
   name: string;
@@ -73,6 +83,13 @@ interface PlayerData {
 export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [selectedWeek, setSelectedWeek] = useState<string>('total');
+  const [isWeeksOpen, setIsWeeksOpen] = useState(false);
+  const [isLiveOpen, setIsLiveOpen] = useState(false); // Yeni, hatasız canlı maç akordiyonu
+  
+  const [liveMatches, setLiveMatches] = useState<any[]>([]);
+  const [week4DfoScores, setWeek4DfoScores] = useState<Record<string, number>>({});
+  const [week4TffScores, setWeek4TffScores] = useState<Record<string, number>>({});
+  
   const [leaderboardData, setLeaderboardData] = useState<PlayerData[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -83,6 +100,75 @@ export default function SkorDurumuPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // TFF sekmesine geçildiğinde sadece 3 ve 4. haftalar var, eğer 1 veya 2 seçiliyse sıfırla
+  useEffect(() => {
+    if (activeTab === 'TFF' && (selectedWeek === '1' || selectedWeek === '2')) {
+      setSelectedWeek('total');
+    }
+  }, [activeTab, selectedWeek]);
+
+  // 🔴 4. Hafta Supabase Canlı Skor Motoru (Ekmel Score Algorithm + Deduplication)
+  useEffect(() => {
+    const fetchLiveMatches = async () => {
+      const { data, error } = await supabase.from('live_matches').select('*');
+      if (error) {
+        console.error('Canlı maçlar çekilemedi:', error);
+        return;
+      }
+      
+      if (data) {
+        setLiveMatches(data);
+        
+        // DEDUPLICATION: Supabase çift veri atma hatasını önleme
+        const uniqueMatches: Record<number, any> = {};
+        data.forEach(row => { uniqueMatches[row.id] = row; });
+
+        const dfoScores: Record<string, number> = {};
+        const tffScores: Record<string, number> = {};
+        Object.keys(allPlayersList).forEach(id => { dfoScores[id] = 0; tffScores[id] = 0; });
+
+        Object.values(uniqueMatches).forEach(dbMatch => {
+          if (dbMatch.status === 'FINISHED') {
+            const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            
+            // Veritabanındaki maçı, projedeki week4Matches dizisindeki sırasıyla eşleştir
+            const matchIndex = week4Matches.findIndex(
+              wm => wm.home.toLowerCase() === dbMatch.home_team.toLowerCase() &&
+                    wm.away.toLowerCase() === dbMatch.away_team.toLowerCase()
+            );
+
+            if (matchIndex !== -1) {
+              const isTff = isTffMatchCheck(dbMatch.category);
+              
+              // Tüm oyuncuların tahminlerini kontrol et ve tam isabetse puan ekle
+              Object.keys(week4PredictionsData).forEach(playerId => {
+                if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
+                  if (isTff) tffScores[playerId] += 1;
+                  else dfoScores[playerId] += 1;
+                }
+              });
+            }
+          }
+        });
+
+        setWeek4DfoScores(dfoScores);
+        setWeek4TffScores(tffScores);
+      }
+    };
+
+    fetchLiveMatches();
+
+    const channel = supabase
+      .channel('skor_live_matches_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => {
+        fetchLiveMatches();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // 🔴 Puanları Toplama ve Tabloya Yansıtma Motoru
   useEffect(() => {
     const calculateScores = () => {
       const baseScores: Record<string, number> = {};
@@ -90,27 +176,38 @@ export default function SkorDurumuPage() {
       Object.keys(allPlayersList).forEach(id => {
         let total = 0;
         
+        // TOPLAM SEKMESİ
         if (selectedWeek === 'total') {
             if (activeTab === 'MASTER') {
-                total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0);
+                total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + 
+                        (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0) +
+                        (week4DfoScores[id] || 0) + (week4TffScores[id] || 0); // 4. Hafta Eklendi
             } else if (activeTab === 'DFO') {
-                total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + (skorWeek3DfoData[id] || 0);
+                total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + 
+                        (skorWeek3DfoData[id] || 0) + (week4DfoScores[id] || 0);
             } else if (activeTab === 'TFF') {
-                total = (skorWeek3TffData[id] || 0);
+                total = (skorWeek3TffData[id] || 0) + (week4TffScores[id] || 0);
             }
         } 
+        // 1. HAFTA SEKMESİ
         else if (selectedWeek === '1') {
             if (activeTab === 'MASTER' || activeTab === 'DFO') total = skorWeek1Data[id] || 0;
-            else total = 0; // TFF 1. hafta 0
         }
+        // 2. HAFTA SEKMESİ
         else if (selectedWeek === '2') {
             if (activeTab === 'MASTER' || activeTab === 'DFO') total = skorWeek2Data[id] || 0;
-            else total = 0; // TFF 2. hafta 0
         }
+        // 3. HAFTA SEKMESİ
         else if (selectedWeek === '3') {
             if (activeTab === 'MASTER') total = (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0);
             else if (activeTab === 'DFO') total = skorWeek3DfoData[id] || 0;
             else if (activeTab === 'TFF') total = skorWeek3TffData[id] || 0;
+        }
+        // 4. HAFTA SEKMESİ
+        else if (selectedWeek === '4') {
+            if (activeTab === 'MASTER') total = (week4DfoScores[id] || 0) + (week4TffScores[id] || 0);
+            else if (activeTab === 'DFO') total = week4DfoScores[id] || 0;
+            else if (activeTab === 'TFF') total = week4TffScores[id] || 0;
         }
 
         baseScores[id] = total;
@@ -134,60 +231,140 @@ export default function SkorDurumuPage() {
     };
 
     calculateScores();
-  }, [activeTab, selectedWeek]);
+  }, [activeTab, selectedWeek, week4DfoScores, week4TffScores]);
+
+  // 🏆 Dinamik Başlık ve Renkler
+  let headerText = "MASTER SKOR ANALİZ MERKEZİ";
+  let headerColor = "text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]";
+  if (activeTab === 'DFO') {
+    headerText = "DFO SKOR ANALİZ MERKEZİ";
+    headerColor = "text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]";
+  } else if (activeTab === 'TFF') {
+    headerText = "TFF SKOR ANALİZ MERKEZİ";
+    headerColor = "text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]";
+  }
 
   return (
     <div className="min-h-screen bg-[#050b14] font-sans text-slate-200 pb-20 selection:bg-amber-500/30">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 sm:py-10">
 
+        {/* ANA BAŞLIK */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.4)] uppercase">MASTER SKOR ANALİZ MERKEZİ</h1>
+          <h1 className={`text-2xl sm:text-4xl font-black tracking-widest uppercase transition-colors duration-500 ${headerColor}`}>
+            {headerText}
+          </h1>
         </div>
 
-        <div className="flex flex-col gap-4 mb-8">
-            <div className="flex justify-center mb-4">
-              <Link href="/admin">
-                <button className="bg-slate-900/50 hover:bg-slate-800 text-slate-300 font-bold px-6 py-3 rounded-xl border border-slate-700 hover:border-amber-500/50 transition-all flex items-center gap-3">
-                  <span className="text-amber-500">🔴</span> GÜNÜN CANLI MAÇLARI
-                </button>
-              </Link>
+        {/* 🔴 GÜNÜN CANLI MAÇLARI - AKORDİYON (YÖNETİME GİTMEZ) */}
+        <div className="w-full max-w-4xl mx-auto mb-8">
+          <div className="bg-[#0b1120] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl">
+            <button
+              onClick={() => setIsLiveOpen(!isLiveOpen)}
+              className="w-full flex items-center justify-between bg-[#0f172a] p-4 hover:bg-[#1e293b] transition-colors"
+            >
+              <div className="w-6"></div> {/* Ortalama için boşluk */}
+              <div className="flex-1 flex justify-center items-center">
+                <h2 className="text-sm sm:text-base font-bold text-amber-500 tracking-widest uppercase">
+                  GÜNÜN CANLI MAÇLARI
+                </h2>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-amber-500 transition-transform duration-300 ${isLiveOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <div className={`grid transition-all duration-500 ease-in-out ${isLiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+              <div className="overflow-hidden">
+                <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 bg-[#0a0f1c]">
+                  {week4Matches.map((match, index) => {
+                    const liveData = liveMatches.find(
+                      (m) => m.home_team.toLowerCase() === match.home.toLowerCase() &&
+                             m.away_team.toLowerCase() === match.away.toLowerCase()
+                    );
+                    return <LiveMatchCard key={index} match={match} liveData={liveData} />;
+                  })}
+                </div>
+              </div>
             </div>
-            
+          </div>
+        </div>
+
+        {/* 🏆 TABLAR: MASTER - DFO - TFF */}
+        <div className="flex flex-col gap-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-3xl mx-auto">
-              <button onClick={() => setActiveTab('MASTER')} className={`flex-1 py-4 px-4 rounded-2xl font-black text-sm sm:text-lg tracking-widest uppercase transition-all duration-300 ${activeTab === 'MASTER' ? 'bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.4)] scale-[1.02] border-none' : 'bg-slate-900/50 text-slate-500 border border-slate-800 hover:bg-slate-800'}`}>MASTER SKOR</button>
+              {/* MASTER */}
+              <button 
+                onClick={() => setActiveTab('MASTER')} 
+                className={`flex-1 py-4 px-4 rounded-xl font-black text-sm sm:text-lg tracking-widest uppercase transition-all duration-300 ${activeTab === 'MASTER' ? 'bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.4)] scale-[1.02] border-none' : 'bg-[#0f172a] text-slate-500 border border-slate-800 hover:bg-[#1e293b]'}`}
+              >
+                MASTER SKOR
+              </button>
+              
               <div className="flex gap-3 w-full sm:flex-1">
-                <button onClick={() => setActiveTab('DFO')} className={`flex-1 py-3 px-2 rounded-2xl font-black text-xs sm:text-sm tracking-widest uppercase transition-all duration-300 ${activeTab === 'DFO' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] scale-[1.02] border-none' : 'bg-slate-900/50 text-slate-500 border border-slate-800 hover:bg-slate-800'}`}>DFO SKOR</button>
-                <button onClick={() => setActiveTab('TFF')} className={`flex-1 py-3 px-2 rounded-2xl font-black text-xs sm:text-sm tracking-widest uppercase transition-all duration-300 ${activeTab === 'TFF' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] scale-[1.02] border-none' : 'bg-slate-900/50 text-slate-500 border border-slate-800 hover:bg-slate-800'}`}>TFF SKOR</button>
+                {/* DFO */}
+                <button 
+                  onClick={() => setActiveTab('DFO')} 
+                  className={`flex-1 py-3 px-2 rounded-xl font-black text-xs sm:text-sm tracking-widest uppercase transition-all duration-300 ${activeTab === 'DFO' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] scale-[1.02] border-none' : 'bg-[#0f172a] text-slate-500 border border-slate-800 hover:bg-[#1e293b]'}`}
+                >
+                  DFO SKOR
+                </button>
+                {/* TFF */}
+                <button 
+                  onClick={() => setActiveTab('TFF')} 
+                  className={`flex-1 py-3 px-2 rounded-xl font-black text-xs sm:text-sm tracking-widest uppercase transition-all duration-300 ${activeTab === 'TFF' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] scale-[1.02] border-none' : 'bg-[#0f172a] text-slate-500 border border-slate-800 hover:bg-[#1e293b]'}`}
+                >
+                  TFF SKOR
+                </button>
               </div>
             </div>
         </div>
 
-        <div className="bg-[#0a1120] rounded-3xl p-4 sm:p-8 shadow-2xl border border-slate-800/50 relative overflow-hidden">
-          
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4 bg-slate-900/40 p-4 rounded-2xl">
-             <div className="flex items-center gap-3">
-                 <span className="text-xl">📅</span>
-                 <h2 className="text-lg sm:text-xl font-black text-white tracking-widest uppercase">
-                    {selectedWeek === 'total' ? 'TOPLAM SKOR DURUMU' : `${selectedWeek}. HAFTA SKOR DURUMU`}
-                 </h2>
-             </div>
-             <select 
-                value={selectedWeek} 
-                onChange={(e) => setSelectedWeek(e.target.value)} 
-                className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-2 rounded-xl outline-none focus:border-amber-500 font-bold text-sm cursor-pointer w-full sm:w-auto"
+        {/* 📅 HAFTALAR AKORDİYONU */}
+        <div className="w-full max-w-3xl mx-auto mb-8">
+          <div className="bg-[#0b1120] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl">
+             <button 
+                onClick={() => setIsWeeksOpen(!isWeeksOpen)} 
+                className="w-full flex items-center justify-between bg-[#0f172a] p-4 hover:bg-[#1e293b] transition-colors"
              >
-                <option value="total">🔻 HAFTALAR (TÜMÜ)</option>
-                <option value="1">1. HAFTA</option>
-                <option value="2">2. HAFTA</option>
-                <option value="3">3. HAFTA</option>
-                <option value="4">4. HAFTA</option>
-             </select>
-          </div>
+                <div className="flex items-center gap-2">
+                   <span>📅</span>
+                   <span className="font-bold text-white text-sm sm:text-base uppercase tracking-widest">
+                     {selectedWeek === 'total' ? 'TOPLAM SKOR DURUMU' : `${selectedWeek}. HAFTA SKORLARI`}
+                   </span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400">
+                   <span className="text-xs font-bold tracking-widest">{isWeeksOpen ? 'KAPAT' : 'HAFTALAR'}</span>
+                   {isWeeksOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </div>
+             </button>
 
+             <div className={`transition-all duration-300 ease-in-out ${isWeeksOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="p-4 bg-[#0a0f1c] flex flex-wrap justify-center gap-2">
+                   <button 
+                      onClick={() => setSelectedWeek('total')} 
+                      className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${selectedWeek === 'total' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                   >
+                     TOPLAM
+                   </button>
+                   
+                   {activeTab !== 'TFF' && (
+                     <>
+                       <button onClick={() => setSelectedWeek('1')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${selectedWeek === '1' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>1</button>
+                       <button onClick={() => setSelectedWeek('2')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${selectedWeek === '2' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>2</button>
+                     </>
+                   )}
+                   
+                   <button onClick={() => setSelectedWeek('3')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${selectedWeek === '3' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>3</button>
+                   <button onClick={() => setSelectedWeek('4')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${selectedWeek === '4' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>4</button>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* 📊 SKOR TABLOSU */}
+        <div className="bg-[#0a1120] rounded-3xl p-4 sm:p-8 shadow-2xl border border-slate-800/50 relative overflow-hidden">
           {leaderboardData.length === 0 ? (
              <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-slate-800">
                 <span className="text-4xl opacity-50 block mb-4">⏳</span>
-                <p className="text-slate-500 font-medium">Bu haftada henüz tam isabet sağlayan yarışmacı bulunmuyor.</p>
+                <p className="text-slate-500 font-medium">Veriler bulunamadı veya henüz bu haftada tam isabet yok.</p>
              </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-800/50">
@@ -224,6 +401,7 @@ export default function SkorDurumuPage() {
                         rowBg = "border-l-4 border-transparent hover:bg-slate-800/30";
                       }
 
+                      // Mobil ekranda kupaları kırpma, sığdır
                       const displayName = isMobile ? player.name.split(' 🏆')[0] : player.name;
 
                       return (
