@@ -165,9 +165,9 @@ export default function MasterPuanDurumuPage() {
       
       let w4Base: Record<string, number> = {}; 
       let w4Live: Record<string, number> = {}; 
-      let w4ExactHits: Record<string, number> = {}; // YENİ: Haftanın skor (tam isabet) sayacı
+      let w4ExactHits: Record<string, number> = {}; 
       let isAnyMatchLive = false;
-      let finishedCount = 0; // YENİ: Biten maç sayacı
+      let finishedCount = 0; 
 
       Object.keys(allPlayersMasterList).forEach(id => {
         w4Base[id] = 0;
@@ -182,7 +182,6 @@ export default function MasterPuanDurumuPage() {
         });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          // Biten maçları sayıyoruz (24'e ulaşınca Ekmel Bonus Motoru ateşlenecek)
           if (dbMatch.status === 'FINISHED') finishedCount++;
 
           if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
@@ -202,7 +201,7 @@ export default function MasterPuanDurumuPage() {
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') {
                 w4Base[wId] += points; 
-                w4ExactHits[wId] += 1; // Sadece biten (onaylanmış) maçların tam isabetleri sayılır
+                w4ExactHits[wId] += 1; 
               } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
                 w4Live[wId] += points; 
                 isAnyMatchLive = true;
@@ -212,13 +211,11 @@ export default function MasterPuanDurumuPage() {
         });
       }
 
-      // 🏆 EKMEL BONUS MOTORU V2.0 🏆
-      // SADECE 24 MAÇIN TAMAMI "FINISHED" OLDUĞUNDA ÇALIŞIR!
+      // 🏆 EKMEL BONUS MOTORU V2.0 (4. HAFTA İÇİN CANLI MOTOR) 🏆
       let puanKraliId: string | null = null;
       let skorKraliId: string | null = null;
 
       if (finishedCount === 24) {
-        // 1. MÜSTAKİL PUAN KRALI HESAPLAMA
         let maxPuan = -1;
         let maxPuanCount = 0;
         let tempPuanKrali: string | null = null;
@@ -226,20 +223,18 @@ export default function MasterPuanDurumuPage() {
         Object.entries(w4Base).forEach(([id, puan]) => {
           if (puan > maxPuan) {
             maxPuan = puan;
-            maxPuanCount = 1; // Zirve el değiştirdi, sayaç 1 oldu
+            maxPuanCount = 1; 
             tempPuanKrali = id;
           } else if (puan === maxPuan) {
-            maxPuanCount++; // Zirveye ortak geldi, sayaç arttı (Bonus yanar)
+            maxPuanCount++; 
           }
         });
 
-        // EĞER ZİRVEDE TEK TABANCAYSA +3 ÇAKILIR!
         if (maxPuanCount === 1 && tempPuanKrali) {
           puanKraliId = tempPuanKrali;
           w4Base[puanKraliId] += 3; 
         }
 
-        // 2. MÜSTAKİL SKOR (TAM İSABET) KRALI HESAPLAMA
         let maxSkor = -1;
         let maxSkorCount = 0;
         let tempSkorKrali: string | null = null;
@@ -247,14 +242,13 @@ export default function MasterPuanDurumuPage() {
         Object.entries(w4ExactHits).forEach(([id, hits]) => {
           if (hits > maxSkor) {
             maxSkor = hits;
-            maxSkorCount = 1; // Zirve el değiştirdi, sayaç 1 oldu
+            maxSkorCount = 1; 
             tempSkorKrali = id;
           } else if (hits === maxSkor) {
-            maxSkorCount++; // Zirveye ortak geldi, sayaç arttı (Bonus yanar)
+            maxSkorCount++; 
           }
         });
 
-        // EĞER SKOR ZİRVESİNDE TEK TABANCAYSA +3 ÇAKILIR!
         if (maxSkorCount === 1 && tempSkorKrali) {
           skorKraliId = tempSkorKrali;
           w4Base[skorKraliId] += 3; 
@@ -320,7 +314,6 @@ export default function MasterPuanDurumuPage() {
               liveExtra, 
               trend: 'none', 
               trendDiff: 0,
-              // Etiketlerin görünüp görünmeyeceğine karar veren gizli işaretler
               hasPuanBonus: id === puanKraliId,
               hasSkorBonus: id === skorKraliId
             };
@@ -334,6 +327,26 @@ export default function MasterPuanDurumuPage() {
           const list = Object.keys(allPlayersMasterList).map(id => {
             const rawObj = dataMap[id];
             const basePuan = rawObj ? rawObj.puan : 0;
+            
+            // 🌟 1. , 2. ve 3. HAFTA GEÇMİŞE DÖNÜK ETİKET MOTORU 🌟
+            // NOT: Puanlar veri listesinde zaten bonuslu haliyle ekli olduğu için matematiksel bir +3 eklenmez!
+            // Sadece görsel etiketler ilgili yarışmacıların yanına eklenir.
+            let pBonus = false;
+            let sBonus = false;
+
+            if (activeTab === 'week1') {
+              if (id === "262736") pBonus = true; // Mehmet Ali Kara (+3 Liderlik)
+              if (id === "262755") sBonus = true; // Doğaç Alkan (+3 Skor)
+            } else if (activeTab === 'week2') {
+              if (id === "262756") pBonus = true; // Eyüp Karacaoğlu (+3 Liderlik)
+              // 2. Hafta skor liderliği ortak olduğu için bonus yok
+            } else if (activeTab === 'week3') {
+              if (id === "262816") { // Sedat Sedat (İkisi Birden)
+                pBonus = true;
+                sBonus = true;
+              }
+            }
+
             return { 
               id, 
               name: rawObj ? rawObj.name : allPlayersMasterList[id], 
@@ -341,8 +354,8 @@ export default function MasterPuanDurumuPage() {
               liveExtra: 0, 
               trend: 'none', 
               trendDiff: 0,
-              hasPuanBonus: false,
-              hasSkorBonus: false
+              hasPuanBonus: pBonus,
+              hasSkorBonus: sBonus
             };
           });
           setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
@@ -464,14 +477,14 @@ export default function MasterPuanDurumuPage() {
                           );
                         })()}
 
-                        {/* 🌟 4. HAFTAYA ÖZEL ETİKETLER (SADECE O HAFTANIN SEKME İÇİNDE GÖRÜNÜR) 🌟 */}
-                        {activeTab === 'week4' && row.hasPuanBonus && (
-                          <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1">
+                        {/* 🌟 HAFTALIK ETİKETLER (SADECE HAFTA SEKMELERİNDE GÖRÜNÜR) 🌟 */}
+                        {activeTab !== 'total' && row.hasPuanBonus && (
+                          <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
                             +3 LİDERLİK BONUSU
                           </span>
                         )}
-                        {activeTab === 'week4' && row.hasSkorBonus && (
-                          <span className="bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1">
+                        {activeTab !== 'total' && row.hasSkorBonus && (
+                          <span className="bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
                             +3 SKOR BONUSU
                           </span>
                         )}
