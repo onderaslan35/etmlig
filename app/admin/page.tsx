@@ -126,8 +126,9 @@ const LEAGUE_TEAMS: Record<string, string[]> = {
   "ÇEŞİTLİ AVRUPA TAKIMLARI": ["AGNATIA", "AJAX", "ANDERLECHT", "AUDA RIGA", "BAŞAKŞEHİR", "BENFICA", "BEŞİKTAŞ", "BRAGA", "BRANN", "CSKA 1948", "CSKA SOFYA", "DINAMO KIEV", "DINAMO ZAGREB", "FENERBAHÇE", "FERENCVAROS", "GORNİK ZABRZE", "GOTEBORG", "HAJDUK SPLIT", "HAMMARBY", "HEART", "IBERIA 1999", "INTER TURKU", "KARABAĞ FK", "KIZILYILDIZ", "KOPENAG", "KUPS", "LARNE FC", "LEVADIA FC", "LEVSKI SOFYA", "MIDTJYLLAND", "NK CELJE", "NK CERCLE", "PAKSI FC", "PANATHINAIKOS", "PAOK", "PATOS", "POLISSYA", "RAPID WIEN", "SABAH FK", "SANTA COLOMA FC", "FCSB", "SLOVAN BRATISLAVA", "SPARTAK TRNAVA", "ST GALLEN", "STURM GRAZ", "THUN", "TWENTE", "UNIVERSITATEA CLUJ", "UNIVERSITATEA CRAIOVA", "VOJVODINA", "ZELEZNICAR PANCEVO", "DINAMO MINSK", "SHELBOURNE", "GENT", "DEBRECEN", "HRADEC KRALOVE", "PAIDE LINNAMEESKOND", "BODO-GLIMT", "USG", "OLIMPIC LYON", "SPARTA PRAG", "NEC NIJMEGEN", "OLIMPIYAKOS", "FK ZALGIRIS", "FK KAUNO ZALGIRIS"]
 };
 
-// 🔴 YENİ YARIŞMACILAR (AYGÜN VE SABAHATTİN) EKLENDİ 🔴
-const allPlayersList: Record<string, string> = {
+// --- STATİK VE DİNAMİK YARIŞMACILARIN BİRLEŞTİRİLMESİ İÇİN TEMEL LİSTE ---
+// Kod içindeki sabit liste budur, üzerine Supabase'den gelenler eklenecek.
+const staticPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
@@ -141,12 +142,7 @@ const allPlayersList: Record<string, string> = {
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU",
-  "262741": "SABAHATTİN ÇAYLAK", "262735": "AYGÜN AKKEÇELİ"
-};
-
-const getPlayerIdByName = (name: string) => {
-  return Object.keys(allPlayersList).find(key => allPlayersList[key] === name) || null;
+  "262723": "AYHAN LUŞOĞLU", "262741": "SABAHATTİN ÇAYLAK", "262735": "AYGÜN AKKEÇELİ"
 };
 
 // 🔴 GEÇİCİ KÖPRÜ: 4. Hafta veritabanında yoksa buradan okunacak
@@ -177,7 +173,6 @@ const week4Matches = [
   { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
 ];
 
-// 🔴 4. HAFTA İÇİN CAN KURTARAN TAHMİN KÖPRÜSÜ
 const week4PredictionsData: Record<string, string[]> = {
   "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
   "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
@@ -222,12 +217,21 @@ export default function AdminRadarPortal() {
   // 🔴 ÇİFT KADEMELİ ŞİFRE & RÜTBE SİSTEMİ 🔴
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<'master' | 'subadmin' | null>(null);
-  
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  // 🔴 AKTİF SEKME
-  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions'>('live');
+  // 🔴 AKTİF SEKME: DÖRDÜNCÜ ODA EKLENDİ ('players')
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players'>('live');
+
+  // 🔴 SİSTEMDEKİ TÜM OYUNCULARI TUTAN ANA STATE (Statik + Veritabanı)
+  const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
+
+  // --- 4. ODA: YARIŞMACI YÖNETİMİ STATELERİ ---
+  const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
+  const [newPlayerId, setNewPlayerId] = useState('');
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerPass, setNewPlayerPass] = useState('');
+  const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
   // --- CANLI OPERASYON STATELERİ ---
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
@@ -289,6 +293,24 @@ export default function AdminRadarPortal() {
     }
   }, []);
 
+  // 🔴 TÜM OYUNCULARI VERİTABANINDAN ÇEK VE BİRLEŞTİR (ASLA ESKİ SİSTEMİ BOZMAZ)
+  const fetchAllSystemPlayers = async () => {
+    const { data } = await supabase.from('players').select('*').order('full_name');
+    if (data) {
+       setDbPlayersList(data);
+       // Statik listeye veritabanından gelenleri ekle (Ezer)
+       const newMergedMap = { ...staticPlayersList };
+       data.forEach((p: any) => {
+          newMergedMap[p.user_id] = p.full_name;
+       });
+       setMergedPlayers(newMergedMap);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) fetchAllSystemPlayers();
+  }, [isAuthenticated]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
@@ -317,6 +339,11 @@ export default function AdminRadarPortal() {
     setUserRole(null);
     setUsernameInput('');
     setPasswordInput('');
+  };
+
+  // Dinamik getPlayerIdByName fonksiyonu (mergedPlayers kullanır)
+  const getPlayerIdByName = (name: string) => {
+    return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
   // ----------------------------------------------------
@@ -428,7 +455,9 @@ export default function AdminRadarPortal() {
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
       
       const pMap: Record<string, string[]> = {};
-      const allUserIds = Object.keys(allPlayersList);
+      
+      // mergedPlayers kullanıyoruz ki yeni eklenenler de burada görünsün
+      const allUserIds = Object.keys(mergedPlayers);
 
       if (selectedPredictionWeek === 4) {
          allUserIds.forEach(id => {
@@ -451,8 +480,8 @@ export default function AdminRadarPortal() {
          else missing.push(id);
       });
 
-      submitted.sort((a, b) => (allPlayersList[a] || '').localeCompare(allPlayersList[b] || '', 'tr'));
-      missing.sort((a, b) => (allPlayersList[a] || '').localeCompare(allPlayersList[b] || '', 'tr'));
+      submitted.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
+      missing.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
 
       setPlayerPredictionsMap(pMap);
       setSubmittedPlayers(submitted);
@@ -460,10 +489,56 @@ export default function AdminRadarPortal() {
     };
 
     fetchPredictionData();
-  }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole]);
+  }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
 
 
-  // --- CANLI OPERASYON FONKSİYONLARI ---
+  // ----------------------------------------------------
+  // 🟢 4. MOTOR: YARIŞMACI YÖNETİM ODASI FONKSİYONLARI
+  // ----------------------------------------------------
+  const handleAddNewPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerId || !newPlayerName || !newPlayerPass) {
+       alert("Lütfen ID, İsim ve Şifre alanlarının tümünü doldurun.");
+       return;
+    }
+    setIsPlayerLoading(true);
+    try {
+       const { error } = await supabase.from('players').insert({
+          user_id: newPlayerId.trim(),
+          full_name: newPlayerName.trim().toUpperCase(),
+          password: newPlayerPass.trim()
+       });
+
+       if (error) {
+          if (error.code === '23505') alert("❌ HATA: Bu ID'ye sahip bir yarışmacı zaten var!");
+          else throw error;
+       } else {
+          alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!`);
+          setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
+          fetchAllSystemPlayers(); // Listeyi yenile
+       }
+    } catch (err: any) {
+       alert("❌ Beklenmeyen bir hata oluştu: " + err.message);
+    }
+    setIsPlayerLoading(false);
+  };
+
+  const handleBanishPlayer = async (userId: string, userName: string) => {
+    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) isimli yarışmacıyı Karargah'tan tamamen İHRAÇ etmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`);
+    if (!confirmDelete) return;
+
+    try {
+       const { error } = await supabase.from('players').delete().eq('user_id', userId);
+       if (error) throw error;
+       alert(`✅ ${userName} isimli askerin Karargah ile ilişiği kesildi!`);
+       fetchAllSystemPlayers(); // Listeyi yenile
+    } catch (err: any) {
+       alert("❌ İhraç işlemi sırasında hata oluştu: " + err.message);
+    }
+  };
+
+
+  // --- CANLI OPERASYON YARDIMCI FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   
   const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
@@ -730,9 +805,8 @@ export default function AdminRadarPortal() {
       <div className="max-w-7xl mx-auto">
         
         {/* 🔴 ÜST TAB MENÜSÜ 🔴 */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative overflow-x-auto custom-scrollbar">
            
-           {/* Güvenli Çıkış Butonu */}
            <button 
              onClick={handleLogout} 
              className="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-red-400 z-50 flex items-center gap-1"
@@ -742,27 +816,33 @@ export default function AdminRadarPortal() {
 
            <button 
              onClick={() => setActiveTab('live')}
-             className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+             className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
            >
              🔴 CANLI MAÇ YÖNETİMİ
            </button>
            
-           {/* 🛡️ RÜTBE KONTROLÜ: Sadece 'master' ise diğer butonları göster */}
            {userRole === 'master' && (
              <>
                <button 
                  onClick={() => setActiveTab('bulletin')}
-                 className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
                  🛠️ BÜLTEN OLUŞTUR
                </button>
 
-               {/* 🔴 YENİ ÜÇÜNCÜ ODA: TAHMİN YÖNETİMİ 🔴 */}
                <button 
                  onClick={() => setActiveTab('predictions')}
-                 className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'predictions' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'predictions' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
                  📊 TAHMİN YÖNETİMİ
+               </button>
+
+               {/* 🔴 YENİ DÖRDÜNCÜ ODA: YARIŞMACI YÖNETİMİ 🔴 */}
+               <button 
+                 onClick={() => setActiveTab('players')}
+                 className={`flex-1 min-w-[200px] py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+               >
+                 👥 YARIŞMACI YÖNETİMİ
                </button>
              </>
            )}
@@ -840,7 +920,7 @@ export default function AdminRadarPortal() {
                             return predictionsSource[uid] && predictionsSource[uid][match.match_index] === targetScore;
                         }
                     })
-                    .map(uid => allPlayersList[uid] || "Bilinmeyen")
+                    .map(uid => mergedPlayers[uid] || "Bilinmeyen")
                     .sort((a, b) => a.localeCompare(b, 'tr'));
                     
                   winnersCount = currentWinners.length;
@@ -922,7 +1002,6 @@ export default function AdminRadarPortal() {
                       </div>
                     </div>
 
-                    {/* 🔴 YENİ EKLENEN "BİLENLERİ GÖR" ÇUBUĞU (MAÇ ARŞİVİNDEN) 🔴 */}
                     <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
                       <div className="flex justify-between items-center w-full">
                         <div className="text-left flex-1">
@@ -950,7 +1029,6 @@ export default function AdminRadarPortal() {
                         </div>
                       </div>
                       
-                      {/* Bilenleri Gösteren Akordeon */}
                       {isWinnersOpen && winnersCount > 0 && (
                         <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
                           <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
@@ -967,7 +1045,6 @@ export default function AdminRadarPortal() {
                         </div>
                       )}
                     </div>
-                    {/* Bilenleri Gör Çubuğu Bitiş */}
 
                   </div>
                 );
@@ -978,7 +1055,7 @@ export default function AdminRadarPortal() {
         )}
 
         {/* ========================================================================================= */}
-        {/* 2. CEPHE: YENİ BÜLTEN ÜRETİM FABRİKASI (SADECE MASTER GÖREBİLİR) */}
+        {/* 2. CEPHE: YENİ BÜLTEN ÜRETİM FABRİKASI */}
         {/* ========================================================================================= */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
@@ -1157,7 +1234,7 @@ export default function AdminRadarPortal() {
         )}
 
         {/* ========================================================================================= */}
-        {/* 3. CEPHE: 🔴 YENİ EKLENEN TAHMİN YÖNETİMİ ODASI (LOGOLU ESTETİK) 🔴 */}
+        {/* 3. CEPHE: TAHMİN YÖNETİMİ ODASI */}
         {/* ========================================================================================= */}
         {activeTab === 'predictions' && userRole === 'master' && (
           <div className="animate-fade-in">
@@ -1208,7 +1285,7 @@ export default function AdminRadarPortal() {
                     ) : (
                        missingPlayers.map(id => (
                          <div key={id} className="bg-slate-950/50 border border-rose-900/30 p-3 rounded-xl flex justify-between items-center group hover:bg-slate-900 transition-colors">
-                            <span className="font-bold text-slate-300 text-sm">{allPlayersList[id]}</span>
+                            <span className="font-bold text-slate-300 text-sm">{mergedPlayers[id]}</span>
                             <span className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-950/50 px-2 py-1 rounded border border-rose-900/50">BEKLENİYOR</span>
                          </div>
                        ))
@@ -1241,14 +1318,13 @@ export default function AdminRadarPortal() {
                                  className="p-3 flex justify-between items-center cursor-pointer"
                                  onClick={() => setExpandedPlayer(isExpanded ? null : id)}
                                >
-                                  <span className="font-bold text-emerald-100 text-sm">{allPlayersList[id]}</span>
+                                  <span className="font-bold text-emerald-100 text-sm">{mergedPlayers[id]}</span>
                                   <div className="flex items-center gap-3">
                                      <span className="text-[10px] font-black tracking-widest text-emerald-400 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900/50">TAMAM</span>
                                      <span className="text-slate-500 text-xs">{isExpanded ? '▲' : '▼'}</span>
                                   </div>
                                </div>
                                
-                               {/* Akordeon Açıldığında Gösterilecek ESTETİK LOGOLU Tahminler */}
                                {isExpanded && (
                                   <div className="p-3 bg-slate-950 border-t border-emerald-900/30">
                                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -1265,24 +1341,18 @@ export default function AdminRadarPortal() {
 
                                            return (
                                               <div key={index} className="relative flex flex-col items-center justify-center bg-slate-900 border border-slate-700/50 pt-4 pb-2 px-1 rounded-xl shadow-sm hover:border-emerald-500/50 transition-colors">
-                                                 {/* Maç Numarası - Tam Tepe Ortada */}
                                                  <div className="absolute -top-2 bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-[8px] font-black tracking-widest text-slate-400 shadow-sm">
                                                    M{index + 1}
                                                  </div>
                                                  
                                                  <div className="flex items-center justify-between w-full mt-1">
-                                                    {/* EV SAHİBİ */}
                                                     <div className="flex flex-col items-center justify-center w-1/3">
                                                        <img src={hLogo} alt={hShort} className="w-6 h-6 object-contain drop-shadow-md mb-0.5" />
                                                        <span className="text-[8px] font-bold text-slate-400 uppercase">{hShort}</span>
                                                     </div>
-
-                                                    {/* SKOR (Ortadaki tire ve boşluklar yok edildi) */}
                                                     <div className="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-center items-center shadow-inner">
                                                        <span className="text-xs font-black text-amber-400 tracking-wider">{score}</span>
                                                     </div>
-
-                                                    {/* DEPLASMAN */}
                                                     <div className="flex flex-col items-center justify-center w-1/3">
                                                        <img src={aLogo} alt={aShort} className="w-6 h-6 object-contain drop-shadow-md mb-0.5" />
                                                        <span className="text-[8px] font-bold text-slate-400 uppercase">{aShort}</span>
@@ -1297,6 +1367,112 @@ export default function AdminRadarPortal() {
                             </div>
                           )
                        })
+                    )}
+                 </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================================= */}
+        {/* 4. CEPHE: 🔴 YENİ EKLENEN YARIŞMACI YÖNETİMİ ODASI 🔴 */}
+        {/* ========================================================================================= */}
+        {activeTab === 'players' && userRole === 'master' && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl font-black text-fuchsia-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
+                  <span className="text-3xl">👥</span> YARIŞMACI YÖNETİMİ
+                </h1>
+                <p className="text-slate-400 text-sm mt-1">
+                  Sisteme yeni yarışmacı dahil edebilir veya disiplinsizlik yapanları ihraç edebilirsiniz.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              
+              {/* SOL SÜTUN: YENİ ASKER ALMA MERKEZİ (EKLEME FORMU) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
+                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-fuchsia-400 flex items-center gap-2">
+                       <span className="text-xl">➕</span> YENİ ASLAN PARÇASI EKLE
+                    </h2>
+                 </div>
+                 
+                 <form onSubmit={handleAddNewPlayer} className="flex flex-col gap-5">
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">6 HANELİ YARIŞMACI ID</label>
+                       <input 
+                         type="text" 
+                         value={newPlayerId} 
+                         onChange={e => setNewPlayerId(e.target.value)} 
+                         placeholder="Örn: 262888"
+                         maxLength={6}
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
+                       />
+                    </div>
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">İSİM SOYİSİM</label>
+                       <input 
+                         type="text" 
+                         value={newPlayerName} 
+                         onChange={e => setNewPlayerName(e.target.value)} 
+                         placeholder="Örn: SİNAN ENGİN"
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
+                       />
+                    </div>
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">GİRİŞ ŞİFRESİ</label>
+                       <input 
+                         type="text" 
+                         value={newPlayerPass} 
+                         onChange={e => setNewPlayerPass(e.target.value)} 
+                         placeholder="Örn: 19030"
+                         className="w-full bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
+                       />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={isPlayerLoading}
+                      className="mt-4 bg-fuchsia-600 hover:bg-fuchsia-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(192,38,211,0.4)] flex justify-center items-center gap-2"
+                    >
+                      {isPlayerLoading ? 'KAYDEDİLİYOR...' : 'SİSTEME KAYDET VE GÖNDER'}
+                    </button>
+                 </form>
+              </div>
+
+              {/* SAĞ SÜTUN: DİSİPLİN KURULU (LİSTE VE SİLME) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                 <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-rose-500 flex items-center gap-2">
+                       <span className="text-xl">⚖️</span> DİSİPLİN KURULU (TÜM LİSTE)
+                    </h2>
+                    <span className="bg-slate-950 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold border border-slate-800">
+                       Veritabanındaki Liste
+                    </span>
+                 </div>
+                 
+                 <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                    {dbPlayersList.length === 0 ? (
+                       <div className="text-center py-8 text-slate-500 italic">Veritabanında kayıtlı kimse yok (Henüz dinamik liste boş).</div>
+                    ) : (
+                       dbPlayersList.map(p => (
+                         <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
+                            <div className="flex flex-col">
+                               <span className="font-black text-slate-200 text-sm uppercase tracking-wide">{p.full_name}</span>
+                               <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.user_id} | ŞİFRE: {p.password}</span>
+                            </div>
+                            <button 
+                              onClick={() => handleBanishPlayer(p.user_id, p.full_name)}
+                              className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                            >
+                               ❌ İHRAÇ ET
+                            </button>
+                         </div>
+                       ))
                     )}
                  </div>
               </div>
