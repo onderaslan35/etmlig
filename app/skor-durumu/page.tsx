@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// Sabit Oyuncu Listesi (Sadece isimleri göstermek için)
+// Sabit Oyuncu Listesi
 const allPlayersList: Record<string, string> = {
   "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN",
   "262706": "GAZİ AYAN", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
@@ -25,11 +25,43 @@ const allPlayersList: Record<string, string> = {
   "262797": "ÖMER DOGER"
 };
 
-// 🔴 HAFTALIK STATİK SKOR BİLME SAYILARI (PUAN DEĞİL, ADET) 🔴
-const historicalScoresData: Record<number, Record<string, number>> = {
-  1: { "262705": 6, "262732": 5, "262714": 4, "262785": 4, "262772": 4, "262727": 4, "262706": 4, "262754": 4, "350909": 4 },
-  2: { "262705": 7, "262732": 5, "262714": 4, "262785": 3, "262772": 3, "262727": 5, "262706": 3, "262754": 3, "350909": 3 },
-  3: { "262705": 6, "262732": 4, "262714": 5, "262785": 5, "262772": 4, "262727": 2, "262706": 3, "262754": 3, "350909": 2 }
+// 🔴 1. HAFTA (Tamamı DFO)
+const skorWeek1Data: Record<string, number> = {
+  "262736": 4, "262755": 6, "262719": 4, "262756": 4, "262754": 4, "262786": 3, "262731": 3, "262717": 3, "262732": 4,
+  "262726": 3, "262750": 2, "262747": 3, "262771": 2, "262728": 2, "262816": 2, "262716": 2, "262790": 2, "262733": 2,
+  "262709": 1, "262753": 2, "262813": 2, "262740": 1, "262718": 3, "262707": 1, "262782": 1, "262702": 1, "262714": 1,
+  "262721": 1, "262706": 1, "262787": 1, "262744": 1, "262774": 1, "262715": 1, "262723": 1, "351925": 0, "262749": 0,
+  "262705": 0, "262708": 0, "262711": 0, "262712": 0, "262734": 0
+};
+
+// 🔴 2. HAFTA (Tamamı DFO)
+const skorWeek2Data: Record<string, number> = {
+  "262756": 3, "262755": 2, "262709": 2, "262790": 4, "262772": 1, "262728": 4, "262726": 3, "262711": 2, "262717": 2,
+  "262737": 2, "262705": 2, "262816": 2, "262774": 1, "262732": 1, "262786": 1, "262721": 1, "262738": 1, "262714": 3,
+  "262763": 2, "262736": 2, "262740": 1, "262702": 1, "262703": 1, "262730": 1, "262715": 1, "262749": 1, "262725": 1,
+  "262758": 1, "262771": 1, "262754": 1, "262747": 1, "262716": 1, "262708": 1, "262731": 1, "262739": 1, "262813": 0,
+  "262712": 0, "262734": 0, "351925": 0, "262744": 0, "262718": 0, "262704": 0, "262733": 0, "262707": 0, "262750": 0,
+  "262753": 0, "262706": 0, "262723": 0, "262719": 0, "262782": 0, "262770": 0
+};
+
+// 🔴 3. HAFTA DFO
+const skorWeek3DfoData: Record<string, number> = {
+  "262816": 2, "262733": 1, "262721": 3, "262763": 2, "262786": 2, "262711": 2, "351925": 2, "262726": 2, "262725": 2,
+  "262771": 1, "262813": 2, "262709": 2, "262706": 1, "262738": 1, "262753": 1, "262734": 1, "262756": 1, "262702": 1,
+  "262730": 1, "262731": 1, "262755": 1, "262747": 1, "262732": 1, "262707": 1, "262754": 1, "262714": 1, "262782": 1,
+  "262723": 1, "262772": 1, "262739": 1, "262716": 1, "262728": 0, "262705": 0, "262774": 0, "262740": 0, "262749": 0,
+  "262770": 0, "262719": 0, "262708": 0, "262744": 0, "262758": 0, "262718": 0, "262736": 0, "262790": 0, "262750": 0,
+  "262717": 0, "262703": 0
+};
+
+// 🔴 3. HAFTA TFF
+const skorWeek3TffData: Record<string, number> = {
+  "262707": 2, "262816": 3, "262733": 2, "262754": 3, "262728": 2, "262706": 1, "262755": 1, "262736": 1, "262771": 1,
+  "262734": 1, "262705": 2, "262714": 1, "262763": 1, "262756": 1, "262774": 1, "262740": 1, "262702": 2, "262782": 2,
+  "262813": 1, "262723": 1, "262749": 1, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1,
+  "262786": 0, "262711": 0, "262726": 0, "262725": 0, "262709": 0, "262738": 0, "262753": 0, "262731": 0, "262747": 0,
+  "262732": 0, "262716": 0, "262719": 0, "262708": 0, "262744": 0, "262758": 0, "262718": 0, "262790": 0, "262750": 0,
+  "262717": 0, "262703": 0
 };
 
 interface PlayerData {
@@ -52,45 +84,56 @@ export default function SkorDurumuPage() {
   }, []);
 
   useEffect(() => {
-    // 1) Temel skorları hesapla (Seçilen haftaya göre veya toplama göre)
-    const baseScores: Record<string, number> = {};
+    const calculateScores = () => {
+      const baseScores: Record<string, number> = {};
 
-    Object.keys(allPlayersList).forEach(id => {
-      let total = 0;
-      if (selectedWeek === 'total') {
-        Object.keys(historicalScoresData).forEach(week => {
-          total += (historicalScoresData[Number(week)][id] || 0);
-        });
+      Object.keys(allPlayersList).forEach(id => {
+        let total = 0;
+        
+        if (selectedWeek === 'total') {
+            if (activeTab === 'MASTER') {
+                total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0);
+            } else if (activeTab === 'DFO') {
+                total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + (skorWeek3DfoData[id] || 0);
+            } else if (activeTab === 'TFF') {
+                total = (skorWeek3TffData[id] || 0);
+            }
+        } 
+        else if (selectedWeek === '1') {
+            if (activeTab === 'MASTER' || activeTab === 'DFO') total = skorWeek1Data[id] || 0;
+            else total = 0; // TFF 1. hafta 0
+        }
+        else if (selectedWeek === '2') {
+            if (activeTab === 'MASTER' || activeTab === 'DFO') total = skorWeek2Data[id] || 0;
+            else total = 0; // TFF 2. hafta 0
+        }
+        else if (selectedWeek === '3') {
+            if (activeTab === 'MASTER') total = (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0);
+            else if (activeTab === 'DFO') total = skorWeek3DfoData[id] || 0;
+            else if (activeTab === 'TFF') total = skorWeek3TffData[id] || 0;
+        }
+
+        baseScores[id] = total;
+      });
+
+      const finalData: PlayerData[] = [];
+      Object.keys(baseScores).forEach(id => {
+        if (baseScores[id] > 0 || selectedWeek === 'total') {
+           finalData.push({ id, name: allPlayersList[id] || "Bilinmeyen", totalScore: baseScores[id] });
+        }
+      });
+
+      finalData.sort((a, b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name, 'tr'));
+      
+      const isAllZero = finalData.every(p => p.totalScore === 0);
+      if (isAllZero && selectedWeek !== 'total') {
+         setLeaderboardData([]);
       } else {
-        total = historicalScoresData[Number(selectedWeek)]?.[id] || 0;
+         setLeaderboardData(finalData);
       }
-      baseScores[id] = total;
-    });
+    };
 
-    // 2) Eğer TFF seçiliyse, geçmiş haftalarda TFF maçı olmadığı için (1, 2 ve 3. hafta) TFF skorlarını 0 yapalım (Eğer toplam veya o haftalardaysak)
-    // Sadece 4. hafta ve sonrasında TFF canlı verisi geldiğinde artacak.
-    const finalData: PlayerData[] = [];
-    Object.keys(baseScores).forEach(id => {
-      let score = baseScores[id];
-      if (activeTab === 'TFF' && (selectedWeek === 'total' || Number(selectedWeek) <= 3)) {
-         score = 0; 
-      }
-      // DFO için hepsi geçerli, Master için hepsi geçerli
-      if (score > 0 || selectedWeek === 'total') {
-         finalData.push({ id, name: allPlayersList[id] || "Bilinmeyen", totalScore: score });
-      }
-    });
-
-    // 3) Sırala
-    finalData.sort((a, b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name, 'tr'));
-    
-    // Eğer tüm skorlar 0 ise ve total değilsek boş liste gösterelim
-    const isAllZero = finalData.every(p => p.totalScore === 0);
-    if (isAllZero && selectedWeek !== 'total') {
-       setLeaderboardData([]);
-    } else {
-       setLeaderboardData(finalData);
-    }
+    calculateScores();
   }, [activeTab, selectedWeek]);
 
   return (
@@ -144,7 +187,7 @@ export default function SkorDurumuPage() {
           {leaderboardData.length === 0 ? (
              <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-slate-800">
                 <span className="text-4xl opacity-50 block mb-4">⏳</span>
-                <p className="text-slate-500 font-medium">Veriler bulunamadı.</p>
+                <p className="text-slate-500 font-medium">Bu haftada henüz tam isabet sağlayan yarışmacı bulunmuyor.</p>
              </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-800/50">
@@ -164,7 +207,6 @@ export default function SkorDurumuPage() {
                       let nameColor = "text-slate-200";
                       let rowBg = "hover:bg-slate-800/30";
                       let rankDisplay = <span className="text-slate-500 font-bold">{index + 1}</span>;
-                      let badge = null;
 
                       if (isTop1) {
                         nameColor = "text-amber-400 font-black";
@@ -182,7 +224,6 @@ export default function SkorDurumuPage() {
                         rowBg = "border-l-4 border-transparent hover:bg-slate-800/30";
                       }
 
-                      // Mobil görünümde madalyaları koruma (emoji kırpılmasını engeller)
                       const displayName = isMobile ? player.name.split(' 🏆')[0] : player.name;
 
                       return (
@@ -193,7 +234,6 @@ export default function SkorDurumuPage() {
                               <span className={`text-xs sm:text-sm uppercase tracking-wide truncate ${nameColor}`}>
                                 {displayName}
                               </span>
-                              {badge && <span className="hidden sm:inline-block">{badge}</span>}
                             </div>
                           </td>
                           <td className="p-4 sm:p-5 text-center">
