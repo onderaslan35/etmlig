@@ -224,7 +224,8 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  const [activeTab, setActiveTab] = useState<'live' | 'bulletin'>('live');
+  // 🔴 AKTİF SEKME: ÜÇÜNCÜ BİR ODA EKLENDİ ('predictions')
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions'>('live');
 
   // --- CANLI OPERASYON STATELERİ ---
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
@@ -238,9 +239,14 @@ export default function AdminRadarPortal() {
   const [bulletinWeek, setBulletinWeek] = useState<number>(5);
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
-  
-  // 🔴 AKTİF ODAKTAKİ SATIRI TUTAN STATE
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+
+  // --- 🔴 TAHMİN YÖNETİM ODASI STATELERİ 🔴 ---
+  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(5);
+  const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
+  const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
+  const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+  const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
   
   const categoriesList = [
     "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG",
@@ -268,7 +274,6 @@ export default function AdminRadarPortal() {
     }))
   );
 
-  // 🔴 ŞİFRE HATIRLAMA (Session Storage)
   useEffect(() => {
     if (typeof window !== 'undefined') {
        const auth = sessionStorage.getItem('admin_auth');
@@ -281,26 +286,20 @@ export default function AdminRadarPortal() {
     }
   }, []);
 
-  // 🔴 GİRİŞ VE RÜTBE KONTROLÜ MANTIĞI
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // ==============================================================
-    // 👑 MASTER (GENERAL) HESABI ŞİFRESİ
     if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
        setIsAuthenticated(true);
        setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'master');
     } 
-    // ==============================================================
-    // 🛡️ ALT YETKİLİ (SAHA KOMİSERİ) HESABI
     else if (usernameInput === 'skoradmin' && passwordInput === '123456') {
        setIsAuthenticated(true);
        setUserRole('subadmin');
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'subadmin');
-       setActiveTab('live'); // Zorunlu olarak Live sekmesine atar
+       setActiveTab('live'); 
     } 
     else {
        alert("❌ Erişim Reddedildi! Hatalı Kullanıcı Adı veya Şifre.");
@@ -345,10 +344,7 @@ export default function AdminRadarPortal() {
          const liveInfo = liveData?.find(l => l.id === uniqueId);
          
          if (liveInfo) {
-           initialScores[m.match_index] = { 
-             home: liveInfo.home_score, 
-             away: liveInfo.away_score 
-           };
+           initialScores[m.match_index] = { home: liveInfo.home_score, away: liveInfo.away_score };
            if (liveInfo.status === 'FINISHED') {
               lockedMatches[m.match_index] = true;
            }
@@ -402,12 +398,7 @@ export default function AdminRadarPortal() {
           setBulletinMatches(mapped as any);
         } else {
           setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
-            match_index: i + 1,
-            category: 'TÜRKİYE SÜPER LİG',
-            match_date: newDates[0],
-            match_time: '21:00',
-            home_team: '',
-            away_team: ''
+            match_index: i + 1, category: 'TÜRKİYE SÜPER LİG', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: ''
           })));
         }
       }
@@ -415,6 +406,59 @@ export default function AdminRadarPortal() {
 
     loadBulletinData();
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
+
+  // ----------------------------------------------------
+  // 🟢 3. MOTOR: TAHMİN YÖNETİMİ ODASI (YENİ SADECE OKUMA)
+  // ----------------------------------------------------
+  useEffect(() => {
+    if (!isAuthenticated || userRole !== 'master') return;
+    if (activeTab !== 'predictions') return;
+
+    const fetchPredictionData = async () => {
+      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
+      
+      const pMap: Record<string, string[]> = {};
+      const allUserIds = Object.keys(allPlayersList);
+
+      if (selectedPredictionWeek === 4) {
+         // Statik 4. Hafta Verisini Kullan
+         allUserIds.forEach(id => {
+            if (week4PredictionsData[id] && week4PredictionsData[id].length > 0) {
+               pMap[id] = week4PredictionsData[id];
+            }
+         });
+      } else if (pData) {
+         // Veritabanından O Haftayı Çek
+         pData.forEach(row => {
+            if (!pMap[row.user_id]) pMap[row.user_id] = Array(24).fill('-');
+            pMap[row.user_id][row.match_index - 1] = row.predicted_score;
+         });
+      }
+
+      const submitted: string[] = [];
+      const missing: string[] = [];
+
+      allUserIds.forEach(id => {
+         if (pMap[id]) {
+            // Eğer dizide '-' varsa veya eksikse tam sayılmaz, ama şimdilik "giriş yaptı" olarak kabul edelim
+            submitted.push(id);
+         } else {
+            missing.push(id);
+         }
+      });
+
+      // İsimlerine göre sırala
+      submitted.sort((a, b) => (allPlayersList[a] || '').localeCompare(allPlayersList[b] || '', 'tr'));
+      missing.sort((a, b) => (allPlayersList[a] || '').localeCompare(allPlayersList[b] || '', 'tr'));
+
+      setPlayerPredictionsMap(pMap);
+      setSubmittedPlayers(submitted);
+      setMissingPlayers(missing);
+    };
+
+    fetchPredictionData();
+  }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole]);
+
 
   // --- CANLI OPERASYON FONKSİYONLARI ---
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -697,17 +741,27 @@ export default function AdminRadarPortal() {
              onClick={() => setActiveTab('live')}
              className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
            >
-             🔴 CANLI MAÇ & PUAN YÖNETİMİ
+             🔴 CANLI MAÇ YÖNETİMİ
            </button>
            
-           {/* 🛡️ RÜTBE KONTROLÜ: Sadece 'master' ise Bülten butonunu göster */}
+           {/* 🛡️ RÜTBE KONTROLÜ: Sadece 'master' ise diğer butonları göster */}
            {userRole === 'master' && (
-             <button 
-               onClick={() => setActiveTab('bulletin')}
-               className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-             >
-               🛠️ YENİ BÜLTEN OLUŞTUR
-             </button>
+             <>
+               <button 
+                 onClick={() => setActiveTab('bulletin')}
+                 className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+               >
+                 🛠️ BÜLTEN OLUŞTUR
+               </button>
+
+               {/* 🔴 YENİ ÜÇÜNCÜ ODA: TAHMİN YÖNETİMİ 🔴 */}
+               <button 
+                 onClick={() => setActiveTab('predictions')}
+                 className={`flex-1 py-4 rounded-xl font-black text-sm tracking-widest transition-all ${activeTab === 'predictions' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+               >
+                 📊 TAHMİN YÖNETİMİ
+               </button>
+             </>
            )}
         </div>
 
@@ -865,7 +919,6 @@ export default function AdminRadarPortal() {
                       </div>
                     </div>
 
-                    {/* 🔴 YENİ EKLENEN "BİLENLERİ GÖR" ÇUBUĞU (MAÇ ARŞİVİNDEN) 🔴 */}
                     <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
                       <div className="flex justify-between items-center w-full">
                         <div className="text-left flex-1">
@@ -893,7 +946,6 @@ export default function AdminRadarPortal() {
                         </div>
                       </div>
                       
-                      {/* Bilenleri Gösteren Akordeon */}
                       {isWinnersOpen && winnersCount > 0 && (
                         <div className="w-full mt-3 p-3 bg-slate-950/40 rounded-lg border border-slate-800/40 text-xs animate-fadeIn shadow-inner">
                           <div className="text-slate-300/80 font-semibold mb-2 border-b border-slate-800/50 pb-1.5 flex justify-between items-center text-[10px] sm:text-[11px]">
@@ -910,7 +962,6 @@ export default function AdminRadarPortal() {
                         </div>
                       )}
                     </div>
-                    {/* Bilenleri Gör Çubuğu Bitiş */}
 
                   </div>
                 );
@@ -1094,6 +1145,122 @@ export default function AdminRadarPortal() {
                      {isPublishing ? '📡 VERİLER SUNUCUYA İLETİLİYOR...' : `🚀 ${bulletinWeek}. HAFTA BÜLTENİNİ MÜHÜRLE VE YAYINLA`}
                   </button>
                </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================================= */}
+        {/* 3. CEPHE: 🔴 YENİ EKLENEN TAHMİN YÖNETİMİ ODASI (SADECE OKUMA) 🔴 */}
+        {/* ========================================================================================= */}
+        {activeTab === 'predictions' && userRole === 'master' && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl font-black text-emerald-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
+                  <span className="text-3xl">📊</span> TAHMİN DURUM PANELİ
+                </h1>
+                <p className="text-slate-400 text-sm mt-1">
+                  Görev kağıtlarını dolduranları ve eksik kalanları buradan takip edebilirsiniz.
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                 <span className="text-slate-400 font-bold text-sm">İNCELENECEK HAFTA:</span>
+                 <select 
+                   value={selectedPredictionWeek} 
+                   onChange={e => setSelectedPredictionWeek(Number(e.target.value))}
+                   className="bg-emerald-950 border border-emerald-500/50 text-emerald-300 font-black text-xl px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] outline-none cursor-pointer"
+                 >
+                    <option value={4}>4. HAFTA</option>
+                    <option value={5}>5. HAFTA</option>
+                    <option value={6}>6. HAFTA</option>
+                    <option value={7}>7. HAFTA</option>
+                    <option value={8}>8. HAFTA</option>
+                    <option value={9}>9. HAFTA</option>
+                    <option value={10}>10. HAFTA</option>
+                 </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              
+              {/* SOL SÜTUN: EKSİKLER (KIRMIZI LİSTE) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                 <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-rose-400 flex items-center gap-2">
+                       <span className="text-xl">⏳</span> TAHMİN GİRMEYENLER
+                    </h2>
+                    <span className="bg-rose-950 text-rose-400 px-3 py-1 rounded-lg text-sm font-bold border border-rose-900/50">
+                       {missingPlayers.length} KİŞİ
+                    </span>
+                 </div>
+                 
+                 <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                    {missingPlayers.length === 0 ? (
+                       <div className="text-center py-8 text-slate-500 italic">Eksik tahmin yok, herkes görevi tamamlamış!</div>
+                    ) : (
+                       missingPlayers.map(id => (
+                         <div key={id} className="bg-slate-950/50 border border-rose-900/30 p-3 rounded-xl flex justify-between items-center group hover:bg-slate-900 transition-colors">
+                            <span className="font-bold text-slate-300 text-sm">{allPlayersList[id]}</span>
+                            <span className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-950/50 px-2 py-1 rounded border border-rose-900/50">BEKLENİYOR</span>
+                         </div>
+                       ))
+                    )}
+                 </div>
+              </div>
+
+              {/* SAĞ SÜTUN: TAMAMLAYANLAR (YEŞİL LİSTE) */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                 <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-emerald-400 flex items-center gap-2">
+                       <span className="text-xl">✅</span> GÖREVİ TAMAMLAYANLAR
+                    </h2>
+                    <span className="bg-emerald-950 text-emerald-400 px-3 py-1 rounded-lg text-sm font-bold border border-emerald-900/50">
+                       {submittedPlayers.length} KİŞİ
+                    </span>
+                 </div>
+                 
+                 <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                    {submittedPlayers.length === 0 ? (
+                       <div className="text-center py-8 text-slate-500 italic">Henüz bu hafta için tahmin giren kimse yok.</div>
+                    ) : (
+                       submittedPlayers.map(id => {
+                          const isExpanded = expandedPlayer === id;
+                          const preds = playerPredictionsMap[id] || [];
+
+                          return (
+                            <div key={id} className={`border rounded-xl transition-all duration-300 overflow-hidden ${isExpanded ? 'bg-emerald-950/20 border-emerald-500/50' : 'bg-slate-950/50 border-emerald-900/30 hover:bg-slate-900'}`}>
+                               <div 
+                                 className="p-3 flex justify-between items-center cursor-pointer"
+                                 onClick={() => setExpandedPlayer(isExpanded ? null : id)}
+                               >
+                                  <span className="font-bold text-emerald-100 text-sm">{allPlayersList[id]}</span>
+                                  <div className="flex items-center gap-3">
+                                     <span className="text-[10px] font-black tracking-widest text-emerald-400 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900/50">TAMAM</span>
+                                     <span className="text-slate-500 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                                  </div>
+                               </div>
+                               
+                               {/* Akordeon Açıldığında Gösterilecek Tahminler */}
+                               {isExpanded && (
+                                  <div className="p-3 bg-slate-950 border-t border-emerald-900/30">
+                                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                        {preds.map((score, index) => (
+                                           <div key={index} className="flex flex-col items-center justify-center bg-slate-900 border border-slate-700 p-1.5 rounded-lg">
+                                              <span className="text-[8px] text-slate-500 mb-1">M{index + 1}</span>
+                                              <span className="text-xs font-black text-amber-400">{score}</span>
+                                           </div>
+                                        ))}
+                                     </div>
+                                  </div>
+                               )}
+                            </div>
+                          )
+                       })
+                    )}
+                 </div>
+              </div>
 
             </div>
           </div>
