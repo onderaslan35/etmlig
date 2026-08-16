@@ -87,9 +87,7 @@ const masterWeek3Data: Record<string, { name: string; puan: number }> = {
   "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 },
   "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 },
   "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 },
-  "262738": { name: "MEVLÜT EVLER", puan: 5 }, 
-  // DÜZELTME: Yanlışlıkla 9 yapılan puan orijinal tarihi puanı olan 4'e çekildi. 
-  "262782": { name: "YUSUF ERBAY", puan: 4 }, 
+  "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262782": { name: "YUSUF ERBAY", puan: 4 }, 
   "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 },
   "262740": { name: "ABDULLAH DİK", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 },
   "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 },
@@ -167,11 +165,14 @@ export default function MasterPuanDurumuPage() {
       
       let w4Base: Record<string, number> = {}; 
       let w4Live: Record<string, number> = {}; 
+      let w4ExactHits: Record<string, number> = {}; // YENİ: Haftanın skor (tam isabet) sayacı
       let isAnyMatchLive = false;
+      let finishedCount = 0; // YENİ: Biten maç sayacı
 
       Object.keys(allPlayersMasterList).forEach(id => {
         w4Base[id] = 0;
         w4Live[id] = 0;
+        w4ExactHits[id] = 0;
       });
 
       if (dbMatches) {
@@ -181,6 +182,9 @@ export default function MasterPuanDurumuPage() {
         });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
+          // Biten maçları sayıyoruz (24'e ulaşınca Ekmel Bonus Motoru ateşlenecek)
+          if (dbMatch.status === 'FINISHED') finishedCount++;
+
           if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = dbMatch.id - 1; 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
@@ -198,6 +202,7 @@ export default function MasterPuanDurumuPage() {
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') {
                 w4Base[wId] += points; 
+                w4ExactHits[wId] += 1; // Sadece biten (onaylanmış) maçların tam isabetleri sayılır
               } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
                 w4Live[wId] += points; 
                 isAnyMatchLive = true;
@@ -205,6 +210,55 @@ export default function MasterPuanDurumuPage() {
             });
           }
         });
+      }
+
+      // 🏆 EKMEL BONUS MOTORU V2.0 🏆
+      // SADECE 24 MAÇIN TAMAMI "FINISHED" OLDUĞUNDA ÇALIŞIR!
+      let puanKraliId: string | null = null;
+      let skorKraliId: string | null = null;
+
+      if (finishedCount === 24) {
+        // 1. MÜSTAKİL PUAN KRALI HESAPLAMA
+        let maxPuan = -1;
+        let maxPuanCount = 0;
+        let tempPuanKrali: string | null = null;
+
+        Object.entries(w4Base).forEach(([id, puan]) => {
+          if (puan > maxPuan) {
+            maxPuan = puan;
+            maxPuanCount = 1; // Zirve el değiştirdi, sayaç 1 oldu
+            tempPuanKrali = id;
+          } else if (puan === maxPuan) {
+            maxPuanCount++; // Zirveye ortak geldi, sayaç arttı (Bonus yanar)
+          }
+        });
+
+        // EĞER ZİRVEDE TEK TABANCAYSA +3 ÇAKILIR!
+        if (maxPuanCount === 1 && tempPuanKrali) {
+          puanKraliId = tempPuanKrali;
+          w4Base[puanKraliId] += 3; 
+        }
+
+        // 2. MÜSTAKİL SKOR (TAM İSABET) KRALI HESAPLAMA
+        let maxSkor = -1;
+        let maxSkorCount = 0;
+        let tempSkorKrali: string | null = null;
+
+        Object.entries(w4ExactHits).forEach(([id, hits]) => {
+          if (hits > maxSkor) {
+            maxSkor = hits;
+            maxSkorCount = 1; // Zirve el değiştirdi, sayaç 1 oldu
+            tempSkorKrali = id;
+          } else if (hits === maxSkor) {
+            maxSkorCount++; // Zirveye ortak geldi, sayaç arttı (Bonus yanar)
+          }
+        });
+
+        // EĞER SKOR ZİRVESİNDE TEK TABANCAYSA +3 ÇAKILIR!
+        if (maxSkorCount === 1 && tempSkorKrali) {
+          skorKraliId = tempSkorKrali;
+          w4Base[skorKraliId] += 3; 
+        }
       }
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
@@ -259,7 +313,17 @@ export default function MasterPuanDurumuPage() {
           const list = Object.keys(allPlayersMasterList).map(id => {
             const basePuan = w4Base[id] || 0; 
             const liveExtra = w4Live[id] || 0; 
-            return { id, name: allPlayersMasterList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none', trendDiff: 0 };
+            return { 
+              id, 
+              name: allPlayersMasterList[id], 
+              puan: basePuan + liveExtra, 
+              liveExtra, 
+              trend: 'none', 
+              trendDiff: 0,
+              // Etiketlerin görünüp görünmeyeceğine karar veren gizli işaretler
+              hasPuanBonus: id === puanKraliId,
+              hasSkorBonus: id === skorKraliId
+            };
           });
           setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         } else {
@@ -270,7 +334,16 @@ export default function MasterPuanDurumuPage() {
           const list = Object.keys(allPlayersMasterList).map(id => {
             const rawObj = dataMap[id];
             const basePuan = rawObj ? rawObj.puan : 0;
-            return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: basePuan, liveExtra: 0, trend: 'none', trendDiff: 0 };
+            return { 
+              id, 
+              name: rawObj ? rawObj.name : allPlayersMasterList[id], 
+              puan: basePuan, 
+              liveExtra: 0, 
+              trend: 'none', 
+              trendDiff: 0,
+              hasPuanBonus: false,
+              hasSkorBonus: false
+            };
           });
           setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         }
@@ -370,7 +443,7 @@ export default function MasterPuanDurumuPage() {
                       </div>
                     </td>
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
-                      <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap overflow-hidden">
                         
                         {(() => {
                           const trophyCount = (row.name.match(/🏆/g) || []).length;
@@ -378,7 +451,7 @@ export default function MasterPuanDurumuPage() {
                           
                           return (
                             <>
-                              <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>
+                              <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink-0" title={cleanName}>
                                 {cleanName}
                               </span>
                               
@@ -390,6 +463,18 @@ export default function MasterPuanDurumuPage() {
                             </>
                           );
                         })()}
+
+                        {/* 🌟 4. HAFTAYA ÖZEL ETİKETLER (SADECE O HAFTANIN SEKME İÇİNDE GÖRÜNÜR) 🌟 */}
+                        {activeTab === 'week4' && row.hasPuanBonus && (
+                          <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1">
+                            +3 LİDERLİK BONUSU
+                          </span>
+                        )}
+                        {activeTab === 'week4' && row.hasSkorBonus && (
+                          <span className="bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1">
+                            +3 SKOR BONUSU
+                          </span>
+                        )}
                         
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
