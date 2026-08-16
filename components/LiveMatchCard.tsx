@@ -159,7 +159,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
-  "262872": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
 // 4. HAFTA TÜM FİKSTÜR
@@ -402,7 +402,6 @@ export default function LiveMatchCard() {
       const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
       const isWinnersOpen = openWinnersMap[match.id] !== false;
       
-      // 🔴 CAN ALICI NOKTA: EĞER BİTEN MAÇ GRUBUNDAYSA VE ÜZERİNE TIKLANMADIYSA OTOMATİK OLARAK KOCAMAN AÇIKTIR 🔴
       const isExpanded = expandedMatches[match.id] !== undefined ? expandedMatches[match.id] : isFinishedGroup;
 
       const dbMatch = liveMatchesData[match.id] || {};
@@ -437,6 +436,7 @@ export default function LiveMatchCard() {
         currentWinners = Object.keys(week4PredictionsData)
           .filter(id => week4PredictionsData[id][match.id - 1] === targetScore)
           .map(id => allPlayersList[id])
+          .filter(name => name) // HATA OLMAMASI İÇİN: Sadece undefined olmayan isimleri al
           .sort((a, b) => a.localeCompare(b, 'tr'));
       }
       const winnersCount = currentWinners.length;
@@ -662,7 +662,6 @@ export default function LiveMatchCard() {
           
           {isFinishedAccordionOpen && (
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
-              {/* İkinci parametre true olduğu için Biten Maçlar açıldığında kocaman (expanded) render edilecek */}
               {finishedMatches.map(match => renderMatchCard(match, true))}
             </div>
           )}
@@ -694,7 +693,6 @@ export default function LiveMatchCard() {
           
           {isLiveAccordionOpen && (
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
-              {/* İkinci parametre false olduğu için Canlı Maçlar ipince (bilgi çubuğu) render edilecek */}
               {activeMatches.map(match => renderMatchCard(match, false))}
             </div>
           )}
