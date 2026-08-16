@@ -226,7 +226,7 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  // 🔴 AKTİF SEKME: ÜÇÜNCÜ BİR ODA EKLENDİ ('predictions')
+  // 🔴 AKTİF SEKME
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions'>('live');
 
   // --- CANLI OPERASYON STATELERİ ---
@@ -243,14 +243,12 @@ export default function AdminRadarPortal() {
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
-  // --- 🔴 TAHMİN YÖNETİM ODASI STATELERİ 🔴 ---
+  // --- TAHMİN YÖNETİM ODASI STATELERİ ---
   const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(5);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
   const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
-  
-  // 🔴 YENİ EKLENEN: TAHMİN ODASINDA LOGOLARI GÖSTERMEK İÇİN BÜLTEN BİLGİSİ TUTUCU
   const [predictionBulletinData, setPredictionBulletinData] = useState<any[]>([]);
 
   const categoriesList = [
@@ -374,7 +372,7 @@ export default function AdminRadarPortal() {
   }, [activeTab, selectedLiveWeek, isAuthenticated]);
 
   // ----------------------------------------------------
-  // 🟢 2. MOTOR: BÜLTEN FABRİKASININ "ZİHİN ÇİPİ"
+  // 🟢 2. MOTOR: BÜLTEN FABRİKASI
   // ----------------------------------------------------
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
@@ -413,14 +411,13 @@ export default function AdminRadarPortal() {
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
   // ----------------------------------------------------
-  // 🟢 3. MOTOR: TAHMİN YÖNETİMİ ODASI (YENİ SADECE OKUMA VE LOGOLU TAHMİN)
+  // 🟢 3. MOTOR: TAHMİN YÖNETİMİ ODASI
   // ----------------------------------------------------
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
     if (activeTab !== 'predictions') return;
 
     const fetchPredictionData = async () => {
-      // 1. Önce o haftanın maç bültenini çekelim (Logolar ve takım isimleri için)
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedPredictionWeek).order('match_index', { ascending: true });
       let currentBultenForPreds = bultenData || [];
       if (selectedPredictionWeek === 4 && currentBultenForPreds.length === 0) {
@@ -428,21 +425,18 @@ export default function AdminRadarPortal() {
       }
       setPredictionBulletinData(currentBultenForPreds);
 
-      // 2. Tahmin verilerini çekelim
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
       
       const pMap: Record<string, string[]> = {};
       const allUserIds = Object.keys(allPlayersList);
 
       if (selectedPredictionWeek === 4) {
-         // Statik 4. Hafta Verisini Kullan
          allUserIds.forEach(id => {
             if (week4PredictionsData[id] && week4PredictionsData[id].length > 0) {
                pMap[id] = week4PredictionsData[id];
             }
          });
       } else if (pData) {
-         // Veritabanından O Haftayı Çek
          pData.forEach(row => {
             if (!pMap[row.user_id]) pMap[row.user_id] = Array(24).fill('-');
             pMap[row.user_id][row.match_index - 1] = row.predicted_score;
@@ -453,14 +447,10 @@ export default function AdminRadarPortal() {
       const missing: string[] = [];
 
       allUserIds.forEach(id => {
-         if (pMap[id]) {
-            submitted.push(id);
-         } else {
-            missing.push(id);
-         }
+         if (pMap[id]) submitted.push(id);
+         else missing.push(id);
       });
 
-      // İsimlerine göre sırala
       submitted.sort((a, b) => (allPlayersList[a] || '').localeCompare(allPlayersList[b] || '', 'tr'));
       missing.sort((a, b) => (allPlayersList[a] || '').localeCompare(allPlayersList[b] || '', 'tr'));
 
@@ -1167,7 +1157,7 @@ export default function AdminRadarPortal() {
         )}
 
         {/* ========================================================================================= */}
-        {/* 3. CEPHE: 🔴 YENİ EKLENEN TAHMİN YÖNETİMİ ODASI (LOGOLU) 🔴 */}
+        {/* 3. CEPHE: 🔴 YENİ EKLENEN TAHMİN YÖNETİMİ ODASI (LOGOLU ESTETİK) 🔴 */}
         {/* ========================================================================================= */}
         {activeTab === 'predictions' && userRole === 'master' && (
           <div className="animate-fade-in">
@@ -1258,44 +1248,44 @@ export default function AdminRadarPortal() {
                                   </div>
                                </div>
                                
-                               {/* Akordeon Açıldığında Gösterilecek LOGOLU Tahminler */}
+                               {/* Akordeon Açıldığında Gösterilecek ESTETİK LOGOLU Tahminler */}
                                {isExpanded && (
                                   <div className="p-3 bg-slate-950 border-t border-emerald-900/30">
                                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                                         {preds.map((score, index) => {
-                                           // İlgili maçın bilgilerini bültenden çek
                                            const matchInfo = predictionBulletinData[index] || {};
                                            const hTeam = matchInfo.home_team || "EV";
                                            const aTeam = matchInfo.away_team || "DEP";
                                            
-                                           // Logoları al (Yoksa default kullan)
                                            const hLogo = localTeamLogos[hTeam] || "/logos/default.png";
                                            const aLogo = localTeamLogos[aTeam] || "/logos/default.png";
                                            
-                                           // 3 Harfli Kısa İsimler
                                            const hShort = hTeam.substring(0, 3);
                                            const aShort = aTeam.substring(0, 3);
 
                                            return (
-                                              <div key={index} className="flex flex-col items-center justify-center bg-slate-900 border border-slate-700/50 p-2 rounded-xl shadow-sm hover:border-emerald-500/50 transition-colors">
-                                                 <span className="text-[9px] text-slate-500 mb-1.5 font-bold tracking-widest">M{index + 1}</span>
+                                              <div key={index} className="relative flex flex-col items-center justify-center bg-slate-900 border border-slate-700/50 pt-4 pb-2 px-1 rounded-xl shadow-sm hover:border-emerald-500/50 transition-colors">
+                                                 {/* Maç Numarası - Tam Tepe Ortada */}
+                                                 <div className="absolute -top-2 bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-[8px] font-black tracking-widest text-slate-400 shadow-sm">
+                                                   M{index + 1}
+                                                 </div>
                                                  
-                                                 <div className="flex items-center justify-between w-full px-1">
-                                                    {/* EV SAHİBİ KISMI */}
-                                                    <div className="flex flex-col items-center gap-1 w-1/3">
-                                                       <img src={hLogo} alt={hShort} className="w-5 h-5 object-contain drop-shadow-md" />
-                                                       <span className="text-[8px] font-bold text-slate-400">{hShort}</span>
+                                                 <div className="flex items-center justify-between w-full mt-1">
+                                                    {/* EV SAHİBİ */}
+                                                    <div className="flex flex-col items-center justify-center w-1/3">
+                                                       <img src={hLogo} alt={hShort} className="w-6 h-6 object-contain drop-shadow-md mb-0.5" />
+                                                       <span className="text-[8px] font-bold text-slate-400 uppercase">{hShort}</span>
                                                     </div>
 
-                                                    {/* SKOR KISMI */}
-                                                    <div className="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex-1 flex justify-center mx-1">
-                                                       <span className="text-[11px] font-black text-amber-400">{score}</span>
+                                                    {/* SKOR (Ortadaki tire ve boşluklar yok edildi) */}
+                                                    <div className="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-center items-center shadow-inner">
+                                                       <span className="text-xs font-black text-amber-400 tracking-wider">{score}</span>
                                                     </div>
 
-                                                    {/* DEPLASMAN KISMI */}
-                                                    <div className="flex flex-col items-center gap-1 w-1/3">
-                                                       <img src={aLogo} alt={aShort} className="w-5 h-5 object-contain drop-shadow-md" />
-                                                       <span className="text-[8px] font-bold text-slate-400">{aShort}</span>
+                                                    {/* DEPLASMAN */}
+                                                    <div className="flex flex-col items-center justify-center w-1/3">
+                                                       <img src={aLogo} alt={aShort} className="w-6 h-6 object-contain drop-shadow-md mb-0.5" />
+                                                       <span className="text-[8px] font-bold text-slate-400 uppercase">{aShort}</span>
                                                     </div>
                                                  </div>
                                               </div>
