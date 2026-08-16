@@ -195,14 +195,13 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  // İKİ FARKLI AKORDEON DURUMU (Canlılar hep açık başlasın, Bitenler kapalı)
+  // İKİ FARKLI AKORDEON DURUMU 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
-  // 🔴 MAÇLAR OTOMATİK OLARAK İNCE (BİLGİ ÇUBUĞU) BAŞLAYACAK 🔴
-  // Sadece tıklanınca isExpanded true olacak. Başlangıçta hepsi false.
+  // Maçların üzerine tıklanıldığında açılmasını kontrol eden State
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
@@ -397,11 +396,14 @@ export default function LiveMatchCard() {
      return dbMatch.status === 'FINISHED';
   });
 
+  // isFinishedGroup: Biten maçlar grubundaysa kocamandır.
   const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
       const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
       const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
       const isWinnersOpen = openWinnersMap[match.id] !== false;
-      const isExpanded = !!expandedMatches[match.id];
+      
+      // 🔴 CAN ALICI NOKTA: EĞER BİTEN MAÇ GRUBUNDAYSA VE ÜZERİNE TIKLANMADIYSA OTOMATİK OLARAK KOCAMAN AÇIKTIR 🔴
+      const isExpanded = expandedMatches[match.id] !== undefined ? expandedMatches[match.id] : isFinishedGroup;
 
       const dbMatch = liveMatchesData[match.id] || {};
       let matchStatus = dbMatch.status || 'NOT_STARTED';
@@ -479,7 +481,7 @@ export default function LiveMatchCard() {
             </>
           )}
 
-          {/* İPİNCE BİLGİ ÇUBUĞU MODU (SAYFA İLK AÇILDIĞINDA GEÇERLİ OLAN) */}
+          {/* İPİNCE BİLGİ ÇUBUĞU MODU */}
           {!isExpanded && (
             <div
               onClick={() => toggleMatchExpansion(match.id)}
@@ -511,7 +513,7 @@ export default function LiveMatchCard() {
             </div>
           )}
 
-          {/* SİNEMA PERDESİ GİBİ KOCAMAN EKRAN (SADECE TIKLANINCA AÇILIR) */}
+          {/* SİNEMA PERDESİ GİBİ KOCAMAN EKRAN */}
           {isExpanded && (
             <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
               <button 
@@ -640,7 +642,34 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
-      {/* 🔴 CANLI VE BEKLEYEN MAÇLAR BÖLÜMÜ 🔴 */}
+      {/* 🔴 BİTEN MAÇLAR BÖLÜMÜ (ÜSTE ALINDI) 🔴 */}
+      {finishedMatches.length > 0 && (
+        <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
+          <button 
+            onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
+            className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group"
+          >
+            <div className="flex-1"></div> 
+            <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">
+              📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})
+            </h2>
+            <div className="flex-1 flex justify-end">
+              <div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}>
+                <span className="text-slate-500 text-[10px] sm:text-xs">▼</span>
+              </div>
+            </div>
+          </button>
+          
+          {isFinishedAccordionOpen && (
+            <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
+              {/* İkinci parametre true olduğu için Biten Maçlar açıldığında kocaman (expanded) render edilecek */}
+              {finishedMatches.map(match => renderMatchCard(match, true))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 🔴 CANLI VE BEKLEYEN MAÇLAR BÖLÜMÜ (ALTA ALINDI) 🔴 */}
       {activeMatches.length > 0 && (
         <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
           <button 
@@ -665,33 +694,8 @@ export default function LiveMatchCard() {
           
           {isLiveAccordionOpen && (
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+              {/* İkinci parametre false olduğu için Canlı Maçlar ipince (bilgi çubuğu) render edilecek */}
               {activeMatches.map(match => renderMatchCard(match, false))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 🔴 BİTEN MAÇLAR BÖLÜMÜ 🔴 */}
-      {finishedMatches.length > 0 && (
-        <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
-          <button 
-            onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
-            className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group"
-          >
-            <div className="flex-1"></div> 
-            <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">
-              📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})
-            </h2>
-            <div className="flex-1 flex justify-end">
-              <div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}>
-                <span className="text-slate-500 text-[10px] sm:text-xs">▼</span>
-              </div>
-            </div>
-          </button>
-          
-          {isFinishedAccordionOpen && (
-            <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
-              {finishedMatches.map(match => renderMatchCard(match, true))}
             </div>
           )}
         </div>
