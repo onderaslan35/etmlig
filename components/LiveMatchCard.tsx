@@ -159,7 +159,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
+  "262872": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
 // 4. HAFTA TÜM FİKSTÜR
@@ -201,9 +201,9 @@ export default function LiveMatchCard() {
   
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
-  // 🔴 MAÇLAR OTOMATİK OLARAK CANLIYSA BÜYÜK (İS_EXPANDED=TRUE) BAŞLAYACAK 🔴
+  // 🔴 MAÇLAR OTOMATİK OLARAK İNCE (BİLGİ ÇUBUĞU) BAŞLAYACAK 🔴
+  // Sadece tıklanınca isExpanded true olacak. Başlangıçta hepsi false.
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
-  const [initialExpandDone, setInitialExpandDone] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
@@ -326,16 +326,6 @@ export default function LiveMatchCard() {
           
           let currentBoard: Record<string, any> = {}; 
           let hasLiveScores = false;
-          
-          // Maçları otomatik açık başlatma mantığı
-          if(!initialExpandDone) {
-             const defaultExpands: Record<number, boolean> = {};
-             todaysMatches.forEach(match => {
-                defaultExpands[match.id] = true; 
-             });
-             setExpandedMatches(defaultExpands);
-             setInitialExpandDone(true);
-          }
 
           todaysMatches.forEach(match => {
             const dbMatch = map[match.id];
@@ -379,7 +369,7 @@ export default function LiveMatchCard() {
     fetchFromDB(); 
     const interval = setInterval(fetchFromDB, 5000); 
     return () => clearInterval(interval);
-  }, [initialExpandDone]);
+  }, []);
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
@@ -397,7 +387,6 @@ export default function LiveMatchCard() {
 
   if (todaysMatchesList.length === 0) return null;
 
-  // 🔴 MAÇLARI "BİTENLER" VE "CANLILAR/BEKLEYENLER" DİYE İKİYE AYIR 🔴
   const activeMatches = todaysMatchesList.filter(match => {
      const dbMatch = liveMatchesData[match.id] || {};
      return dbMatch.status !== 'FINISHED';
@@ -490,7 +479,7 @@ export default function LiveMatchCard() {
             </>
           )}
 
-          {/* İPİNCE MOD EKRANI (İsteğe bağlı olarak kapatılırsa) */}
+          {/* İPİNCE BİLGİ ÇUBUĞU MODU (SAYFA İLK AÇILDIĞINDA GEÇERLİ OLAN) */}
           {!isExpanded && (
             <div
               onClick={() => toggleMatchExpansion(match.id)}
@@ -522,7 +511,7 @@ export default function LiveMatchCard() {
             </div>
           )}
 
-          {/* SİNEMA PERDESİ GİBİ KOCAMAN EKRAN (Varsayılan Açık) */}
+          {/* SİNEMA PERDESİ GİBİ KOCAMAN EKRAN (SADECE TIKLANINCA AÇILIR) */}
           {isExpanded && (
             <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
               <button 
