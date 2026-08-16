@@ -181,18 +181,17 @@ export default function SkorDurumuPage() {
       dbMatches.forEach(row => { if (row && row.id) uniqueMatches[row.id] = row; });
 
       Object.values(uniqueMatches).forEach(dbMatch => {
-        if (dbMatch && dbMatch.home_team && dbMatch.away_team && dbMatch.home_score && dbMatch.away_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+        if (dbMatch && dbMatch.home_score && dbMatch.away_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
           const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
           
-          const matchIndex = week4Matches.findIndex(
-            wm => wm.home.toLowerCase() === dbMatch.home_team.toLowerCase() &&
-                  wm.away.toLowerCase() === dbMatch.away_team.toLowerCase()
-          );
+          // 🛡️ DÖRDÜNCÜ HAFTAYI EŞLEŞTİRMEK İÇİN EN GÜVENLİ ID YÖNTEMİ 🛡️
+          const matchIndex = dbMatch.id - 1; 
 
-          if (matchIndex !== -1) {
+          if (matchIndex >= 0 && matchIndex < week4Matches.length) {
             const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
             
             Object.keys(week4PredictionsData).forEach(playerId => {
+              // Tahmini varsa ve skorla eşleştiyse
               if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
                 if (dbMatch.status === 'FINISHED') {
                     if (isTff) w4BaseTff[playerId] += 1;
@@ -257,7 +256,8 @@ export default function SkorDurumuPage() {
 
       return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
     })
-    .filter(p => p.skorAdedi > 0) // Sadece skoru olanları göster
+    // 🛡️ Murat Aydemir İstisnası: Skoru 0 olsa bile görünecek. Diğer 0'lar (hayaletler) uçacak! 🛡️
+    .filter(p => p.skorAdedi > 0 || p.id === "262712") 
     .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
     if (activeTab === 'total') {
@@ -267,7 +267,7 @@ export default function SkorDurumuPage() {
          else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
          else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
          return { id, refSkor };
-      }).filter(p => p.refSkor > 0).sort((a, b) => b.refSkor - a.refSkor);
+      }).filter(p => p.refSkor > 0 || p.id === "262712").sort((a, b) => b.refSkor - a.refSkor);
       
       const prevRanks: Record<string, number> = {};
       referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
