@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 
 // 🔴 ANA YARIŞMACI LİSTESİ 🔴
@@ -23,40 +23,6 @@ const staticPlayersList: Record<string, string> = {
   "262787": "MUSTAFA TUCİ", "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "262790": "CUMALİ SÖKER", "351925": "ALİOS GÖZTEPE",
   "350909": "DİNÇER ÖZER", "262815": "MURAT KAYA", "262816": "SEDAT SEDAT", "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK",
   "262797": "ÖMER DOGER"
-};
-
-// 🔴 GEÇİCİ KÖPRÜ: 4. Hafta veritabanında yoksa buradan okunacak
-const week4Matches = [
-  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
-  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
-  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
-  { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
-  { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
-  { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
-  { id: 7, weekLabel: "4. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
-  { id: 8, weekLabel: "4. Hafta - 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
-  { id: 9, weekLabel: "4. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
-  { id: 10, weekLabel: "4. Hafta - 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
-  { id: 11, weekLabel: "4. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
-  { id: 12, weekLabel: "4. Hafta - 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
-  { id: 13, weekLabel: "4. Hafta - 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
-  { id: 14, weekLabel: "4. Hafta - 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
-  { id: 15, weekLabel: "4. Hafta - 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
-  { id: 16, weekLabel: "4. Hafta - 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
-  { id: 17, weekLabel: "4. Hafta - 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
-  { id: 18, weekLabel: "4. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
-  { id: 19, weekLabel: "4. Hafta - 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
-  { id: 20, weekLabel: "4. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
-  { id: 21, weekLabel: "4. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
-  { id: 22, weekLabel: "4. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
-  { id: 23, weekLabel: "4. Hafta - 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
-  { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
-];
-
-const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
 const generateTimeOptions = () => {
@@ -88,7 +54,6 @@ const generateWeekDates = (weekNum: number) => {
 };
 
 const getUniqueMatchId = (week: number, index: number) => {
-    if (week === 4) return index; 
     return (week * 100) + index;
 };
 
@@ -112,28 +77,14 @@ export default function AdminRadarPortal() {
   const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>({});
   const [leagueTeamsMap, setLeagueTeamsMap] = useState<Record<string, string[]>>({});
   
-  // 🚀 DİNAMİK KATEGORİ LİSTESİ (TÜM LİGLER BURADA TOPLANACAK)
-  const [dynamicCategoriesList, setDynamicCategoriesList] = useState<string[]>([]);
-  
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamLeague, setNewTeamLeague] = useState('');
   const [newTeamLogo, setNewTeamLogo] = useState('');
   const [isTeamLoading, setIsTeamLoading] = useState(false);
 
-  const defaultCategoriesList = [
-    "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG", "AMATÖR LİG",
-    "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", "FRANSA LIGUE 1", "İTALYA SERIE A", "İSPANYA LA LIGA",
-    "UEFA ŞAMPİYONLAR LİGİ GURUP AŞAMASI", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ",
-    "UEFA Ş.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA Ş.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA Ş.L. PLAY OFF İLK MAÇ", "UEFA Ş.L. PLAY OFF RÖVANŞ",
-    "UEFA AVRUPA LİGİ GURUP AŞAMASI", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ",
-    "UEFA A.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA A.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA A.L. PLAY OFF İLK MAÇ", "UEFA A.L. PLAY OFF RÖVANŞ",
-    "UEFA KONFERANS LİGİ GURUP AŞAMASI", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ",
-    "UEFA K.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA K.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA K.L. PLAY OFF İLK MAÇ", "UEFA K.L. PLAY OFF RÖVANŞ",
-    "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ",
-    "İNGİLTERE SÜPER KUPA", "UEFA SÜPER KUPA",
-    "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", "EREDIVISIE", "FA CUP", "SCOTTISH PREMIER LEAGUE", "PORTEKİZ LİGİ",
-    "FIFA DÜNYA KUPASI", "MİLLİ TAKIM MAÇI"
-  ];
+  // 🚀 SES BİLDİRİMİ STATE'İ
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const previousScoresRef = useRef<Record<string, number>>({});
 
   const teamLeagueOptions = [
     "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG",
@@ -142,7 +93,7 @@ export default function AdminRadarPortal() {
     "MİLLİ TAKIMLAR", "ÇEŞİTLİ AVRUPA TAKIMLARI", "DİĞER"
   ];
 
-  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
+  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(5);
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
@@ -161,6 +112,21 @@ export default function AdminRadarPortal() {
   const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
   const [predictionBulletinData, setPredictionBulletinData] = useState<any[]>([]);
 
+  const categoriesList = [
+    "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG", "AMATÖR LİG",
+    "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", "FRANSA LIGUE 1", "İTALYA SERIE A", "İSPANYA LA LIGA",
+    "UEFA ŞAMPİYONLAR LİGİ GURUP AŞAMASI", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ",
+    "UEFA Ş.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA Ş.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA Ş.L. PLAY OFF İLK MAÇ", "UEFA Ş.L. PLAY OFF RÖVANŞ",
+    "UEFA AVRUPA LİGİ GURUP AŞAMASI", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ",
+    "UEFA A.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA A.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA A.L. PLAY OFF İLK MAÇ", "UEFA A.L. PLAY OFF RÖVANŞ",
+    "UEFA KONFERANS LİGİ GURUP AŞAMASI", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ",
+    "UEFA K.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA K.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA K.L. PLAY OFF İLK MAÇ", "UEFA K.L. PLAY OFF RÖVANŞ",
+    "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ",
+    "İNGİLTERE SÜPER KUPA", "UEFA SÜPER KUPA",
+    "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", "EREDIVISIE", "FA CUP", "SCOTTISH PREMIER LEAGUE", "PORTEKİZ LİGİ",
+    "FIFA DÜNYA KUPASI", "MİLLİ TAKIM MAÇI"
+  ];
+  
   const [bulletinMatches, setBulletinMatches] = useState(
     Array.from({ length: 24 }, (_, i) => ({
       match_index: i + 1,
@@ -211,10 +177,6 @@ export default function AdminRadarPortal() {
 
        setTeamLogosMap(logos);
        setLeagueTeamsMap(leagues);
-       
-       // 🚀 KATEGORİLERİ DİNAMİK OLARAK BİRLEŞTİR VE GÜNCELLE
-       const combinedCategories = Array.from(new Set([...defaultCategoriesList, ...Object.keys(leagues)])).sort((a, b) => a.localeCompare(b, 'tr'));
-       setDynamicCategoriesList(combinedCategories);
     }
   };
 
@@ -267,17 +229,12 @@ export default function AdminRadarPortal() {
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek);
 
       let currentBulten = bultenData || [];
-
-      if (selectedLiveWeek === 4 && currentBulten.length === 0) {
-         currentBulten = week4Matches.map(m => ({
-            match_index: m.id, week_num: 4, category: m.category, match_date: m.date, match_time: m.time, home_team: m.homeTeam, away_team: m.awayTeam
-         }));
-      }
-
       setLiveMatchesDB(currentBulten);
 
       const initialScores: Record<number, { home: string, away: string }> = {};
       const lockedMatches: Record<number, boolean> = {};
+      
+      let goalHappened = false;
 
       currentBulten.forEach(m => {
          const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
@@ -288,12 +245,30 @@ export default function AdminRadarPortal() {
            if (liveInfo.status === 'FINISHED') {
               lockedMatches[m.match_index] = true;
            }
+
+           // 🔴 SES MOTORU: GOL KONTROLÜ
+           if (liveInfo.home_score !== '-' && liveInfo.away_score !== '-') {
+             const newTotal = parseInt(liveInfo.home_score) + parseInt(liveInfo.away_score);
+             const prevTotal = previousScoresRef.current[uniqueId];
+             
+             if (prevTotal !== undefined && newTotal > prevTotal) {
+               goalHappened = true;
+             }
+             previousScoresRef.current[uniqueId] = newTotal;
+           }
          } else {
            initialScores[m.match_index] = { home: "-", away: "-" };
          }
       });
+      
       setAdminScores(initialScores);
       setDistributedMatches(lockedMatches);
+
+      // 🔴 SES MOTORU: EĞER GOL VARSA VE SES AÇIKSA PATLAT!
+      if (goalHappened && isSoundEnabled) {
+         const audio = new Audio('/sounds/goal.mp3');
+         audio.play().catch(e => console.log("Ses çalınamadı:", e));
+      }
 
       if (pData) {
          const pMap: Record<string, Record<number, string>> = {};
@@ -305,8 +280,19 @@ export default function AdminRadarPortal() {
       }
     };
     
-    if (activeTab === 'live') fetchLiveAdminData();
-  }, [activeTab, selectedLiveWeek, isAuthenticated]);
+    if (activeTab === 'live') {
+        fetchLiveAdminData();
+        
+        // Supabase Realtime ile Canlı Skor Değişikliklerini Dinle
+        const channel = supabase.channel('public:live_matches')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
+                fetchLiveAdminData();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }
+  }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled]);
 
 
   useEffect(() => {
@@ -352,9 +338,6 @@ export default function AdminRadarPortal() {
     const fetchPredictionData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedPredictionWeek).order('match_index', { ascending: true });
       let currentBultenForPreds = bultenData || [];
-      if (selectedPredictionWeek === 4 && currentBultenForPreds.length === 0) {
-         currentBultenForPreds = week4Matches.map(m => ({ match_index: m.id, home_team: m.homeTeam, away_team: m.awayTeam }));
-      }
       setPredictionBulletinData(currentBultenForPreds);
 
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
@@ -362,13 +345,7 @@ export default function AdminRadarPortal() {
       const pMap: Record<string, string[]> = {};
       const allUserIds = Object.keys(mergedPlayers);
 
-      if (selectedPredictionWeek === 4) {
-         allUserIds.forEach(id => {
-            if (week4PredictionsData[id] && week4PredictionsData[id].length > 0) {
-               pMap[id] = week4PredictionsData[id];
-            }
-         });
-      } else if (pData) {
+      if (pData) {
          pData.forEach(row => {
             if (!pMap[row.user_id]) pMap[row.user_id] = Array(24).fill('-');
             pMap[row.user_id][row.match_index - 1] = row.predicted_score;
@@ -622,12 +599,8 @@ export default function AdminRadarPortal() {
     if (upCat.includes("KADINLAR")) return "TÜRKİYE KADINLAR SÜPER LİG";
     if (upCat.includes("KUPASI") || upCat.includes("KUPA")) return "TÜRKİYE KUPASI";
     if (upCat.includes("AMATÖR")) return "AMATÖR LİG";
-    
-    // 🚀 VERİTABANINDAN EKLENEN YENİ LİGLER İÇİN DİNAMİK KONTROL!
     if (leagueTeamsMap[upCat]) return upCat;
-
     if (upCat.includes("DİĞER") || upCat === "DİĞER") return "DİĞER";
-    
     return "ÇEŞİTLİ AVRUPA TAKIMLARI"; 
   };
 
@@ -797,7 +770,7 @@ export default function AdminRadarPortal() {
         </div>
 
         {/* ========================================================================================= */}
-        {/* 1. CEPHE: CANLI MAÇ OPERASYONU */}
+        {/* 🚀🚀 1. CEPHE: CANLI MAÇ OPERASYONU (YENİLENMİŞ MAÇ ARŞİVİ EFEKTLERİYLE) 🚀🚀 */}
         {/* ========================================================================================= */}
         {activeTab === 'live' && (
           <div className="animate-fade-in">
@@ -812,6 +785,18 @@ export default function AdminRadarPortal() {
               </div>
               
               <div className="flex items-center gap-3">
+                 {/* 🚀 YENİ: GOL SESİ AÇ/KAPAT BUTONU */}
+                 <button 
+                    onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                    className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all mr-2 shadow-md ${
+                        isSoundEnabled 
+                        ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500' 
+                        : 'bg-slate-800/50 text-slate-500 border border-slate-700'
+                    }`}
+                 >
+                    {isSoundEnabled ? '🔊 GOL SESİ AÇIK' : '🔇 GOL SESİ KAPALI'}
+                 </button>
+
                  <span className="text-slate-400 font-bold text-sm">YÖNETİLECEK HAFTA:</span>
                  <select 
                    value={selectedLiveWeek} 
@@ -856,17 +841,10 @@ export default function AdminRadarPortal() {
                   const targetScore = `${homeScore}-${awayScore}`;
                   
                   let predictionsSource = predictionsDB;
-                  if (selectedLiveWeek === 4) {
-                      predictionsSource = week4PredictionsData as any;
-                  }
-
+                  
                   currentWinners = Object.keys(predictionsSource)
                     .filter(uid => {
-                        if (selectedLiveWeek === 4) {
-                            return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
-                        } else {
-                            return predictionsSource[uid] && predictionsSource[uid][match.match_index] === targetScore;
-                        }
+                        return predictionsSource[uid] && predictionsSource[uid][match.match_index] === targetScore;
                     })
                     .map(uid => mergedPlayers[uid] || "Bilinmeyen")
                     .sort((a, b) => a.localeCompare(b, 'tr'));
@@ -887,6 +865,7 @@ export default function AdminRadarPortal() {
                 const isLocked = distributedMatches[match.match_index];
 
                 return (
+                  // 🚀 KART TASARIMI MAÇ ARŞİVİ İLE AYNI YAPILDI (Genişlik, Gölge, Arkaplan)
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                     <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
                       {theme.bgImg && (
@@ -896,6 +875,7 @@ export default function AdminRadarPortal() {
                         </>
                       )}
                       <div className="relative z-10 flex flex-col h-full justify-between">
+                        
                         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
                           <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
                             {match.week_num}. Hafta - {match.match_index}. MAÇ
@@ -904,15 +884,20 @@ export default function AdminRadarPortal() {
                             🏆 {match.category}
                           </span>
                         </div>
+                        
                         <div className="flex items-center justify-between px-0 sm:px-4">
+                          
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center relative z-20">
-                              <img src={homeLogoUrl} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-lg" />
+                            {/* 🚀 LOGOLAR BÜYÜTÜLDÜ VE EFEKT EKLENDİ */}
+                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                              <img src={homeLogoUrl} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                             </div>
-                            <span className="text-white font-extrabold text-[10px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{homeTeamUpper}</span>
+                            <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{homeTeamUpper}</span>
                           </div>
-                          <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-32 z-30">
-                            <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
+
+                          <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
+                            {/* 🚀 SKOR KUTUSU BÜYÜTÜLDÜ (MAÇ ARŞİVİ BOYUTU) */}
+                            <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select disabled={isLocked} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80">
                                 {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                               </select>
@@ -922,34 +907,39 @@ export default function AdminRadarPortal() {
                               </select>
                             </div>
                           </div>
+
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center relative z-20">
-                              <img src={awayLogoUrl} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-lg" />
+                             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                              <img src={awayLogoUrl} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                             </div>
-                            <span className="text-white font-extrabold text-[10px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{awayTeamUpper}</span>
+                            <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{awayTeamUpper}</span>
                           </div>
+
                         </div>
+
+                        {/* 🚀 BUTON KISMI (Maç bitmediyse butonlar burada) */}
                         <div className="flex justify-center gap-2 mt-5 min-h-[32px] items-center">
                           {isLocked ? (
-                            <div className="flex flex-col gap-2 w-full mt-2">
-                              <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner text-center">
+                            <div className="w-full text-center">
+                              <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner inline-block w-full">
                                 ✅ BU MAÇIN PUANLARI DAĞITILDI
                               </div>
-                              <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mx-auto w-3/4">
+                              <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
                                 İptal Et & Puanları Geri Al
                               </button>
                             </div>
                           ) : (
                             <>
-                              <button onClick={() => handleAction('Skoru Güncelle', match.match_index, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all">Skoru Güncelle</button>
+                              <button onClick={() => handleAction('Skoru Güncelle', match.match_index, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all shadow-md">Skoru Kaydet</button>
                               <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">Maçı Bitir (Dağıt)</button>
-                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all">Resetle</button>
+                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">Resetle</button>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
 
+                    {/* 🚀 ALT KISIM (Bilenler ve Bildirimler - Maç Arşivi ile birebir aynı) */}
                     <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative`}>
                       <div className="flex justify-between items-center w-full">
                         <div className="text-left flex-1">
@@ -958,8 +948,8 @@ export default function AdminRadarPortal() {
                           ) : winnersCount === 0 ? (
                             <span className="text-[10px] sm:text-xs font-medium text-slate-400 italic drop-shadow-sm">Bu skoru bilen yok</span>
                           ) : (
-                            <span className="text-[10px] sm:text-xs font-medium text-blue-200">
-                              <strong className="text-amber-400">{winnersCount} kişi</strong> tam isabetli
+                            <span className="text-[10px] sm:text-xs font-medium text-amber-400">
+                              <strong>{winnersCount} kişi</strong> tam isabetli
                             </span>
                           )}
                         </div>
@@ -1081,7 +1071,6 @@ export default function AdminRadarPortal() {
                               </td>
                               
                               <td className="p-2">
-                                 {/* 🚀 ARTIK DİNAMİK KATEGORİ LİSTESİNİ KULLANIYORUZ */}
                                  <select 
                                    value={m.category} 
                                    onChange={e => handleBulletinChange(idx, 'category', e.target.value)}
@@ -1092,7 +1081,7 @@ export default function AdminRadarPortal() {
                                       : 'bg-slate-950 border border-slate-700 text-slate-300'
                                    }`}
                                  >
-                                    {dynamicCategoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                    {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                  </select>
                               </td>
 
@@ -1463,7 +1452,7 @@ export default function AdminRadarPortal() {
                          type="text" 
                          value={newTeamName} 
                          onChange={e => setNewTeamName(e.target.value)} 
-                         placeholder="Örn: BOCA JUNIORS"
+                         placeholder="Örn: BALÇOVA YAŞAM SPOR"
                          className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
                        />
                     </div>
@@ -1475,7 +1464,7 @@ export default function AdminRadarPortal() {
                          list="leagueOptions"
                          value={newTeamLeague} 
                          onChange={e => setNewTeamLeague(e.target.value.toUpperCase())} 
-                         placeholder="Örn: ARJANTİN LİGİ veya listeden seçin..."
+                         placeholder="Örn: TFF 2.LİG veya listeden seçin..."
                          className="w-full bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-bold tracking-widest shadow-inner uppercase placeholder:text-slate-600"
                        />
                        <datalist id="leagueOptions">
