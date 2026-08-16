@@ -53,7 +53,8 @@ export default function TahminlerPortal() {
     e.preventDefault();
     setLoginError('');
 
-    if (username === 'mankoman' && password === '123456') { // Şifreyi kendi admin şifrene göre ayarlayabilirsin
+    // DİKKAT: Şifreyi güvenlik için her zaman buradan değiştirebilirsin
+    if (username.trim() !== '' && password === '123456') { 
       fetchBulletinForEntry();
       setView('entry');
     } else {
@@ -61,12 +62,12 @@ export default function TahminlerPortal() {
     }
   };
 
-  // 5. Hafta Bültenini Getir
+  // 🔴 5. HAFTA BÜLTENİNİ GETİR (KESİN KİLİT) 🔴
   const fetchBulletinForEntry = async () => {
     const { data, error } = await supabase
       .from('matches_bulletin')
       .select('*')
-      .eq('week_num', 5) // 5. HAFTA SABİT
+      .eq('week_num', 5) // 5. HAFTA SABİT KİLİT
       .order('match_index', { ascending: true });
 
     if (data) {
@@ -98,7 +99,7 @@ export default function TahminlerPortal() {
       return;
     }
 
-    if(!window.confirm('Tahminlerinizi mühürleyip göndermek istediğinize emin misiniz?')) return;
+    if(!window.confirm(`${username} ID'li yarışmacının 5. HAFTA tahminlerini mühürleyip göndermek istediğinize emin misiniz?`)) return;
 
     setIsSaving(true);
     setSaveMessage('Tahminler şifrelenerek karargaha iletiliyor...');
@@ -106,8 +107,8 @@ export default function TahminlerPortal() {
     try {
       // Arka planda veritabanına kayıt işlemi (player_predictions tablosuna)
       const payload = Object.keys(predictions).map(matchIndex => ({
-        user_id: username, // 'mankoman' olarak kaydedecek test aşamasında
-        week_num: 5,
+        user_id: username.trim(), // 🔴 Hangi ID ile girildiyse o ID ile kaydeder 🔴
+        week_num: 5, // 5. HAFTA SABİT KİLİT
         match_index: Number(matchIndex),
         predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
       }));
@@ -116,10 +117,12 @@ export default function TahminlerPortal() {
       
       if(error) throw error;
 
-      setSaveMessage('✅ TAHMİNLER BAŞARIYLA KARARGAHA İLETİLDİ!');
+      setSaveMessage(`✅ ${username} ID'Lİ YARIŞMACININ 5. HAFTA TAHMİNLERİ BAŞARIYLA KAYDEDİLDİ!`);
       setTimeout(() => {
         setView('lobby');
         setSaveMessage('');
+        setUsername(''); // Sonraki yarışmacı için temizle
+        setPassword('');
       }, 3000);
 
     } catch (e) {
@@ -207,7 +210,7 @@ export default function TahminlerPortal() {
 
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-6"></div>
 
-                {/* LOGİN FORMU (SADECE MANKOMAN GİREBİLİR) */}
+                {/* LOGİN FORMU */}
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                   <input 
                     type="text" 
@@ -219,7 +222,7 @@ export default function TahminlerPortal() {
                   />
                   <input 
                     type="password" 
-                    placeholder="Şifre" 
+                    placeholder="Admin Şifresi" 
                     value={password} 
                     onChange={e => setPassword(e.target.value)} 
                     disabled={isTimeUp}
@@ -267,7 +270,7 @@ export default function TahminlerPortal() {
             <div className="flex justify-between items-center mb-8 bg-slate-900 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
               <div>
                 <h2 className="text-2xl font-black text-amber-500 tracking-widest">5. HAFTA GÖREV KAĞIDI</h2>
-                <p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{username.toUpperCase()}</span></p>
+                <p className="text-slate-400 text-sm mt-1">Yarışmacı ID: <span className="text-white font-bold">{username.toUpperCase()}</span></p>
               </div>
               <button onClick={() => setView('lobby')} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">
                 Oturumu Kapat
