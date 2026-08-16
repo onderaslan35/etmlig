@@ -148,7 +148,7 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function SkorDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('week4');
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [activeLeague, setActiveLeague] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -164,9 +164,6 @@ export default function SkorDurumuPage() {
   const loadLeaderboard = async () => {
     let dbMatches: any[] = [];
     
-    // 🛡️ HATA YAKALAMA ZIRHI 🛡️
-    // Eğer Supabase çökerse, internet giderse veya boş dönerse bile 
-    // sistem tarihi verileri (1, 2, 3) okumaya devam edecek. Asla durmayacak!
     try {
       const { data, error } = await supabase.from('live_matches').select('*');
       if (data) {
@@ -192,7 +189,6 @@ export default function SkorDurumuPage() {
       dbMatches.forEach(row => { if (row && row.id) uniqueMatches[row.id] = row; });
 
       Object.values(uniqueMatches).forEach(dbMatch => {
-        // null veya tanımsız değerlere karşı tam koruma
         if (dbMatch && dbMatch.home_team && dbMatch.away_team && dbMatch.home_score && dbMatch.away_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
           const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
           
@@ -298,7 +294,6 @@ export default function SkorDurumuPage() {
         return { ...player, currentRank, prevRank, trend, trendDiff };
       });
       
-      // Filtre YOK, sıfırlar dahi herkes görünecek
       setTableRows(finalRows);
       
     } else {
@@ -306,7 +301,6 @@ export default function SkorDurumuPage() {
         return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
       });
       
-      // Filtre YOK, sıfırlar dahi herkes görünecek
       setTableRows(finalRows);
     }
   };
@@ -415,29 +409,10 @@ export default function SkorDurumuPage() {
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => {
-                  const isTop1 = idx === 0;
-                  const isTop2 = idx === 1;
-                  const isTop3 = idx === 2;
                   
                   let rankDisplay = <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank}</span>;
+                  let rowBg = "border-l-4 border-transparent hover:bg-slate-800/40";
                   let nameColor = "text-slate-200";
-                  let rowBg = "hover:bg-slate-800/40";
-
-                  if (isTop1) {
-                    nameColor = "text-amber-400 font-black";
-                    rowBg = "bg-amber-950/20 border-l-4 border-amber-500 hover:bg-amber-900/30";
-                    rankDisplay = <span className="text-2xl drop-shadow-md">🥇</span>;
-                  } else if (isTop2) {
-                    nameColor = "text-slate-300 font-bold";
-                    rowBg = "bg-slate-800/40 border-l-4 border-slate-400 hover:bg-slate-700/50";
-                    rankDisplay = <span className="text-2xl drop-shadow-md">🥈</span>;
-                  } else if (isTop3) {
-                    nameColor = "text-orange-300 font-bold";
-                    rowBg = "bg-orange-950/20 border-l-4 border-orange-500 hover:bg-orange-900/30";
-                    rankDisplay = <span className="text-2xl drop-shadow-md">🥉</span>;
-                  } else {
-                    rowBg = "border-l-4 border-transparent hover:bg-slate-800/40";
-                  }
 
                   const cleanName = row.name.replace(/🏆/g, '').trim();
                   const trophyCount = (row.name.match(/🏆/g) || []).length;
@@ -488,7 +463,7 @@ export default function SkorDurumuPage() {
                           )}
                         </div>
                       </td>
-                      <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-black text-lg sm:text-xl whitespace-nowrap ${isTop1 || isTop2 || isTop3 ? 'text-amber-400 drop-shadow-md' : 'text-emerald-400'}`}>
+                      <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-black text-sm sm:text-base whitespace-nowrap text-emerald-400`}>
                         {row.skorAdedi}
                       </td>
                     </tr>
