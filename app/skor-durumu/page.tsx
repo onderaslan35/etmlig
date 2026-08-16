@@ -115,8 +115,7 @@ const skorWeek1Data: Record<string, number> = {
   "262736": 4, "262755": 6, "262719": 4, "262756": 4, "262754": 4, "262786": 3, "262731": 3, "262717": 3, "262732": 4,
   "262726": 3, "262750": 2, "262747": 3, "262771": 2, "262728": 2, "262816": 2, "262716": 2, "262790": 2, "262733": 2,
   "262709": 1, "262753": 2, "262813": 2, "262740": 1, "262718": 3, "262707": 1, "262782": 1, "262702": 1, "262714": 1,
-  "262721": 1, "262706": 1, "262787": 1, "262744": 1, "262774": 1, "262715": 1, "262723": 1, "351925": 0, "262749": 0,
-  "262705": 0, "262708": 0, "262711": 0, "262712": 0, "262734": 0
+  "262721": 1, "262706": 1, "262787": 1, "262744": 1, "262774": 1, "262715": 1, "262723": 1
 };
 
 // 🔴 2. HAFTA SKOR BİLME ADEDİ (Tamamı DFO)
@@ -124,9 +123,7 @@ const skorWeek2Data: Record<string, number> = {
   "262756": 3, "262755": 2, "262709": 2, "262790": 4, "262772": 1, "262728": 4, "262726": 3, "262711": 2, "262717": 2,
   "262737": 2, "262705": 2, "262816": 2, "262774": 1, "262732": 1, "262786": 1, "262721": 1, "262738": 1, "262714": 3,
   "262763": 2, "262736": 2, "262740": 1, "262702": 1, "262703": 1, "262730": 1, "262715": 1, "262749": 1, "262725": 1,
-  "262758": 1, "262771": 1, "262754": 1, "262747": 1, "262716": 1, "262708": 1, "262731": 1, "262739": 1, "262813": 0,
-  "262712": 0, "262734": 0, "351925": 0, "262744": 0, "262718": 0, "262704": 0, "262733": 0, "262707": 0, "262750": 0,
-  "262753": 0, "262706": 0, "262723": 0, "262719": 0, "262782": 0, "262770": 0
+  "262758": 1, "262771": 1, "262754": 1, "262747": 1, "262716": 1, "262708": 1, "262731": 1, "262739": 1
 };
 
 // 🔴 3. HAFTA DFO SKOR BİLME ADEDİ
@@ -134,19 +131,14 @@ const skorWeek3DfoData: Record<string, number> = {
   "262816": 2, "262733": 1, "262721": 3, "262763": 2, "262786": 2, "262711": 2, "351925": 2, "262726": 2, "262725": 2,
   "262771": 1, "262813": 2, "262709": 2, "262706": 1, "262738": 1, "262753": 1, "262734": 1, "262756": 1, "262702": 1,
   "262730": 1, "262731": 1, "262755": 1, "262747": 1, "262732": 1, "262707": 1, "262754": 1, "262714": 1, "262782": 1,
-  "262723": 1, "262772": 1, "262739": 1, "262716": 1, "262728": 0, "262705": 0, "262774": 0, "262740": 0, "262749": 0,
-  "262770": 0, "262719": 0, "262708": 0, "262744": 0, "262758": 0, "262718": 0, "262736": 0, "262790": 0, "262750": 0,
-  "262717": 0, "262703": 0
+  "262723": 1, "262772": 1, "262739": 1, "262716": 1
 };
 
 // 🔴 3. HAFTA TFF SKOR BİLME ADEDİ
 const skorWeek3TffData: Record<string, number> = {
   "262707": 2, "262816": 3, "262733": 2, "262754": 3, "262728": 2, "262706": 1, "262755": 1, "262736": 1, "262771": 1,
   "262734": 1, "262705": 2, "262714": 1, "262763": 1, "262756": 1, "262774": 1, "262740": 1, "262702": 2, "262782": 2,
-  "262813": 1, "262723": 1, "262749": 1, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1,
-  "262786": 0, "262711": 0, "262726": 0, "262725": 0, "262709": 0, "262738": 0, "262753": 0, "262731": 0, "262747": 0,
-  "262732": 0, "262716": 0, "262719": 0, "262708": 0, "262744": 0, "262758": 0, "262718": 0, "262790": 0, "262750": 0,
-  "262717": 0, "262703": 0
+  "262813": 1, "262723": 1, "262749": 1, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1
 };
 
 const isTffMatchCheck = (category: string) => {
@@ -156,11 +148,16 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function SkorDurumuPage() {
-  // Varsayılan olarak week4 açılır. 
   const [activeTab, setActiveTab] = useState<string>('week4');
   const [activeLeague, setActiveLeague] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+  
+  const [week4DfoBase, setWeek4DfoBase] = useState<Record<string, number>>({});
+  const [week4TffBase, setWeek4TffBase] = useState<Record<string, number>>({});
+  const [week4DfoLive, setWeek4DfoLive] = useState<Record<string, number>>({});
+  const [week4TffLive, setWeek4TffLive] = useState<Record<string, number>>({});
   
   const availableWeeks = [1, 2, 3, 4];
 
@@ -168,12 +165,15 @@ export default function SkorDurumuPage() {
     try {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       
-      let w4DfoScores: Record<string, number> = {}; 
-      let w4TffScores: Record<string, number> = {}; 
+      let w4BaseDfo: Record<string, number> = {}; 
+      let w4BaseTff: Record<string, number> = {}; 
+      let w4LiveDfo: Record<string, number> = {}; 
+      let w4LiveTff: Record<string, number> = {}; 
+      let isAnyMatchLive = false;
 
       Object.keys(allPlayersList).forEach(id => {
-        w4DfoScores[id] = 0;
-        w4TffScores[id] = 0;
+        w4BaseDfo[id] = 0; w4BaseTff[id] = 0;
+        w4LiveDfo[id] = 0; w4LiveTff[id] = 0;
       });
 
       if (dbMatches) {
@@ -181,8 +181,7 @@ export default function SkorDurumuPage() {
         dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          // Biten ve skoru girilen maçları değerlendir
-          if (dbMatch.status === 'FINISHED' && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+          if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
             const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
             const matchIndex = week4Matches.findIndex(
@@ -195,8 +194,14 @@ export default function SkorDurumuPage() {
               
               Object.keys(week4PredictionsData).forEach(playerId => {
                 if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
-                  if (isTff) w4TffScores[playerId] += 1;
-                  else w4DfoScores[playerId] += 1;
+                  if (dbMatch.status === 'FINISHED') {
+                      if (isTff) w4BaseTff[playerId] += 1;
+                      else w4BaseDfo[playerId] += 1;
+                  } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
+                      if (isTff) w4LiveTff[playerId] += 1;
+                      else w4LiveDfo[playerId] += 1;
+                      isAnyMatchLive = true;
+                  }
                 }
               });
             }
@@ -204,47 +209,91 @@ export default function SkorDurumuPage() {
         });
       }
 
+      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
+      setWeek4DfoBase(w4BaseDfo);
+      setWeek4TffBase(w4BaseTff);
+      setWeek4DfoLive(w4LiveDfo);
+      setWeek4TffLive(w4LiveTff);
+
       const baseList = Object.keys(allPlayersList).map(id => {
-        let totalSkorAdedi = 0;
+        let baseSkor = 0;
+        let liveSkor = 0;
         
         if (activeTab === 'total') {
             if (activeLeague === 'MASTER') {
-                totalSkorAdedi = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + 
-                                 (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0) +
-                                 (w4DfoScores[id] || 0) + (w4TffScores[id] || 0); 
+                baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
+                liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
             } else if (activeLeague === 'DFO') {
-                totalSkorAdedi = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + 
-                                 (skorWeek3DfoData[id] || 0) + (w4DfoScores[id] || 0);
+                baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0);
+                liveSkor = (w4LiveDfo[id]||0);
             } else if (activeLeague === 'TFF') {
-                totalSkorAdedi = (skorWeek3TffData[id] || 0) + (w4TffScores[id] || 0);
+                baseSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0);
+                liveSkor = (w4LiveTff[id]||0);
             }
         } 
         else if (activeTab === 'week1') {
-            if (activeLeague === 'MASTER' || activeLeague === 'DFO') totalSkorAdedi = skorWeek1Data[id] || 0;
+            if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek1Data[id]||0;
         }
         else if (activeTab === 'week2') {
-            if (activeLeague === 'MASTER' || activeLeague === 'DFO') totalSkorAdedi = skorWeek2Data[id] || 0;
+            if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek2Data[id]||0;
         }
         else if (activeTab === 'week3') {
-            if (activeLeague === 'MASTER') totalSkorAdedi = (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0);
-            else if (activeLeague === 'DFO') totalSkorAdedi = skorWeek3DfoData[id] || 0;
-            else if (activeLeague === 'TFF') totalSkorAdedi = skorWeek3TffData[id] || 0;
+            if (activeLeague === 'MASTER') baseSkor = (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
+            else if (activeLeague === 'DFO') baseSkor = skorWeek3DfoData[id]||0;
+            else if (activeLeague === 'TFF') baseSkor = skorWeek3TffData[id]||0;
         }
         else if (activeTab === 'week4') {
-            if (activeLeague === 'MASTER') totalSkorAdedi = (w4DfoScores[id] || 0) + (w4TffScores[id] || 0);
-            else if (activeLeague === 'DFO') totalSkorAdedi = w4DfoScores[id] || 0;
-            else if (activeLeague === 'TFF') totalSkorAdedi = w4TffScores[id] || 0;
+            if (activeLeague === 'MASTER') {
+                baseSkor = (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
+                liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
+            } else if (activeLeague === 'DFO') {
+                baseSkor = (w4BaseDfo[id]||0);
+                liveSkor = (w4LiveDfo[id]||0);
+            } else if (activeLeague === 'TFF') {
+                baseSkor = (w4BaseTff[id]||0);
+                liveSkor = (w4LiveTff[id]||0);
+            }
         }
 
-        return { id, name: allPlayersList[id], skorAdedi: totalSkorAdedi };
-      }).filter(p => p.skorAdedi > 0 || activeTab === 'total') // Sıfır çekenleri gizle (Total hariç)
+        return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
+      }).filter(p => p.skorAdedi > 0)
         .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
-      const finalRows = baseList.map((player, index) => {
-        return { ...player, currentRank: index + 1 };
-      });
+      // SADECE TOPLAM SEKMEDE TREND OKLARI GÖRÜNSÜN
+      if (activeTab === 'total') {
+        const referenceList = Object.keys(allPlayersList).map(id => {
+           let refSkor = 0;
+           if (activeLeague === 'MASTER') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
+           else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
+           else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
+           return { id, refSkor };
+        }).sort((a, b) => b.refSkor - a.refSkor);
+        
+        const prevRanks: Record<string, number> = {};
+        referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      setTableRows(finalRows);
+        const finalRows = baseList.map((player, index) => {
+          const currentRank = index + 1;
+          const prevRank = prevRanks[player.id] || currentRank;
+          let trend = 'same';
+          let trendDiff = 0;
+          
+          if (currentRank < prevRank) {
+            trend = 'up';
+            trendDiff = prevRank - currentRank;
+          } else if (currentRank > prevRank) {
+            trend = 'down';
+            trendDiff = currentRank - prevRank;
+          }
+          return { ...player, currentRank, prevRank, trend, trendDiff };
+        });
+        setTableRows(finalRows);
+      } else {
+        const finalRows = baseList.map((player, index) => {
+          return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
+        });
+        setTableRows(finalRows);
+      }
 
     } catch (error) {
       console.log("Supabase verileri okunurken hata oluştu");
@@ -353,7 +402,7 @@ export default function SkorDurumuPage() {
                 <tr>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET SKORU</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -362,7 +411,7 @@ export default function SkorDurumuPage() {
                   const isTop2 = idx === 1;
                   const isTop3 = idx === 2;
                   
-                  let rankDisplay = <span className="text-slate-300 font-medium text-xs sm:text-sm">{row.currentRank}</span>;
+                  let rankDisplay = <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank}</span>;
                   let nameColor = "text-slate-200";
                   let rowBg = "hover:bg-slate-800/40";
 
@@ -388,8 +437,23 @@ export default function SkorDurumuPage() {
                   return (
                     <tr key={row.id || idx} className={`transition-all ${rowBg}`}>
                       <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-0.5 sm:gap-2">
                           {rankDisplay}
+                          <div className="w-6 sm:w-10 flex items-center justify-start">
+                            {activeTab === 'total' && row.trend === 'up' && (
+                              <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">
+                                ▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
+                              </span>
+                            )}
+                            {activeTab === 'total' && row.trend === 'down' && (
+                              <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">
+                                ▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
+                              </span>
+                            )}
+                            {activeTab === 'total' && row.trend === 'same' && (
+                              <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
@@ -400,6 +464,18 @@ export default function SkorDurumuPage() {
                           {trophyCount > 0 && (
                             <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">
                               {'🏆'.repeat(trophyCount)}
+                            </span>
+                          )}
+                          
+                          {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
+                            <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0 ml-2">
+                              +{row.liveExtra} CANLI
+                            </span>
+                          )}
+
+                          {row.liveExtra > 0 && activeTab !== 'total' && (
+                            <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ml-2 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
+                              +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}
                             </span>
                           )}
                         </div>
