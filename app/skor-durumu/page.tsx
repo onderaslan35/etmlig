@@ -256,8 +256,9 @@ export default function SkorDurumuPage() {
         }
 
         return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
-      }).filter(p => p.skorAdedi > 0)
-        .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
+      })
+      // 🔴 SIFIR ÇEKENLERİ GİZLEME FİLTRESİ KALDIRILDI! ARTIK HERKES GÖRÜNECEK 🔴
+      .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
       // SADECE TOPLAM SEKMEDE TREND OKLARI GÖRÜNSÜN
       if (activeTab === 'total') {
@@ -402,7 +403,7 @@ export default function SkorDurumuPage() {
                 <tr>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
                   <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET SKORU</th>
+                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
