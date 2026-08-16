@@ -5,7 +5,7 @@ import LiveMatchCard from '@/components/LiveMatchCard';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/utils/supabase';
 
-// 🏆 Sabit Oyuncu Listesi
+// 🏆 Sabit Oyuncu Listesi (Sadece Aktif Oyunculara İzin Verilecek)
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -20,15 +20,7 @@ const allPlayersList: Record<string, string> = {
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU", "262701": "MUHAMMET OKUMUŞ", "262710": "MUZAFFER ERTUĞRUL", "262713": "VAHİT KÜLCÜ",
-  "262720": "HASAN ASLAN", "262722": "MUSTAFA ERKAN", "262724": "YÜCEL TOMAK", "262727": "YAHŞİ ERKAN🏆",
-  "262729": "HAKAN GÜN", "262735": "AYGÜN AKKEÇELİ", "262741": "SABAHATTİN ÇAYLAK", "262742": "ZEKERiYYA TOPKAYYA",
-  "262743": "MEHMET ALİ ŞAHİN", "262745": "OĞUZ YILDIRIMKAYA", "262746": "MEHMET BAYIR", "262748": "YASİN ŞAHİN",
-  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262762": "İLHAN DANIŞ", "262760": "UĞUR NES",
-  "262776": "CUMA OKUR", "262777": "MİRAÇ TOPAL", "262778": "CENGİZ SAYAN", "262780": "YUSUF KILIÇ",
-  "262781": "KADİR SOLMAZ", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL 🏆",
-  "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "350909": "DİNÇER ÖZER", "262815": "MURAT KAYA",
-  "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK", "262797": "ÖMER DOGER"
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 // 🔴 Sabit 4. Hafta Maçları
@@ -264,7 +256,9 @@ export default function SkorDurumuPage() {
       }
 
       return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
-    }).sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
+    })
+    .filter(p => p.skorAdedi > 0) // Sadece skoru olanları göster
+    .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
     if (activeTab === 'total') {
       const referenceList = Object.keys(allPlayersList).map(id => {
@@ -273,7 +267,7 @@ export default function SkorDurumuPage() {
          else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
          else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
          return { id, refSkor };
-      }).sort((a, b) => b.refSkor - a.refSkor);
+      }).filter(p => p.refSkor > 0).sort((a, b) => b.refSkor - a.refSkor);
       
       const prevRanks: Record<string, number> = {};
       referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
