@@ -2,31 +2,63 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
-// NOT: Kendi bileşen ve veri yollarını kontrol et (genelde standart böyledir)
-import LiveMatchCard from '@/components/LiveMatchCard';
-import { week4Matches, week4PredictionsData } from '@/lib/data'; 
+import { supabase } from '@/utils/supabase';
 
-// 🏆 Sabit Oyuncu Listesi
+// 🏆 Admin Sayfasından Alınan Sabit Oyuncu Listesi
 const allPlayersList: Record<string, string> = {
-  "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN",
-  "262706": "GAZİ AYAN", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
-  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262713": "VAHİT KÜLCÜ", "262714": "İSMAİL EKER", "262715": "ŞEMSETTIN DÜGER",
+  "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
+  "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
+  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262713": "VAHİT KÜLCÜ", "262714": "İSMAİL EKER 🏆", "262715": "ŞEMSETTIN DÜGER",
   "262716": "BİROL DEMİREL", "262717": "MURAT ALİ", "262718": "BEKİR KARADAĞ", "262719": "UĞUR VARDAR", "262720": "HASAN ASLAN",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262722": "MUSTAFA ERKAN", "262723": "AYHAN LUŞOĞLU", "262724": "YÜCEL TOMAK", "262725": "İLYAS KAZDAL",
-  "262726": "HUDAVER TOPARDIC", "262727": "YAHŞİ ERKAN", "262728": "ÖNDER ASLAN", "262729": "HAKAN GÜN", "262730": "ÖNDER IŞIK",
-  "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA", "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ",
+  "262726": "HUDAVER TOPARDIC", "262727": "YAHŞİ ERKAN🏆", "262728": "ÖNDER ASLAN", "262729": "HAKAN GÜN", "262730": "ÖNDER IŞIK",
+  "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA 🏆🏆", "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ",
   "262736": "MEHMET ALİ KARA", "262737": "ŞAHİN GEZGİNCİ", "262738": "MEVLÜT EVLER", "262739": "UĞUR GÜRBÜZ", "262740": "ABDULLAH DİK",
   "262741": "SABAHATTİN ÇAYLAK", "262742": "ZEKERiYYA TOPKAYYA", "262743": "MEHMET ALİ ŞAHİN", "262744": "İLYAS UYGUN", "262745": "OĞUZ YILDIRIMKAYA",
   "262746": "MEHMET BAYIR", "262747": "SAVAŞ ÇAĞLAYAN", "262748": "YASİN ŞAHİN", "262749": "B.VEYSELOĞLU EROL", "262750": "MAHMUT CBR",
-  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN", "262755": "DOĞAÇ ALKAN",
+  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN 🏆", "262755": "DOĞAÇ ALKAN",
   "262756": "EYÜP KARACAOĞLU", "262813": "KEMAL ERSOY", "262758": "MELİH PINAR", "262762": "İLHAN DANIŞ", "262763": "MUSTAFA ELMAS",
-  "262770": "OZKAYA MAZAKALI BAYRAM", "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA", "262760": "UĞUR NES", "262774": "ŞENOL CAN ÇAKICI",
+  "262770": "OZKAYA MAZAKALI BAYRAM", "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA 🏆", "262760": "UĞUR NES", "262774": "ŞENOL CAN ÇAKICI",
   "262776": "CUMA OKUR", "262777": "MİRAÇ TOPAL", "262778": "CENGİZ SAYAN", "262780": "YUSUF KILIÇ", "262781": "KADİR SOLMAZ",
-  "262782": "YUSUF ERBAY", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL", "262786": "SEDAT DİŞLİ",
+  "262782": "YUSUF ERBAY", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL 🏆", "262786": "SEDAT DİŞLİ",
   "262787": "MUSTAFA TUCİ", "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "262790": "CUMALİ SÖKER", "351925": "ALİOS GÖZTEPE",
   "350909": "DİNÇER ÖZER", "262815": "MURAT KAYA", "262816": "SEDAT SEDAT", "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK",
   "262797": "ÖMER DOGER"
+};
+
+// 🔴 Admin Sayfasından Alınan Sabit 4. Hafta Maçları
+const week4Matches = [
+  { id: 1, weekLabel: "4. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
+  { id: 2, weekLabel: "4. Hafta - 2. MAÇ", category: "UEFA SÜPER KUPA", date: "12.08.2026", time: "22:00", homeTeam: "PARIS SG", awayTeam: "ASTON VILLA" },
+  { id: 3, weekLabel: "4. Hafta - 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "19:00", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
+  { id: 4, weekLabel: "4. Hafta - 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", date: "13.08.2026", time: "20:00", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 5, weekLabel: "4. Hafta - 5. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "14.08.2026", time: "21:30", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
+  { id: 6, weekLabel: "4. Hafta - 6. MAÇ", category: "TÜRKİYE 1.LİG", date: "14.08.2026", time: "21:30", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
+  { id: 7, weekLabel: "4. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
+  { id: 8, weekLabel: "4. Hafta - 8. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "19:00", homeTeam: "KONYASPOR", awayTeam: "ÇAYKUR RİZE" },
+  { id: 9, weekLabel: "4. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "ÜMRANİYESPOR" },
+  { id: 10, weekLabel: "4. Hafta - 10. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "19:00", homeTeam: "İSTANBULSPOR", awayTeam: "BODRUMSPOR" },
+  { id: 11, weekLabel: "4. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GAZİANTEP FK", awayTeam: "ALANYASPOR" },
+  { id: 12, weekLabel: "4. Hafta - 12. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "15.08.2026", time: "21:30", homeTeam: "GENÇLERBİRLİĞİ", awayTeam: "FENERBAHÇE" },
+  { id: 13, weekLabel: "4. Hafta - 13. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "BURSASPOR", awayTeam: "IĞDIR FK" },
+  { id: 14, weekLabel: "4. Hafta - 14. MAÇ", category: "TÜRKİYE 1.LİG", date: "15.08.2026", time: "21:30", homeTeam: "MANİSA FK", awayTeam: "VANSPOR FK" },
+  { id: 15, weekLabel: "4. Hafta - 15. MAÇ", category: "İNGİLTERE SÜPER KUPA", date: "16.08.2026", time: "17:00", homeTeam: "ARSENAL", awayTeam: "MANCHESTER CITY" },
+  { id: 16, weekLabel: "4. Hafta - 16. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "19:00", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
+  { id: 17, weekLabel: "4. Hafta - 17. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
+  { id: 18, weekLabel: "4. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
+  { id: 19, weekLabel: "4. Hafta - 19. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "16.08.2026", time: "21:30", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
+  { id: 20, weekLabel: "4. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "19:00", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
+  { id: 21, weekLabel: "4. Hafta - 21. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
+  { id: 22, weekLabel: "4. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
+  { id: 23, weekLabel: "4. Hafta - 23. MAÇ", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE" },
+  { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR" }
+];
+
+// 🔴 Admin Sayfasından Alınan Sabit 4. Hafta Tahminleri
+const week4PredictionsData: Record<string, string[]> = {
+  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"], "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"], "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"], "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"], "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"], "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"], "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"], "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"], "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"], "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"], "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"], "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"], "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"], "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"], "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"], "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"], "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"], "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"], "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"], "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"], "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"], "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"], "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"], "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"], "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"], "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"], "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"], "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"], "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"], "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"], "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"], "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"], "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"], "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"], "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"], "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"], "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"], "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"], "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"], "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"], "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"], "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"], "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"], "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"], "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
+  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
 // 🔴 1. HAFTA (Tamamı DFO)
@@ -70,8 +102,8 @@ const skorWeek3TffData: Record<string, number> = {
 
 const isTffMatchCheck = (category: string) => {
   if (!category) return false;
-  const tffCategories = ["TRENDYOL SÜPER LİG", "TFF 1. LİG", "TURKİYE KUPASI", "TÜRKİYE SÜPER KUPASI"];
-  return tffCategories.includes(category.toUpperCase().trim());
+  const uppercaseCat = category.toUpperCase();
+  return ( uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") );
 };
 
 interface PlayerData {
@@ -84,9 +116,11 @@ export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [selectedWeek, setSelectedWeek] = useState<string>('total');
   const [isWeeksOpen, setIsWeeksOpen] = useState(false);
-  const [isLiveOpen, setIsLiveOpen] = useState(false); // Yeni, hatasız canlı maç akordiyonu
+  const [isLiveOpen, setIsLiveOpen] = useState(false);
   
   const [liveMatches, setLiveMatches] = useState<any[]>([]);
+  const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>({});
+  
   const [week4DfoScores, setWeek4DfoScores] = useState<Record<string, number>>({});
   const [week4TffScores, setWeek4TffScores] = useState<Record<string, number>>({});
   
@@ -100,7 +134,19 @@ export default function SkorDurumuPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // TFF sekmesine geçildiğinde sadece 3 ve 4. haftalar var, eğer 1 veya 2 seçiliyse sıfırla
+  // Tüm logoları Supabase'den çek
+  useEffect(() => {
+    const fetchTeams = async () => {
+       const { data } = await supabase.from('teams').select('*');
+       if (data) {
+          const logos: Record<string, string> = {};
+          data.forEach((team: any) => { logos[team.team_name] = team.logo_url; });
+          setTeamLogosMap(logos);
+       }
+    };
+    fetchTeams();
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'TFF' && (selectedWeek === '1' || selectedWeek === '2')) {
       setSelectedWeek('total');
@@ -112,14 +158,13 @@ export default function SkorDurumuPage() {
     const fetchLiveMatches = async () => {
       const { data, error } = await supabase.from('live_matches').select('*');
       if (error) {
-        console.error('Canlı maçlar çekilemedi:', error);
+        console.error("Canlı maçlar çekilemedi: ", error);
         return;
       }
       
       if (data) {
         setLiveMatches(data);
         
-        // DEDUPLICATION: Supabase çift veri atma hatasını önleme
         const uniqueMatches: Record<number, any> = {};
         data.forEach(row => { uniqueMatches[row.id] = row; });
 
@@ -131,16 +176,15 @@ export default function SkorDurumuPage() {
           if (dbMatch.status === 'FINISHED') {
             const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
-            // Veritabanındaki maçı, projedeki week4Matches dizisindeki sırasıyla eşleştir
+            // 🔴 DİKKAT: Burada yazım farkı düzeltildi (home_team vs homeTeam)
             const matchIndex = week4Matches.findIndex(
-              wm => wm.home.toLowerCase() === dbMatch.home_team.toLowerCase() &&
-                    wm.away.toLowerCase() === dbMatch.away_team.toLowerCase()
+              wm => wm.homeTeam.toLowerCase() === dbMatch.home_team.toLowerCase() &&
+                    wm.awayTeam.toLowerCase() === dbMatch.away_team.toLowerCase()
             );
 
             if (matchIndex !== -1) {
-              const isTff = isTffMatchCheck(dbMatch.category);
+              const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
               
-              // Tüm oyuncuların tahminlerini kontrol et ve tam isabetse puan ekle
               Object.keys(week4PredictionsData).forEach(playerId => {
                 if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
                   if (isTff) tffScores[playerId] += 1;
@@ -168,7 +212,6 @@ export default function SkorDurumuPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // 🔴 Puanları Toplama ve Tabloya Yansıtma Motoru
   useEffect(() => {
     const calculateScores = () => {
       const baseScores: Record<string, number> = {};
@@ -176,12 +219,11 @@ export default function SkorDurumuPage() {
       Object.keys(allPlayersList).forEach(id => {
         let total = 0;
         
-        // TOPLAM SEKMESİ
         if (selectedWeek === 'total') {
             if (activeTab === 'MASTER') {
                 total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + 
                         (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0) +
-                        (week4DfoScores[id] || 0) + (week4TffScores[id] || 0); // 4. Hafta Eklendi
+                        (week4DfoScores[id] || 0) + (week4TffScores[id] || 0); 
             } else if (activeTab === 'DFO') {
                 total = (skorWeek1Data[id] || 0) + (skorWeek2Data[id] || 0) + 
                         (skorWeek3DfoData[id] || 0) + (week4DfoScores[id] || 0);
@@ -189,21 +231,17 @@ export default function SkorDurumuPage() {
                 total = (skorWeek3TffData[id] || 0) + (week4TffScores[id] || 0);
             }
         } 
-        // 1. HAFTA SEKMESİ
         else if (selectedWeek === '1') {
             if (activeTab === 'MASTER' || activeTab === 'DFO') total = skorWeek1Data[id] || 0;
         }
-        // 2. HAFTA SEKMESİ
         else if (selectedWeek === '2') {
             if (activeTab === 'MASTER' || activeTab === 'DFO') total = skorWeek2Data[id] || 0;
         }
-        // 3. HAFTA SEKMESİ
         else if (selectedWeek === '3') {
             if (activeTab === 'MASTER') total = (skorWeek3DfoData[id] || 0) + (skorWeek3TffData[id] || 0);
             else if (activeTab === 'DFO') total = skorWeek3DfoData[id] || 0;
             else if (activeTab === 'TFF') total = skorWeek3TffData[id] || 0;
         }
-        // 4. HAFTA SEKMESİ
         else if (selectedWeek === '4') {
             if (activeTab === 'MASTER') total = (week4DfoScores[id] || 0) + (week4TffScores[id] || 0);
             else if (activeTab === 'DFO') total = week4DfoScores[id] || 0;
@@ -233,7 +271,6 @@ export default function SkorDurumuPage() {
     calculateScores();
   }, [activeTab, selectedWeek, week4DfoScores, week4TffScores]);
 
-  // 🏆 Dinamik Başlık ve Renkler
   let headerText = "MASTER SKOR ANALİZ MERKEZİ";
   let headerColor = "text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]";
   if (activeTab === 'DFO') {
@@ -248,21 +285,20 @@ export default function SkorDurumuPage() {
     <div className="min-h-screen bg-[#050b14] font-sans text-slate-200 pb-20 selection:bg-amber-500/30">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 sm:py-10">
 
-        {/* ANA BAŞLIK */}
         <div className="text-center mb-8">
           <h1 className={`text-2xl sm:text-4xl font-black tracking-widest uppercase transition-colors duration-500 ${headerColor}`}>
             {headerText}
           </h1>
         </div>
 
-        {/* 🔴 GÜNÜN CANLI MAÇLARI - AKORDİYON (YÖNETİME GİTMEZ) */}
+        {/* 🔴 GÜNÜN CANLI MAÇLARI - AKORDİYON */}
         <div className="w-full max-w-4xl mx-auto mb-8">
           <div className="bg-[#0b1120] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl">
             <button
               onClick={() => setIsLiveOpen(!isLiveOpen)}
               className="w-full flex items-center justify-between bg-[#0f172a] p-4 hover:bg-[#1e293b] transition-colors"
             >
-              <div className="w-6"></div> {/* Ortalama için boşluk */}
+              <div className="w-6"></div>
               <div className="flex-1 flex justify-center items-center">
                 <h2 className="text-sm sm:text-base font-bold text-amber-500 tracking-widest uppercase">
                   GÜNÜN CANLI MAÇLARI
@@ -275,11 +311,41 @@ export default function SkorDurumuPage() {
               <div className="overflow-hidden">
                 <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 bg-[#0a0f1c]">
                   {week4Matches.map((match, index) => {
+                    const hTeam = match.homeTeam.toUpperCase();
+                    const aTeam = match.awayTeam.toUpperCase();
+                    
+                    const hLogo = teamLogosMap[hTeam] || "/logos/default.png";
+                    const aLogo = teamLogosMap[aTeam] || "/logos/default.png";
+
                     const liveData = liveMatches.find(
-                      (m) => m.home_team.toLowerCase() === match.home.toLowerCase() &&
-                             m.away_team.toLowerCase() === match.away.toLowerCase()
+                      (m) => m.home_team.toLowerCase() === match.homeTeam.toLowerCase() &&
+                             m.away_team.toLowerCase() === match.awayTeam.toLowerCase()
                     );
-                    return <LiveMatchCard key={index} match={match} liveData={liveData} />;
+                    
+                    const displayHomeScore = liveData && liveData.home_score !== '-' ? liveData.home_score : '-';
+                    const displayAwayScore = liveData && liveData.away_score !== '-' ? liveData.away_score : '-';
+
+                    return (
+                      <div key={index} className="bg-slate-900 border border-slate-700/50 rounded-xl p-3 flex flex-col gap-3">
+                         <div className="flex justify-between items-center px-2 border-b border-slate-800/50 pb-2">
+                            <span className="text-[10px] text-slate-400 font-bold">{match.time}</span>
+                            <span className="text-[10px] text-slate-500 font-bold truncate max-w-[150px]">{match.category}</span>
+                         </div>
+                         <div className="flex justify-between items-center px-2">
+                             <div className="flex items-center gap-2 flex-1">
+                                <img src={hLogo} className="w-6 h-6 object-contain" alt={hTeam} />
+                                <span className="text-xs font-bold text-white truncate max-w-[100px]">{hTeam}</span>
+                             </div>
+                             <div className="bg-slate-950 px-3 py-1 rounded border border-slate-700">
+                                <span className="text-sm font-black text-amber-400">{displayHomeScore} - {displayAwayScore}</span>
+                             </div>
+                             <div className="flex items-center gap-2 flex-1 justify-end">
+                                <span className="text-xs font-bold text-white truncate max-w-[100px] text-right">{aTeam}</span>
+                                <img src={aLogo} className="w-6 h-6 object-contain" alt={aTeam} />
+                             </div>
+                         </div>
+                      </div>
+                    );
                   })}
                 </div>
               </div>
@@ -287,10 +353,9 @@ export default function SkorDurumuPage() {
           </div>
         </div>
 
-        {/* 🏆 TABLAR: MASTER - DFO - TFF */}
+        {/* 🏆 TABLAR */}
         <div className="flex flex-col gap-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-3xl mx-auto">
-              {/* MASTER */}
               <button 
                 onClick={() => setActiveTab('MASTER')} 
                 className={`flex-1 py-4 px-4 rounded-xl font-black text-sm sm:text-lg tracking-widest uppercase transition-all duration-300 ${activeTab === 'MASTER' ? 'bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.4)] scale-[1.02] border-none' : 'bg-[#0f172a] text-slate-500 border border-slate-800 hover:bg-[#1e293b]'}`}
@@ -299,14 +364,12 @@ export default function SkorDurumuPage() {
               </button>
               
               <div className="flex gap-3 w-full sm:flex-1">
-                {/* DFO */}
                 <button 
                   onClick={() => setActiveTab('DFO')} 
                   className={`flex-1 py-3 px-2 rounded-xl font-black text-xs sm:text-sm tracking-widest uppercase transition-all duration-300 ${activeTab === 'DFO' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] scale-[1.02] border-none' : 'bg-[#0f172a] text-slate-500 border border-slate-800 hover:bg-[#1e293b]'}`}
                 >
                   DFO SKOR
                 </button>
-                {/* TFF */}
                 <button 
                   onClick={() => setActiveTab('TFF')} 
                   className={`flex-1 py-3 px-2 rounded-xl font-black text-xs sm:text-sm tracking-widest uppercase transition-all duration-300 ${activeTab === 'TFF' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] scale-[1.02] border-none' : 'bg-[#0f172a] text-slate-500 border border-slate-800 hover:bg-[#1e293b]'}`}
@@ -401,7 +464,6 @@ export default function SkorDurumuPage() {
                         rowBg = "border-l-4 border-transparent hover:bg-slate-800/30";
                       }
 
-                      // Mobil ekranda kupaları kırpma, sığdır
                       const displayName = isMobile ? player.name.split(' 🏆')[0] : player.name;
 
                       return (
