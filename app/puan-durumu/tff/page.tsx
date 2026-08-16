@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 EKMEL KANUNU: 52 KİŞİLİK SABİT LİSTE 🔴
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -13,7 +14,12 @@ const allPlayersList: Record<string, string> = {
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY"
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
 };
 
 const tffWeek1Data: Record<string, { name: string; puan: number }> = {}; 
@@ -97,80 +103,96 @@ export default function TffPuanDurumuPage() {
   const availableWeeks = [1, 2, 3, 4]; 
 
   const loadLeaderboard = async () => {
+    let dbMatches: any[] = [];
+    
+    // 🛡️ TRY CATCH İLE KORUMA ALTINDA
     try {
-      const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      let w4Base: Record<string, number> = {}; 
-      let w4Live: Record<string, number> = {}; 
-      let isAnyMatchLive = false;
+      const { data, error } = await supabase.from('live_matches').select('*');
+      if (data) {
+         dbMatches = data;
+      }
+    } catch (e) {
+      console.log("Canlı skor okunamadı, geçmiş verilerle devam ediliyor.");
+    }
+    
+    let w4Base: Record<string, number> = {}; 
+    let w4Live: Record<string, number> = {}; 
+    let isAnyMatchLive = false;
 
-      Object.keys(allPlayersList).forEach(id => { w4Base[id] = 0; w4Live[id] = 0; });
+    Object.keys(allPlayersList).forEach(id => { w4Base[id] = 0; w4Live[id] = 0; });
 
-      if (dbMatches) {
-        const uniqueMatches: Record<number, any> = {};
-        dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
+    if (dbMatches && dbMatches.length > 0) {
+      const uniqueMatches: Record<number, any> = {};
+      dbMatches.forEach(row => { if(row && row.id) uniqueMatches[row.id] = row; });
 
-        Object.values(uniqueMatches).forEach(dbMatch => {
-          const matchIndex = dbMatch.id - 1; 
-          const matchDef = week4Matches[matchIndex];
+      Object.values(uniqueMatches).forEach(dbMatch => {
+        const matchIndex = dbMatch.id - 1; 
+        const matchDef = week4Matches[matchIndex];
+        
+        if (matchDef && isTffMatchCheck(matchDef.category) && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+          const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+          const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id] && week4PredictionsData[id][matchIndex] === targetScore);
           
-          if (matchDef && isTffMatchCheck(matchDef.category) && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
-            
-            let points = 1;
-            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
+          let points = 1;
+          if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
 
-            winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') w4Base[wId] += points; 
-              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') { w4Live[wId] += points; isAnyMatchLive = true; }
-            });
-          }
-        });
-      }
-
-      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-
-      if (activeTab === 'total') {
-        const referenceList = Object.keys(allPlayersList).map(id => {
-          const basePuan = (tffWeek1Data[id]?.puan || 0) + (tffWeek2Data[id]?.puan || 0) + (tffWeek3Data[id]?.puan || 0);
-          return { id, name: allPlayersList[id], basePuan };
-        }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
-
-        const prevRanks: Record<string, number> = {};
-        referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
-
-        const baseList = Object.keys(allPlayersList).map(id => {
-          const w4B = w4Base[id] || 0; 
-          const basePuan = (tffWeek1Data[id]?.puan || 0) + (tffWeek2Data[id]?.puan || 0) + (tffWeek3Data[id]?.puan || 0) + w4B;
-          const liveExtra = w4Live[id] || 0; 
-          return { id, name: allPlayersList[id], basePuan, liveExtra, puan: basePuan + liveExtra };
-        }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
-
-        const finalRows = baseList.map((player, index) => {
-          const currentRank = index + 1;
-          const prevRank = prevRanks[player.id];
-          let trend = 'same', trendDiff = 0; 
-          if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-          else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
-          return { ...player, currentRank, prevRank, trend, trendDiff };
-        });
-        setTableRows(finalRows);
-      } else {
-        if(activeTab === 'week4') {
-          const list = Object.keys(allPlayersList).map(id => {
-            return { id, name: allPlayersList[id], puan: (w4Base[id] || 0) + (w4Live[id] || 0), liveExtra: w4Live[id] || 0, trend: 'none', trendDiff: 0 };
+          winnerIds.forEach(wId => {
+            if (dbMatch.status === 'FINISHED') w4Base[wId] += points; 
+            else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') { w4Live[wId] += points; isAnyMatchLive = true; }
           });
-          setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
-        } else {
-          let dataMap = tffWeek1Data; if(activeTab === 'week2') dataMap = tffWeek2Data; if(activeTab === 'week3') dataMap = tffWeek3Data;
-          const list = Object.keys(allPlayersList).map(id => {
-            const rawObj = dataMap[id];
-            return { id, name: rawObj ? rawObj.name : allPlayersList[id], puan: rawObj ? rawObj.puan : 0, liveExtra: 0, trend: 'none', trendDiff: 0 };
-          });
-          setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
         }
+      });
+    }
+
+    setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
+
+    // 🔴 1. VE 2. HAFTADA TABLOYU KOMPLE BOŞALT 🔴
+    if (activeTab === 'week1' || activeTab === 'week2') {
+      setTableRows([]);
+      return;
+    }
+
+    if (activeTab === 'total') {
+      const referenceList = Object.keys(allPlayersList).map(id => {
+        const basePuan = (tffWeek1Data[id]?.puan || 0) + (tffWeek2Data[id]?.puan || 0) + (tffWeek3Data[id]?.puan || 0);
+        return { id, name: allPlayersList[id], basePuan };
+      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
+
+      const prevRanks: Record<string, number> = {};
+      referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      const baseList = Object.keys(allPlayersList).map(id => {
+        const w4B = w4Base[id] || 0; 
+        const basePuan = (tffWeek1Data[id]?.puan || 0) + (tffWeek2Data[id]?.puan || 0) + (tffWeek3Data[id]?.puan || 0) + w4B;
+        const liveExtra = w4Live[id] || 0; 
+        return { id, name: allPlayersList[id], basePuan, liveExtra, puan: basePuan + liveExtra };
+      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
+
+      const finalRows = baseList.map((player, index) => {
+        const currentRank = index + 1;
+        const prevRank = prevRanks[player.id];
+        let trend = 'same', trendDiff = 0; 
+        if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+        else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+        return { ...player, currentRank, prevRank, trend, trendDiff };
+      });
+      setTableRows(finalRows);
+    } else {
+      if(activeTab === 'week4') {
+        const list = Object.keys(allPlayersList).map(id => {
+          return { id, name: allPlayersList[id], puan: (w4Base[id] || 0) + (w4Live[id] || 0), liveExtra: w4Live[id] || 0, trend: 'none', trendDiff: 0 };
+        });
+        setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')).map((p, idx) => ({ ...p, currentRank: idx + 1 })));
+      } else {
+        // Sadece week3 kaldı (week1 ve week2 yukarıda kesildi)
+        let dataMap = tffWeek3Data;
+        const list = Object.keys(allPlayersList).map(id => {
+          const rawObj = dataMap[id];
+          return { id, name: rawObj ? rawObj.name : allPlayersList[id], puan: rawObj ? rawObj.puan : 0, liveExtra: 0, trend: 'none', trendDiff: 0 };
+        });
+        setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')).map((p, idx) => ({ ...p, currentRank: idx + 1 })));
       }
-    } catch (e) {}
+    }
   };
 
   useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
@@ -256,7 +278,11 @@ export default function TffPuanDurumuPage() {
             </table>
           </div>
         ) : (
-          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler bulunamadı.</div>
+          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
+            {activeTab === 'week1' || activeTab === 'week2' 
+              ? '⏳ Bu haftalarda TFF maçı oynanmamıştır.' 
+              : '⏳ Veriler bulunamadı.'}
+          </div>
         )}
       </div>
     </div>
