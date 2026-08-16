@@ -618,6 +618,7 @@ export default function AdminRadarPortal() {
     if (upCat.includes("İTALYA SERIE A")) return "İTALYA SERIE A";
     if (upCat.includes("İSPANYA LA LIGA")) return "İSPANYA LA LIGA";
     if (upCat.includes("MİLLİ TAKIM")) return "MİLLİ TAKIMLAR";
+    if (upCat.includes("DİĞER")) return "DİĞER"; // BU SATIRI EKLEDİK!
     return "ÇEŞİTLİ AVRUPA TAKIMLARI"; 
   };
 
