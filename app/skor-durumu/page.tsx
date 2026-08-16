@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/utils/supabase';
 
-// 🏆 Sabit Oyuncu Listesi (Master'dan Birebir Alındı)
+// 🏆 Sabit Oyuncu Listesi
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -30,7 +31,7 @@ const allPlayersList: Record<string, string> = {
   "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK", "262797": "ÖMER DOGER"
 };
 
-// 🔴 Sabit 4. Hafta Maçları (Tam İsabet Kıyaslaması İçin)
+// 🔴 Sabit 4. Hafta Maçları
 const week4Matches = [
   { id: 1, category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", home: "STURM GRAZ", away: "FENERBAHÇE" },
   { id: 2, category: "UEFA SÜPER KUPA", home: "PARIS SG", away: "ASTON VILLA" },
@@ -155,7 +156,8 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function SkorDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('total');
+  // Varsayılan olarak week4 açılır. 
+  const [activeTab, setActiveTab] = useState<string>('week4');
   const [activeLeague, setActiveLeague] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -179,6 +181,7 @@ export default function SkorDurumuPage() {
         dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
+          // Biten ve skoru girilen maçları değerlendir
           if (dbMatch.status === 'FINISHED' && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
             const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
@@ -282,10 +285,32 @@ export default function SkorDurumuPage() {
       </div>
 
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        <div className="flex gap-2 w-full">
-          <button onClick={() => setActiveLeague('MASTER')} className={`flex-1 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'MASTER' ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>MASTER</button>
-          <button onClick={() => setActiveLeague('DFO')} className={`flex-1 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'DFO' ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>DFO</button>
-          <button onClick={() => setActiveLeague('TFF')} className={`flex-1 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'TFF' ? 'bg-red-600 text-white border-red-500' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>TFF</button>
+        {/* ÜÇGEN DİZİLİMİ - MASTER ORTADA ÜSTTE, DFO VE TFF ALTTA YAN YANA */}
+        <div className="w-full flex flex-col gap-2">
+          {/* Üst Satır - Sadece Master */}
+          <div className="flex justify-center w-full">
+             <button 
+                onClick={() => setActiveLeague('MASTER')} 
+                className={`w-1/2 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'MASTER' ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800'}`}
+             >
+                MASTER
+             </button>
+          </div>
+          {/* Alt Satır - DFO ve TFF */}
+          <div className="flex justify-center gap-2 w-full">
+             <button 
+                onClick={() => setActiveLeague('DFO')} 
+                className={`w-1/2 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'DFO' ? 'bg-blue-600 text-white border-blue-500 shadow-md scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800'}`}
+             >
+                DFO
+             </button>
+             <button 
+                onClick={() => setActiveLeague('TFF')} 
+                className={`w-1/2 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'TFF' ? 'bg-red-600 text-white border-red-500 shadow-md scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800'}`}
+             >
+                TFF
+             </button>
+          </div>
         </div>
 
         <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-emerald-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
