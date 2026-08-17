@@ -168,7 +168,7 @@ export default function AdminRadarPortal() {
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
   const [predictionsDB, setPredictionsDB] = useState<Record<string, Record<number, string>>>({}); 
-  const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); // 🚀 YENİ: LOG BİLGİLERİ İÇİN
+  const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
 
   const [bulletinWeek, setBulletinWeek] = useState<number>(5);
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
@@ -357,11 +357,12 @@ export default function AdminRadarPortal() {
          }));
       }
 
+      // Veritabanından gelen tüm bülten state'e atılır. Süzgeçleme işi render'da yapılacak.
       setLiveMatchesDB(currentBulten);
 
       const initialScores: Record<number, { home: string, away: string }> = {};
       const lockedMatches: Record<number, boolean> = {};
-      const infoMap: Record<number, any> = {}; // 🚀 YENİ: LOG BİLGİLERİ İÇİN
+      const infoMap: Record<number, any> = {}; 
       let goalHappened = false;
 
       currentBulten.forEach(m => {
@@ -370,7 +371,7 @@ export default function AdminRadarPortal() {
          
          if (liveInfo) {
            initialScores[m.match_index] = { home: liveInfo.home_score, away: liveInfo.away_score };
-           infoMap[m.match_index] = liveInfo; // Log bilgilerini (updated_by, updated_at) sakla
+           infoMap[m.match_index] = liveInfo; 
            
            if (liveInfo.status === 'FINISHED') {
               lockedMatches[m.match_index] = true;
@@ -845,6 +846,7 @@ export default function AdminRadarPortal() {
               onChange={e => setUsernameInput(e.target.value)} 
               className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600 lowercase" 
               placeholder="KULLANICI ADI" 
+              autoComplete="off"
             />
             <input 
               type="password" 
@@ -852,6 +854,7 @@ export default function AdminRadarPortal() {
               onChange={e => setPasswordInput(e.target.value)} 
               className="bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-[0.3em] font-black text-lg shadow-inner placeholder:text-slate-600" 
               placeholder="••••••••" 
+              autoComplete="new-password"
             />
             <button 
               type="submit" 
@@ -865,12 +868,17 @@ export default function AdminRadarPortal() {
     );
   }
 
-  // 🚀 FİLTRELENMİŞ EKRAN ÇIKTISI (SADECE BUGÜN / TÜMÜ)
+  // 🚀 FİLTRELENMİŞ EKRAN ÇIKTISI (TAMAMEN RENDER AŞAMASINDA ÇÖZÜLDÜ - SIZINTI İMKANSIZ)
   const displayedMatches = liveMatchesDB.filter(match => {
-      if (userRole === 'master' && showOnlyToday) {
+      // Süper Admin (Mankoman) için
+      if (userRole === 'master') {
+          return showOnlyToday ? match.match_date === getTodayDateString() : true;
+      }
+      // Skorcular (skorcum01, skorcum06, skorcum34) için ZORUNLU GÜNLÜK KARANTİNA
+      if (userRole && userRole.startsWith('skorcum')) {
           return match.match_date === getTodayDateString();
       }
-      return true; // Skorcularınki zaten use effect içinde filtreleniyor
+      return false;
   });
 
   return (
