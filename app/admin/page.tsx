@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ANA YARIŞMACI LİSTESİ 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ (SADECE BU LİSTE BAZ ALINACAKTIR) 🔴
 const staticPlayersList: Record<string, string> = {
   "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
   "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
@@ -108,6 +108,8 @@ export default function AdminRadarPortal() {
   const [passwordInput, setPasswordInput] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players' | 'teams'>('live');
+  
+  // 🔴 mergedPlayers ARTIK SADECE VE SADECE staticPlayersList'İ ALACAK (86 KİŞİLİK DB LİSTESİ BURAYA GİRMEYECEK)
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
@@ -222,15 +224,13 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated, userRole]);
 
+  // 🔴 YARIŞMACI LİSTESİ SADECE DİSİPLİN KURULU İÇİN ÇEKİLİR, TAHMİN LİSTESİNİ (mergedPlayers) ETKİLEMEZ 🔴
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('full_name');
     if (data) {
        setDbPlayersList(data);
-       const newMergedMap = { ...staticPlayersList };
-       data.forEach((p: any) => {
-          newMergedMap[p.user_id] = p.full_name;
-       });
-       setMergedPlayers(newMergedMap);
+       // BURASI İPTAL EDİLDİ: setMergedPlayers(newMergedMap); 
+       // ÇÜNKÜ BİZ SADECE STATIC LİSTEDEKİ 58 KİŞİYİ GÖRMEK İSTİYORUZ.
     }
   };
 
@@ -327,7 +327,7 @@ export default function AdminRadarPortal() {
   };
 
   const getPlayerIdByName = (name: string) => {
-    return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
+    return Object.keys(staticPlayersList).find(key => staticPlayersList[key] === name) || null;
   };
 
   useEffect(() => {
@@ -403,8 +403,10 @@ export default function AdminRadarPortal() {
       if (pData) {
          const pMap: Record<string, Record<number, string>> = {};
          pData.forEach(row => {
-            if(!pMap[row.user_id]) pMap[row.user_id] = {};
-            pMap[row.user_id][row.match_index] = row.predicted_score;
+            // 🔴 Supabase'ten gelen verinin ID'sini kesin olarak String'e çevir (Eşleşme Hatası Çözümü)
+            const stringId = String(row.user_id);
+            if(!pMap[stringId]) pMap[stringId] = {};
+            pMap[stringId][row.match_index] = row.predicted_score;
          });
          setPredictionsDB(pMap);
       }
@@ -475,7 +477,7 @@ export default function AdminRadarPortal() {
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
       
       const pMap: Record<string, string[]> = {};
-      const allUserIds = Object.keys(mergedPlayers);
+      const allUserIds = Object.keys(staticPlayersList); // 🔴 Sadece 58 Kişilik Listeyi Tara
 
       if (selectedPredictionWeek === 4) {
          allUserIds.forEach(id => {
@@ -485,8 +487,9 @@ export default function AdminRadarPortal() {
          });
       } else if (pData) {
          pData.forEach(row => {
-            if (!pMap[row.user_id]) pMap[row.user_id] = Array(24).fill('-');
-            pMap[row.user_id][row.match_index - 1] = row.predicted_score;
+            const stringId = String(row.user_id); // 🔴 String Dönüşümü
+            if (!pMap[stringId]) pMap[stringId] = Array(24).fill('-');
+            pMap[stringId][row.match_index - 1] = row.predicted_score;
          });
       }
 
@@ -498,8 +501,8 @@ export default function AdminRadarPortal() {
          else missing.push(id);
       });
 
-      submitted.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
-      missing.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
+      submitted.sort((a, b) => (staticPlayersList[a] || '').localeCompare(staticPlayersList[b] || '', 'tr'));
+      missing.sort((a, b) => (staticPlayersList[a] || '').localeCompare(staticPlayersList[b] || '', 'tr'));
 
       setPlayerPredictionsMap(pMap);
       setSubmittedPlayers(submitted);
@@ -507,7 +510,7 @@ export default function AdminRadarPortal() {
     };
 
     fetchPredictionData();
-  }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
+  }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole]);
 
   const handleAddNewPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -610,7 +613,7 @@ export default function AdminRadarPortal() {
   // 🚀 CANLI BONUS MOTORU HESAPLAMASI (SADECE O HAFTAYA ÖZEL)
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
-     Object.keys(mergedPlayers).forEach(uid => {
+     Object.keys(staticPlayersList).forEach(uid => {
          stats[uid] = { points: 0, exactScores: 0 };
      });
 
@@ -624,8 +627,9 @@ export default function AdminRadarPortal() {
              const predsSource = selectedLiveWeek === 4 ? (week4PredictionsData as any) : predictionsDB;
              
              const winners = Object.keys(predsSource).filter(uid => {
+                 const stringId = String(uid); // 🔴 String Dönüşümü Garanti
                  const idx = selectedLiveWeek === 4 ? match.match_index - 1 : match.match_index;
-                 return predsSource[uid] && predsSource[uid][idx] === targetScore;
+                 return predsSource[stringId] && predsSource[stringId][idx] === targetScore;
              });
 
              const wCount = winners.length;
@@ -639,9 +643,10 @@ export default function AdminRadarPortal() {
              else if (wCount >= 7) pts = 1;
 
              winners.forEach(uid => {
-                 if (stats[uid]) {
-                     stats[uid].points += pts;
-                     stats[uid].exactScores += 1;
+                 const stringId = String(uid);
+                 if (stats[stringId]) {
+                     stats[stringId].points += pts;
+                     stats[stringId].exactScores += 1;
                  }
              });
          }
@@ -668,7 +673,7 @@ export default function AdminRadarPortal() {
      }
 
      return { pointsLeader, scoreLeader, stats, maxPts, maxScores };
-  }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
+  }, [adminScores, predictionsDB, liveMatchesDB, selectedLiveWeek]);
 
 
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
@@ -703,10 +708,10 @@ export default function AdminRadarPortal() {
       if (matchId === 24) {
           confirmMsg = `FİNAL MAÇI ONAYI VE BONUS DAĞITIMI (24. MAÇ) 🚨\n\n`;
           confirmMsg += `Bu maçı ${currentWinners.length} kişi bildi (${displayPoints} Puan)\n\n`;
-          if (weeklyStats.pointsLeader) confirmMsg += `🏆 Puan Lideri (+3 Puan): ${mergedPlayers[weeklyStats.pointsLeader]}\n`;
+          if (weeklyStats.pointsLeader) confirmMsg += `🏆 Puan Lideri (+3 Puan): ${staticPlayersList[weeklyStats.pointsLeader]}\n`;
           else confirmMsg += `🏆 Puan Lideri: MÜSTAKİL LİDER YOK (Bonus İptal)\n`;
           
-          if (weeklyStats.scoreLeader) confirmMsg += `🔥 Skor Kralı (+3 Master Puan): ${mergedPlayers[weeklyStats.scoreLeader]}\n`;
+          if (weeklyStats.scoreLeader) confirmMsg += `🔥 Skor Kralı (+3 Master Puan): ${staticPlayersList[weeklyStats.scoreLeader]}\n`;
           else confirmMsg += `🔥 Skor Kralı: MÜSTAKİL KRAL YOK (Bonus İptal)\n`;
           
           confirmMsg += `\nİşlemi onaylıyor musun Kumandanım?`;
@@ -762,13 +767,13 @@ export default function AdminRadarPortal() {
 
             if (pLeaderId) {
                 bonusInserts.push({
-                    hafta: selectedLiveWeek, user_name: mergedPlayers[pLeaderId], username: pLeaderId, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ',
+                    hafta: selectedLiveWeek, user_name: staticPlayersList[pLeaderId], username: pLeaderId, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ',
                     gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
                 });
             }
             if (sLeaderId) {
                 bonusInserts.push({
-                    hafta: selectedLiveWeek, user_name: mergedPlayers[sLeaderId], username: sLeaderId, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI',
+                    hafta: selectedLiveWeek, user_name: staticPlayersList[sLeaderId], username: sLeaderId, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI',
                     gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
                 });
             }
@@ -796,7 +801,7 @@ export default function AdminRadarPortal() {
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
                         }
                     }
-                    alert(`🎁 HAFTANIN BONUSLARI BAŞARIYLA DAĞITILDI!\n\n🏆 Puan Lideri: ${pLeaderId ? mergedPlayers[pLeaderId] : 'Müstakil Lider Yok'}\n🔥 Skor Kralı: ${sLeaderId ? mergedPlayers[sLeaderId] : 'Müstakil Kral Yok'}`);
+                    alert(`🎁 HAFTANIN BONUSLARI BAŞARIYLA DAĞITILDI!\n\n🏆 Puan Lideri: ${pLeaderId ? staticPlayersList[pLeaderId] : 'Müstakil Lider Yok'}\n🔥 Skor Kralı: ${sLeaderId ? staticPlayersList[sLeaderId] : 'Müstakil Kral Yok'}`);
                 } else {
                     console.error("Bonus insert error:", bInsertError);
                 }
@@ -1223,13 +1228,14 @@ export default function AdminRadarPortal() {
 
                   currentWinners = Object.keys(predictionsSource)
                     .filter(uid => {
+                        const stringId = String(uid); // 🔴 String Garanti Eşleşme
                         if (selectedLiveWeek === 4) {
-                            return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
+                            return predictionsSource[stringId] && predictionsSource[stringId][match.match_index - 1] === targetScore;
                         } else {
-                            return predictionsSource[uid] && predictionsSource[uid][match.match_index] === targetScore;
+                            return predictionsSource[stringId] && predictionsSource[stringId][match.match_index] === targetScore;
                         }
                     })
-                    .map(uid => mergedPlayers[uid] || "Bilinmeyen")
+                    .map(uid => staticPlayersList[uid] || "Bilinmeyen")
                     .sort((a, b) => a.localeCompare(b, 'tr'));
                     
                   winnersCount = currentWinners.length;
@@ -1320,13 +1326,13 @@ export default function AdminRadarPortal() {
                                     <div className="flex justify-between items-center bg-slate-950/80 px-3 py-2 rounded border border-slate-700/50 shadow-inner">
                                         <span className="text-[9px] text-slate-300 font-bold tracking-widest">🎯 Puan Lideri (+3 Puan):</span>
                                         <span className={`text-[10px] font-black tracking-widest ${weeklyStats.pointsLeader ? 'text-emerald-400' : 'text-rose-500'}`}>
-                                            {weeklyStats.pointsLeader ? `${mergedPlayers[weeklyStats.pointsLeader]} (${weeklyStats.maxPts}P)` : 'MÜSTAKİL LİDER YOK'}
+                                            {weeklyStats.pointsLeader ? `${staticPlayersList[weeklyStats.pointsLeader]} (${weeklyStats.maxPts}P)` : 'MÜSTAKİL LİDER YOK'}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center bg-slate-950/80 px-3 py-2 rounded border border-slate-700/50 shadow-inner">
                                         <span className="text-[9px] text-slate-300 font-bold tracking-widest">⚽ Skor Kralı (+3 Master):</span>
                                         <span className={`text-[10px] font-black tracking-widest ${weeklyStats.scoreLeader ? 'text-amber-400' : 'text-rose-500'}`}>
-                                            {weeklyStats.scoreLeader ? `${mergedPlayers[weeklyStats.scoreLeader]} (${weeklyStats.maxScores} Maç)` : 'MÜSTAKİL KRAL YOK'}
+                                            {weeklyStats.scoreLeader ? `${staticPlayersList[weeklyStats.scoreLeader]} (${weeklyStats.maxScores} Maç)` : 'MÜSTAKİL KRAL YOK'}
                                         </span>
                                     </div>
                                 </div>
@@ -1630,7 +1636,7 @@ export default function AdminRadarPortal() {
                     ) : (
                        missingPlayers.map(id => (
                          <div key={id} className="bg-slate-950/50 border border-rose-900/30 p-3 rounded-xl flex justify-between items-center group hover:bg-slate-900 transition-colors">
-                            <span className="font-bold text-slate-300 text-sm">{mergedPlayers[id]}</span>
+                            <span className="font-bold text-slate-300 text-sm">{staticPlayersList[id]}</span>
                             <span className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-950/50 px-2 py-1 rounded border border-rose-900/50">BEKLENİYOR</span>
                          </div>
                        ))
@@ -1663,7 +1669,7 @@ export default function AdminRadarPortal() {
                                  className="p-3 flex justify-between items-center cursor-pointer"
                                  onClick={() => setExpandedPlayer(isExpanded ? null : id)}
                                >
-                                  <span className="font-bold text-emerald-100 text-sm">{mergedPlayers[id]}</span>
+                                  <span className="font-bold text-emerald-100 text-sm">{staticPlayersList[id]}</span>
                                   <div className="flex items-center gap-3">
                                      <span className="text-[10px] font-black tracking-widest text-emerald-400 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900/50">TAMAM</span>
                                      <span className="text-slate-500 text-xs">{isExpanded ? '▲' : '▼'}</span>
