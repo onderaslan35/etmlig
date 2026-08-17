@@ -228,7 +228,7 @@ export default function AdminRadarPortal() {
        setDbPlayersList(data);
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
-          newMergedMap[p.user_id] = p.full_name;
+          newMergedMap[String(p.user_id)] = p.full_name; // 🚀 CERRAHİ MÜDAHALE: Veritabanı ID'si kesin olarak String'e çevrildi
        });
        setMergedPlayers(newMergedMap);
     }
@@ -403,8 +403,9 @@ export default function AdminRadarPortal() {
       if (pData) {
          const pMap: Record<string, Record<number, string>> = {};
          pData.forEach(row => {
-            if(!pMap[row.user_id]) pMap[row.user_id] = {};
-            pMap[row.user_id][row.match_index] = row.predicted_score;
+            const rowUserId = String(row.user_id); // 🚀 CERRAHİ MÜDAHALE: Veritabanı ID'si kesin olarak String'e çevrildi
+            if(!pMap[rowUserId]) pMap[rowUserId] = {};
+            pMap[rowUserId][row.match_index] = row.predicted_score;
          });
          setPredictionsDB(pMap);
       }
@@ -485,8 +486,9 @@ export default function AdminRadarPortal() {
          });
       } else if (pData) {
          pData.forEach(row => {
-            if (!pMap[row.user_id]) pMap[row.user_id] = Array(24).fill('-');
-            pMap[row.user_id][row.match_index - 1] = row.predicted_score;
+            const rowUserId = String(row.user_id); // 🚀 CERRAHİ MÜDAHALE: Veritabanı ID'si kesin olarak String'e çevrildi
+            if (!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
+            pMap[rowUserId][row.match_index - 1] = row.predicted_score;
          });
       }
 
