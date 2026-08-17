@@ -227,7 +227,6 @@ export default function TahminlerPortal() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); 
 
-  // 🚀 DİNAMİK BÜLTEN: Artık Supabase'den çekiliyor.
   const [bulletinMap, setBulletinMap] = useState<Record<number, any[]>>({ 4: archiveMatches[4] }); 
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [oldPredictions, setOldPredictions] = useState<Record<number, { home: string, away: string }>>({});
@@ -241,10 +240,8 @@ export default function TahminlerPortal() {
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(4);
 
-  // 🚀 SAYFA AÇILDIĞINDA LOGOLARI VE "matches_bulletin" TABLOSUNU ÇEKİYORUZ!
   useEffect(() => {
     const fetchInitialData = async () => {
-      // 1. Logoları Çek
       const { data: teamsData } = await supabase.from('teams').select('team_name, logo_url');
       if (teamsData) {
         const logos: Record<string, string> = {};
@@ -252,10 +249,9 @@ export default function TahminlerPortal() {
         setTeamLogosMap(logos);
       }
 
-      // 2. Dinamik Bültenleri Çek (Arşiv, Deklarasyon ve Tahminmatik için)
-      const { data: bultenData } = await supabase.from('matches_bulletin').select('*');
+      const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
-         const newMap: Record<number, any[]> = { 4: archiveMatches[4] }; // 4 sabit kalsın
+         const newMap: Record<number, any[]> = { 4: archiveMatches[4] };
          bultenData.forEach(row => {
             if(!newMap[row.week_num]) newMap[row.week_num] = [];
             newMap[row.week_num].push({
@@ -298,11 +294,8 @@ export default function TahminlerPortal() {
   };
 
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
-    
-    // 🚀 DİNAMİK BÜLTEN KONTROLÜ
     const bData = bulletinMap[selectedEntryWeek] || [];
     
-    // Tahminleri Çek
     const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedEntryWeek).eq('user_id', currentUsername);
 
     if (bData && bData.length > 0) {
@@ -402,31 +395,50 @@ export default function TahminlerPortal() {
     else setSortOrder('A-Z');
   };
 
-  // 🚀 TAHMİN EDENLERİ ÇEKEN KISIM
+  // 🚀 LİMİTSİZ BÜYÜK VERİ ÇEKİCİ MOTOR (1000 SATIR LİMİTİNİ YIKAR)
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
   useEffect(() => {
      const fetchLivePreds = async () => {
-        const { data } = await supabase.from('player_predictions').select('*');
-        if (data) {
-           const newData: Record<number, Record<string, string[]>> = { 4: { ...archivePredictionsData[4] } };
-           
-           data.forEach(row => {
-               const wk = row.week_num;
-               const uid = String(row.user_id);
-               if(!newData[wk]) newData[wk] = {};
-               if(!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
-               newData[wk][uid][row.match_index - 1] = row.predicted_score;
-           });
-           setLivePredictionsData(newData);
+        let allData: any[] = [];
+        let from = 0;
+        let step = 999;
+        let keepFetching = true;
+        
+        // Supabase limitlerine takılmadan tüm veriyi parça parça çekip birleştirir.
+        while(keepFetching) {
+            const { data } = await supabase
+              .from('player_predictions')
+              .select('*')
+              .in('week_num', [4, selectedTahminWeek])
+              .range(from, from + step);
+              
+            if (data && data.length > 0) {
+                allData = [...allData, ...data];
+                if (data.length <= step) keepFetching = false;
+                else from += step + 1;
+            } else {
+                keepFetching = false;
+            }
+        }
+        
+        if (allData.length > 0) {
+            const newData: Record<number, Record<string, string[]>> = { 4: { ...archivePredictionsData[4] } };
+            allData.forEach(row => {
+                const wk = row.week_num;
+                const uid = String(row.user_id);
+                if(!newData[wk]) newData[wk] = {};
+                if(!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
+                newData[wk][uid][row.match_index - 1] = row.predicted_score;
+            });
+            setLivePredictionsData(newData);
         } else {
-           setLivePredictionsData(archivePredictionsData);
+            setLivePredictionsData(archivePredictionsData);
         }
      };
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
-  // 🚀 SADECE TAHMİN GİRENLERİ DEĞİL, BÜLTEN VARSA HERKESİ GÖSTEREN GÜVENLİK DUVARI KALDIRILMIŞ FİLTRE
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
