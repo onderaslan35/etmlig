@@ -213,12 +213,14 @@ export default function MasterPuanDurumuPage() {
           }
         });
 
-        // 🏆 EKMEL BONUS MOTORU V3.0 (24. MAÇ CANLI TETİKLEYİCİ - MÜSTAKİL LİDER AVI) 🏆
+        // 🏆 EKMEL BONUS MOTORU V3.1 (24. MAÇ CANLI TETİKLEYİCİ DÜZELTMESİ) 🏆
         let puanKraliId: string | null = null;
         let skorKraliId: string | null = null;
         
-        // Tetikleyici: 24 ID'li maç (Batman Petrol - Boluspor) veritabanında görünürse (canlı, devre arası veya bitmiş)
-        const isEngineActive = !!uniqueMatches[24];
+        // Tetikleyici: 24 ID'li maç (Batman Petrol - Boluspor) BAŞLAMIŞ veya BİTMİŞ olmalı.
+        // Eğer admin maçı "Sıfırla" yaparsa status geri döner ve motor durur, bonuslar iptal olur.
+        const match24 = uniqueMatches[24];
+        const isEngineActive = match24 && (match24.status === 'LIVE' || match24.status === 'HT' || match24.status === 'WAITING_APPROVAL' || match24.status === 'FINISHED');
 
         if (isEngineActive) {
           let maxPuan = -1;
