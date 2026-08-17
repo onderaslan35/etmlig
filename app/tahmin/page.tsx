@@ -67,7 +67,6 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
 };
 
-// 4. HAFTA SABİT ARŞİV BİLGİLERİ (Bülten kısmı Supabase'den dinamik çekilecek)
 const archiveMatches = {
   4: [
     { id: 1, weekLabel: "4. Hafta - 1. MAÇ", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30" },
@@ -403,13 +402,11 @@ export default function TahminlerPortal() {
     else setSortOrder('A-Z');
   };
 
-  // 🚀 TAHMİN EDENLERİ ÇEKEN KISIM (SADECE ARŞİV DEĞİL, SUPABASE'E DE BAKSIN)
+  // 🚀 TAHMİN EDENLERİ ÇEKEN KISIM
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
   useEffect(() => {
-     // Sayfa her açıldığında veya hafta değiştiğinde, gerçek oyuncu verilerini DB'den alıyoruz ki boş görünmesin.
      const fetchLivePreds = async () => {
-        // Artık tüm haftaları çekiyoruz ki 6,7,8 de gelse çalışsın.
         const { data } = await supabase.from('player_predictions').select('*');
         if (data) {
            const newData: Record<number, Record<string, string[]>> = { 4: { ...archivePredictionsData[4] } };
@@ -429,7 +426,7 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
-
+  // 🚀 SADECE TAHMİN GİRENLERİ DEĞİL, BÜLTEN VARSA HERKESİ GÖSTEREN GÜVENLİK DUVARI KALDIRILMIŞ FİLTRE
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
@@ -442,7 +439,6 @@ export default function TahminlerPortal() {
       });
     }
 
-    // Seçilen haftada en az bir maça tahmin giren (PAS demeyen) herkes
     const submittedIds = allIds.filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'));
     const missingIds = allIds.filter(id => !selectedWeekData[id] || !selectedWeekData[id].some(s => s !== 'PAS'));
 
