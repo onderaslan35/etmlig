@@ -58,6 +58,15 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
+// 🚀 BUGÜNÜN TARİHİNİ ALAN YARDIMCI FONKSİYON (GÜNLÜK KARANTİNA İÇİN)
+const getTodayDateString = () => {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+};
+
 const generateTimeOptions = () => {
   const times = ["00:00"];
   for (let h = 23; h >= 12; h--) {
@@ -86,7 +95,6 @@ const generateWeekDates = (weekNum: number) => {
   return dates;
 };
 
-// 🔴 HATANIN KAYNAĞI BURASIYDI, DÜZELTİLDİ! (4. Hafta için veritabanında id'ler 1,2,3... diye kayıtlı)
 const getUniqueMatchId = (week: number, index: number) => {
     if (week === 4) return index; 
     return (week * 100) + index;
@@ -119,7 +127,6 @@ export default function AdminRadarPortal() {
   const [newTeamLogo, setNewTeamLogo] = useState('');
   const [isTeamLoading, setIsTeamLoading] = useState(false);
 
-  // 🚀 SES BİLDİRİMİ STATE VE REF'İ
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
 
@@ -270,11 +277,16 @@ export default function AdminRadarPortal() {
 
       let currentBulten = bultenData || [];
 
-      // 🚀 4. HAFTA EĞER BÜLTENDE YOKSA YEDEK KÖPRÜDEN ÇEKER
       if (selectedLiveWeek === 4 && currentBulten.length === 0) {
          currentBulten = week4Matches.map(m => ({
             match_index: m.id, week_num: 4, category: m.category, match_date: m.date, match_time: m.time, home_team: m.homeTeam, away_team: m.awayTeam
          }));
+      }
+
+      // 🛡️ 🚀 YENİ: GÜNLÜK KARANTİNA ZIRHI (SCORE ADMIN İÇİN)
+      if (userRole === 'subadmin') {
+          const strictTodayStr = getTodayDateString();
+          currentBulten = currentBulten.filter(m => m.match_date === strictTodayStr);
       }
 
       setLiveMatchesDB(currentBulten);
@@ -293,7 +305,6 @@ export default function AdminRadarPortal() {
               lockedMatches[m.match_index] = true;
            }
 
-           // 🔴 SES MOTORU: GOL KONTROLÜ
            if (liveInfo.home_score !== '-' && liveInfo.away_score !== '-') {
              const newTotal = parseInt(liveInfo.home_score) + parseInt(liveInfo.away_score);
              const prevTotal = previousScoresRef.current[uniqueId];
@@ -311,7 +322,6 @@ export default function AdminRadarPortal() {
       setAdminScores(initialScores);
       setDistributedMatches(lockedMatches);
 
-      // 🔴 SES MOTORU: EĞER GOL VARSA VE SES AÇIKSA PATLAT!
       if (goalHappened && isSoundEnabled) {
          const audio = new Audio('/sounds/goal.mp3');
          audio.play().catch(e => console.log("Ses çalınamadı:", e));
@@ -338,7 +348,7 @@ export default function AdminRadarPortal() {
 
         return () => { supabase.removeChannel(channel); };
     }
-  }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled]);
+  }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
 
   useEffect(() => {
@@ -776,7 +786,7 @@ export default function AdminRadarPortal() {
         
         {/* 🔴 ÜST TAB MENÜSÜ 🔴 */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative overflow-x-auto custom-scrollbar flex-wrap">
-           
+            
            <button 
              onClick={handleLogout} 
              className="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-red-400 z-50 flex items-center gap-1"
@@ -834,8 +844,14 @@ export default function AdminRadarPortal() {
                 <h1 className="text-xl sm:text-2xl font-bold text-amber-400 tracking-tight flex items-center justify-center sm:justify-start gap-2">
                   🔴 KÖK KOMUTA MERKEZİ / CANLI RADAR
                 </h1>
-                <p className="text-slate-400 text-xs mt-0.5">
-                  Veritabanındaki maçların skorunu gir ve puanları dağıt.
+                <p className="text-slate-400 text-xs mt-1 flex items-center justify-center sm:justify-start gap-2">
+                  {userRole === 'subadmin' ? (
+                     <span className="bg-rose-950/80 text-rose-400 px-2 py-0.5 rounded border border-rose-900 font-bold tracking-widest uppercase">
+                       🛡️ GÜNLÜK KARANTİNA ZIRHI AKTİF ({getTodayDateString()})
+                     </span>
+                  ) : (
+                     "Veritabanındaki maçların skorunu gir ve puanları dağıt."
+                  )}
                 </p>
               </div>
               
@@ -852,7 +868,9 @@ export default function AdminRadarPortal() {
                     {isSoundEnabled ? '🔊 GOL SESİ AÇIK' : '🔇 GOL SESİ KAPALI'}
                  </button>
 
-                 <span className="text-slate-400 font-bold text-sm">YÖNETİLECEK HAFTA:</span>
+                 <span className="text-slate-400 font-bold text-sm">
+                    {userRole === 'subadmin' ? 'AKTİF HAFTA:' : 'YÖNETİLECEK HAFTA:'}
+                 </span>
                  <select 
                    value={selectedLiveWeek} 
                    onChange={e => setSelectedLiveWeek(Number(e.target.value))}
@@ -868,10 +886,16 @@ export default function AdminRadarPortal() {
             </div>
 
             {liveMatchesDB.length === 0 ? (
-                 <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
-                    <span className="text-5xl mb-4 block opacity-50">📡</span>
-                    <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI</h2>
-                    <p className="text-slate-500 text-sm">Önce 'Yeni Bülten Oluştur' sekmesinden bu haftayı yayınlayın.</p>
+                 <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl shadow-inner">
+                    <span className="text-5xl mb-4 block opacity-50">{userRole === 'subadmin' ? '🛡️' : '📡'}</span>
+                    <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole === 'subadmin' ? 'text-rose-400' : 'text-slate-400'}`}>
+                       {userRole === 'subadmin' ? `BUGÜN İÇİN (${getTodayDateString()}) OYNANACAK MAÇ BULUNAMADI` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
+                    </h2>
+                    <p className="text-slate-500 text-sm">
+                       {userRole === 'subadmin' 
+                          ? 'Günlük karantina zırhı devrede. Sadece bugün oynanan maçlara müdahale edebilirsiniz. Düne veya yarına ait maçlar gizlenmiştir.' 
+                          : 'Önce "Yeni Bülten Oluştur" sekmesinden bu haftayı yayınlayın.'}
+                    </p>
                  </div>
             ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -1332,7 +1356,7 @@ export default function AdminRadarPortal() {
                                            return (
                                               <div key={index} className="relative flex flex-col items-center justify-center bg-slate-900 border border-slate-700/50 pt-4 pb-2 px-1 rounded-xl shadow-sm hover:border-emerald-500/50 transition-colors">
                                                  <div className="absolute -top-2 bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-[8px] font-black tracking-widest text-slate-400 shadow-sm">
-                                                   M{index + 1}
+                                                    M{index + 1}
                                                  </div>
                                                  
                                                  <div className="flex items-center justify-between w-full mt-1">
