@@ -103,7 +103,7 @@ const getUniqueMatchId = (week: number, index: number) => {
 export default function AdminRadarPortal() {
   
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<'master' | 'subadmin' | null>(null);
+  const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
@@ -129,6 +129,13 @@ export default function AdminRadarPortal() {
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
+
+  // 🚀 SKORCU DİSİPLİN KONTROL STATE'LERİ
+  const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({
+     'skorcum01': true,
+     'skorcum06': true,
+     'skorcum34': true
+  });
 
   const defaultCategoriesList = [
     "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG", "AMATÖR LİG",
@@ -185,7 +192,7 @@ export default function AdminRadarPortal() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
        const auth = sessionStorage.getItem('admin_auth');
-       const role = sessionStorage.getItem('admin_role') as 'master' | 'subadmin' | null;
+       const role = sessionStorage.getItem('admin_role') as any;
        
        if (auth === 'true' && role) {
           setIsAuthenticated(true);
@@ -193,6 +200,27 @@ export default function AdminRadarPortal() {
        }
     }
   }, []);
+
+  const fetchSkorcuStatus = async () => {
+     try {
+       // Kırmızı butonlar için veritabanında skorcu_auth tablosu beklenir. 
+       // Yoksa sistem çökmesin diye error catch'te varsayılan true bırakılır.
+       const { data, error } = await supabase.from('skorcu_auth').select('*');
+       if (data) {
+          const newMap: Record<string, boolean> = {};
+          data.forEach(row => { newMap[row.username] = row.is_active; });
+          setSkorcuStatusMap(prev => ({...prev, ...newMap}));
+       }
+     } catch (e) {
+        console.log("Skorcu tablosu bulunamadı, varsayılan aktif devam ediliyor.");
+     }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && userRole === 'master') {
+       fetchSkorcuStatus();
+    }
+  }, [isAuthenticated, userRole]);
 
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('full_name');
@@ -234,25 +262,48 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
        setIsAuthenticated(true);
        setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'master');
+       return;
     } 
-    else if (usernameInput === 'skoradmin' && passwordInput === '123456') {
-       setIsAuthenticated(true);
-       setUserRole('subadmin');
-       sessionStorage.setItem('admin_auth', 'true');
-       sessionStorage.setItem('admin_role', 'subadmin');
-       setActiveTab('live'); 
-    } 
-    else {
-       alert("❌ Erişim Reddedildi! Hatalı Kullanıcı Adı veya Şifre.");
-       setPasswordInput('');
+    
+    // 🛡️ SKORCU GİRİŞ SİSTEMİ (ÖZEL KÜNYELER)
+    const validSkorcular: Record<string, string> = {
+       'skorcum01': '150101',
+       'skorcum06': '191006',
+       'skorcum34': '192306'
+    };
+
+    if (validSkorcular[usernameInput]) {
+       if (passwordInput === validSkorcular[usernameInput]) {
+          
+          // Veritabanından Kırmızı Buton (Dondurulma) kontrolü
+          try {
+             const { data, error } = await supabase.from('skorcu_auth').select('is_active').eq('username', usernameInput).single();
+             if (data && data.is_active === false) {
+                 alert("❌ YETKİLERİNİZ DONDURULDU!\nSistemden uzaklaştırıldınız. Lütfen Genelkurmay (Mankoman) ile iletişime geçin.");
+                 return;
+             }
+          } catch(err) {
+             console.log("Tablo bulunamadı, giriş yapılıyor...");
+          }
+
+          setIsAuthenticated(true);
+          setUserRole(usernameInput as any);
+          sessionStorage.setItem('admin_auth', 'true');
+          sessionStorage.setItem('admin_role', usernameInput);
+          setActiveTab('live');
+          return;
+       }
     }
+    
+    alert("❌ Erişim Reddedildi! Hatalı Kullanıcı Adı veya Şifre.");
+    setPasswordInput('');
   };
 
   const handleLogout = () => {
@@ -264,6 +315,26 @@ export default function AdminRadarPortal() {
     setPasswordInput('');
   };
 
+  // 🔴 MANKOMAN İÇİN SKORCU DONDURMA / AÇMA BUTONU MANTIĞI
+  const toggleSkorcuAccess = async (skorcuName: string, currentStatus: boolean) => {
+     const newStatus = !currentStatus;
+     
+     // 1. Arayüzü hızlıca güncelle
+     setSkorcuStatusMap(prev => ({...prev, [skorcuName]: newStatus}));
+     
+     // 2. Veritabanını güncelle (Tablo varsa)
+     try {
+        await supabase.from('skorcu_auth').upsert({ username: skorcuName, is_active: newStatus }, { onConflict: 'username' });
+        if (!newStatus) {
+           alert(`🚨 ${skorcuName.toUpperCase()} başarıyla ETKİSİZLEŞTİRİLDİ!\nŞu an içerideyken bile bir şey yapamayacak ve tekrar giriş yapamayacak.`);
+        } else {
+           alert(`✅ ${skorcuName.toUpperCase()} yetkileri geri verildi. Sisteme girebilir.`);
+        }
+     } catch (e) {
+        alert("SQL Tablosu ('skorcu_auth') henüz kurulmadığı için bu ayar sadece ekranda değişti. Kalıcı olması için tabloyu oluşturmalısın.");
+     }
+  };
+
   const getPlayerIdByName = (name: string) => {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
@@ -271,6 +342,19 @@ export default function AdminRadarPortal() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const fetchLiveAdminData = async () => {
+      
+      // Eğer skorcu içerideyken Mankoman tarafından "PASİF" edilirse, anında sistemden dışarı atar!
+      if (userRole && userRole.startsWith('skorcum')) {
+         try {
+           const { data } = await supabase.from('skorcu_auth').select('is_active').eq('username', userRole).single();
+           if (data && data.is_active === false) {
+              alert("🚨 YETKİLERİNİZ DONDURULDU!\nSistemden uzaklaştırılıyorsunuz.");
+              handleLogout();
+              return;
+           }
+         } catch(e) {}
+      }
+
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
       const { data: liveData } = await supabase.from('live_matches').select('*');
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek);
@@ -283,8 +367,8 @@ export default function AdminRadarPortal() {
          }));
       }
 
-      // 🛡️ 🚀 YENİ: GÜNLÜK KARANTİNA ZIRHI (SCORE ADMIN İÇİN)
-      if (userRole === 'subadmin') {
+      // 🛡️ 🚀 GÜNLÜK KARANTİNA ZIRHI (SADECE SKORCULAR İÇİN)
+      if (userRole && userRole.startsWith('skorcum')) {
           const strictTodayStr = getTodayDateString();
           currentBulten = currentBulten.filter(m => m.match_date === strictTodayStr);
       }
@@ -758,7 +842,7 @@ export default function AdminRadarPortal() {
               type="text" 
               value={usernameInput} 
               onChange={e => setUsernameInput(e.target.value)} 
-              className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600" 
+              className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600 lowercase" 
               placeholder="KULLANICI ADI" 
             />
             <input 
@@ -785,14 +869,7 @@ export default function AdminRadarPortal() {
       <div className="max-w-7xl mx-auto pt-6">
         
         {/* 🔴 ÜST TAB MENÜSÜ 🔴 */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl relative overflow-x-auto custom-scrollbar flex-wrap">
-            
-           <button 
-             onClick={handleLogout} 
-             className="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-red-400 z-50 flex items-center gap-1"
-           >
-             🔒 KİLİTLE ÇIK
-           </button>
+        <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
 
            <button 
              onClick={() => setActiveTab('live')}
@@ -839,27 +916,64 @@ export default function AdminRadarPortal() {
         {/* ========================================================================================= */}
         {activeTab === 'live' && (
           <div className="animate-fade-in">
+            
+            {/* 🔴 MANKOMAN İÇİN SKORCU DİSİPLİN KONTROL PANELİ 🔴 */}
+            {userRole === 'master' && (
+               <div className="mb-6 bg-slate-900 border border-slate-700/80 rounded-2xl p-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                     <div className="flex items-center gap-2">
+                        <span className="text-2xl drop-shadow-md">⚔️</span>
+                        <div>
+                           <h2 className="text-white font-black tracking-widest uppercase text-sm">SKORCU DİSİPLİN PANELİ</h2>
+                           <p className="text-slate-400 text-[10px]">Aktif Skorcuları anında sistemden atabilir veya yetki verebilirsin.</p>
+                        </div>
+                     </div>
+                     <div className="flex gap-3 flex-wrap justify-center">
+                        {['skorcum01', 'skorcum06', 'skorcum34'].map(sk => {
+                           const isActive = skorcuStatusMap[sk] !== false; // Varsayılan true
+                           return (
+                              <button 
+                                 key={sk}
+                                 onClick={() => toggleSkorcuAccess(sk, isActive)}
+                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs transition-all shadow-md ${
+                                    isActive 
+                                    ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400 hover:bg-emerald-900' 
+                                    : 'bg-rose-950/80 border-rose-500/50 text-rose-400 hover:bg-rose-900'
+                                 }`}
+                              >
+                                 <span className="uppercase tracking-widest">{sk}</span>
+                                 <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.8)]'}`}></div>
+                              </button>
+                           )
+                        })}
+                     </div>
+                  </div>
+               </div>
+            )}
+
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
               <div className="text-center sm:text-left">
                 <h1 className="text-xl sm:text-2xl font-bold text-amber-400 tracking-tight flex items-center justify-center sm:justify-start gap-2">
                   🔴 KÖK KOMUTA MERKEZİ / CANLI RADAR
                 </h1>
                 <p className="text-slate-400 text-xs mt-1 flex items-center justify-center sm:justify-start gap-2">
-                  {userRole === 'subadmin' ? (
-                     <span className="bg-rose-950/80 text-rose-400 px-2 py-0.5 rounded border border-rose-900 font-bold tracking-widest uppercase">
-                       🛡️ GÜNLÜK KARANTİNA ZIRHI AKTİF ({getTodayDateString()})
-                     </span>
-                  ) : (
-                     "Veritabanındaki maçların skorunu gir ve puanları dağıt."
-                  )}
+                  Veritabanındaki maçların skorunu gir ve puanları dağıt.
                 </p>
               </div>
               
-              <div className="flex items-center gap-3">
-                 {/* 🚀 YENİ: GOL SESİ AÇ/KAPAT BUTONU */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3">
+                 
+                 {/* 🚀 KİLİTLE ÇIK BURAYA GELDİ (GOL SESİNİN SOLUNA) */}
+                 <button 
+                   onClick={handleLogout} 
+                   className="px-4 py-2 bg-rose-950 hover:bg-rose-900 text-rose-400 text-xs font-bold rounded-xl shadow-md border border-rose-900/50 flex items-center gap-2 transition-all"
+                 >
+                   🔒 KİLİTLE ÇIK
+                 </button>
+
                  <button 
                     onClick={() => setIsSoundEnabled(!isSoundEnabled)}
-                    className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all mr-2 shadow-md ${
+                    className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md ${
                         isSoundEnabled 
                         ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500' 
                         : 'bg-slate-800/50 text-slate-500 border border-slate-700'
@@ -868,32 +982,38 @@ export default function AdminRadarPortal() {
                     {isSoundEnabled ? '🔊 GOL SESİ AÇIK' : '🔇 GOL SESİ KAPALI'}
                  </button>
 
-                 <span className="text-slate-400 font-bold text-sm">
-                    {userRole === 'subadmin' ? 'AKTİF HAFTA:' : 'YÖNETİLECEK HAFTA:'}
-                 </span>
-                 <select 
-                   value={selectedLiveWeek} 
-                   onChange={e => setSelectedLiveWeek(Number(e.target.value))}
-                   className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-lg px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
-                 >
-                    <option value={4}>4. HAFTA</option>
-                    <option value={5}>5. HAFTA</option>
-                    <option value={6}>6. HAFTA</option>
-                    <option value={7}>7. HAFTA</option>
-                    <option value={8}>8. HAFTA</option>
-                 </select>
+                 <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 ml-0 sm:ml-2">
+                    <span className="text-slate-400 font-bold text-xs tracking-wider">AKTİF HAFTA:</span>
+                    {userRole === 'master' ? (
+                       <select 
+                         value={selectedLiveWeek} 
+                         onChange={e => setSelectedLiveWeek(Number(e.target.value))}
+                         className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-1 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
+                       >
+                          <option value={4}>4. HAFTA</option>
+                          <option value={5}>5. HAFTA</option>
+                          <option value={6}>6. HAFTA</option>
+                          <option value={7}>7. HAFTA</option>
+                          <option value={8}>8. HAFTA</option>
+                       </select>
+                    ) : (
+                       <div className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-3 py-1 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] select-none">
+                          {selectedLiveWeek}. HAFTA
+                       </div>
+                    )}
+                 </div>
               </div>
             </div>
 
             {liveMatchesDB.length === 0 ? (
                  <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl shadow-inner">
-                    <span className="text-5xl mb-4 block opacity-50">{userRole === 'subadmin' ? '🛡️' : '📡'}</span>
-                    <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole === 'subadmin' ? 'text-rose-400' : 'text-slate-400'}`}>
-                       {userRole === 'subadmin' ? `BUGÜN İÇİN (${getTodayDateString()}) OYNANACAK MAÇ BULUNAMADI` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
+                    <span className="text-5xl mb-4 block opacity-50">{userRole && userRole.startsWith('skorcum') ? '🛡️' : '📡'}</span>
+                    <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') ? 'text-amber-500' : 'text-slate-400'}`}>
+                       {userRole && userRole.startsWith('skorcum') ? `BUGÜN İÇİN (${getTodayDateString()}) OYNANACAK MAÇ BULUNAMADI` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
                     </h2>
                     <p className="text-slate-500 text-sm">
-                       {userRole === 'subadmin' 
-                          ? 'Günlük karantina zırhı devrede. Sadece bugün oynanan maçlara müdahale edebilirsiniz. Düne veya yarına ait maçlar gizlenmiştir.' 
+                       {userRole && userRole.startsWith('skorcum') 
+                          ? 'Sadece bugün oynanan maçlara müdahale edebilirsiniz. Düne veya yarına ait maçlar otomatik olarak gizlenmiştir.' 
                           : 'Önce "Yeni Bülten Oluştur" sekmesinden bu haftayı yayınlayın.'}
                     </p>
                  </div>
