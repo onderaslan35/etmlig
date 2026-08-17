@@ -166,6 +166,7 @@ export default function MasterPuanDurumuPage() {
       let w4Base: Record<string, number> = {}; 
       let w4Live: Record<string, number> = {}; 
       let w4ExactHits: Record<string, number> = {}; 
+      let w4LiveExactHits: Record<string, number> = {}; 
       let isAnyMatchLive = false;
       let finishedCount = 0; 
 
@@ -173,6 +174,7 @@ export default function MasterPuanDurumuPage() {
         w4Base[id] = 0;
         w4Live[id] = 0;
         w4ExactHits[id] = 0;
+        w4LiveExactHits[id] = 0;
       });
 
       if (dbMatches) {
@@ -204,161 +206,186 @@ export default function MasterPuanDurumuPage() {
                 w4ExactHits[wId] += 1; 
               } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
                 w4Live[wId] += points; 
+                w4LiveExactHits[wId] += 1; // Canlı maçtaki tam isabetleri de sayıyoruz
                 isAnyMatchLive = true;
               }
             });
           }
         });
-      }
 
-      // 🏆 EKMEL BONUS MOTORU V2.0 (4. HAFTA İÇİN CANLI MOTOR) 🏆
-      let puanKraliId: string | null = null;
-      let skorKraliId: string | null = null;
+        // 🏆 EKMEL BONUS MOTORU V3.0 (24. MAÇ CANLI TETİKLEYİCİ - MÜSTAKİL LİDER AVI) 🏆
+        let puanKraliId: string | null = null;
+        let skorKraliId: string | null = null;
+        
+        // Tetikleyici: 24 ID'li maç (Batman Petrol - Boluspor) veritabanında görünürse (canlı, devre arası veya bitmiş)
+        const isEngineActive = !!uniqueMatches[24];
 
-      if (finishedCount === 24) {
-        let maxPuan = -1;
-        let maxPuanCount = 0;
-        let tempPuanKrali: string | null = null;
+        if (isEngineActive) {
+          let maxPuan = -1;
+          let maxPuanCount = 0;
+          let tempPuanKrali: string | null = null;
 
-        Object.entries(w4Base).forEach(([id, puan]) => {
-          if (puan > maxPuan) {
-            maxPuan = puan;
-            maxPuanCount = 1; 
-            tempPuanKrali = id;
-          } else if (puan === maxPuan) {
-            maxPuanCount++; 
-          }
-        });
+          let maxSkor = -1;
+          let maxSkorCount = 0;
+          let tempSkorKrali: string | null = null;
 
-        if (maxPuanCount === 1 && tempPuanKrali) {
-          puanKraliId = tempPuanKrali;
-          w4Base[puanKraliId] += 3; 
-        }
-
-        let maxSkor = -1;
-        let maxSkorCount = 0;
-        let tempSkorKrali: string | null = null;
-
-        Object.entries(w4ExactHits).forEach(([id, hits]) => {
-          if (hits > maxSkor) {
-            maxSkor = hits;
-            maxSkorCount = 1; 
-            tempSkorKrali = id;
-          } else if (hits === maxSkor) {
-            maxSkorCount++; 
-          }
-        });
-
-        if (maxSkorCount === 1 && tempSkorKrali) {
-          skorKraliId = tempSkorKrali;
-          w4Base[skorKraliId] += 3; 
-        }
-      }
-
-      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-
-      if (activeTab === 'total') {
-        const referenceList = Object.keys(allPlayersMasterList).map(id => {
-          const w1 = masterWeek1Data[id]?.puan || 0;
-          const w2 = masterWeek2Data[id]?.puan || 0;
-          const w3 = masterWeek3Data[id]?.puan || 0;
-          const basePuan = w1 + w2 + w3;
-          const finalName = allPlayersMasterList[id];
-          return { id, name: finalName, basePuan };
-        }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
-
-        const prevRanks: Record<string, number> = {};
-        referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
-
-        const baseList = Object.keys(allPlayersMasterList).map(id => {
-          const w1 = masterWeek1Data[id]?.puan || 0;
-          const w2 = masterWeek2Data[id]?.puan || 0;
-          const w3 = masterWeek3Data[id]?.puan || 0;
-          const w4B = w4Base[id] || 0; 
-          
-          const basePuan = w1 + w2 + w3 + w4B;
-          const liveExtra = w4Live[id] || 0; 
-          
-          const finalName = allPlayersMasterList[id];
-
-          return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
-        }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
-
-        const finalRows = baseList.map((player, index) => {
-          const currentRank = index + 1;
-          const prevRank = prevRanks[player.id];
-          let trend = 'same';
-          let trendDiff = 0; 
-          
-          if (currentRank < prevRank) {
-            trend = 'up';
-            trendDiff = prevRank - currentRank; 
-          } else if (currentRank > prevRank) {
-            trend = 'down';
-            trendDiff = currentRank - prevRank; 
-          }
-          
-          return { ...player, currentRank, prevRank, trend, trendDiff };
-        });
-
-        setTableRows(finalRows);
-      } else {
-        if(activeTab === 'week4') {
-          const list = Object.keys(allPlayersMasterList).map(id => {
-            const basePuan = w4Base[id] || 0; 
-            const liveExtra = w4Live[id] || 0; 
-            return { 
-              id, 
-              name: allPlayersMasterList[id], 
-              puan: basePuan + liveExtra, 
-              liveExtra, 
-              trend: 'none', 
-              trendDiff: 0,
-              hasPuanBonus: id === puanKraliId,
-              hasSkorBonus: id === skorKraliId
-            };
-          });
-          setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
-        } else {
-          let dataMap = masterWeek1Data;
-          if(activeTab === 'week2') dataMap = masterWeek2Data;
-          if(activeTab === 'week3') dataMap = masterWeek3Data;
-
-          const list = Object.keys(allPlayersMasterList).map(id => {
-            const rawObj = dataMap[id];
-            const basePuan = rawObj ? rawObj.puan : 0;
-            
-            // 🌟 1. , 2. ve 3. HAFTA GEÇMİŞE DÖNÜK ETİKET MOTORU 🌟
-            // NOT: Puanlar veri listesinde zaten bonuslu haliyle ekli olduğu için matematiksel bir +3 eklenmez!
-            // Sadece görsel etiketler ilgili yarışmacıların yanına eklenir.
-            let pBonus = false;
-            let sBonus = false;
-
-            if (activeTab === 'week1') {
-              if (id === "262736") pBonus = true; // Mehmet Ali Kara (+3 Liderlik)
-              if (id === "262755") sBonus = true; // Doğaç Alkan (+3 Skor)
-            } else if (activeTab === 'week2') {
-              if (id === "262756") pBonus = true; // Eyüp Karacaoğlu (+3 Liderlik)
-              // 2. Hafta skor liderliği ortak olduğu için bonus yok
-            } else if (activeTab === 'week3') {
-              if (id === "262816") { // Sedat Sedat (İkisi Birden)
-                pBonus = true;
-                sBonus = true;
-              }
+          Object.keys(allPlayersMasterList).forEach(id => {
+            // 1. Puan Liderliği (Canlı + Biten Toplamı)
+            const totalP = (w4Base[id] || 0) + (w4Live[id] || 0);
+            if (totalP > maxPuan) {
+              maxPuan = totalP;
+              maxPuanCount = 1; 
+              tempPuanKrali = id;
+            } else if (totalP === maxPuan) {
+              maxPuanCount++; 
             }
 
+            // 2. Skor Liderliği (Canlı + Biten Tam İsabet Toplamı)
+            const totalHits = (w4ExactHits[id] || 0) + (w4LiveExactHits[id] || 0);
+            if (totalHits > maxSkor) {
+              maxSkor = totalHits;
+              maxSkorCount = 1;
+              tempSkorKrali = id;
+            } else if (totalHits === maxSkor) {
+              maxSkorCount++;
+            }
+          });
+
+          // Unvanlar sadece MÜSTAKİL (tek tabanca) ise verilir
+          if (maxPuanCount === 1 && tempPuanKrali && maxPuan > 0) {
+            puanKraliId = tempPuanKrali;
+          }
+          if (maxSkorCount === 1 && tempSkorKrali && maxSkor > 0) {
+            skorKraliId = tempSkorKrali;
+          }
+        }
+
+        setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
+
+        if (activeTab === 'total') {
+          // Önceki haftaların (1, 2, 3) sıralama referansı trend okları için hesaplanır
+          const referenceList = Object.keys(allPlayersMasterList).map(id => {
+            const w1 = masterWeek1Data[id]?.puan || 0;
+            const w2 = masterWeek2Data[id]?.puan || 0;
+            const w3 = masterWeek3Data[id]?.puan || 0;
+            const basePuan = w1 + w2 + w3;
+            const finalName = allPlayersMasterList[id];
+            return { id, name: finalName, basePuan };
+          }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
+
+          const prevRanks: Record<string, number> = {};
+          referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+          const baseList = Object.keys(allPlayersMasterList).map(id => {
+            const w1 = masterWeek1Data[id]?.puan || 0;
+            const w2 = masterWeek2Data[id]?.puan || 0;
+            const w3 = masterWeek3Data[id]?.puan || 0;
+            let w4B = w4Base[id] || 0; 
+            
+            let pBonus = id === puanKraliId;
+            let sBonus = id === skorKraliId;
+
+            // Kazanılan +3 Puanlar anlık olarak Genel Toplama (basePuan üzerinden) yansıtılır.
+            if (pBonus) w4B += 3;
+            if (sBonus) w4B += 3;
+
+            const basePuan = w1 + w2 + w3 + w4B;
+            const liveExtra = w4Live[id] || 0; 
+            
+            const finalName = allPlayersMasterList[id];
+
             return { 
               id, 
-              name: rawObj ? rawObj.name : allPlayersMasterList[id], 
-              puan: basePuan, 
-              liveExtra: 0, 
-              trend: 'none', 
-              trendDiff: 0,
+              name: finalName, 
+              basePuan, 
+              liveExtra, 
+              puan: basePuan + liveExtra,
               hasPuanBonus: pBonus,
               hasSkorBonus: sBonus
             };
+          }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
+
+          const finalRows = baseList.map((player, index) => {
+            const currentRank = index + 1;
+            const prevRank = prevRanks[player.id];
+            let trend = 'same';
+            let trendDiff = 0; 
+            
+            if (currentRank < prevRank) {
+              trend = 'up';
+              trendDiff = prevRank - currentRank; 
+            } else if (currentRank > prevRank) {
+              trend = 'down';
+              trendDiff = currentRank - prevRank; 
+            }
+            
+            return { ...player, currentRank, prevRank, trend, trendDiff };
           });
-          setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
+
+          setTableRows(finalRows);
+        } else {
+          if(activeTab === 'week4') {
+            const list = Object.keys(allPlayersMasterList).map(id => {
+              let basePuan = w4Base[id] || 0; 
+              const liveExtra = w4Live[id] || 0; 
+              
+              let pBonus = id === puanKraliId;
+              let sBonus = id === skorKraliId;
+
+              // Kazanılan +3 Puanlar anlık olarak haftalık toplama (basePuan üzerinden) yansıtılır.
+              if (pBonus) basePuan += 3;
+              if (sBonus) basePuan += 3;
+
+              return { 
+                id, 
+                name: allPlayersMasterList[id], 
+                puan: basePuan + liveExtra, 
+                liveExtra, 
+                trend: 'none', 
+                trendDiff: 0,
+                hasPuanBonus: pBonus,
+                hasSkorBonus: sBonus
+              };
+            });
+            setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
+          } else {
+            let dataMap = masterWeek1Data;
+            if(activeTab === 'week2') dataMap = masterWeek2Data;
+            if(activeTab === 'week3') dataMap = masterWeek3Data;
+
+            const list = Object.keys(allPlayersMasterList).map(id => {
+              const rawObj = dataMap[id];
+              const basePuan = rawObj ? rawObj.puan : 0;
+              
+              // 🌟 1. , 2. ve 3. HAFTA GEÇMİŞE DÖNÜK ETİKET MOTORU 🌟
+              let pBonus = false;
+              let sBonus = false;
+
+              if (activeTab === 'week1') {
+                if (id === "262736") pBonus = true; // Mehmet Ali Kara (+3 Liderlik)
+                if (id === "262755") sBonus = true; // Doğaç Alkan (+3 Skor)
+              } else if (activeTab === 'week2') {
+                if (id === "262756") pBonus = true; // Eyüp Karacaoğlu (+3 Liderlik)
+              } else if (activeTab === 'week3') {
+                if (id === "262816") { // Sedat Sedat (İkisi Birden)
+                  pBonus = true;
+                  sBonus = true;
+                }
+              }
+
+              return { 
+                id, 
+                name: rawObj ? rawObj.name : allPlayersMasterList[id], 
+                puan: basePuan, 
+                liveExtra: 0, 
+                trend: 'none', 
+                trendDiff: 0,
+                hasPuanBonus: pBonus,
+                hasSkorBonus: sBonus
+              };
+            });
+            setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
+          }
         }
       }
     } catch (error) {
@@ -477,13 +504,13 @@ export default function MasterPuanDurumuPage() {
                           );
                         })()}
 
-                        {/* 🌟 HAFTALIK ETİKETLER (SADECE HAFTA SEKMELERİNDE GÖRÜNÜR) 🌟 */}
-                        {activeTab !== 'total' && row.hasPuanBonus && (
+                        {/* 🌟 HAFTALIK ETİKETLER (Artık Total sekmesinde de kazananı parlatacak!) 🌟 */}
+                        {row.hasPuanBonus && (
                           <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
                             +3 LİDERLİK BONUSU
                           </span>
                         )}
-                        {activeTab !== 'total' && row.hasSkorBonus && (
+                        {row.hasSkorBonus && (
                           <span className="bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
                             +3 SKOR BONUSU
                           </span>

@@ -216,13 +216,6 @@ export default function SkorDurumuPage() {
       let baseSkor = 0;
       let liveSkor = 0;
       
-      // 🛡️ EKMEL KANUNU: AKTİF 52 KİŞİYİ BUL (Toplam Master Skoru 0'dan büyük olanlar + Murat Aydemir) 🛡️
-      const totalMasterSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + 
-                              (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + 
-                              (w4BaseDfo[id]||0) + (w4BaseTff[id]||0) + 
-                              (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
-      const isClub52 = totalMasterSkor > 0 || id === "262712"; 
-      
       if (activeTab === 'total') {
           if (activeLeague === 'MASTER') {
               baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
@@ -259,9 +252,8 @@ export default function SkorDurumuPage() {
           }
       }
 
-      return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor, isClub52 };
+      return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
     })
-    .filter(p => p.isClub52) // 🔴 52 KİŞİLİK ZIRH: Sadece aktif 52 kişi listeye girebilir. Hangi sekmede olursan ol! 🔴
     .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
     if (activeTab === 'total') {
@@ -271,10 +263,8 @@ export default function SkorDurumuPage() {
          else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
          else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
          
-         const isClub52 = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0) + (w4LiveDfo[id]||0) + (w4LiveTff[id]||0) > 0 || id === "262712";
-
-         return { id, refSkor, isClub52 };
-      }).filter(p => p.isClub52).sort((a, b) => b.refSkor - a.refSkor);
+         return { id, refSkor };
+      }).sort((a, b) => b.refSkor - a.refSkor);
       
       const prevRanks: Record<string, number> = {};
       referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
