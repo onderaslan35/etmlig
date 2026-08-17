@@ -67,7 +67,7 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
 };
 
-// MAÇ VERİLERİ SADECE TAHMİNMATİK EKRANI İÇİN (GEÇMİŞ ARŞİV) KULLANILIYOR
+// 🚀 MAÇ VERİLERİ SADECE TAHMİNMATİK EKRANI İÇİN (GEÇMİŞ ARŞİV) KULLANILIYOR
 const archiveMatches = {
   4: [
     { id: 1, weekLabel: "4. Hafta - 1. MAÇ", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30" },
@@ -94,6 +94,32 @@ const archiveMatches = {
     { id: 22, weekLabel: "4. Hafta - 22. MAÇ", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30" },
     { id: 23, weekLabel: "4. Hafta - 23. MAÇ", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30" },
     { id: 24, weekLabel: "4. Hafta - 24. MAÇ", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30" }
+  ],
+  5: [
+    { id: 1, weekLabel: "5. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ PLAY OFF İLK MAÇ", date: "18.08.2026", time: "22:00", homeTeam: "FENERBAHÇE", awayTeam: "OLİMPİC LYON" },
+    { id: 2, weekLabel: "5. Hafta - 2. MAÇ", category: "UEFA AVRUPA LİGİ PLAY OFF İLK MAÇ", date: "20.08.2026", time: "19:00", homeTeam: "BEŞİKTAŞ", awayTeam: "FK KAUNO ZALGİRİS" },
+    { id: 3, weekLabel: "5. Hafta - 3. MAÇ", category: "UEFA AVRUPA LİGİ PLAY OFF İLK MAÇ", date: "20.08.2026", time: "19:00", homeTeam: "TRABZONSPOR", awayTeam: "FERENCVAROS" },
+    { id: 4, weekLabel: "5. Hafta - 4. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "21.08.2026", time: "21:30", homeTeam: "ERZURUMSPOR", awayTeam: "GALATASARAY" },
+    { id: 5, weekLabel: "5. Hafta - 5. MAÇ", category: "TÜRKİYE 1.LİG", date: "21.08.2026", time: "21:30", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "BURSASPOR" },
+    { id: 6, weekLabel: "5. Hafta - 6. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "22.08.2026", time: "19:00", homeTeam: "ÇORUM FK", awayTeam: "KASIMPAŞA" },
+    { id: 7, weekLabel: "5. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "22.08.2026", time: "19:00", homeTeam: "ALANYASPOR", awayTeam: "KONYASPOR" },
+    { id: 8, weekLabel: "5. Hafta - 8. MAÇ", category: "TÜRKİYE 1.LİG", date: "22.08.2026", time: "19:00", homeTeam: "ÜMRANİYESPOR", awayTeam: "VANSPOR FK" },
+    { id: 9, weekLabel: "5. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "22.08.2026", time: "19:00", homeTeam: "BANDIRMASPOR", awayTeam: "BODRUMSPOR" },
+    { id: 10, weekLabel: "5. Hafta - 10. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "22.08.2026", time: "14:30", homeTeam: "TOTTENHAM", awayTeam: "ARSENAL" },
+    { id: 11, weekLabel: "5. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "22.08.2026", time: "21:30", homeTeam: "FENERBAHÇE", awayTeam: "GÖZTEPE" },
+    { id: 12, weekLabel: "5. Hafta - 12. MAÇ", category: "TÜRKİYE 1.LİG", date: "22.08.2026", time: "21:30", homeTeam: "İSTANBULSPOR", awayTeam: "GENÇLERBİRLİĞİ" },
+    { id: 13, weekLabel: "5. Hafta - 13. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "22.08.2026", time: "17:00", homeTeam: "ASTON VİLLA", awayTeam: "MANCHESTER CITY" },
+    { id: 14, weekLabel: "5. Hafta - 14. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "22.08.2026", time: "17:00", homeTeam: "FULHAM", awayTeam: "MANCHESTER UTD" },
+    { id: 15, weekLabel: "5. Hafta - 15. MAÇ", category: "FRANSA LIGUE 1", date: "22.08.2026", time: "20:00", homeTeam: "PARİS SG", awayTeam: "LİLL OSC" },
+    { id: 16, weekLabel: "5. Hafta - 16. MAÇ", category: "İTALYA SERIE A", date: "22.08.2026", time: "21:45", homeTeam: "İNTER MİLANO", awayTeam: "JUVENTUS" },
+    { id: 17, weekLabel: "5. Hafta - 17. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "23.08.2026", time: "19:00", homeTeam: "SİVASSPOR", awayTeam: "EYÜPSPOR" },
+    { id: 18, weekLabel: "5. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "23.08.2026", time: "19:00", homeTeam: "KOCAELİSPOR", awayTeam: "BEŞİKTAŞ" },
+    { id: 19, weekLabel: "5. Hafta - 19. MAÇ", category: "TÜRKİYE 1.LİG", date: "23.08.2026", time: "19:00", homeTeam: "BOLUSPOR", awayTeam: "KAYSERİSPOR" },
+    { id: 20, weekLabel: "5. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "23.08.2026", time: "19:00", homeTeam: "SARIYER", awayTeam: "BATMAN PETROL SPOR" },
+    { id: 21, weekLabel: "5. Hafta - 21. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "23.08.2026", time: "21:30", homeTeam: "TRABZONSPOR", awayTeam: "BAŞAKŞEHİR" },
+    { id: 22, weekLabel: "5. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "23.08.2026", time: "21:30", homeTeam: "ANTALYASPOR", awayTeam: "EROKSPOR" },
+    { id: 23, weekLabel: "5. Hafta - 23. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "23.08.2026", time: "18:30", homeTeam: "LİVERPOOL", awayTeam: "CHELSEA" },
+    { id: 24, weekLabel: "5. Hafta - 24. MAÇ", category: "İSPANYA LA LIGA", date: "23.08.2026", time: "22:30", homeTeam: "REAL MADRİD", awayTeam: "BARCELONA" }
   ]
 };
 
@@ -228,6 +254,7 @@ export default function TahminlerPortal() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); 
 
+  // 🚀 BÜLTEN ARTIK SABİT OLARAK 5. HAFTA LİSTESİNİ ÇEKECEK
   const [bulletin, setBulletin] = useState<any[]>([]);
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [oldPredictions, setOldPredictions] = useState<Record<number, { home: string, away: string }>>({});
@@ -236,14 +263,12 @@ export default function TahminlerPortal() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
   
-  // 🚀 LOGO MOTORU İÇİN STATELER (SUPABASE'DEN GELECEK)
   const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>({});
 
-  // 🚀 ZAMAN MAKİNESİ - GİRİŞ YAPILACAK HAFTAYI SEÇMEK İÇİN
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(4);
 
-  // 🚀 AÇILIŞTA LOGOLARI ÇEK
+  // 🚀 SUPABASE'DEN SADECE LOGOLARI ÇEKİYORUZ, BÜLTENİ DEĞİL!
   useEffect(() => {
     const fetchTeams = async () => {
       const { data } = await supabase.from('teams').select('team_name, logo_url');
@@ -275,26 +300,32 @@ export default function TahminlerPortal() {
   };
 
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
-    // 🚀 SEÇİLEN HAFTAYA (selectedEntryWeek) GÖRE BÜLTEN ÇEKER
-    const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedEntryWeek).order('match_index', { ascending: true });
+    
+    // 🚀 CERRAHİ MÜDAHALE: Bülten artık Supabase'den değil, yukarıdaki "archiveMatches" sabit listesinden çekiliyor.
+    const bData = archiveMatches[selectedEntryWeek as keyof typeof archiveMatches] || [];
+    
+    // 🚀 DİKKAT: Tahminler hala Supabase'den okunuyor (Çünkü herkesin tahmini dinamiktir)
     const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedEntryWeek).eq('user_id', currentUsername);
 
-    if (bData) {
+    if (bData && bData.length > 0) {
       setBulletin(bData);
       const initialPreds: Record<number, { home: string, away: string }> = {};
       
       bData.forEach(m => {
-        const existingPred = pData?.find(p => p.match_index === m.match_index);
+        // match_index yerine id kullanıyoruz çünkü archiveMatches içinde 'id' yazıyor.
+        const existingPred = pData?.find(p => p.match_index === m.id);
         if (existingPred && existingPred.predicted_score) {
           const [h, a] = existingPred.predicted_score.split('-');
-          initialPreds[m.match_index] = { home: h || '-', away: a || '-' };
+          initialPreds[m.id] = { home: h || '-', away: a || '-' };
         } else {
-          initialPreds[m.match_index] = { home: '-', away: '-' };
+          initialPreds[m.id] = { home: '-', away: '-' };
         }
       });
       
       setPredictions(initialPreds);
-      setOldPredictions(JSON.parse(JSON.stringify(initialPreds))); // Eski tahminleri log için kopyalıyoruz
+      setOldPredictions(JSON.parse(JSON.stringify(initialPreds))); 
+    } else {
+      setBulletin([]);
     }
   };
 
@@ -336,7 +367,7 @@ export default function TahminlerPortal() {
     try {
       const payload = Object.keys(predictions).map(matchIndex => ({
         user_id: username.trim(), 
-        week_num: selectedEntryWeek, // 🚀 SEÇİLEN HAFTAYA KAYDEDER
+        week_num: selectedEntryWeek, 
         match_index: Number(matchIndex),
         predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
       }));
@@ -345,7 +376,6 @@ export default function TahminlerPortal() {
       
       if(error) throw error;
 
-      // 🕵️‍♂️ VERCEL İSTİHBARAT RADARINI TETİKLİYORUZ (LOG & LOKASYON & CİHAZ KAYDI) 🕵️‍♂️
       try {
         await fetch('/api/log-tahmin', {
           method: 'POST',
@@ -378,9 +408,34 @@ export default function TahminlerPortal() {
     else setSortOrder('A-Z');
   };
 
+  // 🚀 TAHMİN EDENLERİ ÇEKEN KISIM (SADECE ARŞİV DEĞİL, SUPABASE'E DE BAKSIN)
+  const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
+
+  useEffect(() => {
+     // Sayfa her açıldığında veya hafta değiştiğinde, gerçek oyuncu verilerini DB'den alıyoruz ki boş görünmesin.
+     const fetchLivePreds = async () => {
+        const { data } = await supabase.from('player_predictions').select('*').in('week_num', [4, 5]);
+        if (data) {
+           const newData: Record<number, Record<string, string[]>> = { 4: { ...archivePredictionsData[4] }, 5: {} };
+           
+           data.forEach(row => {
+               const wk = row.week_num;
+               const uid = String(row.user_id);
+               if(!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
+               newData[wk][uid][row.match_index - 1] = row.predicted_score;
+           });
+           setLivePredictionsData(newData);
+        } else {
+           setLivePredictionsData(archivePredictionsData);
+        }
+     };
+     fetchLivePreds();
+  }, [selectedTahminWeek, view]);
+
+
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
-    const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+    const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
 
     if (searchTerm) {
       const normalizedSearch = normalizeTurkish(searchTerm);
@@ -390,8 +445,9 @@ export default function TahminlerPortal() {
       });
     }
 
-    const submittedIds = allIds.filter(id => selectedWeekData[id]);
-    const missingIds = allIds.filter(id => !selectedWeekData[id]);
+    // Seçilen haftada en az bir maça tahmin giren (PAS demeyen) herkes
+    const submittedIds = allIds.filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'));
+    const missingIds = allIds.filter(id => !selectedWeekData[id] || !selectedWeekData[id].some(s => s !== 'PAS'));
 
     if (sortOrder === 'A-Z') {
       submittedIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
@@ -402,7 +458,7 @@ export default function TahminlerPortal() {
     missingIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
 
     return [...submittedIds, ...missingIds];
-  }, [searchTerm, sortOrder, selectedTahminWeek]);
+  }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData]);
 
   const ghostColumns = Array.from({ length: 10 });
 
@@ -436,11 +492,11 @@ export default function TahminlerPortal() {
   };
 
   const activePlayersForJPEG = useMemo(() => {
-    const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+    const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
     return Object.keys(TEST_ACCOUNTS)
-      .filter(id => id !== 'mankoman' && selectedWeekData[id])
+      .filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'))
       .sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
-  }, [selectedTahminWeek]);
+  }, [selectedTahminWeek, livePredictionsData]);
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -510,7 +566,6 @@ export default function TahminlerPortal() {
                 </div>
               </div>
 
-              {/* 🚀 TEST İÇİN SAYAÇ KALDIRILDI VE HAFTA SEÇİMİ EKLENDİ */}
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)]">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
                   <span className="text-amber-500 font-black tracking-widest text-[11px] sm:text-xs bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)] whitespace-nowrap">
@@ -597,7 +652,6 @@ export default function TahminlerPortal() {
               {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] ? archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((match: any) => {
                 const theme = getEliteTheme(match.category);
                 
-                // 🚀 ARŞİV DE LOGOLARI SUPABASE'DEN ÇEKER
                 const hName = match.homeTeam.toUpperCase();
                 const aName = match.awayTeam.toUpperCase();
                 const homeLogoUrl = teamLogosMap[hName] || "/logos/default.png";
@@ -607,7 +661,7 @@ export default function TahminlerPortal() {
                 const isComplete = tScore.home !== '-' && tScore.away !== '-';
                 const targetScore = `${tScore.home}-${tScore.away}`;
                   
-                const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+                const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                 const predictors = isComplete 
                    ? Object.keys(selectedWeekData)
                        .filter(uid => selectedWeekData[uid][match.id - 1] === targetScore)
@@ -806,7 +860,6 @@ export default function TahminlerPortal() {
                         {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
                           <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
                             <div className="w-6 h-6 mx-auto flex items-center justify-center">
-                              {/* 🚀 ARŞİV DE LOGOLARI SUPABASE'DEN ÇEKER */}
                               <img src={teamLogosMap[m.homeTeam?.toUpperCase()] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
                             </div>
                           </th>
@@ -832,7 +885,6 @@ export default function TahminlerPortal() {
                         {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
                           <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
                             <div className="w-6 h-6 mx-auto flex items-center justify-center">
-                              {/* 🚀 ARŞİV DE LOGOLARI SUPABASE'DEN ÇEKER */}
                               <img src={teamLogosMap[m.awayTeam?.toUpperCase()] || "/logos/default.png"} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
                             </div>
                           </th>
@@ -846,7 +898,7 @@ export default function TahminlerPortal() {
                     <tbody>
                       {finalPlayersList.map(id => {
                         const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
-                        const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+                        const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id] || Array(24).fill('PAS');
                         const isMissing = preds[0] === 'PAS'; 
 
@@ -926,7 +978,7 @@ export default function TahminlerPortal() {
                     <tbody>
                       {activePlayersForJPEG.map(id => {
                         const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
-                        const selectedWeekData = archivePredictionsData[selectedTahminWeek] || {};
+                        const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id];
                         if(!preds) return null;
                         
@@ -976,15 +1028,14 @@ export default function TahminlerPortal() {
                 {bulletin.map((match) => {
                   const theme = getEliteTheme(match.category);
                   
-                  // 🚀 SUPABASE'DEN GELEN LOGOLAR BURADA ÇALIŞIYOR!
-                  const homeLogoUrl = teamLogosMap[match.home_team] || "/logos/default.png";
-                  const awayLogoUrl = teamLogosMap[match.away_team] || "/logos/default.png";
+                  const homeLogoUrl = teamLogosMap[match.homeTeam?.toUpperCase()] || "/logos/default.png";
+                  const awayLogoUrl = teamLogosMap[match.awayTeam?.toUpperCase()] || "/logos/default.png";
                   
-                  const hScore = predictions[match.match_index]?.home || '-';
-                  const aScore = predictions[match.match_index]?.away || '-';
+                  const hScore = predictions[match.id]?.home || '-';
+                  const aScore = predictions[match.id]?.away || '-';
 
                   return (
-                    <div key={match.match_index} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
+                    <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                       {theme.bgImg && (
                         <>
                           <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
@@ -994,8 +1045,8 @@ export default function TahminlerPortal() {
                       <div className="relative z-10 flex flex-col h-full py-2">
                         
                         <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
-                          <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{selectedEntryWeek}. HAFTA {match.match_index}. MAÇ</span>
-                          <span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.match_date} - {match.match_time}</span>
+                          <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{selectedEntryWeek}. HAFTA {match.id}. MAÇ</span>
+                          <span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.date} - {match.time}</span>
                         </div>
 
                         <div className="w-full text-center px-2 mt-1 mb-2">
@@ -1004,25 +1055,25 @@ export default function TahminlerPortal() {
 
                         <div className="flex items-center justify-between px-4 pb-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={match.home_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
-                            <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.home_team}</span>
+                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                            <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
                           </div>
 
                           <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                              <select value={hScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
+                              <select value={hScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
                                 {scoreOptionsArr.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
                               </select>
                               <span className="text-xl font-bold text-slate-500">:</span>
-                              <select value={aScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
+                              <select value={aScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none focus:border-amber-500 cursor-pointer appearance-none shadow-inner text-center" style={{ textAlignLast: 'center' }}>
                                 {scoreOptionsArr.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
                               </select>
                             </div>
                           </div>
 
                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={match.away_team} className="w-full h-full object-contain drop-shadow-lg" /></div>
-                            <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.away_team}</span>
+                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                            <span className="text-white font-extrabold text-[10px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
                           </div>
                         </div>
 
