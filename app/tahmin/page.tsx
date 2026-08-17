@@ -67,7 +67,7 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
 };
 
-// 🚀 MAÇ VERİLERİ SADECE TAHMİNMATİK EKRANI İÇİN (GEÇMİŞ ARŞİV) KULLANILIYOR
+// 4. HAFTA SABİT ARŞİV BİLGİLERİ (Bülten kısmı Supabase'den dinamik çekilecek)
 const archiveMatches = {
   4: [
     { id: 1, weekLabel: "4. Hafta - 1. MAÇ", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", date: "11.08.2026", time: "21:30" },
@@ -94,32 +94,6 @@ const archiveMatches = {
     { id: 22, weekLabel: "4. Hafta - 22. MAÇ", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR", category: "TÜRKİYE 1.LİG", date: "16.08.2026", time: "21:30" },
     { id: 23, weekLabel: "4. Hafta - 23. MAÇ", homeTeam: "SAMSUNSPOR", awayTeam: "GÖZTEPE", category: "TÜRKİYE SÜPER KUPA", date: "17.08.2026", time: "21:30" },
     { id: 24, weekLabel: "4. Hafta - 24. MAÇ", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30" }
-  ],
-  5: [
-    { id: 1, weekLabel: "5. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ PLAY OFF İLK MAÇ", date: "18.08.2026", time: "22:00", homeTeam: "FENERBAHÇE", awayTeam: "OLİMPİC LYON" },
-    { id: 2, weekLabel: "5. Hafta - 2. MAÇ", category: "UEFA AVRUPA LİGİ PLAY OFF İLK MAÇ", date: "20.08.2026", time: "19:00", homeTeam: "BEŞİKTAŞ", awayTeam: "FK KAUNO ZALGİRİS" },
-    { id: 3, weekLabel: "5. Hafta - 3. MAÇ", category: "UEFA AVRUPA LİGİ PLAY OFF İLK MAÇ", date: "20.08.2026", time: "19:00", homeTeam: "TRABZONSPOR", awayTeam: "FERENCVAROS" },
-    { id: 4, weekLabel: "5. Hafta - 4. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "21.08.2026", time: "21:30", homeTeam: "ERZURUMSPOR", awayTeam: "GALATASARAY" },
-    { id: 5, weekLabel: "5. Hafta - 5. MAÇ", category: "TÜRKİYE 1.LİG", date: "21.08.2026", time: "21:30", homeTeam: "FATİH KARAGÜMRÜK", awayTeam: "BURSASPOR" },
-    { id: 6, weekLabel: "5. Hafta - 6. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "22.08.2026", time: "19:00", homeTeam: "ÇORUM FK", awayTeam: "KASIMPAŞA" },
-    { id: 7, weekLabel: "5. Hafta - 7. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "22.08.2026", time: "19:00", homeTeam: "ALANYASPOR", awayTeam: "KONYASPOR" },
-    { id: 8, weekLabel: "5. Hafta - 8. MAÇ", category: "TÜRKİYE 1.LİG", date: "22.08.2026", time: "19:00", homeTeam: "ÜMRANİYESPOR", awayTeam: "VANSPOR FK" },
-    { id: 9, weekLabel: "5. Hafta - 9. MAÇ", category: "TÜRKİYE 1.LİG", date: "22.08.2026", time: "19:00", homeTeam: "BANDIRMASPOR", awayTeam: "BODRUMSPOR" },
-    { id: 10, weekLabel: "5. Hafta - 10. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "22.08.2026", time: "14:30", homeTeam: "TOTTENHAM", awayTeam: "ARSENAL" },
-    { id: 11, weekLabel: "5. Hafta - 11. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "22.08.2026", time: "21:30", homeTeam: "FENERBAHÇE", awayTeam: "GÖZTEPE" },
-    { id: 12, weekLabel: "5. Hafta - 12. MAÇ", category: "TÜRKİYE 1.LİG", date: "22.08.2026", time: "21:30", homeTeam: "İSTANBULSPOR", awayTeam: "GENÇLERBİRLİĞİ" },
-    { id: 13, weekLabel: "5. Hafta - 13. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "22.08.2026", time: "17:00", homeTeam: "ASTON VİLLA", awayTeam: "MANCHESTER CITY" },
-    { id: 14, weekLabel: "5. Hafta - 14. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "22.08.2026", time: "17:00", homeTeam: "FULHAM", awayTeam: "MANCHESTER UTD" },
-    { id: 15, weekLabel: "5. Hafta - 15. MAÇ", category: "FRANSA LIGUE 1", date: "22.08.2026", time: "20:00", homeTeam: "PARİS SG", awayTeam: "LİLL OSC" },
-    { id: 16, weekLabel: "5. Hafta - 16. MAÇ", category: "İTALYA SERIE A", date: "22.08.2026", time: "21:45", homeTeam: "İNTER MİLANO", awayTeam: "JUVENTUS" },
-    { id: 17, weekLabel: "5. Hafta - 17. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "23.08.2026", time: "19:00", homeTeam: "SİVASSPOR", awayTeam: "EYÜPSPOR" },
-    { id: 18, weekLabel: "5. Hafta - 18. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "23.08.2026", time: "19:00", homeTeam: "KOCAELİSPOR", awayTeam: "BEŞİKTAŞ" },
-    { id: 19, weekLabel: "5. Hafta - 19. MAÇ", category: "TÜRKİYE 1.LİG", date: "23.08.2026", time: "19:00", homeTeam: "BOLUSPOR", awayTeam: "KAYSERİSPOR" },
-    { id: 20, weekLabel: "5. Hafta - 20. MAÇ", category: "TÜRKİYE 1.LİG", date: "23.08.2026", time: "19:00", homeTeam: "SARIYER", awayTeam: "BATMAN PETROL SPOR" },
-    { id: 21, weekLabel: "5. Hafta - 21. MAÇ", category: "TÜRKİYE SÜPER LİG", date: "23.08.2026", time: "21:30", homeTeam: "TRABZONSPOR", awayTeam: "BAŞAKŞEHİR" },
-    { id: 22, weekLabel: "5. Hafta - 22. MAÇ", category: "TÜRKİYE 1.LİG", date: "23.08.2026", time: "21:30", homeTeam: "ANTALYASPOR", awayTeam: "EROKSPOR" },
-    { id: 23, weekLabel: "5. Hafta - 23. MAÇ", category: "İNGİLTERE PREMIER LİG", date: "23.08.2026", time: "18:30", homeTeam: "LİVERPOOL", awayTeam: "CHELSEA" },
-    { id: 24, weekLabel: "5. Hafta - 24. MAÇ", category: "İSPANYA LA LIGA", date: "23.08.2026", time: "22:30", homeTeam: "REAL MADRİD", awayTeam: "BARCELONA" }
   ]
 };
 
@@ -254,8 +228,8 @@ export default function TahminlerPortal() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); 
 
-  // 🚀 BÜLTEN ARTIK SABİT OLARAK 5. HAFTA LİSTESİNİ ÇEKECEK
-  const [bulletin, setBulletin] = useState<any[]>([]);
+  // 🚀 DİNAMİK BÜLTEN: Artık Supabase'den çekiliyor.
+  const [bulletinMap, setBulletinMap] = useState<Record<number, any[]>>({ 4: archiveMatches[4] }); 
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [oldPredictions, setOldPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -268,17 +242,42 @@ export default function TahminlerPortal() {
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(4);
 
-  // 🚀 SUPABASE'DEN SADECE LOGOLARI ÇEKİYORUZ, BÜLTENİ DEĞİL!
+  // 🚀 SAYFA AÇILDIĞINDA LOGOLARI VE "matches_bulletin" TABLOSUNU ÇEKİYORUZ!
   useEffect(() => {
-    const fetchTeams = async () => {
-      const { data } = await supabase.from('teams').select('team_name, logo_url');
-      if (data) {
+    const fetchInitialData = async () => {
+      // 1. Logoları Çek
+      const { data: teamsData } = await supabase.from('teams').select('team_name, logo_url');
+      if (teamsData) {
         const logos: Record<string, string> = {};
-        data.forEach((team: any) => { logos[team.team_name] = team.logo_url; });
+        teamsData.forEach((team: any) => { logos[team.team_name] = team.logo_url; });
         setTeamLogosMap(logos);
       }
+
+      // 2. Dinamik Bültenleri Çek (Arşiv, Deklarasyon ve Tahminmatik için)
+      const { data: bultenData } = await supabase.from('matches_bulletin').select('*');
+      if (bultenData) {
+         const newMap: Record<number, any[]> = { 4: archiveMatches[4] }; // 4 sabit kalsın
+         bultenData.forEach(row => {
+            if(!newMap[row.week_num]) newMap[row.week_num] = [];
+            newMap[row.week_num].push({
+               id: row.match_index,
+               weekLabel: `${row.week_num}. Hafta - ${row.match_index}. MAÇ`,
+               category: row.category,
+               date: row.match_date,
+               time: row.match_time,
+               homeTeam: row.home_team,
+               awayTeam: row.away_team
+            });
+         });
+         
+         Object.keys(newMap).forEach(week => {
+           newMap[Number(week)].sort((a,b) => a.id - b.id);
+         });
+         
+         setBulletinMap(newMap);
+      }
     };
-    fetchTeams();
+    fetchInitialData();
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -301,18 +300,16 @@ export default function TahminlerPortal() {
 
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
     
-    // 🚀 CERRAHİ MÜDAHALE: Bülten artık Supabase'den değil, yukarıdaki "archiveMatches" sabit listesinden çekiliyor.
-    const bData = archiveMatches[selectedEntryWeek as keyof typeof archiveMatches] || [];
+    // 🚀 DİNAMİK BÜLTEN KONTROLÜ
+    const bData = bulletinMap[selectedEntryWeek] || [];
     
-    // 🚀 DİKKAT: Tahminler hala Supabase'den okunuyor (Çünkü herkesin tahmini dinamiktir)
+    // Tahminleri Çek
     const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedEntryWeek).eq('user_id', currentUsername);
 
     if (bData && bData.length > 0) {
-      setBulletin(bData);
       const initialPreds: Record<number, { home: string, away: string }> = {};
       
-      bData.forEach(m => {
-        // match_index yerine id kullanıyoruz çünkü archiveMatches içinde 'id' yazıyor.
+      bData.forEach((m:any) => {
         const existingPred = pData?.find(p => p.match_index === m.id);
         if (existingPred && existingPred.predicted_score) {
           const [h, a] = existingPred.predicted_score.split('-');
@@ -324,8 +321,6 @@ export default function TahminlerPortal() {
       
       setPredictions(initialPreds);
       setOldPredictions(JSON.parse(JSON.stringify(initialPreds))); 
-    } else {
-      setBulletin([]);
     }
   };
 
@@ -414,13 +409,15 @@ export default function TahminlerPortal() {
   useEffect(() => {
      // Sayfa her açıldığında veya hafta değiştiğinde, gerçek oyuncu verilerini DB'den alıyoruz ki boş görünmesin.
      const fetchLivePreds = async () => {
-        const { data } = await supabase.from('player_predictions').select('*').in('week_num', [4, 5]);
+        // Artık tüm haftaları çekiyoruz ki 6,7,8 de gelse çalışsın.
+        const { data } = await supabase.from('player_predictions').select('*');
         if (data) {
-           const newData: Record<number, Record<string, string[]>> = { 4: { ...archivePredictionsData[4] }, 5: {} };
+           const newData: Record<number, Record<string, string[]>> = { 4: { ...archivePredictionsData[4] } };
            
            data.forEach(row => {
                const wk = row.week_num;
                const uid = String(row.user_id);
+               if(!newData[wk]) newData[wk] = {};
                if(!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
                newData[wk][uid][row.match_index - 1] = row.predicted_score;
            });
@@ -497,6 +494,8 @@ export default function TahminlerPortal() {
       .filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'))
       .sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
   }, [selectedTahminWeek, livePredictionsData]);
+
+  const availableWeeks = [1, 2, 3, 4, ...Object.keys(bulletinMap).map(Number).filter(w => w > 4)].sort((a, b) => a - b);
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -580,11 +579,9 @@ export default function TahminlerPortal() {
                      onChange={(e) => setSelectedEntryWeek(Number(e.target.value))}
                      className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg px-4 py-3 rounded-xl outline-none focus:border-amber-500 text-center cursor-pointer shadow-inner"
                    >
-                     <option value={4}>4. HAFTA BÜLTENİ</option>
-                     <option value={5}>5. HAFTA BÜLTENİ</option>
-                     <option value={6}>6. HAFTA BÜLTENİ</option>
-                     <option value={7}>7. HAFTA BÜLTENİ</option>
-                     <option value={8}>8. HAFTA BÜLTENİ</option>
+                     {availableWeeks.filter(w => w >= 4).map(week => (
+                       <option key={`entry-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option>
+                     ))}
                    </select>
                 </div>
 
@@ -642,14 +639,15 @@ export default function TahminlerPortal() {
                   onChange={(e) => setSelectedTahminWeek(Number(e.target.value))}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm"
                 >
-                  <option value={4}>4. HAFTA</option>
-                  <option value={5}>5. HAFTA</option>
+                  {availableWeeks.filter(w => w >= 4).map(week => (
+                    <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option>
+                  ))}
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] ? archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((match: any) => {
+              {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const theme = getEliteTheme(match.category);
                 
                 const hName = match.homeTeam.toUpperCase();
@@ -786,7 +784,7 @@ export default function TahminlerPortal() {
                 
                 <button 
                   onClick={downloadJPEG}
-                  disabled={isDownloading || !archiveMatches[selectedTahminWeek as keyof typeof archiveMatches]}
+                  disabled={isDownloading || !bulletinMap[selectedTahminWeek]}
                   title="Tahmin tablosunu fotoğraf (JPEG) olarak cihazınıza indirin"
                   className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] whitespace-nowrap transition-all gap-2 text-sm disabled:opacity-50"
                 >
@@ -829,13 +827,14 @@ export default function TahminlerPortal() {
                   onChange={(e) => setSelectedTahminWeek(Number(e.target.value))}
                   className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md"
                 >
-                  <option value={4}>4. HAFTA BÜLTENİ</option>
-                  <option value={5}>5. HAFTA BÜLTENİ</option>
+                  {availableWeeks.filter(w => w >= 4).map(week => (
+                    <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] ? (
+            {bulletinMap[selectedTahminWeek] ? (
               <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
                 <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -845,7 +844,7 @@ export default function TahminlerPortal() {
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
                           <span className="text-amber-500 font-black tracking-widest">{selectedTahminWeek}. HAFTA</span>
                         </th>
-                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => (
                           <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th>
                         ))}
                         {ghostColumns.map((_, i) => (
@@ -857,7 +856,7 @@ export default function TahminlerPortal() {
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
                           <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
                         </th>
-                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => (
                           <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
                             <div className="w-6 h-6 mx-auto flex items-center justify-center">
                               <img src={teamLogosMap[m.homeTeam?.toUpperCase()] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
@@ -882,7 +881,7 @@ export default function TahminlerPortal() {
                              </span>
                           </div>
                         </th>
-                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => (
                           <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
                             <div className="w-6 h-6 mx-auto flex items-center justify-center">
                               <img src={teamLogosMap[m.awayTeam?.toUpperCase()] || "/logos/default.png"} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
@@ -942,14 +941,14 @@ export default function TahminlerPortal() {
                   <h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - {selectedTahminWeek}. HAFTA TAHMİNLERİ</h2>
                   <p className="text-slate-400 mt-2 text-sm font-medium">* Sadece tahmin gönderen yarışmacılar A'dan Z'ye sıralanmıştır.</p>
                 </div>
-                {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches] && (
+                {bulletinMap[selectedTahminWeek] && (
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
                     <thead className="bg-slate-950">
                       <tr>
                         <th className="bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left">
                           <span className="text-amber-500 font-black tracking-widest text-lg">YARIŞMACI / MAÇ NO</span>
                         </th>
-                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => (
                           <th key={`exp-m1-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px] text-lg">{m.id}</th>
                         ))}
                       </tr>
@@ -957,7 +956,7 @@ export default function TahminlerPortal() {
                         <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
                           <span className="text-white font-black tracking-widest text-sm uppercase">EV SAHİBİ TAKIM</span>
                         </th>
-                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => (
                           <th key={`exp-home-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
                              {m.homeTeam}
                           </th>
@@ -967,7 +966,7 @@ export default function TahminlerPortal() {
                         <th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
                           <span className="text-white font-black tracking-widest text-sm uppercase">DEPLASMAN TAKIM</span>
                         </th>
-                        {archiveMatches[selectedTahminWeek as keyof typeof archiveMatches].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => (
                           <th key={`exp-away-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">
                              {m.awayTeam}
                           </th>
@@ -1017,7 +1016,7 @@ export default function TahminlerPortal() {
               </button>
             </div>
 
-            {bulletin.length === 0 ? (
+            {(!bulletinMap[selectedEntryWeek] || bulletinMap[selectedEntryWeek].length === 0) ? (
                <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto">
                   <span className="text-5xl mb-4 block opacity-50">🛡️</span>
                   <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedEntryWeek}. HAFTA BÜLTENİ BEKLENİYOR</h2>
@@ -1025,7 +1024,7 @@ export default function TahminlerPortal() {
                </div>
             ) : (
               <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-                {bulletin.map((match) => {
+                {bulletinMap[selectedEntryWeek].map((match) => {
                   const theme = getEliteTheme(match.category);
                   
                   const homeLogoUrl = teamLogosMap[match.homeTeam?.toUpperCase()] || "/logos/default.png";
@@ -1084,7 +1083,7 @@ export default function TahminlerPortal() {
               </div>
             )}
 
-            {bulletin.length > 0 && (
+            {bulletinMap[selectedEntryWeek] && bulletinMap[selectedEntryWeek].length > 0 && (
               <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
                 <button 
                   onClick={handleTahminMatikRastgele}
