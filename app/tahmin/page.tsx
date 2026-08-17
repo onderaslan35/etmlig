@@ -395,7 +395,6 @@ export default function TahminlerPortal() {
     else setSortOrder('A-Z');
   };
 
-  // 🚀 LİMİTSİZ BÜYÜK VERİ ÇEKİCİ MOTOR (1000 SATIR LİMİTİNİ YIKAR)
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
   useEffect(() => {
@@ -405,7 +404,6 @@ export default function TahminlerPortal() {
         let step = 999;
         let keepFetching = true;
         
-        // Supabase limitlerine takılmadan tüm veriyi parça parça çekip birleştirir.
         while(keepFetching) {
             const { data } = await supabase
               .from('player_predictions')
@@ -439,6 +437,7 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
+  // 🚀 İŞTE DÜZENLENEN VE KÖKTEN TEMİZLENEN BÖLÜM
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
@@ -451,18 +450,17 @@ export default function TahminlerPortal() {
       });
     }
 
+    // SADECE TAHMİN YAPANLARI LİSTELE (PAS GEÇENLERİ EKRANDAN GİZLE)
+    // missingIds tamamen silindi. Sadece verisi olan adamlar gösterilecek.
     const submittedIds = allIds.filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'));
-    const missingIds = allIds.filter(id => !selectedWeekData[id] || !selectedWeekData[id].some(s => s !== 'PAS'));
 
     if (sortOrder === 'A-Z') {
       submittedIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
     } else if (sortOrder === 'Z-A') {
       submittedIds.sort((a, b) => TEST_ACCOUNTS[b].name.localeCompare(TEST_ACCOUNTS[a].name, 'tr'));
     }
-    
-    missingIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
 
-    return [...submittedIds, ...missingIds];
+    return submittedIds; 
   }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData]);
 
   const ghostColumns = Array.from({ length: 10 });
@@ -907,15 +905,14 @@ export default function TahminlerPortal() {
                         const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
                         const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id] || Array(24).fill('PAS');
-                        const isMissing = preds[0] === 'PAS'; 
-
+                        
                         return (
-                          <tr key={id} className={`hover:bg-slate-800/50 transition-colors group ${isMissing ? 'opacity-70' : ''}`}>
+                          <tr key={id} className="hover:bg-slate-800/50 transition-colors group">
                             <td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900 transition-colors">
-                              <span className={isMissing ? 'text-red-400 line-through' : 'text-slate-300'}>{playerName}</span>
+                              <span className="text-slate-300">{playerName}</span>
                             </td>
                             {preds.map((score: string, idx: number) => (
-                              <td key={idx} className={`border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] group-hover:bg-slate-800/80 ${isMissing ? 'text-red-500 text-[10px]' : 'text-amber-500'}`}>
+                              <td key={idx} className="border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] group-hover:bg-slate-800/80 text-amber-500">
                                 {score}
                               </td>
                             ))}
@@ -928,7 +925,7 @@ export default function TahminlerPortal() {
                       
                       {finalPlayersList.length === 0 && (
                         <tr>
-                          <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Aradığınız kriterlere uygun yarışmacı bulunamadı.</td>
+                          <td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Sistemde henüz kayıtlı tahmin bulunmuyor.</td>
                         </tr>
                       )}
                     </tbody>
