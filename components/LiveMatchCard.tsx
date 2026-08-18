@@ -253,11 +253,18 @@ export default function LiveMatchCard() {
 
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
-      const { data: dbMatches } = await supabase
-        .from('live_matches')
+      // 🌟 DİKKAT: Artık bülteni "matches_bulletin" tablosundan okuyoruz!
+      // Bu tabloda home_team, away_team, match_date vb. tüm bilgileriniz dolu.
+      const { data: dbBulletinMatches } = await supabase
+        .from('matches_bulletin')
         .select('*')
         .eq('week_num', activeWeek)
         .order('match_index', { ascending: true });
+
+      // Skorları ve statüleri ise "live_matches" tablosundan alacağız
+      const { data: dbLiveMatches } = await supabase
+        .from('live_matches')
+        .select('*');
 
       const { data: dbPredictions } = await supabase
         .from('player_predictions')
@@ -275,7 +282,7 @@ export default function LiveMatchCard() {
       }
       setPredictionsData(predDict);
 
-      if (dbMatches) {
+      if (dbBulletinMatches) {
         // BUGÜNÜN TARİHİNİ TÜRKİYE SAATİNE (UTC+3) GÖRE HESAPLA
         const nowUTC = new Date();
         const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
@@ -285,7 +292,8 @@ export default function LiveMatchCard() {
         const yyyy = todayTurkey.getUTCFullYear();
         const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
-        const currentWeekMatches = dbMatches.map((m, idx) => ({
+        // Maçların temel bilgilerini bültenden alıyoruz
+        const currentWeekMatches = dbBulletinMatches.map((m, idx) => ({
           id: m.match_index,
           weekLabel: `${activeWeek}. HAFTA ${m.match_index}. MAÇ`,
           category: m.category,
@@ -298,15 +306,18 @@ export default function LiveMatchCard() {
         const todaysMatches = currentWeekMatches.filter(m => m.date === todayFormatted);
         setTodaysMatchesList(todaysMatches);
         
-        const map: Record<number, any> = {};
-        dbMatches.forEach(row => map[row.match_index] = row);
-        setLiveMatchesData(map);
+        // Skor bilgilerini "live_matches" tablosundan mapliyoruz
+        const liveMap: Record<number, any> = {};
+        if (dbLiveMatches) {
+          dbLiveMatches.forEach(row => liveMap[row.id] = row); // live_matches tablosundaki ID'ye göre
+        }
+        setLiveMatchesData(liveMap);
 
         let currentBoard: Record<string, any> = {}; 
         let hasLiveScores = false;
 
         todaysMatches.forEach(match => {
-          const dbMatch = map[match.id];
+          const dbMatch = liveMap[match.id];
           if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             hasLiveScores = true;
             const isTff = isTffMatchCheck(match.category);
