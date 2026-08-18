@@ -200,19 +200,29 @@ export default function AdminRadarPortal() {
   };
 
   const fetchAllTeamsFromDB = async () => {
-    const { data } = await supabase.from('teams').select('*').order('name'); 
+    // 🔥 DİKKAT: Takımlar doğrudan 'teams' tablosundan, name veya team_name hangisiyse çekilir.
+    // Eğer tablo yapınızda 'name' ise name, 'team_name' ise team_name kullanın.
+    // Her iki ihtimale karşı data'yı esnek alıyoruz.
+    const { data } = await supabase.from('teams').select('*'); 
     if (data) {
        setDbTeamsList(data);
        const logos: Record<string, string> = {};
        const leagues: Record<string, string[]> = {};
 
        data.forEach((team: any) => {
-           // 🚀 TEMİZ EŞLEŞTİRME: DB'deki adı da temizliyoruz
-           const safeName = cleanTeamName(team.name);
-           logos[safeName] = team.logo_url;
-           
-           if (!leagues[team.category]) leagues[team.category] = [];
-           leagues[team.category].push(safeName);
+           // Sütun adı name de olsa team_name de olsa yakalar
+           const tName = team.team_name || team.name; 
+           const tLeague = team.league || team.category;
+
+           if(tName) {
+               const safeName = cleanTeamName(tName);
+               logos[safeName] = team.logo_url;
+               
+               if (tLeague) {
+                   if (!leagues[tLeague]) leagues[tLeague] = [];
+                   leagues[tLeague].push(safeName);
+               }
+           }
        });
 
        logos["OLYMPIC LYON"] = "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg";
@@ -455,6 +465,7 @@ export default function AdminRadarPortal() {
     if (!newTeamName || !newTeamLeague || !newTeamLogo) return;
     setIsTeamLoading(true);
     try {
+       // Tablonuza göre ekleme: name ve category kullanıyoruz (önceki yapınıza göre)
        const { error } = await supabase.from('teams').insert({ name: newTeamName.trim().toUpperCase(), category: newTeamLeague.trim().toUpperCase(), logo_url: newTeamLogo.trim() });
        if (error) throw error;
        alert(`✅ BAŞARILI!`);
@@ -780,7 +791,6 @@ export default function AdminRadarPortal() {
 
     if (leagueKey === "REST OF WORLD" || leagueKey === "DİĞER" || !leagueTeamsMap[leagueKey]) {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
         const allTeamsInSystem = dbTeamsList.map(t => cleanTeamName(t.name)).sort((a, b) => a.localeCompare(b, 'tr')); 
         return allTeamsInSystem.filter(t => t !== cleanTeamName(opponent));
     }
@@ -829,13 +839,13 @@ export default function AdminRadarPortal() {
     setIsPublishing(true);
     try {
       const payload = bulletinMatches.map(m => {
-        // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
         const hTeam = cleanTeamName(m.home_team);
         const aTeam = cleanTeamName(m.away_team);
         return {
           week_num: bulletinWeek, match_index: m.match_index, category: m.category,
           match_date: m.match_date, match_time: m.match_time,
           home_team: hTeam, away_team: aTeam,
+          // LOGO SÜTUNLARI: Maç arşivi gibi sayfalarda direkt DB'den okunabilmesi için
           home_logo: teamLogosMap[hTeam] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
           away_logo: teamLogosMap[aTeam] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
           is_tff: isTffMatchCheck(m.category)
@@ -1085,6 +1095,8 @@ export default function AdminRadarPortal() {
                 const homeTeamUpper = cleanTeamName(match.home_team || match.homeTeam);
                 const awayTeamUpper = cleanTeamName(match.away_team || match.awayTeam);
 
+                // Admin Canlı Ekranda DB'deki (Bülten tablosundaki) logoyu okumasın,
+                // her zaman teams tablosundaki en güncel halini okusun diye bu sözlükten çekiyoruz!
                 const homeLogoUrl = teamLogosMap[homeTeamUpper] || "/logos/default.png";
                 const awayLogoUrl = teamLogosMap[awayTeamUpper] || "/logos/default.png";
 
@@ -1481,25 +1493,29 @@ export default function AdminRadarPortal() {
                     {dbTeamsList.length === 0 ? (
                        <div className="text-center py-8 text-slate-500 italic">Veritabanında kayıtlı takım yok.</div>
                     ) : (
-                       dbTeamsList.map(t => (
+                       dbTeamsList.map(t => {
+                         // 🚀 TEMİZ İSİMLENDİRME: Ekranda gösterirken de güvenli adı kullanıyoruz
+                         const safeName = cleanTeamName(t.name || t.team_name);
+                         const safeCat = t.category || t.league;
+                         return (
                          <div key={t.id} className="bg-slate-950/80 border border-slate-800 p-2 sm:p-3 rounded-xl flex justify-between items-center group hover:border-cyan-900/50 transition-colors gap-2">
                             <div className="flex items-center gap-3 overflow-hidden">
                                <div className="w-10 h-10 bg-slate-900 rounded border border-slate-700 flex items-center justify-center flex-shrink-0 p-1">
-                                  <img src={t.logo_url} alt={t.team_name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                                  <img src={t.logo_url} alt={safeName} className="max-w-full max-h-full object-contain drop-shadow-md" />
                                </div>
                                <div className="flex flex-col overflow-hidden">
-                                  <span className="font-black text-slate-200 text-[11px] sm:text-xs uppercase tracking-wide truncate">{t.team_name}</span>
-                                  <span className="text-[9px] sm:text-[10px] font-bold text-cyan-500/70 tracking-widest mt-0.5 truncate">{t.league}</span>
+                                  <span className="font-black text-slate-200 text-[11px] sm:text-xs uppercase tracking-wide truncate">{safeName}</span>
+                                  <span className="text-[9px] sm:text-[10px] font-bold text-cyan-500/70 tracking-widest mt-0.5 truncate">{safeCat}</span>
                                </div>
                             </div>
                             <button 
-                              onClick={() => handleDeleteTeam(t.team_name)}
+                              onClick={() => handleDeleteTeam(t.name || t.team_name)}
                               className="flex-shrink-0 bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-2 py-1.5 rounded-lg text-[9px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
                             >
                                ❌ SİL
                             </button>
                          </div>
-                       ))
+                       )})
                     )}
                  </div>
               </div>
