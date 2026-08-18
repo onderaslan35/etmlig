@@ -5,20 +5,24 @@ import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase'; 
 
 const allPlayersMasterList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
+  "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
+  "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
+  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262713": "VAHİT KÜLCÜ", "262714": "İSMAİL EKER 🏆", "262715": "ŞEMSETTIN DÜGER",
+  "262716": "BİROL DEMİREL", "262717": "MURAT ALİ", "262718": "BEKİR KARADAĞ", "262719": "UĞUR VARDAR", "262720": "HASAN ASLAN",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262722": "MUSTAFA ERKAN", "262723": "AYHAN LUŞOĞLU", "262724": "YÜCEL TOMAK", "262725": "İLYAS KAZDAL",
+  "262726": "HUDAVER TOPARDIC", "262727": "YAHŞİ ERKAN🏆", "262728": "ÖNDER ASLAN", "262729": "HAKAN GÜN", "262730": "ÖNDER IŞIK",
+  "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA 🏆🏆", "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ",
+  "262736": "MEHMET ALİ KARA", "262737": "ŞAHİN GEZGİNCİ", "262738": "MEVLÜT EVLER", "262739": "UĞUR GÜRBÜZ", "262740": "ABDULLAH DİK",
+  "262741": "SABAHATTİN ÇAYLAK", "262742": "ZEKERiYYA TOPKAYYA", "262743": "MEHMET ALİ ŞAHİN", "262744": "İLYAS UYGUN", "262745": "OĞUZ YILDIRIMKAYA",
+  "262746": "MEHMET BAYIR", "262747": "SAVAŞ ÇAĞLAYAN", "262748": "YASİN ŞAHİN", "262749": "B.VEYSELOĞLU EROL", "262750": "MAHMUT CBR",
+  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN 🏆", "262755": "DOĞAÇ ALKAN",
+  "262756": "EYÜP KARACAOĞLU", "262813": "KEMAL ERSOY", "262758": "MELİH PINAR", "262762": "İLHAN DANIŞ", "262763": "MUSTAFA ELMAS",
+  "262770": "OZKAYA MAZAKALI BAYRAM", "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA 🏆", "262760": "UĞUR NES", "262774": "ŞENOL CAN ÇAKICI",
+  "262776": "CUMA OKUR", "262777": "MİRAÇ TOPAL", "262778": "CENGİZ SAYAN", "262780": "YUSUF KILIÇ", "262781": "KADİR SOLMAZ",
+  "262782": "YUSUF ERBAY", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL 🏆", "262786": "SEDAT DİŞLİ",
+  "262787": "MUSTAFA TUCİ", "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "262790": "CUMALİ SÖKER", "351925": "ALİOS GÖZTEPE",
+  "350909": "DİNÇER ÖZER", "262815": "MURAT KAYA", "262816": "SEDAT SEDAT", "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK",
+  "262797": "ÖMER DOGER"
 };
 
 const masterWeek1Data: Record<string, { name: string; puan: number }> = {
@@ -101,54 +105,35 @@ const masterWeek3Data: Record<string, { name: string; puan: number }> = {
   "262703": { name: "CEMALETTİN BELLİ", puan: 0 }
 };
 
-const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
-  "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
-  "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"],
-  "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"],
-  "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"],
-  "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"],
-  "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"],
-  "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"],
-  "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"],
-  "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"],
-  "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"],
-  "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"],
-  "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"],
-  "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"],
-  "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"],
-  "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"],
-  "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"],
-  "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"],
-  "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"],
-  "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"],
-  "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"],
-  "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"],
-  "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"],
-  "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"],
-  "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"],
-  "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"],
-  "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"],
-  "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"],
-  "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"],
-  "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"],
-  "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"],
-  "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"],
-  "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"],
-  "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"],
-  "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"],
-  "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"],
-  "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"],
-  "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"],
-  "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"],
-  "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"],
-  "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"],
-  "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
-  "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
-  "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
+// 🌟 4. HAFTAYI ARTIK "SABİTLEDİK" (DONDURDUK) - ESKİ ETİKETLER ÇÖPE GİTTİ! 🌟
+const masterWeek4Data: Record<string, { name: string; puan: number }> = {
+  "262736": { name: "MEHMET ALİ KARA", puan: 11 }, "262755": { name: "DOĞAÇ ALKAN", puan: 7 },
+  "262816": { name: "SEDAT SEDAT", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 3 },
+  "262786": { name: "SEDAT DİŞLİ", puan: 13 }, "262733": { name: "MUHSİN ASİLKAN", puan: 5 },
+  "262728": { name: "ÖNDER ASLAN", puan: 0 }, "262726": { name: "HUDAVER TOPARDIC", puan: 5 },
+  "262709": { name: "SALİH KARACAOĞLU", puan: 2 }, "262719": { name: "UĞUR VARDAR", puan: 8 },
+  "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 0 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 },
+  "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 }, "262790": { name: "CUMALİ SÖKER", puan: 1 },
+  "262717": { name: "MURAT ALİ", puan: 12 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 },
+  "262711": { name: "RIDVAN DOGER", puan: 7 }, "262731": { name: "FATİH AYAN", puan: 13 },
+  "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 0 }, "262763": { name: "MUSTAFA ELMAS", puan: 4 },
+  "262707": { name: "HAKAN AYAN", puan: 9 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 2 },
+  "262813": { name: "KEMAL ERSOY", puan: 11 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 13 }, // BONUSLAR TOPLANDI
+  "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 0 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
+  "262714": { name: "İSMAİL EKER 🏆", puan: 14 }, // BONUS EKLENDİ
+  "262740": { name: "ABDULLAH DİK", puan: 2 }, "262702": { name: "MURAT KARA", puan: 8 },
+  "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 9 },
+  "262716": { name: "BİROL DEMİREL", puan: 6 }, "262750": { name: "MAHMUT CBR", puan: 5 },
+  "262734": { name: "LEVENT YILDIRIM", puan: 8 }, "262725": { name: "İLYAS KAZDAL", puan: 1 },
+  "262737": { name: "ŞAHİN GEZGİNCİ", puan: 0 }, "351925": { name: "ALİOS GÖZTEPE", puan: 4 },
+  "262730": { name: "ÖNDER IŞIK", puan: 13 }, "262782": { name: "YUSUF ERBAY", puan: 0 },
+  "262749": { name: "B.VEYSELOĞLU EROL", puan: 13 }, "262718": { name: "BEKİR KARADAĞ", puan: 11 },
+  "262715": { name: "ŞEMSETTİN DÜGER", puan: 0 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 10 },
+  "262703": { name: "CEMALETTİN BELLİ", puan: 3 }, "262758": { name: "MELİH PINAR", puan: 16 },
+  "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 6 }, "262708": { name: "BAYRAM YILMAZ", puan: 0 },
+  "262787": { name: "MUSTAFA TUCİ", puan: 0 }, "262744": { name: "İLYAS UYGUN", puan: 2 },
+  "262712": { name: "MURAT AYDEMİR", puan: 0 }, "262704": { name: "YAPAY ZEKA", puan: 6 },
+  "262723": { name: "AYHAN LUŞOĞLU", puan: 5 }
 };
 
 export default function MasterPuanDurumuPage() {
@@ -156,25 +141,38 @@ export default function MasterPuanDurumuPage() {
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+  const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   
-  const availableWeeks = [1, 2, 3, 4];
+  const availableWeeks = [1, 2, 3, 4, 5]; // 🚀 5. HAFTA EKLENDİ
 
   const loadLeaderboard = async () => {
     try {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
+      const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
+
+      // 🚀 5. HAFTA TAHMİNLERİNİ DB'DEN ÇEKİYORUZ
+      const predDict: Record<string, string[]> = {};
+      if (dbPredictions) {
+        dbPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
+          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+        });
+      }
+      setPredictionsDB(predDict);
       
-      let w4Base: Record<string, number> = {}; 
-      let w4Live: Record<string, number> = {}; 
-      let w4ExactHits: Record<string, number> = {}; 
-      let w4LiveExactHits: Record<string, number> = {}; 
+      let w5Base: Record<string, number> = {}; 
+      let w5Live: Record<string, number> = {}; 
+      let w5ExactHits: Record<string, number> = {}; 
+      let w5LiveExactHits: Record<string, number> = {}; 
       let isAnyMatchLive = false;
       let finishedCount = 0; 
 
       Object.keys(allPlayersMasterList).forEach(id => {
-        w4Base[id] = 0;
-        w4Live[id] = 0;
-        w4ExactHits[id] = 0;
-        w4LiveExactHits[id] = 0;
+        w5Base[id] = 0;
+        w5Live[id] = 0;
+        w5ExactHits[id] = 0;
+        w5LiveExactHits[id] = 0;
       });
 
       if (dbMatches) {
@@ -184,93 +182,78 @@ export default function MasterPuanDurumuPage() {
         });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.status === 'FINISHED') finishedCount++;
+          // SADECE 5. HAFTA MAÇLARINI KONTROL EDİYORUZ (ID'si 500'den büyük olanlar)
+          if (dbMatch.id > 500) {
+              if (dbMatch.status === 'FINISHED') finishedCount++;
 
-          if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const matchIndex = dbMatch.id - 1; 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id][matchIndex] === targetScore);
-            
-            let points = 1;
-            if(winnerIds.length === 1) points = 12;
-            else if(winnerIds.length === 2) points = 6;
-            else if(winnerIds.length === 3) points = 5;
-            else if(winnerIds.length === 4) points = 4;
-            else if(winnerIds.length === 5) points = 3;
-            else if(winnerIds.length === 6) points = 2;
-            else points = 1;
+              if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+                // 🚀 ARRAY KAYMASI ÇÖZÜLDÜ (501 id -> 0. index)
+                const matchIndex = (dbMatch.id % 100) - 1; 
+                const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+                
+                const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+                
+                let points = 1;
+                if(winnerIds.length === 1) points = 12;
+                else if(winnerIds.length === 2) points = 6;
+                else if(winnerIds.length === 3) points = 5;
+                else if(winnerIds.length === 4) points = 4;
+                else if(winnerIds.length === 5) points = 3;
+                else if(winnerIds.length === 6) points = 2;
+                else if(winnerIds.length >= 7) points = 1;
+                else points = 0;
 
-            winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') {
-                w4Base[wId] += points; 
-                w4ExactHits[wId] += 1; 
-              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
-                w4Live[wId] += points; 
-                w4LiveExactHits[wId] += 1; // Canlı maçtaki tam isabetleri de sayıyoruz
-                isAnyMatchLive = true;
+                winnerIds.forEach(wId => {
+                  if (dbMatch.status === 'FINISHED') {
+                    w5Base[wId] += points; 
+                    w5ExactHits[wId] += 1; 
+                  } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                    w5Live[wId] += points; 
+                    w5LiveExactHits[wId] += 1; 
+                    isAnyMatchLive = true;
+                  }
+                });
               }
-            });
           }
         });
 
-        // 🏆 EKMEL BONUS MOTORU V3.1 (24. MAÇ CANLI TETİKLEYİCİ DÜZELTMESİ) 🏆
+        // 🏆 EKMEL BONUS MOTORU V3.1 (SADECE 5. HAFTA 24. MAÇ BİTİNCE) 🏆
         let puanKraliId: string | null = null;
         let skorKraliId: string | null = null;
         
-        // Tetikleyici: 24 ID'li maç (Batman Petrol - Boluspor) BAŞLAMIŞ veya BİTMİŞ olmalı.
-        // Eğer admin maçı "Sıfırla" yaparsa status geri döner ve motor durur, bonuslar iptal olur.
-        const match24 = uniqueMatches[24];
-        const isEngineActive = match24 && (match24.status === 'LIVE' || match24.status === 'HT' || match24.status === 'WAITING_APPROVAL' || match24.status === 'FINISHED');
+        const match524 = uniqueMatches[524];
+        const isEngineActive = match524 && (match524.status === 'LIVE' || match524.status === 'WAITING_APPROVAL' || match524.status === 'FINISHED');
 
         if (isEngineActive) {
-          let maxPuan = -1;
-          let maxPuanCount = 0;
-          let tempPuanKrali: string | null = null;
-
-          let maxSkor = -1;
-          let maxSkorCount = 0;
-          let tempSkorKrali: string | null = null;
+          let maxPuan = -1; let maxPuanCount = 0; let tempPuanKrali: string | null = null;
+          let maxSkor = -1; let maxSkorCount = 0; let tempSkorKrali: string | null = null;
 
           Object.keys(allPlayersMasterList).forEach(id => {
-            // 1. Puan Liderliği (Canlı + Biten Toplamı)
-            const totalP = (w4Base[id] || 0) + (w4Live[id] || 0);
+            const totalP = (w5Base[id] || 0) + (w5Live[id] || 0);
             if (totalP > maxPuan) {
-              maxPuan = totalP;
-              maxPuanCount = 1; 
-              tempPuanKrali = id;
-            } else if (totalP === maxPuan) {
-              maxPuanCount++; 
-            }
+              maxPuan = totalP; maxPuanCount = 1; tempPuanKrali = id;
+            } else if (totalP === maxPuan) maxPuanCount++;
 
-            // 2. Skor Liderliği (Canlı + Biten Tam İsabet Toplamı)
-            const totalHits = (w4ExactHits[id] || 0) + (w4LiveExactHits[id] || 0);
+            const totalHits = (w5ExactHits[id] || 0) + (w5LiveExactHits[id] || 0);
             if (totalHits > maxSkor) {
-              maxSkor = totalHits;
-              maxSkorCount = 1;
-              tempSkorKrali = id;
-            } else if (totalHits === maxSkor) {
-              maxSkorCount++;
-            }
+              maxSkor = totalHits; maxSkorCount = 1; tempSkorKrali = id;
+            } else if (totalHits === maxSkor) maxSkorCount++;
           });
 
-          // Unvanlar sadece MÜSTAKİL (tek tabanca) ise verilir
-          if (maxPuanCount === 1 && tempPuanKrali && maxPuan > 0) {
-            puanKraliId = tempPuanKrali;
-          }
-          if (maxSkorCount === 1 && tempSkorKrali && maxSkor > 0) {
-            skorKraliId = tempSkorKrali;
-          }
+          if (maxPuanCount === 1 && tempPuanKrali && maxPuan > 0) puanKraliId = tempPuanKrali;
+          if (maxSkorCount === 1 && tempSkorKrali && maxSkor > 0) skorKraliId = tempSkorKrali;
         }
 
         setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
         if (activeTab === 'total') {
-          // Önceki haftaların (1, 2, 3) sıralama referansı trend okları için hesaplanır
+          // Önceki haftaların (1, 2, 3, 4) toplamı (TREND OKLARI İÇİN REFERANS)
           const referenceList = Object.keys(allPlayersMasterList).map(id => {
             const w1 = masterWeek1Data[id]?.puan || 0;
             const w2 = masterWeek2Data[id]?.puan || 0;
             const w3 = masterWeek3Data[id]?.puan || 0;
-            const basePuan = w1 + w2 + w3;
+            const w4 = masterWeek4Data[id]?.puan || 0;
+            const basePuan = w1 + w2 + w3 + w4;
             const finalName = allPlayersMasterList[id];
             return { id, name: finalName, basePuan };
           }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
@@ -282,18 +265,19 @@ export default function MasterPuanDurumuPage() {
             const w1 = masterWeek1Data[id]?.puan || 0;
             const w2 = masterWeek2Data[id]?.puan || 0;
             const w3 = masterWeek3Data[id]?.puan || 0;
-            let w4B = w4Base[id] || 0; 
+            const w4 = masterWeek4Data[id]?.puan || 0;
+            let w5B = w5Base[id] || 0; 
             
             let pBonus = id === puanKraliId;
             let sBonus = id === skorKraliId;
 
-            // Kazanılan +3 Puanlar anlık olarak Genel Toplama (basePuan üzerinden) yansıtılır.
-            if (pBonus) w4B += 3;
-            if (sBonus) w4B += 3;
+            // Yeni 5. Hafta Bonusları
+            if (pBonus) w5B += 3;
+            if (sBonus) w5B += 3;
 
-            const basePuan = w1 + w2 + w3 + w4B;
-            const liveExtra = w4Live[id] || 0; 
-            
+            // YEPYENİ 5. HAFTA CANLI PUANLARI (1 Puan vb.) BURADA TOPLANIYOR!
+            const liveExtra = w5Live[id] || 0; 
+            const basePuan = w1 + w2 + w3 + w4 + w5B;
             const finalName = allPlayersMasterList[id];
 
             return { 
@@ -314,11 +298,9 @@ export default function MasterPuanDurumuPage() {
             let trendDiff = 0; 
             
             if (currentRank < prevRank) {
-              trend = 'up';
-              trendDiff = prevRank - currentRank; 
+              trend = 'up'; trendDiff = prevRank - currentRank; 
             } else if (currentRank > prevRank) {
-              trend = 'down';
-              trendDiff = currentRank - prevRank; 
+              trend = 'down'; trendDiff = currentRank - prevRank; 
             }
             
             return { ...player, currentRank, prevRank, trend, trendDiff };
@@ -326,15 +308,15 @@ export default function MasterPuanDurumuPage() {
 
           setTableRows(finalRows);
         } else {
-          if(activeTab === 'week4') {
+          // SADECE 5. HAFTAYI GÖRMEK İSTEYENLER İÇİN
+          if(activeTab === 'week5') {
             const list = Object.keys(allPlayersMasterList).map(id => {
-              let basePuan = w4Base[id] || 0; 
-              const liveExtra = w4Live[id] || 0; 
+              let basePuan = w5Base[id] || 0; 
+              const liveExtra = w5Live[id] || 0; 
               
               let pBonus = id === puanKraliId;
               let sBonus = id === skorKraliId;
 
-              // Kazanılan +3 Puanlar anlık olarak haftalık toplama (basePuan üzerinden) yansıtılır.
               if (pBonus) basePuan += 3;
               if (sBonus) basePuan += 3;
 
@@ -354,25 +336,26 @@ export default function MasterPuanDurumuPage() {
             let dataMap = masterWeek1Data;
             if(activeTab === 'week2') dataMap = masterWeek2Data;
             if(activeTab === 'week3') dataMap = masterWeek3Data;
+            if(activeTab === 'week4') dataMap = masterWeek4Data;
 
             const list = Object.keys(allPlayersMasterList).map(id => {
               const rawObj = dataMap[id];
               const basePuan = rawObj ? rawObj.puan : 0;
               
-              // 🌟 1. , 2. ve 3. HAFTA GEÇMİŞE DÖNÜK ETİKET MOTORU 🌟
+              // GEÇMİŞ HAFTALARIN SABİTLENMİŞ BONUSLARI (4. Hafta rozetleri dahil, ama "Total" sekmesinde gözükmeyecekler)
               let pBonus = false;
               let sBonus = false;
 
               if (activeTab === 'week1') {
-                if (id === "262736") pBonus = true; // Mehmet Ali Kara (+3 Liderlik)
-                if (id === "262755") sBonus = true; // Doğaç Alkan (+3 Skor)
+                if (id === "262736") pBonus = true; 
+                if (id === "262755") sBonus = true; 
               } else if (activeTab === 'week2') {
-                if (id === "262756") pBonus = true; // Eyüp Karacaoğlu (+3 Liderlik)
+                if (id === "262756") pBonus = true; 
               } else if (activeTab === 'week3') {
-                if (id === "262816") { // Sedat Sedat (İkisi Birden)
-                  pBonus = true;
-                  sBonus = true;
-                }
+                if (id === "262816") { pBonus = true; sBonus = true; }
+              } else if (activeTab === 'week4') {
+                if (id === "262714") pBonus = true; // İSMAİL EKER LİDER
+                if (id === "262774") sBonus = true; // ŞENOL CAN SKOR
               }
 
               return { 
@@ -506,7 +489,7 @@ export default function MasterPuanDurumuPage() {
                           );
                         })()}
 
-                        {/* 🌟 HAFTALIK ETİKETLER (Artık Total sekmesinde de kazananı parlatacak!) 🌟 */}
+                        {/* 🌟 5. HAFTANIN YENİ ETİKET MOTORU 🌟 */}
                         {row.hasPuanBonus && (
                           <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
                             +3 LİDERLİK BONUSU
@@ -518,6 +501,7 @@ export default function MasterPuanDurumuPage() {
                           </span>
                         )}
                         
+                        {/* 🌟 EFSANEVİ CANLI PUAN YANSITMASI (Örn: +1 CANLI) 🌟 */}
                         {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
                           <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
                             +{row.liveExtra} CANLI
