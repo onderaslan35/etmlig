@@ -99,7 +99,6 @@ const localTeamLogos: Record<string, string> = {
   "FULHAM": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Fulham_FC_%28shield%29.svg/200px-Fulham_FC_%28shield%29.svg.png",
   "EVERTON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Everton_FC_logo.svg/200px-Everton_FC_logo.svg.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
-  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/f1/Olympique_Lyonnais.svg/200px-Olympique_Lyonnais.svg.png",
 
   // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -107,10 +106,16 @@ const localTeamLogos: Record<string, string> = {
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", 
+  "HAMMARBY": "/logos/hammarby.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png"
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
+  
+  // ŞEFFAF LOGOLAR (ÖZELLİKLE LYON İÇİN OTO-DÜZELTME)
+  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg"
 };
 
 const allPlayersList: Record<string, string> = {
@@ -293,11 +298,12 @@ const week4Matches = [
 ];
 
 export default function MacArsiviPage() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(4);
+  const [selectedWeek, setSelectedWeek] = useState<number>(5); // 🚀 DEFAULT ARTIK 5. HAFTA 🚀
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [bulletinData, setBulletinData] = useState<Record<number, any>>({});
+  const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     const fetchFromDB = async () => {
@@ -332,6 +338,19 @@ export default function MacArsiviPage() {
            
            setBulletinData(bultenMap);
         }
+
+        // 🚀 5. HAFTA TAHMİNLERİNİ DE ÇEKİYORUZ 🚀
+        const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
+        if (pData) {
+           const pMap: Record<string, string[]> = {};
+           pData.forEach(row => {
+              const rowUserId = String(row.user_id);
+              if(!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
+              pMap[rowUserId][row.match_index - 1] = row.predicted_score;
+           });
+           setPredictionsDB(pMap);
+        }
+
       } catch (e) {
         console.log("Supabase baglantisi bekleniyor...");
       }
@@ -386,9 +405,8 @@ export default function MacArsiviPage() {
     return (week * 100) + index;
   };
 
-  // 🟢 DİNAMİK TARİH MOTORU
   const getWeekDateRange = (weekNum: number) => {
-    const startDate = new Date(2026, 7, 11 + (weekNum - 4) * 7); // 7 = Ağustos
+    const startDate = new Date(2026, 7, 11 + (weekNum - 4) * 7); 
     const endDate = new Date(2026, 7, 17 + (weekNum - 4) * 7);
     
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
@@ -402,7 +420,6 @@ export default function MacArsiviPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans relative">
       <div className="max-w-5xl mx-auto">
         
-        {/* 🟢 ANA SAYFAYA DÖN BUTONU EKLENDİ 🟢 */}
         <div className="mb-4">
           <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors font-bold text-xs bg-slate-900/50 border border-slate-800 px-4 py-2 rounded-lg shadow-sm">
             <span className="text-base leading-none">←</span> Ana Sayfaya Dön
@@ -415,7 +432,6 @@ export default function MacArsiviPage() {
               📂 MAÇ ARŞİVİ & FİKSTÜR
             </h1>
             <p className="text-slate-400 text-xs mt-1 bg-slate-900 inline-block px-3 py-1 rounded-md border border-slate-800">
-              {/* 🟢 DİNAMİK TARİH YAZISI EKLENDİ 🟢 */}
               <strong className="text-amber-500 mr-1">{selectedWeek}. HAFTA BÜLTENİ:</strong> 
               {getWeekDateRange(selectedWeek)}
             </p>
@@ -446,8 +462,12 @@ export default function MacArsiviPage() {
             {currentMatches.map((match: any) => {
               const isWinnersOpen = !!openWinnersMap[match.id];
               const isTffMatch = isTffMatchCheck(match.category);
-              const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
-              const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
+              
+              const homeUpper = match.homeTeam?.toUpperCase();
+              const awayUpper = match.awayTeam?.toUpperCase();
+              
+              const homeLogoUrl = localTeamLogos[homeUpper] || "/logos/default.png";
+              const awayLogoUrl = localTeamLogos[awayUpper] || "/logos/default.png";
 
               let homeScore = "-";
               let awayScore = "-";
@@ -457,6 +477,7 @@ export default function MacArsiviPage() {
               let displayPoints = match.earnedPoints || 0;
               let isFinished = false;
 
+              // 🚀 5. HAFTA VE SONRASI İÇİN CANLI/BİTMİŞ SKOR OKUMA (501 ID MANTIĞI) 🚀
               if (selectedWeek >= 4) {
                 const uniqueId = getUniqueMatchId(selectedWeek, match.id);
                 const dbMatch = liveMatchesData[uniqueId];
@@ -464,15 +485,16 @@ export default function MacArsiviPage() {
                   matchStatus = dbMatch.status;
                   homeScore = dbMatch.home_score;
                   awayScore = dbMatch.away_score;
-                  isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE');
+                  isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL');
                   
                   if (isFinished && homeScore !== '-' && awayScore !== '-') {
                     const targetScore = `${homeScore}-${awayScore}`;
-                    const predictionsToUse = selectedWeek === 4 ? week4PredictionsData : {};
+                    const predictionsToUse = selectedWeek === 4 ? week4PredictionsData : predictionsDB;
                     
                     currentWinners = Object.keys(predictionsToUse)
                       .filter(id => predictionsToUse[id] && predictionsToUse[id][match.id - 1] === targetScore)
                       .map(id => allPlayersList[id])
+                      .filter(name => name) // 🚀 BU SATIRI EKLEDİK (KIRMIZI ÇİZGİ HATASI GİTTİ) 🚀
                       .sort((a, b) => a.localeCompare(b, 'tr'));
                     winnersCount = currentWinners.length;
                     
