@@ -111,11 +111,11 @@ const localTeamLogos: Record<string, string> = {
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   
-  // ŞEFFAF LOGOLAR (ÖZELLİKLE LYON İÇİN OTO-DÜZELTME)
-  "OLYMPIC LYON": "https://etmlig-8xiutamce-onderaslan35s-projects.vercel.app/logos/lyon.png",
-  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg"
+  // 🔴 KOMUTANIN BULDUĞU KESİN ÇÖZÜM: LYON LOGOSU YERELDEN ÇEKİLİYOR 🔴
+  "OLYMPIC LYON": "/logos/lyon.png",
+  "OLYMPIQUE LYON": "/logos/lyon.png",
+  "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
+  "LYON": "/logos/lyon.png"
 };
 
 const allPlayersList: Record<string, string> = {
@@ -297,7 +297,7 @@ const week4Matches = [
 ];
 
 export default function MacArsiviPage() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(5); // 🚀 DEFAULT ARTIK 5. HAFTA 🚀
+  const [selectedWeek, setSelectedWeek] = useState<number>(5);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
@@ -338,7 +338,6 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
-        // 🚀 5. HAFTA TAHMİNLERİNİ DE ÇEKİYORUZ 🚀
         const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
         if (pData) {
            const pMap: Record<string, string[]> = {};
@@ -476,7 +475,6 @@ export default function MacArsiviPage() {
               let displayPoints = match.earnedPoints || 0;
               let isFinished = false;
 
-              // 🚀 5. HAFTA VE SONRASI İÇİN CANLI/BİTMİŞ SKOR OKUMA (501 ID MANTIĞI) 🚀
               if (selectedWeek >= 4) {
                 const uniqueId = getUniqueMatchId(selectedWeek, match.id);
                 const dbMatch = liveMatchesData[uniqueId];
@@ -493,7 +491,7 @@ export default function MacArsiviPage() {
                     currentWinners = Object.keys(predictionsToUse)
                       .filter(id => predictionsToUse[id] && predictionsToUse[id][match.id - 1] === targetScore)
                       .map(id => allPlayersList[id])
-                      .filter(name => name) // 🚀 BU SATIRI EKLEDİK (KIRMIZI ÇİZGİ HATASI GİTTİ) 🚀
+                      .filter(name => name)
                       .sort((a, b) => a.localeCompare(b, 'tr'));
                     winnersCount = currentWinners.length;
                     
