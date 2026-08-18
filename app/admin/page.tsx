@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 
-// 🔴 54 ASLAN PARÇASI 🔴
 const staticPlayersList: Record<string, string> = {
   "262736": "MEHMET ALİ KARA", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262756": "EYÜP KARACAOĞLU",
   "262786": "SEDAT DİŞLİ", "262719": "UĞUR VARDAR", "262733": "MUHSİN ASİLKAN", "262726": "HUDAVER TOPARDIC",
@@ -21,7 +20,6 @@ const staticPlayersList: Record<string, string> = {
   "262741": "SABAHATTİN ÇAYLAK", "262735": "AYGÜN AKKEÇELİ"
 };
 
-// 🚀 MAÇ ARŞİVİ MODELİ (SABİT LOGOLAR) 🚀
 const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "https://upload.wikimedia.org/wikipedia/tr/6/66/Fenerbah%C3%A7e_120._Y%C4%B1l.png",
   "GALATASARAY": "https://upload.wikimedia.org/wikipedia/tr/b/b9/Galatasaray_Spor_Kul%C3%BCb%C3%BC_logo.svg",
@@ -47,6 +45,8 @@ const localTeamLogos: Record<string, string> = {
   "EYÜPSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/84/Ey%C3%BCpspor_Logo.png",
   "GÖZTEPE": "https://upload.wikimedia.org/wikipedia/tr/c/c5/G%C3%B6ztepe_Logo.png",
   "BODRUM FK": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
+  
+  // TFF 1. LİG
   "SAKARYASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2b/Samsunspor_logo_3.svg", 
   "KOCAELİSPOR": "https://upload.wikimedia.org/wikipedia/tr/f/fa/Konyaspor_logo_3.svg", 
   "GENÇLERBİRLİĞİ": "https://upload.wikimedia.org/wikipedia/tr/5/5a/Genclerbirligi_logo.svg",
@@ -90,6 +90,8 @@ const localTeamLogos: Record<string, string> = {
   "ZONGULDAK KÖMÜRSPOR": "https://upload.wikimedia.org/wikipedia/tr/6/6f/Zonguldak_K%C3%B6m%C3%BCrspor.png",
   "KIRŞEHİR FUTBOL SK": "https://upload.wikimedia.org/wikipedia/tr/9/91/K%C4%B1r%C5%9Fehir_Belediyespor.png",
   "BODRUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
+
+  // AVRUPA
   "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
@@ -119,30 +121,27 @@ const localTeamLogos: Record<string, string> = {
   "CHELSEA": "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg",
   "MANCHESTER UNITED": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg", 
   "NAPOLI": "https://upload.wikimedia.org/wikipedia/commons/2/28/S.S.C._Napoli_logo.svg",
-  "AS ROMA": "https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg"
+  "AS ROMA": "https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg",
+  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/en/d/d6/Rcd_espanyol_logo.svg"
 };
 
 const TFF_CATEGORIES = [
-  "TÜRKİYE SÜPER LİG",
-  "TÜRKİYE 1.LİG",
-  "TÜRKİYE KUPASI",
-  "TÜRKİYE SÜPER KUPA",
-  "TÜRKİYE KADINLAR SÜPER LİG"
+  "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG"
 ];
 
 const CATEGORIES = [
-  ...TFF_CATEGORIES,
-  "BUNDESLIGA", "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", 
+  ...TFF_CATEGORIES, "BUNDESLIGA", "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", 
   "EREDIVISIE", "FA CUP", "FIFA DÜNYA KUPASI", "LA LIGA", "LIGUE 1", "PORTEKİZ LİGİ", 
-  "PREMIER LEAGUE", "SCOTTISH PREMIER LEAGUE", "SERIE A", 
-  "UEFA AVRUPA LİGİ GURUP AŞAMASI", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", 
-  "UEFA A.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA A.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA A.L. PLAY OFF İLK MAÇ", "UEFA A.L. PLAY OFF RÖVANŞ", 
-  "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ", 
-  "UEFA KONFERANS LİGİ GURUP AŞAMASI", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", 
-  "UEFA K.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA K.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA K.L. PLAY OFF İLK MAÇ", "UEFA K.L. PLAY OFF RÖVANŞ", 
-  "UEFA ŞAMPİYONLAR LİGİ GURUP AŞAMASI", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", 
-  "UEFA Ş.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA Ş.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA Ş.L. PLAY OFF İLK MAÇ", "UEFA Ş.L. PLAY OFF RÖVANŞ", 
-  "İNGİLTERE SÜPER KUPA"
+  "PREMIER LEAGUE", "SCOTTISH PREMIER LEAGUE", "SERIE A", "UEFA AVRUPA LİGİ GURUP AŞAMASI", 
+  "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ", 
+  "UEFA A.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA A.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA A.L. PLAY OFF İLK MAÇ", 
+  "UEFA A.L. PLAY OFF RÖVANŞ", "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ", 
+  "UEFA KONFERANS LİGİ GURUP AŞAMASI", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR İLK MAÇ", 
+  "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ", "UEFA K.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA K.L. ÖN ELEME 3.TUR RÖVANŞ", 
+  "UEFA K.L. PLAY OFF İLK MAÇ", "UEFA K.L. PLAY OFF RÖVANŞ", "UEFA ŞAMPİYONLAR LİGİ GURUP AŞAMASI", 
+  "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ", 
+  "UEFA Ş.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA Ş.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA Ş.L. PLAY OFF İLK MAÇ", 
+  "UEFA Ş.L. PLAY OFF RÖVANŞ", "İNGİLTERE SÜPER KUPA"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
 const getTodayDateString = () => {
@@ -192,20 +191,19 @@ const cleanTeamName = (name: string) => {
 };
 
 export default function AdminRadarPortal() {
-  
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
-
+  
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players' | 'teams'>('live');
-  const [mergedPlayers] = useState<Record<string, string>>(staticPlayersList);
+  const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
   const [dbTeamsList, setDbTeamsList] = useState<any[]>([]);
-  
-  // 🚀 DB YERİNE LOCAL LOGO SÖZLÜĞÜNÜ BAZ ALIYORUZ
+  const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>(localTeamLogos);
   const [leagueTeamsMap, setLeagueTeamsMap] = useState<Record<string, string[]>>({});
+  
   const [dynamicCategoriesList, setDynamicCategoriesList] = useState<string[]>([]);
   
   const [newTeamName, setNewTeamName] = useState('');
@@ -217,9 +215,7 @@ export default function AdminRadarPortal() {
   const previousScoresRef = useRef<Record<string, number>>({});
 
   const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({
-     'skorcum01': true,
-     'skorcum06': true,
-     'skorcum34': true
+     'skorcum01': true, 'skorcum06': true, 'skorcum34': true
   });
 
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
@@ -250,12 +246,8 @@ export default function AdminRadarPortal() {
 
   const [bulletinMatches, setBulletinMatches] = useState(
     Array.from({ length: 24 }, (_, i) => ({
-      match_index: i + 1,
-      category: 'TÜRKİYE SÜPER LİG',
-      match_date: generateWeekDates(5)[0],
-      match_time: '21:00',
-      home_team: '',
-      away_team: ''
+      match_index: i + 1, category: 'TÜRKİYE SÜPER LİG', match_date: generateWeekDates(5)[0],
+      match_time: '21:00', home_team: '', away_team: ''
     }))
   );
 
@@ -289,10 +281,7 @@ export default function AdminRadarPortal() {
 
   const fetchAllSystemPlayers = async () => {
     const formattedPlayers = Object.keys(staticPlayersList).map(id => ({
-        id: id,
-        user_id: id,
-        full_name: staticPlayersList[id],
-        password: "Gizli"
+        id: id, user_id: id, full_name: staticPlayersList[id], password: "Gizli"
     })).sort((a, b) => a.full_name.localeCompare(b.full_name, 'tr'));
     
     setDbPlayersList(formattedPlayers);
@@ -300,32 +289,39 @@ export default function AdminRadarPortal() {
 
   const fetchAllTeamsFromDB = async () => {
     const { data } = await supabase.from('teams').select('*'); 
-    setDbTeamsList(data || []);
     
+    const hybridLogos = { ...localTeamLogos };
     const leagues: Record<string, string[]> = { "DİĞER": [] };
 
-    // Önce Local takımları listeye atıyoruz
     Object.keys(localTeamLogos).forEach(team => {
         if(!leagues["DİĞER"].includes(team)) leagues["DİĞER"].push(team);
     });
 
     if (data) {
+       setDbTeamsList(data);
        data.forEach((team: any) => {
            const tName = team.team_name || team.name; 
            const tLeague = team.league || team.category;
            
            if(tName) {
                const safeName = cleanTeamName(tName);
+               if (!hybridLogos[safeName]) {
+                  hybridLogos[safeName] = team.logo_url;
+               }
+               
                if (tLeague) {
                    if (!leagues[tLeague]) leagues[tLeague] = [];
                    if (!leagues[tLeague].includes(safeName)) leagues[tLeague].push(safeName);
+                   
                    leagues["DİĞER"] = leagues["DİĞER"].filter(t => t !== safeName);
                }
            }
        });
     }
 
+    setTeamLogosMap(hybridLogos);
     setLeagueTeamsMap(leagues);
+    
     const combinedCategories = Array.from(new Set([...CATEGORIES, ...Object.keys(leagues)])).sort((a, b) => a.localeCompare(b, 'tr'));
     setDynamicCategoriesList(combinedCategories);
   };
@@ -348,9 +344,7 @@ export default function AdminRadarPortal() {
     } 
     
     const validSkorcular: Record<string, string> = {
-       'skorcum01': '150101',
-       'skorcum06': '191006',
-       'skorcum34': '192306'
+       'skorcum01': '150101', 'skorcum06': '191006', 'skorcum34': '192306'
     };
 
     if (validSkorcular[usernameInput]) {
@@ -896,7 +890,7 @@ export default function AdminRadarPortal() {
 
     if (leagueKey === "REST OF WORLD" || leagueKey === "DİĞER" || !leagueTeamsMap[leagueKey]) {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        const allTeamsInSystem = Object.keys(localTeamLogos).sort((a, b) => a.localeCompare(b, 'tr')); 
+        const allTeamsInSystem = Object.keys(teamLogosMap).sort((a, b) => a.localeCompare(b, 'tr')); 
         return allTeamsInSystem.filter(t => t !== cleanTeamName(opponent));
     }
 
@@ -937,8 +931,13 @@ export default function AdminRadarPortal() {
 
   const saveBulletinToDB = async () => {
     const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim());
+    
+    // 🚀 BURADAKİ HATA GİDERİLDİ (if blogu standart hale getirildi)
     if (hasEmpty) {
-       if(!window.confirm("Bazı takımlar seçilmemiş. Bülteni kaydedip yayınlamak istiyor musun?")) return;
+       const userConfirmed = window.confirm("Bazı takımlar seçilmemiş. Bülteni kaydedip yayınlamak istiyor musun?");
+       if (!userConfirmed) {
+           return;
+       }
     }
 
     setIsPublishing(true);
@@ -950,8 +949,8 @@ export default function AdminRadarPortal() {
           week_num: bulletinWeek, match_index: m.match_index, category: m.category,
           match_date: m.match_date, match_time: m.match_time,
           home_team: hTeam, away_team: aTeam,
-          home_logo: localTeamLogos[hTeam] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
-          away_logo: localTeamLogos[aTeam] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
+          home_logo: teamLogosMap[hTeam] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
+          away_logo: teamLogosMap[aTeam] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
           is_tff: isTffMatchCheck(m.category)
         };
       });
@@ -1007,11 +1006,6 @@ export default function AdminRadarPortal() {
       }
       return false;
   });
-
-  const noMatchIcon = (userRole && userRole.startsWith('skorcum')) || showOnlyToday ? '🛡️' : '📡';
-  const noMatchText = (userRole && userRole.startsWith('skorcum')) || showOnlyToday 
-      ? `BUGÜN İÇİN (${getTodayDateString()}) OYNANACAK MAÇ BULUNAMADI` 
-      : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
@@ -1189,9 +1183,11 @@ export default function AdminRadarPortal() {
 
             {displayedMatches.length === 0 ? (
                  <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl shadow-inner">
-                    <span className="text-5xl mb-4 block opacity-50">{noMatchIcon}</span>
+                    <span className="text-5xl mb-4 block opacity-50">
+                       {userRole && userRole.startsWith('skorcum') || showOnlyToday ? '🛡️' : '📡'}
+                    </span>
                     <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') || showOnlyToday ? 'text-amber-500' : 'text-slate-400'}`}>
-                       {noMatchText}
+                       {userRole && userRole.startsWith('skorcum') || showOnlyToday ? `BUGÜN İÇİN (${getTodayDateString()}) OYNANACAK MAÇ BULUNAMADI` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
                     </h2>
                  </div>
             ) : (
@@ -1203,8 +1199,8 @@ export default function AdminRadarPortal() {
                 const homeTeamUpper = cleanTeamName(match.home_team || match.homeTeam);
                 const awayTeamUpper = cleanTeamName(match.away_team || match.awayTeam);
 
-                const homeLogoUrl = localTeamLogos[homeTeamUpper] || "/logos/default.png";
-                const awayLogoUrl = localTeamLogos[awayTeamUpper] || "/logos/default.png";
+                const homeLogoUrl = teamLogosMap[homeTeamUpper] || "/logos/default.png";
+                const awayLogoUrl = teamLogosMap[awayTeamUpper] || "/logos/default.png";
 
                 const homeScore = adminScores[match.match_index]?.home || "-";
                 const awayScore = adminScores[match.match_index]?.away || "-";

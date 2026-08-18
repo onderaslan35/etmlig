@@ -131,6 +131,8 @@ const localTeamLogos: Record<string, string> = {
   "ZONGULDAK KÖMÜRSPOR": "https://upload.wikimedia.org/wikipedia/tr/6/6f/Zonguldak_K%C3%B6m%C3%BCrspor.png",
   "KIRŞEHİR FUTBOL SK": "https://upload.wikimedia.org/wikipedia/tr/9/91/K%C4%B1r%C5%9Fehir_Belediyespor.png",
   "BODRUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
+
+  // AVRUPA
   "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
@@ -160,7 +162,8 @@ const localTeamLogos: Record<string, string> = {
   "CHELSEA": "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg",
   "MANCHESTER UNITED": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg", 
   "NAPOLI": "https://upload.wikimedia.org/wikipedia/commons/2/28/S.S.C._Napoli_logo.svg",
-  "AS ROMA": "https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg"
+  "AS ROMA": "https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg",
+  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/en/d/d6/Rcd_espanyol_logo.svg"
 };
 
 const normalizeTurkish = (text: string) => {
@@ -206,11 +209,14 @@ export default function TahminlerPortal() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
   
+  const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>(localTeamLogos);
+
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(5);
 
   useEffect(() => {
     const fetchInitialData = async () => {
+
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -423,8 +429,8 @@ export default function TahminlerPortal() {
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
 
-                const homeLogoUrl = localTeamLogos[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                const awayLogoUrl = localTeamLogos[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                 
                 const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
                 const isComplete = tScore.home !== '-' && tScore.away !== '-';
@@ -499,7 +505,7 @@ export default function TahminlerPortal() {
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left"><span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const hName = cleanTeamName(m.homeTeam || m.home_team);
-                          const homeLogoUrl = localTeamLogos[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                          const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                           return ( <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={homeLogoUrl} alt={hName} className="w-full h-full object-contain drop-shadow-md" title={hName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
@@ -507,7 +513,7 @@ export default function TahminlerPortal() {
                         <th onClick={toggleSortOrder} className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-right cursor-pointer hover:bg-slate-900 transition-colors group"><div className="flex justify-end items-center gap-2"><span className="text-slate-500 text-[8px] uppercase group-hover:text-amber-300">Sırala: {sortOrder}</span><span className="text-amber-500 font-bold text-[9px] uppercase border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30">SIRA / LİSTE</span></div></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          const awayLogoUrl = localTeamLogos[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                          const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                           return ( <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={awayLogoUrl} alt={aName} className="w-full h-full object-contain drop-shadow-md" title={aName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
@@ -566,8 +572,8 @@ export default function TahminlerPortal() {
                   const theme = getEliteTheme(match.category);
                   const hName = cleanTeamName(match.homeTeam || match.home_team);
                   const aName = cleanTeamName(match.awayTeam || match.away_team);
-                  const homeLogoUrl = localTeamLogos[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                  const awayLogoUrl = localTeamLogos[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                  const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                  const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                   const hScore = predictions[match.id]?.home || '-'; const aScore = predictions[match.id]?.away || '-';
 
                   return (
