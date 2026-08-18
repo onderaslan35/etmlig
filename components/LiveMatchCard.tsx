@@ -90,14 +90,17 @@ const localTeamLogos: Record<string, string> = {
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
-  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg", 
-  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg", 
-  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   
-  // YENİ EKLENEN LOGOLAR
+  // YENİ EKLENEN LOGOLAR (HER İHTİMALE KARŞI TÜM LYON YAZILIŞLARI)
+  "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
   "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
   "LILLE": "https://en.wikipedia.org/wiki/Special:FilePath/LOSC_Lille_logo.svg",
@@ -124,6 +127,12 @@ const allPlayersList: Record<string, string> = {
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
   "262723": "AYHAN LUŞOĞLU"
+};
+
+// 🚀 HAFTALARA GÖRE BENZERSİZ ID OLUŞTURUCU (ÇAKIŞMAYI ÖNLER!)
+const getUniqueMatchId = (week: number, index: number) => {
+    if (week === 4) return index; 
+    return (week * 100) + index; // Örn: 5. hafta 1. maç = 501 olur.
 };
 
 // 🚀 OTOMATİK ZAMAN MOTORU (TÜRKİYE SAATİ DESTEKLİ)
@@ -256,14 +265,14 @@ export default function LiveMatchCard() {
 
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
-      // 🌟 DİKKAT: Artık bülteni "matches_bulletin" tablosundan okuyoruz!
+      // BÜLTENDEN ÇEKİYORUZ
       const { data: dbBulletinMatches } = await supabase
         .from('matches_bulletin')
         .select('*')
         .eq('week_num', activeWeek)
         .order('match_index', { ascending: true });
 
-      // Skorları ve statüleri ise "live_matches" tablosundan alacağız
+      // SKORLARI ÇEKİYORUZ
       const { data: dbLiveMatches } = await supabase
         .from('live_matches')
         .select('*');
@@ -285,7 +294,6 @@ export default function LiveMatchCard() {
       setPredictionsData(predDict);
 
       if (dbBulletinMatches) {
-        // BUGÜNÜN TARİHİNİ TÜRKİYE SAATİNE (UTC+3) GÖRE HESAPLA
         const nowUTC = new Date();
         const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
         
@@ -294,7 +302,6 @@ export default function LiveMatchCard() {
         const yyyy = todayTurkey.getUTCFullYear();
         const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
-        // Maçların temel bilgilerini bültenden alıyoruz
         const currentWeekMatches = dbBulletinMatches.map((m, idx) => ({
           id: m.match_index,
           weekLabel: `${activeWeek}. HAFTA ${m.match_index}. MAÇ`,
@@ -308,7 +315,6 @@ export default function LiveMatchCard() {
         const todaysMatches = currentWeekMatches.filter(m => m.date === todayFormatted);
         setTodaysMatchesList(todaysMatches);
         
-        // Skor bilgilerini "live_matches" tablosundan mapliyoruz
         const liveMap: Record<number, any> = {};
         if (dbLiveMatches) {
           dbLiveMatches.forEach(row => liveMap[row.id] = row); 
@@ -319,7 +325,9 @@ export default function LiveMatchCard() {
         let hasLiveScores = false;
 
         todaysMatches.forEach(match => {
-          const dbMatch = liveMap[match.id];
+          // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
+          const uniqueId = getUniqueMatchId(activeWeek, match.id);
+          const dbMatch = liveMap[uniqueId];
           if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             hasLiveScores = true;
             const isTff = isTffMatchCheck(match.category);
@@ -386,12 +394,16 @@ export default function LiveMatchCard() {
   }
 
   const activeMatches = todaysMatchesList.filter(match => {
-     const dbMatch = liveMatchesData[match.id] || {};
+     // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
+     const uniqueId = getUniqueMatchId(activeWeek, match.id);
+     const dbMatch = liveMatchesData[uniqueId] || {};
      return dbMatch.status !== 'FINISHED';
   });
 
   const finishedMatches = todaysMatchesList.filter(match => {
-     const dbMatch = liveMatchesData[match.id] || {};
+     // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
+     const uniqueId = getUniqueMatchId(activeWeek, match.id);
+     const dbMatch = liveMatchesData[uniqueId] || {};
      return dbMatch.status === 'FINISHED';
   });
 
@@ -405,7 +417,10 @@ export default function LiveMatchCard() {
       
       const isExpanded = expandedMatches[match.id] !== undefined ? expandedMatches[match.id] : isFinishedGroup;
 
-      const dbMatch = liveMatchesData[match.id] || {};
+      // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
+      const uniqueId = getUniqueMatchId(activeWeek, match.id);
+      const dbMatch = liveMatchesData[uniqueId] || {};
+      
       let matchStatus = dbMatch.status || 'NOT_STARTED';
       let homeScore = dbMatch.home_score || '-';
       let awayScore = dbMatch.away_score || '-';
