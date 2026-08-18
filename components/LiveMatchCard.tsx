@@ -100,7 +100,8 @@ const localTeamLogos: Record<string, string> = {
   "OLYMPIC LYON": "https://www.etmlig.com.tr/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "LYON": "/logos/lyon.png",
+ 
   "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
   "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
   "LILLE": "https://en.wikipedia.org/wiki/Special:FilePath/LOSC_Lille_logo.svg",
