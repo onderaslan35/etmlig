@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ANA YARIŞMACI LİSTESİ 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ (SABİT TEMEL) 🔴
 const staticPlayersList: Record<string, string> = {
   "262701": "MUHAMMET OKUMUŞ", "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
   "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
@@ -332,11 +332,9 @@ export default function AdminRadarPortal() {
   const [newPlayerPass, setNewPlayerPass] = useState('');
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
-  // Bu state'ler Takım sekmesi için sadece görsel amaçlı kaldı (Bülten buralara BAĞLI DEĞİL)
+  // 🚀 YENİ TAKIM LOJİSTİK MERKEZİ (VERİTABANI YERİNE DİREKT BÜLTENE YANSITIR) 🚀
   const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamLeague, setNewTeamLeague] = useState('');
-  const [newTeamLogo, setNewTeamLogo] = useState('');
-  const [isTeamLoading, setIsTeamLoading] = useState(false);
+  const [dynamicTeamsList, setDynamicTeamsList] = useState<string[]>(ALL_STATIC_TEAMS);
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
@@ -349,13 +347,6 @@ export default function AdminRadarPortal() {
 
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
-  const teamLeagueOptions = [
-    "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG",
-    "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG", "AMATÖR LİG",
-    "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", "FRANSA LIGUE 1", "İITALYA SERIE A", "İSPANYA LA LIGA", 
-    "MİLLİ TAKIMLAR", "ÇEŞİTLİ AVRUPA TAKIMLARI", "DİĞER"
-  ];
-
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(5); 
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
@@ -364,11 +355,11 @@ export default function AdminRadarPortal() {
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
 
-  const [bulletinWeek, setBulletinWeek] = useState<number>(5);
-  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(5));
+  const [bulletinWeek, setBulletinWeek] = useState<number>(6); // Otomatik 6'dan başlasın
+  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(5);
+  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(6);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
@@ -376,8 +367,8 @@ export default function AdminRadarPortal() {
   const [bulletinMatches, setBulletinMatches] = useState(
     Array.from({ length: 24 }, (_, i) => ({
       match_index: i + 1,
-      category: 'TÜRKİYE SÜPER LİG',
-      match_date: generateWeekDates(5)[0],
+      category: '', // Boş başlasın ki doldurduğunda yansın
+      match_date: generateWeekDates(6)[0],
       match_time: '21:00',
       home_team: '',
       away_team: ''
@@ -412,15 +403,17 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated, userRole]);
 
+  // 🚀 DİNAMİK YARIŞMACI BİRLEŞTİRİCİSİ (SABİT + DB) 🚀
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('full_name');
     if (data) {
        setDbPlayersList(data);
+       // Sabit listeyi (staticPlayersList) veritabanı ile harmanla
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
           newMergedMap[String(p.user_id)] = p.full_name; 
        });
-       setMergedPlayers(newMergedMap);
+       setMergedPlayers(newMergedMap); // mergedPlayers güncellenince canlı radar ve tahminler tablosu da otomatik güncellenir.
     }
   };
 
@@ -554,7 +547,6 @@ export default function AdminRadarPortal() {
          audio.play().catch(e => console.log("Ses çalınamadı:", e));
       }
 
-      // 🚀 PUAN DAĞITIM HATASININ KÖKTEN ÇÖZÜMÜ: ARRAY YAPISI
       if (pData) {
          const pMap: Record<string, string[]> = {};
          pData.forEach(row => {
@@ -592,14 +584,14 @@ export default function AdminRadarPortal() {
           const mapped = Array.from({ length: 24 }, (_, i) => {
             const existing = data.find(m => m.match_index === i + 1);
             return {
-              match_index: i + 1, category: existing?.category || 'TÜRKİYE SÜPER LİG', match_date: existing?.match_date || newDates[0],
+              match_index: i + 1, category: existing?.category || '', match_date: existing?.match_date || newDates[0],
               match_time: existing?.match_time || '21:00', home_team: existing?.home_team || '', away_team: existing?.away_team || ''
             };
           });
           setBulletinMatches(mapped as any);
         } else {
           setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
-            match_index: i + 1, category: 'TÜRKİYE SÜPER LİG', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: ''
+            match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: ''
           })));
         }
       }
@@ -607,6 +599,7 @@ export default function AdminRadarPortal() {
     loadBulletinData();
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
+  // 🚀 EKSİKLER LİSTESİ (SEÇİLİ HAFTAYA GÖRE DİNAMİK) 🚀
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
     if (activeTab !== 'predictions') return;
@@ -614,7 +607,7 @@ export default function AdminRadarPortal() {
     const fetchPredictionData = async () => {
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
       const pMap: Record<string, string[]> = {};
-      const allUserIds = Object.keys(mergedPlayers);
+      const allUserIds = Object.keys(mergedPlayers); // Güncel aktif tüm oyuncular
 
       if (selectedPredictionWeek === 4) {
          allUserIds.forEach(id => {
@@ -656,7 +649,7 @@ export default function AdminRadarPortal() {
     try {
        const { error } = await supabase.from('players').insert({ user_id: newPlayerId.trim(), full_name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
        if (error) throw error;
-       alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!`);
+       alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
        setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
        fetchAllSystemPlayers(); 
     } catch (err: any) { alert("❌ HATA: " + err.message); }
@@ -674,9 +667,17 @@ export default function AdminRadarPortal() {
     } catch (err: any) { alert("❌ Hata: " + err.message); }
   };
 
-  const handleAddNewTeam = async (e: React.FormEvent) => {
+  // 🚀 LOKAL TAKIM EKLEYİCİ (VERİTABANI İPTAL, DİREKT LİSTEYE ATAR) 🚀
+  const handleAddLocalTeam = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Takım sistemi statik(LOKAL) hale getirilmiştir. Lütfen kod içerisinden ALL_STATIC_TEAMS dizisine ekleme yapınız.");
+    if(!newTeamName.trim()) return;
+    const tName = newTeamName.trim().toUpperCase();
+    if (dynamicTeamsList.includes(tName)) {
+        alert("Bu takım zaten listede var!"); return;
+    }
+    setDynamicTeamsList(prev => [...prev, tName].sort((a, b) => a.localeCompare(b, 'tr')));
+    setNewTeamName('');
+    alert(`✅ Takım bülten listesine geçici olarak eklendi! Bülten fabrikasına dönüp hemen seçebilirsiniz.\n(Not: Logosu bilgisayarınızda /logos/${getLocalLogoUrl(tName).split('/logos/')[1]} olarak bulunmalıdır.)`);
   };
 
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -693,7 +694,6 @@ export default function AdminRadarPortal() {
     return ( uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") );
   };
 
-  // 🚀 CANLI LİDERLİK / BONUS MOTORU HESAPLAMASI (KUSURSUZ HALE GETİRİLDİ)
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach(uid => {
@@ -709,7 +709,6 @@ export default function AdminRadarPortal() {
              const predsSource = selectedLiveWeek === 4 ? (week4PredictionsData as any) : predictionsDB;
              
              const winners = Object.keys(predsSource).filter(uid => {
-                 // 🚀 ARRAY İÇİNDEKİ DOĞRU İNDEKSİ KONTROL EDİYORUZ (-1 YAPILARAK)
                  const targetIndex = match.match_index - 1;
                  return predsSource[uid] && predsSource[uid][targetIndex] === targetScore;
              });
@@ -835,7 +834,7 @@ export default function AdminRadarPortal() {
           }
         }
 
-        // 🚀 BONUS MOTORU VERİTABANI İŞLEMLERİ (SADECE 24. MAÇ ONAYLANDIĞINDA)
+        // 🚀 BONUS MOTORU VERİTABANI İŞLEMLERİ
         if (matchId === 24) {
             let bonusInserts = [];
             let pLeaderId = weeklyStats.pointsLeader;
@@ -951,11 +950,9 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🚀 MAÇ ARŞİVİ LOGO ÇEKİM VE TEMALANDIRMA FONKSİYONU 🚀
   const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
     const upCat = category ? category.toUpperCase() : '';
     
-    // YALNIZCA LOKAL LOGOLAR ARANIR!
     const homeLogoUrl = localTeamLogos[homeTeam] || getLocalLogoUrl(homeTeam);
     const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
 
@@ -964,19 +961,16 @@ export default function AdminRadarPortal() {
     if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
     else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
-    else if (isTffMatchCheck(category)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
+    else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
     else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     
     return theme;
   };
 
-  // 🚀 LOKAL TAKIMLARI GETİREN FONKSİYON 🚀
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
     const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-    
-    // Veritabanı aramak yerine, oluşturduğumuz statik listeyi döner
-    return ALL_STATIC_TEAMS.filter(t => t !== opponent);
+    return dynamicTeamsList.filter(t => t !== opponent);
   };
 
   const handleBulletinChange = (index: number, field: string, value: string) => {
@@ -997,9 +991,9 @@ export default function AdminRadarPortal() {
   };
 
   const saveBulletinToDB = async () => {
-    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim());
+    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
     if (hasEmpty) {
-       if(!window.confirm("Bazı takımlar seçilmemiş. Bülteni kaydedip yayınlamak istiyor musun?")) return;
+       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
     }
 
     setIsPublishing(true);
@@ -1012,7 +1006,7 @@ export default function AdminRadarPortal() {
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
-      alert(`✅ BAŞARILI! ${bulletinWeek}. Hafta Bülteni veritabanına mühürlendi!`);
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni veritabanına mühürlendi!\n\nŞu an:\n1. Maç Arşivi'nde ${bulletinWeek}. Hafta otomatik olarak oluştu.\n2. Lobi ekranı kapılarını açmak için Cuma 21:00'ı bekliyor.`);
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
     setIsPublishing(false);
   };
@@ -1108,8 +1102,6 @@ export default function AdminRadarPortal() {
         {/* 🚀 1. CEPHE: CANLI MAÇ OPERASYONU 🚀 */}
         {activeTab === 'live' && (
           <div className="animate-fade-in">
-            
-            {/* 🔴 MANKOMAN İÇİN SKORCU DİSİPLİN KONTROL PANELİ 🔴 */}
             {userRole === 'master' && (
                <div className="mb-6 bg-slate-900 border border-slate-700/80 rounded-2xl p-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -1141,7 +1133,6 @@ export default function AdminRadarPortal() {
                </div>
             )}
 
-            {/* 🔴 CANLI LİDERLİK RADARI (SADECE BU HAFTA İÇİN) 🔴 */}
             {userRole === 'master' && (
             <div className="mb-8 p-5 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)]">
                 <h2 className="text-center font-black text-blue-400 text-sm tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
@@ -1225,6 +1216,8 @@ export default function AdminRadarPortal() {
                              <option value={5}>5. HAFTA</option>
                              <option value={6}>6. HAFTA</option>
                              <option value={7}>7. HAFTA</option>
+                             <option value={8}>8. HAFTA</option>
+                             <option value={9}>9. HAFTA</option>
                           </select>
                        ) : (
                           <div className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-3 py-1 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] select-none">
@@ -1271,11 +1264,7 @@ export default function AdminRadarPortal() {
 
                   currentWinners = Object.keys(predictionsSource)
                     .filter(uid => {
-                        if (selectedLiveWeek === 4) {
-                            return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
-                        } else {
-                            return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
-                        }
+                        return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
                     })
                     .map(uid => mergedPlayers[uid] || "Bilinmeyen")
                     .sort((a, b) => a.localeCompare(b, 'tr'));
@@ -1420,14 +1409,14 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 2. CEPHE: BÜLTEN ÜRETİM FABRİKASI 🚀 */}
+        {/* 🚀 2. CEPHE: BÜLTEN ÜRETİM FABRİKASI (NEON SİSTEMİ) 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-black text-indigo-400">🏭 BÜLTEN FABRİKASI</h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
-                      <option value={4}>4. HAFTA</option><option value={5}>5. HAFTA</option><option value={6}>6. HAFTA</option><option value={7}>7. HAFTA</option><option value={8}>8. HAFTA</option><option value={9}>9. HAFTA</option><option value={10}>10. HAFTA</option>
+                      <option value={5}>5. HAFTA</option><option value={6}>6. HAFTA</option><option value={7}>7. HAFTA</option><option value={8}>8. HAFTA</option><option value={9}>9. HAFTA</option><option value={10}>10. HAFTA</option>
                    </select>
                 </div>
              </div>
@@ -1437,47 +1426,56 @@ export default function AdminRadarPortal() {
                    📅 1. Maçın Tarihini Alta Kopyala
                 </button>
                 
-                <div className="overflow-x-auto custom-scrollbar">
+                <div className="overflow-x-auto custom-scrollbar pb-4">
                    <table className="w-full text-left text-xs min-w-[800px]">
                       <tbody>
-                         {bulletinMatches.map((m, idx) => (
-                            <tr key={m.match_index} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
-                               <td className="p-2 w-8 font-black text-slate-400 text-center">{m.match_index}</td>
-                               
-                               <td className="p-2 w-[22%]">
-                                  <select value={m.category} onChange={e=>handleBulletinChange(idx,'category',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-1.5 rounded outline-none focus:border-indigo-500 cursor-pointer">
-                                     <option value="">-- KATEGORİ SEÇİN --</option>
-                                     {defaultCategoriesList.map(c => <option key={`cat-${m.match_index}-${c}`} value={c}>{c}</option>)}
-                                  </select>
-                               </td>
-                               
-                               <td className="p-2 w-[15%]">
-                                  <select value={m.match_date} onChange={e=>handleBulletinChange(idx,'match_date',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-1.5 rounded outline-none focus:border-indigo-500 cursor-pointer">
-                                     {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
-                                  </select>
-                               </td>
-                               
-                               <td className="p-2 w-[12%]">
-                                  <select value={m.match_time} onChange={e=>handleBulletinChange(idx,'match_time',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-1.5 rounded outline-none focus:border-indigo-500 cursor-pointer">
-                                     {timeOptionsArr.map(t => <option key={`time-${m.match_index}-${t}`} value={t}>{t}</option>)}
-                                  </select>
-                               </td>
-                               
-                               <td className="p-2 w-[22%]">
-                                  <select value={m.home_team} onChange={e=>handleBulletinChange(idx,'home_team',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-1.5 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer">
-                                     <option value="">-- EV SAHİBİ SEÇ --</option>
-                                     {getAvailableTeams(idx, true).map(t => <option key={`home-${m.match_index}-${t}`} value={t}>{t}</option>)}
-                                  </select>
-                               </td>
-                               
-                               <td className="p-2 w-[22%]">
-                                  <select value={m.away_team} onChange={e=>handleBulletinChange(idx,'away_team',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-1.5 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer">
-                                     <option value="">-- DEPLASMAN SEÇ --</option>
-                                     {getAvailableTeams(idx, false).map(t => <option key={`away-${m.match_index}-${t}`} value={t}>{t}</option>)}
-                                  </select>
-                               </td>
-                            </tr>
-                         ))}
+                         {bulletinMatches.map((m, idx) => {
+                            // 🚀 NEON KONTROLÜ: Eğer 5 sütun da doluysa satır hazır demektir.
+                            const isReady = m.category && m.match_date && m.match_time && m.home_team && m.away_team;
+                            
+                            return (
+                              <tr key={m.match_index} className={`border-b border-slate-800 transition-colors ${isReady ? 'bg-emerald-950/20' : 'hover:bg-slate-800/30'}`}>
+                                 <td className="p-2 w-10 text-center">
+                                    <div className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full font-black text-[13px] transition-all duration-500 ${isReady ? 'bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.8)] scale-110' : 'bg-slate-800 text-slate-500'}`}>
+                                       {isReady ? '✓' : m.match_index}
+                                    </div>
+                                 </td>
+                                 
+                                 <td className="p-2 w-[22%]">
+                                    <select value={m.category} onChange={e=>handleBulletinChange(idx,'category',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold`}>
+                                       <option value="">-- KATEGORİ SEÇİN --</option>
+                                       {defaultCategoriesList.map(c => <option key={`cat-${m.match_index}-${c}`} value={c}>{c}</option>)}
+                                    </select>
+                                 </td>
+                                 
+                                 <td className="p-2 w-[15%]">
+                                    <select value={m.match_date} onChange={e=>handleBulletinChange(idx,'match_date',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
+                                       {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
+                                    </select>
+                                 </td>
+                                 
+                                 <td className="p-2 w-[12%]">
+                                    <select value={m.match_time} onChange={e=>handleBulletinChange(idx,'match_time',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold text-center">
+                                       {timeOptionsArr.map(t => <option key={`time-${m.match_index}-${t}`} value={t}>{t}</option>)}
+                                    </select>
+                                 </td>
+                                 
+                                 <td className="p-2 w-[22%]">
+                                    <select value={m.home_team} onChange={e=>handleBulletinChange(idx,'home_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
+                                       <option value="">-- EV SAHİBİ SEÇ --</option>
+                                       {getAvailableTeams(idx, true).map(t => <option key={`home-${m.match_index}-${t}`} value={t}>{t}</option>)}
+                                    </select>
+                                 </td>
+                                 
+                                 <td className="p-2 w-[22%]">
+                                    <select value={m.away_team} onChange={e=>handleBulletinChange(idx,'away_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
+                                       <option value="">-- DEPLASMAN SEÇ --</option>
+                                       {getAvailableTeams(idx, false).map(t => <option key={`away-${m.match_index}-${t}`} value={t}>{t}</option>)}
+                                    </select>
+                                 </td>
+                              </tr>
+                            );
+                         })}
                       </tbody>
                    </table>
                 </div>
@@ -1485,7 +1483,7 @@ export default function AdminRadarPortal() {
                 <button 
                   onClick={saveBulletinToDB} 
                   disabled={isPublishing} 
-                  className="mt-6 w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] flex justify-center items-center gap-2"
+                  className="mt-6 w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.5)] flex justify-center items-center gap-2 text-lg"
                 >
                    {isPublishing ? 'MÜHÜRLENİYOR...' : '🚀 BÜLTENİ ONAYLA VE YAYINLA'}
                 </button>
@@ -1496,21 +1494,36 @@ export default function AdminRadarPortal() {
         {/* 🚀 3. CEPHE: TAHMİNLER DURUM PANELİ 🚀 */}
         {activeTab === 'predictions' && userRole === 'master' && (
            <div className="animate-fade-in">
-              <h2 className="text-xl font-black text-emerald-400 mb-4 border-b border-slate-800 pb-2">📊 TAHMİNLER</h2>
+              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
+                 <h2 className="text-xl font-black text-emerald-400">📊 TAHMİNLER (CANLI DURUM)</h2>
+                 <select value={selectedPredictionWeek} onChange={e => setSelectedPredictionWeek(Number(e.target.value))} className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded outline-none border border-emerald-700/50 cursor-pointer">
+                    <option value={4}>4. HAFTA</option><option value={5}>5. HAFTA</option><option value={6}>6. HAFTA</option><option value={7}>7. HAFTA</option>
+                 </select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
-                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <h3 className="text-rose-400 font-bold mb-2">EKSİKLER ({missingPlayers.length})</h3>
-                    {missingPlayers.map(id => <div key={id} className="text-xs text-slate-300 py-1">{mergedPlayers[id]}</div>)}
+                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg">
+                    <h3 className="text-rose-400 font-black mb-3 pb-2 border-b border-rose-900/50 tracking-widest flex items-center justify-between">
+                       <span>EKSİKLER</span>
+                       <span className="bg-rose-950 px-2 py-0.5 rounded text-xs">{missingPlayers.length} KİŞİ</span>
+                    </h3>
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                       {missingPlayers.map(id => <div key={id} className="text-[11px] font-bold text-slate-400 py-1.5 border-b border-slate-800/50 uppercase">{mergedPlayers[id]}</div>)}
+                    </div>
                  </div>
-                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <h3 className="text-emerald-400 font-bold mb-2">GİRENLER ({submittedPlayers.length})</h3>
-                    {submittedPlayers.map(id => <div key={id} className="text-xs text-slate-300 py-1">{mergedPlayers[id]}</div>)}
+                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg">
+                    <h3 className="text-emerald-400 font-black mb-3 pb-2 border-b border-emerald-900/50 tracking-widest flex items-center justify-between">
+                       <span>GİRENLER</span>
+                       <span className="bg-emerald-950 px-2 py-0.5 rounded text-xs">{submittedPlayers.length} KİŞİ</span>
+                    </h3>
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                       {submittedPlayers.map(id => <div key={id} className="text-[11px] font-bold text-emerald-500/70 py-1.5 border-b border-slate-800/50 uppercase">{mergedPlayers[id]}</div>)}
+                    </div>
                  </div>
               </div>
            </div>
         )}
 
-        {/* 🚀 4. CEPHE: YARIŞMACI YÖNETİMİ ODASI 🚀 */}
+        {/* 🚀 4. CEPHE: YARIŞMACI YÖNETİMİ ODASI (DİNAMİK HARMANLI) 🚀 */}
         {activeTab === 'players' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
@@ -1519,7 +1532,7 @@ export default function AdminRadarPortal() {
                   <span className="text-3xl">👥</span> YARIŞMACI YÖNETİMİ
                 </h1>
                 <p className="text-slate-400 text-sm mt-1">
-                  Sisteme yeni yarışmacı dahil edebilir veya disiplinsizlik yapanları ihraç edebilirsiniz.
+                  Buradan eklediğiniz yarışmacılar "Eksikler/Girenler" ve "Canlı Radar" tablolarına otomatik olarak dahil edilir.
                 </p>
               </div>
             </div>
@@ -1571,7 +1584,7 @@ export default function AdminRadarPortal() {
                       disabled={isPlayerLoading}
                       className="mt-4 bg-fuchsia-600 hover:bg-fuchsia-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(192,38,211,0.4)] flex justify-center items-center gap-2"
                     >
-                      {isPlayerLoading ? 'KAYDEDİLİYOR...' : 'SİSTEME KAYDET VE GÖNDER'}
+                      {isPlayerLoading ? 'KAYDEDİLİYOR...' : 'SİSTEME KAYDET VE DAHİL ET'}
                     </button>
                  </form>
               </div>
@@ -1582,29 +1595,39 @@ export default function AdminRadarPortal() {
                        <span className="text-xl">⚖️</span> DİSİPLİN KURULU (TÜM LİSTE)
                     </h2>
                     <span className="bg-slate-950 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold border border-slate-800">
-                       Veritabanındaki Liste
+                       {dbPlayersList.length + Object.keys(staticPlayersList).length} Toplam Aktif
                     </span>
                  </div>
                  
                  <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                    {dbPlayersList.length === 0 ? (
-                       <div className="text-center py-8 text-slate-500 italic">Veritabanında kayıtlı kimse yok.</div>
-                    ) : (
-                       dbPlayersList.map(p => (
-                         <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
-                            <div className="flex flex-col">
-                               <span className="font-black text-slate-200 text-sm uppercase tracking-wide">{p.full_name}</span>
-                               <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.user_id} | ŞİFRE: {p.password}</span>
-                            </div>
-                            <button 
-                              onClick={() => handleBanishPlayer(p.user_id, p.full_name)}
-                              className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
-                            >
-                               ❌ İHRAÇ ET
-                            </button>
+                    {/* Önce Veritabanından Eklenenleri Göster (İhraç Edilebilir) */}
+                    {dbPlayersList.map(p => (
+                      <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
+                         <div className="flex flex-col">
+                            <span className="font-black text-fuchsia-400 text-sm uppercase tracking-wide flex items-center gap-2">
+                               {p.full_name} <span className="text-[8px] bg-fuchsia-950/50 border border-fuchsia-500/30 px-1.5 py-0.5 rounded text-fuchsia-300">YENİ</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.user_id} | ŞİFRE: {p.password}</span>
                          </div>
-                       ))
-                    )}
+                         <button 
+                           onClick={() => handleBanishPlayer(p.user_id, p.full_name)}
+                           className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                         >
+                            ❌ İHRAÇ ET
+                         </button>
+                      </div>
+                    ))}
+                    
+                    {/* Sonra Koddaki Sabit Aslanları Göster (İhraç Edilemez, Korumalı) */}
+                    {Object.keys(staticPlayersList).map(id => (
+                      <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center opacity-80">
+                         <div className="flex flex-col">
+                            <span className="font-black text-slate-300 text-sm uppercase tracking-wide">{staticPlayersList[id]}</span>
+                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {id}</span>
+                         </div>
+                         <div className="text-[9px] font-black text-slate-600 uppercase border border-slate-700 bg-slate-900 px-2 py-1 rounded">🔒 KORUMALI</div>
+                      </div>
+                    ))}
                  </div>
               </div>
 
@@ -1612,29 +1635,73 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 5. CEPHE: TAKIM YÖNETİMİ ODASI (VERİTABANI KOPARILDI - STATİK MOD) 🚀 */}
+        {/* 🚀 5. CEPHE: TAKIM YÖNETİMİ ODASI (GEÇİCİ LOJİSTİK MERKEZİ EKLENDİ) 🚀 */}
         {activeTab === 'teams' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
               <div className="text-center sm:text-left">
                 <h1 className="text-2xl font-black text-cyan-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
-                  <span className="text-3xl">🛡️</span> TAKIM CEPHANELİĞİ (DEVRE DIŞI)
+                  <span className="text-3xl">🛡️</span> TAKIM LOJİSTİK MERKEZİ
                 </h1>
                 <p className="text-slate-400 text-sm mt-1">
-                  Veritabanı bağlantısı iptal edilip takımlar koda sabitlendiği için burası devre dışıdır.
+                  Listede bulamadığınız bir takım varsa, adını buradan girip anında Bülten Fabrikasına gönderebilirsiniz.
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-xl text-center py-20">
-                 <span className="text-6xl mb-4 block opacity-50">🔒</span>
-                 <h2 className="text-2xl font-black text-slate-400 tracking-widest mb-2">BU EKRAN İPTAL EDİLMİŞTİR</h2>
-                 <p className="text-slate-500 text-sm">
-                   Sistemin stabil kalması amacıyla "Takımlar" veritabanı bağlantısı koparılmıştır. 
-                   Bülten fabrikasındaki tüm listeler artık doğrudan ana koddaki <strong>LOKAL</strong> listelerden beslenmektedir. 
-                 </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* TAKIM EKLEME ALANI */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit relative overflow-hidden">
+                 <div className="absolute top-0 right-0 bg-cyan-600 text-white text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">HIZLI LOJİSTİK</div>
+                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+                    <h2 className="text-lg font-black text-cyan-400 flex items-center gap-2">
+                       <span className="text-xl">⚡</span> LİSTEYE YENİ TAKIM GÖNDER
+                    </h2>
+                 </div>
+                 
+                 <form onSubmit={handleAddLocalTeam} className="flex flex-col gap-5">
+                    <div>
+                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">TAKIMIN TAM ADI</label>
+                       <input 
+                         type="text" 
+                         value={newTeamName} 
+                         onChange={e => setNewTeamName(e.target.value)} 
+                         placeholder="Örn: MERSİN İDMAN YURDU"
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
+                       />
+                       <p className="text-[10px] text-slate-500 mt-2 ml-1 leading-relaxed">
+                          Sisteme eklediğiniz bu takım Bülten menülerinde anında belirecektir.<br/>
+                          Eğer logosunun da görünmesini istiyorsanız, bilgisayarınızda <strong className="text-cyan-400">/public/logos/</strong> klasörüne bu takımın adıyla (örn: <strong className="text-cyan-400">mersin-idman-yurdu.png</strong>) bir resim koymalısınız.
+                       </p>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="mt-2 bg-cyan-600 hover:bg-cyan-500 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)] flex justify-center items-center gap-2"
+                    >
+                      BÜLTENE GÖNDER
+                    </button>
+                 </form>
               </div>
+
+              {/* MEVCUT YÜKLÜ TAKIMLAR BİLGİ ALANI */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                 <h2 className="text-lg font-black text-slate-400 mb-4 border-b border-slate-800 pb-4 flex items-center gap-2">
+                    <span className="text-xl">📋</span> ŞU AN KULLANILABİLİR TAKIMLAR
+                 </h2>
+                 <p className="text-slate-400 text-sm mb-4">
+                    Sistemde halihazırda gömülü olan <strong className="text-amber-500">{dynamicTeamsList.length}</strong> takım bulunmaktadır. Bu takımları Bülten fabrikasında "Ev Sahibi / Deplasman" seçerken görebilirsiniz.
+                 </p>
+                 <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-wrap gap-2">
+                    {dynamicTeamsList.map(t => (
+                       <span key={t} className="bg-slate-950 border border-slate-800 px-2.5 py-1 rounded text-[10px] font-bold text-slate-300 uppercase shadow-sm">
+                          {t}
+                       </span>
+                    ))}
+                 </div>
+              </div>
+
             </div>
           </div>
         )}
