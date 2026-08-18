@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 54 ASLAN PARÇASI (MÜKERRERLERDEN VE İSTENMEYENLERDEN TEMİZLENDİ) 🔴
+// 🔴 54 ASLAN PARÇASI 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
   "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
@@ -62,27 +62,105 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262735": { pass: "19250", name: "AYGÜN AKKEÇELİ" }
 };
 
-// 🚀 MELEZ MOTORUN İLK PARÇASI: SABİT LOGOLAR 🚀
+// 🚀 MAÇ ARŞİVİ MODELİ (SABİT LOGOLAR) 🚀
 const localTeamLogos: Record<string, string> = {
-  "FENERBAHÇE": "https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.png",
-  "GALATASARAY": "https://upload.wikimedia.org/wikipedia/tr/thumb/b/b9/Galatasaray_Spor_Kul%C3%BCb%C3%BC_logo.svg/200px-Galatasaray_Spor_Kul%C3%BCb%C3%BC_logo.svg.png",
-  "BEŞİKTAŞ": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Be%C5%9Fikta%C5%9F_logo.svg/200px-Be%C5%9Fikta%C5%9F_logo.svg.png",
-  "TRABZONSPOR": "https://upload.wikimedia.org/wikipedia/tr/thumb/a/ab/TrabzonsporAmblemi.png/200px-TrabzonsporAmblemi.png",
+  "FENERBAHÇE": "https://upload.wikimedia.org/wikipedia/tr/6/66/Fenerbah%C3%A7e_120._Y%C4%B1l.png",
+  "GALATASARAY": "https://upload.wikimedia.org/wikipedia/tr/b/b9/Galatasaray_Spor_Kul%C3%BCb%C3%BC_logo.svg",
+  "BEŞİKTAŞ": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Be%C5%9Fikta%C5%9F_logo.svg",
+  "TRABZONSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/ab/TrabzonsporAmblemi.png",
+  "TRABZONSPC": "https://upload.wikimedia.org/wikipedia/tr/a/ab/TrabzonsporAmblemi.png",
+  "BAŞAKŞEHİR": "https://upload.wikimedia.org/wikipedia/tr/8/8c/%C4%B0stanbul_Ba%C5%9Fak%C5%9Fehir_FK.png",
+  "KASIMPAŞA": "https://upload.wikimedia.org/wikipedia/tr/c/cd/Kas%C4%B1mpa%C5%9Fa_SK_logo.svg",
+  "RİZESPOR": "https://upload.wikimedia.org/wikipedia/tr/d/d4/%C3%87aykur_Rizespor_Logo.png",
+  "SİVASSPOR": "https://upload.wikimedia.org/wikipedia/tr/e/ee/Sivasspor_logo.svg",
+  "KAYSERİSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/82/Sivasspor_2022.png", 
+  "KONYASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2a/Konyaspor_2022_logo.png",
+  "ALANYASPOR": "https://upload.wikimedia.org/wikipedia/tr/5/52/Alanyaspor_logo.svg",
+  "ANTALYASPOR": "https://upload.wikimedia.org/wikipedia/tr/5/53/Antalyaspor_logo.svg",
+  "GAZİANTEP FK": "https://upload.wikimedia.org/wikipedia/tr/c/cf/Gaziantep_FK.png",
+  "HATAYSPOR": "https://upload.wikimedia.org/wikipedia/tr/c/cf/Hatayspor.png",
+  "PENDİKSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/89/Pendikspor_logo.png",
+  "ANKARAGÜCÜ": "https://upload.wikimedia.org/wikipedia/tr/d/dd/MKE_Ankarag%C3%BCc%C3%BC_logo.svg",
+  "FATİH KARAGÜMRÜK": "https://upload.wikimedia.org/wikipedia/tr/1/11/Fatih_Karag%C3%BCmr%C3%BCk_SK.png",
+  "İSTANBULSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Istanbulspor_AS_logo.png",
+  "ADANA DEMİRSPOR": "https://upload.wikimedia.org/wikipedia/tr/5/5f/Adana_Demirspor_logo.svg",
+  "SAMSUNSPOR": "https://upload.wikimedia.org/wikipedia/tr/d/d1/Samsunspor_Logo.svg",
+  "EYÜPSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/84/Ey%C3%BCpspor_Logo.png",
+  "GÖZTEPE": "https://upload.wikimedia.org/wikipedia/tr/c/c5/G%C3%B6ztepe_Logo.png",
+  "BODRUM FK": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
+  "SAKARYASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2b/Samsunspor_logo_3.svg", 
+  "KOCAELİSPOR": "https://upload.wikimedia.org/wikipedia/tr/f/fa/Konyaspor_logo_3.svg", 
+  "GENÇLERBİRLİĞİ": "https://upload.wikimedia.org/wikipedia/tr/5/5a/Genclerbirligi_logo.svg",
+  "GİRESUNSPOR": "https://upload.wikimedia.org/wikipedia/tr/7/7b/Giresunspor_Logo.svg",
+  "BOLUSPOR": "https://upload.wikimedia.org/wikipedia/tr/c/c6/Boluspor_logo.svg",
+  "BANDIRMASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2c/Band%C4%B1rmaspor_logo.svg",
+  "ÇORUM FK": "https://upload.wikimedia.org/wikipedia/tr/f/f6/%C3%87orum_FK.png",
+  "ŞANLIURFASPOR": "https://upload.wikimedia.org/wikipedia/tr/a/ab/%C5%9Eanl%C4%B1urfaspor.png",
+  "MANİSA FK": "https://upload.wikimedia.org/wikipedia/tr/4/4e/Manisa_B%C3%BCy%C3%BCk%C5%9Fehir_Belediyespor_logosu.png",
+  "KEÇİÖRENGÜCÜ": "https://upload.wikimedia.org/wikipedia/tr/3/3d/Keci%C3%B6reng%C3%BCc%C3%BC_logo.svg",
+  "ÜMRANİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/5/52/%C3%9Cmraniyespor_logo.svg",
+  "TUZLASPOR": "https://upload.wikimedia.org/wikipedia/tr/7/7f/Tuzlaspor_logo.png",
+  "ALTAY": "https://upload.wikimedia.org/wikipedia/tr/6/6f/Altay_logo.svg",
+  "ERZURUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/9/91/Erzurumspor_FK.png",
+  "ERZURUMSPC": "https://upload.wikimedia.org/wikipedia/tr/9/91/Erzurumspor_FK.png",
+  "KARŞIYAKA": "https://upload.wikimedia.org/wikipedia/tr/e/ee/KarsiyakaSK_logo.svg",
+  "ESENLER EROK": "https://upload.wikimedia.org/wikipedia/tr/d/d4/Esenler_Erokspor.png",
+  "ISPARTA 32": "https://upload.wikimedia.org/wikipedia/tr/e/ef/Isparta_32_Spor_logosu.png",
+  "AMED SK": "https://upload.wikimedia.org/wikipedia/tr/1/14/Amed_SFK_Logo.png",
+  "KASTAMONUSPOR": "https://upload.wikimedia.org/wikipedia/tr/9/90/Kastamonuspor_1966.png",
+  "İSKENDERUNSPOR": "https://upload.wikimedia.org/wikipedia/tr/2/25/Iskenderunspor_Logo.png",
+  "YENİ MERSİN İDMANYURDU": "https://upload.wikimedia.org/wikipedia/tr/2/28/Mersin_%C4%B0dman_Yurdu_logo.svg",
+  "ANKARASPOR": "https://upload.wikimedia.org/wikipedia/tr/3/36/Ankaraspor_logo.png",
+  "KARACABEY BELEDİYE": "https://upload.wikimedia.org/wikipedia/tr/0/05/Karacabey_Belediyespor.png",
+  "SOMASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/24/Somaspor.png",
+  "İNEGÖLSPOR": "https://upload.wikimedia.org/wikipedia/tr/c/cb/Inegolspor_logo.png",
+  "FETHİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/1/1a/Fethiyespor.png",
+  "ARNAVUTKÖY BELEDİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/5/52/Arnavutkoy_Belediyespor.png",
+  "MENEMEN FK": "https://upload.wikimedia.org/wikipedia/tr/4/4d/Menemen_FK.png",
+  "24 ERZİNCANSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/ab/24Erzincanspor_Logo.png",
+  "DENİZLİSPOR": "https://upload.wikimedia.org/wikipedia/tr/6/6b/Denizlispor_logo.svg",
+  "SARIYER": "https://upload.wikimedia.org/wikipedia/tr/7/7b/Sariyer_SK_logo.svg",
+  "KARAMAN FK": "https://upload.wikimedia.org/wikipedia/tr/2/21/Karaman_FK.png",
+  "BURSASPOR": "https://upload.wikimedia.org/wikipedia/tr/3/36/Bursaspor_logo.svg",
+  "ALTINORDU": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Alt%C4%B1nordu_FK_logo.svg",
+  "BEYOĞLU YENİ ÇARŞI": "https://upload.wikimedia.org/wikipedia/tr/7/78/Beyo%C4%9Flu_Yeni_%C3%87ar%C5%9F%C4%B1_FK.png",
+  "ADIYAMAN FK": "https://upload.wikimedia.org/wikipedia/tr/6/6d/Adiyaman_1954_SK_logo.png",
+  "DİYARBEKİRSPOR": "https://upload.wikimedia.org/wikipedia/tr/e/ee/Diyarbekir_spor.png",
+  "AFYONSPOR": "https://upload.wikimedia.org/wikipedia/tr/d/d1/Afyonspor_logo.png",
+  "SERİK BELEDİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/1/14/Serik_Belediyespor_logo.png",
+  "ZONGULDAK KÖMÜRSPOR": "https://upload.wikimedia.org/wikipedia/tr/6/6f/Zonguldak_K%C3%B6m%C3%BCrspor.png",
+  "KIRŞEHİR FUTBOL SK": "https://upload.wikimedia.org/wikipedia/tr/9/91/K%C4%B1r%C5%9Fehir_Belediyespor.png",
+  "BODRUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
   "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "FK KAUNO ZALGIRIS": "https://upload.wikimedia.org/wikipedia/en/thumb/e/ef/FK_Kauno_%C5%BDalgiris_logo.svg/200px-FK_Kauno_%C5%BDalgiris_logo.svg.png",
-  "ERZURUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/thumb/9/91/Erzurumspor_FK.png/200px-Erzurumspor_FK.png",
-  "FATİH KARAGÜMRÜK": "https://upload.wikimedia.org/wikipedia/tr/thumb/1/11/Fatih_Karag%C3%BCmr%C3%BCk_SK.png/200px-Fatih_Karag%C3%BCmr%C3%BCk_SK.png",
-  "BURSASPOR": "https://upload.wikimedia.org/wikipedia/tr/thumb/3/36/Bursaspor_logo.svg/200px-Bursaspor_logo.svg.png",
-  "ÇORUM FK": "https://upload.wikimedia.org/wikipedia/tr/thumb/f/f6/%C3%87orum_FK.png/200px-%C3%87orum_FK.png",
-  "KASIMPAŞA": "https://upload.wikimedia.org/wikipedia/tr/thumb/c/cd/Kas%C4%B1mpa%C5%9Fa_SK_logo.svg/200px-Kas%C4%B1mpa%C5%9Fa_SK_logo.svg.png",
-  "STURM GRAZ": "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/SK_Sturm_Graz_logo.svg/200px-SK_Sturm_Graz_logo.svg.png",
-  "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/200px-Paris_Saint-Germain_F.C..svg.png",
-  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Aston_Villa_logo.svg/200px-Aston_Villa_logo.svg.png",
-  "KARABAĞ FK": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/Qaraba%C4%9F_FK_logo.svg/200px-Qaraba%C4%9F_FK_logo.svg.png",
-  "DINAMO KIEV": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/FC_Dynamo_Kyiv_logo.svg/200px-FC_Dynamo_Kyiv_logo.svg.png",
-  "HRADEC KRALOVE": "https://upload.wikimedia.org/wikipedia/en/thumb/8/87/FC_Hradec_Kralove.svg/200px-FC_Hradec_Kralove.svg.png",
-  "FERENCVAROS": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Ferencv%C3%A1rosi_TC_logo.svg/200px-Ferencv%C3%A1rosi_TC_logo.svg.png"
+  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "FK KAUNO ZALGIRIS": "https://upload.wikimedia.org/wikipedia/en/e/ef/FK_Kauno_%C5%BDalgiris_logo.svg",
+  "KAUNO ZALGIRIS": "https://upload.wikimedia.org/wikipedia/en/e/ef/FK_Kauno_%C5%BDalgiris_logo.svg",
+  "STURM GRAZ": "https://upload.wikimedia.org/wikipedia/en/0/07/SK_Sturm_Graz_logo.svg",
+  "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
+  "PSG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo.svg",
+  "KARABAĞ FK": "https://upload.wikimedia.org/wikipedia/en/0/05/Qaraba%C4%9F_FK_logo.svg",
+  "KARABAG": "https://upload.wikimedia.org/wikipedia/en/0/05/Qaraba%C4%9F_FK_logo.svg",
+  "DINAMO KIEV": "https://upload.wikimedia.org/wikipedia/commons/d/d3/FC_Dynamo_Kyiv_logo.svg",
+  "HRADEC KRALOVE": "https://upload.wikimedia.org/wikipedia/en/8/87/FC_Hradec_Kralove.svg",
+  "FERENCVAROS": "https://upload.wikimedia.org/wikipedia/en/0/0e/Ferencv%C3%A1rosi_TC_logo.svg",
+  "FERENCVARO": "https://upload.wikimedia.org/wikipedia/en/0/0e/Ferencv%C3%A1rosi_TC_logo.svg",
+  "REAL MADRID": "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
+  "BARCELONA": "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
+  "MANCHESTER CITY": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
+  "ARSENAL": "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg",
+  "LIVERPOOL": "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
+  "BAYERN MUNICH": "https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg",
+  "BORUSSIA DORTMUND": "https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg",
+  "INTER": "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",
+  "MILAN": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg",
+  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Juventus_FC_-_rect_logo_%28black_bg%29.svg",
+  "CHELSEA": "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg",
+  "MANCHESTER UNITED": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg", 
+  "NAPOLI": "https://upload.wikimedia.org/wikipedia/commons/2/28/S.S.C._Napoli_logo.svg",
+  "AS ROMA": "https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg"
 };
 
 const normalizeTurkish = (text: string) => {
@@ -127,26 +205,12 @@ export default function TahminlerPortal() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
-  const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>(localTeamLogos);
-
+  
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(5);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // 🚀 SUPABASE VE LOCAL TEAM HARMANLAMASI
-      const { data: teamsData } = await supabase.from('teams').select('*');
-      if (teamsData) {
-        const hybridLogos = { ...localTeamLogos };
-        teamsData.forEach((team: any) => { 
-           const tName = team.name || team.team_name;
-           if(tName) {
-               hybridLogos[cleanTeamName(tName)] = team.logo_url; 
-           }
-        });
-        setTeamLogosMap(hybridLogos);
-      }
-
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -356,12 +420,11 @@ export default function TahminlerPortal() {
               {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const theme = getEliteTheme(match.category);
                 
-                // 🚀 TEMİZ EŞLEŞTİRME
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
 
-                const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                const homeLogoUrl = localTeamLogos[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                const awayLogoUrl = localTeamLogos[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                 
                 const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
                 const isComplete = tScore.home !== '-' && tScore.away !== '-';
@@ -436,7 +499,7 @@ export default function TahminlerPortal() {
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left"><span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const hName = cleanTeamName(m.homeTeam || m.home_team);
-                          const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                          const homeLogoUrl = localTeamLogos[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                           return ( <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={homeLogoUrl} alt={hName} className="w-full h-full object-contain drop-shadow-md" title={hName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
@@ -444,7 +507,7 @@ export default function TahminlerPortal() {
                         <th onClick={toggleSortOrder} className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-right cursor-pointer hover:bg-slate-900 transition-colors group"><div className="flex justify-end items-center gap-2"><span className="text-slate-500 text-[8px] uppercase group-hover:text-amber-300">Sırala: {sortOrder}</span><span className="text-amber-500 font-bold text-[9px] uppercase border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30">SIRA / LİSTE</span></div></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                          const awayLogoUrl = localTeamLogos[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                           return ( <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={awayLogoUrl} alt={aName} className="w-full h-full object-contain drop-shadow-md" title={aName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
@@ -503,8 +566,8 @@ export default function TahminlerPortal() {
                   const theme = getEliteTheme(match.category);
                   const hName = cleanTeamName(match.homeTeam || match.home_team);
                   const aName = cleanTeamName(match.awayTeam || match.away_team);
-                  const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                  const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                  const homeLogoUrl = localTeamLogos[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                  const awayLogoUrl = localTeamLogos[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
                   const hScore = predictions[match.id]?.home || '-'; const aScore = predictions[match.id]?.away || '-';
 
                   return (
