@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// Sabit Logolarımız
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -90,7 +89,7 @@ const localTeamLogos: Record<string, string> = {
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "LYON": "/logos/lyon.png", 
+  "HAMMARBY": "/logos/hammarby.png", "OLYMPIQUE LYON": "/logos/lyon.png", "LYON": "/logos/lyon.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
@@ -124,11 +123,13 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🚀 OTOMATİK ZAMAN MOTORU
+// 🚀 OTOMATİK ZAMAN MOTORU (TÜRKİYE SAATİ DESTEKLİ)
 const getActiveWeekByDate = () => {
-  const now = new Date();
-  const baseDate = new Date(2026, 7, 18).getTime(); 
-  const diffTime = now.getTime() - baseDate;
+  const nowUTC = new Date();
+  const nowTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
+  const baseDate = new Date(Date.UTC(2026, 7, 18, 0, 0, 0)).getTime(); // 18 Ağustos 2026 UTC
+  
+  const diffTime = nowTurkey.getTime() - baseDate;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   if (diffDays < 0) return 4; 
@@ -148,7 +149,11 @@ export default function LiveMatchCard() {
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date().getTime()), 1000);
+    const timer = setInterval(() => {
+        const nowUTC = new Date();
+        const turkeyTimeMs = nowUTC.getTime() + (3 * 60 * 60 * 1000);
+        setNow(turkeyTimeMs);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -271,10 +276,13 @@ export default function LiveMatchCard() {
       setPredictionsData(predDict);
 
       if (dbMatches) {
-        const today = new Date();
-        const dd = String(today.getDate()).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const yyyy = today.getFullYear();
+        // BUGÜNÜN TARİHİNİ TÜRKİYE SAATİNE (UTC+3) GÖRE HESAPLA
+        const nowUTC = new Date();
+        const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
+        
+        const dd = String(todayTurkey.getUTCDate()).padStart(2, '0');
+        const mm = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
+        const yyyy = todayTurkey.getUTCFullYear();
         const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
         const currentWeekMatches = dbMatches.map((m, idx) => ({
@@ -287,7 +295,6 @@ export default function LiveMatchCard() {
           awayTeam: m.away_team
         }));
 
-        // GÜN FİLTRESİ
         const todaysMatches = currentWeekMatches.filter(m => m.date === todayFormatted);
         setTodaysMatchesList(todaysMatches);
         
@@ -350,7 +357,8 @@ export default function LiveMatchCard() {
   const getMatchTimeMs = (dateStr: string, timeStr: string) => {
     const [d, m, y] = dateStr.split('.');
     const [hr, min] = timeStr.split(':');
-    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr), parseInt(min), 0).getTime();
+    const matchTime = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr) - 3, parseInt(min), 0));
+    return matchTime.getTime();
   };
 
   if (todaysMatchesList.length === 0) {
