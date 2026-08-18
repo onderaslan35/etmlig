@@ -112,7 +112,7 @@ const localTeamLogos: Record<string, string> = {
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   
   // ŞEFFAF LOGOLAR (ÖZELLİKLE LYON İÇİN OTO-DÜZELTME)
-  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIC LYON": "https://etmlig-8xiutamce-onderaslan35s-projects.vercel.app/logos/lyon.png",
   "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg"
