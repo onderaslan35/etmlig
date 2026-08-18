@@ -3,7 +3,27 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 
-// KOMUTANIN KESİN TFF LİSTESİ
+// 🔴 İSTEMEYEN KİŞİLERİN (Adam Kral, Dinçer Özer vb.) SİLİNDİĞİ TERTEMİZ 54 KİŞİLİK LİSTE 🔴
+const staticPlayersList: Record<string, string> = {
+  "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
+  "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
+  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262713": "VAHİT KÜLCÜ", "262714": "İSMAİL EKER 🏆", "262715": "ŞEMSETTIN DÜGER",
+  "262716": "BİROL DEMİREL", "262717": "MURAT ALİ", "262718": "BEKİR KARADAĞ", "262719": "UĞUR VARDAR", "262720": "HASAN ASLAN",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262722": "MUSTAFA ERKAN", "262723": "AYHAN LUŞOĞLU", "262724": "YÜCEL TOMAK", "262725": "İLYAS KAZDAL",
+  "262726": "HUDAVER TOPARDIC", "262727": "YAHŞİ ERKAN🏆", "262728": "ÖNDER ASLAN", "262729": "HAKAN GÜN", "262730": "ÖNDER IŞIK",
+  "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA 🏆🏆", "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ",
+  "262736": "MEHMET ALİ KARA", "262737": "ŞAHİN GEZGİNCİ", "262738": "MEVLÜT EVLER", "262739": "UĞUR GÜRBÜZ", "262740": "ABDULLAH DİK",
+  "262741": "SABAHATTİN ÇAYLAK", "262742": "ZEKERiYYA TOPKAYYA", "262743": "MEHMET ALİ ŞAHİN", "262744": "İLYAS UYGUN", "262745": "OĞUZ YILDIRIMKAYA",
+  "262746": "MEHMET BAYIR", "262747": "SAVAŞ ÇAĞLAYAN", "262748": "YASİN ŞAHİN", "262749": "B.VEYSELOĞLU EROL", "262750": "MAHMUT CBR",
+  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN 🏆", "262755": "DOĞAÇ ALKAN",
+  "262756": "EYÜP KARACAOĞLU", "262813": "KEMAL ERSOY", "262758": "MELİH PINAR", "262762": "İLHAN DANIŞ", "262763": "MUSTAFA ELMAS",
+  "262770": "OZKAYA MAZAKALI BAYRAM", "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA 🏆", "262760": "UĞUR NES", "262774": "ŞENOL CAN ÇAKICI",
+  "262776": "CUMA OKUR", "262777": "MİRAÇ TOPAL", "262778": "CENGİZ SAYAN", "262780": "YUSUF KILIÇ", "262781": "KADİR SOLMAZ",
+  "262782": "YUSUF ERBAY", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL 🏆", "262786": "SEDAT DİŞLİ",
+  "262787": "MUSTAFA TUCİ", "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "262790": "CUMALİ SÖKER", "351925": "ALİOS GÖZTEPE",
+  "262815": "MURAT KAYA", "262816": "SEDAT SEDAT", "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK", "262797": "ÖMER DOGER"
+};
+
 const TFF_CATEGORIES = [
   "TÜRKİYE SÜPER LİG",
   "TÜRKİYE 1.LİG",
@@ -12,7 +32,6 @@ const TFF_CATEGORIES = [
   "TÜRKİYE KADINLAR SÜPER LİG"
 ];
 
-// KOMUTANIN VERDİĞİ TÜM KATEGORİLER (A-Z Sıralı)
 const CATEGORIES = [
   ...TFF_CATEGORIES,
   "BUNDESLIGA", "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", 
@@ -28,7 +47,6 @@ const CATEGORIES = [
   "İNGİLTERE SÜPER KUPA"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-// 🚀 BUGÜNÜN TARİHİNİ ALAN YARDIMCI FONKSİYON
 const getTodayDateString = () => {
   const d = new Date();
   const dd = String(d.getDate()).padStart(2, '0');
@@ -65,7 +83,6 @@ const generateWeekDates = (weekNum: number) => {
   return dates;
 };
 
-// 🚀 HAFTALARA GÖRE BENZERSİZ ID OLUŞTURUCU
 const getUniqueMatchId = (week: number, index: number) => {
     if (week === 4) return index; 
     return (week * 100) + index;
@@ -79,7 +96,7 @@ export default function AdminRadarPortal() {
   const [passwordInput, setPasswordInput] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players' | 'teams'>('live');
-  const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>({}); // BOŞALTILDI
+  const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
   const [newPlayerId, setNewPlayerId] = useState('');
@@ -173,19 +190,20 @@ export default function AdminRadarPortal() {
   }, [isAuthenticated, userRole]);
 
   const fetchAllSystemPlayers = async () => {
-    const { data } = await supabase.from('players').select('*').order('full_name');
-    if (data) {
-       setDbPlayersList(data);
-       const newMergedMap: Record<string, string> = {};
-       data.forEach((p: any) => {
-          newMergedMap[String(p.user_id)] = p.full_name; 
-       });
-       setMergedPlayers(newMergedMap);
-    }
+    // Supabase'den çekme işlemi iptal edildi, doğrudan statik liste kullanılıyor
+    const formattedPlayers = Object.keys(staticPlayersList).map(id => ({
+        id: id,
+        user_id: id,
+        full_name: staticPlayersList[id],
+        password: "Gizli"
+    })).sort((a, b) => a.full_name.localeCompare(b.full_name, 'tr'));
+    
+    setDbPlayersList(formattedPlayers);
+    setMergedPlayers(staticPlayersList);
   };
 
   const fetchAllTeamsFromDB = async () => {
-    const { data } = await supabase.from('teams').select('*').order('name'); // TEAMS UPDATE
+    const { data } = await supabase.from('teams').select('*').order('name'); 
     if (data) {
        setDbTeamsList(data);
        const logos: Record<string, string> = {};
@@ -425,27 +443,11 @@ export default function AdminRadarPortal() {
 
   const handleAddNewPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
-    setIsPlayerLoading(true);
-    try {
-       const { error } = await supabase.from('players').insert({ user_id: newPlayerId.trim(), full_name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
-       if (error) throw error;
-       alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!`);
-       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ HATA: " + err.message); }
-    setIsPlayerLoading(false);
+    alert("Yarışmacı listesi sisteme kalıcı olarak tanımlanmıştır. Yeni ekleme veya çıkarma manuel olarak yapılamaz.");
   };
 
   const handleBanishPlayer = async (userId: string, userName: string) => {
-    const confirmDelete = window.confirm(`DİKKAT: ${userName} ihraç edilecek. Emin misiniz?`);
-    if (!confirmDelete) return;
-    try {
-       const { error } = await supabase.from('players').delete().eq('user_id', userId);
-       if (error) throw error;
-       alert(`✅ İhraç başarılı.`);
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ Hata: " + err.message); }
+    alert("Yarışmacı listesi sisteme kalıcı olarak tanımlanmıştır. Yeni ekleme veya çıkarma manuel olarak yapılamaz.");
   };
 
   const handleAddNewTeam = async (e: React.FormEvent) => {
@@ -778,7 +780,7 @@ export default function AdminRadarPortal() {
 
     if (leagueKey === "REST OF WORLD" || leagueKey === "DİĞER" || !leagueTeamsMap[leagueKey]) {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        const allTeamsInSystem = dbTeamsList.map(t => t.name).sort((a, b) => a.localeCompare(b, 'tr')); // TEAMS UPDATE
+        const allTeamsInSystem = dbTeamsList.map(t => t.name).sort((a, b) => a.localeCompare(b, 'tr')); 
         return allTeamsInSystem.filter(t => t !== opponent);
     }
 
@@ -1093,7 +1095,7 @@ export default function AdminRadarPortal() {
                 if (homeScore !== "-" && awayScore !== "-") {
                   const targetScore = `${homeScore}-${awayScore}`;
                   let predictionsSource = predictionsDB;
-                  
+
                   currentWinners = Object.keys(predictionsSource)
                     .filter(uid => {
                         return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
@@ -1302,14 +1304,14 @@ export default function AdminRadarPortal() {
                   <span className="text-3xl">👥</span> YARIŞMACI YÖNETİMİ
                 </h1>
                 <p className="text-slate-400 text-sm mt-1">
-                  Sisteme yeni yarışmacı dahil edebilir veya disiplinsizlik yapanları ihraç edebilirsiniz.
+                  Kayıtlı 54 Aslan Parçası sisteme kalıcı olarak mühürlenmiştir.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit opacity-50 cursor-not-allowed">
                  <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
                     <h2 className="text-lg font-black text-fuchsia-400 flex items-center gap-2">
                        <span className="text-xl">➕</span> YENİ ASLAN PARÇASI EKLE
@@ -1321,40 +1323,36 @@ export default function AdminRadarPortal() {
                        <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">6 HANELİ YARIŞMACI ID</label>
                        <input 
                          type="text" 
-                         value={newPlayerId} 
-                         onChange={e => setNewPlayerId(e.target.value)} 
+                         disabled
                          placeholder="Örn: 262888"
-                         maxLength={6}
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-500 px-4 py-3 rounded-xl outline-none font-black tracking-widest shadow-inner cursor-not-allowed"
                        />
                     </div>
                     <div>
                        <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">İSİM SOYİSİM</label>
                        <input 
                          type="text" 
-                         value={newPlayerName} 
-                         onChange={e => setNewPlayerName(e.target.value)} 
+                         disabled
                          placeholder="Örn: SİNAN ENGİN"
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-500 px-4 py-3 rounded-xl outline-none font-black tracking-widest uppercase shadow-inner cursor-not-allowed"
                        />
                     </div>
                     <div>
                        <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">GİRİŞ ŞİFRESİ</label>
                        <input 
                          type="text" 
-                         value={newPlayerPass} 
-                         onChange={e => setNewPlayerPass(e.target.value)} 
+                         disabled
                          placeholder="Örn: 19030"
-                         className="w-full bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
+                         className="w-full bg-slate-950 border border-slate-700 text-slate-500 px-4 py-3 rounded-xl outline-none font-black tracking-widest shadow-inner cursor-not-allowed"
                        />
                     </div>
 
                     <button 
                       type="submit" 
-                      disabled={isPlayerLoading}
-                      className="mt-4 bg-fuchsia-600 hover:bg-fuchsia-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(192,38,211,0.4)] flex justify-center items-center gap-2"
+                      disabled
+                      className="mt-4 bg-slate-700 text-slate-400 font-black tracking-widest py-4 rounded-xl flex justify-center items-center gap-2 cursor-not-allowed"
                     >
-                      {isPlayerLoading ? 'KAYDEDİLİYOR...' : 'SİSTEME KAYDET VE GÖNDER'}
+                      SİSTEME KAYIT KAPALIDIR
                     </button>
                  </form>
               </div>
@@ -1362,10 +1360,10 @@ export default function AdminRadarPortal() {
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
                  <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                     <h2 className="text-lg font-black text-rose-500 flex items-center gap-2">
-                       <span className="text-xl">⚖️</span> DİSİPLİN KURULU (TÜM LİSTE)
+                       <span className="text-xl">⚖️</span> 54 ASLAN PARÇASI (TÜM LİSTE)
                     </h2>
-                    <span className="bg-slate-950 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold border border-slate-800">
-                       Veritabanındaki Liste
+                    <span className="bg-slate-950 text-emerald-400 px-3 py-1 rounded-lg text-xs font-bold border border-emerald-800">
+                       Kalıcı Liste
                     </span>
                  </div>
                  
@@ -1377,13 +1375,14 @@ export default function AdminRadarPortal() {
                          <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
                             <div className="flex flex-col">
                                <span className="font-black text-slate-200 text-sm uppercase tracking-wide">{p.full_name}</span>
-                               <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.user_id} | ŞİFRE: {p.password}</span>
+                               <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.user_id}</span>
                             </div>
                             <button 
                               onClick={() => handleBanishPlayer(p.user_id, p.full_name)}
-                              className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                              className="bg-slate-800 text-slate-500 border border-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest cursor-not-allowed"
+                              title="Silme işlemi kapalıdır"
                             >
-                               ❌ İHRAÇ ET
+                               🔒 KORUMALI
                             </button>
                          </div>
                        ))

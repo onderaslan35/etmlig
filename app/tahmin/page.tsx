@@ -3,6 +3,67 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 54 YARIŞMACI + MANKOMAN (İstenmeyen isimler silindi) 🔴
+const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
+  "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
+  "262740": { pass: "49400", name: "ABDULLAH DİK" },
+  "262705": { pass: "14050", name: "AHMET BİRCAN 🏆" },
+  "351925": { pass: "19250", name: "ALİOS GÖZTEPE" },
+  "262735": { pass: "19250", name: "AYGÜN AKKEÇELİ" },
+  "262723": { pass: "32230", name: "AYHAN LUŞOĞLU" },
+  "262749": { pass: "58490", name: "B.VEYSELOĞLU EROL" },
+  "262708": { pass: "17080", name: "BAYRAM YILMAZ" },
+  "262718": { pass: "27180", name: "BEKİR KARADAĞ" },
+  "262716": { pass: "25160", name: "BİROL DEMİREL" },
+  "262772": { pass: "81720", name: "CEMAL SİVRİKAYA 🏆" },
+  "262703": { pass: "12030", name: "CEMALETTİN BELLİ" },
+  "262790": { pass: "99880", name: "CUMALİ SÖKER" },
+  "262755": { pass: "64550", name: "DOĞAÇ ALKAN" },
+  "262756": { pass: "65560", name: "EYÜP KARACAOĞLU" },
+  "262731": { pass: "40310", name: "FATİH AYAN" },
+  "262706": { pass: "15060", name: "GAZİ AYAN 🏆🏆" },
+  "262707": { pass: "16070", name: "HAKAN AYAN" },
+  "262726": { pass: "35260", name: "HUDAVER TOPARDIC" },
+  "262762": { pass: "71620", name: "İLHAN DANIŞ" },
+  "262725": { pass: "34250", name: "İLYAS KAZDAL" },
+  "262744": { pass: "53440", name: "İLYAS UYGUN" },
+  "262714": { pass: "23140", name: "İSMAİL EKER 🏆" },
+  "262813": { pass: "28620", name: "KEMAL ERSOY" },
+  "262734": { pass: "43340", name: "LEVENT YILDIRIM" },
+  "262750": { pass: "59500", name: "MAHMUT CBR" },
+  "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
+  "262758": { pass: "67580", name: "MELİH PINAR" },
+  "262738": { pass: "47380", name: "MEVLÜT EVLER" },
+  "262733": { pass: "42330", name: "MUHSİN ASİLKAN" },
+  "262717": { pass: "26170", name: "MURAT ALİ" },
+  "262712": { pass: "21120", name: "MURAT AYDEMİR" },
+  "262702": { pass: "11020", name: "MURAT KARA" },
+  "262763": { pass: "72630", name: "MUSTAFA ELMAS" },
+  "262721": { pass: "30210", name: "MUSTAFA GÜMÜŞÇÜ" },
+  "262787": { pass: "96870", name: "MUSTAFA TUCİ" },
+  "262745": { pass: "54450", name: "OĞUZ YILDIRIMKAYA" },
+  "262754": { pass: "63540", name: "OSMAN ALİ AYDIN 🏆" },
+  "262770": { pass: "79700", name: "OZKAYA MAZAKALI BAYRAM" },
+  "262728": { pass: "35280", name: "ÖNDER ASLAN" },
+  "262730": { pass: "39300", name: "ÖNDER IŞIK" },
+  "262732": { pass: "41320", name: "R. İLHAN KARACA 🏆🏆" },
+  "262711": { pass: "20110", name: "RIDVAN DOGER" },
+  "262741": { pass: "50410", name: "SABAHATTİN ÇAYLAK" },
+  "262709": { pass: "18090", name: "SALİH KARACAOĞLU" },
+  "262747": { pass: "56470", name: "SAVAŞ ÇAĞLAYAN" },
+  "262786": { pass: "95860", name: "SEDAT DİŞLİ" },
+  "262816": { pass: "61820", name: "SEDAT SEDAT" },
+  "262737": { pass: "46370", name: "ŞAHİN GEZGİNCİ" },
+  "262715": { pass: "24150", name: "ŞEMSETTIN DÜGER" },
+  "262774": { pass: "83740", name: "ŞENOL CAN ÇAKICI" },
+  "262739": { pass: "48390", name: "UĞUR GÜRBÜZ" },
+  "262719": { pass: "28190", name: "UĞUR VARDAR" },
+  "262771": { pass: "80710", name: "ULAŞ ADIGÜZEL" },
+  "262704": { pass: "13040", name: "YAPAY ZEKA" },
+  "262782": { pass: "91820", name: "YUSUF ERBAY" },
+  "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
+};
+
 const normalizeTurkish = (text: string) => {
   if (!text) return '';
   return text.replace(/İ/g, 'i')
@@ -126,9 +187,6 @@ export default function TahminlerPortal() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); 
 
-  // 🚀 SUPABASE'DEN GELECEK YARIŞMACILAR (Kod içindeki liste TAMAMEN SİLİNDİ)
-  const [systemPlayers, setSystemPlayers] = useState<Record<string, string>>({});
-
   const [bulletinMap, setBulletinMap] = useState<Record<number, any[]>>({}); 
   const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
   const [oldPredictions, setOldPredictions] = useState<Record<number, { home: string, away: string }>>({});
@@ -144,16 +202,7 @@ export default function TahminlerPortal() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      
-      // 🚀 YARIŞMACILARI SUPABASE'DEN ÇEK
-      const { data: pData } = await supabase.from('players').select('user_id, full_name');
-      if (pData) {
-        const pMap: Record<string, string> = {};
-        pData.forEach(p => { pMap[String(p.user_id)] = p.full_name; });
-        setSystemPlayers(pMap);
-      }
-
-      // 🚀 YENİ SUPABASE TAKIM MOTORU EKLENDİ
+      // 🚀 SUPABASE'DEN TAKIMLARI VE LOGOLARI ÇEK
       const { data: teamsData } = await supabase.from('teams').select('name, logo_url');
       if (teamsData) {
         const logos: Record<string, string> = {};
@@ -162,7 +211,7 @@ export default function TahminlerPortal() {
         setTeamLogosMap(logos);
       }
 
-      // 🚀 YENİ BÜLTEN MOTORU (Sadece Supabase)
+      // 🚀 SUPABASE'DEN BÜLTENİ ÇEK
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -196,30 +245,14 @@ export default function TahminlerPortal() {
     const userKey = username.trim();
     const passKey = password.trim(); 
     
-    if (userKey === 'mankoman' && passKey === '123456') {
-      setDisplayName('MANKOMAN (ADMİN)');
+    const account = TEST_ACCOUNTS[userKey];
+
+    if (account && passKey === account.pass) { 
+      setDisplayName(account.name);
       await fetchBulletinAndPredictions(userKey);
       setView('entry');
-      return;
-    }
-
-    try {
-      // 🚀 GİRİŞ İŞLEMİ ARTIK SUPABASE'DEN KONTROL EDİLİYOR
-      const { data: player, error } = await supabase
-        .from('players')
-        .select('full_name, password')
-        .eq('user_id', userKey)
-        .single();
-
-      if (player && player.password === passKey) {
-        setDisplayName(player.full_name);
-        await fetchBulletinAndPredictions(userKey);
-        setView('entry');
-      } else {
-        setLoginError('Hatalı ID veya Şifre. İhraç edilmiş olabilirsiniz.');
-      }
-    } catch (err) {
-      setLoginError('Sisteme bağlanılamadı veya kullanıcı bulunamadı.');
+    } else {
+      setLoginError('Sistem şu an yapılandırma ve test aşamasındadır. Yalnızca kayıtlı yetkili girişine izin verilmektedir.');
     }
   };
 
@@ -327,6 +360,7 @@ export default function TahminlerPortal() {
 
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
+  // 🚀 TAHMİNLER SUPABASE'DEN ÇEKİLİYOR
   useEffect(() => {
      const fetchLivePreds = async () => {
         let allData: any[] = [];
@@ -367,15 +401,15 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
+  // 🚀 OYUNCU LİSTESİ SADECE TAHMİN YAPAN ASLAN PARÇALARINI GÖSTERECEK ŞEKİLDE AYARLANDI
   const finalPlayersList = useMemo(() => {
-    // 🚀 DİNAMİK LİSTE (Supabase'den gelen sistem oyuncuları üzerinden dönüyor)
-    let allIds = Object.keys(systemPlayers);
+    let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
 
     if (searchTerm) {
       const normalizedSearch = normalizeTurkish(searchTerm);
       allIds = allIds.filter(id => {
-        const pName = normalizeTurkish(systemPlayers[id] || "");
+        const pName = normalizeTurkish(TEST_ACCOUNTS[id]?.name || "");
         return pName.includes(normalizedSearch);
       });
     }
@@ -383,13 +417,13 @@ export default function TahminlerPortal() {
     const submittedIds = allIds.filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'));
 
     if (sortOrder === 'A-Z') {
-      submittedIds.sort((a, b) => systemPlayers[a].localeCompare(systemPlayers[b], 'tr'));
+      submittedIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
     } else if (sortOrder === 'Z-A') {
-      submittedIds.sort((a, b) => systemPlayers[b].localeCompare(systemPlayers[a], 'tr'));
+      submittedIds.sort((a, b) => TEST_ACCOUNTS[b].name.localeCompare(TEST_ACCOUNTS[a].name, 'tr'));
     }
 
     return submittedIds; 
-  }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData, systemPlayers]);
+  }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData]);
 
   const ghostColumns = Array.from({ length: 10 });
 
@@ -424,10 +458,10 @@ export default function TahminlerPortal() {
 
   const activePlayersForJPEG = useMemo(() => {
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-    return Object.keys(systemPlayers)
-      .filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'))
-      .sort((a, b) => systemPlayers[a].localeCompare(systemPlayers[b], 'tr'));
-  }, [selectedTahminWeek, livePredictionsData, systemPlayers]);
+    return Object.keys(TEST_ACCOUNTS)
+      .filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'))
+      .sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
+  }, [selectedTahminWeek, livePredictionsData]);
 
   const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
 
@@ -596,8 +630,8 @@ export default function TahminlerPortal() {
                 const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                 const predictors = isComplete 
                    ? Object.keys(selectedWeekData)
-                       .filter(uid => selectedWeekData[uid][match.id - 1] === targetScore && systemPlayers[uid])
-                       .map(uid => systemPlayers[uid] || "Bilinmeyen Oyuncu")
+                       .filter(uid => selectedWeekData[uid][match.id - 1] === targetScore && TEST_ACCOUNTS[uid])
+                       .map(uid => TEST_ACCOUNTS[uid]?.name || "Bilinmeyen Oyuncu")
                        .sort((a,b) => a.localeCompare(b, 'tr'))
                    : [];
 
@@ -742,11 +776,11 @@ export default function TahminlerPortal() {
                           key={`drop-${id}`} 
                           className="px-4 py-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 border-b border-slate-800/50 last:border-0"
                           onClick={() => {
-                            setSearchTerm(systemPlayers[id] || "");
+                            setSearchTerm(TEST_ACCOUNTS[id].name);
                             setIsSearchFocused(false);
                           }}
                         >
-                          {systemPlayers[id] || "Bilinmeyen Oyuncu"}
+                          {TEST_ACCOUNTS[id].name}
                         </div>
                       ))}
                       {finalPlayersList.length === 0 && (
@@ -830,7 +864,7 @@ export default function TahminlerPortal() {
                     
                     <tbody>
                       {finalPlayersList.map(id => {
-                        const playerName = systemPlayers[id] || "Bilinmeyen Oyuncu";
+                        const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
                         const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id] || Array(24).fill('PAS');
                         
@@ -909,7 +943,7 @@ export default function TahminlerPortal() {
                     
                     <tbody>
                       {activePlayersForJPEG.map(id => {
-                        const playerName = systemPlayers[id] || "Bilinmeyen Oyuncu";
+                        const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
                         const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id];
                         if(!preds) return null;
