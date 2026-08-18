@@ -191,11 +191,8 @@ export default function TffPuanDurumuPage() {
               <table className="w-full text-left text-xs md:text-sm">
                 <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                   <tr>
-                    {/* 1) SIRA SÜTUNU DARALTILDI VE SOLA YASLANDI */}
                     <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
-                    {/* 2) İSİMLER SOLA YASLANDI */}
                     <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                    {/* 3) PUAN SÜTUNU TAM ORTAYA (M HARFİNE) HİZALANDI */}
                     <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">
                       {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                     </th>
@@ -222,7 +219,8 @@ export default function TffPuanDurumuPage() {
                         </div>
                       </td>
                       <td className="px-1 md:px-2 py-3">
-                        <div className="flex items-center gap-1 md:gap-2 text-[#e2e8f0] font-semibold whitespace-nowrap">
+                        {/* İSİMLER BEMBEYAZ YAPILDI (text-white) */}
+                        <div className="flex items-center gap-1 md:gap-2 text-white font-semibold whitespace-nowrap">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
                             const cleanName = row.name.replace(/🏆/g, '').trim();
@@ -240,8 +238,8 @@ export default function TffPuanDurumuPage() {
                           )}
                         </div>
                       </td>
-                      {/* PUAN SÜTUNU HİZALAMASI (M HARFİ ALTI) */}
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-red-500">
+                      {/* PUANLAR İSİMLER GİBİ BEMBEYAZ YAPILDI (text-white) */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-white">
                         {row.displayScore}
                       </td>
                     </tr>
