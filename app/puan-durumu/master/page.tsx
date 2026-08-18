@@ -105,7 +105,7 @@ const masterWeek3Data: Record<string, { name: string; puan: number }> = {
   "262703": { name: "CEMALETTİN BELLİ", puan: 0 }
 };
 
-// 🌟 4. HAFTAYI ARTIK "SABİTLEDİK" (DONDURDUK) - ESKİ ETİKETLER ÇÖPE GİTTİ! 🌟
+// 🌟 DİKKAT: İSMAİL EKER VE ŞENOL CAN'IN 4. HAFTA BONUSLU DEĞERLERİ YANSITILDI (17 VE 16)
 const masterWeek4Data: Record<string, { name: string; puan: number }> = {
   "262736": { name: "MEHMET ALİ KARA", puan: 11 }, "262755": { name: "DOĞAÇ ALKAN", puan: 7 },
   "262816": { name: "SEDAT SEDAT", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 3 },
@@ -118,9 +118,10 @@ const masterWeek4Data: Record<string, { name: string; puan: number }> = {
   "262711": { name: "RIDVAN DOGER", puan: 7 }, "262731": { name: "FATİH AYAN", puan: 13 },
   "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 0 }, "262763": { name: "MUSTAFA ELMAS", puan: 4 },
   "262707": { name: "HAKAN AYAN", puan: 9 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 2 },
-  "262813": { name: "KEMAL ERSOY", puan: 11 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 16 }, // BONUSLAR TOPLANDI
+  "262813": { name: "KEMAL ERSOY", puan: 11 }, 
+  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 16 }, // 🏆 BONUS EKLENDİ (13+3)
   "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 0 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
-  "262714": { name: "İSMAİL EKER 🏆", puan: 17 }, // BONUS EKLENDİ
+  "262714": { name: "İSMAİL EKER 🏆", puan: 17 }, // 🏆 BONUS EKLENDİ (14+3)
   "262740": { name: "ABDULLAH DİK", puan: 2 }, "262702": { name: "MURAT KARA", puan: 8 },
   "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 9 },
   "262716": { name: "BİROL DEMİREL", puan: 6 }, "262750": { name: "MAHMUT CBR", puan: 5 },
@@ -143,14 +144,13 @@ export default function MasterPuanDurumuPage() {
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   
-  const availableWeeks = [1, 2, 3, 4, 5]; // 🚀 5. HAFTA EKLENDİ
+  const availableWeeks = [1, 2, 3, 4, 5];
 
   const loadLeaderboard = async () => {
     try {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
 
-      // 🚀 5. HAFTA TAHMİNLERİNİ DB'DEN ÇEKİYORUZ
       const predDict: Record<string, string[]> = {};
       if (dbPredictions) {
         dbPredictions.forEach(pred => {
@@ -169,25 +169,18 @@ export default function MasterPuanDurumuPage() {
       let finishedCount = 0; 
 
       Object.keys(allPlayersMasterList).forEach(id => {
-        w5Base[id] = 0;
-        w5Live[id] = 0;
-        w5ExactHits[id] = 0;
-        w5LiveExactHits[id] = 0;
+        w5Base[id] = 0; w5Live[id] = 0; w5ExactHits[id] = 0; w5LiveExactHits[id] = 0;
       });
 
       if (dbMatches) {
         const uniqueMatches: Record<number, any> = {};
-        dbMatches.forEach(row => {
-          uniqueMatches[row.id] = row; 
-        });
+        dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          // SADECE 5. HAFTA MAÇLARINI KONTROL EDİYORUZ (ID'si 500'den büyük olanlar)
           if (dbMatch.id > 500) {
               if (dbMatch.status === 'FINISHED') finishedCount++;
 
               if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-                // 🚀 ARRAY KAYMASI ÇÖZÜLDÜ (501 id -> 0. index)
                 const matchIndex = (dbMatch.id % 100) - 1; 
                 const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
                 
@@ -205,19 +198,15 @@ export default function MasterPuanDurumuPage() {
 
                 winnerIds.forEach(wId => {
                   if (dbMatch.status === 'FINISHED') {
-                    w5Base[wId] += points; 
-                    w5ExactHits[wId] += 1; 
+                    w5Base[wId] += points; w5ExactHits[wId] += 1; 
                   } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                    w5Live[wId] += points; 
-                    w5LiveExactHits[wId] += 1; 
-                    isAnyMatchLive = true;
+                    w5Live[wId] += points; w5LiveExactHits[wId] += 1; isAnyMatchLive = true;
                   }
                 });
               }
           }
         });
 
-        // 🏆 EKMEL BONUS MOTORU V3.1 (SADECE 5. HAFTA 24. MAÇ BİTİNCE) 🏆
         let puanKraliId: string | null = null;
         let skorKraliId: string | null = null;
         
@@ -230,14 +219,12 @@ export default function MasterPuanDurumuPage() {
 
           Object.keys(allPlayersMasterList).forEach(id => {
             const totalP = (w5Base[id] || 0) + (w5Live[id] || 0);
-            if (totalP > maxPuan) {
-              maxPuan = totalP; maxPuanCount = 1; tempPuanKrali = id;
-            } else if (totalP === maxPuan) maxPuanCount++;
+            if (totalP > maxPuan) { maxPuan = totalP; maxPuanCount = 1; tempPuanKrali = id; } 
+            else if (totalP === maxPuan) maxPuanCount++;
 
             const totalHits = (w5ExactHits[id] || 0) + (w5LiveExactHits[id] || 0);
-            if (totalHits > maxSkor) {
-              maxSkor = totalHits; maxSkorCount = 1; tempSkorKrali = id;
-            } else if (totalHits === maxSkor) maxSkorCount++;
+            if (totalHits > maxSkor) { maxSkor = totalHits; maxSkorCount = 1; tempSkorKrali = id; } 
+            else if (totalHits === maxSkor) maxSkorCount++;
           });
 
           if (maxPuanCount === 1 && tempPuanKrali && maxPuan > 0) puanKraliId = tempPuanKrali;
@@ -247,7 +234,6 @@ export default function MasterPuanDurumuPage() {
         setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
         if (activeTab === 'total') {
-          // Önceki haftaların (1, 2, 3, 4) toplamı (TREND OKLARI İÇİN REFERANS)
           const referenceList = Object.keys(allPlayersMasterList).map(id => {
             const w1 = masterWeek1Data[id]?.puan || 0;
             const w2 = masterWeek2Data[id]?.puan || 0;
@@ -265,19 +251,19 @@ export default function MasterPuanDurumuPage() {
             const w1 = masterWeek1Data[id]?.puan || 0;
             const w2 = masterWeek2Data[id]?.puan || 0;
             const w3 = masterWeek3Data[id]?.puan || 0;
-            const w4 = masterWeek4Data[id]?.puan || 0;
+            
+            // 🔥 ARTIK 4. HAFTA PUANLARI (17 ve 16 DAHİL) BURADAN GELİYOR
+            const w4 = masterWeek4Data[id]?.puan || 0; 
             let w5B = w5Base[id] || 0; 
             
             let pBonus = id === puanKraliId;
             let sBonus = id === skorKraliId;
 
-            // Yeni 5. Hafta Bonusları
             if (pBonus) w5B += 3;
             if (sBonus) w5B += 3;
 
-            // YEPYENİ 5. HAFTA CANLI PUANLARI (1 Puan vb.) BURADA TOPLANIYOR!
             const liveExtra = w5Live[id] || 0; 
-            const basePuan = w1 + w2 + w3 + w4 + w5B;
+            const basePuan = w1 + w2 + w3 + w4 + w5B; // TAMAMI TOPLANDI
             const finalName = allPlayersMasterList[id];
 
             return { 
@@ -297,38 +283,23 @@ export default function MasterPuanDurumuPage() {
             let trend = 'same';
             let trendDiff = 0; 
             
-            if (currentRank < prevRank) {
-              trend = 'up'; trendDiff = prevRank - currentRank; 
-            } else if (currentRank > prevRank) {
-              trend = 'down'; trendDiff = currentRank - prevRank; 
-            }
+            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
             
             return { ...player, currentRank, prevRank, trend, trendDiff };
           });
 
           setTableRows(finalRows);
         } else {
-          // SADECE 5. HAFTAYI GÖRMEK İSTEYENLER İÇİN
           if(activeTab === 'week5') {
             const list = Object.keys(allPlayersMasterList).map(id => {
               let basePuan = w5Base[id] || 0; 
               const liveExtra = w5Live[id] || 0; 
-              
-              let pBonus = id === puanKraliId;
-              let sBonus = id === skorKraliId;
-
-              if (pBonus) basePuan += 3;
-              if (sBonus) basePuan += 3;
+              let pBonus = id === puanKraliId; let sBonus = id === skorKraliId;
+              if (pBonus) basePuan += 3; if (sBonus) basePuan += 3;
 
               return { 
-                id, 
-                name: allPlayersMasterList[id], 
-                puan: basePuan + liveExtra, 
-                liveExtra, 
-                trend: 'none', 
-                trendDiff: 0,
-                hasPuanBonus: pBonus,
-                hasSkorBonus: sBonus
+                id, name: allPlayersMasterList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none', trendDiff: 0, hasPuanBonus: pBonus, hasSkorBonus: sBonus
               };
             });
             setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
@@ -342,106 +313,54 @@ export default function MasterPuanDurumuPage() {
               const rawObj = dataMap[id];
               const basePuan = rawObj ? rawObj.puan : 0;
               
-              // GEÇMİŞ HAFTALARIN SABİTLENMİŞ BONUSLARI (4. Hafta rozetleri dahil, ama "Total" sekmesinde gözükmeyecekler)
-              let pBonus = false;
-              let sBonus = false;
-
-              if (activeTab === 'week1') {
-                if (id === "262736") pBonus = true; 
-                if (id === "262755") sBonus = true; 
-              } else if (activeTab === 'week2') {
-                if (id === "262756") pBonus = true; 
-              } else if (activeTab === 'week3') {
-                if (id === "262816") { pBonus = true; sBonus = true; }
-              } else if (activeTab === 'week4') {
-                if (id === "262714") pBonus = true; // İSMAİL EKER LİDER
-                if (id === "262774") sBonus = true; // ŞENOL CAN SKOR
-              }
+              let pBonus = false; let sBonus = false;
+              if (activeTab === 'week1') { if (id === "262736") pBonus = true; if (id === "262755") sBonus = true; } 
+              else if (activeTab === 'week2') { if (id === "262756") pBonus = true; } 
+              else if (activeTab === 'week3') { if (id === "262816") { pBonus = true; sBonus = true; } } 
+              else if (activeTab === 'week4') { if (id === "262714") pBonus = true; if (id === "262774") sBonus = true; }
 
               return { 
-                id, 
-                name: rawObj ? rawObj.name : allPlayersMasterList[id], 
-                puan: basePuan, 
-                liveExtra: 0, 
-                trend: 'none', 
-                trendDiff: 0,
-                hasPuanBonus: pBonus,
-                hasSkorBonus: sBonus
+                id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: basePuan, liveExtra: 0, trend: 'none', trendDiff: 0, hasPuanBonus: pBonus, hasSkorBonus: sBonus
               };
             });
             setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
           }
         }
       }
-    } catch (error) {
-      console.log("Supabase verileri okunurken hata oluştu");
-    }
+    } catch (error) {}
   };
 
-  useEffect(() => {
-    loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 5000); 
-    return () => clearInterval(interval);
-  }, [activeTab]);
-
-  const selectTab = (tabKey: string) => {
-    setActiveTab(tabKey);
-    setIsWeekMenuOpen(false);
-  };
+  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
+  const selectTab = (tabKey: string) => { setActiveTab(tabKey); setIsWeekMenuOpen(false); };
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase drop-shadow-md">
-          ELİT TAHMİN MASTER LİGİ
-        </h1>
-      </div>
-
-      <div className="w-full mb-6">
-        <LiveMatchCard />
-      </div>
-
+      <div className="flex flex-col items-center text-center mb-5 mt-1"><h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase drop-shadow-md">ELİT TAHMİN MASTER LİGİ</h1></div>
+      <div className="w-full mb-6"><LiveMatchCard /></div>
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-          MASTER TOPLAM PUAN DURUMU
-        </button>
+        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>MASTER TOPLAM PUAN DURUMU</button>
         <div className="w-full relative">
           <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `MASTER ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
-            <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
+            <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `MASTER ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span><span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
           </button>
-          
           {isWeekMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
               <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
                 {availableWeeks.map((weekNum) => {
                   const weekKey = `week${weekNum}`;
-                  return (
-                    <button 
-                      key={weekNum} 
-                      onClick={() => selectTab(weekKey)} 
-                      className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}
-                    >
-                      {weekNum}
-                    </button>
-                  );
+                  return <button key={weekNum} onClick={() => selectTab(weekKey)} className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}>{weekNum}</button>;
                 })}
               </div>
             </div>
           )}
         </div>
       </div>
-
       <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
-                <tr>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th>
-                </tr>
+                <tr><th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th><th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th><th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
@@ -449,75 +368,26 @@ export default function MasterPuanDurumuPage() {
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
                       <div className="flex items-center justify-center gap-0.5 sm:gap-2">
                         <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank || idx + 1}</span>
-                        
                         <div className="w-6 sm:w-10 flex items-center justify-start">
-                          {activeTab === 'total' && row.trend === 'up' && (
-                            <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">
-                              ▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
-                            </span>
-                          )}
-                          {activeTab === 'total' && row.trend === 'down' && (
-                            <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">
-                              ▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
-                            </span>
-                          )}
-                          {activeTab === 'total' && row.trend === 'same' && (
-                            <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>
-                          )}
+                          {activeTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
+                          {activeTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
+                          {activeTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>}
                         </div>
                       </div>
                     </td>
                     <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap overflow-hidden">
-                        
                         {(() => {
-                          const trophyCount = (row.name.match(/🏆/g) || []).length;
-                          const cleanName = row.name.replace(/🏆/g, '').trim();
-                          
-                          return (
-                            <>
-                              <span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink-0" title={cleanName}>
-                                {cleanName}
-                              </span>
-                              
-                              {trophyCount > 0 && (
-                                <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">
-                                  {'🏆'.repeat(trophyCount)}
-                                </span>
-                              )}
-                            </>
-                          );
+                          const trophyCount = (row.name.match(/🏆/g) || []).length; const cleanName = row.name.replace(/🏆/g, '').trim();
+                          return ( <><span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink-0" title={cleanName}>{cleanName}</span>{trophyCount > 0 && <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">{'🏆'.repeat(trophyCount)}</span>}</> );
                         })()}
-
-                        {/* 🌟 5. HAFTANIN YENİ ETİKET MOTORU 🌟 */}
-                        {row.hasPuanBonus && (
-                          <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
-                            +3 LİDERLİK BONUSU
-                          </span>
-                        )}
-                        {row.hasSkorBonus && (
-                          <span className="bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">
-                            +3 SKOR BONUSU
-                          </span>
-                        )}
-                        
-                        {/* 🌟 EFSANEVİ CANLI PUAN YANSITMASI (Örn: +1 CANLI) 🌟 */}
-                        {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
-                          <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">
-                            +{row.liveExtra} CANLI
-                          </span>
-                        )}
-
-                        {row.liveExtra > 0 && activeTab !== 'total' && (
-                          <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
-                            +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}
-                          </span>
-                        )}
+                        {row.hasPuanBonus && <span className="bg-amber-900/80 text-amber-300 border border-amber-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">+3 LİDERLİK BONUSU</span>}
+                        {row.hasSkorBonus && <span className="bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex-shrink-0 ml-1 whitespace-nowrap">+3 SKOR BONUSU</span>}
+                        {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">+{row.liveExtra} CANLI</span>}
+                        {row.liveExtra > 0 && activeTab !== 'total' && <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>+{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}</span>}
                       </div>
                     </td>
-                    <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-bold text-sm sm:text-base whitespace-nowrap ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>
-                      {row.puan}
-                    </td>
+                    <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-bold text-sm sm:text-base whitespace-nowrap ${row.liveExtra > 0 && activeTab !== 'total' ? "text-emerald-400" : "text-amber-400"}`}>{row.puan}</td>
                   </tr>
                 ))}
               </tbody>
