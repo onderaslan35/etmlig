@@ -100,7 +100,7 @@ const localTeamLogos: Record<string, string> = {
   "EVERTON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Everton_FC_logo.svg/200px-Everton_FC_logo.svg.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
 
-  // 🔴 YENİ EKLENEN YABANCI TAKIMLAR (Eksiksiz) 🔴
+  // 🔴 YENİ EKLENEN YABANCI TAKIMLAR
   "BRIGHTON": "/logos/brighton.png",
   "CHELSEA": "/logos/chelsea.png",
   "BARCELONA": "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
@@ -118,7 +118,7 @@ const localTeamLogos: Record<string, string> = {
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   
-  // 🔴 KOMUTANIN BULDUĞU KESİN ÇÖZÜM: LYON LOGOSU YERELDEN ÇEKİLİYOR 🔴
+  // 🔴 LYON LOGOSU
   "OLYMPIC LYON": "/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
@@ -345,7 +345,8 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
-        const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
+        // 🔴 1000 SATIR LIMITI KIRILDI (.limit(5000) eklendi)
+        const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5).limit(5000);
         if (pData) {
            const pMap: Record<string, string[]> = {};
            pData.forEach(row => {
