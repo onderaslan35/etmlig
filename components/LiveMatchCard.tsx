@@ -97,7 +97,7 @@ const localTeamLogos: Record<string, string> = {
   // YENİ EKLENEN LOGOLAR (HER İHTİMALE KARŞI TÜM LYON YAZILIŞLARI)
   "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIC LYON": "https://www.etmlig.com.tr/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
