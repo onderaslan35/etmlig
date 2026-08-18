@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// Sabit Liste
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -103,7 +102,6 @@ export default function DfoPuanDurumuPage() {
         };
       });
 
-      // ÖNCEKİ HAFTANIN SIRALAMASI (Sadece oklar için)
       const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
@@ -172,14 +170,15 @@ export default function DfoPuanDurumuPage() {
             </div>
           </div>
 
+          {/* MASTER SAYFASININ BİREBİR AYNI, ZARİF KUTUCUKLARI (SADECE RENGİ MAVİ) */}
           {isMenuOpen && (
-            <div className="w-full bg-[#0a0f1c] p-6 flex flex-wrap justify-center gap-4 border-b border-[#1e293b]">
+            <div className="w-full bg-[#0a0f1c] p-4 md:p-6 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
               {[1, 2, 3, 4, 5].map(num => (
                 <button
                   key={num}
                   onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
-                  className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-xl font-bold text-lg md:text-xl transition-all ${
-                    activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-[#334155]'
+                  className={`w-12 h-10 md:w-16 md:h-12 flex items-center justify-center rounded-lg font-bold text-sm md:text-base transition-all ${
+                    activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
                   }`}
                 >
                   {num}
@@ -203,25 +202,24 @@ export default function DfoPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      
-                      {/* İŞTE OKLAR BURADA KOMUTANIM! */}
                       <td className="px-4 md:px-6 py-4 text-[#94a3b8] font-medium">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <span className="w-5 text-left">{row.currentRank || idx + 1}</span>
-                          <div className="w-8 flex justify-center">
+                        {/* MASTER SAYFASININ BİREBİR AYNI ZIPLAYAN OK YAPISI */}
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
+                          <span className="text-[#475569]">-</span>
+                          <div className="w-6 flex justify-center">
                             {activeTab === 'total' ? (
                               <>
                                 {row.trend === 'up' && <span className="text-emerald-400 text-[10px] md:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
                                 {row.trend === 'down' && <span className="text-red-500 text-[10px] md:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
-                                {row.trend === 'same' && <span className="text-slate-600 text-[8px] md:text-[10px]">-</span>}
+                                {row.trend === 'same' && <span className="text-transparent text-[8px] md:text-[10px]">-</span>}
                               </>
                             ) : (
-                              <span>-</span>
+                              <span className="text-transparent">-</span>
                             )}
                           </div>
                         </div>
                       </td>
-                      
                       <td className="px-2 md:px-4 py-4">
                         <div className="flex items-center gap-2 overflow-hidden text-[#e2e8f0] font-semibold">
                           {(() => {
@@ -237,7 +235,6 @@ export default function DfoPuanDurumuPage() {
                           {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && <span className="text-emerald-400 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">+{row.liveExtra} CANLI</span>}
                         </div>
                       </td>
-
                       <td className="px-4 md:px-6 py-4 text-right font-bold text-sm md:text-base text-[#60a5fa]">
                         {row.displayScore}
                       </td>
