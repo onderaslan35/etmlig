@@ -206,18 +206,22 @@ export default function TahminlerPortal() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // 🚀 LOGO HATASI BURADA DÜZELTİLDİ: team_name olarak çekiliyor
-      const { data: teamsData } = await supabase.from('teams').select('team_name, logo_url');
+      // 🚀 YENİ SUPABASE TAKIM MOTORU VE EŞLEŞTİRME KORUMASI
+      const { data: teamsData } = await supabase.from('teams').select('*');
       if (teamsData) {
         const logos: Record<string, string> = {};
         teamsData.forEach((team: any) => { 
-           // 🚀 TEMİZ EŞLEŞTİRME: Logoları çekerken de temizliyoruz
-           logos[cleanTeamName(team.team_name)] = team.logo_url; 
+           // Sütun adı ne olursa olsun garantiye alıyoruz
+           const tName = team.name || team.team_name;
+           if(tName) {
+               logos[cleanTeamName(tName)] = team.logo_url; 
+           }
         });
         logos["OLYMPIC LYON"] = "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg";
         setTeamLogosMap(logos);
       }
 
+      // 🚀 BÜLTEN MOTORU
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -622,7 +626,7 @@ export default function TahminlerPortal() {
               {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const theme = getEliteTheme(match.category);
                 
-                // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
+                // 🚀 TEMİZ EŞLEŞTİRME: Ekranda gösterirken temizlenmiş ismi arıyoruz
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
 
@@ -831,6 +835,7 @@ export default function TahminlerPortal() {
                           <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
                         </th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
+                          // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
                           const hName = cleanTeamName(m.homeTeam || m.home_team);
                           const homeLogoUrl = teamLogosMap[hName] || "/logos/default.png";
                           return (
@@ -859,6 +864,7 @@ export default function TahminlerPortal() {
                           </div>
                         </th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
+                          // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
                           const aName = cleanTeamName(m.awayTeam || m.away_team);
                           const awayLogoUrl = teamLogosMap[aName] || "/logos/default.png";
                           return (
