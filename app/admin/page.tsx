@@ -28,7 +28,8 @@ const CATEGORIES = [
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
 // OTOMATİK SAAT ÜRETİCİSİ (12:00'dan 23:45'e kadar 15dk aralıklarla)
-const TIME_OPTIONS = [];
+// TYPESCRIPT HATASI BURADA ÇÖZÜLDÜ (: string[] eklendi)
+const TIME_OPTIONS: string[] = [];
 for (let h = 12; h <= 23; h++) {
   for (let m = 0; m < 60; m += 15) {
     TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
