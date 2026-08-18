@@ -72,6 +72,7 @@ export default function DfoPuanDurumuPage() {
             const category = catDict[matchIndex + 1] || "";
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
+            // DFO MANTIĞI: TFF OLMAYAN MAÇLAR
             if (!isTffMatchCheck(category)) {
               const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
               let points = 1;
@@ -149,7 +150,6 @@ export default function DfoPuanDurumuPage() {
       <div className="w-full mb-6"><LiveMatchCard /></div>
       
       <div className="w-full max-w-3xl mx-auto">
-        {/* ANA BUTON - KALINLIK AZALTILDI (py-3 yapıldı) */}
         <button 
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
           className="w-full bg-[#1d4ed8] hover:bg-blue-600 text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
@@ -158,7 +158,6 @@ export default function DfoPuanDurumuPage() {
         </button>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
-          {/* AKORDİYON BAR - KALINLIK AZALTILDI (py-3 yapıldı) */}
           <div 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
@@ -190,13 +189,16 @@ export default function DfoPuanDurumuPage() {
 
           {tableRows.length > 0 ? (
             <div className="overflow-x-auto">
+              {/* TFF'DEKİ O KUSURSUZ HİZALAMA MİMARİSİ BİREBİR KULLANILDI */}
               <table className="w-full text-left text-xs md:text-sm">
                 <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                   <tr>
-                    {/* BAŞLIK SATIRI İNCELTİLDİ (py-3) */}
-                    <th className="px-4 py-3 w-16 text-left">SIRA</th>
-                    <th className="px-2 py-3 text-left">YARIŞMACI</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">
+                    {/* SIRA SÜTUNU SOLA YASLI */}
+                    <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
+                    {/* İSİMLER SOLA YASLI */}
+                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                    {/* PUAN SÜTUNU TAM ORTAYA (M HARFİNE) HİZALANDI */}
+                    <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">
                       {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                     </th>
                   </tr>
@@ -204,12 +206,11 @@ export default function DfoPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      {/* TÜM SATIRLAR İNCELTİLDİ (py-3) */}
-                      <td className="px-4 py-3 text-[#94a3b8] font-medium">
-                        <div className="flex items-center gap-2">
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium">
+                        <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
-                          <div className="w-6 flex justify-center">
+                          <div className="w-5 flex justify-center">
                             {activeTab === 'total' ? (
                               <>
                                 {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
@@ -222,8 +223,8 @@ export default function DfoPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-3">
-                        <div className="flex items-center gap-2 text-[#e2e8f0] font-semibold whitespace-nowrap">
+                      <td className="px-1 md:px-2 py-3">
+                        <div className="flex items-center gap-1 md:gap-2 text-[#e2e8f0] font-semibold whitespace-nowrap">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
                             const cleanName = row.name.replace(/🏆/g, '').trim();
@@ -241,7 +242,8 @@ export default function DfoPuanDurumuPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-sm text-[#60a5fa]">
+                      {/* DFO MAVİSİ - PUAN SÜTUNU HİZALAMASI (M HARFİ ALTI) */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-[#60a5fa]">
                         {row.displayScore}
                       </td>
                     </tr>
