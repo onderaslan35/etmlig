@@ -105,7 +105,7 @@ const masterWeek3Data: Record<string, { name: string; puan: number }> = {
   "262703": { name: "CEMALETTİN BELLİ", puan: 0 }
 };
 
-// 🌟 DİKKAT: İSMAİL EKER VE ŞENOL CAN'IN 4. HAFTA BONUSLU DEĞERLERİ YANSITILDI (17 VE 16)
+// 🌟 İSMAİL EKER (20 PUAN = TOPLAM 30) VE ŞENOL CAN ÇAKICI (16 PUAN = TOPLAM 27) DÜZELTİLDİ 🌟
 const masterWeek4Data: Record<string, { name: string; puan: number }> = {
   "262736": { name: "MEHMET ALİ KARA", puan: 11 }, "262755": { name: "DOĞAÇ ALKAN", puan: 7 },
   "262816": { name: "SEDAT SEDAT", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 3 },
@@ -119,9 +119,9 @@ const masterWeek4Data: Record<string, { name: string; puan: number }> = {
   "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 0 }, "262763": { name: "MUSTAFA ELMAS", puan: 4 },
   "262707": { name: "HAKAN AYAN", puan: 9 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 2 },
   "262813": { name: "KEMAL ERSOY", puan: 11 }, 
-  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 16 }, // 🏆 BONUS EKLENDİ (13+3)
+  "262774": { name: "ŞENOL CAN ÇAKICI", puan: 16 }, // 🏆 ŞENOL TOPLAM 27
   "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 0 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
-  "262714": { name: "İSMAİL EKER 🏆", puan: 17 }, // 🏆 BONUS EKLENDİ (14+3)
+  "262714": { name: "İSMAİL EKER 🏆", puan: 20 }, // 🏆 İSMAİL TOPLAM 30 (1+4+5+20)
   "262740": { name: "ABDULLAH DİK", puan: 2 }, "262702": { name: "MURAT KARA", puan: 8 },
   "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 9 },
   "262716": { name: "BİROL DEMİREL", puan: 6 }, "262750": { name: "MAHMUT CBR", puan: 5 },
@@ -251,8 +251,6 @@ export default function MasterPuanDurumuPage() {
             const w1 = masterWeek1Data[id]?.puan || 0;
             const w2 = masterWeek2Data[id]?.puan || 0;
             const w3 = masterWeek3Data[id]?.puan || 0;
-            
-            // 🔥 ARTIK 4. HAFTA PUANLARI (17 ve 16 DAHİL) BURADAN GELİYOR
             const w4 = masterWeek4Data[id]?.puan || 0; 
             let w5B = w5Base[id] || 0; 
             
@@ -263,7 +261,7 @@ export default function MasterPuanDurumuPage() {
             if (sBonus) w5B += 3;
 
             const liveExtra = w5Live[id] || 0; 
-            const basePuan = w1 + w2 + w3 + w4 + w5B; // TAMAMI TOPLANDI
+            const basePuan = w1 + w2 + w3 + w4 + w5B; 
             const finalName = allPlayersMasterList[id];
 
             return { 
@@ -275,16 +273,22 @@ export default function MasterPuanDurumuPage() {
               hasPuanBonus: pBonus,
               hasSkorBonus: sBonus
             };
-          }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
+          });
 
-          const finalRows = baseList.map((player, index) => {
+          // 🌟 EKMEL FİLTRESİ: PUANI 0 OLANLARI GİZLE (MURAT AYDEMİR HARİÇ) 🌟
+          const visibleList = baseList.filter(p => p.puan > 0 || p.id === "262712");
+          visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
+
+          const finalRows = visibleList.map((player, index) => {
             const currentRank = index + 1;
             const prevRank = prevRanks[player.id];
             let trend = 'same';
             let trendDiff = 0; 
             
-            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+            if (prevRank) {
+              if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+              else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+            }
             
             return { ...player, currentRank, prevRank, trend, trendDiff };
           });
@@ -302,7 +306,9 @@ export default function MasterPuanDurumuPage() {
                 id, name: allPlayersMasterList[id], puan: basePuan + liveExtra, liveExtra, trend: 'none', trendDiff: 0, hasPuanBonus: pBonus, hasSkorBonus: sBonus
               };
             });
-            setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
+            // Filtre uygula
+            const visibleList = list.filter(p => p.puan > 0 || p.id === "262712");
+            setTableRows(visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
           } else {
             let dataMap = masterWeek1Data;
             if(activeTab === 'week2') dataMap = masterWeek2Data;
@@ -323,7 +329,9 @@ export default function MasterPuanDurumuPage() {
                 id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: basePuan, liveExtra: 0, trend: 'none', trendDiff: 0, hasPuanBonus: pBonus, hasSkorBonus: sBonus
               };
             });
-            setTableRows(list.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
+            // Filtre uygula
+            const visibleList = list.filter(p => p.puan > 0 || p.id === "262712");
+            setTableRows(visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')));
           }
         }
       }
