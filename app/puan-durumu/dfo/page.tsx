@@ -170,7 +170,6 @@ export default function DfoPuanDurumuPage() {
             </div>
           </div>
 
-          {/* MASTER SAYFASININ BİREBİR AYNI, ZARİF KUTUCUKLARI (SADECE RENGİ MAVİ) */}
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 md:p-6 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
               {[1, 2, 3, 4, 5].map(num => (
@@ -189,12 +188,13 @@ export default function DfoPuanDurumuPage() {
 
           {tableRows.length > 0 ? (
             <div className="overflow-x-auto">
+              {/* TABLO MİMARİSİ MASTER İLE BİREBİR AYNI YAPILDI */}
               <table className="w-full text-left text-xs md:text-sm">
                 <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                   <tr>
-                    <th className="px-4 md:px-6 py-5 w-24">SIRA</th>
-                    <th className="px-2 md:px-4 py-5">YARIŞMACI</th>
-                    <th className="px-4 md:px-6 py-5 text-right whitespace-nowrap">
+                    <th className="px-2 md:px-4 py-4 w-14 md:w-20 text-left">SIRA</th>
+                    <th className="px-1 md:px-2 py-4 text-left">YARIŞMACI</th>
+                    <th className="px-2 md:px-4 py-4 text-right whitespace-nowrap">
                       {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                     </th>
                   </tr>
@@ -202,12 +202,10 @@ export default function DfoPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="px-4 md:px-6 py-4 text-[#94a3b8] font-medium">
-                        {/* MASTER SAYFASININ BİREBİR AYNI ZIPLAYAN OK YAPISI */}
-                        <div className="flex items-center gap-2">
-                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
-                          <span className="text-[#475569]">-</span>
-                          <div className="w-6 flex justify-center">
+                      <td className="px-2 md:px-4 py-4 text-[#94a3b8] font-medium">
+                        <div className="flex items-center gap-1 md:gap-2">
+                          <span className="w-3 md:w-4 text-left">{row.currentRank || idx + 1}</span>
+                          <div className="w-4 md:w-6 flex justify-center">
                             {activeTab === 'total' ? (
                               <>
                                 {row.trend === 'up' && <span className="text-emerald-400 text-[10px] md:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
@@ -220,22 +218,27 @@ export default function DfoPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 md:px-4 py-4">
-                        <div className="flex items-center gap-2 overflow-hidden text-[#e2e8f0] font-semibold">
+                      <td className="px-1 md:px-2 py-4">
+                        {/* TRUNCATE KALDIRILDI - İSİMLER SOLA YANAŞTI */}
+                        <div className="flex items-center gap-2 text-[#e2e8f0] font-semibold whitespace-nowrap">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
                             const cleanName = row.name.replace(/🏆/g, '').trim();
                             return (
                               <>
-                                <span className="truncate whitespace-nowrap">{cleanName}</span>
+                                <span>{cleanName}</span>
                                 {trophyCount > 0 && <span className="text-amber-400 text-[10px] md:text-xs">{'🏆'.repeat(trophyCount)}</span>}
                               </>
                             );
                           })()}
-                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && <span className="text-emerald-400 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">+{row.liveExtra} CANLI</span>}
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
+                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
+                              +{row.liveExtra} CANLI
+                            </span>
+                          )}
                         </div>
                       </td>
-                      <td className="px-4 md:px-6 py-4 text-right font-bold text-sm md:text-base text-[#60a5fa]">
+                      <td className="px-2 md:px-4 py-4 text-right font-bold text-sm md:text-base text-[#60a5fa]">
                         {row.displayScore}
                       </td>
                     </tr>
