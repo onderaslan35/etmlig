@@ -514,7 +514,9 @@ export default function AdminRadarPortal() {
 
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
       const { data: liveData } = await supabase.from('live_matches').select('*');
-      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek);
+      
+      // 🔴 1000 SATIR LİMİTİNİ AŞAN KRİTİK ÇÖZÜM (.limit(5000))
+      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek).limit(5000);
 
       let currentBulten = bultenData || [];
       if (selectedLiveWeek === 4 && currentBulten.length === 0) {
@@ -619,7 +621,8 @@ export default function AdminRadarPortal() {
     if (activeTab !== 'predictions') return;
 
     const fetchPredictionData = async () => {
-      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
+      // 🔴 TAHMİNLER SEKMESİ İÇİN DE .limit(5000) EKLENDİ
+      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek).limit(5000);
       const pMap: Record<string, string[]> = {};
       const allUserIds = Object.keys(mergedPlayers); 
 
