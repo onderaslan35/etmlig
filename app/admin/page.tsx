@@ -162,7 +162,8 @@ export default function AdminRadarPortal() {
     "MİLLİ TAKIMLAR", "ÇEŞİTLİ AVRUPA TAKIMLARI", "DİĞER"
   ];
 
-  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(4);
+  // 🚀 BURASI DEĞİŞTİ: Artık Canlı Radar doğrudan 5. haftada açılıyor
+  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(5);
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
@@ -228,7 +229,7 @@ export default function AdminRadarPortal() {
        setDbPlayersList(data);
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
-          newMergedMap[String(p.user_id)] = p.full_name; // 🚀 CERRAHİ MÜDAHALE: Veritabanı ID'si kesin olarak String'e çevrildi
+          newMergedMap[String(p.user_id)] = p.full_name; 
        });
        setMergedPlayers(newMergedMap);
     }
@@ -403,7 +404,7 @@ export default function AdminRadarPortal() {
       if (pData) {
          const pMap: Record<string, Record<number, string>> = {};
          pData.forEach(row => {
-            const rowUserId = String(row.user_id); // 🚀 CERRAHİ MÜDAHALE: Veritabanı ID'si kesin olarak String'e çevrildi
+            const rowUserId = String(row.user_id); 
             if(!pMap[rowUserId]) pMap[rowUserId] = {};
             pMap[rowUserId][row.match_index] = row.predicted_score;
          });
@@ -486,7 +487,7 @@ export default function AdminRadarPortal() {
          });
       } else if (pData) {
          pData.forEach(row => {
-            const rowUserId = String(row.user_id); // 🚀 CERRAHİ MÜDAHALE: Veritabanı ID'si kesin olarak String'e çevrildi
+            const rowUserId = String(row.user_id); 
             if (!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
             pMap[rowUserId][row.match_index - 1] = row.predicted_score;
          });
@@ -616,7 +617,6 @@ export default function AdminRadarPortal() {
          stats[uid] = { points: 0, exactScores: 0 };
      });
 
-     // Sadece aktif haftanın maçlarını (liveMatchesDB) döngüye sokuyoruz. (İzolasyon Kuralı)
      liveMatchesDB.forEach(match => {
          const hScore = adminScores[match.match_index]?.home || "-";
          const aScore = adminScores[match.match_index]?.away || "-";
@@ -659,7 +659,6 @@ export default function AdminRadarPortal() {
      let pointsLeader = null;
      let scoreLeader = null;
 
-     // Müstakillik Şartı (Sadece 1 kişi o skorda/puanda ise)
      if (maxPts > 0) {
          const pLeaders = Object.keys(stats).filter(uid => stats[uid].points === maxPts);
          if (pLeaders.length === 1) pointsLeader = pLeaders[0];
@@ -1167,9 +1166,19 @@ export default function AdminRadarPortal() {
                     <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
                        <span className="text-slate-400 font-bold text-xs tracking-wider">AKTİF HAFTA:</span>
                        {userRole === 'master' ? (
-                          <div className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-3 py-1 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] select-none">
-                             {selectedLiveWeek}. HAFTA
-                          </div>
+                          <select 
+                            value={selectedLiveWeek}
+                            onChange={(e) => setSelectedLiveWeek(Number(e.target.value))}
+                            className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
+                          >
+                             <option value={4}>4. HAFTA</option>
+                             <option value={5}>5. HAFTA</option>
+                             <option value={6}>6. HAFTA</option>
+                             <option value={7}>7. HAFTA</option>
+                             <option value={8}>8. HAFTA</option>
+                             <option value={9}>9. HAFTA</option>
+                             <option value={10}>10. HAFTA</option>
+                          </select>
                        ) : (
                           <div className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-3 py-1 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] select-none">
                              {selectedLiveWeek}. HAFTA
