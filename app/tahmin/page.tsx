@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 54 ASLAN PARÇASI (MÜKERRERLERDEN VE İSTENMEYENLERDEN TEMİZLENDİ) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
   "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
@@ -200,16 +199,16 @@ export default function TahminlerPortal() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // SUPABASE TAKIM MOTORU
-      const { data: teamsData } = await supabase.from('teams').select('name, logo_url');
+
+      // 🚀 LOGO HATASI BURADA DÜZELTİLDİ: team_name olarak çekiliyor
+      const { data: teamsData } = await supabase.from('teams').select('team_name, logo_url');
       if (teamsData) {
         const logos: Record<string, string> = {};
-        teamsData.forEach((team: any) => { logos[team.name] = team.logo_url; });
+        teamsData.forEach((team: any) => { logos[team.team_name] = team.logo_url; });
         logos["OLYMPIC LYON"] = "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg";
         setTeamLogosMap(logos);
       }
 
-      // SUPABASE BÜLTEN MOTORU
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -358,7 +357,6 @@ export default function TahminlerPortal() {
 
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
-  // TAHMİNLER SUPABASE'DEN ÇEKİLİYOR
   useEffect(() => {
      const fetchLivePreds = async () => {
         let allData: any[] = [];
@@ -399,7 +397,6 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
-  // OYUNCU LİSTESİ TEST_ACCOUNTS ÜZERİNDEN ÇALIŞACAK
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};

@@ -3,25 +3,22 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 
-// 🔴 İSTEMEYEN KİŞİLERİN (Adam Kral, Dinçer Özer vb.) SİLİNDİĞİ TERTEMİZ 54 KİŞİLİK LİSTE 🔴
+// 🔴 54 ASLAN PARÇASI (KORUNAN LİSTE) 🔴
 const staticPlayersList: Record<string, string> = {
-  "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
-  "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU", "262710": "MUZAFFER ERTUĞRUL",
-  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262713": "VAHİT KÜLCÜ", "262714": "İSMAİL EKER 🏆", "262715": "ŞEMSETTIN DÜGER",
-  "262716": "BİROL DEMİREL", "262717": "MURAT ALİ", "262718": "BEKİR KARADAĞ", "262719": "UĞUR VARDAR", "262720": "HASAN ASLAN",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262722": "MUSTAFA ERKAN", "262723": "AYHAN LUŞOĞLU", "262724": "YÜCEL TOMAK", "262725": "İLYAS KAZDAL",
-  "262726": "HUDAVER TOPARDIC", "262727": "YAHŞİ ERKAN🏆", "262728": "ÖNDER ASLAN", "262729": "HAKAN GÜN", "262730": "ÖNDER IŞIK",
-  "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA 🏆🏆", "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ",
-  "262736": "MEHMET ALİ KARA", "262737": "ŞAHİN GEZGİNCİ", "262738": "MEVLÜT EVLER", "262739": "UĞUR GÜRBÜZ", "262740": "ABDULLAH DİK",
-  "262741": "SABAHATTİN ÇAYLAK", "262742": "ZEKERiYYA TOPKAYYA", "262743": "MEHMET ALİ ŞAHİN", "262744": "İLYAS UYGUN", "262745": "OĞUZ YILDIRIMKAYA",
-  "262746": "MEHMET BAYIR", "262747": "SAVAŞ ÇAĞLAYAN", "262748": "YASİN ŞAHİN", "262749": "B.VEYSELOĞLU EROL", "262750": "MAHMUT CBR",
-  "262751": "HÜSEYİN ERBAŞ", "262810": "ADEM BULUT ERTÜRK", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN 🏆", "262755": "DOĞAÇ ALKAN",
-  "262756": "EYÜP KARACAOĞLU", "262813": "KEMAL ERSOY", "262758": "MELİH PINAR", "262762": "İLHAN DANIŞ", "262763": "MUSTAFA ELMAS",
-  "262770": "OZKAYA MAZAKALI BAYRAM", "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA 🏆", "262760": "UĞUR NES", "262774": "ŞENOL CAN ÇAKICI",
-  "262776": "CUMA OKUR", "262777": "MİRAÇ TOPAL", "262778": "CENGİZ SAYAN", "262780": "YUSUF KILIÇ", "262781": "KADİR SOLMAZ",
-  "262782": "YUSUF ERBAY", "262783": "YASİN AYAN", "262784": "MEHMET AVCI", "262785": "METE BÜYÜKGÖL 🏆", "262786": "SEDAT DİŞLİ",
-  "262787": "MUSTAFA TUCİ", "262788": "HAKAN ÇİFTÇİ", "262789": "ALİ ABUKAN", "262790": "CUMALİ SÖKER", "351925": "ALİOS GÖZTEPE",
-  "262815": "MURAT KAYA", "262816": "SEDAT SEDAT", "262795": "SEFA İÇA", "262796": "D. SERGEN TAŞYÜREK", "262797": "ÖMER DOGER"
+  "262736": "MEHMET ALİ KARA", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262756": "EYÜP KARACAOĞLU",
+  "262786": "SEDAT DİŞLİ", "262719": "UĞUR VARDAR", "262733": "MUHSİN ASİLKAN", "262726": "HUDAVER TOPARDIC",
+  "262714": "İSMAİL EKER 🏆", "262717": "MURAT ALİ", "262774": "ŞENOL CAN ÇAKICI", "262728": "ÖNDER ASLAN",
+  "262709": "SALİH KARACAOĞLU", "262813": "KEMAL ERSOY", "262754": "OSMAN ALİ AYDIN 🏆", "262721": "MUSTAFA GÜMÜŞÇÜ",
+  "262711": "RIDVAN DOGER", "262707": "HAKAN AYAN", "262771": "ULAŞ ADIGÜZEL", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262790": "CUMALİ SÖKER", "262730": "ÖNDER IŞIK", "262702": "MURAT KARA", "262753": "YUSUF KIZILTUĞ",
+  "262738": "MEVLÜT EVLER", "262734": "LEVENT YILDIRIM", "262758": "MELİH PINAR", "262731": "FATİH AYAN",
+  "262763": "MUSTAFA ELMAS", "262705": "AHMET BİRCAN 🏆", "262706": "GAZİ AYAN 🏆🏆", "262772": "CEMAL SİVRİKAYA 🏆",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262723": "AYHAN LUŞOĞLU", "351925": "ALİOS GÖZTEPE", "262750": "MAHMUT CBR",
+  "262782": "YUSUF ERBAY", "262704": "YAPAY ZEKA", "262725": "İLYAS KAZDAL", "262716": "BİROL DEMİREL",
+  "262740": "ABDULLAH DİK", "262749": "B.VEYSELOĞLU EROL", "262737": "ŞAHİN GEZGİNCİ", "262718": "BEKİR KARADAĞ",
+  "262770": "OZKAYA MAZAKALI BAYRAM", "262703": "CEMALETTİN BELLİ", "262739": "UĞUR GÜRBÜZ", "262715": "ŞEMSETTIN DÜGER",
+  "262708": "BAYRAM YILMAZ", "262744": "İLYAS UYGUN", "262787": "MUSTAFA TUCİ", "262712": "MURAT AYDEMİR",
+  "262741": "SABAHATTİN ÇAYLAK", "262735": "AYGÜN AKKEÇELİ"
 };
 
 const TFF_CATEGORIES = [
@@ -99,11 +96,6 @@ export default function AdminRadarPortal() {
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
-  const [newPlayerId, setNewPlayerId] = useState('');
-  const [newPlayerName, setNewPlayerName] = useState('');
-  const [newPlayerPass, setNewPlayerPass] = useState('');
-  const [isPlayerLoading, setIsPlayerLoading] = useState(false);
-
   const [dbTeamsList, setDbTeamsList] = useState<any[]>([]);
   const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>({});
   const [leagueTeamsMap, setLeagueTeamsMap] = useState<Record<string, string[]>>({});
@@ -190,7 +182,6 @@ export default function AdminRadarPortal() {
   }, [isAuthenticated, userRole]);
 
   const fetchAllSystemPlayers = async () => {
-    // Supabase'den çekme işlemi iptal edildi, doğrudan statik liste kullanılıyor
     const formattedPlayers = Object.keys(staticPlayersList).map(id => ({
         id: id,
         user_id: id,
@@ -202,17 +193,18 @@ export default function AdminRadarPortal() {
     setMergedPlayers(staticPlayersList);
   };
 
+  // 🚀 LOGO HATASI BURADA DÜZELTİLDİ: name -> team_name, category -> league
   const fetchAllTeamsFromDB = async () => {
-    const { data } = await supabase.from('teams').select('*').order('name'); 
+    const { data } = await supabase.from('teams').select('*').order('team_name'); 
     if (data) {
        setDbTeamsList(data);
        const logos: Record<string, string> = {};
        const leagues: Record<string, string[]> = {};
 
        data.forEach((team: any) => {
-           logos[team.name] = team.logo_url;
-           if (!leagues[team.category]) leagues[team.category] = [];
-           leagues[team.category].push(team.name);
+           logos[team.team_name] = team.logo_url;
+           if (!leagues[team.league]) leagues[team.league] = [];
+           leagues[team.league].push(team.team_name);
        });
 
        logos["OLYMPIC LYON"] = "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg";
@@ -455,7 +447,8 @@ export default function AdminRadarPortal() {
     if (!newTeamName || !newTeamLeague || !newTeamLogo) return;
     setIsTeamLoading(true);
     try {
-       const { error } = await supabase.from('teams').insert({ name: newTeamName.trim().toUpperCase(), category: newTeamLeague.trim().toUpperCase(), logo_url: newTeamLogo.trim() });
+       // 🚀 DÜZELTME BURADA DA YAPILDI: team_name ve league olarak kaydediliyor
+       const { error } = await supabase.from('teams').insert({ team_name: newTeamName.trim().toUpperCase(), league: newTeamLeague.trim().toUpperCase(), logo_url: newTeamLogo.trim() });
        if (error) throw error;
        alert(`✅ BAŞARILI!`);
        setNewTeamName(''); setNewTeamLogo(''); setNewTeamLeague('');
@@ -468,7 +461,7 @@ export default function AdminRadarPortal() {
     const confirmDelete = window.confirm(`DİKKAT: ${teamName} silinecek. Emin misiniz?`);
     if (!confirmDelete) return;
     try {
-       const { error } = await supabase.from('teams').delete().eq('name', teamName);
+       const { error } = await supabase.from('teams').delete().eq('team_name', teamName);
        if (error) throw error;
        alert(`✅ Silindi!`);
        fetchAllTeamsFromDB(); 
@@ -780,7 +773,7 @@ export default function AdminRadarPortal() {
 
     if (leagueKey === "REST OF WORLD" || leagueKey === "DİĞER" || !leagueTeamsMap[leagueKey]) {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        const allTeamsInSystem = dbTeamsList.map(t => t.name).sort((a, b) => a.localeCompare(b, 'tr')); 
+        const allTeamsInSystem = dbTeamsList.map(t => t.team_name).sort((a, b) => a.localeCompare(b, 'tr')); 
         return allTeamsInSystem.filter(t => t !== opponent);
     }
 
@@ -1482,15 +1475,15 @@ export default function AdminRadarPortal() {
                          <div key={t.id} className="bg-slate-950/80 border border-slate-800 p-2 sm:p-3 rounded-xl flex justify-between items-center group hover:border-cyan-900/50 transition-colors gap-2">
                             <div className="flex items-center gap-3 overflow-hidden">
                                <div className="w-10 h-10 bg-slate-900 rounded border border-slate-700 flex items-center justify-center flex-shrink-0 p-1">
-                                  <img src={t.logo_url} alt={t.name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                                  <img src={t.logo_url} alt={t.team_name} className="max-w-full max-h-full object-contain drop-shadow-md" />
                                </div>
                                <div className="flex flex-col overflow-hidden">
-                                  <span className="font-black text-slate-200 text-[11px] sm:text-xs uppercase tracking-wide truncate">{t.name}</span>
-                                  <span className="text-[9px] sm:text-[10px] font-bold text-cyan-500/70 tracking-widest mt-0.5 truncate">{t.category}</span>
+                                  <span className="font-black text-slate-200 text-[11px] sm:text-xs uppercase tracking-wide truncate">{t.team_name}</span>
+                                  <span className="text-[9px] sm:text-[10px] font-bold text-cyan-500/70 tracking-widest mt-0.5 truncate">{t.league}</span>
                                </div>
                             </div>
                             <button 
-                              onClick={() => handleDeleteTeam(t.name)}
+                              onClick={() => handleDeleteTeam(t.team_name)}
                               className="flex-shrink-0 bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-2 py-1.5 rounded-lg text-[9px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
                             >
                                ❌ SİL
