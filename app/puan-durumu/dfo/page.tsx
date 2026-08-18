@@ -149,34 +149,36 @@ export default function DfoPuanDurumuPage() {
       <div className="w-full mb-6"><LiveMatchCard /></div>
       
       <div className="w-full max-w-3xl mx-auto">
+        {/* ANA BUTON - KALINLIK AZALTILDI (py-3 yapıldı) */}
         <button 
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
-          className="w-full bg-[#1d4ed8] hover:bg-blue-600 text-white font-bold text-sm md:text-base py-4 px-4 rounded-xl mb-4 transition-colors uppercase tracking-wide"
+          className="w-full bg-[#1d4ed8] hover:bg-blue-600 text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
         >
           {activeTab === 'total' ? 'DFO TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
         </button>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
+          {/* AKORDİYON BAR - KALINLIK AZALTILDI (py-3 yapıldı) */}
           <div 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-full flex items-center justify-between p-4 md:p-5 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
+            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
           >
-            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] md:text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
               <span>📅</span>
               <span>{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
             </div>
-            <div className="text-slate-400 font-bold text-[10px] md:text-xs uppercase flex items-center gap-1 tracking-widest">
+            <div className="text-slate-400 font-bold text-[10px] uppercase flex items-center gap-1 tracking-widest">
               {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
             </div>
           </div>
 
           {isMenuOpen && (
-            <div className="w-full bg-[#0a0f1c] p-4 md:p-6 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
+            <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
               {[1, 2, 3, 4, 5].map(num => (
                 <button
                   key={num}
                   onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
-                  className={`w-12 h-10 md:w-16 md:h-12 flex items-center justify-center rounded-lg font-bold text-sm md:text-base transition-all ${
+                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
                     activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
                   }`}
                 >
@@ -188,13 +190,13 @@ export default function DfoPuanDurumuPage() {
 
           {tableRows.length > 0 ? (
             <div className="overflow-x-auto">
-              {/* TABLO MİMARİSİ MASTER İLE BİREBİR AYNI YAPILDI */}
               <table className="w-full text-left text-xs md:text-sm">
                 <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                   <tr>
-                    <th className="px-2 md:px-4 py-4 w-14 md:w-20 text-left">SIRA</th>
-                    <th className="px-1 md:px-2 py-4 text-left">YARIŞMACI</th>
-                    <th className="px-2 md:px-4 py-4 text-right whitespace-nowrap">
+                    {/* BAŞLIK SATIRI İNCELTİLDİ (py-3) */}
+                    <th className="px-4 py-3 w-16 text-left">SIRA</th>
+                    <th className="px-2 py-3 text-left">YARIŞMACI</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">
                       {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                     </th>
                   </tr>
@@ -202,15 +204,17 @@ export default function DfoPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="px-2 md:px-4 py-4 text-[#94a3b8] font-medium">
-                        <div className="flex items-center gap-1 md:gap-2">
-                          <span className="w-3 md:w-4 text-left">{row.currentRank || idx + 1}</span>
-                          <div className="w-4 md:w-6 flex justify-center">
+                      {/* TÜM SATIRLAR İNCELTİLDİ (py-3) */}
+                      <td className="px-4 py-3 text-[#94a3b8] font-medium">
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
+                          <span className="text-[#475569]">-</span>
+                          <div className="w-6 flex justify-center">
                             {activeTab === 'total' ? (
                               <>
-                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] md:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
-                                {row.trend === 'down' && <span className="text-red-500 text-[10px] md:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
-                                {row.trend === 'same' && <span className="text-transparent text-[8px] md:text-[10px]">-</span>}
+                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
                               </>
                             ) : (
                               <span className="text-transparent">-</span>
@@ -218,8 +222,7 @@ export default function DfoPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-1 md:px-2 py-4">
-                        {/* TRUNCATE KALDIRILDI - İSİMLER SOLA YANAŞTI */}
+                      <td className="px-2 py-3">
                         <div className="flex items-center gap-2 text-[#e2e8f0] font-semibold whitespace-nowrap">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
@@ -227,18 +230,18 @@ export default function DfoPuanDurumuPage() {
                             return (
                               <>
                                 <span>{cleanName}</span>
-                                {trophyCount > 0 && <span className="text-amber-400 text-[10px] md:text-xs">{'🏆'.repeat(trophyCount)}</span>}
+                                {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
                               </>
                             );
                           })()}
                           {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
-                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
+                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
                               +{row.liveExtra} CANLI
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-2 md:px-4 py-4 text-right font-bold text-sm md:text-base text-[#60a5fa]">
+                      <td className="px-4 py-3 text-right font-bold text-sm text-[#60a5fa]">
                         {row.displayScore}
                       </td>
                     </tr>
