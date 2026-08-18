@@ -129,23 +129,23 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🚀 HAFTALARA GÖRE BENZERSİZ ID OLUŞTURUCU (ÇAKIŞMAYI ÖNLER!)
-const getUniqueMatchId = (week: number, index: number) => {
-    if (week === 4) return index; 
-    return (week * 100) + index; // Örn: 5. hafta 1. maç = 501 olur.
-};
-
 // 🚀 OTOMATİK ZAMAN MOTORU (TÜRKİYE SAATİ DESTEKLİ)
 const getActiveWeekByDate = () => {
   const nowUTC = new Date();
   const nowTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
-  const baseDate = new Date(Date.UTC(2026, 7, 18, 0, 0, 0)).getTime(); // 18 Ağustos 2026 UTC
+  const baseDate = new Date(Date.UTC(2026, 7, 18, 0, 0, 0)).getTime(); 
   
   const diffTime = nowTurkey.getTime() - baseDate;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   if (diffDays < 0) return 4; 
   return 5 + Math.floor(diffDays / 7);
+};
+
+// 🚀 BENZERSİZ ID OLUŞTURUCU (Puan kartının geçen haftayı okumasını engeller)
+const getUniqueMatchId = (week: number, index: number) => {
+    if (week === 4) return index; 
+    return (week * 100) + index;
 };
 
 export default function LiveMatchCard() {
@@ -265,14 +265,14 @@ export default function LiveMatchCard() {
 
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
-      // BÜLTENDEN ÇEKİYORUZ
+      // 🌟 DİKKAT: Artık bülteni "matches_bulletin" tablosundan okuyoruz!
       const { data: dbBulletinMatches } = await supabase
         .from('matches_bulletin')
         .select('*')
         .eq('week_num', activeWeek)
         .order('match_index', { ascending: true });
 
-      // SKORLARI ÇEKİYORUZ
+      // Skorları ve statüleri ise "live_matches" tablosundan alacağız
       const { data: dbLiveMatches } = await supabase
         .from('live_matches')
         .select('*');
@@ -282,11 +282,12 @@ export default function LiveMatchCard() {
         .select('*')
         .eq('week_num', activeWeek);
 
+      // 🚀 UYARI: BURADA DİZİ (ARRAY) KAYMASI ÇÖZÜLDÜ (match_index - 1 kullanıldı)
       const predDict: Record<string, string[]> = {};
       if (dbPredictions) {
         dbPredictions.forEach(pred => {
           if (!predDict[pred.user_id]) {
-            predDict[pred.user_id] = Array(24).fill('');
+            predDict[pred.user_id] = Array(24).fill('-');
           }
           predDict[pred.user_id][pred.match_index - 1] = pred.predicted_score;
         });
@@ -328,10 +329,13 @@ export default function LiveMatchCard() {
           // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
           const uniqueId = getUniqueMatchId(activeWeek, match.id);
           const dbMatch = liveMap[uniqueId];
+          
           if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             hasLiveScores = true;
             const isTff = isTffMatchCheck(match.category);
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            
+            // 🚀 DÜZELTİLDİ: Artık match.id - 1 indeksine bakarak doğru oyuncuları buluyor
             const winnerIds = Object.keys(predDict).filter(id => predDict[id][match.id - 1] === targetScore);
             
             let points = 1;
@@ -450,6 +454,7 @@ export default function LiveMatchCard() {
       if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
         const targetScore = `${homeScore}-${awayScore}`;
         currentWinners = Object.keys(predictionsData)
+          // 🚀 DÜZELTME: match.id - 1 KULLANILDI, KAYMA ENGELLENDİ
           .filter(id => predictionsData[id] && predictionsData[id][match.id - 1] === targetScore)
           .map(id => allPlayersList[id])
           .filter(name => name)
