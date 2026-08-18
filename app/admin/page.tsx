@@ -500,6 +500,8 @@ export default function AdminRadarPortal() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    
+    // 🔴🔴 ZIRHLI CHUNKING (PAGINATION) ALGORİTMASI 🔴🔴
     const fetchLiveAdminData = async () => {
       
       if (userRole && userRole.startsWith('skorcum')) {
@@ -515,8 +517,35 @@ export default function AdminRadarPortal() {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
       const { data: liveData } = await supabase.from('live_matches').select('*');
       
-      // 🔴 1000 SATIR LİMİTİNİ AŞAN KRİTİK ÇÖZÜM (.limit(5000))
-      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek).limit(5000);
+      // 👉 Tüm tahminleri 1000'er 1000'er parçalayarak çekme garantisi
+      let allPredictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+
+      while (fetchMore) {
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', selectedLiveWeek)
+          .range(from, from + step - 1);
+          
+        if (error) {
+           console.error("Tahminler çekilirken hata:", error);
+           break;
+        }
+
+        if (pDataChunk && pDataChunk.length > 0) {
+           allPredictions = [...allPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) {
+              fetchMore = false; 
+           } else {
+              from += step; 
+           }
+        } else {
+           fetchMore = false; 
+        }
+      }
 
       let currentBulten = bultenData || [];
       if (selectedLiveWeek === 4 && currentBulten.length === 0) {
@@ -564,9 +593,9 @@ export default function AdminRadarPortal() {
          audio.play().catch(e => console.log("Ses çalınamadı:", e));
       }
 
-      if (pData) {
+      if (allPredictions.length > 0) {
          const pMap: Record<string, string[]> = {};
-         pData.forEach(row => {
+         allPredictions.forEach(row => {
             const rowUserId = String(row.user_id);
             if(!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
             pMap[rowUserId][row.match_index - 1] = row.predicted_score;
@@ -620,9 +649,29 @@ export default function AdminRadarPortal() {
     if (!isAuthenticated || userRole !== 'master') return;
     if (activeTab !== 'predictions') return;
 
+    // 🔴 TAHMİNLER SEKMESİ İÇİN DE AYNI CHUNKING MANTIĞI EKLENDİ 🔴
     const fetchPredictionData = async () => {
-      // 🔴 TAHMİNLER SEKMESİ İÇİN DE .limit(5000) EKLENDİ
-      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek).limit(5000);
+      let allPredictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+
+      while (fetchMore) {
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', selectedPredictionWeek)
+          .range(from, from + step - 1);
+          
+        if (!error && pDataChunk && pDataChunk.length > 0) {
+           allPredictions = [...allPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
+        } else {
+           fetchMore = false; 
+        }
+      }
+
       const pMap: Record<string, string[]> = {};
       const allUserIds = Object.keys(mergedPlayers); 
 
@@ -632,8 +681,8 @@ export default function AdminRadarPortal() {
                pMap[id] = week4PredictionsData[id];
             }
          });
-      } else if (pData) {
-         pData.forEach(row => {
+      } else if (allPredictions.length > 0) {
+         allPredictions.forEach(row => {
             const rowUserId = String(row.user_id);
             if (!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
             pMap[rowUserId][row.match_index - 1] = row.predicted_score;
@@ -980,75 +1029,6 @@ export default function AdminRadarPortal() {
     else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     
     return theme;
-  };
-
-  // 🚀 YENİ AKILLI KİLİT VE LOJİSTİK FONKSİYONU 🚀
-  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
-    const currentMatch = bulletinMatches[currentIndex];
-    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
-    const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-    
-    if (!currentCat) return [];
-
-    let havuz = LIG_HAVUZU[currentCat] || LIG_HAVUZU["ÇEŞİTLİ AVRUPA TAKIMLARI"] || [];
-
-    if (currentCat.includes("UEFA") || currentCat.includes("ŞAMPİYONLAR LİGİ")) {
-       havuz = LIG_HAVUZU["ÇEŞİTLİ AVRUPA TAKIMLARI"];
-    }
-
-    const fullHavuz = Array.from(new Set([...havuz, ...dynamicTeamsList]));
-    const usedTeams = new Set<string>();
-
-    bulletinMatches.forEach((m, idx) => {
-       if (idx === currentIndex) return; 
-       
-       const mCat = m.category ? m.category.toUpperCase() : '';
-       
-       if (currentCat === mCat) {
-           if (m.home_team) usedTeams.add(m.home_team);
-           if (m.away_team) usedTeams.add(m.away_team);
-       }
-    });
-
-    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const handleBulletinChange = (index: number, field: string, value: string) => {
-    const newMatches = [...bulletinMatches];
-    (newMatches[index] as any)[field] = value;
-    if (field === 'category') {
-        newMatches[index].home_team = ''; newMatches[index].away_team = '';
-    }
-    setBulletinMatches(newMatches);
-  };
-
-  const copyDateTimeToAll = () => {
-    const firstDate = bulletinMatches[0].match_date;
-    const firstTime = bulletinMatches[0].match_time;
-    if(!firstDate || !firstTime) return alert("Önce 1. maçın tarih ve saatini doldurun!");
-    const updated = bulletinMatches.map(m => ({ ...m, match_date: firstDate, match_time: firstTime }));
-    setBulletinMatches(updated);
-  };
-
-  const saveBulletinToDB = async () => {
-    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
-    if (hasEmpty) {
-       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
-    }
-
-    setIsPublishing(true);
-    try {
-      const payload = bulletinMatches.map(m => ({
-         week_num: bulletinWeek, match_index: m.match_index, category: m.category,
-         match_date: m.match_date, match_time: m.match_time,
-         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase()
-      }));
-
-      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
-      if (error) throw error;
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni veritabanına mühürlendi!\n\nŞu an:\n1. Maç Arşivi'nde ${bulletinWeek}. Hafta otomatik olarak oluştu.\n2. Lobi ekranı kapılarını açmak için Cuma 21:00'ı bekliyor.`);
-    } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
-    setIsPublishing(false);
   };
 
   if (!isAuthenticated) {
