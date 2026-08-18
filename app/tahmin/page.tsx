@@ -3,65 +3,63 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 54 YARIŞMACI + MANKOMAN (İstenmeyen isimler silindi) 🔴
+// 🔴 54 ASLAN PARÇASI (MÜKERRERLERDEN VE İSTENMEYENLERDEN TEMİZLENDİ) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
-  "262740": { pass: "49400", name: "ABDULLAH DİK" },
-  "262705": { pass: "14050", name: "AHMET BİRCAN 🏆" },
-  "351925": { pass: "19250", name: "ALİOS GÖZTEPE" },
-  "262735": { pass: "19250", name: "AYGÜN AKKEÇELİ" },
-  "262723": { pass: "32230", name: "AYHAN LUŞOĞLU" },
-  "262749": { pass: "58490", name: "B.VEYSELOĞLU EROL" },
-  "262708": { pass: "17080", name: "BAYRAM YILMAZ" },
-  "262718": { pass: "27180", name: "BEKİR KARADAĞ" },
-  "262716": { pass: "25160", name: "BİROL DEMİREL" },
-  "262772": { pass: "81720", name: "CEMAL SİVRİKAYA 🏆" },
-  "262703": { pass: "12030", name: "CEMALETTİN BELLİ" },
-  "262790": { pass: "99880", name: "CUMALİ SÖKER" },
-  "262755": { pass: "64550", name: "DOĞAÇ ALKAN" },
-  "262756": { pass: "65560", name: "EYÜP KARACAOĞLU" },
-  "262731": { pass: "40310", name: "FATİH AYAN" },
-  "262706": { pass: "15060", name: "GAZİ AYAN 🏆🏆" },
-  "262707": { pass: "16070", name: "HAKAN AYAN" },
-  "262726": { pass: "35260", name: "HUDAVER TOPARDIC" },
-  "262762": { pass: "71620", name: "İLHAN DANIŞ" },
-  "262725": { pass: "34250", name: "İLYAS KAZDAL" },
-  "262744": { pass: "53440", name: "İLYAS UYGUN" },
-  "262714": { pass: "23140", name: "İSMAİL EKER 🏆" },
-  "262813": { pass: "28620", name: "KEMAL ERSOY" },
-  "262734": { pass: "43340", name: "LEVENT YILDIRIM" },
-  "262750": { pass: "59500", name: "MAHMUT CBR" },
   "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
-  "262758": { pass: "67580", name: "MELİH PINAR" },
-  "262738": { pass: "47380", name: "MEVLÜT EVLER" },
-  "262733": { pass: "42330", name: "MUHSİN ASİLKAN" },
-  "262717": { pass: "26170", name: "MURAT ALİ" },
-  "262712": { pass: "21120", name: "MURAT AYDEMİR" },
-  "262702": { pass: "11020", name: "MURAT KARA" },
-  "262763": { pass: "72630", name: "MUSTAFA ELMAS" },
-  "262721": { pass: "30210", name: "MUSTAFA GÜMÜŞÇÜ" },
-  "262787": { pass: "96870", name: "MUSTAFA TUCİ" },
-  "262745": { pass: "54450", name: "OĞUZ YILDIRIMKAYA" },
-  "262754": { pass: "63540", name: "OSMAN ALİ AYDIN 🏆" },
-  "262770": { pass: "79700", name: "OZKAYA MAZAKALI BAYRAM" },
-  "262728": { pass: "35280", name: "ÖNDER ASLAN" },
-  "262730": { pass: "39300", name: "ÖNDER IŞIK" },
-  "262732": { pass: "41320", name: "R. İLHAN KARACA 🏆🏆" },
-  "262711": { pass: "20110", name: "RIDVAN DOGER" },
-  "262741": { pass: "50410", name: "SABAHATTİN ÇAYLAK" },
-  "262709": { pass: "18090", name: "SALİH KARACAOĞLU" },
-  "262747": { pass: "56470", name: "SAVAŞ ÇAĞLAYAN" },
-  "262786": { pass: "95860", name: "SEDAT DİŞLİ" },
+  "262755": { pass: "64550", name: "DOĞAÇ ALKAN" },
   "262816": { pass: "61820", name: "SEDAT SEDAT" },
-  "262737": { pass: "46370", name: "ŞAHİN GEZGİNCİ" },
-  "262715": { pass: "24150", name: "ŞEMSETTIN DÜGER" },
-  "262774": { pass: "83740", name: "ŞENOL CAN ÇAKICI" },
-  "262739": { pass: "48390", name: "UĞUR GÜRBÜZ" },
+  "262756": { pass: "65560", name: "EYÜP KARACAOĞLU" },
+  "262786": { pass: "95860", name: "SEDAT DİŞLİ" },
   "262719": { pass: "28190", name: "UĞUR VARDAR" },
+  "262733": { pass: "42330", name: "MUHSİN ASİLKAN" },
+  "262726": { pass: "35260", name: "HUDAVER TOPARDIC" },
+  "262714": { pass: "23140", name: "İSMAİL EKER 🏆" },
+  "262717": { pass: "26170", name: "MURAT ALİ" },
+  "262774": { pass: "83740", name: "ŞENOL CAN ÇAKICI" },
+  "262728": { pass: "35280", name: "ÖNDER ASLAN" },
+  "262709": { pass: "18090", name: "SALİH KARACAOĞLU" },
+  "262813": { pass: "28620", name: "KEMAL ERSOY" },
+  "262754": { pass: "63540", name: "OSMAN ALİ AYDIN 🏆" },
+  "262721": { pass: "30210", name: "MUSTAFA GÜMÜŞÇÜ" },
+  "262711": { pass: "20110", name: "RIDVAN DOGER" },
+  "262707": { pass: "16070", name: "HAKAN AYAN" },
   "262771": { pass: "80710", name: "ULAŞ ADIGÜZEL" },
-  "262704": { pass: "13040", name: "YAPAY ZEKA" },
+  "262732": { pass: "41320", name: "R. İLHAN KARACA 🏆🏆" },
+  "262790": { pass: "99880", name: "CUMALİ SÖKER" },
+  "262730": { pass: "39300", name: "ÖNDER IŞIK" },
+  "262702": { pass: "11020", name: "MURAT KARA" },
+  "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" },
+  "262738": { pass: "47380", name: "MEVLÜT EVLER" },
+  "262734": { pass: "43340", name: "LEVENT YILDIRIM" },
+  "262758": { pass: "67580", name: "MELİH PINAR" },
+  "262731": { pass: "40310", name: "FATİH AYAN" },
+  "262763": { pass: "72630", name: "MUSTAFA ELMAS" },
+  "262705": { pass: "14050", name: "AHMET BİRCAN 🏆" },
+  "262706": { pass: "15060", name: "GAZİ AYAN 🏆🏆" },
+  "262772": { pass: "81720", name: "CEMAL SİVRİKAYA 🏆" },
+  "262747": { pass: "56470", name: "SAVAŞ ÇAĞLAYAN" },
+  "262723": { pass: "32230", name: "AYHAN LUŞOĞLU" },
+  "351925": { pass: "19250", name: "ALİOS GÖZTEPE" },
+  "262750": { pass: "59500", name: "MAHMUT CBR" },
   "262782": { pass: "91820", name: "YUSUF ERBAY" },
-  "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" }
+  "262704": { pass: "13040", name: "YAPAY ZEKA" },
+  "262725": { pass: "34250", name: "İLYAS KAZDAL" },
+  "262716": { pass: "25160", name: "BİROL DEMİREL" },
+  "262740": { pass: "49400", name: "ABDULLAH DİK" },
+  "262749": { pass: "58490", name: "B.VEYSELOĞLU EROL" },
+  "262737": { pass: "46370", name: "ŞAHİN GEZGİNCİ" },
+  "262718": { pass: "27180", name: "BEKİR KARADAĞ" },
+  "262770": { pass: "79700", name: "OZKAYA MAZAKALI BAYRAM" },
+  "262703": { pass: "12030", name: "CEMALETTİN BELLİ" },
+  "262739": { pass: "48390", name: "UĞUR GÜRBÜZ" },
+  "262715": { pass: "24150", name: "ŞEMSETTIN DÜGER" },
+  "262708": { pass: "17080", name: "BAYRAM YILMAZ" },
+  "262744": { pass: "53440", name: "İLYAS UYGUN" },
+  "262787": { pass: "96870", name: "MUSTAFA TUCİ" },
+  "262712": { pass: "21120", name: "MURAT AYDEMİR" },
+  "262741": { pass: "50410", name: "SABAHATTİN ÇAYLAK" },
+  "262735": { pass: "19250", name: "AYGÜN AKKEÇELİ" }
 };
 
 const normalizeTurkish = (text: string) => {
@@ -202,7 +200,7 @@ export default function TahminlerPortal() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // 🚀 SUPABASE'DEN TAKIMLARI VE LOGOLARI ÇEK
+      // SUPABASE TAKIM MOTORU
       const { data: teamsData } = await supabase.from('teams').select('name, logo_url');
       if (teamsData) {
         const logos: Record<string, string> = {};
@@ -211,7 +209,7 @@ export default function TahminlerPortal() {
         setTeamLogosMap(logos);
       }
 
-      // 🚀 SUPABASE'DEN BÜLTENİ ÇEK
+      // SUPABASE BÜLTEN MOTORU
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -360,7 +358,7 @@ export default function TahminlerPortal() {
 
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
-  // 🚀 TAHMİNLER SUPABASE'DEN ÇEKİLİYOR
+  // TAHMİNLER SUPABASE'DEN ÇEKİLİYOR
   useEffect(() => {
      const fetchLivePreds = async () => {
         let allData: any[] = [];
@@ -401,7 +399,7 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
-  // 🚀 OYUNCU LİSTESİ SADECE TAHMİN YAPAN ASLAN PARÇALARINI GÖSTERECEK ŞEKİLDE AYARLANDI
+  // OYUNCU LİSTESİ TEST_ACCOUNTS ÜZERİNDEN ÇALIŞACAK
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
