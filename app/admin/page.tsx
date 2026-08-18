@@ -21,7 +21,7 @@ const staticPlayersList: Record<string, string> = {
   "262741": "SABAHATTİN ÇAYLAK", "262735": "AYGÜN AKKEÇELİ"
 };
 
-// 🔴 YEREL & BULUT LOGO BANKASI (MAÇ ARŞİVİNDEN BİREBİR KOPYALANDI) 🔴
+// 🔴 YEREL & BULUT LOGO BANKASI (MAÇ ARŞİVİNDEN BİREBİR) 🔴
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -157,6 +157,7 @@ export default function AdminRadarPortal() {
   const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
+  
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions'>('live');
   const [mergedPlayers] = useState<Record<string, string>>(staticPlayersList);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
@@ -173,9 +174,8 @@ export default function AdminRadarPortal() {
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
 
-  // MAÇ ARŞİVİNDE BÜLTEN KATEGORİSİ/EDİTLEME VS OLMADIĞI İÇİN BURALARI SADELEŞTİRDİM.
-  // SADECE CANLI SKOR GİRİŞİ YAPACAKSINIZ
-  const [bulletinWeek, setBulletinWeek] = useState<number>(5);
+  // 🚀 TİP HATASINI ÇÖzen EKSİK STATE TANIMLAMALARI 🚀
+  const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
   const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(5);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
@@ -257,7 +257,6 @@ export default function AdminRadarPortal() {
          } catch(e) {}
       }
 
-      // MAÇ ARŞİVİ GİBİ BULLETİN ÇEKİLİYOR
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
       const { data: liveData } = await supabase.from('live_matches').select('*');
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedLiveWeek);
@@ -328,7 +327,10 @@ export default function AdminRadarPortal() {
       allUserIds.forEach(id => { if (pMap[id]) submitted.push(id); else missing.push(id); });
       submitted.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
       missing.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
-      setPlayerPredictionsMap(pMap); setSubmittedPlayers(submitted); setMissingPlayers(missing);
+      
+      setPlayerPredictionsMap(pMap);
+      setSubmittedPlayers(submitted);
+      setMissingPlayers(missing);
     };
     fetchPredictionData();
   }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
@@ -510,9 +512,8 @@ export default function AdminRadarPortal() {
                 const homeTeamUpper = cleanTeamName(match.home_team || match.homeTeam);
                 const awayTeamUpper = cleanTeamName(match.away_team || match.awayTeam);
 
-                // 🚀 BİREBİR MAÇ ARŞİVİNDEN KOPYALANAN LOGO MANTIĞI 🚀
-                const homeLogoUrl = localTeamLogos[homeTeamUpper] || "/logos/default.png";
-                const awayLogoUrl = localTeamLogos[awayTeamUpper] || "/logos/default.png";
+                const homeLogoUrl = match.home_logo || "/logos/default.png";
+                const awayLogoUrl = match.away_logo || "/logos/default.png";
 
                 const homeScore = adminScores[match.match_index]?.home || "-";
                 const awayScore = adminScores[match.match_index]?.away || "-";
