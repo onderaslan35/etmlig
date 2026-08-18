@@ -89,7 +89,10 @@ const localTeamLogos: Record<string, string> = {
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLYMPIQUE LYON": "/logos/lyon.png", "LYON": "/logos/lyon.png", 
+  "HAMMARBY": "/logos/hammarby.png", 
+  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg", 
+  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg", 
+  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
@@ -254,7 +257,6 @@ export default function LiveMatchCard() {
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
       // 🌟 DİKKAT: Artık bülteni "matches_bulletin" tablosundan okuyoruz!
-      // Bu tabloda home_team, away_team, match_date vb. tüm bilgileriniz dolu.
       const { data: dbBulletinMatches } = await supabase
         .from('matches_bulletin')
         .select('*')
@@ -309,7 +311,7 @@ export default function LiveMatchCard() {
         // Skor bilgilerini "live_matches" tablosundan mapliyoruz
         const liveMap: Record<number, any> = {};
         if (dbLiveMatches) {
-          dbLiveMatches.forEach(row => liveMap[row.id] = row); // live_matches tablosundaki ID'ye göre
+          dbLiveMatches.forEach(row => liveMap[row.id] = row); 
         }
         setLiveMatchesData(liveMap);
 
@@ -394,8 +396,11 @@ export default function LiveMatchCard() {
   });
 
   const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
-      const homeLogoUrl = localTeamLogos[match.homeTeam] || "/logos/default.png";
-      const awayLogoUrl = localTeamLogos[match.awayTeam] || "/logos/default.png";
+      const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
+      const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
+
+      const homeLogoUrl = localTeamLogos[homeTeamUpper] || "/logos/default.png";
+      const awayLogoUrl = localTeamLogos[awayTeamUpper] || "/logos/default.png";
       const isWinnersOpen = openWinnersMap[match.id] !== false;
       
       const isExpanded = expandedMatches[match.id] !== undefined ? expandedMatches[match.id] : isFinishedGroup;
@@ -483,8 +488,8 @@ export default function LiveMatchCard() {
               className="cursor-pointer px-3 sm:px-5 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300 py-3 sm:py-4"
             >
               <div className="flex-1 flex items-center gap-2 justify-end text-right">
-                <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{match.homeTeam}</span>
-                <img src={homeLogoUrl} alt={match.homeTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{homeTeamUpper}</span>
+                <img src={homeLogoUrl} alt={homeTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
               </div>
               
               <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
@@ -500,8 +505,8 @@ export default function LiveMatchCard() {
               </div>
               
               <div className="flex-1 flex items-center gap-2 justify-start text-left">
-                <img src={awayLogoUrl} alt={match.awayTeam} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{match.awayTeam}</span>
+                <img src={awayLogoUrl} alt={awayTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{awayTeamUpper}</span>
               </div>
               
               <div className="ml-2 opacity-50 text-[10px] text-white group-hover:opacity-100 transition-opacity">▼</div>
@@ -532,9 +537,9 @@ export default function LiveMatchCard() {
                 <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                      <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                      <img src={homeLogoUrl} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
-                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.homeTeam}</span>
+                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{homeTeamUpper}</span>
                   </div>
 
                   <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
@@ -577,9 +582,9 @@ export default function LiveMatchCard() {
 
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                      <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                      <img src={awayLogoUrl} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
-                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{match.awayTeam}</span>
+                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{awayTeamUpper}</span>
                   </div>
                 </div>
               
