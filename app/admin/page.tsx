@@ -102,7 +102,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
-// 🔴 YEREL & BULUT LOGO BANKASI (MAÇ ARŞİVİNDEN KOPYALANDI) 🔴
+// 🔴 YEREL & BULUT LOGO BANKASI 🔴
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -215,34 +215,51 @@ const localTeamLogos: Record<string, string> = {
   "LYON": "/logos/lyon.png"
 };
 
-// 🔴 SABİT TAKIMLAR VE KATEGORİLER LİSTESİ (VERİTABANI YERİNE KULLANILIR) 🔴
-const LOCAL_TEAMS = [
-  "FENERBAHÇE", "GALATASARAY", "BEŞİKTAŞ", "TRABZONSPOR", "BAŞAKŞEHİR", "KASIMPAŞA", "RİZESPOR",
-  "SİVASSPOR", "KAYSERİSPOR", "KONYASPOR", "ALANYASPOR", "ANTALYASPOR", "GAZİANTEP FK", "HATAYSPOR",
-  "PENDİKSPOR", "ANKARAGÜCÜ", "FATİH KARAGÜMRÜK", "İSTANBULSPOR", "ADANA DEMİRSPOR", "SAMSUNSPOR",
-  "EYÜPSPOR", "GÖZTEPE", "BODRUM FK", "SAKARYASPOR", "KOCAELİSPOR", "GENÇLERBİRLİĞİ", "GİRESUNSPOR",
-  "BOLUSPOR", "BANDIRMASPOR", "ÇORUM FK", "ŞANLIURFASPOR", "MANİSA FK", "KEÇİÖRENGÜCÜ", "ÜMRANİYESPOR",
-  "TUZLASPOR", "ALTAY", "ERZURUMSPOR", "KARŞIYAKA", "ESENLER EROKSPOR", "ISPARTA 32", "AMED SPOR",
-  "KASTAMONUSPOR", "İSKENDERUNSPOR", "YENİ MERSİN İDMANYURDU", "ANKARASPOR", "KARACABEY BELEDİYE",
-  "SOMASPOR", "İNEGÖLSPOR", "FETHİYESPOR", "ARNAVUTKÖY BELEDİYESPOR", "MENEMEN FK", "24 ERZİNCANSPOR",
-  "DENİZLİSPOR", "SARIYER", "KARAMAN FK", "BURSASPOR", "ALTINORDU", "BEYOĞLU YENİ ÇARŞI", "ADIYAMAN FK",
-  "DİYARBEKİRSPOR", "AFYONSPOR", "SERİK BELEDİYESPOR", "ZONGULDAK KÖMÜRSPOR", "KIRŞEHİR FUTBOL SK",
-  "BODRUMSPOR", "LYON", "OLYMPIC LYON", "OLYMPIQUE LYON", "OLYMPIQUE LYONNAIS", "FK KAUNO ZALGIRIS",
-  "KAUNO ZALGIRIS", "STURM GRAZ", "PARIS SG", "PSG", "ASTON VILLA", "KARABAĞ FK", "KARABAG",
-  "DINAMO KIEV", "HRADEC KRALOVE", "FERENCVAROS", "FERENCVARO", "REAL MADRID", "BARCELONA",
-  "MANCHESTER CITY", "ARSENAL", "LIVERPOOL", "BAYERN MUNICH", "BORUSSIA DORTMUND", "INTER", "MILAN",
-  "JUVENTUS", "CHELSEA", "MANCHESTER UNITED", "NAPOLI", "AS ROMA", "ESPANYOL", "MARDİN 1969", "BATMAN PETROL SPOR"
-];
+// 🔴 YENİ AKILLI LOJİSTİK DEPOSU (KATEGORİ BAZLI) 🔴
+const LIG_HAVUZU: Record<string, string[]> = {
+  "TÜRKİYE SÜPER LİG": [
+    "ALANYASPOR", "AMED SPOR", "BAŞAKŞEHİR", "BEŞİKTAŞ", "ÇAYKUR RİZE", "ÇORUM FK", 
+    "ERZURUMSPOR", "EYÜPSPOR", "FENERBAHÇE", "GALATASARAY", "GAZİANTEP FK", "GENÇLERBİRLİĞİ", 
+    "GÖZTEPE", "KASIMPAŞA", "KOCAELİSPOR", "KONYASPOR", "SAMSUNSPOR", "TRABZONSPOR"
+  ],
+  "TÜRKİYE 1. LİG": [
+    "ANTALYASPOR", "BANDIRMASPOR", "BATMAN PETROL SPOR", "BODRUMSPOR", "BOLUSPOR", "BURSASPOR", 
+    "EROKSPOR", "FATİH KARAGÜMRÜK", "IĞDIR FK", "İSTANBULSPOR", "KAYSERİSPOR", "KEÇİÖRENGÜCÜ", 
+    "MANİSA FK", "MARDİN 1969", "MUĞLASPOR", "PENDİKSPOR", "SARIYER", "SİVASSPOR", "ÜMRANİYE SPOR", "VANSPOR FK"
+  ],
+  "İNGİLTERE LİGİ": [
+    "ARSENAL", "ASTON VILLA", "BOURNEMOUTH", "BRENTFORD", "BRIGHTON", "CHELSEA", "COVENTRY CITY", 
+    "CRYSTAL PALACE", "EVERTON", "FULHAM", "HULL CITY", "IPSWICH TOWN", "LEEDS UNITED", "LIVERPOOL", 
+    "MANCHESTER CITY", "MANCHESTER UNITED", "NEWCASTLE UNITED", "NOTTINGHAM FOREST", "SUNDERLAND", "TOTTENHAM HOTSPUR"
+  ],
+  "ALMANYA LİGİ": [
+    "AUGSBURG", "BAYER LEVERKUSEN", "BAYERN MUNCHEN", "BORUSSIA DORTMUND", "MÖNCHENGLADBACH", "EINTRACHT FRANKFURT", 
+    "ELVERSBERG", "FREIBURG", "HAMBURG", "HOFFENHEIM", "KÖLN", "MAINZ 05", "RB LEIPZIG", "SCHALKE 04", "STUTTGART", "UNION BERLIN", "WERDER BREMEN", "PADERBORN 07"
+  ],
+  "FRANSA LİGİ": [
+    "ANGERS", "BREST", "LE MANS", "LENS", "LILLE", "LORIENT", "LYON", "MARSEILLE", "MONACO", "PARIS FC", "PARIS SAINT-GERMAIN", 
+    "RENNES", "STRASBOURG", "TOULOUSE", "TROYES", "NICE", "LE HAVRE", "AUXERRE"
+  ],
+  "İTALYA LİGİ": [
+    "ATALANTA", "BOLOGNA", "CAGLIARI", "COMO", "FIORENTINA", "FROSINONE", "GENOA", "INTER", "JUVENTUS", "LAZIO", 
+    "LECCE", "MILAN", "NAPOLI", "PARMA", "ROMA", "SASSUOLO", "TORINO", "UDINESE", "VENEZIA", "MONZA"
+  ],
+  "İSPANYA LİGİ": [
+    "ALAVÉS", "ATLÉTICO MADRID", "ATHLETIC BILBAO", "BARCELONA", "CELTA VIGO", "DEPORTIVO LA CORUÑA", "ELCHE", "ESPANYOL", 
+    "GETAFE", "LEVANTE", "OSASUNA", "RACING SANTANDER", "RAYO VALLECANO", "REAL BETIS", "REAL MADRID", "REAL SOCIEDAD", "SEVILLA", "VALENCIA", "VILLARREAL", "MALAGA"
+  ],
+  "MİLLİ TAKIMLAR": [
+    "ALMANYA", "AMERİKA", "ANDORRA", "ANGOLA", "ARJANTİN", "ARNAVUTLUK", "AVUSTRALYA", "AVUSTURYA", "AZERBAYCAN", "BAHREYN", "BANGLADEŞ", "BELARUS", "BELÇİKA", "BOSNA HERSEK", "BREZİLYA", "BRİTANYA VİRJİN ADALARI", "BUHUTAN", "BULGARİSTAN", "BURNİKA FASO", "BURUNDİ", "CEBELİTARIK", "CEZAYİR", "ÇEKYA", "ÇİN", "ÇİN HONG KONG", "ÇURAÇAO", "DANİMARKA", "DOMİNİK CUMHURİYETİ", "EKVADOR", "EKVATOR GİNESİ", "EL SALVADOR", "ENDONEZYA", "FAS", "FİLDİŞİ SAHİLİ", "FİNLANDİYA", "FRANSA", "GALLER", "GANA", "GİNE", "GUATEMELA", "GÜNEY AFRİKA", "GÜNEY KORE", "GÜRCİSTAN", "HAİTİ", "HIRVATİSTAN", "HİNDİSTAN", "HOLLANDA", "IRAK", "İNGİLTERE", "İRAN", "İSKOÇYA", "İSPANYA", "İSRAİL", "İSVEÇ", "İSVİÇRE", "İTALYA", "İZLANDA", "JAPONYA", "KAMBOÇYA", "KANADA", "KARADAĞ", "KATAR", "KENYA", "KIBRIS", "KOLOMBİYA", "KONGO DC", "KOSOVA", "KOSTA RİKA", "KUVEYT", "KUZEY İRLANDA", "KUZEY MAKEDONYA", "LESOTHO", "LİHTENŞTAYN", "LÜKSEMBURG", "MACARİSTAN", "MADAGASKAR", "MALDİVLER", "MALTA", "MEKSİKA", "MISIR", "MOĞOLİSTAN", "MOLDOVA", "MORİTANYA", "NİJERYA", "NORVEÇ", "ORTA AFRİKA CUMHURİYETİ", "ÖZBEKİSTAN", "PAKİSTAN", "PANAMA", "PARAGUAY", "POLONYA", "PORTEKİZ", "ROMANYA", "RUSYA", "SAN MARİNO", "SENEGAL", "SIRBİSTAN", "SİNGAPUR", "SLOVAKYA", "SLOVENYA", "SURİYE", "SUUDİ ARABİSTAN", "TACİKİSTAN", "TANZANYA", "TAYLAND", "TOGO", "TRİNİDAD AND TABAGO", "TUNUS", "TÜRKİYE", "UGANDA", "UKRAYNA", "UMMAN", "URUGUAY", "ÜRDÜN", "YENİ ZELANDA", "YEŞİL BURUN ADALARI", "YUNANİSTAN"
+  ],
+  "ÇEŞİTLİ AVRUPA TAKIMLARI": [
+    "AGNATIA", "AJAX", "ANDERLECHT", "AUDA RIGA", "BRAGA", "BRANN", "CSKA 1948", "CSKA SOFYA", "DINAMO KIEV", "DINAMO ZAGREB", "FERENCVAROS", "GORNİK ZABRZE", "GOTEBORG", "HAJDUK SPLIT", "HAMMARBY", "HEART", "IBERIA 1999", "INTER TURKU", "KARABAĞ FK", "KIZILYILDIZ", "KOPENAG", "KUPS", "LARNE FC", "LEVADIA FC", "LEVSKI SOFYA", "MIDTJYLLAND", "NK CELJE", "NK CERCLE", "PAKSI FC", "PANATHINAIKOS", "PAOK", "PATOS", "POLISSYA", "RAPID WIEN", "SABAH FK", "SANTA COLOMA FC", "FCSB", "SLOVAN BRATISLAVA", "SPARTAK TRNAVA", "ST GALLEN", "STURM GRAZ", "THUN", "TWENTE", "UNIVERSITATEA CLUJ", "UNIVERSITATEA CRAIOVA", "VOJVODINA", "ZELEZNICAR PANCEVO", "DINAMO MINSK", "SHELBOURNE", "GENT", "DEBRECEN", "HRADEC KRALOVE", "PAIDE LINNAMEESKOND", "BODO-GLIMT", "USG", "OLIMPIC LYON", "SPARTA PRAG", "NEC NIJMEGEN", "OLIMPIYAKOS"
+  ]
+};
 
-// Tüm takımların alfabetik ve benzersiz listesi (Seçim menüsü için)
-const ALL_STATIC_TEAMS = Array.from(new Set([
-  ...LOCAL_TEAMS,
-  ...Object.keys(localTeamLogos)
-])).sort((a, b) => a.localeCompare(b, 'tr'));
-
+// Ekstra Avrupa/Kupa kategorileri için "Çeşitli Avrupa" kullanılacak şekilde ayarlandı.
 const defaultCategoriesList = [
-  "TÜRKİYE SÜPER LİG", "TÜRKİYE 1.LİG", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG", "AMATÖR LİG",
-  "İNGİLTERE PREMIER LİG", "ALMANYA BUNDESLIGA", "FRANSA LIGUE 1", "İTALYA SERIE A", "İSPANYA LA LIGA",
+  ...Object.keys(LIG_HAVUZU),
+  "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE KADINLAR SÜPER LİG", "AMATÖR LİG",
   "UEFA ŞAMPİYONLAR LİGİ GURUP AŞAMASI", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR RÖVANŞ",
   "UEFA Ş.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA Ş.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA Ş.L. PLAY OFF İLK MAÇ", "UEFA Ş.L. PLAY OFF RÖVANŞ",
   "UEFA AVRUPA LİGİ GURUP AŞAMASI", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA AVRUPA LİGİ ÖN ELEME 2.TUR RÖVANŞ",
@@ -252,7 +269,7 @@ const defaultCategoriesList = [
   "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ",
   "İNGİLTERE SÜPER KUPA", "UEFA SÜPER KUPA",
   "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", "EREDIVISIE", "FA CUP", "SCOTTISH PREMIER LEAGUE", "PORTEKİZ LİGİ",
-  "FIFA DÜNYA KUPASI", "MİLLİ TAKIM MAÇI"
+  "FIFA DÜNYA KUPASI"
 ];
 
 // 🚀 BUGÜNÜN TARİHİNİ ALAN YARDIMCI FONKSİYON
@@ -276,7 +293,7 @@ const generateTimeOptions = () => {
 const timeOptionsArr = generateTimeOptions();
 
 const generateWeekDates = (weekNum: number) => {
-  const baseDate = new Date(2026, 7, 18);
+  const baseDate = new Date(2026, 7, 18); // Ağustos (7 = Ağustos çünkü aylar 0'dan başlar)
   const diffDays = (weekNum - 5) * 7;
   baseDate.setDate(baseDate.getDate() + diffDays);
   
@@ -332,9 +349,9 @@ export default function AdminRadarPortal() {
   const [newPlayerPass, setNewPlayerPass] = useState('');
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
-  // 🚀 YENİ TAKIM LOJİSTİK MERKEZİ (VERİTABANI YERİNE DİREKT BÜLTENE YANSITIR) 🚀
+  // 🚀 Lojistik Merkezden eklenen takımlar
   const [newTeamName, setNewTeamName] = useState('');
-  const [dynamicTeamsList, setDynamicTeamsList] = useState<string[]>(ALL_STATIC_TEAMS);
+  const [dynamicTeamsList, setDynamicTeamsList] = useState<string[]>([]);
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
@@ -403,17 +420,15 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated, userRole]);
 
-  // 🚀 DİNAMİK YARIŞMACI BİRLEŞTİRİCİSİ (SABİT + DB) 🚀
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('full_name');
     if (data) {
        setDbPlayersList(data);
-       // Sabit listeyi (staticPlayersList) veritabanı ile harmanla
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
           newMergedMap[String(p.user_id)] = p.full_name; 
        });
-       setMergedPlayers(newMergedMap); // mergedPlayers güncellenince canlı radar ve tahminler tablosu da otomatik güncellenir.
+       setMergedPlayers(newMergedMap); 
     }
   };
 
@@ -599,7 +614,6 @@ export default function AdminRadarPortal() {
     loadBulletinData();
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
-  // 🚀 EKSİKLER LİSTESİ (SEÇİLİ HAFTAYA GÖRE DİNAMİK) 🚀
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
     if (activeTab !== 'predictions') return;
@@ -607,7 +621,7 @@ export default function AdminRadarPortal() {
     const fetchPredictionData = async () => {
       const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedPredictionWeek);
       const pMap: Record<string, string[]> = {};
-      const allUserIds = Object.keys(mergedPlayers); // Güncel aktif tüm oyuncular
+      const allUserIds = Object.keys(mergedPlayers); 
 
       if (selectedPredictionWeek === 4) {
          allUserIds.forEach(id => {
@@ -667,17 +681,16 @@ export default function AdminRadarPortal() {
     } catch (err: any) { alert("❌ Hata: " + err.message); }
   };
 
-  // 🚀 LOKAL TAKIM EKLEYİCİ (VERİTABANI İPTAL, DİREKT LİSTEYE ATAR) 🚀
   const handleAddLocalTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if(!newTeamName.trim()) return;
     const tName = newTeamName.trim().toUpperCase();
     if (dynamicTeamsList.includes(tName)) {
-        alert("Bu takım zaten listede var!"); return;
+        alert("Bu takım zaten geçici lojistikte var!"); return;
     }
     setDynamicTeamsList(prev => [...prev, tName].sort((a, b) => a.localeCompare(b, 'tr')));
     setNewTeamName('');
-    alert(`✅ Takım bülten listesine geçici olarak eklendi! Bülten fabrikasına dönüp hemen seçebilirsiniz.\n(Not: Logosu bilgisayarınızda /logos/${getLocalLogoUrl(tName).split('/logos/')[1]} olarak bulunmalıdır.)`);
+    alert(`✅ Takım bülten listesine "ÇEŞİTLİ AVRUPA TAKIMLARI" kategorisine (Veya herhangi bir avrupa maçına) eklendi!`);
   };
 
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -834,7 +847,6 @@ export default function AdminRadarPortal() {
           }
         }
 
-        // 🚀 BONUS MOTORU VERİTABANI İŞLEMLERİ
         if (matchId === 24) {
             let bonusInserts = [];
             let pLeaderId = weeklyStats.pointsLeader;
@@ -967,35 +979,35 @@ export default function AdminRadarPortal() {
     return theme;
   };
 
+  // 🚀 YENİ AKILLI KİLİT VE LOJİSTİK FONKSİYONU 🚀
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
     const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
     const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
     
-    // 1. Kategori Avrupa (UEFA) maçı mı? Onu anlıyoruz.
-    const isCurrentUefa = currentCat.includes("UEFA") || currentCat.includes("ŞAMPİYONLAR LİGİ") || currentCat.includes("AVRUPA LİGİ") || currentCat.includes("KONFERANS LİGİ");
+    if (!currentCat) return [];
 
-    const usedTeams = new Set<string>(); // Kullanılmış takımları tutacağımız boş bir küme
+    let havuz = LIG_HAVUZU[currentCat] || LIG_HAVUZU["ÇEŞİTLİ AVRUPA TAKIMLARI"] || [];
 
-    // 2. Bültendeki tüm satırları tek tek geziyoruz
+    if (currentCat.includes("UEFA") || currentCat.includes("ŞAMPİYONLAR LİGİ")) {
+       havuz = LIG_HAVUZU["ÇEŞİTLİ AVRUPA TAKIMLARI"];
+    }
+
+    const fullHavuz = Array.from(new Set([...havuz, ...dynamicTeamsList]));
+    const usedTeams = new Set<string>();
+
     bulletinMatches.forEach((m, idx) => {
-       if (idx === currentIndex) return; // Kendi satırımıza geldiysek atla (kendimizi kilitlemeyelim)
+       if (idx === currentIndex) return; 
        
        const mCat = m.category ? m.category.toUpperCase() : '';
-       const isMUefa = mCat.includes("UEFA") || mCat.includes("ŞAMPİYONLAR LİGİ") || mCat.includes("AVRUPA LİGİ") || mCat.includes("KONFERANS LİGİ");
-
-       // 3. KİLİT MANTIĞI:
-       // - Eğer ikisi de YEREL (Süper lig vb) ise -> Takımları kilitle
-       // - Eğer ikisi de AVRUPA (UEFA) ise -> Takımları kilitle
-       // - Biri Yerel, diğeri Avrupa ise -> KİLİTLEME (Aynı takım iki farklı kulvarda seçilebilsin)
-       if (isCurrentUefa === isMUefa) {
-           if (m.home_team) usedTeams.add(m.home_team); // Ev sahibini yasaklı listesine ekle
-           if (m.away_team) usedTeams.add(m.away_team); // Deplasmanı yasaklı listesine ekle
+       
+       if (currentCat === mCat) {
+           if (m.home_team) usedTeams.add(m.home_team);
+           if (m.away_team) usedTeams.add(m.away_team);
        }
     });
 
-    // 4. Sonuç: Rakibi ve yasaklılar listesinde olanları listeden çıkarıp temiz listeyi ver
-    return dynamicTeamsList.filter(t => t !== opponent && !usedTeams.has(t));
+    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
   };
 
   const handleBulletinChange = (index: number, field: string, value: string) => {
@@ -1455,7 +1467,6 @@ export default function AdminRadarPortal() {
                    <table className="w-full text-left text-xs min-w-[800px]">
                       <tbody>
                          {bulletinMatches.map((m, idx) => {
-                            // 🚀 NEON KONTROLÜ: Eğer 5 sütun da doluysa satır hazır demektir.
                             const isReady = m.category && m.match_date && m.match_time && m.home_team && m.away_team;
                             
                             return (
@@ -1548,7 +1559,7 @@ export default function AdminRadarPortal() {
            </div>
         )}
 
-        {/* 🚀 4. CEPHE: YARIŞMACI YÖNETİMİ ODASI (DİNAMİK HARMANLI) 🚀 */}
+        {/* 🚀 4. CEPHE: YARIŞMACI YÖNETİMİ ODASI 🚀 */}
         {activeTab === 'players' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
@@ -1625,7 +1636,6 @@ export default function AdminRadarPortal() {
                  </div>
                  
                  <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                    {/* Önce Veritabanından Eklenenleri Göster (İhraç Edilebilir) */}
                     {dbPlayersList.map(p => (
                       <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
                          <div className="flex flex-col">
@@ -1643,7 +1653,6 @@ export default function AdminRadarPortal() {
                       </div>
                     ))}
                     
-                    {/* Sonra Koddaki Sabit Aslanları Göster (İhraç Edilemez, Korumalı) */}
                     {Object.keys(staticPlayersList).map(id => (
                       <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center opacity-80">
                          <div className="flex flex-col">
@@ -1676,7 +1685,6 @@ export default function AdminRadarPortal() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
-              {/* TAKIM EKLEME ALANI */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit relative overflow-hidden">
                  <div className="absolute top-0 right-0 bg-cyan-600 text-white text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">HIZLI LOJİSTİK</div>
                  <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
@@ -1696,7 +1704,7 @@ export default function AdminRadarPortal() {
                          className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
                        />
                        <p className="text-[10px] text-slate-500 mt-2 ml-1 leading-relaxed">
-                          Sisteme eklediğiniz bu takım Bülten menülerinde anında belirecektir.<br/>
+                          Sisteme eklediğiniz bu takım Bülten menülerinde <strong className="text-amber-500">Çeşitli Avrupa Takımları</strong> kategorisinde (ve tüm Avrupa maçlarında) anında belirecektir.<br/>
                           Eğer logosunun da görünmesini istiyorsanız, bilgisayarınızda <strong className="text-cyan-400">/public/logos/</strong> klasörüne bu takımın adıyla (örn: <strong className="text-cyan-400">mersin-idman-yurdu.png</strong>) bir resim koymalısınız.
                        </p>
                     </div>
@@ -1710,16 +1718,17 @@ export default function AdminRadarPortal() {
                  </form>
               </div>
 
-              {/* MEVCUT YÜKLÜ TAKIMLAR BİLGİ ALANI */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-xl">
                  <h2 className="text-lg font-black text-slate-400 mb-4 border-b border-slate-800 pb-4 flex items-center gap-2">
-                    <span className="text-xl">📋</span> ŞU AN KULLANILABİLİR TAKIMLAR
+                    <span className="text-xl">📋</span> ŞU AN EKLENEN GEÇİCİ TAKIMLAR
                  </h2>
                  <p className="text-slate-400 text-sm mb-4">
-                    Sistemde halihazırda gömülü olan <strong className="text-amber-500">{dynamicTeamsList.length}</strong> takım bulunmaktadır. Bu takımları Bülten fabrikasında "Ev Sahibi / Deplasman" seçerken görebilirsiniz.
+                    Buradan eklediğiniz takımlar geçici olarak sisteme dahil olur.
                  </p>
                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-wrap gap-2">
-                    {dynamicTeamsList.map(t => (
+                    {dynamicTeamsList.length === 0 ? (
+                        <span className="text-slate-500 text-xs italic">Henüz yeni takım eklenmedi...</span>
+                    ) : dynamicTeamsList.map(t => (
                        <span key={t} className="bg-slate-950 border border-slate-800 px-2.5 py-1 rounded text-[10px] font-bold text-slate-300 uppercase shadow-sm">
                           {t}
                        </span>
