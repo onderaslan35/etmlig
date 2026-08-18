@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ANA YARIŞMACI LİSTESİ 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ (SABİT) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
   "262701": { pass: "00000", name: "MUHAMMET OKUMUŞ" }, "262702": { pass: "00000", name: "MURAT KARA" },
@@ -51,7 +51,7 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262796": { pass: "00000", name: "D. SERGEN TAŞYÜREK" }, "262797": { pass: "00000", name: "ÖMER DOGER" }
 };
 
-// 🔴 YEREL & BULUT LOGO BANKASI (ADMİN PANELİYLE BİREBİR AYNI) 🔴
+// 🔴 YEREL LOGOLAR 🔴
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -169,7 +169,6 @@ const normalizeTurkish = (text: string) => {
   return text.replace(/İ/g, 'i').replace(/I/g, 'ı').replace(/Ş/g, 'ş').replace(/Ğ/g, 'ğ').replace(/Ü/g, 'ü').replace(/Ö/g, 'ö').replace(/Ç/g, 'ç').toLowerCase().trim();
 };
 
-// 🚀 SADECE YEREL LOGO KLASÖRÜNE BAĞLI OTOMATİK MANTIK 🚀
 const getLocalLogoUrl = (teamName: string) => {
   if (!teamName || teamName === '') return '/logos/default.png';
   const slug = teamName
@@ -190,8 +189,6 @@ const isTffMatchCheck = (category: string) => {
 
 const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
     const upCat = category ? category.toUpperCase() : '';
-    
-    // 🚀 LOKAL LOGO MOTORU BURADA ÇALIŞIYOR 🚀
     const homeLogoUrl = localTeamLogos[homeTeam] || getLocalLogoUrl(homeTeam);
     const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
 
@@ -209,6 +206,28 @@ const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => 
 const cleanTeamName = (name: string) => {
     if(!name) return "";
     return name.trim().toUpperCase();
+};
+
+// 🚀 ZAMAN VE HAFTA MANTIĞI 🚀
+const getSystemCurrentTime = () => {
+    return new Date();
+};
+
+const checkGateStatus = () => {
+    const now = getSystemCurrentTime();
+    const currentDay = now.getDay(); // 0 Pazar, 1 Pzt, 2 Salı, 3 Çarş, 4 Perş, 5 Cuma, 6 Cmt
+    const currentHour = now.getHours();
+
+    // Cuma (5) saat 21:00'dan sonra AÇIK başlar
+    if (currentDay === 5 && currentHour >= 21) return 'OPEN';
+    if (currentDay === 6) return 'OPEN'; // Cumartesi tam gün açık
+    if (currentDay === 0) return 'OPEN'; // Pazar tam gün açık
+    // Pazartesi (1) saat 21:00'a kadar açık. 21:00 olduğunda KAPANIR.
+    if (currentDay === 1 && currentHour < 21) return 'OPEN';
+
+    // Salı, Çarş, Perşembe ve Cuma 21:00'a kadar KAPALI
+    // Pazartesi 21:00'dan sonra KAPALI
+    return 'CLOSED';
 };
 
 export default function TahminlerPortal() {
@@ -229,14 +248,32 @@ export default function TahminlerPortal() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
 
-  const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
-  const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(5);
+  const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
+  const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
+  const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
+  // 1. Veritabanından Oyuncuları Çek ve TEST_ACCOUNTS ile birleştir
+  useEffect(() => {
+     const fetchDbPlayers = async () => {
+        const { data } = await supabase.from('players').select('*');
+        if (data) {
+           const newAccounts = { ...TEST_ACCOUNTS };
+           data.forEach(p => {
+               newAccounts[String(p.user_id)] = { pass: p.password, name: p.full_name };
+           });
+           setMergedAccounts(newAccounts);
+        }
+     };
+     fetchDbPlayers();
+  }, []);
+
+  // 2. Bültenleri Getir ve En Son Haftayı Bul
   useEffect(() => {
     const fetchInitialData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
+         let maxWeek = 0;
          bultenData.forEach(row => {
             if(!newMap[row.week_num]) newMap[row.week_num] = [];
             newMap[row.week_num].push({
@@ -248,9 +285,17 @@ export default function TahminlerPortal() {
                homeTeam: row.home_team,
                awayTeam: row.away_team
             });
+            if (row.week_num > maxWeek) maxWeek = row.week_num;
          });
+         
          Object.keys(newMap).forEach(week => { newMap[Number(week)].sort((a,b) => a.id - b.id); });
          setBulletinMap(newMap);
+         
+         // En son yayınlanan bülteni aktif hafta ilan et
+         if (maxWeek > 0) {
+             setActiveBulletinWeek(maxWeek);
+             setSelectedTahminWeek(maxWeek); // Dropdownlar için default
+         }
       }
     };
     fetchInitialData();
@@ -258,16 +303,29 @@ export default function TahminlerPortal() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
+    
+    // 🚀 SAATLİ BOMBA KONTROLÜ (Gişe Açık mı?)
+    const gateStatus = checkGateStatus();
+    if (gateStatus === 'CLOSED' && username.trim() !== 'mankoman') {
+        setLoginError(`Süre Dolmuştur! ${activeBulletinWeek}. Hafta Görev Kağıdı Cuma 21:00'da aktifleşir, Pazartesi 21:00'da kapanır. Tahminleri görmek için Resmi Deklarasyon'a gidiniz.`);
+        return;
+    }
+
     const userKey = username.trim(); const passKey = password.trim(); 
-    const account = TEST_ACCOUNTS[userKey];
+    const account = mergedAccounts[userKey];
+
     if (account && passKey === account.pass) { 
-      setDisplayName(account.name); await fetchBulletinAndPredictions(userKey); setView('entry');
-    } else { setLoginError('Sistem şu an yapılandırma ve test aşamasındadır. Yalnızca kayıtlı yetkili girişine izin verilmektedir.'); }
+      setDisplayName(account.name); 
+      await fetchBulletinAndPredictions(userKey); 
+      setView('entry');
+    } else { 
+        setLoginError('ID veya Şifre Hatalı! Yetkisiz giriş yapılamaz.'); 
+    }
   };
 
   const fetchBulletinAndPredictions = async (currentUsername: string) => {
-    const bData = bulletinMap[selectedEntryWeek] || [];
-    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedEntryWeek).eq('user_id', currentUsername);
+    const bData = bulletinMap[activeBulletinWeek] || [];
+    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', activeBulletinWeek).eq('user_id', currentUsername);
     if (bData && bData.length > 0) {
       const initialPreds: Record<number, { home: string, away: string }> = {};
       bData.forEach((m:any) => {
@@ -300,13 +358,13 @@ export default function TahminlerPortal() {
     setIsSaving(true);
     try {
       const payload = Object.keys(predictions).map(matchIndex => ({
-        user_id: username.trim(), week_num: selectedEntryWeek, match_index: Number(matchIndex),
+        user_id: username.trim(), week_num: activeBulletinWeek, match_index: Number(matchIndex),
         predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
       }));
       const { error } = await supabase.from('player_predictions').upsert(payload, { onConflict: 'user_id,week_num,match_index' });
       if(error) throw error;
       try {
-        await fetch('/api/log-tahmin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kullanici_id: username.trim(), kullanici_adi: displayName, hafta: selectedEntryWeek, eski_tahminler: oldPredictions, yeni_tahminler: predictions }) });
+        await fetch('/api/log-tahmin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kullanici_id: username.trim(), kullanici_adi: displayName, hafta: activeBulletinWeek, eski_tahminler: oldPredictions, yeni_tahminler: predictions }) });
       } catch (logErr) {}
       setShowSuccessModal(true);
     } catch (e) { alert('❌ Kayıt sırasında bir hata oluştu!'); }
@@ -339,17 +397,37 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
+  // 🚀 EKSİKLER GİRENLER LOBİ RADARI (GERÇEK ZAMANLI) 🚀
+  const [lobbyMissing, setLobbyMissing] = useState(0);
+  const [lobbySubmitted, setLobbySubmitted] = useState(0);
+
+  useEffect(() => {
+    if (activeBulletinWeek === 0) return;
+    const fetchLobbyStats = async () => {
+      const { data } = await supabase.from('player_predictions').select('user_id').eq('week_num', activeBulletinWeek);
+      const uniqueUsers = new Set((data || []).map(r => String(r.user_id)));
+      const allPlayerCount = Object.keys(mergedAccounts).filter(id => id !== 'mankoman').length;
+      const submitted = uniqueUsers.size;
+      setLobbySubmitted(submitted);
+      setLobbyMissing(allPlayerCount - submitted);
+    };
+    fetchLobbyStats();
+  }, [activeBulletinWeek, view]);
+
   const finalPlayersList = useMemo(() => {
-    let allIds = Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman');
+    let allIds = Object.keys(mergedAccounts).filter(id => id !== 'mankoman');
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
+    
     if (searchTerm) {
       const normalizedSearch = normalizeTurkish(searchTerm);
-      allIds = allIds.filter(id => { const pName = normalizeTurkish(TEST_ACCOUNTS[id]?.name || ""); return pName.includes(normalizedSearch); });
+      allIds = allIds.filter(id => { const pName = normalizeTurkish(mergedAccounts[id]?.name || ""); return pName.includes(normalizedSearch); });
     }
     const submittedIds = allIds.filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS'));
-    if (sortOrder === 'A-Z') { submittedIds.sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr')); } else if (sortOrder === 'Z-A') { submittedIds.sort((a, b) => TEST_ACCOUNTS[b].name.localeCompare(TEST_ACCOUNTS[a].name, 'tr')); }
+    
+    if (sortOrder === 'A-Z') { submittedIds.sort((a, b) => mergedAccounts[a].name.localeCompare(mergedAccounts[b].name, 'tr')); } 
+    else if (sortOrder === 'Z-A') { submittedIds.sort((a, b) => mergedAccounts[b].name.localeCompare(mergedAccounts[a].name, 'tr')); }
     return submittedIds; 
-  }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData]);
+  }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData, mergedAccounts]);
 
   const ghostColumns = Array.from({ length: 10 });
 
@@ -369,10 +447,24 @@ export default function TahminlerPortal() {
 
   const activePlayersForJPEG = useMemo(() => {
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-    return Object.keys(TEST_ACCOUNTS).filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS')).sort((a, b) => TEST_ACCOUNTS[a].name.localeCompare(TEST_ACCOUNTS[b].name, 'tr'));
-  }, [selectedTahminWeek, livePredictionsData]);
+    return Object.keys(mergedAccounts).filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS')).sort((a, b) => mergedAccounts[a].name.localeCompare(mergedAccounts[b].name, 'tr'));
+  }, [selectedTahminWeek, livePredictionsData, mergedAccounts]);
 
   const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
+
+  // 🚀 RESMİ DEKLARASYON FİLTRESİ 🚀
+  // Pazartesi 21:00'dan önce Aktif Haftanın deklarasyonu gizlenir.
+  const filterAvailableWeeksForDeclaration = () => {
+      const status = checkGateStatus();
+      if (status === 'CLOSED') {
+          return availableWeeks; // Pazartesi 21:00'dan sonra kapı kapandığı için her şey açılır.
+      } else {
+          // Kapı açıksa (Cuma-Pazartesi arası), aktif haftayı gizle.
+          return availableWeeks.filter(w => w !== activeBulletinWeek);
+      }
+  };
+
+  const declarationWeeks = filterAvailableWeeksForDeclaration();
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -382,7 +474,7 @@ export default function TahminlerPortal() {
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div><div className="text-6xl mb-6 mt-2 drop-shadow-lg">🏆</div>
             <h3 className="text-3xl font-black text-emerald-400 mb-3 tracking-widest">TEBRİKLER!</h3>
-            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz {selectedEntryWeek}. Hafta için sisteme kaydedilmiştir.</p>
+            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz {activeBulletinWeek}. Hafta için sisteme kaydedilmiştir.</p>
             <button onClick={() => { setShowSuccessModal(false); setView('lobby'); setUsername(''); setPassword(''); }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] uppercase">TAMAM</button>
           </div>
         </div>
@@ -392,37 +484,61 @@ export default function TahminlerPortal() {
         
         {view === 'lobby' && (
           <div className="animate-fade-in-up">
-            <div className="text-center mb-12"><h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1><p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p></div>
+            <div className="text-center mb-12">
+               <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1>
+               <p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p>
+               {activeBulletinWeek > 0 && (
+                   <div className="mt-4 flex items-center justify-center gap-4">
+                       <span className="bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
+                           GİREN: {lobbySubmitted}
+                       </span>
+                       <span className="bg-rose-950/50 border border-rose-500/30 text-rose-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
+                           EKSİK: {lobbyMissing}
+                       </span>
+                   </div>
+               )}
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
               
               <div onClick={() => setView('declaration')} className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all group shadow-[0_0_30px_rgba(79,70,229,0.1)]">
                 <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><span className="text-4xl">📜</span></div>
                 <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
-                <p className="text-slate-400 text-xs">Geçmiş haftaların tahmin arşivini ve resmi oyuncu listelerini inceleyin.</p>
+                <p className="text-slate-400 text-xs leading-relaxed">Pazartesi 21:00'dan itibaren tahmin tabloları mühürlenip herkese açılır.</p>
                 <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">Arşive Giriş Yap</div>
               </div>
 
               <div onClick={() => setView('tahminmatik')} className="bg-slate-900/50 border-2 border-emerald-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-emerald-900/20 hover:border-emerald-500 transition-all group shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_currentColor]"><span className="text-4xl drop-shadow-md">⚡</span></div>
                 <h2 className="text-xl font-black text-emerald-400 tracking-widest mb-3">TAHMİNMATİK</h2>
-                <p className="text-slate-400 text-xs">İstediğiniz skoru seçin, kimlerin o skoru tahmin ettiğini anında bulun.</p>
+                <p className="text-slate-400 text-xs leading-relaxed">Maçları anlık takip edin, istediğiniz skoru kimin tahmin ettiğini anında görün.</p>
                 <div className="mt-8 px-6 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-emerald-600 group-hover:text-white transition-colors">Tahminmatik'i Aç</div>
               </div>
 
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)]">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center"><span className="text-amber-500 font-black tracking-widest text-[11px] sm:text-xs bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)] whitespace-nowrap">MERKEZ GİRİŞ SİSTEMİ (AÇIK)</span></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
+                   <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${checkGateStatus() === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>
+                      {checkGateStatus() === 'OPEN' ? 'GİŞE AÇIK (CUMA 21:00)' : 'GİŞE KAPALI / ZAMAN KİLİDİ'}
+                   </span>
+                </div>
+                
                 <div className="mt-6 mb-4">
                    <label className="block text-center text-xs font-bold text-slate-400 tracking-widest mb-2">GİRİŞ YAPILACAK HAFTA</label>
-                   <select value={selectedEntryWeek} onChange={(e) => setSelectedEntryWeek(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg px-4 py-3 rounded-xl outline-none text-center cursor-pointer shadow-inner">
-                     {availableWeeks.filter(w => w >= 4).map(week => ( <option key={`entry-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}
-                   </select>
+                   <div className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xl px-4 py-4 rounded-xl text-center shadow-inner cursor-not-allowed">
+                     {activeBulletinWeek > 0 ? `${activeBulletinWeek}. HAFTA BÜLTENİ` : 'BÜLTEN BEKLENİYOR'}
+                   </div>
                 </div>
+                
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-5"></div>
+                
                 <form onSubmit={handleLogin} className="flex flex-col gap-3">
                   <input type="text" placeholder="Yarışmacı ID" value={username} onChange={e => setUsername(e.target.value)} className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none text-center font-black tracking-widest text-sm" />
                   <input type="password" placeholder="Şifre" value={password} onChange={e => setPassword(e.target.value)} className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none text-center tracking-widest text-sm" />
-                  {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-1.5 rounded-lg border border-red-500/30">{loginError}</p>}
-                  <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] mt-1 tracking-widest flex items-center justify-center gap-2 text-sm">GİRİŞ YAP VE DOLDUR</button>
+                  {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-2 px-2 rounded-lg border border-red-500/30 leading-relaxed">{loginError}</p>}
+                  
+                  <button type="submit" className={`${checkGateStatus() === 'OPEN' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
+                     {checkGateStatus() === 'OPEN' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
+                  </button>
                 </form>
               </div>
 
@@ -436,15 +552,17 @@ export default function TahminlerPortal() {
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)] relative z-50">
               <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors"><span>⬅</span> Lobiye Dön</button>
               <div className="text-center"><h2 className="text-2xl md:text-3xl font-black text-emerald-500 tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] uppercase flex items-center justify-center gap-3"><span className="text-3xl md:text-4xl">⚡</span> TAHMİNMATİK</h2></div>
-              <div><select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm">{availableWeeks.filter(w => w >= 4).map(week => ( <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option> ))}</select></div>
+              <div>
+                  <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm">
+                      {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option> ))}
+                  </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
-
-                // 🚀 LOKAL LOGO MANTIĞI BURAYA EKLENDİ 🚀
                 const theme = getEliteTheme(match.category, hName, aName);
                 
                 const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
@@ -452,7 +570,7 @@ export default function TahminlerPortal() {
                 const targetScore = `${tScore.home}-${tScore.away}`;
                   
                 const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-                const predictors = isComplete ? Object.keys(selectedWeekData).filter(uid => selectedWeekData[uid][match.id - 1] === targetScore && TEST_ACCOUNTS[uid]).map(uid => TEST_ACCOUNTS[uid]?.name || "Bilinmeyen").sort((a,b) => a.localeCompare(b, 'tr')) : [];
+                const predictors = isComplete ? Object.keys(selectedWeekData).filter(uid => selectedWeekData[uid][match.id - 1] === targetScore && mergedAccounts[uid]).map(uid => mergedAccounts[uid]?.name || "Bilinmeyen").sort((a,b) => a.localeCompare(b, 'tr')) : [];
 
                 return (
                   <div key={`tm-${match.id}`} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
@@ -462,7 +580,6 @@ export default function TahminlerPortal() {
                         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2"><span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest">{match.weekLabel}</span><span className={`text-[10px] sm:text-[11px] font-black uppercase px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>🏆 {match.category}</span></div>
                         <div className="flex items-center justify-between px-0 sm:px-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            {/* LOGO ÇEKİMİ TEMADAN GELİYOR */}
                             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
                             <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{hName}</span>
                           </div>
@@ -491,7 +608,7 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== RESMİ DEKLARASYON (ARŞİV) ===================== */}
+        {/* ===================== RESMİ DEKLARASYON (ZAMAN KİLİTLİ ARŞİV) ===================== */}
         {view === 'declaration' && (
           <div className="animate-fade-in-up w-full">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative z-50">
@@ -501,13 +618,21 @@ export default function TahminlerPortal() {
                 <button onClick={downloadJPEG} disabled={isDownloading || !bulletinMap[selectedTahminWeek]} className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] disabled:opacity-50"><span className="text-lg">📸</span> {isDownloading ? 'HAZIRLANIYOR...' : 'İNDİR'}</button>
                 <div className="relative flex-1 md:min-w-[200px]">
                   <input type="text" placeholder="Yarışmacı ara..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} className="w-full bg-slate-950 border border-slate-700 px-4 py-2 rounded-lg text-white text-sm outline-none focus:border-amber-500" />
-                  {isSearchFocused && ( <div className="absolute top-full left-0 w-full bg-slate-900 border border-slate-700 mt-1 rounded-lg shadow-2xl z-[100] max-h-48 overflow-y-auto custom-scrollbar"> {finalPlayersList.map(id => ( <div key={`drop-${id}`} className="px-4 py-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 border-b border-slate-800/50" onClick={() => { setSearchTerm(TEST_ACCOUNTS[id].name); setIsSearchFocused(false); }}>{TEST_ACCOUNTS[id].name}</div> ))} </div> )}
+                  {isSearchFocused && ( <div className="absolute top-full left-0 w-full bg-slate-900 border border-slate-700 mt-1 rounded-lg shadow-2xl z-[100] max-h-48 overflow-y-auto custom-scrollbar"> {finalPlayersList.map(id => ( <div key={`drop-${id}`} className="px-4 py-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 border-b border-slate-800/50" onClick={() => { setSearchTerm(mergedAccounts[id].name); setIsSearchFocused(false); }}>{mergedAccounts[id].name}</div> ))} </div> )}
                 </div>
-                <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md">{availableWeeks.filter(w => w >= 4).map(week => ( <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}</select>
+                
+                {/* 🚀 KİLİTLİ HAFTA DROPDOWN KONTROLÜ 🚀 */}
+                {declarationWeeks.length > 0 ? (
+                    <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md">
+                        {declarationWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}
+                    </select>
+                ) : (
+                    <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Deklare Yok</div>
+                )}
               </div>
             </div>
 
-            {bulletinMap[selectedTahminWeek] ? (
+            {bulletinMap[selectedTahminWeek] && declarationWeeks.includes(selectedTahminWeek) ? (
               <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
                 <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -522,7 +647,6 @@ export default function TahminlerPortal() {
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const hName = cleanTeamName(m.homeTeam || m.home_team);
                           const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          // LOKAL LOGO TEMASI
                           const theme = getEliteTheme(m.category, hName, aName);
                           return ( <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-md" title={hName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
@@ -532,7 +656,6 @@ export default function TahminlerPortal() {
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const hName = cleanTeamName(m.homeTeam || m.home_team);
                           const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          // LOKAL LOGO TEMASI
                           const theme = getEliteTheme(m.category, hName, aName);
                           return ( <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-md" title={aName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
@@ -540,7 +663,7 @@ export default function TahminlerPortal() {
                     </thead>
                     <tbody>
                       {finalPlayersList.map(id => {
-                        const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu";
+                        const playerName = mergedAccounts[id]?.name || "Bilinmeyen Oyuncu";
                         const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id] || Array(24).fill('PAS');
                         return ( <tr key={id} className="hover:bg-slate-800/50 transition-colors group"><td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900"><span className="text-slate-300">{playerName}</span></td>{preds.map((score: string, idx: number) => ( <td key={idx} className="border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] text-amber-500">{score}</td> ))}{ghostColumns.map((_, i) => ( <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td> ))}</tr> );
@@ -550,7 +673,15 @@ export default function TahminlerPortal() {
                   </table>
                 </div>
               </div>
-            ) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedTahminWeek}. HAFTA TAHMİNLERİ BULUNAMADI</h2></div> )}
+            ) : ( 
+               <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <span className="text-5xl mb-4 block opacity-50">⏳</span>
+                  <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
+                     {declarationWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
+                  </h2>
+                  <p className="text-slate-500 text-sm mt-2">Pazartesi saat 21:00'dan sonra listeler mühürlenip herkese açılır.</p>
+               </div> 
+            )}
 
             <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, opacity: 0, pointerEvents: 'none' }}>
               <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
@@ -564,7 +695,7 @@ export default function TahminlerPortal() {
                     </thead>
                     <tbody>
                       {activePlayersForJPEG.map(id => {
-                        const playerName = TEST_ACCOUNTS[id]?.name || "Bilinmeyen Oyuncu"; const preds = (livePredictionsData[selectedTahminWeek] || {})[id]; if(!preds) return null;
+                        const playerName = mergedAccounts[id]?.name || "Bilinmeyen Oyuncu"; const preds = (livePredictionsData[selectedTahminWeek] || {})[id]; if(!preds) return null;
                         return ( <tr key={`exp-${id}`}><td className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold text-slate-300 tracking-wide">{playerName}</td>{preds.map((score: string, idx: number) => ( <td key={`exp-sc-${idx}`} className="border-b border-r border-slate-800 p-2 font-black text-amber-500 bg-[#0a1120] text-base">{score}</td> ))}</tr> );
                       })}
                     </tbody>
@@ -580,32 +711,28 @@ export default function TahminlerPortal() {
         {view === 'entry' && (
           <div className="w-full animate-fade-in-up">
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-              <div><h2 className="text-2xl font-black text-amber-500 tracking-widest">{selectedEntryWeek}. HAFTA GÖREV KAĞIDI</h2><p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p></div>
+              <div><h2 className="text-2xl font-black text-amber-500 tracking-widest">{activeBulletinWeek}. HAFTA GÖREV KAĞIDI</h2><p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p></div>
               <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">Oturumu Kapat</button>
             </div>
 
-            {(!bulletinMap[selectedEntryWeek] || bulletinMap[selectedEntryWeek].length === 0) ? (
-               <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedEntryWeek}. HAFTA BÜLTENİ BEKLENİYOR</h2></div>
+            {(!bulletinMap[activeBulletinWeek] || bulletinMap[activeBulletinWeek].length === 0) ? (
+               <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{activeBulletinWeek}. HAFTA BÜLTENİ BEKLENİYOR</h2></div>
             ) : (
               <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-                {bulletinMap[selectedEntryWeek].map((match) => {
+                {bulletinMap[activeBulletinWeek].map((match) => {
                   const hName = cleanTeamName(match.homeTeam || match.home_team);
                   const aName = cleanTeamName(match.awayTeam || match.away_team);
-                  
-                  // 🚀 LOKAL LOGO TEMASI
                   const theme = getEliteTheme(match.category, hName, aName);
-                  
                   const hScore = predictions[match.id]?.home || '-'; const aScore = predictions[match.id]?.away || '-';
 
                   return (
                     <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                       {theme.bgImg && ( <><div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div><div className="absolute inset-0 bg-slate-900/70 z-0"></div></> )}
                       <div className="relative z-10 flex flex-col h-full py-2">
-                        <div className="w-full flex justify-between items-center px-4 pt-3 pb-1"><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full">{selectedEntryWeek}. HAFTA {match.id}. MAÇ</span><span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.date} - {match.time}</span></div>
+                        <div className="w-full flex justify-between items-center px-4 pt-3 pb-1"><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full">{activeBulletinWeek}. HAFTA {match.id}. MAÇ</span><span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.date} - {match.time}</span></div>
                         <div className="w-full text-center px-2 mt-1 mb-2"><span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span></div>
                         <div className="flex items-center justify-between px-4 pb-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                            {/* LOGO ÇEKİMİ TEMADAN GELİYOR */}
                             <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-lg" /></div>
                             <span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{hName}</span>
                           </div>
@@ -626,7 +753,7 @@ export default function TahminlerPortal() {
               </div>
             )}
 
-            {bulletinMap[selectedEntryWeek] && bulletinMap[selectedEntryWeek].length > 0 && (
+            {bulletinMap[activeBulletinWeek] && bulletinMap[activeBulletinWeek].length > 0 && (
               <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
                 <button onClick={handleTahminMatikRastgele} className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center gap-2">🎲 RASTGELE DOLDUR</button>
                 <button onClick={savePredictions} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.5)]">{isSaving ? 'ŞİFRELENİYOR...' : '🚀 TAHMİNLERİMİ MÜHÜRLE'}</button>
