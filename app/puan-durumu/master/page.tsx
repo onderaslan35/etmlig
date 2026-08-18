@@ -118,9 +118,9 @@ const masterWeek4Data: Record<string, { name: string; puan: number }> = {
   "262711": { name: "RIDVAN DOGER", puan: 7 }, "262731": { name: "FATİH AYAN", puan: 13 },
   "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 0 }, "262763": { name: "MUSTAFA ELMAS", puan: 4 },
   "262707": { name: "HAKAN AYAN", puan: 9 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 2 },
-  "262813": { name: "KEMAL ERSOY", puan: 11 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 13 }, // BONUSLAR TOPLANDI
+  "262813": { name: "KEMAL ERSOY", puan: 11 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 16 }, // BONUSLAR TOPLANDI
   "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 0 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
-  "262714": { name: "İSMAİL EKER 🏆", puan: 14 }, // BONUS EKLENDİ
+  "262714": { name: "İSMAİL EKER 🏆", puan: 17 }, // BONUS EKLENDİ
   "262740": { name: "ABDULLAH DİK", puan: 2 }, "262702": { name: "MURAT KARA", puan: 8 },
   "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 9 },
   "262716": { name: "BİROL DEMİREL", puan: 6 }, "262750": { name: "MAHMUT CBR", puan: 5 },
