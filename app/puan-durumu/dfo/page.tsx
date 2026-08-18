@@ -3,22 +3,8 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-const allPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
-};
+// allPlayersList BURADAN TAMAMEN SİLİNDİ!
+// Artık oyuncular Supabase "players" tablosundan çekiliyor.
 
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category.toUpperCase();
@@ -33,16 +19,24 @@ export default function DfoPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
+      const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
       const { data: dbHistorical } = await supabase.from('dfo_weekly_points').select('*');
 
+      const playersList: Record<string, string> = {};
+      if (dbPlayers) {
+        dbPlayers.forEach(p => {
+          playersList[p.id] = p.name;
+        });
+      }
+
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(allPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dbHistorical) {
@@ -91,12 +85,12 @@ export default function DfoPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      const baseList = Object.keys(allPlayersList).map(id => {
+      const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
         const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
         return { 
-          id, name: allPlayersList[id], 
+          id, name: playersList[id], 
           w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4, w5: w5Total, total, 
           liveExtra: w5Live[id] || 0 
         };
@@ -106,10 +100,8 @@ export default function DfoPuanDurumuPage() {
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      const visibleList = baseList.filter(p => {
-        if (activeTab === 'total') return p.total > 0 || p.id === "262712";
-        else return (p[activeTab] as number) > 0 || p.id === "262712";
-      });
+      // SIFIR PUANI OLANLARI GİZLEME KURALI KALDIRILDI!
+      const visibleList = baseList;
 
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
@@ -219,7 +211,6 @@ export default function DfoPuanDurumuPage() {
                         </div>
                       </td>
                       <td className="px-1 md:px-2 py-3">
-                        {/* İSİMLER BEMBEYAZ YAPILDI (text-white) */}
                         <div className="flex items-center gap-1 md:gap-2 text-white font-semibold whitespace-nowrap">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
@@ -238,7 +229,6 @@ export default function DfoPuanDurumuPage() {
                           )}
                         </div>
                       </td>
-                      {/* PUANLAR İSİMLER GİBİ BEMBEYAZ YAPILDI (text-white) */}
                       <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-white">
                         {row.displayScore}
                       </td>

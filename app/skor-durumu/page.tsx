@@ -3,22 +3,8 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-const allPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
-};
+// allPlayersList BURADAN TAMAMEN SİLİNDİ!
+// Artık oyuncular Supabase "players" tablosundan çekiliyor.
 
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category.toUpperCase();
@@ -34,17 +20,25 @@ export default function SkorDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
+      const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
       const { data: dfoHistorical } = await supabase.from('dfo_weekly_scores').select('*');
       const { data: tffHistorical } = await supabase.from('tff_weekly_scores').select('*');
 
+      const playersList: Record<string, string> = {};
+      if (dbPlayers) {
+        dbPlayers.forEach(p => {
+          playersList[p.id] = p.name;
+        });
+      }
+
       let w5DfoLive: Record<string, number> = {}; 
       let w5TffLive: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(allPlayersList).forEach(id => { w5DfoLive[id] = 0; w5TffLive[id] = 0; });
+      Object.keys(playersList).forEach(id => { w5DfoLive[id] = 0; w5TffLive[id] = 0; });
 
       const dfoDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dfoHistorical) dfoHistorical.forEach(r => dfoDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
@@ -64,7 +58,7 @@ export default function SkorDurumuPage() {
       if (dbBulletin) dbBulletin.forEach(m => catDict[m.match_index] = m.category);
 
       if (dbMatches) {
-        // Ekmel Standard: Deduplication Filter (Çift yazım hatasını önler)
+        // Ekmel Standard: Deduplication Filter
         const uniqueMatches: Record<number, any> = {};
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
@@ -78,7 +72,6 @@ export default function SkorDurumuPage() {
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
             
             winnerIds.forEach(wId => {
-              // SKOR sayfası 1 puan mantığıyla çalışır. Her tam isabete 1 skor puanı.
               if (dbMatch.status === 'FINISHED' || dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
                 if (isTff) w5TffLive[wId] += 1;
                 else w5DfoLive[wId] += 1;
@@ -91,11 +84,10 @@ export default function SkorDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      const baseList = Object.keys(allPlayersList).map(id => {
+      const baseList = Object.keys(playersList).map(id => {
         const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
-        // Çatı Seçimine Göre Puanları Toparla
         let w1=0, w2=0, w3=0, w4=0, w5=0, total=0, liveExtra=0;
         
         if (leagueFilter === 'MASTER') {
@@ -110,17 +102,15 @@ export default function SkorDurumuPage() {
         
         total = w1 + w2 + w3 + w4 + w5;
 
-        return { id, name: allPlayersList[id], w1, w2, w3, w4, w5, total, liveExtra };
+        return { id, name: playersList[id], w1, w2, w3, w4, w5, total, liveExtra };
       });
 
       const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => prevRanks[player.id] = index + 1);
 
-      const visibleList = baseList.filter(p => {
-        if (activeTab === 'total') return p.total > 0 || p.id === "262712";
-        else return (p[activeTab] as number) > 0 || p.id === "262712";
-      });
+      // SIFIR PUANI OLANLARI GİZLEME KURALI KALDIRILDI!
+      const visibleList = baseList;
 
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
@@ -161,7 +151,6 @@ export default function SkorDurumuPage() {
       
       <div className="w-full max-w-3xl mx-auto">
         
-        {/* SKOR ÇATI MODELİ MENÜLERİ - TASARIM KORUNDU */}
         <div className="w-full flex flex-col gap-2 mb-4">
           <button onClick={() => setLeagueFilter('MASTER')} className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'MASTER' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#064e3b] text-[#34d399] hover:bg-[#047857]'}`}>
             MASTER
@@ -215,7 +204,6 @@ export default function SkorDurumuPage() {
 
           {tableRows.length > 0 ? (
             <div className="overflow-x-auto">
-              {/* ONAYLANAN CİLLOP TASARIM BURAYA DA EKLENDİ */}
               <table className="w-full text-left text-xs md:text-sm">
                 <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                   <tr>
