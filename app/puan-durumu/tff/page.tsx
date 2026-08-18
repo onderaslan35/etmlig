@@ -1,18 +1,16 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKMEL KANUNU: 52 KİŞİLİK SABİT LİSTE 🔴
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
   "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
@@ -22,338 +20,236 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-const tffWeek1Data: Record<string, { name: string; puan: number }> = {}; 
-const tffWeek2Data: Record<string, { name: string; puan: number }> = {};
-const tffWeek3Data: Record<string, { name: string; puan: number }> = {
-  "262707": { name: "HAKAN AYAN", puan: 10 }, "262816": { name: "SEDAT SEDAT", puan: 9 }, "262733": { name: "MUHSİN ASİLKAN", puan: 7 },
-  "262754": { name: "OSMAN ALİ AYDIN", puan: 6 }, "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262706": { name: "GAZİ AYAN", puan: 6 },
-  "262755": { name: "DOĞAÇ ALKAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 5 },
-  "262734": { name: "LEVENT YILDIRIM", puan: 5 }, "262705": { name: "AHMET BİRCAN", puan: 4 }, "262714": { name: "İSMAİL EKER", puan: 4 },
-  "262763": { name: "MUSTAFA ELMAS", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 }, "262740": { name: "ABDULLAH DİK", puan: 4 },
-  "262756": { name: "EYÜP KARACAOĞLU", puan: 4 }, "262782": { name: "YUSUF ERBAY", puan: 3 }, "262702": { name: "MURAT KARA", puan: 3 },
-  "262813": { name: "KEMAL ERSOY", puan: 3 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 },
-  "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 }, "351925": { name: "ALİOS GÖZTEPE", puan: 1 }, "262730": { name: "ÖNDER IŞIK", puan: 1 },
-  "262772": { name: "CEMAL SİVRİKAYA", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 }
-};
-
-const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
-  "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
-  "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"],
-  "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"],
-  "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"],
-  "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"],
-  "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"],
-  "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"],
-  "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"],
-  "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"],
-  "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"],
-  "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"],
-  "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"],
-  "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"],
-  "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"],
-  "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"],
-  "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"],
-  "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"],
-  "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"],
-  "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"],
-  "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"],
-  "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"],
-  "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"],
-  "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"],
-  "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"],
-  "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"],
-  "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"],
-  "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"],
-  "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"],
-  "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"],
-  "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"],
-  "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"],
-  "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"],
-  "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"],
-  "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"],
-  "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"],
-  "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"],
-  "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"],
-  "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"],
-  "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"],
-  "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"],
-  "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
-  "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
-  "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
-};
-
 const isTffMatchCheck = (category: string) => {
-  if (!category) return false;
   const uppercaseCat = category.toUpperCase();
-  return ( uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") );
+  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
 };
-
-const week4Matches = [
-  { id: 1, category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI" }, { id: 2, category: "UEFA SÜPER KUPA" }, { id: 3, category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ" }, { id: 4, category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ" }, { id: 5, category: "TÜRKİYE SÜPER LİG" }, { id: 6, category: "TÜRKİYE 1.LİG" }, { id: 7, category: "TÜRKİYE SÜPER LİG" }, { id: 8, category: "TÜRKİYE SÜPER LİG" }, { id: 9, category: "TÜRKİYE 1.LİG" }, { id: 10, category: "TÜRKİYE 1.LİG" }, { id: 11, category: "TÜRKİYE SÜPER LİG" }, { id: 12, category: "TÜRKİYE SÜPER LİG" }, { id: 13, category: "TÜRKİYE 1.LİG" }, { id: 14, category: "TÜRKİYE 1.LİG" }, { id: 15, category: "İNGİLTERE SÜPER KUPA" }, { id: 16, category: "TÜRKİYE SÜPER LİG" }, { id: 17, category: "TÜRKİYE 1.LİG" }, { id: 18, category: "TÜRKİYE SÜPER LİG" }, { id: 19, category: "TÜRKİYE SÜPER LİG" }, { id: 20, category: "TÜRKİYE 1.LİG" }, { id: 21, category: "TÜRKİYE 1.LİG" }, { id: 22, category: "TÜRKİYE 1.LİG" }, { id: 23, category: "TÜRKİYE SÜPER KUPA" }, { id: 24, category: "TÜRKİYE 1.LİG" }
-];
 
 export default function TffPuanDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('total');
-  const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  
-  // 🚀 5. HAFTA EKLENDİ 🚀
-  const availableWeeks = [1, 2, 3, 4, 5]; 
 
   const loadLeaderboard = async () => {
-    let dbMatches: any[] = [];
-    let dbPredictions: any[] = [];
-    let dbBulletin: any[] = [];
-    
-    // 🛡️ TRY CATCH İLE KORUMA ALTINDA
     try {
-      const { data, error } = await supabase.from('live_matches').select('*');
-      if (data) dbMatches = data;
+      const { data: dbMatches } = await supabase.from('live_matches').select('*');
+      const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      const { data: dbHistorical } = await supabase.from('tff_weekly_points').select('*');
 
-      // 🚀 5. HAFTA TAHMİNLERİ VE BÜLTENİ 🚀
-      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
-      if (pData) dbPredictions = pData;
+      let w5Base: Record<string, number> = {}; 
+      let w5Live: Record<string, number> = {}; 
+      let isAnyMatchLive = false;
 
-      const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
-      if (bData) dbBulletin = bData;
-    } catch (e) {
-      console.log("Canlı skor okunamadı, geçmiş verilerle devam ediliyor.");
-    }
+      Object.keys(allPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
-    const predDict: Record<string, string[]> = {};
-    if (dbPredictions) {
-      dbPredictions.forEach(pred => {
-        const uid = String(pred.user_id);
-        if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-        predDict[uid][pred.match_index - 1] = pred.predicted_score;
-      });
-    }
+      const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
+      if(dbHistorical) {
+          dbHistorical.forEach(row => {
+              historicalDict[row.id] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
+          });
+      }
 
-    const catDict: Record<number, string> = {};
-    if (dbBulletin) {
-      dbBulletin.forEach(m => { catDict[m.match_index] = m.category; });
-    }
-    
-    let w4Base: Record<string, number> = {}; 
-    let w4Live: Record<string, number> = {}; 
-    let w5Base: Record<string, number> = {}; 
-    let w5Live: Record<string, number> = {}; 
-    let isAnyMatchLive = false;
+      const predDict: Record<string, string[]> = {};
+      if (dbPredictions) {
+        dbPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
+          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+        });
+      }
 
-    Object.keys(allPlayersList).forEach(id => { 
-        w4Base[id] = 0; w4Live[id] = 0; 
-        w5Base[id] = 0; w5Live[id] = 0;
-    });
+      const catDict: Record<number, string> = {};
+      if (dbBulletin) {
+        dbBulletin.forEach(m => { catDict[m.match_index] = m.category; });
+      }
 
-    if (dbMatches && dbMatches.length > 0) {
-      const uniqueMatches: Record<number, any> = {};
-      dbMatches.forEach(row => { if(row && row.id) uniqueMatches[row.id] = row; });
-
-      Object.values(uniqueMatches).forEach(dbMatch => {
-        if (dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+      if (dbMatches) {
+        dbMatches.forEach(dbMatch => {
+          if (dbMatch.id > 500 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+            const matchIndex = (dbMatch.id % 100) - 1;
+            const category = catDict[matchIndex + 1] || "";
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            
+            // DFO'NUN TAM TERSİ: SADECE TFF MAÇLARINA PUAN VER!
+            if (isTffMatchCheck(category)) {
+              const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+              let points = 1;
+              if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
 
-            // ============================================
-            // 4. HAFTA İŞLEMLERİ (ID 1 ile 24 arası)
-            // ============================================
-            if (dbMatch.id >= 1 && dbMatch.id <= 24) {
-              const matchIndex = dbMatch.id - 1; 
-              const matchDef = week4Matches[matchIndex];
-              
-              if (matchDef && isTffMatchCheck(matchDef.category)) {
-                const winnerIds = Object.keys(week4PredictionsData).filter(id => week4PredictionsData[id] && week4PredictionsData[id][matchIndex] === targetScore);
-                
-                let points = 1;
-                if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
-
-                winnerIds.forEach(wId => {
-                  if (dbMatch.status === 'FINISHED') w4Base[wId] += points; 
-                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') { w4Live[wId] += points; isAnyMatchLive = true; }
-                });
-              }
-            }
-
-            // ============================================
-            // 🚀 5. HAFTA CANLI RADAR İŞLEMLERİ (ID 501+) 🚀
-            // ============================================
-            if (dbMatch.id > 500) {
-                const matchIndex = (dbMatch.id % 100) - 1;
-                const category = catDict[matchIndex + 1] || "";
-
-                if (isTffMatchCheck(category)) {
-                    const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
-                    let points = 1;
-                    if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
-
-                    winnerIds.forEach(wId => {
-                        if (dbMatch.status === 'FINISHED') w5Base[wId] += points; 
-                        else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') { w5Live[wId] += points; isAnyMatchLive = true; }
-                    });
+              winnerIds.forEach(wId => {
+                if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
+                else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                  w5Live[wId] += points;
+                  isAnyMatchLive = true;
                 }
+              });
             }
-        }
-      });
-    }
+          }
+        });
+      }
 
-    setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-
-    // 🔴 1. VE 2. HAFTADA TABLOYU KOMPLE BOŞALT 🔴
-    if (activeTab === 'week1' || activeTab === 'week2') {
-      setTableRows([]);
-      return;
-    }
-
-    if (activeTab === 'total') {
-      const referenceList = Object.keys(allPlayersList).map(id => {
-        // 🚀 TREND İÇİN ARTIK 4. HAFTA BAZ ALINIYOR (W4Base dahil) 🚀
-        const basePuan = (tffWeek1Data[id]?.puan || 0) + (tffWeek2Data[id]?.puan || 0) + (tffWeek3Data[id]?.puan || 0) + (w4Base[id] || 0);
-        return { id, name: allPlayersList[id], basePuan };
-      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name, 'tr'));
-
-      const prevRanks: Record<string, number> = {};
-      referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
       const baseList = Object.keys(allPlayersList).map(id => {
-        const w4B = w4Base[id] || 0; 
-        const w5B = w5Base[id] || 0;
-        const basePuan = (tffWeek1Data[id]?.puan || 0) + (tffWeek2Data[id]?.puan || 0) + (tffWeek3Data[id]?.puan || 0) + w4B + w5B;
-        const liveExtra = w5Live[id] || 0; // W4Live ve W5Live karışmaması için genelde güncel hafta canı olur
-        return { id, name: allPlayersList[id], basePuan, liveExtra, puan: basePuan + liveExtra };
+        const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
+        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
+        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
+        return { 
+          id, name: allPlayersList[id], 
+          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4, w5: w5Total, total, 
+          liveExtra: w5Live[id] || 0 
+        };
       });
 
-      // 🌟 EKMEL ÇELİK SÜZGECİ: SIFIR PUANLILARI GİZLE (Murat Aydemir İstisnası) 🌟
-      const visibleList = baseList.filter(p => p.puan > 0 || p.id === "262712");
-      visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
+      const prevRanks: Record<string, number> = {};
+      prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      const visibleList = baseList.filter(p => {
+        if (activeTab === 'total') return p.total > 0 || p.id === "262712";
+        else return (p[activeTab] as number) > 0 || p.id === "262712";
+      });
+
+      visibleList.sort((a, b) => {
+        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
+        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
+        return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
+      });
 
       const finalRows = visibleList.map((player, index) => {
         const currentRank = index + 1;
-        const prevRank = prevRanks[player.id];
         let trend = 'same', trendDiff = 0; 
-        if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-        else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
-        return { ...player, currentRank, prevRank, trend, trendDiff };
+        
+        if (activeTab === 'total') {
+            const prevRank = prevRanks[player.id];
+            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+        }
+
+        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        return { ...player, currentRank, trend, trendDiff, displayScore };
       });
+      
       setTableRows(finalRows);
-    } else {
-      if(activeTab === 'week5') {
-        const list = Object.keys(allPlayersList).map(id => {
-          return { id, name: allPlayersList[id], puan: (w5Base[id] || 0) + (w5Live[id] || 0), liveExtra: w5Live[id] || 0, trend: 'none', trendDiff: 0 };
-        });
-        const visibleList = list.filter(p => p.puan > 0 || p.id === "262712");
-        setTableRows(visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')).map((p, idx) => ({ ...p, currentRank: idx + 1 })));
-      } else if(activeTab === 'week4') {
-        const list = Object.keys(allPlayersList).map(id => {
-          return { id, name: allPlayersList[id], puan: (w4Base[id] || 0) + (w4Live[id] || 0), liveExtra: w4Live[id] || 0, trend: 'none', trendDiff: 0 };
-        });
-        const visibleList = list.filter(p => p.puan > 0 || p.id === "262712");
-        setTableRows(visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')).map((p, idx) => ({ ...p, currentRank: idx + 1 })));
-      } else {
-        // Sadece week3 kaldı
-        let dataMap = tffWeek3Data;
-        const list = Object.keys(allPlayersList).map(id => {
-          const rawObj = dataMap[id];
-          return { id, name: rawObj ? rawObj.name : allPlayersList[id], puan: rawObj ? rawObj.puan : 0, liveExtra: 0, trend: 'none', trendDiff: 0 };
-        });
-        const visibleList = list.filter(p => p.puan > 0 || p.id === "262712");
-        setTableRows(visibleList.sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name, 'tr')).map((p, idx) => ({ ...p, currentRank: idx + 1 })));
-      }
+
+    } catch (e) {
+        console.log("Veri çekilirken hata oluştu");
     }
   };
 
   useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
-  const selectTab = (tabKey: string) => { setActiveTab(tabKey); setIsWeekMenuOpen(false); };
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="flex flex-col items-center text-center mb-5 mt-1"><h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1></div>
+      <div className="flex flex-col items-center text-center mb-5 mt-1">
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
+      </div>
+      
       <div className="w-full mb-6"><LiveMatchCard /></div>
       
-      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-          TFF TOPLAM PUAN DURUMU
+      <div className="w-full max-w-3xl mx-auto">
+        <button 
+          onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
+          className="w-full bg-[#dc2626] hover:bg-red-500 text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
+        >
+          {activeTab === 'total' ? 'TFF TOPLAM PUAN DURUMU' : `TFF ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
         </button>
-        <div className="w-full relative">
-          <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-red-700 text-white border-red-500' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            <span>📅 {activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `TFF ${activeTab.replace('week', '')}. HAFTA PUAN DURUMU`}</span>
-            <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
-          </button>
-          {isWeekMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
-                {availableWeeks.map((weekNum) => {
-                  const weekKey = `week${weekNum}`;
-                  return (
-                    <button key={weekNum} onClick={() => selectTab(weekKey)} className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-red-700 text-white border-red-500 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-red-500/20 hover:text-red-300'}`}>{weekNum}</button>
-                  );
-                })}
-              </div>
+
+        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
+          <div 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
+          >
+            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
+              <span>📅</span>
+              <span>{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
+            </div>
+            <div className="text-slate-400 font-bold text-[10px] uppercase flex items-center gap-1 tracking-widest">
+              {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+            </div>
+          </div>
+
+          {isMenuOpen && (
+            <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
+              {[1, 2, 3, 4, 5].map(num => (
+                <button
+                  key={num}
+                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
+                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
+                    activeTab === `w${num}` ? 'bg-[#dc2626] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
           )}
-        </div>
-      </div>
 
-      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        {tableRows.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
-                <tr>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap pr-4 sm:pr-8">
-                    {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {tableRows.map((row, idx) => (
-                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
-                      <div className="flex items-center justify-center gap-0.5 sm:gap-2">
-                        <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank || idx + 1}</span>
-                        <div className="w-6 sm:w-10 flex items-center justify-start">
-                          {activeTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
-                          {activeTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
-                          {activeTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
-                      <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
-                        {(() => {
-                          const trophyCount = (row.name.match(/🏆/g) || []).length;
-                          const cleanName = row.name.replace(/🏆/g, '').trim();
-                          return ( <><span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>{cleanName}</span>{trophyCount > 0 && <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">{'🏆'.repeat(trophyCount)}</span>}</> );
-                        })()}
-                        {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">+{row.liveExtra} CANLI</span>}
-                        {row.liveExtra > 0 && activeTab !== 'total' && <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>+{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}</span>}
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap pr-4 sm:pr-8">
-                      <span
-                        className="text-white font-black text-base sm:text-xl tracking-wider"
-                        style={{ textShadow: '0 0 10px rgba(239,68,68,1), 0 0 20px rgba(220,38,38,0.9), 0 0 30px rgba(153,27,27,0.8)' }}
-                      >
-                        {row.puan}
-                      </span>
-                    </td>
+          {tableRows.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs md:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                  <tr>
+                    <th className="px-4 py-3 w-16 text-left">SIRA</th>
+                    <th className="px-2 py-3 text-left">YARIŞMACI</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">
+                      {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
-            {activeTab === 'week1' || activeTab === 'week2' 
-              ? '⏳ Bu haftalarda TFF maçı oynanmamıştır.' 
-              : '⏳ Veriler bulunamadı.'}
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-[#1e293b]">
+                  {tableRows.map((row, idx) => (
+                    <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
+                      <td className="px-4 py-3 text-[#94a3b8] font-medium">
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
+                          <span className="text-[#475569]">-</span>
+                          <div className="w-6 flex justify-center">
+                            {activeTab === 'total' ? (
+                              <>
+                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
+                              </>
+                            ) : (
+                              <span className="text-transparent">-</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-3">
+                        <div className="flex items-center gap-2 text-[#e2e8f0] font-semibold whitespace-nowrap">
+                          {(() => {
+                            const trophyCount = (row.name.match(/🏆/g) || []).length;
+                            const cleanName = row.name.replace(/🏆/g, '').trim();
+                            return (
+                              <>
+                                <span>{cleanName}</span>
+                                {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
+                              </>
+                            );
+                          })()}
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
+                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
+                              +{row.liveExtra} CANLI
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-sm text-red-500">
+                        {row.displayScore}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
+          )}
+        </div>
       </div>
     </div>
   );
