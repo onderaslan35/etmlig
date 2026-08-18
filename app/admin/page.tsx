@@ -969,8 +969,33 @@ export default function AdminRadarPortal() {
 
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
+    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
     const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-    return dynamicTeamsList.filter(t => t !== opponent);
+    
+    // 1. Kategori Avrupa (UEFA) maçı mı? Onu anlıyoruz.
+    const isCurrentUefa = currentCat.includes("UEFA") || currentCat.includes("ŞAMPİYONLAR LİGİ") || currentCat.includes("AVRUPA LİGİ") || currentCat.includes("KONFERANS LİGİ");
+
+    const usedTeams = new Set<string>(); // Kullanılmış takımları tutacağımız boş bir küme
+
+    // 2. Bültendeki tüm satırları tek tek geziyoruz
+    bulletinMatches.forEach((m, idx) => {
+       if (idx === currentIndex) return; // Kendi satırımıza geldiysek atla (kendimizi kilitlemeyelim)
+       
+       const mCat = m.category ? m.category.toUpperCase() : '';
+       const isMUefa = mCat.includes("UEFA") || mCat.includes("ŞAMPİYONLAR LİGİ") || mCat.includes("AVRUPA LİGİ") || mCat.includes("KONFERANS LİGİ");
+
+       // 3. KİLİT MANTIĞI:
+       // - Eğer ikisi de YEREL (Süper lig vb) ise -> Takımları kilitle
+       // - Eğer ikisi de AVRUPA (UEFA) ise -> Takımları kilitle
+       // - Biri Yerel, diğeri Avrupa ise -> KİLİTLEME (Aynı takım iki farklı kulvarda seçilebilsin)
+       if (isCurrentUefa === isMUefa) {
+           if (m.home_team) usedTeams.add(m.home_team); // Ev sahibini yasaklı listesine ekle
+           if (m.away_team) usedTeams.add(m.away_team); // Deplasmanı yasaklı listesine ekle
+       }
+    });
+
+    // 4. Sonuç: Rakibi ve yasaklılar listesinde olanları listeden çıkarıp temiz listeyi ver
+    return dynamicTeamsList.filter(t => t !== opponent && !usedTeams.has(t));
   };
 
   const handleBulletinChange = (index: number, field: string, value: string) => {
