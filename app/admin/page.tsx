@@ -1031,6 +1031,76 @@ export default function AdminRadarPortal() {
     return theme;
   };
 
+  // 🚀 YENİ AKILLI KİLİT VE LOJİSTİK FONKSİYONU 🚀
+  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
+    const currentMatch = bulletinMatches[currentIndex];
+    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
+    const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
+    
+    if (!currentCat) return [];
+
+    let havuz = LIG_HAVUZU[currentCat] || LIG_HAVUZU["ÇEŞİTLİ AVRUPA TAKIMLARI"] || [];
+
+    if (currentCat.includes("UEFA") || currentCat.includes("ŞAMPİYONLAR LİGİ")) {
+       havuz = LIG_HAVUZU["ÇEŞİTLİ AVRUPA TAKIMLARI"];
+    }
+
+    const fullHavuz = Array.from(new Set([...havuz, ...dynamicTeamsList]));
+    const usedTeams = new Set<string>();
+
+    bulletinMatches.forEach((m, idx) => {
+       if (idx === currentIndex) return; 
+       
+       const mCat = m.category ? m.category.toUpperCase() : '';
+       
+       if (currentCat === mCat) {
+           if (m.home_team) usedTeams.add(m.home_team);
+           if (m.away_team) usedTeams.add(m.away_team);
+       }
+    });
+
+    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
+  };
+
+  const handleBulletinChange = (index: number, field: string, value: string) => {
+    const newMatches = [...bulletinMatches];
+    (newMatches[index] as any)[field] = value;
+    if (field === 'category') {
+        newMatches[index].home_team = ''; newMatches[index].away_team = '';
+    }
+    setBulletinMatches(newMatches);
+  };
+
+  // 🔴 VERCEL'İN ÇÖKTÜĞÜ FONKSİYON BURAYA GERİ EKLENDİ! 🔴
+  const copyDateTimeToAll = () => {
+    const firstDate = bulletinMatches[0].match_date;
+    const firstTime = bulletinMatches[0].match_time;
+    if(!firstDate || !firstTime) return alert("Önce 1. maçın tarih ve saatini doldurun!");
+    const updated = bulletinMatches.map(m => ({ ...m, match_date: firstDate, match_time: firstTime }));
+    setBulletinMatches(updated);
+  };
+
+  const saveBulletinToDB = async () => {
+    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
+    if (hasEmpty) {
+       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const payload = bulletinMatches.map(m => ({
+         week_num: bulletinWeek, match_index: m.match_index, category: m.category,
+         match_date: m.match_date, match_time: m.match_time,
+         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase()
+      }));
+
+      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
+      if (error) throw error;
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni veritabanına mühürlendi!\n\nŞu an:\n1. Maç Arşivi'nde ${bulletinWeek}. Hafta otomatik olarak oluştu.\n2. Lobi ekranı kapılarını açmak için Cuma 21:00'ı bekliyor.`);
+    } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
+    setIsPublishing(false);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
