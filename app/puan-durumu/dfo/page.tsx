@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// Sabit Liste (Değişmedi)
+// Sabit Liste
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -28,8 +28,9 @@ const isTffMatchCheck = (category: string) => {
 
 export default function DfoPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
   const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
   const loadLeaderboard = async () => {
     try {
@@ -44,7 +45,6 @@ export default function DfoPuanDurumuPage() {
 
       Object.keys(allPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
-      // Eski haftaları tek tek sözlüğe çekiyoruz
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dbHistorical) {
           dbHistorical.forEach(row => {
@@ -66,7 +66,6 @@ export default function DfoPuanDurumuPage() {
         dbBulletin.forEach(m => { catDict[m.match_index] = m.category; });
       }
 
-      // SADECE 5. HAFTAYI HESAPLA (Canlı Motor)
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
           if (dbMatch.id > 500 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
@@ -93,7 +92,6 @@ export default function DfoPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // TÜM KİŞİLERİN VERİLERİNİ DERLE
       const baseList = Object.keys(allPlayersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
@@ -105,12 +103,11 @@ export default function DfoPuanDurumuPage() {
         };
       });
 
-      // ÖNCEKİ HAFTANIN SIRALAMASI (Oklar için sadece ilk 4 haftanın toplamına bakılır)
+      // ÖNCEKİ HAFTANIN SIRALAMASI (Sadece oklar için)
       const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      // HANGİ SEKMEYDEYSEK ONA GÖRE 0 PUANLILARI GİZLE VE SIRALA
       const visibleList = baseList.filter(p => {
         if (activeTab === 'total') return p.total > 0 || p.id === "262712";
         else return (p[activeTab] as number) > 0 || p.id === "262712";
@@ -122,22 +119,17 @@ export default function DfoPuanDurumuPage() {
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
-      // EKRANA BASILACAK SON HALİ
       const finalRows = visibleList.map((player, index) => {
         const currentRank = index + 1;
         let trend = 'same', trendDiff = 0; 
         
-        // Oklar sadece Genel Klasmanda çalışır
         if (activeTab === 'total') {
             const prevRank = prevRanks[player.id];
             if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        let displayScore = 0;
-        if (activeTab === 'total') displayScore = player.total;
-        else displayScore = player[activeTab] as number;
-
+        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
@@ -158,75 +150,106 @@ export default function DfoPuanDurumuPage() {
       
       <div className="w-full mb-6"><LiveMatchCard /></div>
       
-      {/* SEKMELER - KOMUTANIN VİZYONU */}
-      <div className="flex flex-wrap justify-center gap-2 mb-6 w-full max-w-3xl mx-auto px-2">
-        {[
-          { id: 'w1', label: '1. HAFTA' },
-          { id: 'w2', label: '2. HAFTA' },
-          { id: 'w3', label: '3. HAFTA' },
-          { id: 'w4', label: '4. HAFTA' },
-          { id: 'w5', label: '5. HAFTA (CANLI)' },
-          { id: 'total', label: 'GENEL KLASMAN' }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black tracking-widest border transition-all duration-300 ${
-              activeTab === tab.id 
-                ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-105' 
-                : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className="w-full max-w-3xl mx-auto">
+        <button 
+          onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
+          className="w-full bg-[#1d4ed8] hover:bg-blue-600 text-white font-bold text-sm md:text-base py-4 px-4 rounded-xl mb-4 transition-colors uppercase tracking-wide"
+        >
+          {activeTab === 'total' ? 'DFO TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
+        </button>
 
-      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        {tableRows.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
-                <tr>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">
-                    {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {tableRows.map((row, idx) => (
-                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
-                      <div className="flex items-center justify-center gap-0.5 sm:gap-2">
-                        <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank || idx + 1}</span>
-                        <div className="w-6 sm:w-10 flex items-center justify-start ml-0.5 sm:ml-1">
-                          {activeTab === 'total' && row.trend === 'up' && <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
-                          {activeTab === 'total' && row.trend === 'down' && <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span></span>}
-                          {activeTab === 'total' && row.trend === 'same' && <span className="text-slate-600 text-[8px] sm:text-[10px]">▶</span>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
-                      <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
-                        {(() => {
-                          const trophyCount = (row.name.match(/🏆/g) || []).length;
-                          const cleanName = row.name.replace(/🏆/g, '').trim();
-                          return ( <><span className="text-slate-200 font-semibold truncate whitespace-nowrap flex-shrink" title={cleanName}>{cleanName}</span>{trophyCount > 0 && <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">{'🏆'.repeat(trophyCount)}</span>}</> );
-                        })()}
-                        {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0">+{row.liveExtra} CANLI</span>}
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-right font-bold text-sm sm:text-base whitespace-nowrap text-blue-400">{row.displayScore}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
+          <div 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-full flex items-center justify-between p-4 md:p-5 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
+          >
+            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] md:text-xs uppercase tracking-wider">
+              <span>📅</span>
+              <span>{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
+            </div>
+            <div className="text-slate-400 font-bold text-[10px] md:text-xs uppercase flex items-center gap-1 tracking-widest">
+              {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+            </div>
           </div>
-        ) : (
-          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
-        )}
+
+          {isMenuOpen && (
+            <div className="w-full bg-[#0a0f1c] p-6 flex flex-wrap justify-center gap-4 border-b border-[#1e293b]">
+              {[1, 2, 3, 4, 5].map(num => (
+                <button
+                  key={num}
+                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
+                  className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-xl font-bold text-lg md:text-xl transition-all ${
+                    activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-[#334155]'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {tableRows.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs md:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                  <tr>
+                    <th className="px-4 md:px-6 py-5 w-24">SIRA</th>
+                    <th className="px-2 md:px-4 py-5">YARIŞMACI</th>
+                    <th className="px-4 md:px-6 py-5 text-right whitespace-nowrap">
+                      {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e293b]">
+                  {tableRows.map((row, idx) => (
+                    <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
+                      
+                      {/* İŞTE OKLAR BURADA KOMUTANIM! */}
+                      <td className="px-4 md:px-6 py-4 text-[#94a3b8] font-medium">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <span className="w-5 text-left">{row.currentRank || idx + 1}</span>
+                          <div className="w-8 flex justify-center">
+                            {activeTab === 'total' ? (
+                              <>
+                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] md:text-xs font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] md:text-xs font-bold flex items-center gap-0.5">▼ <span className="text-[8px] md:text-[10px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'same' && <span className="text-slate-600 text-[8px] md:text-[10px]">-</span>}
+                              </>
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-2 md:px-4 py-4">
+                        <div className="flex items-center gap-2 overflow-hidden text-[#e2e8f0] font-semibold">
+                          {(() => {
+                            const trophyCount = (row.name.match(/🏆/g) || []).length;
+                            const cleanName = row.name.replace(/🏆/g, '').trim();
+                            return (
+                              <>
+                                <span className="truncate whitespace-nowrap">{cleanName}</span>
+                                {trophyCount > 0 && <span className="text-amber-400 text-[10px] md:text-xs">{'🏆'.repeat(trophyCount)}</span>}
+                              </>
+                            );
+                          })()}
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && <span className="text-emerald-400 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">+{row.liveExtra} CANLI</span>}
+                        </div>
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 text-right font-bold text-sm md:text-base text-[#60a5fa]">
+                        {row.displayScore}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
+          )}
+        </div>
       </div>
     </div>
   );
