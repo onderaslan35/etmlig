@@ -3,167 +3,165 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 54 ASLAN PARÇASI 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
-  "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
-  "262755": { pass: "64550", name: "DOĞAÇ ALKAN" },
-  "262816": { pass: "61820", name: "SEDAT SEDAT" },
-  "262756": { pass: "65560", name: "EYÜP KARACAOĞLU" },
-  "262786": { pass: "95860", name: "SEDAT DİŞLİ" },
-  "262719": { pass: "28190", name: "UĞUR VARDAR" },
-  "262733": { pass: "42330", name: "MUHSİN ASİLKAN" },
-  "262726": { pass: "35260", name: "HUDAVER TOPARDIC" },
-  "262714": { pass: "23140", name: "İSMAİL EKER 🏆" },
-  "262717": { pass: "26170", name: "MURAT ALİ" },
-  "262774": { pass: "83740", name: "ŞENOL CAN ÇAKICI" },
-  "262728": { pass: "35280", name: "ÖNDER ASLAN" },
-  "262709": { pass: "18090", name: "SALİH KARACAOĞLU" },
-  "262813": { pass: "28620", name: "KEMAL ERSOY" },
-  "262754": { pass: "63540", name: "OSMAN ALİ AYDIN 🏆" },
-  "262721": { pass: "30210", name: "MUSTAFA GÜMÜŞÇÜ" },
-  "262711": { pass: "20110", name: "RIDVAN DOGER" },
-  "262707": { pass: "16070", name: "HAKAN AYAN" },
-  "262771": { pass: "80710", name: "ULAŞ ADIGÜZEL" },
-  "262732": { pass: "41320", name: "R. İLHAN KARACA 🏆🏆" },
-  "262790": { pass: "99880", name: "CUMALİ SÖKER" },
-  "262730": { pass: "39300", name: "ÖNDER IŞIK" },
-  "262702": { pass: "11020", name: "MURAT KARA" },
-  "262753": { pass: "62530", name: "YUSUF KIZILTUĞ" },
-  "262738": { pass: "47380", name: "MEVLÜT EVLER" },
-  "262734": { pass: "43340", name: "LEVENT YILDIRIM" },
-  "262758": { pass: "67580", name: "MELİH PINAR" },
-  "262731": { pass: "40310", name: "FATİH AYAN" },
-  "262763": { pass: "72630", name: "MUSTAFA ELMAS" },
-  "262705": { pass: "14050", name: "AHMET BİRCAN 🏆" },
-  "262706": { pass: "15060", name: "GAZİ AYAN 🏆🏆" },
-  "262772": { pass: "81720", name: "CEMAL SİVRİKAYA 🏆" },
-  "262747": { pass: "56470", name: "SAVAŞ ÇAĞLAYAN" },
-  "262723": { pass: "32230", name: "AYHAN LUŞOĞLU" },
-  "351925": { pass: "19250", name: "ALİOS GÖZTEPE" },
-  "262750": { pass: "59500", name: "MAHMUT CBR" },
-  "262782": { pass: "91820", name: "YUSUF ERBAY" },
-  "262704": { pass: "13040", name: "YAPAY ZEKA" },
-  "262725": { pass: "34250", name: "İLYAS KAZDAL" },
-  "262716": { pass: "25160", name: "BİROL DEMİREL" },
-  "262740": { pass: "49400", name: "ABDULLAH DİK" },
-  "262749": { pass: "58490", name: "B.VEYSELOĞLU EROL" },
-  "262737": { pass: "46370", name: "ŞAHİN GEZGİNCİ" },
-  "262718": { pass: "27180", name: "BEKİR KARADAĞ" },
-  "262770": { pass: "79700", name: "OZKAYA MAZAKALI BAYRAM" },
-  "262703": { pass: "12030", name: "CEMALETTİN BELLİ" },
-  "262739": { pass: "48390", name: "UĞUR GÜRBÜZ" },
-  "262715": { pass: "24150", name: "ŞEMSETTIN DÜGER" },
-  "262708": { pass: "17080", name: "BAYRAM YILMAZ" },
-  "262744": { pass: "53440", name: "İLYAS UYGUN" },
-  "262787": { pass: "96870", name: "MUSTAFA TUCİ" },
-  "262712": { pass: "21120", name: "MURAT AYDEMİR" },
-  "262741": { pass: "50410", name: "SABAHATTİN ÇAYLAK" },
-  "262735": { pass: "19250", name: "AYGÜN AKKEÇELİ" }
+  "262701": { pass: "00000", name: "MUHAMMET OKUMUŞ" }, "262702": { pass: "00000", name: "MURAT KARA" },
+  "262703": { pass: "00000", name: "CEMALETTİN BELLİ" }, "262704": { pass: "00000", name: "YAPAY ZEKA" },
+  "262705": { pass: "00000", name: "AHMET BİRCAN 🏆" }, "262706": { pass: "00000", name: "GAZİ AYAN 🏆🏆" },
+  "262707": { pass: "00000", name: "HAKAN AYAN" }, "262708": { pass: "00000", name: "BAYRAM YILMAZ" },
+  "262709": { pass: "00000", name: "SALİH KARACAOĞLU" }, "262710": { pass: "00000", name: "MUZAFFER ERTUĞRUL" },
+  "262711": { pass: "00000", name: "RIDVAN DOGER" }, "262712": { pass: "00000", name: "MURAT AYDEMİR" },
+  "262713": { pass: "00000", name: "VAHİT KÜLCÜ" }, "262714": { pass: "00000", name: "İSMAİL EKER 🏆" },
+  "262715": { pass: "00000", name: "ŞEMSETTIN DÜGER" }, "262716": { pass: "00000", name: "BİROL DEMİREL" },
+  "262717": { pass: "00000", name: "MURAT ALİ" }, "262718": { pass: "00000", name: "BEKİR KARADAĞ" },
+  "262719": { pass: "00000", name: "UĞUR VARDAR" }, "262720": { pass: "00000", name: "HASAN ASLAN" },
+  "262721": { pass: "00000", name: "MUSTAFA GÜMÜŞÇÜ" }, "262722": { pass: "00000", name: "MUSTAFA ERKAN" },
+  "262723": { pass: "00000", name: "AYHAN LUŞOĞLU" }, "262724": { pass: "00000", name: "YÜCEL TOMAK" },
+  "262725": { pass: "00000", name: "İLYAS KAZDAL" }, "262726": { pass: "00000", name: "HUDAVER TOPARDIC" },
+  "262727": { pass: "00000", name: "YAHŞİ ERKAN🏆" }, "262728": { pass: "00000", name: "ÖNDER ASLAN" },
+  "262729": { pass: "00000", name: "HAKAN GÜN" }, "262730": { pass: "00000", name: "ÖNDER IŞIK" },
+  "262731": { pass: "00000", name: "FATİH AYAN" }, "262732": { pass: "00000", name: "R. İLHAN KARACA 🏆🏆" },
+  "262733": { pass: "00000", name: "MUHSİN ASİLKAN" }, "262734": { pass: "00000", name: "LEVENT YILDIRIM" },
+  "262735": { pass: "00000", name: "AYGÜN AKKEÇELİ" }, "262736": { pass: "00000", name: "MEHMET ALİ KARA" },
+  "262737": { pass: "00000", name: "ŞAHİN GEZGİNCİ" }, "262738": { pass: "00000", name: "MEVLÜT EVLER" },
+  "262739": { pass: "00000", name: "UĞUR GÜRBÜZ" }, "262740": { pass: "00000", name: "ABDULLAH DİK" },
+  "262741": { pass: "00000", name: "SABAHATTİN ÇAYLAK" }, "262742": { pass: "00000", name: "ZEKERiYYA TOPKAYYA" },
+  "262743": { pass: "00000", name: "MEHMET ALİ ŞAHİN" }, "262744": { pass: "00000", name: "İLYAS UYGUN" },
+  "262745": { pass: "00000", name: "OĞUZ YILDIRIMKAYA" }, "262746": { pass: "00000", name: "MEHMET BAYIR" },
+  "262747": { pass: "00000", name: "SAVAŞ ÇAĞLAYAN" }, "262748": { pass: "00000", name: "YASİN ŞAHİN" },
+  "262749": { pass: "00000", name: "B.VEYSELOĞLU EROL" }, "262750": { pass: "00000", name: "MAHMUT CBR" },
+  "262751": { pass: "00000", name: "HÜSEYİN ERBAŞ" }, "262810": { pass: "00000", name: "ADEM BULUT ERTÜRK" },
+  "262753": { pass: "00000", name: "YUSUF KIZILTUĞ" }, "262754": { pass: "00000", name: "OSMAN ALİ AYDIN 🏆" },
+  "262755": { pass: "00000", name: "DOĞAÇ ALKAN" }, "262756": { pass: "00000", name: "EYÜP KARACAOĞLU" },
+  "262813": { pass: "00000", name: "KEMAL ERSOY" }, "262758": { pass: "00000", name: "MELİH PINAR" },
+  "262762": { pass: "00000", name: "İLHAN DANIŞ" }, "262763": { pass: "00000", name: "MUSTAFA ELMAS" },
+  "262770": { pass: "00000", name: "OZKAYA MAZAKALI BAYRAM" }, "262771": { pass: "00000", name: "ULAŞ ADIGÜZEL" },
+  "262772": { pass: "00000", name: "CEMAL SİVRİKAYA 🏆" }, "262760": { pass: "00000", name: "UĞUR NES" },
+  "262774": { pass: "00000", name: "ŞENOL CAN ÇAKICI" }, "262776": { pass: "00000", name: "CUMA OKUR" },
+  "262777": { pass: "00000", name: "MİRAÇ TOPAL" }, "262778": { pass: "00000", name: "CENGİZ SAYAN" },
+  "262780": { pass: "00000", name: "YUSUF KILIÇ" }, "262781": { pass: "00000", name: "KADİR SOLMAZ" },
+  "262782": { pass: "00000", name: "YUSUF ERBAY" }, "262783": { pass: "00000", name: "YASİN AYAN" },
+  "262784": { pass: "00000", name: "MEHMET AVCI" }, "262785": { pass: "00000", name: "METE BÜYÜKGÖL 🏆" },
+  "262786": { pass: "00000", name: "SEDAT DİŞLİ" }, "262787": { pass: "00000", name: "MUSTAFA TUCİ" },
+  "262788": { pass: "00000", name: "HAKAN ÇİFTÇİ" }, "262789": { pass: "00000", name: "ALİ ABUKAN" },
+  "262790": { pass: "00000", name: "CUMALİ SÖKER" }, "351925": { pass: "00000", name: "ALİOS GÖZTEPE" },
+  "350909": { pass: "00000", name: "DİNÇER ÖZER" }, "262815": { pass: "00000", name: "MURAT KAYA" },
+  "262816": { pass: "00000", name: "SEDAT SEDAT" }, "262795": { pass: "00000", name: "SEFA İÇA" },
+  "262796": { pass: "00000", name: "D. SERGEN TAŞYÜREK" }, "262797": { pass: "00000", name: "ÖMER DOGER" }
 };
 
-// 🚀 MAÇ ARŞİVİ MODELİ (SABİT LOGOLAR) 🚀
+// 🔴 YEREL & BULUT LOGO BANKASI (ADMİN PANELİYLE BİREBİR AYNI) 🔴
 const localTeamLogos: Record<string, string> = {
-  "FENERBAHÇE": "https://upload.wikimedia.org/wikipedia/tr/6/66/Fenerbah%C3%A7e_120._Y%C4%B1l.png",
-  "GALATASARAY": "https://upload.wikimedia.org/wikipedia/tr/b/b9/Galatasaray_Spor_Kul%C3%BCb%C3%BC_logo.svg",
-  "BEŞİKTAŞ": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Be%C5%9Fikta%C5%9F_logo.svg",
-  "TRABZONSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/ab/TrabzonsporAmblemi.png",
-  "TRABZONSPC": "https://upload.wikimedia.org/wikipedia/tr/a/ab/TrabzonsporAmblemi.png",
-  "BAŞAKŞEHİR": "https://upload.wikimedia.org/wikipedia/tr/8/8c/%C4%B0stanbul_Ba%C5%9Fak%C5%9Fehir_FK.png",
-  "KASIMPAŞA": "https://upload.wikimedia.org/wikipedia/tr/c/cd/Kas%C4%B1mpa%C5%9Fa_SK_logo.svg",
-  "RİZESPOR": "https://upload.wikimedia.org/wikipedia/tr/d/d4/%C3%87aykur_Rizespor_Logo.png",
-  "SİVASSPOR": "https://upload.wikimedia.org/wikipedia/tr/e/ee/Sivasspor_logo.svg",
-  "KAYSERİSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/82/Sivasspor_2022.png", 
-  "KONYASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2a/Konyaspor_2022_logo.png",
-  "ALANYASPOR": "https://upload.wikimedia.org/wikipedia/tr/5/52/Alanyaspor_logo.svg",
-  "ANTALYASPOR": "https://upload.wikimedia.org/wikipedia/tr/5/53/Antalyaspor_logo.svg",
-  "GAZİANTEP FK": "https://upload.wikimedia.org/wikipedia/tr/c/cf/Gaziantep_FK.png",
-  "HATAYSPOR": "https://upload.wikimedia.org/wikipedia/tr/c/cf/Hatayspor.png",
-  "PENDİKSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/89/Pendikspor_logo.png",
-  "ANKARAGÜCÜ": "https://upload.wikimedia.org/wikipedia/tr/d/dd/MKE_Ankarag%C3%BCc%C3%BC_logo.svg",
-  "FATİH KARAGÜMRÜK": "https://upload.wikimedia.org/wikipedia/tr/1/11/Fatih_Karag%C3%BCmr%C3%BCk_SK.png",
-  "İSTANBULSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Istanbulspor_AS_logo.png",
-  "ADANA DEMİRSPOR": "https://upload.wikimedia.org/wikipedia/tr/5/5f/Adana_Demirspor_logo.svg",
-  "SAMSUNSPOR": "https://upload.wikimedia.org/wikipedia/tr/d/d1/Samsunspor_Logo.svg",
-  "EYÜPSPOR": "https://upload.wikimedia.org/wikipedia/tr/8/84/Ey%C3%BCpspor_Logo.png",
-  "GÖZTEPE": "https://upload.wikimedia.org/wikipedia/tr/c/c5/G%C3%B6ztepe_Logo.png",
-  "BODRUM FK": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
-  "SAKARYASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2b/Samsunspor_logo_3.svg", 
-  "KOCAELİSPOR": "https://upload.wikimedia.org/wikipedia/tr/f/fa/Konyaspor_logo_3.svg", 
-  "GENÇLERBİRLİĞİ": "https://upload.wikimedia.org/wikipedia/tr/5/5a/Genclerbirligi_logo.svg",
-  "GİRESUNSPOR": "https://upload.wikimedia.org/wikipedia/tr/7/7b/Giresunspor_Logo.svg",
-  "BOLUSPOR": "https://upload.wikimedia.org/wikipedia/tr/c/c6/Boluspor_logo.svg",
-  "BANDIRMASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/2c/Band%C4%B1rmaspor_logo.svg",
-  "ÇORUM FK": "https://upload.wikimedia.org/wikipedia/tr/f/f6/%C3%87orum_FK.png",
-  "ŞANLIURFASPOR": "https://upload.wikimedia.org/wikipedia/tr/a/ab/%C5%9Eanl%C4%B1urfaspor.png",
-  "MANİSA FK": "https://upload.wikimedia.org/wikipedia/tr/4/4e/Manisa_B%C3%BCy%C3%BCk%C5%9Fehir_Belediyespor_logosu.png",
-  "KEÇİÖRENGÜCÜ": "https://upload.wikimedia.org/wikipedia/tr/3/3d/Keci%C3%B6reng%C3%BCc%C3%BC_logo.svg",
-  "ÜMRANİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/5/52/%C3%9Cmraniyespor_logo.svg",
-  "TUZLASPOR": "https://upload.wikimedia.org/wikipedia/tr/7/7f/Tuzlaspor_logo.png",
-  "ALTAY": "https://upload.wikimedia.org/wikipedia/tr/6/6f/Altay_logo.svg",
-  "ERZURUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/9/91/Erzurumspor_FK.png",
-  "ERZURUMSPC": "https://upload.wikimedia.org/wikipedia/tr/9/91/Erzurumspor_FK.png",
-  "KARŞIYAKA": "https://upload.wikimedia.org/wikipedia/tr/e/ee/KarsiyakaSK_logo.svg",
-  "ESENLER EROK": "https://upload.wikimedia.org/wikipedia/tr/d/d4/Esenler_Erokspor.png",
-  "ISPARTA 32": "https://upload.wikimedia.org/wikipedia/tr/e/ef/Isparta_32_Spor_logosu.png",
-  "AMED SK": "https://upload.wikimedia.org/wikipedia/tr/1/14/Amed_SFK_Logo.png",
-  "KASTAMONUSPOR": "https://upload.wikimedia.org/wikipedia/tr/9/90/Kastamonuspor_1966.png",
-  "İSKENDERUNSPOR": "https://upload.wikimedia.org/wikipedia/tr/2/25/Iskenderunspor_Logo.png",
-  "YENİ MERSİN İDMANYURDU": "https://upload.wikimedia.org/wikipedia/tr/2/28/Mersin_%C4%B0dman_Yurdu_logo.svg",
-  "ANKARASPOR": "https://upload.wikimedia.org/wikipedia/tr/3/36/Ankaraspor_logo.png",
-  "KARACABEY BELEDİYE": "https://upload.wikimedia.org/wikipedia/tr/0/05/Karacabey_Belediyespor.png",
-  "SOMASPOR": "https://upload.wikimedia.org/wikipedia/tr/2/24/Somaspor.png",
-  "İNEGÖLSPOR": "https://upload.wikimedia.org/wikipedia/tr/c/cb/Inegolspor_logo.png",
-  "FETHİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/1/1a/Fethiyespor.png",
-  "ARNAVUTKÖY BELEDİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/5/52/Arnavutkoy_Belediyespor.png",
-  "MENEMEN FK": "https://upload.wikimedia.org/wikipedia/tr/4/4d/Menemen_FK.png",
-  "24 ERZİNCANSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/ab/24Erzincanspor_Logo.png",
-  "DENİZLİSPOR": "https://upload.wikimedia.org/wikipedia/tr/6/6b/Denizlispor_logo.svg",
-  "SARIYER": "https://upload.wikimedia.org/wikipedia/tr/7/7b/Sariyer_SK_logo.svg",
-  "KARAMAN FK": "https://upload.wikimedia.org/wikipedia/tr/2/21/Karaman_FK.png",
-  "BURSASPOR": "https://upload.wikimedia.org/wikipedia/tr/3/36/Bursaspor_logo.svg",
-  "ALTINORDU": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Alt%C4%B1nordu_FK_logo.svg",
-  "BEYOĞLU YENİ ÇARŞI": "https://upload.wikimedia.org/wikipedia/tr/7/78/Beyo%C4%9Flu_Yeni_%C3%87ar%C5%9F%C4%B1_FK.png",
-  "ADIYAMAN FK": "https://upload.wikimedia.org/wikipedia/tr/6/6d/Adiyaman_1954_SK_logo.png",
-  "DİYARBEKİRSPOR": "https://upload.wikimedia.org/wikipedia/tr/e/ee/Diyarbekir_spor.png",
-  "AFYONSPOR": "https://upload.wikimedia.org/wikipedia/tr/d/d1/Afyonspor_logo.png",
-  "SERİK BELEDİYESPOR": "https://upload.wikimedia.org/wikipedia/tr/1/14/Serik_Belediyespor_logo.png",
-  "ZONGULDAK KÖMÜRSPOR": "https://upload.wikimedia.org/wikipedia/tr/6/6f/Zonguldak_K%C3%B6m%C3%BCrspor.png",
-  "KIRŞEHİR FUTBOL SK": "https://upload.wikimedia.org/wikipedia/tr/9/91/K%C4%B1r%C5%9Fehir_Belediyespor.png",
-  "BODRUMSPOR": "https://upload.wikimedia.org/wikipedia/tr/a/a2/Bodrum_FK_logo.png",
+  "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
+  "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
+  "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
+  "KASIMPAŞA": "https://de.wikipedia.org/wiki/Special:FilePath/Kasimpasa_Logo.svg",
+  "TRABZONSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Trabzonspor_2022.svg",
+  "KONYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Konyaspor_(logo).svg",
+  "ÇAYKUR RİZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Caykur_Rizespor_(logo).svg",
+  "FATİH KARAGÜMRÜK": "https://fr.wikipedia.org/wiki/Special:FilePath/Fatih_Karag%C3%BCmr%C3%BCk_SK_(logo).svg",
+  "ÜMRANİYESPOR": "https://el.wikipedia.org/wiki/Special:FilePath/%C3%9Cmraniyespor_(logo).svg",
+  "GAZİANTEP FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gaziantep_FK.svg",
+  "FENERBAHÇE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Fenerbah%C3%A7e_SK_-_120_Yil_(1907-2027).svg",
+  "ALANYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Alanyaspor_(logo).svg",
+  "GENÇLERBİRLİĞİ": "https://fr.wikipedia.org/wiki/Special:FilePath/Gen%C3%A7lerbirli%C4%9Fi_S.K._(logo).svg",
+  "IĞDIR FK": "https://ar.wikipedia.org/wiki/Special:FilePath/I%C4%9Fd%C4%B1r_FK.svg",
+  "VANSPOR FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Vanspor_FK_(2019).svg",
+  "MANİSA FK": "https://tr.wikipedia.org/wiki/Special:FilePath/Manisa_FK.png",
+  "BAŞAKŞEHİR": "https://de.wikipedia.org/wiki/Special:FilePath/Istanbul_Basaksehir_FK_Logo.svg",
+  "KAYSERİSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Kayserispor.svg",
+  "SİVASSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Sivasspor_-_Logo.svg",
+  "AMED SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Amed_SK.png",
+  "MARDİN 1969": "https://tr.wikipedia.org/wiki/Special:FilePath/Mardin_1969_SK.png",
+  "ANTALYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Antalyaspor.svg",
+  "BATMAN PETROL SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Batman_Petrolspor.png",
+  "KEÇİÖRENGÜCÜ": "https://tr.wikipedia.org/wiki/Special:FilePath/Ankara_Ke%C3%A7i%C3%B6reng%C3%BCc%C3%BC_SK.png",
+  "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
+  "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
+  "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
+  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
+  "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
+  "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
+  "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
+  "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
+  "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
+  "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
+  "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
+  "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
+  "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
+  "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
+  "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
+  "SABAH FK": "https://en.wikipedia.org/wiki/Special:FilePath/Sabah_FC_(Azerbaijan).png",
+  "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
+  "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
+  "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
+  "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
+  "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
+  "KIZILYILDIZ": "https://en.wikipedia.org/wiki/Special:FilePath/Red_Star_Belgrade_crest.svg",
+  "LEVADIA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Levadia_Tallinnin.png",
+  "LEVSKI SOFYA": "https://en.wikipedia.org/wiki/Special:FilePath/Levski_Sofia_crest_(2026).svg",
+  "UNIVERSITATEA CRAIOVA": "https://ro.wikipedia.org/wiki/Special:FilePath/CS_Universitatea_Craiova.svg",
+  "POLISSYA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Polissya_Zhytomyr.png",
+  "KOPENAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
+  "KOPENHAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
+  "SANTA COLOMA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Santa_Coloma_logo.svg",
+  "RAPID WIEN": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Rapid_Wien_Logo.svg",
+  "FCSB": "https://tr.wikipedia.org/wiki/Special:FilePath/Fcsb-logo.svg",
+  "AUDA RIGA": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Auda_logo.png",
+  "BRANN": "https://en.wikipedia.org/wiki/Special:FilePath/Brann_logo.svg",
+  "PAKSI FC": "https://tr.wikipedia.org/wiki/Special:FilePath/Paksi_FC_(Logo).svg",
+  "PANATHINAIKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Panathinaikos.svg",
+  "ZELEZNICAR PANCEVO": "https://en.wikipedia.org/wiki/Special:FilePath/FK_%C5%BDelezni%C4%8Dar_Pan%C4%8Devo_logo.png",
+  "MIDTJYLLAND": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Midtjylland.png",
+  "HAJDUK SPLIT": "https://tr.wikipedia.org/wiki/Special:FilePath/Hajduk_Split.png",
+  "PATOS": "https://en.wikipedia.org/wiki/Special:FilePath/Pafos_FC_crest.svg",
+  "CSKA SOFYA": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_Sofia_logo.svg",
+  "ST GALLEN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_St._Gallen_logo.svg",
+  "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
+  "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
+  "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
+  "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
+  "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
+  "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
+  "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
+  "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
+  "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
+  "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
+  "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
+  "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  // AVRUPA
-  "LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "FK KAUNO ZALGIRIS": "https://upload.wikimedia.org/wikipedia/en/e/ef/FK_Kauno_%C5%BDalgiris_logo.svg",
-  "KAUNO ZALGIRIS": "https://upload.wikimedia.org/wikipedia/en/e/ef/FK_Kauno_%C5%BDalgiris_logo.svg",
-  "STURM GRAZ": "https://upload.wikimedia.org/wikipedia/en/0/07/SK_Sturm_Graz_logo.svg",
-  "PARIS SG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
-  "PSG": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
-  "ASTON VILLA": "https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo.svg",
-  "KARABAĞ FK": "https://upload.wikimedia.org/wikipedia/en/0/05/Qaraba%C4%9F_FK_logo.svg",
-  "KARABAG": "https://upload.wikimedia.org/wikipedia/en/0/05/Qaraba%C4%9F_FK_logo.svg",
-  "DINAMO KIEV": "https://upload.wikimedia.org/wikipedia/commons/d/d3/FC_Dynamo_Kyiv_logo.svg",
-  "HRADEC KRALOVE": "https://upload.wikimedia.org/wikipedia/en/8/87/FC_Hradec_Kralove.svg",
-  "FERENCVAROS": "https://upload.wikimedia.org/wikipedia/en/0/0e/Ferencv%C3%A1rosi_TC_logo.svg",
-  "FERENCVARO": "https://upload.wikimedia.org/wikipedia/en/0/0e/Ferencv%C3%A1rosi_TC_logo.svg",
-  "REAL MADRID": "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
-  "BARCELONA": "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
-  "MANCHESTER CITY": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
-  "ARSENAL": "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg",
-  "LIVERPOOL": "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
-  "BAYERN MUNICH": "https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg",
-  "BORUSSIA DORTMUND": "https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg",
-  "INTER": "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",
-  "MILAN": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg",
-  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Juventus_FC_-_rect_logo_%28black_bg%29.svg",
-  "CHELSEA": "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg",
-  "MANCHESTER UNITED": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg", 
-  "NAPOLI": "https://upload.wikimedia.org/wikipedia/commons/2/28/S.S.C._Napoli_logo.svg",
-  "AS ROMA": "https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg",
-  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/en/d/d6/Rcd_espanyol_logo.svg"
+  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
+  "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
+  "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
+  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Juventus_FC_-_pictogram_white_%28Italy%2C_2017%29.svg",
+  
+  "MALAGA": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/M%C3%A1laga_CF.svg/200px-M%C3%A1laga_CF.svg.png",
+  "DEPORTIVO LA CORUÑA": "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/RC_Deportivo_La_Coru%C3%B1a_logo.svg/200px-RC_Deportivo_La_Coru%C3%B1a_logo.svg.png",
+  "MONACO": "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/AS_Monaco_FC.svg/200px-AS_Monaco_FC.svg.png",
+  "LILLE": "https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/Lille_OSC_2018_logo.svg/200px-Lille_OSC_2018_logo.svg.png",
+  "NOTTINGHAM FOREST": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e5/Nottingham_Forest_F.C._logo.svg/200px-Nottingham_Forest_F.C._logo.svg.png",
+  "LIVERPOOL": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png",
+  "FULHAM": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Fulham_FC_%28shield%29.svg/200px-Fulham_FC_%28shield%29.svg.png",
+  "EVERTON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Everton_FC_logo.svg/200px-Everton_FC_logo.svg.png",
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
+
+  // Yerel Logolar
+  "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
+  "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
+  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
+  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
+  "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
+  "HAMMARBY": "/logos/hammarby.png", 
+  "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
+  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
+  
+  "OLYMPIC LYON": "/logos/lyon.png",
+  "OLYMPIQUE LYON": "/logos/lyon.png",
+  "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
+  "LYON": "/logos/lyon.png"
 };
 
 const normalizeTurkish = (text: string) => {
@@ -171,19 +169,41 @@ const normalizeTurkish = (text: string) => {
   return text.replace(/İ/g, 'i').replace(/I/g, 'ı').replace(/Ş/g, 'ş').replace(/Ğ/g, 'ğ').replace(/Ü/g, 'ü').replace(/Ö/g, 'ö').replace(/Ç/g, 'ç').toLowerCase().trim();
 };
 
+// 🚀 SADECE YEREL LOGO KLASÖRÜNE BAĞLI OTOMATİK MANTIK 🚀
+const getLocalLogoUrl = (teamName: string) => {
+  if (!teamName || teamName === '') return '/logos/default.png';
+  const slug = teamName
+    .toLowerCase()
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+    
+  return `/logos/${slug}.png`;
+};
+
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category?.toUpperCase() || '';
   return ["TÜRKİYE 1.LİG", "TÜRKİYE KADINLAR SÜPER LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE SÜPER LİG", "TFF 1. LİG", "AMATÖR", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG"].some(cat => uppercaseCat.includes(cat));
 };
 
-const getEliteTheme = (category: string) => {
-    if(!category) return { bgImg: null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
-    const upCat = category.toUpperCase();
-    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) return { bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
-    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) return { bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
-    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) return { bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
-    else if (isTffMatchCheck(upCat)) return { bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
-    return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
+    const upCat = category ? category.toUpperCase() : '';
+    
+    // 🚀 LOKAL LOGO MOTORU BURADA ÇALIŞIYOR 🚀
+    const homeLogoUrl = localTeamLogos[homeTeam] || getLocalLogoUrl(homeTeam);
+    const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
+
+    let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl };
+
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
+    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
+    else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
+    else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    
+    return theme;
 };
 
 const cleanTeamName = (name: string) => {
@@ -208,15 +228,12 @@ export default function TahminlerPortal() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
-  
-  const [teamLogosMap, setTeamLogosMap] = useState<Record<string, string>>(localTeamLogos);
 
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(5); 
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(5);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
@@ -424,13 +441,11 @@ export default function TahminlerPortal() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
-                const theme = getEliteTheme(match.category);
-                
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
 
-                const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                // 🚀 LOKAL LOGO MANTIĞI BURAYA EKLENDİ 🚀
+                const theme = getEliteTheme(match.category, hName, aName);
                 
                 const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
                 const isComplete = tScore.home !== '-' && tScore.away !== '-';
@@ -447,7 +462,8 @@ export default function TahminlerPortal() {
                         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2"><span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest">{match.weekLabel}</span><span className={`text-[10px] sm:text-[11px] font-black uppercase px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>🏆 {match.category}</span></div>
                         <div className="flex items-center justify-between px-0 sm:px-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={hName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
+                            {/* LOGO ÇEKİMİ TEMADAN GELİYOR */}
+                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
                             <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{hName}</span>
                           </div>
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
@@ -456,7 +472,7 @@ export default function TahminlerPortal() {
                             </div>
                           </div>
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={aName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
+                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
                             <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{aName}</span>
                           </div>
                         </div>
@@ -505,16 +521,20 @@ export default function TahminlerPortal() {
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left"><span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
                           const hName = cleanTeamName(m.homeTeam || m.home_team);
-                          const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                          return ( <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={homeLogoUrl} alt={hName} className="w-full h-full object-contain drop-shadow-md" title={hName} /></div></th> )})}
+                          const aName = cleanTeamName(m.awayTeam || m.away_team);
+                          // LOKAL LOGO TEMASI
+                          const theme = getEliteTheme(m.category, hName, aName);
+                          return ( <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-md" title={hName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
                       <tr>
                         <th onClick={toggleSortOrder} className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-right cursor-pointer hover:bg-slate-900 transition-colors group"><div className="flex justify-end items-center gap-2"><span className="text-slate-500 text-[8px] uppercase group-hover:text-amber-300">Sırala: {sortOrder}</span><span className="text-amber-500 font-bold text-[9px] uppercase border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30">SIRA / LİSTE</span></div></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => {
+                          const hName = cleanTeamName(m.homeTeam || m.home_team);
                           const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                          return ( <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={awayLogoUrl} alt={aName} className="w-full h-full object-contain drop-shadow-md" title={aName} /></div></th> )})}
+                          // LOKAL LOGO TEMASI
+                          const theme = getEliteTheme(m.category, hName, aName);
+                          return ( <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-md" title={aName} /></div></th> )})}
                         {ghostColumns.map((_, i) => ( <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
                     </thead>
@@ -569,11 +589,12 @@ export default function TahminlerPortal() {
             ) : (
               <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
                 {bulletinMap[selectedEntryWeek].map((match) => {
-                  const theme = getEliteTheme(match.category);
                   const hName = cleanTeamName(match.homeTeam || match.home_team);
                   const aName = cleanTeamName(match.awayTeam || match.away_team);
-                  const homeLogoUrl = teamLogosMap[hName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
-                  const awayLogoUrl = teamLogosMap[aName] || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+                  
+                  // 🚀 LOKAL LOGO TEMASI
+                  const theme = getEliteTheme(match.category, hName, aName);
+                  
                   const hScore = predictions[match.id]?.home || '-'; const aScore = predictions[match.id]?.away || '-';
 
                   return (
@@ -583,13 +604,20 @@ export default function TahminlerPortal() {
                         <div className="w-full flex justify-between items-center px-4 pt-3 pb-1"><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full">{selectedEntryWeek}. HAFTA {match.id}. MAÇ</span><span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.date} - {match.time}</span></div>
                         <div className="w-full text-center px-2 mt-1 mb-2"><span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span></div>
                         <div className="flex items-center justify-between px-4 pb-4 mt-2">
-                          <div className="flex flex-col items-center justify-center flex-1 gap-2"><div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={homeLogoUrl} alt={hName} className="w-full h-full object-contain drop-shadow-lg" /></div><span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{hName}</span></div>
+                          <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                            {/* LOGO ÇEKİMİ TEMADAN GELİYOR */}
+                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                            <span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{hName}</span>
+                          </div>
                           <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select value={hScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none text-center cursor-pointer">{scoreOptionsArr.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}</select><span className="text-xl font-bold text-slate-500">:</span><select value={aScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none text-center cursor-pointer">{scoreOptionsArr.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}</select>
                             </div>
                           </div>
-                          <div className="flex flex-col items-center justify-center flex-1 gap-2"><div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={awayLogoUrl} alt={aName} className="w-full h-full object-contain drop-shadow-lg" /></div><span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{aName}</span></div>
+                          <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-lg" /></div>
+                            <span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{aName}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
