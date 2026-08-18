@@ -1,10 +1,8 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🏆 Sabit Oyuncu Listesi
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -18,526 +16,267 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTাস্থFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🔴 Sabit 4. Hafta Maçları
-const week4Matches = [
-  { id: 1, category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR RÖVANŞ MAÇI", home: "STURM GRAZ", away: "FENERBAHÇE" },
-  { id: 2, category: "UEFA SÜPER KUPA", home: "PARIS SG", away: "ASTON VILLA" },
-  { id: 3, category: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR RÖVANŞ", home: "KARABAĞ FK", away: "DINAMO KIEV" },
-  { id: 4, category: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR RÖVANŞ", home: "BEŞİKTAŞ", away: "HRADEC KRALOVE" },
-  { id: 5, category: "TÜRKİYE SÜPER LİG", home: "GALATASARAY", away: "ÇORUM FK" },
-  { id: 6, category: "TÜRKİYE 1.LİG", home: "EROKSPOR", away: "SARIYER" },
-  { id: 7, category: "TÜRKİYE SÜPER LİG", home: "KASIMPAŞA", away: "TRABZONSPOR" },
-  { id: 8, category: "TÜRKİYE SÜPER LİG", home: "KONYASPOR", away: "ÇAYKUR RİZE" },
-  { id: 9, category: "TÜRKİYE 1.LİG", home: "FATİH KARAGÜMRÜK", away: "ÜMRANİYESPOR" },
-  { id: 10, category: "TÜRKİYE 1.LİG", home: "İSTANBULSPOR", away: "BODRUMSPOR" },
-  { id: 11, category: "TÜRKİYE SÜPER LİG", home: "GAZİANTEP FK", away: "ALANYASPOR" },
-  { id: 12, category: "TÜRKİYE SÜPER LİG", home: "GENÇLERBİRLİĞİ", away: "FENERBAHÇE" },
-  { id: 13, category: "TÜRKİYE 1.LİG", home: "BURSASPOR", away: "IĞDIR FK" },
-  { id: 14, category: "TÜRKİYE 1.LİG", home: "MANİSA FK", away: "VANSPOR FK" },
-  { id: 15, category: "İNGİLTERE SÜPER KUPA", home: "ARSENAL", away: "MANCHESTER CITY" },
-  { id: 16, category: "TÜRKİYE SÜPER LİG", home: "BAŞAKŞEHİR", away: "KOCAELİSPOR" },
-  { id: 17, category: "TÜRKİYE 1.LİG", home: "KAYSERİSPOR", away: "SİVASSPOR" },
-  { id: 18, category: "TÜRKİYE SÜPER LİG", home: "AMED SPOR", away: "ERZURUMSPOR" },
-  { id: 19, category: "TÜRKİYE SÜPER LİG", home: "BEŞİKTAŞ", away: "EYÜPSPOR" },
-  { id: 20, category: "TÜRKİYE 1.LİG", home: "KEÇİÖRENGÜCÜ", away: "PENDİKSPOR" },
-  { id: 21, category: "TÜRKİYE 1.LİG", home: "MARDİN 1969", away: "ANTALYASPOR" },
-  { id: 22, category: "TÜRKİYE 1.LİG", home: "MUĞLASPOR", away: "BANDIRMASPOR" },
-  { id: 23, category: "TÜRKİYE SÜPER KUPA", home: "SAMSUNSPOR", away: "GÖZTEPE" },
-  { id: 24, category: "TÜRKİYE 1.LİG", home: "BATMAN PETROL SPOR", away: "BOLUSPOR" }
-];
-
-// 🔴 Sabit 4. Hafta Tahminleri
-const week4PredictionsData: Record<string, string[]> = {
-  "262731": ["1-1", "3-1", "1-1", "2-0", "3-0", "2-2", "1-3", "1-1", "2-1", "1-2", "1-0", "1-3", "2-1", "1-2", "2-2", "2-1", "2-1", "1-1", "3-1", "1-1", "1-1", "1-1", "1-1", "2-1"],
-  "262758": ["1-2", "3-0", "2-0", "3-0", "4-1", "1-1", "1-3", "1-1", "1-1", "0-2", "2-1", "0-3", "3-0", "1-1", "2-1", "2-1", "3-0", "3-0", "3-0", "1-1", "0-3", "1-1", "1-2", "3-0"],
-  "262763": ["1-1", "1-1", "1-1", "2-0", "4-0", "1-1", "0-2", "1-0", "1-0", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-0", "3-0", "1-1", "1-1", "1-1", "1-1", "1-0"],
-  "262744": ["1-2", "3-1", "1-1", "2-0", "4-0", "2-0", "1-2", "1-1", "1-0", "0-0", "2-2", "0-4", "2-0", "2-0", "1-2", "2-1", "0-1", "0-2", "2-0", "0-1", "0-2", "0-2", "1-1", "0-1"],
-  "262813": ["1-2", "4-1", "1-0", "3-2", "2-0", "2-0", "1-3", "1-1", "3-0", "2-2", "1-2", "0-4", "1-1", "2-2", "2-0", "1-0", "2-0", "1-2", "2-0", "1-2", "1-3", "0-0", "0-1", "1-2"],
-  "351925": ["0-2", "0-0", "2-1", "1-0", "3-0", "0-0", "0-2", "0-0", "0-0", "0-0", "0-0", "0-3", "2-1", "0-0", "2-0", "2-1", "0-0", "0-2", "2-0", "0-0", "0-2", "0-0", "0-2", "0-0"],
-  "262732": ["2-1", "2-1", "1-0", "1-1", "2-0", "3-1", "2-2", "2-1", "2-0", "1-1", "1-1", "0-3", "2-0", "1-1", "2-1", "0-1", "1-1", "1-1", "2-1", "1-2", "0-2", "0-2", "2-1", "1-0"],
-  "262754": ["1-1", "1-0", "1-0", "2-0", "3-0", "1-0", "0-2", "1-0", "1-0", "0-2", "1-0", "0-3", "2-0", "1-0", "1-2", "1-0", "1-0", "1-1", "2-0", "1-0", "0-1", "0-1", "1-0", "1-0"],
-  "262733": ["2-1", "3-1", "0-0", "3-0", "2-0", "0-1", "1-4", "2-0", "0-0", "1-0", "1-1", "0-3", "2-0", "2-1", "2-1", "2-0", "1-1", "1-0", "3-0", "1-1", "0-1", "1-1", "3-1", "1-0"],
-  "262774": ["0-1", "2-0", "1-0", "2-0", "3-1", "1-1", "0-2", "1-1", "1-2", "1-2", "1-1", "0-2", "1-0", "0-0", "2-0", "0-0", "1-2", "2-1", "2-0", "1-1", "0-2", "0-0", "3-1", "0-2"],
-  "262771": ["2-2", "3-1", "2-1", "4-0", "5-0", "1-1", "1-3", "1-1", "2-2", "1-1", "2-1", "1-4", "3-1", "3-0", "2-1", "1-0", "1-1", "3-1", "3-1", "1-3", "1-1", "1-1", "1-1", "2-1"],
-  "262730": ["0-3", "3-0", "1-0", "3-1", "2-0", "1-1", "0-2", "0-1", "0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "0-2", "2-0", "1-1", "1-2", "3-0", "0-1", "0-2", "0-0", "1-1", "2-1"],
-  "262707": ["0-4", "3-0", "2-1", "1-1", "1-0", "0-0", "0-2", "0-0", "2-1", "0-2", "0-0", "0-4", "1-0", "0-0", "0-0", "0-0", "0-0", "0-0", "2-0", "1-0", "0-2", "0-0", "0-0", "0-2"],
-  "262816": ["0-1", "3-1", "0-2", "1-0", "2-0", "0-0", "0-3", "1-1", "3-0", "0-2", "0-0", "0-2", "3-0", "0-2", "2-0", "1-1", "2-1", "1-3", "3-0", "0-0", "0-2", "0-3", "2-0", "0-1"],
-  "262719": ["2-1", "2-1", "2-0", "2-1", "3-0", "2-1", "0-2", "3-1", "2-1", "1-1", "1-2", "0-2", "3-0", "2-1", "2-1", "1-1", "1-2", "2-1", "3-0", "2-1", "1-1", "2-1", "1-2", "2-0"],
-  "262725": ["0-2", "2-0", "1-1", "3-0", "3-0", "1-0", "0-2", "1-1", "2-0", "2-1", "2-1", "0-2", "2-0", "0-0", "1-1", "1-0", "2-0", "1-0", "2-0", "0-1", "0-2", "1-0", "1-0", "0-1"],
-  "262711": ["0-1", "3-1", "1-0", "3-0", "3-0", "2-1", "0-4", "0-0", "1-1", "1-3", "1-1", "1-2", "2-2", "1-0", "1-1", "2-1", "0-0", "2-1", "3-0", "0-0", "1-1", "1-2", "2-2", "2-0"],
-  "262718": ["1-2", "4-1", "3-1", "3-0", "4-1", "1-1", "1-3", "2-2", "2-1", "1-1", "1-2", "1-3", "2-0", "2-1", "2-2", "2-1", "2-2", "1-1", "3-1", "2-2", "1-2", "1-3", "2-2", "1-2"],
-  "262721": ["0-1", "2-0", "1-0", "3-1", "2-1", "0-2", "0-3", "2-1", "2-0", "1-2", "1-1", "0-3", "3-1", "1-1", "0-1", "0-2", "0-1", "0-2", "2-0", "0-2", "0-3", "0-1", "2-2", "0-1"],
-  "262726": ["1-3", "2-2", "2-2", "3-0", "4-0", "1-1", "1-2", "2-1", "1-1", "1-1", "1-2", "0-3", "1-1", "2-1", "0-2", "0-2", "2-0", "1-1", "2-0", "3-1", "2-2", "0-2", "1-0", "2-1"],
-  "262702": ["0-2", "1-0", "1-1", "3-1", "2-0", "1-0", "0-2", "0-1", "0-0", "0-1", "1-0", "0-3", "2-0", "1-0", "0-1", "1-0", "1-0", "2-0", "3-0", "1-1", "0-0", "0-1", "0-0", "2-0"],
-  "262738": ["1-1", "2-1", "1-1", "1-0", "3-0", "2-1", "1-3", "2-1", "2-1", "1-1", "2-1", "1-3", "2-0", "1-1", "2-2", "2-1", "2-1", "1-1", "2-0", "2-1", "1-1", "1-1", "2-1", "1-1"],
-  "262750": ["1-1", "3-1", "2-2", "3-1", "3-0", "1-1", "1-3", "2-1", "0-0", "1-2", "2-2", "0-3", "3-1", "2-0", "2-2", "0-0", "1-1", "0-2", "3-1", "0-2", "0-3", "1-2", "1-3", "2-0"],
-  "262705": ["1-3", "3-1", "2-1", "3-1", "3-1", "3-0", "1-3", "1-2", "3-1", "1-2", "1-2", "0-3", "2-0", "3-0", "2-1", "2-1", "2-0", "2-0", "4-0", "3-1", "0-1", "0-2", "1-2", "1-1"],
-  "262706": ["0-2", "4-1", "1-0", "3-0", "2-0", "0-2", "0-2", "0-0", "0-0", "0-1", "0-0", "0-2", "0-2", "0-0", "0-1", "0-0", "0-0", "0-1", "2-0", "2-1", "0-2", "0-2", "0-0", "2-0"],
-  "262716": ["1-1", "3-2", "1-0", "3-1", "3-0", "3-1", "0-3", "0-0", "3-1", "0-2", "1-1", "0-4", "2-0", "3-1", "1-1", "3-0", "2-1", "1-1", "4-0", "2-1", "0-2", "0-2", "1-1", "1-2"],
-  "262736": ["1-2", "2-1", "1-2", "3-0", "4-0", "2-1", "2-4", "3-1", "2-2", "2-2", "3-2", "1-1", "3-1", "3-0", "1-1", "4-1", "2-1", "2-1", "1-0", "2-1", "1-1", "1-1", "1-1", "3-0"],
-  "262714": ["1-3", "2-0", "0-2", "0-0", "2-0", "0-1", "1-1", "0-0", "2-0", "0-1", "2-0", "0-3", "1-1", "0-1", "1-1", "0-0", "0-0", "1-0", "1-0", "0-0", "1-0", "1-1", "0-1", "0-1"],
-  "262749": ["2-1", "3-1", "2-0", "3-0", "3-1", "2-2", "1-2", "2-1", "2-0", "2-0", "2-2", "1-3", "2-1", "2-1", "2-1", "1-1", "2-1", "1-1", "2-1", "2-1", "0-2", "1-2", "2-2", "1-1"],
-  "262753": ["1-1", "2-1", "2-0", "3-0", "1-1", "1-0", "3-2", "1-1", "1-0", "2-2", "2-2", "0-3", "2-0", "1-2", "1-1", "1-1", "1-1", "0-1", "2-0", "1-1", "1-2", "1-1", "0-2", "1-1"],
-  "262740": ["1-2", "1-1", "2-1", "2-0", "3-0", "1-2", "1-3", "1-1", "2-2", "1-1", "2-1", "1-3", "3-0", "1-1", "2-2", "2-1", "1-1", "1-2", "3-1", "2-1", "1-2", "2-1", "2-2", "1-1"],
-  "262790": ["0-2", "3-1", "0-2", "0-2", "4-0", "0-2", "0-3", "3-1", "1-1", "2-0", "1-1", "0-3", "3-1", "2-1", "0-3", "2-1", "1-1", "2-0", "2-1", "1-0", "2-1", "1-1", "0-2", "0-2"],
-  "262786": ["1-2", "3-1", "3-1", "3-0", "2-1", "1-1", "1-2", "1-1", "1-2", "2-0", "2-1", "1-1", "3-1", "2-0", "1-1", "1-2", "1-1", "1-1", "3-1", "2-1", "2-0", "1-2", "1-2", "1-1"],
-  "262734": ["3-0", "4-1", "2-1", "3-1", "4-1", "2-1", "1-2", "3-2", "2-1", "3-2", "3-1", "2-1", "3-0", "2-3", "1-2", "3-1", "2-1", "3-2", "4-1", "3-1", "2-1", "3-1", "2-1", "3-1"],
-  "262756": ["2-2", "3-2", "2-0", "4-2", "1-2", "1-2", "1-3", "1-2", "0-0", "0-0", "2-1", "1-3", "2-2", "1-2", "1-2", "1-2", "0-0", "0-0", "2-0", "0-0", "2-2", "0-1", "1-1", "1-3"],
-  "262703": ["2-2", "1-1", "1-1", "2-1", "1-0", "1-1", "1-3", "2-2", "0-1", "0-0", "1-1", "0-2", "0-0", "0-0", "2-2", "1-1", "1-1", "0-0", "2-1", "1-1", "0-1", "1-1", "2-2", "0-0"],
-  "262772": ["0-2", "2-0", "1-1", "1-1", "1-0", "0-0", "0-1", "0-0", "1-0", "1-2", "2-3", "0-3", "2-0", "1-1", "1-1", "1-0", "0-1", "1-0", "2-1", "1-1", "0-0", "0-1", "0-0", "0-1"],
-  "262717": ["1-2", "0-1", "1-1", "2-2", "2-2", "2-0", "0-2", "1-2", "0-0", "0-2", "0-1", "0-2", "2-0", "1-2", "1-1", "1-0", "1-2", "0-0", "2-1", "1-0", "1-1", "3-2", "1-2", "0-0"],
-  "262728": ["0-0", "0-0", "1-0", "2-1", "4-1", "0-1", "0-2", "1-1", "0-1", "0-0", "1-0", "0-5", "4-0", "2-0", "2-3", "1-2", "0-0", "0-0", "3-0", "0-0", "0-2", "0-1", "0-2", "0-0"],
-  "262770": ["3-1", "3-1", "2-2", "2-0", "2-1", "1-1", "1-3", "0-2", "2-0", "0-3", "0-1", "0-4", "2-1", "1-1", "2-1", "2-0", "1-1", "1-0", "3-0", "2-3", "0-2", "1-2", "0-2", "3-1"],
-  "262755": ["1-2", "4-1", "3-2", "2-1", "3-2", "1-1", "3-3", "2-1", "1-0", "0-1", "1-1", "0-2", "1-1", "3-0", "1-2", "4-2", "3-1", "2-2", "1-0", "2-2", "1-0", "3-2", "1-0", "3-1"],
-  "262704": ["1-1", "2-1", "1-1", "2-0", "3-0", "0-1", "1-2", "2-1", "1-0", "0-1", "1-1", "1-3", "1-0", "2-0", "2-1", "2-0", "1-1", "1-1", "2-1", "1-1", "1-2", "0-2", "2-1", "1-1"],
-  "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
-  "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
-  "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
-  "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
-  // 🔴 TFF ID HATASI DÜZELTİLDİ: 262872 yerine DOĞRU ID: 262782 (YUSUF ERBAY) 🔴
-  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
-};
-
-// 🔴 1. HAFTA SKOR BİLME ADEDİ (Tamamı DFO)
-const skorWeek1Data: Record<string, number> = {
-  "262736": 4, "262755": 6, "262719": 4, "262756": 4, "262754": 4, "262786": 3, "262731": 3, "262717": 3, "262732": 4,
-  "262726": 3, "262750": 2, "262747": 3, "262771": 2, "262728": 2, "262816": 2, "262716": 2, "262790": 2, "262733": 2,
-  "262709": 1, "262753": 2, "262813": 2, "262740": 1, "262718": 3, "262707": 1, "262782": 1, "262702": 1, "262714": 1,
-  "262721": 1, "262706": 1, "262787": 1, "262744": 1, "262774": 1, "262715": 1, "262723": 1
-};
-
-// 🔴 2. HAFTA SKOR BİLME ADEDİ (Tamamı DFO)
-const skorWeek2Data: Record<string, number> = {
-  "262756": 3, "262755": 2, "262709": 2, "262790": 4, "262772": 1, "262728": 4, "262726": 3, "262711": 2, "262717": 2,
-  "262737": 2, "262705": 2, "262816": 2, "262774": 1, "262732": 1, "262786": 1, "262721": 1, "262738": 1, "262714": 3,
-  "262763": 2, "262736": 2, "262740": 1, "262702": 1, "262703": 1, "262730": 1, "262715": 1, "262749": 1, "262725": 1,
-  "262758": 1, "262771": 1, "262754": 1, "262747": 1, "262716": 1, "262708": 1, "262731": 1, "262739": 1
-};
-
-// 🔴 3. HAFTA DFO SKOR BİLME ADEDİ
-const skorWeek3DfoData: Record<string, number> = {
-  "262816": 2, "262733": 1, "262721": 3, "262763": 2, "262786": 2, "262711": 2, "351925": 2, "262726": 2, "262725": 2,
-  "262771": 1, "262813": 2, "262709": 2, "262706": 1, "262738": 1, "262753": 1, "262734": 1, "262756": 1, "262702": 1,
-  "262730": 1, "262731": 1, "262755": 1, "262747": 1, "262732": 1, "262707": 1, "262754": 1, "262714": 1, "262782": 1,
-  "262723": 1, "262772": 1, "262739": 1, "262716": 1
-};
-
-// 🔴 3. HAFTA TFF SKOR BİLME ADEDİ
-const skorWeek3TffData: Record<string, number> = {
-  "262707": 2, "262816": 3, "262733": 2, "262754": 3, "262728": 2, "262706": 1, "262755": 1, "262736": 1, "262771": 1,
-  "262734": 1, "262705": 2, "262714": 1, "262763": 1, "262756": 1, "262774": 1, "262740": 1, "262702": 2, "262782": 2,
-  "262813": 1, "262723": 1, "262749": 1, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1
-};
-
 const isTffMatchCheck = (category: string) => {
-  if (!category) return false;
   const uppercaseCat = category.toUpperCase();
-  return ( uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") );
+  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
 };
 
 export default function SkorDurumuPage() {
-  const [activeTab, setActiveTab] = useState<string>('total');
-  const [activeLeague, setActiveLeague] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
-  const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [leagueFilter, setLeagueFilter] = useState<'MASTER'|'DFO'|'TFF'>('MASTER');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  
-  const [week4DfoBase, setWeek4DfoBase] = useState<Record<string, number>>({});
-  const [week4TffBase, setWeek4TffBase] = useState<Record<string, number>>({});
-  const [week4DfoLive, setWeek4DfoLive] = useState<Record<string, number>>({});
-  const [week4TffLive, setWeek4TffLive] = useState<Record<string, number>>({});
-  
-  // 🚀 5. HAFTA EKLENDİ
-  const availableWeeks = [1, 2, 3, 4, 5];
 
   const loadLeaderboard = async () => {
-    let dbMatches: any[] = [];
-    let dbPredictions: any[] = [];
-    let dbBulletin: any[] = [];
-    
-    // 🛡️ TRY CATCH İLE KORUMA
     try {
-      const { data, error } = await supabase.from('live_matches').select('*');
-      if (data) dbMatches = data;
+      const { data: dbMatches } = await supabase.from('live_matches').select('*');
+      const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      const { data: dfoHistorical } = await supabase.from('dfo_weekly_scores').select('*');
+      const { data: tffHistorical } = await supabase.from('tff_weekly_scores').select('*');
 
-      // 🚀 5. HAFTA TAHMİNLERİ VE BÜLTENİ 🚀
-      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
-      if (pData) dbPredictions = pData;
+      let w5DfoLive: Record<string, number> = {}; 
+      let w5TffLive: Record<string, number> = {}; 
+      let isAnyMatchLive = false;
 
-      const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
-      if (bData) dbBulletin = bData;
-    } catch (error) {
-      console.log("Canlı maçlar çekilirken bir sorun oluştu.");
-    }
+      Object.keys(allPlayersList).forEach(id => { w5DfoLive[id] = 0; w5TffLive[id] = 0; });
 
-    const predDict: Record<string, string[]> = {};
-    if (dbPredictions) {
-      dbPredictions.forEach(pred => {
-        const uid = String(pred.user_id);
-        if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-        predDict[uid][pred.match_index - 1] = pred.predicted_score;
-      });
-    }
+      const dfoDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
+      if(dfoHistorical) dfoHistorical.forEach(r => dfoDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
+      const tffDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
+      if(tffHistorical) tffHistorical.forEach(r => tffDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
 
-    const catDict: Record<number, string> = {};
-    if (dbBulletin) {
-      dbBulletin.forEach(m => { catDict[m.match_index] = m.category; });
-    }
-    
-    let w4BaseDfo: Record<string, number> = {}; 
-    let w4BaseTff: Record<string, number> = {}; 
-    let w4LiveDfo: Record<string, number> = {}; 
-    let w4LiveTff: Record<string, number> = {}; 
+      const predDict: Record<string, string[]> = {};
+      if (dbPredictions) {
+        dbPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
+          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+        });
+      }
 
-    // 🚀 5. Hafta Değişkenleri
-    let w5BaseDfo: Record<string, number> = {}; 
-    let w5BaseTff: Record<string, number> = {}; 
-    let w5LiveDfo: Record<string, number> = {}; 
-    let w5LiveTff: Record<string, number> = {}; 
-    let isAnyMatchLive = false;
+      const catDict: Record<number, string> = {};
+      if (dbBulletin) dbBulletin.forEach(m => catDict[m.match_index] = m.category);
 
-    Object.keys(allPlayersList).forEach(id => {
-      w4BaseDfo[id] = 0; w4BaseTff[id] = 0;
-      w4LiveDfo[id] = 0; w4LiveTff[id] = 0;
-      w5BaseDfo[id] = 0; w5BaseTff[id] = 0;
-      w5LiveDfo[id] = 0; w5LiveTff[id] = 0;
-    });
+      if (dbMatches) {
+        // Ekmel Standard: Deduplication Filter (Çift yazım hatasını önler)
+        const uniqueMatches: Record<number, any> = {};
+        dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
-    if (dbMatches && dbMatches.length > 0) {
-      const uniqueMatches: Record<number, any> = {};
-      dbMatches.forEach(row => { if (row && row.id) uniqueMatches[row.id] = row; });
-
-      Object.values(uniqueMatches).forEach(dbMatch => {
-        if (dbMatch && dbMatch.home_score && dbMatch.away_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
-          const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-          
-          // ============================================
-          // 4. HAFTA İŞLEMLERİ (ID 1 ile 24 arası)
-          // ============================================
-          if (dbMatch.id >= 1 && dbMatch.id <= 24) {
-             const matchIndex = dbMatch.id - 1; 
-             if (matchIndex >= 0 && matchIndex < week4Matches.length) {
-               const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
-               Object.keys(week4PredictionsData).forEach(playerId => {
-                 if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
-                   if (dbMatch.status === 'FINISHED') {
-                       if (isTff) w4BaseTff[playerId] += 1;
-                       else w4BaseDfo[playerId] += 1;
-                   } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
-                       if (isTff) w4LiveTff[playerId] += 1;
-                       else w4LiveDfo[playerId] += 1;
-                       isAnyMatchLive = true;
-                   }
-                 }
-               });
-             }
+        Object.values(uniqueMatches).forEach(dbMatch => {
+          if (dbMatch.id > 500 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+            const matchIndex = (dbMatch.id % 100) - 1;
+            const category = catDict[matchIndex + 1] || "";
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            const isTff = isTffMatchCheck(category);
+            
+            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            
+            winnerIds.forEach(wId => {
+              // SKOR sayfası 1 puan mantığıyla çalışır. Her tam isabete 1 skor puanı.
+              if (dbMatch.status === 'FINISHED' || dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                if (isTff) w5TffLive[wId] += 1;
+                else w5DfoLive[wId] += 1;
+              }
+              if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') isAnyMatchLive = true;
+            });
           }
+        });
+      }
 
-          // ============================================
-          // 🚀 5. HAFTA CANLI RADAR İŞLEMLERİ (ID 501+) 🚀
-          // ============================================
-          if (dbMatch.id > 500) {
-             const matchIndex = (dbMatch.id % 100) - 1;
-             const category = catDict[matchIndex + 1] || "";
-             const isTff = isTffMatchCheck(category);
+      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-             Object.keys(predDict).forEach(playerId => {
-               if (predDict[playerId] && predDict[playerId][matchIndex] === finalScore) {
-                 if (dbMatch.status === 'FINISHED') {
-                     if (isTff) w5BaseTff[playerId] += 1;
-                     else w5BaseDfo[playerId] += 1;
-                 } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
-                     if (isTff) w5LiveTff[playerId] += 1;
-                     else w5LiveDfo[playerId] += 1;
-                     isAnyMatchLive = true;
-                 }
-               }
-             });
-          }
+      const baseList = Object.keys(allPlayersList).map(id => {
+        const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
+        const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
+        
+        // Çatı Seçimine Göre Puanları Toparla
+        let w1=0, w2=0, w3=0, w4=0, w5=0, total=0, liveExtra=0;
+        
+        if (leagueFilter === 'MASTER') {
+            w1 = dfo.w1 + tff.w1; w2 = dfo.w2 + tff.w2; w3 = dfo.w3 + tff.w3; w4 = dfo.w4 + tff.w4;
+            w5 = w5DfoLive[id] + w5TffLive[id];
+            liveExtra = w5;
+        } else if (leagueFilter === 'DFO') {
+            w1 = dfo.w1; w2 = dfo.w2; w3 = dfo.w3; w4 = dfo.w4; w5 = w5DfoLive[id]; liveExtra = w5;
+        } else if (leagueFilter === 'TFF') {
+            w1 = tff.w1; w2 = tff.w2; w3 = tff.w3; w4 = tff.w4; w5 = w5TffLive[id]; liveExtra = w5;
         }
+        
+        total = w1 + w2 + w3 + w4 + w5;
+
+        return { id, name: allPlayersList[id], w1, w2, w3, w4, w5, total, liveExtra };
       });
-    }
 
-    setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-    setWeek4DfoBase(w4BaseDfo);
-    setWeek4TffBase(w4BaseTff);
-    setWeek4DfoLive(w4LiveDfo);
-    setWeek4TffLive(w4LiveTff);
-
-    const baseList = Object.keys(allPlayersList).map(id => {
-      let baseSkor = 0;
-      let liveSkor = 0;
-      
-      if (activeTab === 'total') {
-          if (activeLeague === 'MASTER') {
-              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0) + (w5BaseDfo[id]||0) + (w5BaseTff[id]||0);
-              liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0) + (w5LiveDfo[id]||0) + (w5LiveTff[id]||0);
-          } else if (activeLeague === 'DFO') {
-              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0) + (w5BaseDfo[id]||0);
-              liveSkor = (w4LiveDfo[id]||0) + (w5LiveDfo[id]||0);
-          } else if (activeLeague === 'TFF') {
-              baseSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0) + (w5BaseTff[id]||0);
-              liveSkor = (w4LiveTff[id]||0) + (w5LiveTff[id]||0);
-          }
-      } 
-      else if (activeTab === 'week1') {
-          if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek1Data[id]||0;
-      }
-      else if (activeTab === 'week2') {
-          if (activeLeague === 'MASTER' || activeLeague === 'DFO') baseSkor = skorWeek2Data[id]||0;
-      }
-      else if (activeTab === 'week3') {
-          if (activeLeague === 'MASTER') baseSkor = (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
-          else if (activeLeague === 'DFO') baseSkor = skorWeek3DfoData[id]||0;
-          else if (activeLeague === 'TFF') baseSkor = skorWeek3TffData[id]||0;
-      }
-      else if (activeTab === 'week4') {
-          if (activeLeague === 'MASTER') {
-              baseSkor = (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
-              liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
-          } else if (activeLeague === 'DFO') {
-              baseSkor = (w4BaseDfo[id]||0);
-              liveSkor = (w4LiveDfo[id]||0);
-          } else if (activeLeague === 'TFF') {
-              baseSkor = (w4BaseTff[id]||0);
-              liveSkor = (w4LiveTff[id]||0);
-          }
-      }
-      else if (activeTab === 'week5') {
-          if (activeLeague === 'MASTER') {
-              baseSkor = (w5BaseDfo[id]||0) + (w5BaseTff[id]||0);
-              liveSkor = (w5LiveDfo[id]||0) + (w5LiveTff[id]||0);
-          } else if (activeLeague === 'DFO') {
-              baseSkor = (w5BaseDfo[id]||0);
-              liveSkor = (w5LiveDfo[id]||0);
-          } else if (activeLeague === 'TFF') {
-              baseSkor = (w5BaseTff[id]||0);
-              liveSkor = (w5LiveTff[id]||0);
-          }
-      }
-
-      return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
-    })
-    .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
-
-    // 🌟 EKMEL ÇELİK SÜZGECİ: SIFIR PUANLILARI GİZLE (Murat Aydemir İstisnası) 🌟
-    const visibleList = baseList.filter(p => p.skorAdedi > 0 || p.id === "262712");
-
-    if (activeTab === 'total') {
-      const referenceList = Object.keys(allPlayersList).map(id => {
-         let refSkor = 0;
-         // 🚀 TREND İÇİN W4Base dahil edildi 🚀
-         if (activeLeague === 'MASTER') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
-         else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0);
-         else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0);
-         
-         return { id, refSkor };
-      }).sort((a, b) => b.refSkor - a.refSkor);
-      
+      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
-      referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+      prevRefList.forEach((player, index) => prevRanks[player.id] = index + 1);
+
+      const visibleList = baseList.filter(p => {
+        if (activeTab === 'total') return p.total > 0 || p.id === "262712";
+        else return (p[activeTab] as number) > 0 || p.id === "262712";
+      });
+
+      visibleList.sort((a, b) => {
+        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
+        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
+        return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
+      });
 
       const finalRows = visibleList.map((player, index) => {
         const currentRank = index + 1;
-        const prevRank = prevRanks[player.id] || currentRank;
-        let trend = 'same';
-        let trendDiff = 0;
+        let trend = 'same', trendDiff = 0; 
         
-        if (currentRank < prevRank) {
-          trend = 'up';
-          trendDiff = prevRank - currentRank;
-        } else if (currentRank > prevRank) {
-          trend = 'down';
-          trendDiff = currentRank - prevRank;
+        if (activeTab === 'total') {
+            const prevRank = prevRanks[player.id];
+            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
-        return { ...player, currentRank, prevRank, trend, trendDiff };
+
+        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
       setTableRows(finalRows);
-      
-    } else {
-      const finalRows = visibleList.map((player, index) => {
-        return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
-      });
-      
-      setTableRows(finalRows);
+
+    } catch (e) {
+        console.log("Veri çekilirken hata oluştu");
     }
   };
 
-  useEffect(() => {
-    loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 5000); 
-    return () => clearInterval(interval);
-  }, [activeTab, activeLeague]);
-
-  useEffect(() => {
-    if (activeLeague === 'TFF' && (activeTab === 'week1' || activeTab === 'week2')) {
-      setActiveTab('total');
-    }
-  }, [activeLeague, activeTab]);
-
-  const selectTab = (tabKey: string) => {
-    setActiveTab(tabKey);
-    setIsWeekMenuOpen(false);
-  };
-
-  let headerColor = "text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.4)]";
-  if (activeLeague === 'DFO') headerColor = "text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]";
-  if (activeLeague === 'TFF') headerColor = "text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]";
+  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab, leagueFilter]);
 
   return (
-    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center pb-24">
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className={`text-xl md:text-2xl font-extrabold text-center tracking-wider uppercase drop-shadow-md ${headerColor}`}>
-          ELİT TAHMİN SKOR (TAM İSABET) MERKEZİ
-        </h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-[#10b981] tracking-wider uppercase drop-shadow-md">ELİT TAHMİN SKOR (TAM İSABET) MERKEZİ</h1>
       </div>
-
-      <div className="w-full mb-6">
-        <LiveMatchCard />
-      </div>
-
-      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
-        <div className="w-full flex flex-col gap-2">
-          <div className="flex justify-center w-full">
-             <button 
-                onClick={() => setActiveLeague('MASTER')} 
-                className={`w-1/2 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'MASTER' ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800'}`}
-             >
-                MASTER
-             </button>
-          </div>
-          <div className="flex justify-center gap-2 w-full">
-             <button 
-                onClick={() => setActiveLeague('DFO')} 
-                className={`w-1/2 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'DFO' ? 'bg-blue-600 text-white border-blue-500 shadow-md scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800'}`}
-             >
-                DFO
-             </button>
-             <button 
-                onClick={() => setActiveLeague('TFF')} 
-                className={`w-1/2 py-2.5 rounded-xl font-black text-xs md:text-sm border transition-all ${activeLeague === 'TFF' ? 'bg-red-600 text-white border-red-500 shadow-md scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800'}`}
-             >
-                TFF
-             </button>
+      
+      <div className="w-full mb-6"><LiveMatchCard /></div>
+      
+      <div className="w-full max-w-3xl mx-auto">
+        
+        {/* SKOR ÇATI MODELİ MENÜLERİ - TASARIM KORUNDU */}
+        <div className="w-full flex flex-col gap-2 mb-4">
+          <button onClick={() => setLeagueFilter('MASTER')} className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'MASTER' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#064e3b] text-[#34d399] hover:bg-[#047857]'}`}>
+            MASTER
+          </button>
+          <div className="flex w-full gap-2">
+            <button onClick={() => setLeagueFilter('DFO')} className={`flex-1 font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'DFO' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#0f172a] text-[#34d399] hover:bg-[#1e293b]'}`}>
+              DFO
+            </button>
+            <button onClick={() => setLeagueFilter('TFF')} className={`flex-1 font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'TFF' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#0f172a] text-[#34d399] hover:bg-[#1e293b]'}`}>
+              TFF
+            </button>
           </div>
         </div>
 
-        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-emerald-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-          {activeLeague} TOPLAM SKOR DURUMU
+        <button 
+          onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
+          className="w-full bg-[#10b981] text-[#022c22] hover:bg-[#059669] hover:text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+        >
+          {activeTab === 'total' ? `${leagueFilter} TOPLAM SKOR DURUMU` : `${leagueFilter} ${activeTab.replace('w', '')}. HAFTA SKOR DURUMU`}
         </button>
 
-        <div className="w-full relative">
-          <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
-            <span>📅 {activeTab === 'total' ? 'TOPLAM SKOR DURUMU' : `${activeLeague} ${activeTab.replace('week', '')}. HAFTA SKOR DURUMU`}</span>
-            <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
-          </button>
-          
-          {isWeekMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="flex flex-wrap justify-center gap-1.5 max-h-56 overflow-y-auto pr-1">
-                {availableWeeks.map((weekNum) => {
-                  if (activeLeague === 'TFF' && (weekNum === 1 || weekNum === 2)) return null;
-                  const weekKey = `week${weekNum}`;
-                  return (
-                    <button 
-                      key={weekNum} 
-                      onClick={() => selectTab(weekKey)} 
-                      className={`w-12 py-1.5 text-xs font-bold rounded-lg border transition-all text-center flex-shrink-0 ${activeTab === weekKey ? 'bg-emerald-500 text-slate-950 border-emerald-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-emerald-500/20 hover:text-emerald-300'}`}
-                    >
-                      {weekNum}
-                    </button>
-                  );
-                })}
-              </div>
+        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
+          <div 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
+          >
+            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
+              <span>📅</span>
+              <span>{activeTab === 'total' ? 'TOPLAM SKOR DURUMU' : `${activeTab.replace('w', '')}. HAFTA SKOR DURUMU`}</span>
+            </div>
+            <div className="text-slate-400 font-bold text-[10px] uppercase flex items-center gap-1 tracking-widest">
+              {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+            </div>
+          </div>
+
+          {isMenuOpen && (
+            <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
+              {[1, 2, 3, 4, 5].map(num => (
+                <button
+                  key={num}
+                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
+                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
+                    activeTab === `w${num}` ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
           )}
-        </div>
-      </div>
 
-      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        {tableRows.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs border-b border-slate-800">
-                <tr>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 w-12 sm:w-24 text-center">SIRA</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5">YARIŞMACI</th>
-                  <th className="px-2 sm:px-6 py-3 sm:py-3.5 text-right whitespace-nowrap">TAM İSABET SKORU</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {tableRows.map((row, idx) => {
-                  
-                  let rankDisplay = <span className="text-slate-300 font-medium text-xs sm:text-sm w-4 sm:w-5 text-center sm:text-right">{row.currentRank}</span>;
-                  let rowBg = "border-l-4 border-transparent hover:bg-slate-800/40";
-                  let nameColor = "text-slate-200";
-
-                  const cleanName = row.name.replace(/🏆/g, '').trim();
-                  const trophyCount = (row.name.match(/🏆/g) || []).length;
-
-                  return (
-                    <tr key={row.id || idx} className={`transition-all ${rowBg}`}>
-                      <td className="px-2 sm:px-6 py-3 sm:py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-0.5 sm:gap-2">
-                          {rankDisplay}
-                          <div className="w-6 sm:w-10 flex items-center justify-start">
-                            {activeTab === 'total' && row.trend === 'up' && (
-                              <span className="text-emerald-400 text-[10px] sm:text-xs font-bold animate-bounce flex items-center gap-0.5">
-                                ▲ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
-                              </span>
-                            )}
-                            {activeTab === 'total' && row.trend === 'down' && (
-                              <span className="text-red-500 text-[10px] sm:text-xs font-bold flex items-center gap-0.5">
-                                ▼ <span className="text-[8px] sm:text-[10px]">{row.trendDiff}</span>
-                              </span>
-                            )}
-                            {activeTab === 'total' && row.trend === 'same' && (
-                              <span className="text-slate-600 text-[8px] sm:text-[10px] ml-0.5 sm:ml-1">▶</span>
+          {tableRows.length > 0 ? (
+            <div className="overflow-x-auto">
+              {/* ONAYLANAN CİLLOP TASARIM BURAYA DA EKLENDİ */}
+              <table className="w-full text-left text-xs md:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                  <tr>
+                    <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
+                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                    <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">
+                      TAM İSABET SKORU
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e293b]">
+                  {tableRows.map((row, idx) => (
+                    <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium">
+                        <div className="flex items-center gap-1">
+                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
+                          <span className="text-[#475569]">-</span>
+                          <div className="w-5 flex justify-center">
+                            {activeTab === 'total' ? (
+                              <>
+                                {row.trend === 'up' && <span className="text-[#10b981] text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
+                              </>
+                            ) : (
+                              <span className="text-transparent">-</span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 sm:px-6 py-3 sm:py-3.5 w-full max-w-[120px] sm:max-w-none">
-                        <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
-                          <span className={`${nameColor} text-xs sm:text-sm uppercase tracking-wide truncate flex-shrink`} title={cleanName}>
-                            {cleanName}
-                          </span>
-                          {trophyCount > 0 && (
-                            <span className="flex-shrink-0 text-amber-400 text-[10px] sm:text-xs tracking-widest whitespace-nowrap">
-                              {'🏆'.repeat(trophyCount)}
-                            </span>
-                          )}
-                          
-                          {row.liveExtra > 0 && activeTab === 'total' && adminStatus === 'LIVE' && (
-                            <span className="bg-emerald-950/80 text-emerald-400 text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse flex-shrink-0 ml-2">
+                      <td className="px-1 md:px-2 py-3">
+                        <div className="flex items-center gap-1 md:gap-2 text-white font-semibold whitespace-nowrap">
+                          {(() => {
+                            const trophyCount = (row.name.match(/🏆/g) || []).length;
+                            const cleanName = row.name.replace(/🏆/g, '').trim();
+                            return (
+                              <>
+                                <span>{cleanName}</span>
+                                {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
+                              </>
+                            );
+                          })()}
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
+                            <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">
                               +{row.liveExtra} CANLI
-                            </span>
-                          )}
-
-                          {row.liveExtra > 0 && activeTab !== 'total' && (
-                            <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border shadow-sm flex-shrink-0 ml-2 ${adminStatus === 'LIVE' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse' : 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50'}`}>
-                              +{row.liveExtra} {adminStatus === 'LIVE' ? 'CANLI' : '(MAÇ)'}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className={`px-2 sm:px-6 py-3 sm:py-3.5 text-right font-black text-sm sm:text-base whitespace-nowrap text-emerald-400`}>
-                        {row.skorAdedi}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-[#10b981]">
+                        {row.displayScore}
                       </td>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Henüz veri bulunmuyor.</div>
-        )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
+          )}
+        </div>
       </div>
     </div>
   );
