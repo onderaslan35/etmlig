@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// Sabit Logolarımız
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -89,7 +90,7 @@ const localTeamLogos: Record<string, string> = {
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", 
+  "HAMMARBY": "/logos/hammarby.png", "OLIMPIC LYON": "/logos/lyon.png", "LYON": "/logos/lyon.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
@@ -126,7 +127,7 @@ const allPlayersList: Record<string, string> = {
 // 🚀 OTOMATİK ZAMAN MOTORU
 const getActiveWeekByDate = () => {
   const now = new Date();
-  const baseDate = new Date(2026, 7, 18).getTime(); // 18 Ağustos 2026
+  const baseDate = new Date(2026, 7, 18).getTime(); 
   const diffTime = now.getTime() - baseDate;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
@@ -141,7 +142,6 @@ export default function LiveMatchCard() {
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  // İKİ FARKLI AKORDEON DURUMU 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
@@ -244,22 +244,21 @@ export default function LiveMatchCard() {
         tagBorder: "border-cyan-400/80",
         bottomBar: "bg-[#050b14]/90 border-blue-900/30"
     };
-  };useEffect(() => {
+  };
+
+  useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
-      // 1. O haftanın canlı maç motorunu çek (Tablodan)
       const { data: dbMatches } = await supabase
         .from('live_matches')
         .select('*')
         .eq('week_num', activeWeek)
         .order('match_index', { ascending: true });
 
-      // 2. O haftanın tahminlerini çek
       const { data: dbPredictions } = await supabase
         .from('player_predictions')
         .select('*')
         .eq('week_num', activeWeek);
 
-      // Tahminleri dictionary'ye çevir
       const predDict: Record<string, string[]> = {};
       if (dbPredictions) {
         dbPredictions.forEach(pred => {
@@ -278,7 +277,6 @@ export default function LiveMatchCard() {
         const yyyy = today.getFullYear();
         const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
-        // Veritabanından gelen listeyi UI objelerine dönüştür
         const currentWeekMatches = dbMatches.map((m, idx) => ({
           id: m.match_index,
           weekLabel: `${activeWeek}. HAFTA ${m.match_index}. MAÇ`,
@@ -289,7 +287,7 @@ export default function LiveMatchCard() {
           awayTeam: m.away_team
         }));
 
-        // BUGÜNÜN MAÇLARINI FİLTRELE
+        // GÜN FİLTRESİ
         const todaysMatches = currentWeekMatches.filter(m => m.date === todayFormatted);
         setTodaysMatchesList(todaysMatches);
         
@@ -297,7 +295,6 @@ export default function LiveMatchCard() {
         dbMatches.forEach(row => map[row.match_index] = row);
         setLiveMatchesData(map);
 
-        // Liderlik tablosu lokal kaydı (Sadece canlı olanlar)
         let currentBoard: Record<string, any> = {}; 
         let hasLiveScores = false;
 
