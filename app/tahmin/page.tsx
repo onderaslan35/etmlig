@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 54 ASLAN PARÇASI (MÜKERRERLERDEN VE İSTENMEYENLERDEN TEMİZLENDİ) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
   "262736": { pass: "45360", name: "MEHMET ALİ KARA" },
@@ -171,6 +172,12 @@ const getEliteTheme = (category: string) => {
     };
 };
 
+// 🚀 KUSURSUZ EŞLEŞTİRME YARDIMCISI
+const cleanTeamName = (name: string) => {
+    if(!name) return "";
+    return name.trim().toUpperCase();
+};
+
 export default function TahminlerPortal() {
   const [view, setView] = useState<'lobby' | 'declaration' | 'entry' | 'tahminmatik'>('lobby');
   
@@ -199,12 +206,14 @@ export default function TahminlerPortal() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-
       // 🚀 LOGO HATASI BURADA DÜZELTİLDİ: team_name olarak çekiliyor
       const { data: teamsData } = await supabase.from('teams').select('team_name, logo_url');
       if (teamsData) {
         const logos: Record<string, string> = {};
-        teamsData.forEach((team: any) => { logos[team.team_name] = team.logo_url; });
+        teamsData.forEach((team: any) => { 
+           // 🚀 TEMİZ EŞLEŞTİRME: Logoları çekerken de temizliyoruz
+           logos[cleanTeamName(team.team_name)] = team.logo_url; 
+        });
         logos["OLYMPIC LYON"] = "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg";
         setTeamLogosMap(logos);
       }
@@ -613,8 +622,10 @@ export default function TahminlerPortal() {
               {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const theme = getEliteTheme(match.category);
                 
-                const hName = match.homeTeam.toUpperCase();
-                const aName = match.awayTeam.toUpperCase();
+                // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
+                const hName = cleanTeamName(match.homeTeam || match.home_team);
+                const aName = cleanTeamName(match.awayTeam || match.away_team);
+
                 const homeLogoUrl = teamLogosMap[hName] || "/logos/default.png";
                 const awayLogoUrl = teamLogosMap[aName] || "/logos/default.png";
                 
@@ -819,13 +830,16 @@ export default function TahminlerPortal() {
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left">
                           <span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span>
                         </th>
-                        {bulletinMap[selectedTahminWeek].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => {
+                          const hName = cleanTeamName(m.homeTeam || m.home_team);
+                          const homeLogoUrl = teamLogosMap[hName] || "/logos/default.png";
+                          return (
                           <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
                             <div className="w-6 h-6 mx-auto flex items-center justify-center">
-                              <img src={teamLogosMap[m.homeTeam?.toUpperCase()] || "/logos/default.png"} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
+                              <img src={homeLogoUrl} alt={m.homeTeam} className="w-full h-full object-contain drop-shadow-md" title={m.homeTeam} />
                             </div>
                           </th>
-                        ))}
+                        )})}
                         {ghostColumns.map((_, i) => (
                           <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                         ))}
@@ -844,13 +858,16 @@ export default function TahminlerPortal() {
                              </span>
                           </div>
                         </th>
-                        {bulletinMap[selectedTahminWeek].map((m: any) => (
+                        {bulletinMap[selectedTahminWeek].map((m: any) => {
+                          const aName = cleanTeamName(m.awayTeam || m.away_team);
+                          const awayLogoUrl = teamLogosMap[aName] || "/logos/default.png";
+                          return (
                           <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50">
                             <div className="w-6 h-6 mx-auto flex items-center justify-center">
-                              <img src={teamLogosMap[m.awayTeam?.toUpperCase()] || "/logos/default.png"} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
+                              <img src={awayLogoUrl} alt={m.awayTeam} className="w-full h-full object-contain drop-shadow-md" title={m.awayTeam} />
                             </div>
                           </th>
-                        ))}
+                        )})}
                         {ghostColumns.map((_, i) => (
                           <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th>
                         ))}
@@ -989,8 +1006,12 @@ export default function TahminlerPortal() {
                 {bulletinMap[selectedEntryWeek].map((match) => {
                   const theme = getEliteTheme(match.category);
                   
-                  const homeLogoUrl = teamLogosMap[match.homeTeam?.toUpperCase()] || "/logos/default.png";
-                  const awayLogoUrl = teamLogosMap[match.awayTeam?.toUpperCase()] || "/logos/default.png";
+                  // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
+                  const hName = cleanTeamName(match.homeTeam || match.home_team);
+                  const aName = cleanTeamName(match.awayTeam || match.away_team);
+
+                  const homeLogoUrl = teamLogosMap[hName] || "/logos/default.png";
+                  const awayLogoUrl = teamLogosMap[aName] || "/logos/default.png";
                   
                   const hScore = predictions[match.id]?.home || '-';
                   const aScore = predictions[match.id]?.away || '-';

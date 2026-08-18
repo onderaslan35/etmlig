@@ -85,6 +85,12 @@ const getUniqueMatchId = (week: number, index: number) => {
     return (week * 100) + index;
 };
 
+// 🚀 KUSURSUZ EŞLEŞTİRME YARDIMCISI
+const cleanTeamName = (name: string) => {
+    if(!name) return "";
+    return name.trim().toUpperCase();
+};
+
 export default function AdminRadarPortal() {
   
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -193,18 +199,20 @@ export default function AdminRadarPortal() {
     setMergedPlayers(staticPlayersList);
   };
 
-  // 🚀 LOGO HATASI BURADA DÜZELTİLDİ: name -> team_name, category -> league
   const fetchAllTeamsFromDB = async () => {
-    const { data } = await supabase.from('teams').select('*').order('team_name'); 
+    const { data } = await supabase.from('teams').select('*').order('name'); 
     if (data) {
        setDbTeamsList(data);
        const logos: Record<string, string> = {};
        const leagues: Record<string, string[]> = {};
 
        data.forEach((team: any) => {
-           logos[team.team_name] = team.logo_url;
-           if (!leagues[team.league]) leagues[team.league] = [];
-           leagues[team.league].push(team.team_name);
+           // 🚀 TEMİZ EŞLEŞTİRME: DB'deki adı da temizliyoruz
+           const safeName = cleanTeamName(team.name);
+           logos[safeName] = team.logo_url;
+           
+           if (!leagues[team.category]) leagues[team.category] = [];
+           leagues[team.category].push(safeName);
        });
 
        logos["OLYMPIC LYON"] = "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg";
@@ -447,8 +455,7 @@ export default function AdminRadarPortal() {
     if (!newTeamName || !newTeamLeague || !newTeamLogo) return;
     setIsTeamLoading(true);
     try {
-       // 🚀 DÜZELTME BURADA DA YAPILDI: team_name ve league olarak kaydediliyor
-       const { error } = await supabase.from('teams').insert({ team_name: newTeamName.trim().toUpperCase(), league: newTeamLeague.trim().toUpperCase(), logo_url: newTeamLogo.trim() });
+       const { error } = await supabase.from('teams').insert({ name: newTeamName.trim().toUpperCase(), category: newTeamLeague.trim().toUpperCase(), logo_url: newTeamLogo.trim() });
        if (error) throw error;
        alert(`✅ BAŞARILI!`);
        setNewTeamName(''); setNewTeamLogo(''); setNewTeamLeague('');
@@ -461,7 +468,7 @@ export default function AdminRadarPortal() {
     const confirmDelete = window.confirm(`DİKKAT: ${teamName} silinecek. Emin misiniz?`);
     if (!confirmDelete) return;
     try {
-       const { error } = await supabase.from('teams').delete().eq('team_name', teamName);
+       const { error } = await supabase.from('teams').delete().eq('name', teamName);
        if (error) throw error;
        alert(`✅ Silindi!`);
        fetchAllTeamsFromDB(); 
@@ -773,8 +780,9 @@ export default function AdminRadarPortal() {
 
     if (leagueKey === "REST OF WORLD" || leagueKey === "DİĞER" || !leagueTeamsMap[leagueKey]) {
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        const allTeamsInSystem = dbTeamsList.map(t => t.team_name).sort((a, b) => a.localeCompare(b, 'tr')); 
-        return allTeamsInSystem.filter(t => t !== opponent);
+        // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
+        const allTeamsInSystem = dbTeamsList.map(t => cleanTeamName(t.name)).sort((a, b) => a.localeCompare(b, 'tr')); 
+        return allTeamsInSystem.filter(t => t !== cleanTeamName(opponent));
     }
 
     const baseTeams = leagueTeamsMap[leagueKey] || [];
@@ -782,15 +790,15 @@ export default function AdminRadarPortal() {
     
     bulletinMatches.forEach((m, idx) => {
         if (idx !== currentIndex && getLeagueKey(m.category) === leagueKey) {
-            if (m.home_team) usedTeamsInThisLeague.add(m.home_team);
-            if (m.away_team) usedTeamsInThisLeague.add(m.away_team);
+            if (m.home_team) usedTeamsInThisLeague.add(cleanTeamName(m.home_team));
+            if (m.away_team) usedTeamsInThisLeague.add(cleanTeamName(m.away_team));
         }
     });
 
     return baseTeams.filter(team => {
         if (usedTeamsInThisLeague.has(team)) return false;
         const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-        if (team === opponent) return false;
+        if (team === cleanTeamName(opponent)) return false;
         return true; 
     });
   };
@@ -821,8 +829,9 @@ export default function AdminRadarPortal() {
     setIsPublishing(true);
     try {
       const payload = bulletinMatches.map(m => {
-        const hTeam = m.home_team.trim().toUpperCase();
-        const aTeam = m.away_team.trim().toUpperCase();
+        // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
+        const hTeam = cleanTeamName(m.home_team);
+        const aTeam = cleanTeamName(m.away_team);
         return {
           week_num: bulletinWeek, match_index: m.match_index, category: m.category,
           match_date: m.match_date, match_time: m.match_time,
@@ -1072,8 +1081,9 @@ export default function AdminRadarPortal() {
                 const isWinnersOpen = !!openWinnersMap[match.match_index];
                 const isTffMatch = isTffMatchCheck(match.category);
                 
-                const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase();
-                const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase();
+                // 🚀 TEMİZ EŞLEŞTİRME UYARLAMASI
+                const homeTeamUpper = cleanTeamName(match.home_team || match.homeTeam);
+                const awayTeamUpper = cleanTeamName(match.away_team || match.awayTeam);
 
                 const homeLogoUrl = teamLogosMap[homeTeamUpper] || "/logos/default.png";
                 const awayLogoUrl = teamLogosMap[awayTeamUpper] || "/logos/default.png";
