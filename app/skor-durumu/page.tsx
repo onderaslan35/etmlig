@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/utils/supabase';
 
-// 🏆 Sabit Oyuncu Listesi (Sadece Aktif Oyunculara İzin Verilecek)
+// 🏆 Sabit Oyuncu Listesi
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -19,7 +18,7 @@ const allPlayersList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262787": "MUSTাস্থFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
   "262723": "AYHAN LUŞOĞLU"
 };
 
@@ -99,10 +98,11 @@ const week4PredictionsData: Record<string, string[]> = {
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"],
+  // 🔴 TFF ID HATASI DÜZELTİLDİ: 262872 yerine DOĞRU ID: 262782 (YUSUF ERBAY) 🔴
   "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"]
 };
 
-// 🔴 1. HAFTA SKOR BİLME ADEDİ (Tamamı DFO) - YUSUF ERBAY ID GÜNCELLENDİ
+// 🔴 1. HAFTA SKOR BİLME ADEDİ (Tamamı DFO)
 const skorWeek1Data: Record<string, number> = {
   "262736": 4, "262755": 6, "262719": 4, "262756": 4, "262754": 4, "262786": 3, "262731": 3, "262717": 3, "262732": 4,
   "262726": 3, "262750": 2, "262747": 3, "262771": 2, "262728": 2, "262816": 2, "262716": 2, "262790": 2, "262733": 2,
@@ -118,7 +118,7 @@ const skorWeek2Data: Record<string, number> = {
   "262758": 1, "262771": 1, "262754": 1, "262747": 1, "262716": 1, "262708": 1, "262731": 1, "262739": 1
 };
 
-// 🔴 3. HAFTA DFO SKOR BİLME ADEDİ - YUSUF ERBAY ID GÜNCELLENDİ
+// 🔴 3. HAFTA DFO SKOR BİLME ADEDİ
 const skorWeek3DfoData: Record<string, number> = {
   "262816": 2, "262733": 1, "262721": 3, "262763": 2, "262786": 2, "262711": 2, "351925": 2, "262726": 2, "262725": 2,
   "262771": 1, "262813": 2, "262709": 2, "262706": 1, "262738": 1, "262753": 1, "262734": 1, "262756": 1, "262702": 1,
@@ -126,7 +126,7 @@ const skorWeek3DfoData: Record<string, number> = {
   "262723": 1, "262772": 1, "262739": 1, "262716": 1
 };
 
-// 🔴 3. HAFTA TFF SKOR BİLME ADEDİ - YUSUF ERBAY ID GÜNCELLENDİ
+// 🔴 3. HAFTA TFF SKOR BİLME ADEDİ
 const skorWeek3TffData: Record<string, number> = {
   "262707": 2, "262816": 3, "262733": 2, "262754": 3, "262728": 2, "262706": 1, "262755": 1, "262736": 1, "262771": 1,
   "262734": 1, "262705": 2, "262714": 1, "262763": 1, "262756": 1, "262774": 1, "262740": 1, "262702": 2, "262782": 2,
@@ -151,29 +151,60 @@ export default function SkorDurumuPage() {
   const [week4DfoLive, setWeek4DfoLive] = useState<Record<string, number>>({});
   const [week4TffLive, setWeek4TffLive] = useState<Record<string, number>>({});
   
-  const availableWeeks = [1, 2, 3, 4];
+  // 🚀 5. HAFTA EKLENDİ
+  const availableWeeks = [1, 2, 3, 4, 5];
 
   const loadLeaderboard = async () => {
     let dbMatches: any[] = [];
+    let dbPredictions: any[] = [];
+    let dbBulletin: any[] = [];
     
+    // 🛡️ TRY CATCH İLE KORUMA
     try {
       const { data, error } = await supabase.from('live_matches').select('*');
-      if (data) {
-         dbMatches = data;
-      }
+      if (data) dbMatches = data;
+
+      // 🚀 5. HAFTA TAHMİNLERİ VE BÜLTENİ 🚀
+      const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
+      if (pData) dbPredictions = pData;
+
+      const { data: bData } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      if (bData) dbBulletin = bData;
     } catch (error) {
-      console.log("Canlı maçlar çekilirken bir sorun oluştu, tarihi verilerle devam ediliyor.");
+      console.log("Canlı maçlar çekilirken bir sorun oluştu.");
+    }
+
+    const predDict: Record<string, string[]> = {};
+    if (dbPredictions) {
+      dbPredictions.forEach(pred => {
+        const uid = String(pred.user_id);
+        if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
+        predDict[uid][pred.match_index - 1] = pred.predicted_score;
+      });
+    }
+
+    const catDict: Record<number, string> = {};
+    if (dbBulletin) {
+      dbBulletin.forEach(m => { catDict[m.match_index] = m.category; });
     }
     
     let w4BaseDfo: Record<string, number> = {}; 
     let w4BaseTff: Record<string, number> = {}; 
     let w4LiveDfo: Record<string, number> = {}; 
     let w4LiveTff: Record<string, number> = {}; 
+
+    // 🚀 5. Hafta Değişkenleri
+    let w5BaseDfo: Record<string, number> = {}; 
+    let w5BaseTff: Record<string, number> = {}; 
+    let w5LiveDfo: Record<string, number> = {}; 
+    let w5LiveTff: Record<string, number> = {}; 
     let isAnyMatchLive = false;
 
     Object.keys(allPlayersList).forEach(id => {
       w4BaseDfo[id] = 0; w4BaseTff[id] = 0;
       w4LiveDfo[id] = 0; w4LiveTff[id] = 0;
+      w5BaseDfo[id] = 0; w5BaseTff[id] = 0;
+      w5LiveDfo[id] = 0; w5LiveTff[id] = 0;
     });
 
     if (dbMatches && dbMatches.length > 0) {
@@ -184,23 +215,48 @@ export default function SkorDurumuPage() {
         if (dbMatch && dbMatch.home_score && dbMatch.away_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
           const finalScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
           
-          const matchIndex = dbMatch.id - 1; 
+          // ============================================
+          // 4. HAFTA İŞLEMLERİ (ID 1 ile 24 arası)
+          // ============================================
+          if (dbMatch.id >= 1 && dbMatch.id <= 24) {
+             const matchIndex = dbMatch.id - 1; 
+             if (matchIndex >= 0 && matchIndex < week4Matches.length) {
+               const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
+               Object.keys(week4PredictionsData).forEach(playerId => {
+                 if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
+                   if (dbMatch.status === 'FINISHED') {
+                       if (isTff) w4BaseTff[playerId] += 1;
+                       else w4BaseDfo[playerId] += 1;
+                   } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
+                       if (isTff) w4LiveTff[playerId] += 1;
+                       else w4LiveDfo[playerId] += 1;
+                       isAnyMatchLive = true;
+                   }
+                 }
+               });
+             }
+          }
 
-          if (matchIndex >= 0 && matchIndex < week4Matches.length) {
-            const isTff = isTffMatchCheck(week4Matches[matchIndex].category);
-            
-            Object.keys(week4PredictionsData).forEach(playerId => {
-              if (week4PredictionsData[playerId] && week4PredictionsData[playerId][matchIndex] === finalScore) {
-                if (dbMatch.status === 'FINISHED') {
-                    if (isTff) w4BaseTff[playerId] += 1;
-                    else w4BaseDfo[playerId] += 1;
-                } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT') {
-                    if (isTff) w4LiveTff[playerId] += 1;
-                    else w4LiveDfo[playerId] += 1;
-                    isAnyMatchLive = true;
-                }
-              }
-            });
+          // ============================================
+          // 🚀 5. HAFTA CANLI RADAR İŞLEMLERİ (ID 501+) 🚀
+          // ============================================
+          if (dbMatch.id > 500) {
+             const matchIndex = (dbMatch.id % 100) - 1;
+             const category = catDict[matchIndex + 1] || "";
+             const isTff = isTffMatchCheck(category);
+
+             Object.keys(predDict).forEach(playerId => {
+               if (predDict[playerId] && predDict[playerId][matchIndex] === finalScore) {
+                 if (dbMatch.status === 'FINISHED') {
+                     if (isTff) w5BaseTff[playerId] += 1;
+                     else w5BaseDfo[playerId] += 1;
+                 } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'HT' || dbMatch.status === 'WAITING_APPROVAL') {
+                     if (isTff) w5LiveTff[playerId] += 1;
+                     else w5LiveDfo[playerId] += 1;
+                     isAnyMatchLive = true;
+                 }
+               }
+             });
           }
         }
       });
@@ -218,14 +274,14 @@ export default function SkorDurumuPage() {
       
       if (activeTab === 'total') {
           if (activeLeague === 'MASTER') {
-              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
-              liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0);
+              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0) + (w5BaseDfo[id]||0) + (w5BaseTff[id]||0);
+              liveSkor = (w4LiveDfo[id]||0) + (w4LiveTff[id]||0) + (w5LiveDfo[id]||0) + (w5LiveTff[id]||0);
           } else if (activeLeague === 'DFO') {
-              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0);
-              liveSkor = (w4LiveDfo[id]||0);
+              baseSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0) + (w5BaseDfo[id]||0);
+              liveSkor = (w4LiveDfo[id]||0) + (w5LiveDfo[id]||0);
           } else if (activeLeague === 'TFF') {
-              baseSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0);
-              liveSkor = (w4LiveTff[id]||0);
+              baseSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0) + (w5BaseTff[id]||0);
+              liveSkor = (w4LiveTff[id]||0) + (w5LiveTff[id]||0);
           }
       } 
       else if (activeTab === 'week1') {
@@ -251,17 +307,33 @@ export default function SkorDurumuPage() {
               liveSkor = (w4LiveTff[id]||0);
           }
       }
+      else if (activeTab === 'week5') {
+          if (activeLeague === 'MASTER') {
+              baseSkor = (w5BaseDfo[id]||0) + (w5BaseTff[id]||0);
+              liveSkor = (w5LiveDfo[id]||0) + (w5LiveTff[id]||0);
+          } else if (activeLeague === 'DFO') {
+              baseSkor = (w5BaseDfo[id]||0);
+              liveSkor = (w5LiveDfo[id]||0);
+          } else if (activeLeague === 'TFF') {
+              baseSkor = (w5BaseTff[id]||0);
+              liveSkor = (w5LiveTff[id]||0);
+          }
+      }
 
       return { id, name: allPlayersList[id], skorAdedi: baseSkor + liveSkor, liveExtra: liveSkor, baseSkor };
     })
     .sort((a, b) => b.skorAdedi - a.skorAdedi || a.name.localeCompare(b.name, 'tr'));
 
+    // 🌟 EKMEL ÇELİK SÜZGECİ: SIFIR PUANLILARI GİZLE (Murat Aydemir İstisnası) 🌟
+    const visibleList = baseList.filter(p => p.skorAdedi > 0 || p.id === "262712");
+
     if (activeTab === 'total') {
       const referenceList = Object.keys(allPlayersList).map(id => {
          let refSkor = 0;
-         if (activeLeague === 'MASTER') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0);
-         else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0);
-         else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0);
+         // 🚀 TREND İÇİN W4Base dahil edildi 🚀
+         if (activeLeague === 'MASTER') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (skorWeek3TffData[id]||0) + (w4BaseDfo[id]||0) + (w4BaseTff[id]||0);
+         else if (activeLeague === 'DFO') refSkor = (skorWeek1Data[id]||0) + (skorWeek2Data[id]||0) + (skorWeek3DfoData[id]||0) + (w4BaseDfo[id]||0);
+         else if (activeLeague === 'TFF') refSkor = (skorWeek3TffData[id]||0) + (w4BaseTff[id]||0);
          
          return { id, refSkor };
       }).sort((a, b) => b.refSkor - a.refSkor);
@@ -269,7 +341,7 @@ export default function SkorDurumuPage() {
       const prevRanks: Record<string, number> = {};
       referenceList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      const finalRows = baseList.map((player, index) => {
+      const finalRows = visibleList.map((player, index) => {
         const currentRank = index + 1;
         const prevRank = prevRanks[player.id] || currentRank;
         let trend = 'same';
@@ -288,7 +360,7 @@ export default function SkorDurumuPage() {
       setTableRows(finalRows);
       
     } else {
-      const finalRows = baseList.map((player, index) => {
+      const finalRows = visibleList.map((player, index) => {
         return { ...player, currentRank: index + 1, trend: 'none', trendDiff: 0 };
       });
       
