@@ -82,6 +82,7 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png" ,
 
   // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -162,10 +163,10 @@ export default function LiveMatchCard() {
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
+    // 🔴 DÜZELTME: Epoch mantığı sabittir, +3 saat eklenirse sistem saati şaşırıp erken sayar. 
+    // Tam yerel saat senkronizasyonu için direkt epoch time çekildi.
     const timer = setInterval(() => {
-        const nowUTC = new Date();
-        const turkeyTimeMs = nowUTC.getTime() + (3 * 60 * 60 * 1000);
-        setNow(turkeyTimeMs);
+        setNow(new Date().getTime());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -194,7 +195,8 @@ export default function LiveMatchCard() {
         tagBorder: "border-cyan-400/80",
         bottomBar: "bg-[#050b14]/90 border-blue-900/30"
       };
-    } else if (upCat.includes("AVRUPA LİGİ")) {
+    // 🔴 DÜZELTME: "A.L." kısaltması eklendi! Artık Avrupa Ligi maçları turuncu (amber) yanacak!
+    } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
       return {
         bgImg: "url('/el-bg.png')", 
         containerBorder: "border-orange-500/50",
