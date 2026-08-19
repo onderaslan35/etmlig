@@ -420,13 +420,14 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated, userRole]);
 
+  // 🔴 1. DÜZELTME: user_id YERİNE username KULLANILDI
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('full_name');
     if (data) {
        setDbPlayersList(data);
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
-          newMergedMap[String(p.user_id)] = p.full_name; 
+          newMergedMap[String(p.username)] = p.full_name; 
        });
        setMergedPlayers(newMergedMap); 
     }
@@ -496,6 +497,33 @@ export default function AdminRadarPortal() {
 
   const getPlayerIdByName = (name: string) => {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
+  };
+
+  // 🔴 2. DÜZELTME: user_id YERİNE username KULLANILDI
+  const handleAddNewPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
+    setIsPlayerLoading(true);
+    try {
+       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), full_name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
+       if (error) throw error;
+       alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
+       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
+       fetchAllSystemPlayers(); 
+    } catch (err: any) { alert("❌ HATA: " + err.message); }
+    setIsPlayerLoading(false);
+  };
+
+  // 🔴 3. DÜZELTME: user_id YERİNE username KULLANILDI
+  const handleBanishPlayer = async (userId: string, userName: string) => {
+    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEğer bu kişiyi silerseniz Karargah sisteminden çıkacaktır. Emin misiniz?`);
+    if (!confirmDelete) return;
+    try {
+       const { error } = await supabase.from('players').delete().eq('username', userId);
+       if (error) throw error;
+       alert(`✅ İhraç başarılı. ${userName} sistemden atıldı.`);
+       fetchAllSystemPlayers(); 
+    } catch (err: any) { alert("❌ Hata: " + err.message); }
   };
 
   useEffect(() => {
@@ -707,31 +735,6 @@ export default function AdminRadarPortal() {
 
     fetchPredictionData();
   }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
-
-  const handleAddNewPlayer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
-    setIsPlayerLoading(true);
-    try {
-       const { error } = await supabase.from('players').insert({ user_id: newPlayerId.trim(), full_name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
-       if (error) throw error;
-       alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
-       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ HATA: " + err.message); }
-    setIsPlayerLoading(false);
-  };
-
-  const handleBanishPlayer = async (userId: string, userName: string) => {
-    const confirmDelete = window.confirm(`DİKKAT: ${userName} ihraç edilecek. Emin misiniz?`);
-    if (!confirmDelete) return;
-    try {
-       const { error } = await supabase.from('players').delete().eq('user_id', userId);
-       if (error) throw error;
-       alert(`✅ İhraç başarılı.`);
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ Hata: " + err.message); }
-  };
 
   const handleAddLocalTeam = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1513,7 +1516,7 @@ export default function AdminRadarPortal() {
              
              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl">
                 <button onClick={copyDateTimeToAll} className="mb-4 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors shadow-sm">
-                   📅 1. Maçın Tarihini Alta Kopyala
+                    📅 1. Maçın Tarihini Alta Kopyala
                 </button>
                 
                 <div className="overflow-x-auto custom-scrollbar pb-4">
@@ -1621,7 +1624,7 @@ export default function AdminRadarPortal() {
                   <span className="text-3xl">👥</span> YARIŞMACI YÖNETİMİ
                 </h1>
                 <p className="text-slate-400 text-sm mt-1">
-                  Buradan eklediğiniz yarışmacılar "Eksikler/Girenler" ve "Canlı Radar" tablolarına otomatik olarak dahil edilir.
+                  Buradan eklediğiniz veya sildiğiniz yarışmacılar "Eksikler/Girenler" ve "Canlı Radar" tablolarına otomatik olarak yansır.
                 </p>
               </div>
             </div>
@@ -1689,30 +1692,38 @@ export default function AdminRadarPortal() {
                  </div>
                  
                  <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                    
+                    {/* DİNAMİK (YENİ EKLENEN) OYUNCULAR */}
                     {dbPlayersList.map(p => (
-                      <div key={p.id} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
+                      <div key={`dyn-${p.id}`} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
                          <div className="flex flex-col">
                             <span className="font-black text-fuchsia-400 text-sm uppercase tracking-wide flex items-center gap-2">
                                {p.full_name} <span className="text-[8px] bg-fuchsia-950/50 border border-fuchsia-500/30 px-1.5 py-0.5 rounded text-fuchsia-300">YENİ</span>
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.user_id} | ŞİFRE: {p.password}</span>
+                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.username} | ŞİFRE: {p.password}</span>
                          </div>
                          <button 
-                           onClick={() => handleBanishPlayer(p.user_id, p.full_name)}
+                           onClick={() => handleBanishPlayer(p.username, p.full_name)}
                            className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
                          >
-                            ❌ İHRAÇ ET
+                           ❌ İHRAÇ ET
                          </button>
                       </div>
                     ))}
                     
+                    {/* STATİK (KORUMALI) OYUNCULAR (Artık İhraç Edilebilir) */}
                     {Object.keys(staticPlayersList).map(id => (
-                      <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center opacity-80">
+                      <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
                          <div className="flex flex-col">
                             <span className="font-black text-slate-300 text-sm uppercase tracking-wide">{staticPlayersList[id]}</span>
                             <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {id}</span>
                          </div>
-                         <div className="text-[9px] font-black text-slate-600 uppercase border border-slate-700 bg-slate-900 px-2 py-1 rounded">🔒 KORUMALI</div>
+                         <button 
+                           onClick={() => handleBanishPlayer(id, staticPlayersList[id])}
+                           className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)] opacity-80 hover:opacity-100"
+                         >
+                           ❌ İHRAÇ ET
+                         </button>
                       </div>
                     ))}
                  </div>

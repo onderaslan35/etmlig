@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 YEREL & BULUT LOGO BANKASI
+// 🔴 YEREL & BULUT LOGO BANKASI (TÜM LİGLER EKLENDİ)
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -33,14 +33,12 @@ const localTeamLogos: Record<string, string> = {
   "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
   "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
   "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
-  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
   "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
   "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
   "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
   "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
-  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
@@ -85,29 +83,104 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
-  "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
-  "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
-  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Juventus_FC_-_pictogram_white_%28Italy%2C_2017%29.svg",
+// 🔴 İSPANYA (LA LIGA VE HAVUZ) TAKIMLARI
+  "REAL MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Madrid_CF.svg",
+  "BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
+  "FC BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
+  "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/9906_large.png",
+  "ATLETICO MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Atletico_Madrid_2017_logo.svg",
+  "ATHLETIC BILBAO": "https://images.fotmob.com/image_resources/logo/teamlogo/8315_large.png",
+  "BILBAO": "https://en.wikipedia.org/wiki/Special:FilePath/Athletic_Club_Bilbao_logo.svg",
+  "REAL SOCIEDAD": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Sociedad_logo.svg",
+  "REAL BETIS": "https://images.fotmob.com/image_resources/logo/teamlogo/8603_large.png",
+  "BETIS": "https://en.wikipedia.org/wiki/Special:FilePath/Real_betis_logo.svg",
+  "SEVILLA": "https://en.wikipedia.org/wiki/Special:FilePath/Sevilla_FC_logo.svg",
+  "VILLARREAL": "https://images.fotmob.com/image_resources/logo/teamlogo/10205_large.png",
+  "VALENCIA": "https://images.fotmob.com/image_resources/logo/teamlogo/10267.png",
+  "GIRONA": "https://en.wikipedia.org/wiki/Special:FilePath/Girona_FC_logo_(2022).svg",
+  "CELTA VIGO": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Celta_de_Vigo_logo.svg",
+  "OSASUNA": "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png",
+  "RAYO VALLECANO": "https://en.wikipedia.org/wiki/Special:FilePath/Rayo_Vallecano_logo.svg",
+  "GETAFE": "https://images.fotmob.com/image_resources/logo/teamlogo/8305_large.png",
+  "MALLORCA": "https://en.wikipedia.org/wiki/Special:FilePath/RCD_Mallorca_logo.svg",
+  "RCD MALLORCA": "https://en.wikipedia.org/wiki/Special:FilePath/RCD_Mallorca_logo.svg",
+  "ALAVÉS": "https://images.fotmob.com/image_resources/logo/teamlogo/9866_large.png",
+  "ALAVES": "https://en.wikipedia.org/wiki/Special:FilePath/Deportivo_Alaves_logo.svg",
+  "DEPORTIVO ALAVES": "https://en.wikipedia.org/wiki/Special:FilePath/Deportivo_Alaves_logo.svg",
+  "ESPANYOL": "https://de.wikipedia.org/wiki/Special:FilePath/RCD_Espanyol_De_Barcelona.svg",
+  "RCD ESPANYOL": "https://de.wikipedia.org/wiki/Special:FilePath/RCD_Espanyol_De_Barcelona.svg",
+  "LAS PALMAS": "https://en.wikipedia.org/wiki/Special:FilePath/UD_Las_Palmas_logo.svg",
+  "LEGANES": "https://en.wikipedia.org/wiki/Special:FilePath/CD_Legan%C3%A9s_logo.svg",
+  "LEGANÉS": "https://en.wikipedia.org/wiki/Special:FilePath/CD_Legan%C3%A9s_logo.svg",
+  "REAL VALLADOLID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Valladolid_CF_logo.svg",
+  "VALLADOLID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Valladolid_CF_logo.svg",
+  "ELCHE": "https://en.wikipedia.org/wiki/Special:FilePath/Elche_CF_logo.svg",
+  "LEVANTE": "https://images.fotmob.com/image_resources/logo/teamlogo/8581_large.png",
+  "MALAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
+  "MÁLAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
+  "DEPORTIVO LA CORUÑA": "https://images.fotmob.com/image_resources/logo/teamlogo/9783_large.png",
+  "DEPORTIVO LA CORUNA": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Deportivo_La_Coru%C3%B1a_logo.svg",
+  "RACING SANTANDER": "https://images.fotmob.com/image_resources/logo/teamlogo/8696_large.png",
+
+  // 🔴 İNGİLTERE PREMIER LİG TAKIMLARI
+  "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
+  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
+  "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
+  "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
+  "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
+  "CHELSEA": "https://en.wikipedia.org/wiki/Special:FilePath/Chelsea_FC.svg",
+  "COVENTRY CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8669.png",
+  "CRYSTAL PALACE": "https://images.fotmob.com/image_resources/logo/teamlogo/9826.png",
+  "EVERTON": "https://en.wikipedia.org/wiki/Special:FilePath/Everton_FC_logo.svg",
+  "FULHAM": "https://en.wikipedia.org/wiki/Special:FilePath/Fulham_FC_(shield).svg",
+  "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
+  "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
+  "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
+  "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
+  "MANCHESTER CITY": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
+  "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
+  "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
+  "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
+  "SUNDERLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
+  "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+
+  "INTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
+  "İNTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
+  "MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
+  "AC MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
+  "JUVENTUS": "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png",
+  "NAPOLI": "https://images.fotmob.com/image_resources/logo/teamlogo/9875.png",
+  "ROMA": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
+  "AS ROMA": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
+  "LAZIO": "https://images.fotmob.com/image_resources/logo/teamlogo/8543.png",
+  "ATALANTA": "https://images.fotmob.com/image_resources/logo/teamlogo/8524.png",
+  "FIORENTINA": "https://images.fotmob.com/image_resources/logo/teamlogo/8535.png",
+  "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
+  "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
+  "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
+  "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876.png",
+  "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
+  "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
+  "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
+  "CAGLIARI": "https://images.fotmob.com/image_resources/logo/teamlogo/8529.png",
+  "EMPOLI": "https://images.fotmob.com/image_resources/logo/teamlogo/8534.png",
+  "PARMA": "https://images.fotmob.com/image_resources/logo/teamlogo/10167.png",
+  "COMO": "https://images.fotmob.com/image_resources/logo/teamlogo/8530.png",
+  "VENEZIA": "https://images.fotmob.com/image_resources/logo/teamlogo/7881.png",
+  "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
+  "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
+
+  // 🔴 DİĞER AVRUPA TAKIMLARI
   
-  "MALAGA": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/M%C3%A1laga_CF.svg/200px-M%C3%A1laga_CF.svg.png",
-  "DEPORTIVO LA CORUÑA": "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/RC_Deportivo_La_Coru%C3%B1a_logo.svg/200px-RC_Deportivo_La_Coru%C3%B1a_logo.svg.png",
-  "MONACO": "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/AS_Monaco_FC.svg/200px-AS_Monaco_FC.svg.png",
-  "LILLE": "https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/Lille_OSC_2018_logo.svg/200px-Lille_OSC_2018_logo.svg.png",
-  "NOTTINGHAM FOREST": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e5/Nottingham_Forest_F.C._logo.svg/200px-Nottingham_Forest_F.C._logo.svg.png",
-  "LIVERPOOL": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png",
-  "FULHAM": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Fulham_FC_%28shield%29.svg/200px-Fulham_FC_%28shield%29.svg.png",
-  "EVERTON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Everton_FC_logo.svg/200px-Everton_FC_logo.svg.png",
+  "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
+  "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+  
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
+  "LE HAVRE": "https://en.wikipedia.org/wiki/Special:FilePath/Le_Havre_AC_logo.svg",
+  "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
+  "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
 
-  // 🔴 YENİ EKLENEN YABANCI TAKIMLAR
-  "BRIGHTON": "/logos/brighton.png",
-  "CHELSEA": "/logos/chelsea.png",
-  "BARCELONA": "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
-  "ATLÉTICO MADRID": "https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg",
-  "ATLETICO MADRID": "https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg",
-
-  // Yerel Logolar
+  // 🔴 YEREL LOGOLAR (public/logos/)
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -116,9 +189,8 @@ const localTeamLogos: Record<string, string> = {
   "HAMMARBY": "/logos/hammarby.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
   
-  // 🔴 LYON LOGOSU
   "OLYMPIC LYON": "/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
@@ -188,6 +260,7 @@ const week4PredictionsData: Record<string, string[]> = {
   "262747": ["1-1", "2-0", "1-0", "2-0", "2-0", "1-1", "1-2", "1-1", "1-1", "1-1", "1-1", "1-3", "1-1", "1-1", "1-1", "1-1", "1-1", "1-1", "2-0", "1-1", "1-1", "1-1", "1-1", "1-1"],
   "262723": ["1-1", "3-1", "2-1", "2-0", "3-0", "1-2", "1-2", "2-1", "2-0", "1-2", "1-1", "2-1", "3-1", "3-0", "2-1", "1-1", "2-1", "1-1", "2-1", "1-1", "0-2", "0-2", "1-1", "2-0"],
   "262709": ["1-1", "2-1", "2-1", "2-0", "3-0", "1-1", "1-2", "1-1", "1-0", "1-0", "2-1", "0-2", "2-1", "2-0", "1-1", "1-0", "1-1", "2-1", "2-1", "1-1", "0-3", "0-2", "1-2", "1-0"],
+  "262782": ["0-2", "0-0", "0-1", "1-0", "1-0", "0-0", "0-4", "1-0", "0-1", "0-0", "0-1", "0-3", "0-0", "0-0", "0-1", "0-0", "0-0", "0-0", "3-1", "0-0", "0-1", "0-0", "0-0", "0-0"],
   "262739": ["1-0", "3-1", "1-1", "3-0", "3-1", "0-1", "1-2", "3-1", "2-0", "2-0", "2-1", "1-2", "3-0", "2-0", "2-1", "3-2", "1-0", "1-0", "2-0", "1-1", "0-1", "1-1", "1-2", "1-0"]
 };
 
@@ -303,6 +376,20 @@ const week4Matches = [
   { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", score: "- : -" }
 ];
 
+// 🔴 YENİ EKLENEN: AKILLI YEREL LOGO BULUCU
+const getLocalLogoUrl = (teamName: string) => {
+  if (!teamName || teamName === '') return '/logos/default.png';
+  const slug = teamName
+    .toLowerCase()
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+    
+  return `/logos/${slug}.png`;
+};
+
 export default function MacArsiviPage() {
   const [selectedWeek, setSelectedWeek] = useState<number>(5);
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
@@ -346,7 +433,7 @@ export default function MacArsiviPage() {
         }
 
         // 🔴 1000 SATIR LIMITI KIRILDI (.limit(5000) eklendi)
-        const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', 5).limit(5000);
+        const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedWeek).limit(5000);
         if (pData) {
            const pMap: Record<string, string[]> = {};
            pData.forEach(row => {
@@ -364,7 +451,7 @@ export default function MacArsiviPage() {
     fetchFromDB(); 
     const interval = setInterval(fetchFromDB, 5000); 
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedWeek]); // 🔴 DÜZELTME: selectedWeek değiştiğinde tahminleri yeniden çekmesi için eklendi
 
   const currentMatches =
     selectedWeek === 1 ? week1Matches :
@@ -469,11 +556,12 @@ export default function MacArsiviPage() {
               const isWinnersOpen = !!openWinnersMap[match.id];
               const isTffMatch = isTffMatchCheck(match.category);
               
-              const homeUpper = match.homeTeam?.toUpperCase();
-              const awayUpper = match.awayTeam?.toUpperCase();
+              const homeUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
+              const awayUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
               
-              const homeLogoUrl = localTeamLogos[homeUpper] || "/logos/default.png";
-              const awayLogoUrl = localTeamLogos[awayUpper] || "/logos/default.png";
+              // 🔴 DÜZELTME: AKILLI YEREL LOGO BULUCU BURAYA ENTEGRE EDİLDİ
+              const homeLogoUrl = localTeamLogos[homeUpper] || getLocalLogoUrl(homeUpper);
+              const awayLogoUrl = localTeamLogos[awayUpper] || getLocalLogoUrl(awayUpper);
 
               let homeScore = "-";
               let awayScore = "-";
@@ -552,9 +640,9 @@ export default function MacArsiviPage() {
                       <div className="flex items-center justify-between px-0 sm:px-4">
                         <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                           <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                            <img src={homeLogoUrl} alt={match.homeTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                            <img src={homeLogoUrl} alt={homeUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
-                          <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.homeTeam}</span>
+                          <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{homeUpper}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30">
                           <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
@@ -565,9 +653,9 @@ export default function MacArsiviPage() {
                         </div>
                         <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                           <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                            <img src={awayLogoUrl} alt={match.awayTeam} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                            <img src={awayLogoUrl} alt={awayUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
-                          <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{match.awayTeam}</span>
+                          <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{awayUpper}</span>
                         </div>
                       </div>
                     </div>
