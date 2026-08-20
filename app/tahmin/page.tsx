@@ -132,22 +132,108 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  "ESPANYOL": "https://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
-  "REAL MADRID": "https://upload.wikimedia.org/wikipedia/sco/5/56/Real_Madrid_CF.svg",
-  "FROSINONE": "https://upload.wikimedia.org/wikipedia/de/2/2b/Frosinone_Calcio.svg",
-  "JUVENTUS": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Juventus_FC_-_pictogram_white_%28Italy%2C_2017%29.svg",
-  
-  "MALAGA": "https://upload.wikimedia.org/wikipedia/en/thumb/0/05/M%C3%A1laga_CF.svg/200px-M%C3%A1laga_CF.svg.png",
-  "DEPORTIVO LA CORUÑA": "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/RC_Deportivo_La_Coru%C3%B1a_logo.svg/200px-RC_Deportivo_La_Coru%C3%B1a_logo.svg.png",
-  "MONACO": "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/AS_Monaco_FC.svg/200px-AS_Monaco_FC.svg.png",
-  "LILLE": "https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/Lille_OSC_2018_logo.svg/200px-Lille_OSC_2018_logo.svg.png",
-  "NOTTINGHAM FOREST": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e5/Nottingham_Forest_F.C._logo.svg/200px-Nottingham_Forest_F.C._logo.svg.png",
-  "LIVERPOOL": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png",
-  "FULHAM": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Fulham_FC_%28shield%29.svg/200px-Fulham_FC_%28shield%29.svg.png",
-  "EVERTON": "https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Everton_FC_logo.svg/200px-Everton_FC_logo.svg.png",
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
 
-  // Yerel Logolar
+
+
+
+  // 🔴 İSPANYA (LA LIGA VE HAVUZ) TAKIMLARI
+  "REAL MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Madrid_CF.svg",
+  "BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
+  "FC BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
+  "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/9906_large.png",
+  "ATLETICO MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Atletico_Madrid_2017_logo.svg",
+  "ATHLETIC BILBAO": "https://images.fotmob.com/image_resources/logo/teamlogo/8315_large.png",
+  "BILBAO": "https://en.wikipedia.org/wiki/Special:FilePath/Athletic_Club_Bilbao_logo.svg",
+  "REAL SOCIEDAD": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Sociedad_logo.svg",
+  "REAL BETIS": "https://images.fotmob.com/image_resources/logo/teamlogo/8603_large.png",
+  "BETIS": "https://en.wikipedia.org/wiki/Special:FilePath/Real_betis_logo.svg",
+  "SEVILLA": "https://en.wikipedia.org/wiki/Special:FilePath/Sevilla_FC_logo.svg",
+  "VILLARREAL": "https://images.fotmob.com/image_resources/logo/teamlogo/10205_large.png",
+  "VALENCIA": "https://images.fotmob.com/image_resources/logo/teamlogo/10267.png",
+  "GIRONA": "https://en.wikipedia.org/wiki/Special:FilePath/Girona_FC_logo_(2022).svg",
+  "CELTA VIGO": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Celta_de_Vigo_logo.svg",
+  "OSASUNA": "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png",
+  "RAYO VALLECANO": "https://en.wikipedia.org/wiki/Special:FilePath/Rayo_Vallecano_logo.svg",
+  "GETAFE": "https://images.fotmob.com/image_resources/logo/teamlogo/8305_large.png",
+  "MALLORCA": "https://en.wikipedia.org/wiki/Special:FilePath/RCD_Mallorca_logo.svg",
+  "RCD MALLORCA": "https://en.wikipedia.org/wiki/Special:FilePath/RCD_Mallorca_logo.svg",
+  "ALAVÉS": "https://images.fotmob.com/image_resources/logo/teamlogo/9866_large.png",
+  "ALAVES": "https://en.wikipedia.org/wiki/Special:FilePath/Deportivo_Alaves_logo.svg",
+  "DEPORTIVO ALAVES": "https://en.wikipedia.org/wiki/Special:FilePath/Deportivo_Alaves_logo.svg",
+  "ESPANYOL": "https://de.wikipedia.org/wiki/Special:FilePath/RCD_Espanyol_De_Barcelona.svg",
+  "RCD ESPANYOL": "https://de.wikipedia.org/wiki/Special:FilePath/RCD_Espanyol_De_Barcelona.svg",
+  "LAS PALMAS": "https://en.wikipedia.org/wiki/Special:FilePath/UD_Las_Palmas_logo.svg",
+  "LEGANES": "https://en.wikipedia.org/wiki/Special:FilePath/CD_Legan%C3%A9s_logo.svg",
+  "LEGANÉS": "https://en.wikipedia.org/wiki/Special:FilePath/CD_Legan%C3%A9s_logo.svg",
+  "REAL VALLADOLID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Valladolid_CF_logo.svg",
+  "VALLADOLID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Valladolid_CF_logo.svg",
+  "ELCHE": "https://en.wikipedia.org/wiki/Special:FilePath/Elche_CF_logo.svg",
+  "LEVANTE": "https://images.fotmob.com/image_resources/logo/teamlogo/8581_large.png",
+  "MALAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
+  "MÁLAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
+  "DEPORTIVO LA CORUÑA": "https://images.fotmob.com/image_resources/logo/teamlogo/9783_large.png",
+  "DEPORTIVO LA CORUNA": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Deportivo_La_Coru%C3%B1a_logo.svg",
+  "RACING SANTANDER": "https://images.fotmob.com/image_resources/logo/teamlogo/8696_large.png",
+
+  // 🔴 İNGİLTERE PREMIER LİG TAKIMLARI
+  "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
+  
+  "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
+  "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
+  "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
+  "CHELSEA": "https://en.wikipedia.org/wiki/Special:FilePath/Chelsea_FC.svg",
+  "COVENTRY CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8669.png",
+  "CRYSTAL PALACE": "https://images.fotmob.com/image_resources/logo/teamlogo/9826.png",
+  "EVERTON": "https://en.wikipedia.org/wiki/Special:FilePath/Everton_FC_logo.svg",
+  "FULHAM": "https://en.wikipedia.org/wiki/Special:FilePath/Fulham_FC_(shield).svg",
+  "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
+  "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
+  "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
+  "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
+  
+  "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
+  "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
+  "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
+  "SUNDERLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
+  "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+
+  "INTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
+  "İNTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
+  "MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
+  "AC MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
+  "JUVENTUS": "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png",
+  "NAPOLI": "https://images.fotmob.com/image_resources/logo/teamlogo/9875.png",
+  "ROMA": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
+  "AS ROMA": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
+  "LAZIO": "https://images.fotmob.com/image_resources/logo/teamlogo/8543.png",
+  "ATALANTA": "https://images.fotmob.com/image_resources/logo/teamlogo/8524.png",
+  "FIORENTINA": "https://images.fotmob.com/image_resources/logo/teamlogo/8535.png",
+  "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
+  "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
+  "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
+  "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876.png",
+  "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
+  "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
+  "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
+  "CAGLIARI": "https://images.fotmob.com/image_resources/logo/teamlogo/8529.png",
+  "EMPOLI": "https://images.fotmob.com/image_resources/logo/teamlogo/8534.png",
+  "PARMA": "https://images.fotmob.com/image_resources/logo/teamlogo/10167.png",
+  "COMO": "https://images.fotmob.com/image_resources/logo/teamlogo/8530.png",
+  "VENEZIA": "https://images.fotmob.com/image_resources/logo/teamlogo/7881.png",
+  "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
+  "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
+
+  // 🔴 DİĞER AVRUPA TAKIMLARI
+  
+  "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
+  "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+  
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
+  "LE HAVRE": "https://en.wikipedia.org/wiki/Special:FilePath/Le_Havre_AC_logo.svg",
+  "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
+  "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+
+  // 🔴 YEREL LOGOLAR (public/logos/)
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -156,13 +242,23 @@ const localTeamLogos: Record<string, string> = {
   "HAMMARBY": "/logos/hammarby.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
   
   "OLYMPIC LYON": "/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
   "LYON": "/logos/lyon.png"
 };
+
+
+
+
+
+
+
+
+ 
+
 
 const normalizeTurkish = (text: string) => {
   if (!text) return '';
