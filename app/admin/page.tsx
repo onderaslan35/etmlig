@@ -363,7 +363,7 @@ const localTeamLogos: Record<string, string> = {
   "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8614.png",
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/8656.png",
   "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
-  "NEC NIJMEGEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8610.png",
+  
   
   // 🔴 PORTEKİZ (PRIMEIRA LIGA) - FOTMOB
   "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
@@ -372,7 +372,7 @@ const localTeamLogos: Record<string, string> = {
 
   // 🔴 BELÇİKA (PRO LEAGUE) - FOTMOB
   "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8570.png",
-  "USG": "https://images.fotmob.com/image_resources/logo/teamlogo/9970.png",
+  
   "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
   "ROYAL ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/9982.png"
 };
