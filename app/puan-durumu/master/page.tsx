@@ -3,8 +3,13 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// DİKKAT: allPlayersList (54 kişilik hardcoded liste) BURADAN TAMAMEN SİLİNDİ!
-// Artık oyuncular doğrudan Supabase "players" tablosundan çekiliyor.
+// 🔴 GEÇMİŞ HAFTALARIN KESİNLEŞMİŞ (MÜHÜRLÜ) ROZETLERİ 🔴
+const historicalBadges = {
+  w1: { "MEHMET ALİ KARA": ["points"], "DOĞAÇ ALKAN": ["score"] },
+  w2: { "EYÜP KARACAOĞLU": ["points"] },
+  w3: { "SEDAT SEDAT": ["points", "score"] },
+  w4: { "İSMAİL EKER": ["points"], "ŞENOL CAN ÇAKICI": ["score"] }
+};
 
 export default function MasterPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -24,16 +29,20 @@ export default function MasterPuanDurumuPage() {
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
         dbPlayers.forEach(p => {
-          playersList[p.id] = p.name;
+          playersList[p.id] = p.name || p.full_name; 
         });
       }
 
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
+      let w5ExactScores: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      // Dinamik listedeki id'lere göre sıfırla
-      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(playersList).forEach(id => { 
+          w5Base[id] = 0; 
+          w5Live[id] = 0; 
+          w5ExactScores[id] = 0; 
+      });
 
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dbHistorical) {
@@ -51,22 +60,21 @@ export default function MasterPuanDurumuPage() {
         });
       }
 
+      const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
-        // Ekmel Standard: Deduplication Filter
-        const uniqueMatches: Record<number, any> = {};
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
-            // MASTER ligi hem DFO hem TFF tüm maçlardan puan alır.
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
             let points = 1;
             if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
 
             winnerIds.forEach(wId => {
+              w5ExactScores[wId] += 1; 
               if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
               else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
                 w5Live[wId] += points;
@@ -79,7 +87,41 @@ export default function MasterPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 3. LİSTEYİ OLUŞTUR (0 Puanı olanlar da dahil!)
+      // 🔴 3. DİNAMİK ROZET MOTORU (SONSUZ DÖNGÜ KURALI) 🔴
+      let w5PointsLeaderId: string | null = null;
+      let w5ScoreLeaderId: string | null = null;
+      let showW5Badges = false;
+      let showW5BadgesOnTotal = false;
+
+      const match524 = uniqueMatches[524]; 
+      if (match524 && (match524.status === 'LIVE' || match524.status === 'FINISHED' || match524.status === 'WAITING_APPROVAL')) {
+          showW5Badges = true;
+
+          let maxPts = -1;
+          let ptLeaders: string[] = [];
+          Object.keys(playersList).forEach(id => {
+              const pts = (w5Base[id] || 0) + (w5Live[id] || 0);
+              if (pts > maxPts) { maxPts = pts; ptLeaders = [id]; }
+              else if (pts === maxPts) { ptLeaders.push(id); }
+          });
+          if (ptLeaders.length === 1) w5PointsLeaderId = ptLeaders[0];
+
+          let maxSc = -1;
+          let scLeaders: string[] = [];
+          Object.keys(playersList).forEach(id => {
+              const sc = w5ExactScores[id] || 0;
+              if (sc > maxSc) { maxSc = sc; scLeaders = [id]; }
+              else if (sc === maxSc) { scLeaders.push(id); }
+          });
+          if (scLeaders.length === 1 && maxSc > 0) w5ScoreLeaderId = scLeaders[0];
+
+          const match601 = uniqueMatches[601];
+          if (!match601 || match601.status === 'NOT_STARTED') {
+              showW5BadgesOnTotal = true;
+          }
+      }
+
+      // 4. LİSTEYİ OLUŞTUR VE ETİKETLERİ DAĞIT
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
@@ -95,9 +137,7 @@ export default function MasterPuanDurumuPage() {
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      // SIFIR PUANI OLANLARI GİZLEME KURALI KALDIRILDI! 
-      // Artık listedeki tüm "Asil 54" kişi koşulsuz şartsız görünecek.
-      const visibleList = baseList;
+      const visibleList = baseList; 
 
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
@@ -115,8 +155,27 @@ export default function MasterPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
+        // 🔴 APOLET (ROZET) KONTROLÜ
+        let badges: string[] = [];
+        const cleanName = player.name.replace(/🏆/g, '').trim().toUpperCase();
+
+        if (activeTab === 'w1' && historicalBadges.w1[cleanName as keyof typeof historicalBadges.w1]) badges = historicalBadges.w1[cleanName as keyof typeof historicalBadges.w1];
+        if (activeTab === 'w2' && historicalBadges.w2[cleanName as keyof typeof historicalBadges.w2]) badges = historicalBadges.w2[cleanName as keyof typeof historicalBadges.w2];
+        if (activeTab === 'w3' && historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3]) badges = historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3];
+        if (activeTab === 'w4' && historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4]) badges = historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4];
+
+        if (activeTab === 'w5' && showW5Badges) {
+            if (player.id === w5PointsLeaderId) badges.push('points');
+            if (player.id === w5ScoreLeaderId) badges.push('score');
+        }
+
+        if (activeTab === 'total' && showW5BadgesOnTotal) {
+            if (player.id === w5PointsLeaderId) badges.push('points');
+            if (player.id === w5ScoreLeaderId) badges.push('score');
+        }
+
         let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
-        return { ...player, currentRank, trend, trendDiff, displayScore };
+        return { ...player, currentRank, trend, trendDiff, displayScore, badges };
       });
       
       setTableRows(finalRows);
@@ -189,7 +248,7 @@ export default function MasterPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium">
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
                         <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
@@ -206,28 +265,43 @@ export default function MasterPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-1 md:px-2 py-3">
-                        {/* MASTER İSİMLER DE BEMBEYAZ YAPILDI */}
-                        <div className="flex items-center gap-1 md:gap-2 text-white font-semibold whitespace-nowrap">
+                      
+                      {/* 🔴 SATIR İÇİ YAN YANA GÖSTERİM MERKEZİ 🔴 */}
+                      <td className="px-1 md:px-2 py-3 align-top pt-3.5">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
                             const cleanName = row.name.replace(/🏆/g, '').trim();
                             return (
                               <>
-                                <span>{cleanName}</span>
+                                <span className="whitespace-nowrap">{cleanName}</span>
                                 {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
                               </>
                             );
                           })()}
+                          
                           {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
-                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
+                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse whitespace-nowrap">
                               +{row.liveExtra} CANLI
+                            </span>
+                          )}
+                          
+                          {/* 🔴 RESMİ ASKERİ APOLETLER (YANYANA VE AYNI SATIRDA) 🔴 */}
+                          {row.badges && row.badges.includes('points') && (
+                            <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
+                              +3 PUAN HAFTANIN LİDERİ
+                            </span>
+                          )}
+                          
+                          {row.badges && row.badges.includes('score') && (
+                            <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
+                              +3 PUAN SKOR LİDERİ
                             </span>
                           )}
                         </div>
                       </td>
-                      {/* MASTER PUANLARI SARI (text-amber-500) BIRAKILDI */}
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-amber-500">
+
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-amber-500 align-top pt-3.5">
                         {row.displayScore}
                       </td>
                     </tr>

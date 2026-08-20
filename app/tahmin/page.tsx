@@ -35,7 +35,7 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "00000", name: "YUSUF KIZILTUĞ" }, "262754": { pass: "00000", name: "OSMAN ALİ AYDIN 🏆" },
   "262755": { pass: "00000", name: "DOĞAÇ ALKAN" }, "262756": { pass: "00000", name: "EYÜP KARACAOĞLU" },
   "262813": { pass: "00000", name: "KEMAL ERSOY" }, "262758": { pass: "00000", name: "MELİH PINAR" },
-  "262762": { pass: "00000", name: "İLHAN DANIŞ" }, "262763": { pass: "00000", name: "MUSTAFA ELMAS" },
+  "262762": { pass: "00000", name: "İLHAN DANIŞ" }, "262763": { pass: "00000", name: "MUST ELMAS" },
   "262770": { pass: "00000", name: "OZKAYA MAZAKALI BAYRAM" }, "262771": { pass: "00000", name: "ULAŞ ADIGÜZEL" },
   "262772": { pass: "00000", name: "CEMAL SİVRİKAYA 🏆" }, "262760": { pass: "00000", name: "UĞUR NES" },
   "262774": { pass: "00000", name: "ŞENOL CAN ÇAKICI" }, "262776": { pass: "00000", name: "CUMA OKUR" },
@@ -132,9 +132,8 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-
-
-
+  "BOCA JUNIORS":  "https://images.fotmob.com/image_resources/logo/teamlogo/10077.png",
+  "RIVER PLATE":  "https://images.fotmob.com/image_resources/logo/teamlogo/10078.png",
 
   // 🔴 İSPANYA (LA LIGA VE HAVUZ) TAKIMLARI
   "REAL MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Madrid_CF.svg",
@@ -177,7 +176,6 @@ const localTeamLogos: Record<string, string> = {
 
   // 🔴 İNGİLTERE PREMIER LİG TAKIMLARI
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
-  
   "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
   "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
   "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
@@ -190,7 +188,6 @@ const localTeamLogos: Record<string, string> = {
   "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
   "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
   "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
-  
   "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
   "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
   "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
@@ -224,10 +221,8 @@ const localTeamLogos: Record<string, string> = {
   "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
 
   // 🔴 DİĞER AVRUPA TAKIMLARI
-  
   "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
   "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
-  
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
   "LE HAVRE": "https://en.wikipedia.org/wiki/Special:FilePath/Le_Havre_AC_logo.svg",
   "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
@@ -243,22 +238,11 @@ const localTeamLogos: Record<string, string> = {
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
-  
   "OLYMPIC LYON": "/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
   "LYON": "/logos/lyon.png"
 };
-
-
-
-
-
-
-
-
- 
-
 
 const normalizeTurkish = (text: string) => {
   if (!text) return '';
@@ -311,19 +295,28 @@ const getSystemCurrentTime = () => {
 
 const checkGateStatus = () => {
     const now = getSystemCurrentTime();
-    const currentDay = now.getDay(); // 0 Pazar, 1 Pzt, 2 Salı, 3 Çarş, 4 Perş, 5 Cuma, 6 Cmt
+    const currentDay = now.getDay(); 
     const currentHour = now.getHours();
 
-    // Cuma (5) saat 21:00'dan sonra AÇIK başlar
     if (currentDay === 5 && currentHour >= 21) return 'OPEN';
-    if (currentDay === 6) return 'OPEN'; // Cumartesi tam gün açık
-    if (currentDay === 0) return 'OPEN'; // Pazar tam gün açık
-    // Pazartesi (1) saat 21:00'a kadar açık. 21:00 olduğunda KAPANIR.
+    if (currentDay === 6) return 'OPEN'; 
+    if (currentDay === 0) return 'OPEN'; 
     if (currentDay === 1 && currentHour < 21) return 'OPEN';
 
-    // Salı, Çarş, Perşembe ve Cuma 21:00'a kadar KAPALI
-    // Pazartesi 21:00'dan sonra KAPALI
     return 'CLOSED';
+};
+
+// 🔴 AKİNEL: MÜHÜR KIRILMA MOTORU (Pazartesi 21:01 - Cuma 20:59 arası)
+const isSealBroken = () => {
+    const now = getSystemCurrentTime();
+    const d = now.getDay();
+    const h = now.getHours();
+    const m = now.getMinutes();
+
+    if (d === 1 && (h > 21 || (h === 21 && m >= 1))) return true;
+    if (d === 2 || d === 3 || d === 4) return true;
+    if (d === 5 && h < 21) return true;
+    return false;
 };
 
 export default function TahminlerPortal() {
@@ -348,7 +341,6 @@ export default function TahminlerPortal() {
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
-  // 1. Veritabanından Oyuncuları Çek ve TEST_ACCOUNTS ile birleştir
   useEffect(() => {
      const fetchDbPlayers = async () => {
         const { data } = await supabase.from('players').select('*');
@@ -363,7 +355,6 @@ export default function TahminlerPortal() {
      fetchDbPlayers();
   }, []);
 
-  // 2. Bültenleri Getir ve En Son Haftayı Bul
   useEffect(() => {
     const fetchInitialData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
@@ -387,10 +378,8 @@ export default function TahminlerPortal() {
          Object.keys(newMap).forEach(week => { newMap[Number(week)].sort((a,b) => a.id - b.id); });
          setBulletinMap(newMap);
          
-         // En son yayınlanan bülteni aktif hafta ilan et
          if (maxWeek > 0) {
              setActiveBulletinWeek(maxWeek);
-             setSelectedTahminWeek(maxWeek); // Dropdownlar için default
          }
       }
     };
@@ -400,10 +389,10 @@ export default function TahminlerPortal() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     
-    // 🚀 SAATLİ BOMBA KONTROLÜ (Gişe Açık mı?)
     const gateStatus = checkGateStatus();
     if (gateStatus === 'CLOSED' && username.trim() !== 'mankoman') {
-        setLoginError(`Süre Dolmuştur! ${activeBulletinWeek}. Hafta Görev Kağıdı Cuma 21:00'da aktifleşir, Pazartesi 21:00'da kapanır. Tahminleri görmek için Resmi Deklarasyon'a gidiniz.`);
+        const prevWk = activeBulletinWeek > 1 ? activeBulletinWeek - 1 : activeBulletinWeek;
+        setLoginError(`${prevWk}. hafta için tahmin yapma süresi bitmiştir. ${activeBulletinWeek}. hafta programı için lütfen bu Cuma saat 21:00'ı bekleyiniz. Program müteakip ${activeBulletinWeek}. hafta Cuma 21:00'da aktifleşir ve Pazartesi 21:00'da kapanır. Tahminleri görmek için Resmi Deklarasyon sayfasına gidiniz.`);
         return;
     }
 
@@ -508,7 +497,7 @@ export default function TahminlerPortal() {
       setLobbyMissing(allPlayerCount - submitted);
     };
     fetchLobbyStats();
-  }, [activeBulletinWeek, view]);
+  }, [activeBulletinWeek, view, mergedAccounts]);
 
   const finalPlayersList = useMemo(() => {
     let allIds = Object.keys(mergedAccounts).filter(id => id !== 'mankoman');
@@ -548,19 +537,24 @@ export default function TahminlerPortal() {
 
   const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
 
-  // 🚀 RESMİ DEKLARASYON FİLTRESİ 🚀
-  // Pazartesi 21:00'dan önce Aktif Haftanın deklarasyonu gizlenir.
-  const filterAvailableWeeksForDeclaration = () => {
-      const status = checkGateStatus();
-      if (status === 'CLOSED') {
-          return availableWeeks; // Pazartesi 21:00'dan sonra kapı kapandığı için her şey açılır.
-      } else {
-          // Kapı açıksa (Cuma-Pazartesi arası), aktif haftayı gizle.
-          return availableWeeks.filter(w => w !== activeBulletinWeek);
-      }
-  };
+  // 🔴 AKİNEL: MÜHÜR KIRILMA VE İFŞA FİLTRESİ 🔴
+  const unlockedWeeks = useMemo(() => {
+      return availableWeeks.filter(w => {
+          if (w < activeBulletinWeek) return true; // Geçmiş haftalar her zaman açık
+          if (w === activeBulletinWeek) {
+              // Aktif hafta sadece Pazartesi 21:01 kuralı geçerliyse ve süreci yaşanmışsa gösterilir
+              return checkGateStatus() === 'CLOSED' && isSealBroken() && lobbySubmitted > 0;
+          }
+          return false;
+      });
+  }, [availableWeeks, activeBulletinWeek, lobbySubmitted]);
 
-  const declarationWeeks = filterAvailableWeeksForDeclaration();
+  useEffect(() => {
+      // Bileşen yüklendiğinde veya kilitler açıldığında, seçili haftayı güvenli ve en son açılmış haftaya eşitle.
+      if (unlockedWeeks.length > 0 && (!selectedTahminWeek || !unlockedWeeks.includes(selectedTahminWeek))) {
+          setSelectedTahminWeek(Math.max(...unlockedWeeks));
+      }
+  }, [unlockedWeeks, selectedTahminWeek]);
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -583,8 +577,10 @@ export default function TahminlerPortal() {
             <div className="text-center mb-12">
                <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1>
                <p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p>
-               {activeBulletinWeek > 0 && (
-                   <div className="mt-4 flex items-center justify-center gap-4">
+               
+               {/* 🔴 AKİNEL: GİZLİ İSTİHBARAT BÖLÜMÜ (SADECE ADMİN YAZINCA GÖZÜKÜR) 🔴 */}
+               {activeBulletinWeek > 0 && username.trim().toLowerCase() === 'mankoman' && (
+                   <div className="mt-4 flex items-center justify-center gap-4 animate-fade-in">
                        <span className="bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
                            GİREN: {lobbySubmitted}
                        </span>
@@ -649,14 +645,18 @@ export default function TahminlerPortal() {
               <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors"><span>⬅</span> Lobiye Dön</button>
               <div className="text-center"><h2 className="text-2xl md:text-3xl font-black text-emerald-500 tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] uppercase flex items-center justify-center gap-3"><span className="text-3xl md:text-4xl">⚡</span> TAHMİNMATİK</h2></div>
               <div>
-                  <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm">
-                      {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option> ))}
-                  </select>
+                  {unlockedWeeks.length > 0 ? (
+                      <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm">
+                          {unlockedWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option> ))}
+                      </select>
+                  ) : (
+                      <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Açık Hafta Yok</div>
+                  )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
+              {bulletinMap[selectedTahminWeek] && unlockedWeeks.includes(selectedTahminWeek) ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
                 const theme = getEliteTheme(match.category, hName, aName);
@@ -699,7 +699,7 @@ export default function TahminlerPortal() {
                     </div>
                   </div>
                 );
-              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedTahminWeek}. HAFTA TAHMİNLERİ BULUNAMADI</h2></div> )}
+              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{unlockedWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
             </div>
           </div>
         )}
@@ -717,10 +717,9 @@ export default function TahminlerPortal() {
                   {isSearchFocused && ( <div className="absolute top-full left-0 w-full bg-slate-900 border border-slate-700 mt-1 rounded-lg shadow-2xl z-[100] max-h-48 overflow-y-auto custom-scrollbar"> {finalPlayersList.map(id => ( <div key={`drop-${id}`} className="px-4 py-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 border-b border-slate-800/50" onClick={() => { setSearchTerm(mergedAccounts[id].name); setIsSearchFocused(false); }}>{mergedAccounts[id].name}</div> ))} </div> )}
                 </div>
                 
-                {/* 🚀 KİLİTLİ HAFTA DROPDOWN KONTROLÜ 🚀 */}
-                {declarationWeeks.length > 0 ? (
+                {unlockedWeeks.length > 0 ? (
                     <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md">
-                        {declarationWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}
+                        {unlockedWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}
                     </select>
                 ) : (
                     <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Deklare Yok</div>
@@ -728,7 +727,7 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {bulletinMap[selectedTahminWeek] && declarationWeeks.includes(selectedTahminWeek) ? (
+            {bulletinMap[selectedTahminWeek] && unlockedWeeks.includes(selectedTahminWeek) ? (
               <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
                 <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -773,7 +772,7 @@ export default function TahminlerPortal() {
                <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
                   <span className="text-5xl mb-4 block opacity-50">⏳</span>
                   <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
-                     {declarationWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
+                     {unlockedWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
                   </h2>
                   <p className="text-slate-500 text-sm mt-2">Pazartesi saat 21:00'dan sonra listeler mühürlenip herkese açılır.</p>
                </div> 

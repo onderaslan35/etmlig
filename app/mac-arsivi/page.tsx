@@ -170,6 +170,57 @@ const localTeamLogos: Record<string, string> = {
   "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
   "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
 
+
+  "BOCA JUNIORS":  "https://images.fotmob.com/image_resources/logo/teamlogo/10077.png",
+  "RIVER PLATE":  "https://images.fotmob.com/image_resources/logo/teamlogo/10078.png",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 🔴 DİĞER AVRUPA TAKIMLARI
   
   "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
