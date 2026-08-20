@@ -3,6 +3,54 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 ANA YARIŞMACI LİSTESİ (SABİT BETON KADRO) 🔴
+const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
+  "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
+  "262701": { pass: "00000", name: "MUHAMMET OKUMUŞ" }, "262702": { pass: "00000", name: "MURAT KARA" },
+  "262703": { pass: "00000", name: "CEMALETTİN BELLİ" }, "262704": { pass: "00000", name: "YAPAY ZEKA" },
+  "262705": { pass: "00000", name: "AHMET BİRCAN 🏆" }, "262706": { pass: "00000", name: "GAZİ AYAN 🏆🏆" },
+  "262707": { pass: "00000", name: "HAKAN AYAN" }, "262708": { pass: "00000", name: "BAYRAM YILMAZ" },
+  "262709": { pass: "00000", name: "SALİH KARACAOĞLU" }, "262710": { pass: "00000", name: "MUZAFFER ERTUĞRUL" },
+  "262711": { pass: "00000", name: "RIDVAN DOGER" }, "262712": { pass: "00000", name: "MURAT AYDEMİR" },
+  "262713": { pass: "00000", name: "VAHİT KÜLCÜ" }, "262714": { pass: "00000", name: "İSMAİL EKER 🏆" },
+  "262715": { pass: "00000", name: "ŞEMSETTIN DÜGER" }, "262716": { pass: "00000", name: "BİROL DEMİREL" },
+  "262717": { pass: "00000", name: "MURAT ALİ" }, "262718": { pass: "00000", name: "BEKİR KARADAĞ" },
+  "262719": { pass: "00000", name: "UĞUR VARDAR" }, "262720": { pass: "00000", name: "HASAN ASLAN" },
+  "262721": { pass: "00000", name: "MUSTAFA GÜMÜŞÇÜ" }, "262722": { pass: "00000", name: "MUSTAFA ERKAN" },
+  "262723": { pass: "00000", name: "AYHAN LUŞOĞLU" }, "262724": { pass: "00000", name: "YÜCEL TOMAK" },
+  "262725": { pass: "00000", name: "İLYAS KAZDAL" }, "262726": { pass: "00000", name: "HUDAVER TOPARDIC" },
+  "262727": { pass: "00000", name: "YAHŞİ ERKAN🏆" }, "262728": { pass: "00000", name: "ÖNDER ASLAN" },
+  "262729": { pass: "00000", name: "HAKAN GÜN" }, "262730": { pass: "00000", name: "ÖNDER IŞIK" },
+  "262731": { pass: "00000", name: "FATİH AYAN" }, "262732": { pass: "00000", name: "R. İLHAN KARACA 🏆🏆" },
+  "262733": { pass: "00000", name: "MUHSİN ASİLKAN" }, "262734": { pass: "00000", name: "LEVENT YILDIRIM" },
+  "262735": { pass: "00000", name: "AYGÜN AKKEÇELİ" }, "262736": { pass: "00000", name: "MEHMET ALİ KARA" },
+  "262737": { pass: "00000", name: "ŞAHİN GEZGİNCİ" }, "262738": { pass: "00000", name: "MEVLÜT EVLER" },
+  "262739": { pass: "00000", name: "UĞUR GÜRBÜZ" }, "262740": { pass: "00000", name: "ABDULLAH DİK" },
+  "262741": { pass: "00000", name: "SABAHATTİN ÇAYLAK" }, "262742": { pass: "00000", name: "ZEKERiYYA TOPKAYYA" },
+  "262743": { pass: "00000", name: "MEHMET ALİ ŞAHİN" }, "262744": { pass: "00000", name: "İLYAS UYGUN" },
+  "262745": { pass: "00000", name: "OĞUZ YILDIRIMKAYA" }, "262746": { pass: "00000", name: "MEHMET BAYIR" },
+  "262747": { pass: "00000", name: "SAVAŞ ÇAĞLAYAN" }, "262748": { pass: "00000", name: "YASİN ŞAHİN" },
+  "262749": { pass: "00000", name: "B.VEYSELOĞLU EROL" }, "262750": { pass: "00000", name: "MAHMUT CBR" },
+  "262751": { pass: "00000", name: "HÜSEYİN ERBAŞ" }, "262810": { pass: "00000", name: "ADEM BULUT ERTÜRK" },
+  "262753": { pass: "00000", name: "YUSUF KIZILTUĞ" }, "262754": { pass: "00000", name: "OSMAN ALİ AYDIN 🏆" },
+  "262755": { pass: "00000", name: "DOĞAÇ ALKAN" }, "262756": { pass: "00000", name: "EYÜP KARACAOĞLU" },
+  "262813": { pass: "00000", name: "KEMAL ERSOY" }, "262758": { pass: "00000", name: "MELİH PINAR" },
+  "262762": { pass: "00000", name: "İLHAN DANIŞ" }, "262763": { pass: "00000", name: "MUSTAFA ELMAS" },
+  "262770": { pass: "00000", name: "OZKAYA MAZAKALI BAYRAM" }, "262771": { pass: "00000", name: "ULAŞ ADIGÜZEL" },
+  "262772": { pass: "00000", name: "CEMAL SİVRİKAYA 🏆" }, "262760": { pass: "00000", name: "UĞUR NES" },
+  "262774": { pass: "00000", name: "ŞENOL CAN ÇAKICI" }, "262776": { pass: "00000", name: "CUMA OKUR" },
+  "262777": { pass: "00000", name: "MİRAÇ TOPAL" }, "262778": { pass: "00000", name: "CENGİZ SAYAN" },
+  "262780": { pass: "00000", name: "YUSUF KILIÇ" }, "262781": { pass: "00000", name: "KADİR SOLMAZ" },
+  "262782": { pass: "00000", name: "YUSUF ERBAY" }, "262783": { pass: "00000", name: "YASİN AYAN" },
+  "262784": { pass: "00000", name: "MEHMET AVCI" }, "262785": { pass: "00000", name: "METE BÜYÜKGÖL 🏆" },
+  "262786": { pass: "00000", name: "SEDAT DİŞLİ" }, "262787": { pass: "00000", name: "MUSTAFA TUCİ" },
+  "262788": { pass: "00000", name: "HAKAN ÇİFTÇİ" }, "262789": { pass: "00000", name: "ALİ ABUKAN" },
+  "262790": { pass: "00000", name: "CUMALİ SÖKER" }, "351925": { pass: "00000", name: "ALİOS GÖZTEPE" },
+  "350909": { pass: "00000", name: "DİNÇER ÖZER" }, "262815": { pass: "00000", name: "MURAT KAYA" },
+  "262816": { pass: "00000", name: "SEDAT SEDAT" }, "262795": { pass: "00000", name: "SEFA İÇA" },
+  "262796": { pass: "00000", name: "D. SERGEN TAŞYÜREK" }, "262797": { pass: "00000", name: "ÖMER DOGER" }
+};
+
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -82,9 +130,8 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png" ,
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
 
-  // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -95,14 +142,13 @@ const localTeamLogos: Record<string, string> = {
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   
-  // YENİ EKLENEN LOGOLAR (HER İHTİMALE KARŞI TÜM LYON YAZILIŞLARI)
   "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLYMPIC LYON": "https://www.etmlig.com.tr/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "LYON": "/logos/lyon.png",
- 
+  
   "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
   "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
   "LILLE": "https://en.wikipedia.org/wiki/Special:FilePath/LOSC_Lille_logo.svg",
@@ -114,24 +160,6 @@ const localTeamLogos: Record<string, string> = {
   "HACKEN": "https://en.wikipedia.org/wiki/Special:FilePath/BK_H%C3%A4cken_logo.png"
 };
 
-const allPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
-};
-
-// 🚀 OTOMATİK ZAMAN MOTORU (TÜRKİYE SAATİ DESTEKLİ)
 const getActiveWeekByDate = () => {
   const nowUTC = new Date();
   const nowTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
@@ -144,10 +172,22 @@ const getActiveWeekByDate = () => {
   return 5 + Math.floor(diffDays / 7);
 };
 
-// 🚀 BENZERSİZ ID OLUŞTURUCU (Puan kartının geçen haftayı okumasını engeller)
 const getUniqueMatchId = (week: number, index: number) => {
     if (week === 4) return index; 
     return (week * 100) + index;
+};
+
+const getLocalLogoUrl = (teamName: string) => {
+  if (!teamName || teamName === '') return '/logos/default.png';
+  const slug = teamName
+    .toLowerCase()
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+    
+  return `/logos/${slug}.png`;
 };
 
 export default function LiveMatchCard() {
@@ -159,12 +199,30 @@ export default function LiveMatchCard() {
   
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
+  
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
+  const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
+  const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
+
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
+  const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
+
   useEffect(() => {
-    // 🔴 DÜZELTME: Epoch mantığı sabittir, +3 saat eklenirse sistem saati şaşırıp erken sayar. 
-    // Tam yerel saat senkronizasyonu için direkt epoch time çekildi.
+     const fetchDbPlayers = async () => {
+        const { data } = await supabase.from('players').select('*');
+        if (data) {
+           const newAccounts = { ...TEST_ACCOUNTS };
+           data.forEach(p => {
+               newAccounts[String(p.user_id)] = { pass: p.password, name: p.full_name };
+           });
+           setMergedAccounts(newAccounts);
+        }
+     };
+     fetchDbPlayers();
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => {
         setNow(new Date().getTime());
     }, 1000);
@@ -172,127 +230,91 @@ export default function LiveMatchCard() {
   }, []);
 
   const isTffMatchCheck = (category: string) => {
+    if(!category) return false;
     const uppercaseCat = category.toUpperCase();
-    return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
+    return (
+      uppercaseCat.includes("TÜRKİYE") ||
+      uppercaseCat.includes("TFF") ||
+      uppercaseCat.includes("AMATÖR") ||
+      uppercaseCat.includes("PTT") ||
+      uppercaseCat.includes("2.LİG") ||
+      uppercaseCat.includes("3.LİG")
+    );
   };
 
-  const getEliteTheme = (category: string) => {
-    const upCat = category.toUpperCase();
-    if (upCat.includes("ŞAMPİYONLAR LİGİ")) {
-      return {
-        bgImg: "url('/cl-bg.png')",
-        containerBorder: "border-indigo-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]",
-        containerBg: "bg-[#050b14]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-indigo-300",
-        badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-        scoreBorder: "border-white/30",
-        colonText: "text-white/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-      };
-    // 🔴 DÜZELTME: "A.L." kısaltması eklendi! Artık Avrupa Ligi maçları turuncu (amber) yanacak!
-    } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
-      return {
-        bgImg: "url('/el-bg.png')", 
-        containerBorder: "border-orange-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]",
-        containerBg: "bg-[#140805]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-orange-400",
-        badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]",
-        scoreBorder: "border-orange-600/40",
-        colonText: "text-orange-400/50",
-        tagText: "text-orange-300",
-        tagBg: "bg-orange-950/90",
-        tagBorder: "border-orange-400/80",
-        bottomBar: "bg-[#140805]/90 border-orange-900/30"
-      };
-    } else if (upCat.includes("KONFERANS LİGİ")) {
-      return {
-        bgImg: "url('/uecl-bg.png')",
-        containerBorder: "border-emerald-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]",
-        containerBg: "bg-[#05140b]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-emerald-400",
-        badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
-        scoreBorder: "border-emerald-600/40",
-        colonText: "text-emerald-400/50",
-        tagText: "text-emerald-300",
-        tagBg: "bg-emerald-950/90",
-        tagBorder: "border-emerald-400/80",
-        bottomBar: "bg-[#05140b]/90 border-emerald-900/30"
-      };
-    } else if (isTffMatchCheck(category)) {
-      return {
-        bgImg: "url('/tff-bg.png')",
-        containerBorder: "border-red-500/50",
-        containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]",
-        containerBg: "bg-[#140505]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-red-400",
-        badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
-        scoreBorder: "border-red-600/40",
-        colonText: "text-red-400/50",
-        tagText: "text-red-400",
-        tagBg: "bg-red-950/90",
-        tagBorder: "border-red-500/80",
-        bottomBar: "bg-[#140505]/90 border-red-900/30"
-      };
-    }
-    return {
-        bgImg: null,
-        containerBorder: "border-blue-500/30",
-        containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]",
-        containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]",
-        badgeBg: "bg-transparent backdrop-blur-sm",
-        badgeText: "text-cyan-400",
-        badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]",
-        catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
-        scoreBorder: "border-blue-600/40",
-        colonText: "text-blue-400/50",
-        tagText: "text-cyan-300",
-        tagBg: "bg-cyan-950/90",
-        tagBorder: "border-cyan-400/80",
-        bottomBar: "bg-[#050b14]/90 border-blue-900/30"
-    };
+  const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
+    const upCat = category ? category.toUpperCase() : '';
+    const homeLogoUrl = localTeamLogos[homeTeam] || getLocalLogoUrl(homeTeam);
+    const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
+
+    let leagueLogoUrl = null;
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png";
+    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/73.png";
+    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/10216.png";
+    else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
+    else if (upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("1. LİG") || upCat.includes("1.LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/165.png";
+    else if (upCat.includes("TÜRKİYE KUPASI")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/tr/e/ee/Ziraat_T%C3%BCrkiye_Kupasi_logo.png";
+    else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
+    else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
+    else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png";
+
+    let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
+
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
+    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
+    else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
+    else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    
+    return theme;
   };
 
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
-      // 🌟 DİKKAT: Artık bülteni "matches_bulletin" tablosundan okuyoruz!
       const { data: dbBulletinMatches } = await supabase
         .from('matches_bulletin')
         .select('*')
         .eq('week_num', activeWeek)
         .order('match_index', { ascending: true });
 
-      // Skorları ve statüleri ise "live_matches" tablosundan alacağız
       const { data: dbLiveMatches } = await supabase
         .from('live_matches')
         .select('*');
 
-      const { data: dbPredictions } = await supabase
-        .from('player_predictions')
-        .select('*')
-        .eq('week_num', activeWeek);
+      // 🔴 İŞTE MUCİZE BURADA! 1000'ER 1000'ER ÇEKME MOTORU (LİMİT YOK) 🔴
+      let allPredictions: any[] = [];
+      let from = 0;
+      let step = 999;
+      let keepFetching = true;
 
-      // 🚀 UYARI: BURADA DİZİ (ARRAY) KAYMASI ÇÖZÜLDÜ (match_index - 1 kullanıldı)
-      const predDict: Record<string, string[]> = {};
-      if (dbPredictions) {
-        dbPredictions.forEach(pred => {
-          if (!predDict[pred.user_id]) {
-            predDict[pred.user_id] = Array(24).fill('-');
+      while(keepFetching) {
+          const { data } = await supabase
+              .from('player_predictions')
+              .select('*')
+              .eq('week_num', activeWeek)
+              .range(from, from + step);
+          
+          if (data && data.length > 0) {
+              allPredictions = [...allPredictions, ...data];
+              if (data.length <= step) keepFetching = false;
+              else from += step + 1;
+          } else {
+              keepFetching = false;
           }
-          predDict[pred.user_id][pred.match_index - 1] = pred.predicted_score;
+      }
+
+      const predDict: Record<string, string[]> = {};
+      if (allPredictions.length > 0) {
+        allPredictions.forEach(pred => {
+          const rowUserId = String(pred.user_id);
+          
+          // 🔴 EKMEL ZIRHI 3: ADMİNİ (mankoman) RADARDAN VE LİSTEDEN GİZLE!
+          if (rowUserId === 'mankoman') return;
+          
+          if (!predDict[rowUserId]) {
+            predDict[rowUserId] = Array(24).fill('-');
+          }
+          predDict[rowUserId][pred.match_index - 1] = pred.predicted_score;
         });
       }
       setPredictionsData(predDict);
@@ -329,7 +351,6 @@ export default function LiveMatchCard() {
         let hasLiveScores = false;
 
         todaysMatches.forEach(match => {
-          // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
           const uniqueId = getUniqueMatchId(activeWeek, match.id);
           const dbMatch = liveMap[uniqueId];
           
@@ -338,7 +359,6 @@ export default function LiveMatchCard() {
             const isTff = isTffMatchCheck(match.category);
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
-            // 🚀 DÜZELTİLDİ: Artık match.id - 1 indeksine bakarak doğru oyuncuları buluyor
             const winnerIds = Object.keys(predDict).filter(id => predDict[id][match.id - 1] === targetScore);
             
             let points = 1;
@@ -377,6 +397,12 @@ export default function LiveMatchCard() {
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
   };
+  const togglePossible = (matchId: number) => {
+    setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
+  const toggleEliminated = (matchId: number) => {
+    setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
 
   const toggleMatchExpansion = (matchId: number) => {
     setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -401,14 +427,12 @@ export default function LiveMatchCard() {
   }
 
   const activeMatches = todaysMatchesList.filter(match => {
-     // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
      const uniqueId = getUniqueMatchId(activeWeek, match.id);
      const dbMatch = liveMatchesData[uniqueId] || {};
      return dbMatch.status !== 'FINISHED';
   });
 
   const finishedMatches = todaysMatchesList.filter(match => {
-     // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
      const uniqueId = getUniqueMatchId(activeWeek, match.id);
      const dbMatch = liveMatchesData[uniqueId] || {};
      return dbMatch.status === 'FINISHED';
@@ -418,13 +442,11 @@ export default function LiveMatchCard() {
       const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
       const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
 
-      const homeLogoUrl = localTeamLogos[homeTeamUpper] || "/logos/default.png";
-      const awayLogoUrl = localTeamLogos[awayTeamUpper] || "/logos/default.png";
       const isWinnersOpen = openWinnersMap[match.id] !== false;
-      
+      const isPossibleOpen = openPossibleMap[match.id] || false;
+      const isEliminatedOpen = openEliminatedMap[match.id] || false;
       const isExpanded = expandedMatches[match.id] !== undefined ? expandedMatches[match.id] : isFinishedGroup;
 
-      // 🚀 BURASI HAYATİ! 1 DEĞİL, 501'E BAKACAK!
       const uniqueId = getUniqueMatchId(activeWeek, match.id);
       const dbMatch = liveMatchesData[uniqueId] || {};
       
@@ -450,20 +472,45 @@ export default function LiveMatchCard() {
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
       const isTffMatch = isTffMatchCheck(match.category);
-      const theme = getEliteTheme(match.category);
+      const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
       const isFinished = matchStatus === 'FINISHED'; 
 
-      let currentWinners: string[] = [];
+      let exactWinners: {name: string, score: string}[] = [];
+      let possibleWinners: {name: string, score: string}[] = [];
+      let eliminatedPlayers: {name: string, score: string}[] = [];
+
       if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
-        const targetScore = `${homeScore}-${awayScore}`;
-        currentWinners = Object.keys(predictionsData)
-          // 🚀 DÜZELTME: match.id - 1 KULLANILDI, KAYMA ENGELLENDİ
-          .filter(id => predictionsData[id] && predictionsData[id][match.id - 1] === targetScore)
-          .map(id => allPlayersList[id])
-          .filter(name => name)
-          .sort((a, b) => a.localeCompare(b, 'tr'));
+        const currentH = parseInt(homeScore);
+        const currentA = parseInt(awayScore);
+
+        Object.keys(predictionsData).forEach(id => {
+          const preds = predictionsData[id];
+          if (!preds) return;
+          const predStr = preds[match.id - 1];
+          if (!predStr || predStr === '-' || predStr === 'PAS') return;
+
+          const name = mergedAccounts[id]?.name;
+          if (!name) return;
+
+          const [pHStr, pAStr] = predStr.split('-');
+          const pH = parseInt(pHStr);
+          const pA = parseInt(pAStr);
+
+          if (pH === currentH && pA === currentA) {
+             exactWinners.push({ name, score: predStr });
+          } else if (pH >= currentH && pA >= currentA && !isFinished && matchStatus !== 'WAITING_APPROVAL') {
+             possibleWinners.push({ name, score: predStr });
+          } else {
+             eliminatedPlayers.push({ name, score: predStr });
+          }
+        });
+
+        exactWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        possibleWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        eliminatedPlayers.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
       }
-      const winnersCount = currentWinners.length;
+      
+      const winnersCount = exactWinners.length;
 
       let displayPoints = 1;
       if(winnersCount === 1) displayPoints = 12;
@@ -512,7 +559,7 @@ export default function LiveMatchCard() {
             >
               <div className="flex-1 flex items-center gap-2 justify-end text-right">
                 <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{homeTeamUpper}</span>
-                <img src={homeLogoUrl} alt={homeTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
               </div>
               
               <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
@@ -528,7 +575,7 @@ export default function LiveMatchCard() {
               </div>
               
               <div className="flex-1 flex items-center gap-2 justify-start text-left">
-                <img src={awayLogoUrl} alt={awayTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{awayTeamUpper}</span>
               </div>
               
@@ -560,12 +607,19 @@ export default function LiveMatchCard() {
                 <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                      <img src={homeLogoUrl} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                      <img src={theme.homeLogo} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
                     <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{homeTeamUpper}</span>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30">
+                  <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30 relative">
+                    
+                    {theme.leagueLogo && (
+                      <div className="w-10 h-10 sm:w-14 sm:h-14 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform duration-500 z-40">
+                        <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+
                     {matchStatus === 'NOT_STARTED' && (
                       <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                         <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
@@ -605,7 +659,7 @@ export default function LiveMatchCard() {
 
                   <div className="flex flex-col items-center justify-center flex-1 gap-3">
                     <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                      <img src={awayLogoUrl} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                      <img src={theme.awayLogo} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
                     <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{awayTeamUpper}</span>
                   </div>
@@ -616,11 +670,15 @@ export default function LiveMatchCard() {
                     <div className="text-left flex-1">
                       {matchStatus === 'NOT_STARTED' ? (
                         <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
-                      ) : winnersCount === 0 ? (
-                        <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Şu an skoru bilen yok</span>
+                      ) : exactWinners.length === 0 ? (
+                         !isFinished && possibleWinners.length > 0 ? (
+                           <span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>
+                         ) : (
+                           <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>
+                         )
                       ) : (
-                        <span className="text-[9px] sm:text-[10px] font-medium text-blue-200">
-                          <strong className="text-blue-400">{winnersCount} kişi</strong> tam isabetli
+                        <span className="text-[9px] sm:text-[10px] font-medium text-emerald-300">
+                          <strong className="text-emerald-400">{exactWinners.length} kişi</strong> tam isabetli
                         </span>
                       )}
                     </div>
@@ -630,27 +688,75 @@ export default function LiveMatchCard() {
                       </span>
                     </div>
                     <div className="text-right flex-1">
-                      {winnersCount > 0 && (
+                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && matchStatus !== 'NOT_STARTED' && (
                         <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">
-                          {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                          {isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}
                         </button>
                       )}
                     </div>
                   </div>
                 
-                  {isWinnersOpen && winnersCount > 0 && (
-                    <div className="w-full mt-2 p-2.5 bg-blue-950/20 rounded-lg border border-blue-800/40 text-xs animate-fadeIn shadow-inner">
-                      <div className="text-blue-300/80 font-semibold mb-2 border-b border-blue-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
-                        <span>BİLEN YARIŞMACILAR (A-Z)</span>
-                        <span className="text-blue-300 font-bold bg-blue-900/40 px-2 py-0.5 rounded border border-blue-700/50">Kişi Başı: {displayPoints} Puan</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 mt-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
-                        {currentWinners.map((winner: string, idx: number) => (
-                          <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium transition-all duration-500 bg-blue-900/60 text-white border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-                            {winner}
-                          </span>
-                        ))}
-                      </div>
+                  {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
+                    <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
+                      
+                      {/* 1. CEPHE: TAM İSABET */}
+                      {exactWinners.length > 0 && (
+                        <div className="w-full p-2.5 bg-emerald-950/30 rounded-lg border border-emerald-800/50 shadow-inner">
+                          <div className="text-emerald-400 font-bold mb-2 border-b border-emerald-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
+                            <span>{isFinished ? "🎯 TAM İSABET (MAÇ SONUCUNU BİLENLER)" : "🎯 ANLIK BİLENLER"}</span>
+                            <span className="bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-700/50 text-emerald-300">Kişi Başı: {displayPoints} Puan</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1">
+                            {exactWinners.map((winner, idx) => (
+                              <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-emerald-900/60 text-white border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex gap-1 items-center">
+                                <span>{winner.name}</span>
+                                <span className="text-amber-400 font-black tracking-widest">[{winner.score}]</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 2. CEPHE: ŞANSI DEVAM EDENLER */}
+                      {!isFinished && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
+                        <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
+                          <button onClick={() => togglePossible(match.id)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
+                            <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)</span>
+                            <span className="text-blue-400 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
+                          </button>
+                          {isPossibleOpen && (
+                            <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-blue-900/50">
+                              {possibleWinners.map((winner, idx) => (
+                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center">
+                                  <span>{winner.name}</span>
+                                  <span className="text-cyan-400 font-black tracking-widest">[{winner.score}]</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 3. CEPHE: ELENENLER */}
+                      {eliminatedPlayers.length > 0 && (
+                        <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
+                          <button onClick={() => toggleEliminated(match.id)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
+                            <span className="text-red-400 font-bold text-[9px] sm:text-[10px]">❌ TAM İSABET ŞANSI KALMAYANLAR ({eliminatedPlayers.length} KİŞİ)</span>
+                            <span className="text-red-400 text-[10px]">{isEliminatedOpen ? '▲' : '▼'}</span>
+                          </button>
+                          {isEliminatedOpen && (
+                            <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-red-900/30">
+                              {eliminatedPlayers.map((winner, idx) => (
+                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-red-950/40 text-slate-400 border-red-900/50 flex gap-1 items-center opacity-70">
+                                  <span className="line-through">{winner.name}</span>
+                                  <span className="text-red-500 font-black tracking-widest">[{winner.score}]</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                     </div>
                   )}
                 </div>

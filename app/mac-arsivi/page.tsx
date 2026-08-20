@@ -82,156 +82,9 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png" ,
 
-// 🔴 İSPANYA (LA LIGA VE HAVUZ) TAKIMLARI
-  "REAL MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Madrid_CF.svg",
-  "BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
-  "FC BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
-  "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/9906_large.png",
-  "ATLETICO MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Atletico_Madrid_2017_logo.svg",
-  "ATHLETIC BILBAO": "https://images.fotmob.com/image_resources/logo/teamlogo/8315_large.png",
-  "BILBAO": "https://en.wikipedia.org/wiki/Special:FilePath/Athletic_Club_Bilbao_logo.svg",
-  "REAL SOCIEDAD": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Sociedad_logo.svg",
-  "REAL BETIS": "https://images.fotmob.com/image_resources/logo/teamlogo/8603_large.png",
-  "BETIS": "https://en.wikipedia.org/wiki/Special:FilePath/Real_betis_logo.svg",
-  "SEVILLA": "https://en.wikipedia.org/wiki/Special:FilePath/Sevilla_FC_logo.svg",
-  "VILLARREAL": "https://images.fotmob.com/image_resources/logo/teamlogo/10205_large.png",
-  "VALENCIA": "https://images.fotmob.com/image_resources/logo/teamlogo/10267.png",
-  "GIRONA": "https://en.wikipedia.org/wiki/Special:FilePath/Girona_FC_logo_(2022).svg",
-  "CELTA VIGO": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Celta_de_Vigo_logo.svg",
-  "OSASUNA": "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png",
-  "RAYO VALLECANO": "https://en.wikipedia.org/wiki/Special:FilePath/Rayo_Vallecano_logo.svg",
-  "GETAFE": "https://images.fotmob.com/image_resources/logo/teamlogo/8305_large.png",
-  "MALLORCA": "https://en.wikipedia.org/wiki/Special:FilePath/RCD_Mallorca_logo.svg",
-  "RCD MALLORCA": "https://en.wikipedia.org/wiki/Special:FilePath/RCD_Mallorca_logo.svg",
-  "ALAVÉS": "https://images.fotmob.com/image_resources/logo/teamlogo/9866_large.png",
-  "ALAVES": "https://en.wikipedia.org/wiki/Special:FilePath/Deportivo_Alaves_logo.svg",
-  "DEPORTIVO ALAVES": "https://en.wikipedia.org/wiki/Special:FilePath/Deportivo_Alaves_logo.svg",
-  "ESPANYOL": "https://de.wikipedia.org/wiki/Special:FilePath/RCD_Espanyol_De_Barcelona.svg",
-  "RCD ESPANYOL": "https://de.wikipedia.org/wiki/Special:FilePath/RCD_Espanyol_De_Barcelona.svg",
-  "LAS PALMAS": "https://en.wikipedia.org/wiki/Special:FilePath/UD_Las_Palmas_logo.svg",
-  "LEGANES": "https://en.wikipedia.org/wiki/Special:FilePath/CD_Legan%C3%A9s_logo.svg",
-  "LEGANÉS": "https://en.wikipedia.org/wiki/Special:FilePath/CD_Legan%C3%A9s_logo.svg",
-  "REAL VALLADOLID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Valladolid_CF_logo.svg",
-  "VALLADOLID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Valladolid_CF_logo.svg",
-  "ELCHE": "https://en.wikipedia.org/wiki/Special:FilePath/Elche_CF_logo.svg",
-  "LEVANTE": "https://images.fotmob.com/image_resources/logo/teamlogo/8581_large.png",
-  "MALAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
-  "MÁLAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
-  "DEPORTIVO LA CORUÑA": "https://images.fotmob.com/image_resources/logo/teamlogo/9783_large.png",
-  "DEPORTIVO LA CORUNA": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Deportivo_La_Coru%C3%B1a_logo.svg",
-  "RACING SANTANDER": "https://images.fotmob.com/image_resources/logo/teamlogo/8696_large.png",
-
-  // 🔴 İNGİLTERE PREMIER LİG TAKIMLARI
-  "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
-  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
-  "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
-  "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
-  "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
-  "CHELSEA": "https://en.wikipedia.org/wiki/Special:FilePath/Chelsea_FC.svg",
-  "COVENTRY CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8669.png",
-  "CRYSTAL PALACE": "https://images.fotmob.com/image_resources/logo/teamlogo/9826.png",
-  "EVERTON": "https://en.wikipedia.org/wiki/Special:FilePath/Everton_FC_logo.svg",
-  "FULHAM": "https://en.wikipedia.org/wiki/Special:FilePath/Fulham_FC_(shield).svg",
-  "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
-  "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
-  "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
-  "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
-  "MANCHESTER CITY": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
-  "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
-  "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
-  "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
-  "SUNDERLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
-  "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
-
-  "INTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
-  "İNTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
-  "MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
-  "AC MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
-  "JUVENTUS": "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png",
-  "NAPOLI": "https://images.fotmob.com/image_resources/logo/teamlogo/9875.png",
-  "ROMA": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
-  "AS ROMA": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
-  "LAZIO": "https://images.fotmob.com/image_resources/logo/teamlogo/8543.png",
-  "ATALANTA": "https://images.fotmob.com/image_resources/logo/teamlogo/8524.png",
-  "FIORENTINA": "https://images.fotmob.com/image_resources/logo/teamlogo/8535.png",
-  "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
-  "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
-  "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
-  "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876.png",
-  "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
-  "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
-  "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
-  "CAGLIARI": "https://images.fotmob.com/image_resources/logo/teamlogo/8529.png",
-  "EMPOLI": "https://images.fotmob.com/image_resources/logo/teamlogo/8534.png",
-  "PARMA": "https://images.fotmob.com/image_resources/logo/teamlogo/10167.png",
-  "COMO": "https://images.fotmob.com/image_resources/logo/teamlogo/8530.png",
-  "VENEZIA": "https://images.fotmob.com/image_resources/logo/teamlogo/7881.png",
-  "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
-  "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
-
-
-  "BOCA JUNIORS":  "https://images.fotmob.com/image_resources/logo/teamlogo/10077.png",
-  "RIVER PLATE":  "https://images.fotmob.com/image_resources/logo/teamlogo/10078.png",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // 🔴 DİĞER AVRUPA TAKIMLARI
-  
-  "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
-  "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
-  
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
-  "LE HAVRE": "https://en.wikipedia.org/wiki/Special:FilePath/Le_Havre_AC_logo.svg",
-  "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
-  "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
-
-  // 🔴 YEREL LOGOLAR (public/logos/)
+  // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -240,13 +93,30 @@ const localTeamLogos: Record<string, string> = {
   "HAMMARBY": "/logos/hammarby.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   
-  "OLYMPIC LYON": "/logos/lyon.png",
+  "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "OLYMPIC LYON": "https://www.etmlig.com.tr/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
-  "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
-  "LYON": "/logos/lyon.png"
+  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
+  "LYON": "/logos/lyon.png",
+  
+  "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
+  "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
+  "LILLE": "https://en.wikipedia.org/wiki/Special:FilePath/LOSC_Lille_logo.svg",
+  "JUVENTUS": "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png",
+  "SLAVIA PRAG": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Slavia_Praha_logo.svg",
+  "DINAMO ZAGREP": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
+  "LUGANO": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Lugano_logo.svg",
+  "LENS": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Lens_logo.svg",
+  "FC HEIDENHEIM": "https://en.wikipedia.org/wiki/Special:FilePath/1._FC_Heidenheim_1846.svg",
+  "HACKEN": "https://en.wikipedia.org/wiki/Special:FilePath/BK_H%C3%A4cken_logo.png"
+  
+
 };
+
+
 
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
@@ -427,7 +297,7 @@ const week4Matches = [
   { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", score: "- : -" }
 ];
 
-// 🔴 YENİ EKLENEN: AKILLI YEREL LOGO BULUCU
+// 🔴 AKILLI YEREL LOGO BULUCU
 const getLocalLogoUrl = (teamName: string) => {
   if (!teamName || teamName === '') return '/logos/default.png';
   const slug = teamName
@@ -483,7 +353,6 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
-        // 🔴 1000 SATIR LIMITI KIRILDI (.limit(5000) eklendi)
         const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', selectedWeek).limit(5000);
         if (pData) {
            const pMap: Record<string, string[]> = {};
@@ -502,7 +371,7 @@ export default function MacArsiviPage() {
     fetchFromDB(); 
     const interval = setInterval(fetchFromDB, 5000); 
     return () => clearInterval(interval);
-  }, [selectedWeek]); // 🔴 DÜZELTME: selectedWeek değiştiğinde tahminleri yeniden çekmesi için eklendi
+  }, [selectedWeek]); 
 
   const currentMatches =
     selectedWeek === 1 ? week1Matches :
@@ -515,33 +384,47 @@ export default function MacArsiviPage() {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   };
 
+  // 🔴 TFF KONTROL MOTORU (KURŞUN GEÇİRMEZ) 🔴
   const isTffMatchCheck = (category: string) => {
     if(!category) return false;
     const uppercaseCat = category.toUpperCase();
     return (
-      uppercaseCat.includes("TÜRKİYE SÜPER LİG") ||
-      uppercaseCat.includes("TÜRKİYE KUPASI") ||
-      uppercaseCat.includes("TÜRKİYE 1.LİG") ||
-      uppercaseCat.includes("TÜRKİYE SÜPER KUPA") ||
-      uppercaseCat.includes("TÜRKİYE KADINLAR SÜPER LİG") ||
-      uppercaseCat.includes("TFF")
+      uppercaseCat.includes("TÜRKİYE") ||
+      uppercaseCat.includes("TFF") ||
+      uppercaseCat.includes("AMATÖR") ||
+      uppercaseCat.includes("PTT") ||
+      uppercaseCat.includes("2.LİG") ||
+      uppercaseCat.includes("3.LİG")
     );
   };
 
-  const getEliteTheme = (category: string) => {
-    if(!category) return { bgImg: null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
-    const upCat = category.toUpperCase();
+  // 🔴 LİG LOGOLU DEV TEMA MOTORU 🔴
+  const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
+    const upCat = category ? category.toUpperCase() : '';
+    const homeLogoUrl = localTeamLogos[homeTeam] || getLocalLogoUrl(homeTeam);
+    const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
+
+    let leagueLogoUrl = null;
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png";
+    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/73.png";
+    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/10216.png";
+    else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
+    else if (upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("1. LİG") || upCat.includes("1.LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/165.png";
+    else if (upCat.includes("TÜRKİYE KUPASI")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/tr/e/ee/Ziraat_T%C3%BCrkiye_Kupasi_logo.png";
+    else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
+    else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg";
+    else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png";
+
+
+    let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
+
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
+    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
+    else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
+    else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     
-    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
-      return { bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
-    } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
-      return { bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
-    } else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) {
-      return { bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
-    } else if (isTffMatchCheck(category)) {
-      return { bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
-    }
-    return { bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    return theme;
   };
 
   const getUniqueMatchId = (week: number, index: number) => {
@@ -610,9 +493,7 @@ export default function MacArsiviPage() {
               const homeUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
               const awayUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
               
-              // 🔴 DÜZELTME: AKILLI YEREL LOGO BULUCU BURAYA ENTEGRE EDİLDİ
-              const homeLogoUrl = localTeamLogos[homeUpper] || getLocalLogoUrl(homeUpper);
-              const awayLogoUrl = localTeamLogos[awayUpper] || getLocalLogoUrl(awayUpper);
+              const theme = getEliteTheme(match.category, homeUpper, awayUpper);
 
               let homeScore = "-";
               let awayScore = "-";
@@ -662,8 +543,6 @@ export default function MacArsiviPage() {
                 }
               }
 
-              const theme = getEliteTheme(match.category);
-
               return (
                 <div 
                   key={match.id} 
@@ -691,11 +570,19 @@ export default function MacArsiviPage() {
                       <div className="flex items-center justify-between px-0 sm:px-4">
                         <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                           <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                            <img src={homeLogoUrl} alt={homeUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                            <img src={theme.homeLogo} alt={homeUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
                           <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{homeUpper}</span>
                         </div>
-                        <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30">
+                        <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-20 sm:w-32 z-30 relative">
+                          
+                          {/* 🔴 YENİ EKLENEN LİG LOGOSU BÖLÜMÜ 🔴 */}
+                          {theme.leagueLogo && (
+                            <div className="w-10 h-10 sm:w-14 sm:h-14 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform duration-500 z-40">
+                              <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+                            </div>
+                          )}
+
                           <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                             <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
                             <span className={`text-base sm:text-2xl font-bold ${theme.colonText}`}>:</span>
@@ -704,7 +591,7 @@ export default function MacArsiviPage() {
                         </div>
                         <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                           <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center relative z-20">
-                            <img src={awayLogoUrl} alt={awayUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                            <img src={theme.awayLogo} alt={awayUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                           </div>
                           <span className="text-white font-extrabold text-[10px] sm:text-[13px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{awayUpper}</span>
                         </div>

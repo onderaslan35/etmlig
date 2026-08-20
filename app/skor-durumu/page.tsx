@@ -8,7 +8,7 @@ import { supabase } from '@/utils/supabase';
 
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category.toUpperCase();
-  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
+  return (uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG"));
 };
 
 export default function SkorDurumuPage() {
@@ -22,23 +22,52 @@ export default function SkorDurumuPage() {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
       const { data: dfoHistorical } = await supabase.from('dfo_weekly_scores').select('*');
       const { data: tffHistorical } = await supabase.from('tff_weekly_scores').select('*');
 
+      // 🔴 EKMEL DEVRİMİ: 1000 SATIR LİMİTİNİ KIRAN SONSUZ DÖNGÜ (PAGINATION) 🔴
+      let allPredictions: any[] = [];
+      let from = 0;
+      let step = 999;
+      let keepFetching = true;
+
+      while(keepFetching) {
+          const { data } = await supabase
+              .from('player_predictions')
+              .select('*')
+              .eq('week_num', 5)
+              .range(from, from + step);
+          
+          if (data && data.length > 0) {
+              allPredictions = [...allPredictions, ...data];
+              if (data.length <= step) keepFetching = false;
+              else from += step + 1;
+          } else {
+              keepFetching = false;
+          }
+      }
+
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
         dbPlayers.forEach(p => {
-          playersList[p.id] = p.name;
+          if (p.id !== 'mankoman') {
+             playersList[p.id] = p.name;
+          }
         });
       }
 
+      // 🔴 BİTEN MAÇLAR VE CANLI MAÇLAR İÇİN KASALAR AYRILDI! 🔴
+      let w5DfoBase: Record<string, number> = {}; 
+      let w5TffBase: Record<string, number> = {}; 
       let w5DfoLive: Record<string, number> = {}; 
       let w5TffLive: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(playersList).forEach(id => { w5DfoLive[id] = 0; w5TffLive[id] = 0; });
+      Object.keys(playersList).forEach(id => { 
+          w5DfoBase[id] = 0; w5TffBase[id] = 0; 
+          w5DfoLive[id] = 0; w5TffLive[id] = 0; 
+      });
 
       const dfoDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dfoHistorical) dfoHistorical.forEach(r => dfoDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
@@ -46,8 +75,8 @@ export default function SkorDurumuPage() {
       if(tffHistorical) tffHistorical.forEach(r => tffDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
 
       const predDict: Record<string, string[]> = {};
-      if (dbPredictions) {
-        dbPredictions.forEach(pred => {
+      if (allPredictions.length > 0) {
+        allPredictions.forEach(pred => {
           const uid = String(pred.user_id);
           if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
           predDict[uid][pred.match_index - 1] = pred.predicted_score;
@@ -58,7 +87,6 @@ export default function SkorDurumuPage() {
       if (dbBulletin) dbBulletin.forEach(m => catDict[m.match_index] = m.category);
 
       if (dbMatches) {
-        // Ekmel Standard: Deduplication Filter
         const uniqueMatches: Record<number, any> = {};
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
@@ -71,64 +99,85 @@ export default function SkorDurumuPage() {
             
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
             
+            const isFinished = dbMatch.status === 'FINISHED';
+            const isLiveMatch = dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL';
+
             winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED' || dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                if (isTff) w5TffLive[wId] += 1;
-                else w5DfoLive[wId] += 1;
+              if (isFinished) {
+                  // MAÇ BİTMİŞSE KESİNLEŞMİŞ (BASE) KASAYA EKLE
+                  if (isTff && w5TffBase[wId] !== undefined) w5TffBase[wId] += 1;
+                  else if (!isTff && w5DfoBase[wId] !== undefined) w5DfoBase[wId] += 1;
+              } else if (isLiveMatch) {
+                  // MAÇ CANLIYSA SADECE CANLI KASAYA EKLE!
+                  if (isTff && w5TffLive[wId] !== undefined) w5TffLive[wId] += 1;
+                  else if (!isTff && w5DfoLive[wId] !== undefined) w5DfoLive[wId] += 1;
               }
-              if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') isAnyMatchLive = true;
             });
+
+            if (isLiveMatch) isAnyMatchLive = true;
           }
         });
       }
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
+      // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE İKİ AYRI SKORU (BASE VE CANLI) OLUŞTUR
       const baseList = Object.keys(playersList).map(id => {
         const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
-        let w1=0, w2=0, w3=0, w4=0, w5=0, total=0, liveExtra=0;
+        let w1=0, w2=0, w3=0, w4=0, w5Base=0, liveExtra=0;
         
         if (leagueFilter === 'MASTER') {
             w1 = dfo.w1 + tff.w1; w2 = dfo.w2 + tff.w2; w3 = dfo.w3 + tff.w3; w4 = dfo.w4 + tff.w4;
-            w5 = w5DfoLive[id] + w5TffLive[id];
-            liveExtra = w5;
+            w5Base = w5DfoBase[id] + w5TffBase[id];
+            liveExtra = w5DfoLive[id] + w5TffLive[id];
         } else if (leagueFilter === 'DFO') {
-            w1 = dfo.w1; w2 = dfo.w2; w3 = dfo.w3; w4 = dfo.w4; w5 = w5DfoLive[id]; liveExtra = w5;
+            w1 = dfo.w1; w2 = dfo.w2; w3 = dfo.w3; w4 = dfo.w4;
+            w5Base = w5DfoBase[id];
+            liveExtra = w5DfoLive[id];
         } else if (leagueFilter === 'TFF') {
-            w1 = tff.w1; w2 = tff.w2; w3 = tff.w3; w4 = tff.w4; w5 = w5TffLive[id]; liveExtra = w5;
+            w1 = tff.w1; w2 = tff.w2; w3 = tff.w3; w4 = tff.w4;
+            w5Base = w5TffBase[id];
+            liveExtra = w5TffLive[id];
         }
         
-        total = w1 + w2 + w3 + w4 + w5;
+        const baseTotal = w1 + w2 + w3 + w4 + w5Base; // CANLI YOKKENKİ TOPLAM
+        const finalTotal = baseTotal + liveExtra;       // CANLI EKLENDİĞİNDEKİ TOPLAM
+        const w5Final = w5Base + liveExtra;             // CANLI EKLENDİĞİNDEKİ W5
 
-        return { id, name: playersList[id], w1, w2, w3, w4, w5, total, liveExtra };
+        return { id, name: playersList[id], w1, w2, w3, w4, w5Base, w5Final, baseTotal, finalTotal, liveExtra };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
+      // 🔴 İKİNCİ AŞAMA: ESKİ SIRALAMAYI (CANLI YOKKEN) HESAPLA
+      const prevRefList = [...baseList].sort((a, b) => {
+          const scoreA = activeTab === 'total' ? a.baseTotal : (activeTab === 'w5' ? a.w5Base : (a as any)[activeTab]);
+          const scoreB = activeTab === 'total' ? b.baseTotal : (activeTab === 'w5' ? b.w5Base : (b as any)[activeTab]);
+          return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
+      });
+
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => prevRanks[player.id] = index + 1);
 
-      // SIFIR PUANI OLANLARI GİZLEME KURALI KALDIRILDI!
-      const visibleList = baseList;
-
-      visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
-        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
-        return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
+      // 🔴 ÜÇÜNCÜ AŞAMA: YENİ SIRALAMAYI (CANLI DAHİL) HESAPLA VE FARKINI BUL
+      const currentRefList = [...baseList].sort((a, b) => {
+          const scoreA = activeTab === 'total' ? a.finalTotal : (activeTab === 'w5' ? a.w5Final : (a as any)[activeTab]);
+          const scoreB = activeTab === 'total' ? b.finalTotal : (activeTab === 'w5' ? b.w5Final : (b as any)[activeTab]);
+          return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
-      const finalRows = visibleList.map((player, index) => {
+      const finalRows = currentRefList.map((player, index) => {
         const currentRank = index + 1;
+        const prevRank = prevRanks[player.id];
+
         let trend = 'same', trendDiff = 0; 
         
-        if (activeTab === 'total') {
-            const prevRank = prevRanks[player.id];
-            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
-        }
+        // DÜZELTME: Oklar sadece 'total' sekmesinde değil, tüm sekmelerde çalışacak!
+        if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+        else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
 
-        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        let displayScore = activeTab === 'total' ? player.finalTotal : (activeTab === 'w5' ? player.w5Final : (player as any)[activeTab]);
+
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
@@ -222,15 +271,10 @@ export default function SkorDurumuPage() {
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
                           <div className="w-5 flex justify-center">
-                            {activeTab === 'total' ? (
-                              <>
-                                {row.trend === 'up' && <span className="text-[#10b981] text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
-                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
-                                {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
-                              </>
-                            ) : (
-                              <span className="text-transparent">-</span>
-                            )}
+                            {/* DÜZELTME: Oklar artık "5. Hafta" sekmesinde de çalışıyor! */}
+                            {row.trend === 'up' && <span className="text-[#10b981] text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                            {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                            {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
                           </div>
                         </div>
                       </td>
@@ -246,6 +290,8 @@ export default function SkorDurumuPage() {
                               </>
                             );
                           })()}
+                          
+                          {/* 🔴 DÜZELTME: Sadece gerçekten CANLI skoru bilenlere rozet verilir! 🔴 */}
                           {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
                             <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">
                               +{row.liveExtra} CANLI

@@ -3,52 +3,63 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ANA YARIŞMACI LİSTESİ (SABİT) 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ (SABİT BETON KADRO - ŞİFRELER GÜNCELLENDİ) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
-  "262701": { pass: "00000", name: "MUHAMMET OKUMUŞ" }, "262702": { pass: "00000", name: "MURAT KARA" },
-  "262703": { pass: "00000", name: "CEMALETTİN BELLİ" }, "262704": { pass: "00000", name: "YAPAY ZEKA" },
-  "262705": { pass: "00000", name: "AHMET BİRCAN 🏆" }, "262706": { pass: "00000", name: "GAZİ AYAN 🏆🏆" },
-  "262707": { pass: "00000", name: "HAKAN AYAN" }, "262708": { pass: "00000", name: "BAYRAM YILMAZ" },
-  "262709": { pass: "00000", name: "SALİH KARACAOĞLU" }, "262710": { pass: "00000", name: "MUZAFFER ERTUĞRUL" },
-  "262711": { pass: "00000", name: "RIDVAN DOGER" }, "262712": { pass: "00000", name: "MURAT AYDEMİR" },
-  "262713": { pass: "00000", name: "VAHİT KÜLCÜ" }, "262714": { pass: "00000", name: "İSMAİL EKER 🏆" },
-  "262715": { pass: "00000", name: "ŞEMSETTIN DÜGER" }, "262716": { pass: "00000", name: "BİROL DEMİREL" },
-  "262717": { pass: "00000", name: "MURAT ALİ" }, "262718": { pass: "00000", name: "BEKİR KARADAĞ" },
-  "262719": { pass: "00000", name: "UĞUR VARDAR" }, "262720": { pass: "00000", name: "HASAN ASLAN" },
-  "262721": { pass: "00000", name: "MUSTAFA GÜMÜŞÇÜ" }, "262722": { pass: "00000", name: "MUSTAFA ERKAN" },
-  "262723": { pass: "00000", name: "AYHAN LUŞOĞLU" }, "262724": { pass: "00000", name: "YÜCEL TOMAK" },
-  "262725": { pass: "00000", name: "İLYAS KAZDAL" }, "262726": { pass: "00000", name: "HUDAVER TOPARDIC" },
-  "262727": { pass: "00000", name: "YAHŞİ ERKAN🏆" }, "262728": { pass: "00000", name: "ÖNDER ASLAN" },
-  "262729": { pass: "00000", name: "HAKAN GÜN" }, "262730": { pass: "00000", name: "ÖNDER IŞIK" },
-  "262731": { pass: "00000", name: "FATİH AYAN" }, "262732": { pass: "00000", name: "R. İLHAN KARACA 🏆🏆" },
-  "262733": { pass: "00000", name: "MUHSİN ASİLKAN" }, "262734": { pass: "00000", name: "LEVENT YILDIRIM" },
-  "262735": { pass: "00000", name: "AYGÜN AKKEÇELİ" }, "262736": { pass: "00000", name: "MEHMET ALİ KARA" },
-  "262737": { pass: "00000", name: "ŞAHİN GEZGİNCİ" }, "262738": { pass: "00000", name: "MEVLÜT EVLER" },
-  "262739": { pass: "00000", name: "UĞUR GÜRBÜZ" }, "262740": { pass: "00000", name: "ABDULLAH DİK" },
-  "262741": { pass: "00000", name: "SABAHATTİN ÇAYLAK" }, "262742": { pass: "00000", name: "ZEKERiYYA TOPKAYYA" },
-  "262743": { pass: "00000", name: "MEHMET ALİ ŞAHİN" }, "262744": { pass: "00000", name: "İLYAS UYGUN" },
-  "262745": { pass: "00000", name: "OĞUZ YILDIRIMKAYA" }, "262746": { pass: "00000", name: "MEHMET BAYIR" },
-  "262747": { pass: "00000", name: "SAVAŞ ÇAĞLAYAN" }, "262748": { pass: "00000", name: "YASİN ŞAHİN" },
-  "262749": { pass: "00000", name: "B.VEYSELOĞLU EROL" }, "262750": { pass: "00000", name: "MAHMUT CBR" },
-  "262751": { pass: "00000", name: "HÜSEYİN ERBAŞ" }, "262810": { pass: "00000", name: "ADEM BULUT ERTÜRK" },
-  "262753": { pass: "00000", name: "YUSUF KIZILTUĞ" }, "262754": { pass: "00000", name: "OSMAN ALİ AYDIN 🏆" },
-  "262755": { pass: "00000", name: "DOĞAÇ ALKAN" }, "262756": { pass: "00000", name: "EYÜP KARACAOĞLU" },
-  "262813": { pass: "00000", name: "KEMAL ERSOY" }, "262758": { pass: "00000", name: "MELİH PINAR" },
-  "262762": { pass: "00000", name: "İLHAN DANIŞ" }, "262763": { pass: "00000", name: "MUST ELMAS" },
-  "262770": { pass: "00000", name: "OZKAYA MAZAKALI BAYRAM" }, "262771": { pass: "00000", name: "ULAŞ ADIGÜZEL" },
-  "262772": { pass: "00000", name: "CEMAL SİVRİKAYA 🏆" }, "262760": { pass: "00000", name: "UĞUR NES" },
-  "262774": { pass: "00000", name: "ŞENOL CAN ÇAKICI" }, "262776": { pass: "00000", name: "CUMA OKUR" },
-  "262777": { pass: "00000", name: "MİRAÇ TOPAL" }, "262778": { pass: "00000", name: "CENGİZ SAYAN" },
-  "262780": { pass: "00000", name: "YUSUF KILIÇ" }, "262781": { pass: "00000", name: "KADİR SOLMAZ" },
-  "262782": { pass: "00000", name: "YUSUF ERBAY" }, "262783": { pass: "00000", name: "YASİN AYAN" },
-  "262784": { pass: "00000", name: "MEHMET AVCI" }, "262785": { pass: "00000", name: "METE BÜYÜKGÖL 🏆" },
-  "262786": { pass: "00000", name: "SEDAT DİŞLİ" }, "262787": { pass: "00000", name: "MUSTAFA TUCİ" },
-  "262788": { pass: "00000", name: "HAKAN ÇİFTÇİ" }, "262789": { pass: "00000", name: "ALİ ABUKAN" },
-  "262790": { pass: "00000", name: "CUMALİ SÖKER" }, "351925": { pass: "00000", name: "ALİOS GÖZTEPE" },
-  "350909": { pass: "00000", name: "DİNÇER ÖZER" }, "262815": { pass: "00000", name: "MURAT KAYA" },
-  "262816": { pass: "00000", name: "SEDAT SEDAT" }, "262795": { pass: "00000", name: "SEFA İÇA" },
-  "262796": { pass: "00000", name: "D. SERGEN TAŞYÜREK" }, "262797": { pass: "00000", name: "ÖMER DOGER" }
+  "262740": { pass: "4940", name: "ABDULLAH DİK" },
+  "262705": { pass: "1405", name: "AHMET BİRCAN 🏆" },
+  "351925": { pass: "1925", name: "ALİOS GÖZTEPE" },
+  "262735": { pass: "1925", name: "AYGÜN AKKEÇELİ" },
+  "262723": { pass: "3223", name: "AYHAN LUŞOĞLU" },
+  "262749": { pass: "5849", name: "B.VEYSELOĞLU EROL" },
+  "262708": { pass: "1708", name: "BAYRAM YILMAZ" },
+  "262718": { pass: "2718", name: "BEKİR KARADAĞ" },
+  "262716": { pass: "2516", name: "BİROL DEMİREL" },
+  "262772": { pass: "8172", name: "CEMAL SİVRİKAYA 🏆" },
+  "262703": { pass: "1203", name: "CEMALETTİN BELLİ" },
+  "262790": { pass: "9988", name: "CUMALİ SÖKER" },
+  "262755": { pass: "6455", name: "DOĞAÇ ALKAN" },
+  "262756": { pass: "6556", name: "EYÜP KARACAOĞLU" },
+  "262731": { pass: "4031", name: "FATİH AYAN" },
+  "262706": { pass: "1506", name: "GAZİ AYAN 🏆🏆" },
+  "262707": { pass: "1607", name: "HAKAN AYAN" },
+  "262726": { pass: "3526", name: "HUDAVER TOPARDIC" },
+  "262725": { pass: "3425", name: "İLYAS KAZDAL" },
+  "262744": { pass: "5344", name: "İLYAS UYGUN" },
+  "262714": { pass: "2314", name: "İSMAİL EKER 🏆" },
+  "262813": { pass: "2862", name: "KEMAL ERSOY" },
+  "262734": { pass: "4334", name: "LEVENT YILDIRIM" },
+  "262750": { pass: "5950", name: "MAHMUT CBR" },
+  "262736": { pass: "4536", name: "MEHMET ALİ KARA" },
+  "262758": { pass: "6758", name: "MELİH PINAR" },
+  "262738": { pass: "4738", name: "MEVLÜT EVLER" },
+  "262733": { pass: "4233", name: "MUHSİN ASİLKAN" },
+  "262717": { pass: "2617", name: "MURAT ALİ" },
+  "262712": { pass: "2112", name: "MURAT AYDEMİR" },
+  "262702": { pass: "1102", name: "MURAT KARA" },
+  "262763": { pass: "7263", name: "MUSTAFA ELMAS" },
+  "262721": { pass: "3021", name: "MUSTAFA GÜMÜŞÇÜ" },
+  "262787": { pass: "9687", name: "MUSTAFA TUCİ" },
+  "262754": { pass: "6354", name: "OSMAN ALİ AYDIN 🏆" },
+  "262770": { pass: "7970", name: "OZKAYA MAZAKALI BAYRAM" },
+  "262728": { pass: "3528", name: "ÖNDER ASLAN" },
+  "262730": { pass: "3930", name: "ÖNDER IŞIK" },
+  "262732": { pass: "4132", name: "R. İLHAN KARACA 🏆🏆" },
+  "262711": { pass: "2011", name: "RIDVAN DOGER" },
+  "262741": { pass: "5041", name: "SABAHATTİN ÇAYLAK" },
+  "262709": { pass: "1809", name: "SALİH KARACAOĞLU" },
+  "262747": { pass: "5647", name: "SAVAŞ ÇAĞLAYAN" },
+  "262786": { pass: "9586", name: "SEDAT DİŞLİ" },
+  "262816": { pass: "6182", name: "SEDAT SEDAT" },
+  "262737": { pass: "4637", name: "ŞAHİN GEZGİNCİ" },
+  "262715": { pass: "2415", name: "ŞEMSETTIN DÜGER" },
+  "262774": { pass: "8374", name: "ŞENOL CAN ÇAKICI" },
+  "262739": { pass: "4839", name: "UĞUR GÜRBÜZ" },
+  "262719": { pass: "2819", name: "UĞUR VARDAR" },
+  "262771": { pass: "8071", name: "ULAŞ ADIGÜZEL" },
+  "262704": { pass: "1304", name: "YAPAY ZEKA" },
+  "262782": { pass: "9182", name: "YUSUF ERBAY" },
+  "262753": { pass: "6253", name: "YUSUF KIZILTUĞ" }
 };
 
 // 🔴 YEREL LOGOLAR 🔴
@@ -135,7 +146,6 @@ const localTeamLogos: Record<string, string> = {
   "BOCA JUNIORS":  "https://images.fotmob.com/image_resources/logo/teamlogo/10077.png",
   "RIVER PLATE":  "https://images.fotmob.com/image_resources/logo/teamlogo/10078.png",
 
-  // 🔴 İSPANYA (LA LIGA VE HAVUZ) TAKIMLARI
   "REAL MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Madrid_CF.svg",
   "BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
   "FC BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
@@ -174,7 +184,6 @@ const localTeamLogos: Record<string, string> = {
   "DEPORTIVO LA CORUNA": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Deportivo_La_Coru%C3%B1a_logo.svg",
   "RACING SANTANDER": "https://images.fotmob.com/image_resources/logo/teamlogo/8696_large.png",
 
-  // 🔴 İNGİLTERE PREMIER LİG TAKIMLARI
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
   "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
   "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
@@ -220,7 +229,6 @@ const localTeamLogos: Record<string, string> = {
   "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
   "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
 
-  // 🔴 DİĞER AVRUPA TAKIMLARI
   "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
   "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
@@ -228,7 +236,6 @@ const localTeamLogos: Record<string, string> = {
   "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
   "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
 
-  // 🔴 YEREL LOGOLAR (public/logos/)
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -238,6 +245,7 @@ const localTeamLogos: Record<string, string> = {
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+  
   "OLYMPIC LYON": "/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
@@ -262,17 +270,38 @@ const getLocalLogoUrl = (teamName: string) => {
   return `/logos/${slug}.png`;
 };
 
+// 🔴 TFF KONTROL MOTORU
 const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category?.toUpperCase() || '';
-  return ["TÜRKİYE 1.LİG", "TÜRKİYE KADINLAR SÜPER LİG", "TÜRKİYE KUPASI", "TÜRKİYE SÜPER KUPA", "TÜRKİYE SÜPER LİG", "TFF 1. LİG", "AMATÖR", "TÜRKİYE 2.LİG", "TÜRKİYE 3.LİG"].some(cat => uppercaseCat.includes(cat));
+  if(!category) return false;
+  const uppercaseCat = category.toUpperCase();
+  return ( 
+    uppercaseCat.includes("TÜRKİYE") || 
+    uppercaseCat.includes("TFF") || 
+    uppercaseCat.includes("AMATÖR") || 
+    uppercaseCat.includes("PTT") || 
+    uppercaseCat.includes("2.LİG") || 
+    uppercaseCat.includes("3.LİG") 
+  );
 };
 
+// 🔴 LİG LOGOLU DEV TEMA MOTORU
 const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
     const upCat = category ? category.toUpperCase() : '';
     const homeLogoUrl = localTeamLogos[homeTeam] || getLocalLogoUrl(homeTeam);
     const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
 
-    let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl };
+    let leagueLogoUrl = null;
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png";
+    else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/73.png";
+    else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/10216.png";
+    else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
+    else if (upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("1. LİG") || upCat.includes("1.LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/165.png";
+    else if (upCat.includes("TÜRKİYE KUPASI")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/tr/e/ee/Ziraat_T%C3%BCrkiye_Kupasi_logo.png";
+    else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
+    else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
+    else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png";
+
+    let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
 
     if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
@@ -306,7 +335,7 @@ const checkGateStatus = () => {
     return 'CLOSED';
 };
 
-// 🔴 AKİNEL: MÜHÜR KIRILMA MOTORU (Pazartesi 21:01 - Cuma 20:59 arası)
+// 🔴 MÜHÜR KIRILMA MOTORU (Pazartesi 21:01 - Cuma 20:59 arası)
 const isSealBroken = () => {
     const now = getSystemCurrentTime();
     const d = now.getDay();
@@ -339,6 +368,8 @@ export default function TahminlerPortal() {
 
   const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
+  
+  // MERGED ACCOUNTS: Önce TEST_ACCOUNTS (Beton Kadro), sonra Veritabanı
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
   useEffect(() => {
@@ -347,7 +378,10 @@ export default function TahminlerPortal() {
         if (data) {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
-               newAccounts[String(p.user_id)] = { pass: p.password, name: p.full_name };
+               // SADECE TEST ACCOUNTS İÇİNDE OLMAYANLARI EKLER, BÖYLECE GÜVENLİK SAĞLANIR
+               if (!newAccounts[String(p.user_id)]) {
+                 newAccounts[String(p.user_id)] = { pass: p.password, name: p.full_name };
+               }
            });
            setMergedAccounts(newAccounts);
         }
@@ -472,6 +506,9 @@ export default function TahminlerPortal() {
             const newData: Record<number, Record<string, string[]>> = {};
             allData.forEach(row => {
                 const wk = row.week_num; const uid = String(row.user_id);
+                // 🔴 EKMEL ZIRHI: MANKOMAN'I RADARDAN GİZLE
+                if (uid === 'mankoman') return; 
+
                 if(!newData[wk]) newData[wk] = {};
                 if(!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
                 newData[wk][uid][row.match_index - 1] = row.predicted_score;
@@ -482,17 +519,22 @@ export default function TahminlerPortal() {
      fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
-  // 🚀 EKSİKLER GİRENLER LOBİ RADARI (GERÇEK ZAMANLI) 🚀
   const [lobbyMissing, setLobbyMissing] = useState(0);
   const [lobbySubmitted, setLobbySubmitted] = useState(0);
 
   useEffect(() => {
     if (activeBulletinWeek === 0) return;
     const fetchLobbyStats = async () => {
-      const { data } = await supabase.from('player_predictions').select('user_id').eq('week_num', activeBulletinWeek);
-      const uniqueUsers = new Set((data || []).map(r => String(r.user_id)));
+      let allData: any[] = []; let from = 0; let step = 999; let keepFetching = true;
+      while(keepFetching) {
+         const { data } = await supabase.from('player_predictions').select('user_id').eq('week_num', activeBulletinWeek).range(from, from + step);
+         if (data && data.length > 0) { allData = [...allData, ...data]; if (data.length <= step) keepFetching = false; else from += step + 1; } else { keepFetching = false; }
+      }
+      
+      const uniqueUsers = new Set(allData.map(r => String(r.user_id)).filter(id => id !== 'mankoman'));
       const allPlayerCount = Object.keys(mergedAccounts).filter(id => id !== 'mankoman').length;
       const submitted = uniqueUsers.size;
+      
       setLobbySubmitted(submitted);
       setLobbyMissing(allPlayerCount - submitted);
     };
@@ -537,12 +579,11 @@ export default function TahminlerPortal() {
 
   const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
 
-  // 🔴 AKİNEL: MÜHÜR KIRILMA VE İFŞA FİLTRESİ 🔴
+  // 🔴 MÜHÜR KIRILMA VE İFŞA FİLTRESİ
   const unlockedWeeks = useMemo(() => {
       return availableWeeks.filter(w => {
-          if (w < activeBulletinWeek) return true; // Geçmiş haftalar her zaman açık
+          if (w < activeBulletinWeek) return true; 
           if (w === activeBulletinWeek) {
-              // Aktif hafta sadece Pazartesi 21:01 kuralı geçerliyse ve süreci yaşanmışsa gösterilir
               return checkGateStatus() === 'CLOSED' && isSealBroken() && lobbySubmitted > 0;
           }
           return false;
@@ -550,7 +591,6 @@ export default function TahminlerPortal() {
   }, [availableWeeks, activeBulletinWeek, lobbySubmitted]);
 
   useEffect(() => {
-      // Bileşen yüklendiğinde veya kilitler açıldığında, seçili haftayı güvenli ve en son açılmış haftaya eşitle.
       if (unlockedWeeks.length > 0 && (!selectedTahminWeek || !unlockedWeeks.includes(selectedTahminWeek))) {
           setSelectedTahminWeek(Math.max(...unlockedWeeks));
       }
@@ -578,7 +618,7 @@ export default function TahminlerPortal() {
                <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1>
                <p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p>
                
-               {/* 🔴 AKİNEL: GİZLİ İSTİHBARAT BÖLÜMÜ (SADECE ADMİN YAZINCA GÖZÜKÜR) 🔴 */}
+               {/* 🔴 GİZLİ İSTİHBARAT BÖLÜMÜ (SADECE ADMİN YAZINCA GÖZÜKÜR) 🔴 */}
                {activeBulletinWeek > 0 && username.trim().toLowerCase() === 'mankoman' && (
                    <div className="mt-4 flex items-center justify-center gap-4 animate-fade-in">
                        <span className="bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
@@ -628,8 +668,8 @@ export default function TahminlerPortal() {
                   <input type="password" placeholder="Şifre" value={password} onChange={e => setPassword(e.target.value)} className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none text-center tracking-widest text-sm" />
                   {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-2 px-2 rounded-lg border border-red-500/30 leading-relaxed">{loginError}</p>}
                   
-                  <button type="submit" className={`${checkGateStatus() === 'OPEN' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
-                     {checkGateStatus() === 'OPEN' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
+                  <button type="submit" className={`${checkGateStatus() === 'OPEN' || username.trim() === 'mankoman' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
+                     {checkGateStatus() === 'OPEN' || username.trim() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
                   </button>
                 </form>
               </div>
@@ -673,13 +713,23 @@ export default function TahminlerPortal() {
                     <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
                       {theme.bgImg && ( <><div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div><div className="absolute inset-0 bg-slate-900/40 z-0"></div></> )}
                       <div className="relative z-10 flex flex-col h-full justify-between">
-                        <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2"><span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest">{match.weekLabel}</span><span className={`text-[10px] sm:text-[11px] font-black uppercase px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>🏆 {match.category}</span></div>
+                        <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
+                           <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest">{match.weekLabel}</span>
+                           <span className={`text-[10px] sm:text-[11px] font-black uppercase px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>🏆 {match.category}</span>
+                        </div>
                         <div className="flex items-center justify-between px-0 sm:px-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
                             <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{hName}</span>
                           </div>
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
+                            
+                            {theme.leagueLogo && (
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
+                                <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+                              </div>
+                            )}
+
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select value={tScore.home} onChange={e => handleTahminmatikChange(match.id, 'home', e.target.value)} className="bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg sm:text-2xl px-1 sm:px-2 py-1 rounded-lg outline-none text-center w-10 sm:w-12 appearance-none cursor-pointer" style={{textAlignLast: 'center'}}>{scoreOptionsArr.map(o => <option key={o} value={o}>{o}</option>)}</select><span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span><select value={tScore.away} onChange={e => handleTahminmatikChange(match.id, 'away', e.target.value)} className="bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg sm:text-2xl px-1 sm:px-2 py-1 rounded-lg outline-none text-center w-10 sm:w-12 appearance-none cursor-pointer" style={{textAlignLast: 'center'}}>{scoreOptionsArr.map(o => <option key={o} value={o}>{o}</option>)}</select>
                             </div>
@@ -819,19 +869,46 @@ export default function TahminlerPortal() {
                   const aName = cleanTeamName(match.awayTeam || match.away_team);
                   const theme = getEliteTheme(match.category, hName, aName);
                   const hScore = predictions[match.id]?.home || '-'; const aScore = predictions[match.id]?.away || '-';
+                  
+                  const isTff = isTffMatchCheck(match.category);
 
                   return (
                     <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                       {theme.bgImg && ( <><div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div><div className="absolute inset-0 bg-slate-900/70 z-0"></div></> )}
                       <div className="relative z-10 flex flex-col h-full py-2">
-                        <div className="w-full flex justify-between items-center px-4 pt-3 pb-1"><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full">{activeBulletinWeek}. HAFTA {match.id}. MAÇ</span><span className="text-[10px] font-bold text-slate-300 bg-slate-900/50 px-2 py-1 rounded">{match.date} - {match.time}</span></div>
-                        <div className="w-full text-center px-2 mt-1 mb-2"><span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span></div>
+                        
+                        <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
+                          <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-[0_0_10px_currentColor] bg-slate-950/80 ${theme.badgeText} ${theme.badgeBorder}`}>
+                            {activeBulletinWeek}. HAFTA {match.id}. MAÇ
+                          </span>
+                          <span className={`text-[9px] sm:text-[10px] font-black tracking-widest px-3 py-1 rounded-full border shadow-[0_0_10px_currentColor] bg-slate-950/80 ${theme.badgeText} ${theme.badgeBorder}`}>
+                            {match.date} - {match.time}
+                          </span>
+                        </div>
+                        
+                        <div className="w-full flex flex-col items-center gap-1.5 px-2 mt-1 mb-2">
+                          <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                            🏆 {match.category}
+                          </span>
+                          <span className={`inline-block px-2.5 py-0.5 rounded-md border shadow-[0_0_10px_currentColor] text-[8px] font-black uppercase tracking-widest ${isTff ? 'bg-red-950/80 text-red-400 border-red-500/50' : 'bg-blue-950/80 text-cyan-400 border-blue-500/50'}`}>
+                            {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
+                          </span>
+                        </div>
+
                         <div className="flex items-center justify-between px-4 pb-4 mt-2">
                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
                             <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-lg" /></div>
                             <span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{hName}</span>
                           </div>
-                          <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30">
+                          <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30 relative">
+                            
+                            {/* 🔴 TAHMİNLER SAYFASINDA DA LİG LOGOSU GÖRÜNECEK 🔴 */}
+                            {theme.leagueLogo && (
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
+                                <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+                              </div>
+                            )}
+
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select value={hScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none text-center cursor-pointer">{scoreOptionsArr.map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}</select><span className="text-xl font-bold text-slate-500">:</span><select value={aScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none text-center cursor-pointer">{scoreOptionsArr.map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}</select>
                             </div>
