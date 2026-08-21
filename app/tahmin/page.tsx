@@ -19,7 +19,7 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262703": { pass: "1203", name: "CEMALETTİN BELLİ" },
   "262790": { pass: "9988", name: "CUMALİ SÖKER" },
   "262755": { pass: "6455", name: "DOĞAÇ ALKAN" },
-  "262756": { pass: "6556", name: "EYÜP KARACAOĞLU" },
+  "262756": { pass: "7181", name: "EYÜP KARACAOĞLU" },
   "262731": { pass: "4031", name: "FATİH AYAN" },
   "262706": { pass: "1506", name: "GAZİ AYAN 🏆🏆" },
   "262707": { pass: "1607", name: "HAKAN AYAN" },
