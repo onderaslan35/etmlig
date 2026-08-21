@@ -132,6 +132,33 @@ const localTeamLogos: Record<string, string> = {
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
 
+  // 🔴 ALMANYA BUNDESLIGA TAKIMLARI (FOTMOB ÖZEL)
+  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  "BAYERN MUNICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
+  "B. DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
+  "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
+  "LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
+  "RB LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
+  "LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
+  "STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
+  "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
+  "FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
+  "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
+  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "BORUSSIA MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9799.png",
+  "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
+  "MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
+  "MAINZ": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
+  "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
+  "AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
+  "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
+  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
+  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
+  "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
+  "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
+
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -141,6 +168,33 @@ const localTeamLogos: Record<string, string> = {
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
+  // 🔴 PORTEKİZ LİGİ (PRIMEIRA LIGA)
+  "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
+  "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
+  
+  // 🔴 HOLLANDA LİGİ (EREDIVISIE)
+  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
+ 
+  "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/10229.png",
+ 
+
+  // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
+  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
+  
+  "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
+  "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
+ 
+  "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
+
+  // 🔴 İSKOÇYA LİGİ (PREMIERSHIP)
+  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
+  "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
+  "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
+  "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
   
   "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
@@ -257,6 +311,14 @@ export default function LiveMatchCard() {
     else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
     else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
     else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png";
+    else if (upCat.includes("ALMANYA") || upCat.includes("BUNDESLIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/54.png";
+    else if (upCat.includes("FRANSA") || upCat.includes("LIGUE 1")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/53.png";
+    else if (upCat.includes("PORTEKİZ") || upCat.includes("PRIMEIRA LIGA") || upCat.includes("LIGA NOS")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/61.png";
+    else if (upCat.includes("HOLLANDA") || upCat.includes("EREDIVISIE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/57.png";
+    else if (upCat.includes("BELÇİKA") || upCat.includes("PRO LEAGUE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/40.png";
+    else if (upCat.includes("İSKOÇYA") || upCat.includes("PREMIERSHIP")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/46.png";
+
+    
 
     let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
 

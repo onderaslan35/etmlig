@@ -94,6 +94,32 @@ const localTeamLogos: Record<string, string> = {
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
+  // 🔴 ALMANYA BUNDESLIGA TAKIMLARI (FOTMOB ÖZEL)
+  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  "BAYERN MUNICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
+  "B. DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
+  "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
+  "LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
+  "RB LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
+  "LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
+  "STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
+  "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
+  "FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
+  "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
+  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "BORUSSIA MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9799.png",
+  "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
+  "MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
+  "MAINZ": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
+  "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
+  "AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
+  "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
+  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
+  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
+  "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
+  "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
   
   "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
@@ -101,10 +127,43 @@ const localTeamLogos: Record<string, string> = {
   "OLYMPIQUE LYON": "/logos/lyon.png",
   "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
   "LYON": "/logos/lyon.png",
+  "MALAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
+  "MÁLAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
+  "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+  "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+  // 🔴 PORTEKİZ LİGİ (PRIMEIRA LIGA)
+  "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
+  "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
+  
+
+  // 🔴 HOLLANDA LİGİ (EREDIVISIE)
+  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
+  
+  
+  // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
+  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
+  
+  "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
+  "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
+ 
+  "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
+
+  // 🔴 İSKOÇYA LİGİ (PREMIERSHIP)
+  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
+  "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
+  "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
+  "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
+  
+  
+  
   
   "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
   "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
-  "LILLE": "https://en.wikipedia.org/wiki/Special:FilePath/LOSC_Lille_logo.svg",
+  
   "JUVENTUS": "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png",
   "SLAVIA PRAG": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Slavia_Praha_logo.svg",
   "DINAMO ZAGREP": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
@@ -414,11 +473,113 @@ export default function MacArsiviPage() {
     else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
     else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg";
     else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png";
+    else if (upCat.includes("ALMANYA") || upCat.includes("BUNDESLIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/54.png";
+    else if (upCat.includes("FRANSA") || upCat.includes("LIGUE 1")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/53.png";
+    else if (upCat.includes("PORTEKİZ") || upCat.includes("PRIMEIRA LIGA") || upCat.includes("LIGA NOS")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/61.png";
+    else if (upCat.includes("HOLLANDA") || upCat.includes("EREDIVISIE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/57.png";
+    else if (upCat.includes("BELÇİKA") || upCat.includes("PRO LEAGUE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/40.png";
+    else if (upCat.includes("İSKOÇYA") || upCat.includes("PREMIERSHIP")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/46.png";
 
 
     let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
+    
 
     if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 İNGİLTERE PREMIER LİG (Mor / Fuşya ve Turkuaz neon - Asil İngiliz Teması)
+    else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) {
+        theme = { ...theme,
+            bgImg: "url('/pl-bg.png')",
+            containerBorder: "border-fuchsia-500/50",
+            containerShadow: "shadow-[0_0_40px_rgba(192,38,211,0.4)]",
+            containerBg: "bg-[#0b0410]",
+            badgeBg: "bg-fuchsia-950/80 backdrop-blur-sm",
+            badgeText: "text-fuchsia-300",
+            badgeBorder: "border-fuchsia-400/80 shadow-[0_0_10px_currentColor]",
+            catText: "text-fuchsia-200 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]",
+            scoreBorder: "border-fuchsia-500/30",
+            colonText: "text-fuchsia-400/50",
+            tagText: "text-cyan-300",
+            tagBg: "bg-cyan-950/90",
+            tagBorder: "border-cyan-400/80",
+            bottomBar: "bg-[#0b0410]/90 border-fuchsia-900/30"
+        };
+    }
+    // 🇮🇹 İTALYA SERIE A (Derin Gök Mavisi ve Altın Sarısı - Klasik Çizme Teması)
+    else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) {
+        theme = { ...theme,
+            bgImg: "url('/seriea-bg.png')",
+            containerBorder: "border-blue-500/50",
+            containerShadow: "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
+            containerBg: "bg-[#040b16]",
+            badgeBg: "bg-blue-900/80 backdrop-blur-sm",
+            badgeText: "text-blue-300",
+            badgeBorder: "border-blue-400/80 shadow-[0_0_10px_currentColor]",
+            catText: "text-blue-200 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]",
+            scoreBorder: "border-blue-500/30",
+            colonText: "text-yellow-400/50",
+            tagText: "text-yellow-400",
+            tagBg: "bg-yellow-950/90",
+            tagBorder: "border-yellow-500/80",
+            bottomBar: "bg-[#040b16]/90 border-blue-900/30"
+        };
+    }
+    // 🇪🇸 İSPANYA LA LIGA (EA Sports Teması - Mercan Kırmızısı ve Derin Lacivert)
+    else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) {
+        theme = { ...theme,
+            bgImg: "url('/laliga-bg.png')",
+            containerBorder: "border-rose-500/50",
+            containerShadow: "shadow-[0_0_40px_rgba(225,29,72,0.4)]",
+            containerBg: "bg-[#0f0407]",
+            badgeBg: "bg-rose-950/80 backdrop-blur-sm",
+            badgeText: "text-rose-300",
+            badgeBorder: "border-rose-400/80 shadow-[0_0_10px_currentColor]",
+            catText: "text-rose-200 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]",
+            scoreBorder: "border-rose-500/30",
+            colonText: "text-rose-400/50",
+            tagText: "text-rose-300",
+            tagBg: "bg-rose-950/90",
+            tagBorder: "border-rose-400/80",
+            bottomBar: "bg-[#0f0407]/90 border-rose-900/30"
+        };
+    }
+    // 🇫🇷 FRANSA LIGUE 1 (McDonald's Teması - Fıstık Yeşili / Lime ve Siyah)
+    else if (upCat.includes("FRANSA") || upCat.includes("LIGUE 1")) {
+         theme = { ...theme,
+            bgImg: "url('/ligue1-bg.png')",
+            containerBorder: "border-lime-500/50",
+            containerShadow: "shadow-[0_0_40px_rgba(132,204,22,0.4)]",
+            containerBg: "bg-[#040a05]",
+            badgeBg: "bg-lime-950/80 backdrop-blur-sm",
+            badgeText: "text-lime-300",
+            badgeBorder: "border-lime-400/80 shadow-[0_0_10px_currentColor]",
+            catText: "text-lime-200 drop-shadow-[0_0_8px_rgba(163,230,53,0.8)]",
+            scoreBorder: "border-lime-500/30",
+            colonText: "text-lime-400/50",
+            tagText: "text-lime-300",
+            tagBg: "bg-lime-950/90",
+            tagBorder: "border-lime-400/80",
+            bottomBar: "bg-[#040a05]/90 border-lime-900/30"
+        };
+    }
+    // 🇩🇪 ALMANYA BUNDESLIGA (Panzer Kırmızısı ve Gri/Gümüş)
+    else if (upCat.includes("ALMANYA") || upCat.includes("BUNDESLIGA")) {
+        theme = { ...theme,
+            bgImg: "url('/bundesliga-bg.png')",
+            containerBorder: "border-red-600/50",
+            containerShadow: "shadow-[0_0_40px_rgba(220,38,38,0.4)]",
+            containerBg: "bg-[#0a0202]",
+            badgeBg: "bg-red-950/80 backdrop-blur-sm",
+            badgeText: "text-red-300",
+            badgeBorder: "border-red-400/80 shadow-[0_0_10px_currentColor]",
+            catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
+            scoreBorder: "border-slate-500/30",
+            colonText: "text-slate-400/50",
+            tagText: "text-slate-300",
+            tagBg: "bg-slate-800/90",
+            tagBorder: "border-slate-500/80",
+            bottomBar: "bg-[#0a0202]/90 border-red-900/30"
+        };
+    }
     else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
     else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
     else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };

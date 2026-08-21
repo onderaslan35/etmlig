@@ -229,6 +229,61 @@ const localTeamLogos: Record<string, string> = {
   "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
   "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
 
+  // 🔴 ALMANYA BUNDESLIGA TAKIMLARI (FOTMOB ÖZEL)
+  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  "BAYERN MUNICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
+  "B. DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
+  "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
+  "LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
+  "RB LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
+  "LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
+  "STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
+  "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
+  "FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
+  "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
+  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "BORUSSIA MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9799.png",
+  "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
+  "MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
+  "MAINZ": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
+  "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
+  "AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
+  "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
+  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
+  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
+  "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
+  "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
+  // 🔴 PORTEKİZ LİGİ (PRIMEIRA LIGA)
+  "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
+  "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
+  "BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10208.png",
+
+  // 🔴 HOLLANDA LİGİ (EREDIVISIE)
+  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
+  "AJAX": "https://images.fotmob.com/image_resources/logo/teamlogo/8593.png",
+  "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/10229.png",
+  "TWENTE": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
+
+  // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
+  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
+  "ANDERLECHT": "https://images.fotmob.com/image_resources/logo/teamlogo/8635.png",
+  "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
+  "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
+  "GENT": "https://images.fotmob.com/image_resources/logo/teamlogo/9996.png",
+  "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
+
+  // 🔴 İSKOÇYA LİGİ (PREMIERSHIP)
+  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
+  "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
+  "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
+  "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
+
   "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
   "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
@@ -242,9 +297,7 @@ const localTeamLogos: Record<string, string> = {
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
-  "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
-  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+ 
   
   "OLYMPIC LYON": "/logos/lyon.png",
   "OLYMPIQUE LYON": "/logos/lyon.png",
@@ -291,7 +344,7 @@ const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => 
     const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
 
     let leagueLogoUrl = null;
-    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png";
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/commons/e/e2/UEFA_Champions_League_logo.png?utm_source=tr.wikipedia.org&utm_campaign=index&utm_content=original";
     else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/73.png";
     else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/10216.png";
     else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
@@ -300,6 +353,12 @@ const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => 
     else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
     else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
     else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png";
+    else if (upCat.includes("ALMANYA") || upCat.includes("BUNDESLIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/54.png";
+    else if (upCat.includes("FRANSA") || upCat.includes("LIGUE 1")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/53.png";
+    else if (upCat.includes("PORTEKİZ") || upCat.includes("PRIMEIRA LIGA") || upCat.includes("LIGA NOS")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/61.png";
+    else if (upCat.includes("HOLLANDA") || upCat.includes("EREDIVISIE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/57.png";
+    else if (upCat.includes("BELÇİKA") || upCat.includes("PRO LEAGUE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/40.png";
+    else if (upCat.includes("İSKOÇYA") || upCat.includes("PREMIERSHIP")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/46.png";
 
     let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
 
@@ -324,27 +383,40 @@ const getSystemCurrentTime = () => {
 
 const checkGateStatus = () => {
     const now = getSystemCurrentTime();
-    const currentDay = now.getDay(); 
-    const currentHour = now.getHours();
+    const d = now.getDay(); 
+    const h = now.getHours();
+    const m = now.getMinutes();
 
-    if (currentDay === 5 && currentHour >= 21) return 'OPEN';
-    if (currentDay === 6) return 'OPEN'; 
-    if (currentDay === 0) return 'OPEN'; 
-    if (currentDay === 1 && currentHour < 21) return 'OPEN';
+    // 1. Cuma (5) saat 14:30 ve sonrası AÇIK
+    if (d === 5 && (h > 14 || (h === 14 && m >= 30))) return 'OPEN';
+    
+    // 2. Cumartesi (6), Pazar (0), Pazartesi (1), Salı (2) TAM GÜN AÇIK
+    if (d === 6 || d === 0 || d === 1 || d === 2) return 'OPEN';
+    
+    // 3. Çarşamba (3) saat 20:00'a kadar AÇIK (Yani saat 19:59'a kadar girilebilir)
+    if (d === 3 && h < 20) return 'OPEN';
 
+    // Diğer tüm zamanlar (Çarşamba 20:00 sonrası, Perşembe) KAPALI
     return 'CLOSED';
 };
 
-// 🔴 MÜHÜR KIRILMA MOTORU (Pazartesi 21:01 - Cuma 20:59 arası)
+// 🔴 MÜHÜR KIRILMA MOTORU 
 const isSealBroken = () => {
     const now = getSystemCurrentTime();
     const d = now.getDay();
     const h = now.getHours();
     const m = now.getMinutes();
 
-    if (d === 1 && (h > 21 || (h === 21 && m >= 1))) return true;
-    if (d === 2 || d === 3 || d === 4) return true;
-    if (d === 5 && h < 21) return true;
+    // 1. Çarşamba (3) saat 20:01 ve sonrası MÜHÜR KIRILIR (Açık)
+    if (d === 3 && (h > 20 || (h === 20 && m >= 1))) return true;
+    
+    // 2. Perşembe (4) tam gün boyunca MÜHÜR KIRIK (Açık)
+    if (d === 4) return true;
+    
+    // 3. Cuma (5) saat 14:30'a kadar (Yani yeni gişe açılana kadar) MÜHÜR KIRIK (Açık)
+    if (d === 5 && (h < 14 || (h === 14 && m < 30))) return true;
+
+    // Gişe açıkken mühür sağlamdır, kimse kimsenin tahminini göremez!
     return false;
 };
 
