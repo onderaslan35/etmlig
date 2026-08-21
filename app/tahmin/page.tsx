@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ANA YARIŞMACI LİSTESİ (SABİT BETON KADRO - ŞİFRELER GÜNCELLENDİ) 🔴
+// 🔴 ANA YARIŞMACI LİSTESİ (SABİT BETON KADRO - ŞİFRELER GÜNCEL) 🔴
 const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
   "262740": { pass: "4940", name: "ABDULLAH DİK" },
@@ -62,7 +62,7 @@ const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "262753": { pass: "6253", name: "YUSUF KIZILTUĞ" }
 };
 
-// 🔴 YEREL LOGOLAR 🔴
+// 🔴 FOTMOB & YEREL LOGO BANKASI 🔴
 const localTeamLogos: Record<string, string> = {
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -91,14 +91,11 @@ const localTeamLogos: Record<string, string> = {
   "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
   "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
   "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
-  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
   "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
   "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
   "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
-  "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
-  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
@@ -108,7 +105,6 @@ const localTeamLogos: Record<string, string> = {
   "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
   "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
   "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
-  "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
   "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
   "KIZILYILDIZ": "https://en.wikipedia.org/wiki/Special:FilePath/Red_Star_Belgrade_crest.svg",
   "LEVADIA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Levadia_Tallinnin.png",
@@ -133,19 +129,12 @@ const localTeamLogos: Record<string, string> = {
   "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
   "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
-  "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
-  "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
-  "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
-  "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
-  "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
 
-  "BOCA JUNIORS":  "https://images.fotmob.com/image_resources/logo/teamlogo/10077.png",
-  "RIVER PLATE":  "https://images.fotmob.com/image_resources/logo/teamlogo/10078.png",
-
+  // 🇪🇸 İSPANYA
   "REAL MADRID": "https://en.wikipedia.org/wiki/Special:FilePath/Real_Madrid_CF.svg",
   "BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
   "FC BARCELONA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Barcelona_(crest).svg",
@@ -184,7 +173,9 @@ const localTeamLogos: Record<string, string> = {
   "DEPORTIVO LA CORUNA": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Deportivo_La_Coru%C3%B1a_logo.svg",
   "RACING SANTANDER": "https://images.fotmob.com/image_resources/logo/teamlogo/8696_large.png",
 
+  // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
+  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
   "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
   "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
@@ -197,12 +188,14 @@ const localTeamLogos: Record<string, string> = {
   "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
   "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
   "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
+  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
   "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
   "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
   "SUNDERLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
 
+  // 🇮🇹 İTALYA
   "INTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
   "İNTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
   "MILAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
@@ -229,7 +222,7 @@ const localTeamLogos: Record<string, string> = {
   "SASSUOLO": "https://images.fotmob.com/image_resources/logo/teamlogo/7943.png",
   "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
 
-  // 🔴 ALMANYA BUNDESLIGA TAKIMLARI (FOTMOB ÖZEL)
+  // 🇩🇪 ALMANYA
   "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BAYERN MUNICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
@@ -253,24 +246,45 @@ const localTeamLogos: Record<string, string> = {
   "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
   "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
   "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
+  "FC HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
   "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
   "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
-  // 🔴 PORTEKİZ LİGİ (PRIMEIRA LIGA)
+
+  // 🇫🇷 FRANSA
+  "PSG": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
+  "PARİS SG": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
+  "PARIS SG": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
+  "MARSİLYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8592.png",
+  "MARSEILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8592.png",
+  "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
+  "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+  "LYON": "https://images.fotmob.com/image_resources/logo/teamlogo/9748.png",
+  "OLYMPIQUE LYON": "https://images.fotmob.com/image_resources/logo/teamlogo/9748.png",
+  "OLİMPİC LYON": "https://images.fotmob.com/image_resources/logo/teamlogo/9748.png",
+  "LENS": "https://images.fotmob.com/image_resources/logo/teamlogo/8588.png",
+  "RENNES": "https://images.fotmob.com/image_resources/logo/teamlogo/9851.png",
+  "NICE": "https://images.fotmob.com/image_resources/logo/teamlogo/9831.png",
+  "LE HAVRE": "https://en.wikipedia.org/wiki/Special:FilePath/Le_Havre_AC_logo.svg",
+  "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
+
+  // 🇵🇹 PORTEKİZ
   "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
   "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
   "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
   "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
+  "BENFICA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
   "BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10208.png",
 
-  // 🔴 HOLLANDA LİGİ (EREDIVISIE)
+  // 🇳🇱 HOLLANDA
   "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
   "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
   "AJAX": "https://images.fotmob.com/image_resources/logo/teamlogo/8593.png",
   "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/10229.png",
   "TWENTE": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
+  "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
 
-  // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
+  // 🇧🇪 BELÇİKA
   "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
   "ANDERLECHT": "https://images.fotmob.com/image_resources/logo/teamlogo/8635.png",
   "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
@@ -278,31 +292,30 @@ const localTeamLogos: Record<string, string> = {
   "GENT": "https://images.fotmob.com/image_resources/logo/teamlogo/9996.png",
   "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
 
-  // 🔴 İSKOÇYA LİGİ (PREMIERSHIP)
+  // 🏴󠁧󠁢󠁳󠁣󠁴󠁿 İSKOÇYA
   "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
   "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
+  "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
   "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
   "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
 
-  "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
-  "LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
-  "LE HAVRE": "https://en.wikipedia.org/wiki/Special:FilePath/Le_Havre_AC_logo.svg",
-  "AUXERRE": "https://images.fotmob.com/image_resources/logo/teamlogo/8583_large.png",
-  "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
-
+  // YEREL & DİĞER
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
- 
-  
-  "OLYMPIC LYON": "/logos/lyon.png",
-  "OLYMPIQUE LYON": "/logos/lyon.png",
-  "OLYMPIQUE LYONNAIS": "/logos/lyon.png",
-  "LYON": "/logos/lyon.png"
+  "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
+  "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
+  "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
+  "SLAVIA PRAG": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Slavia_Praha_logo.svg",
+  "DINAMO ZAGREP": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
+  "LUGANO": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Lugano_logo.svg",
+  "HACKEN": "https://en.wikipedia.org/wiki/Special:FilePath/BK_H%C3%A4cken_logo.png",
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
+  "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
+  "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png"
 };
 
 const normalizeTurkish = (text: string) => {
@@ -344,7 +357,7 @@ const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => 
     const awayLogoUrl = localTeamLogos[awayTeam] || getLocalLogoUrl(awayTeam);
 
     let leagueLogoUrl = null;
-    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/commons/e/e2/UEFA_Champions_League_logo.png?utm_source=tr.wikipedia.org&utm_campaign=index&utm_content=original";
+    if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png";
     else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/73.png";
     else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/10216.png";
     else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
@@ -366,7 +379,24 @@ const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => 
     else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
     else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
     else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
-    else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) {
+        theme = { ...theme, bgImg: "url('/pl-bg.png')", containerBorder: "border-fuchsia-500/50", containerShadow: "shadow-[0_0_40px_rgba(192,38,211,0.4)]", containerBg: "bg-[#0b0410]", badgeBg: "bg-fuchsia-950/80 backdrop-blur-sm", badgeText: "text-fuchsia-300", badgeBorder: "border-fuchsia-400/80 shadow-[0_0_10px_currentColor]", catText: "text-fuchsia-200 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]", scoreBorder: "border-fuchsia-500/30", colonText: "text-fuchsia-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#0b0410]/90 border-fuchsia-900/30" };
+    }
+    else if (upCat.includes("İTALYA") || upCat.includes("SERIE A")) {
+        theme = { ...theme, bgImg: "url('/seriea-bg.png')", containerBorder: "border-blue-500/50", containerShadow: "shadow-[0_0_40px_rgba(59,130,246,0.4)]", containerBg: "bg-[#040b16]", badgeBg: "bg-blue-900/80 backdrop-blur-sm", badgeText: "text-blue-300", badgeBorder: "border-blue-400/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-200 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]", scoreBorder: "border-blue-500/30", colonText: "text-yellow-400/50", tagText: "text-yellow-400", tagBg: "bg-yellow-950/90", tagBorder: "border-yellow-500/80", bottomBar: "bg-[#040b16]/90 border-blue-900/30" };
+    }
+    else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) {
+        theme = { ...theme, bgImg: "url('/laliga-bg.png')", containerBorder: "border-rose-500/50", containerShadow: "shadow-[0_0_40px_rgba(225,29,72,0.4)]", containerBg: "bg-[#0f0407]", badgeBg: "bg-rose-950/80 backdrop-blur-sm", badgeText: "text-rose-300", badgeBorder: "border-rose-400/80 shadow-[0_0_10px_currentColor]", catText: "text-rose-200 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]", scoreBorder: "border-rose-500/30", colonText: "text-rose-400/50", tagText: "text-rose-300", tagBg: "bg-rose-950/90", tagBorder: "border-rose-400/80", bottomBar: "bg-[#0f0407]/90 border-rose-900/30" };
+    }
+    else if (upCat.includes("FRANSA") || upCat.includes("LIGUE 1")) {
+        theme = { ...theme, bgImg: "url('/ligue1-bg.png')", containerBorder: "border-lime-500/50", containerShadow: "shadow-[0_0_40px_rgba(132,204,22,0.4)]", containerBg: "bg-[#040a05]", badgeBg: "bg-lime-950/80 backdrop-blur-sm", badgeText: "text-lime-300", badgeBorder: "border-lime-400/80 shadow-[0_0_10px_currentColor]", catText: "text-lime-200 drop-shadow-[0_0_8px_rgba(163,230,53,0.8)]", scoreBorder: "border-lime-500/30", colonText: "text-lime-400/50", tagText: "text-lime-300", tagBg: "bg-lime-950/90", tagBorder: "border-lime-400/80", bottomBar: "bg-[#040a05]/90 border-lime-900/30" };
+    }
+    else if (upCat.includes("ALMANYA") || upCat.includes("BUNDESLIGA")) {
+        theme = { ...theme, bgImg: "url('/bundesliga-bg.png')", containerBorder: "border-red-600/50", containerShadow: "shadow-[0_0_40px_rgba(220,38,38,0.4)]", containerBg: "bg-[#0a0202]", badgeBg: "bg-red-950/80 backdrop-blur-sm", badgeText: "text-red-300", badgeBorder: "border-red-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-slate-500/30", colonText: "text-slate-400/50", tagText: "text-slate-300", tagBg: "bg-slate-800/90", tagBorder: "border-slate-500/80", bottomBar: "bg-[#0a0202]/90 border-red-900/30" };
+    }
+    else {
+        theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
+    }
     
     return theme;
 };
@@ -381,42 +411,42 @@ const getSystemCurrentTime = () => {
     return new Date();
 };
 
+// 🔴 GİŞE KONTROLÜ (TEST: CUMA 14:55 AÇILIŞ - ÇARŞAMBA 20:00 KAPANIŞ) 🔴
 const checkGateStatus = () => {
     const now = getSystemCurrentTime();
     const d = now.getDay(); 
     const h = now.getHours();
     const m = now.getMinutes();
 
-    // 1. Cuma (5) saat 14:30 ve sonrası AÇIK
-    if (d === 5 && (h > 14 || (h === 14 && m >= 30))) return 'OPEN';
+    // 1. Cuma (5) saat 14:55 ve sonrası AÇIK
+    if (d === 5 && (h > 14 || (h === 14 && m >= 55))) return 'OPEN';
     
     // 2. Cumartesi (6), Pazar (0), Pazartesi (1), Salı (2) TAM GÜN AÇIK
     if (d === 6 || d === 0 || d === 1 || d === 2) return 'OPEN';
     
-    // 3. Çarşamba (3) saat 20:00'a kadar AÇIK (Yani saat 19:59'a kadar girilebilir)
+    // 3. Çarşamba (3) saat 20:00'a kadar AÇIK
     if (d === 3 && h < 20) return 'OPEN';
 
-    // Diğer tüm zamanlar (Çarşamba 20:00 sonrası, Perşembe) KAPALI
+    // Diğer tüm zamanlar KAPALI
     return 'CLOSED';
 };
 
-// 🔴 MÜHÜR KIRILMA MOTORU 
+// 🔴 MÜHÜR ŞALTERİ (ÇARŞAMBA 20:01'DE KIRILIR) 🔴
 const isSealBroken = () => {
     const now = getSystemCurrentTime();
     const d = now.getDay();
     const h = now.getHours();
     const m = now.getMinutes();
 
-    // 1. Çarşamba (3) saat 20:01 ve sonrası MÜHÜR KIRILIR (Açık)
+    // 1. Çarşamba (3) saat 20:01 ve sonrası MÜHÜR KIRIK (Açık)
     if (d === 3 && (h > 20 || (h === 20 && m >= 1))) return true;
     
     // 2. Perşembe (4) tam gün boyunca MÜHÜR KIRIK (Açık)
     if (d === 4) return true;
     
-    // 3. Cuma (5) saat 14:30'a kadar (Yani yeni gişe açılana kadar) MÜHÜR KIRIK (Açık)
-    if (d === 5 && (h < 14 || (h === 14 && m < 30))) return true;
+    // 3. Cuma (5) saat 14:55'e kadar MÜHÜR KIRIK (Açık)
+    if (d === 5 && (h < 14 || (h === 14 && m < 55))) return true;
 
-    // Gişe açıkken mühür sağlamdır, kimse kimsenin tahminini göremez!
     return false;
 };
 
@@ -441,7 +471,6 @@ export default function TahminlerPortal() {
   const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
   
-  // MERGED ACCOUNTS: Önce TEST_ACCOUNTS (Beton Kadro), sonra Veritabanı
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
   useEffect(() => {
@@ -450,7 +479,6 @@ export default function TahminlerPortal() {
         if (data) {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
-               // SADECE TEST ACCOUNTS İÇİNDE OLMAYANLARI EKLER, BÖYLECE GÜVENLİK SAĞLANIR
                if (!newAccounts[String(p.user_id)]) {
                  newAccounts[String(p.user_id)] = { pass: p.password, name: p.full_name };
                }
@@ -498,7 +526,7 @@ export default function TahminlerPortal() {
     const gateStatus = checkGateStatus();
     if (gateStatus === 'CLOSED' && username.trim() !== 'mankoman') {
         const prevWk = activeBulletinWeek > 1 ? activeBulletinWeek - 1 : activeBulletinWeek;
-        setLoginError(`${prevWk}. hafta için tahmin yapma süresi bitmiştir. ${activeBulletinWeek}. hafta programı için lütfen bu Cuma saat 21:00'ı bekleyiniz. Program müteakip ${activeBulletinWeek}. hafta Cuma 21:00'da aktifleşir ve Pazartesi 21:00'da kapanır. Tahminleri görmek için Resmi Deklarasyon sayfasına gidiniz.`);
+        setLoginError(`${prevWk}. hafta için tahmin yapma süresi bitmiştir. ${activeBulletinWeek}. hafta programı için lütfen bu Cuma saat 14:55'i bekleyiniz. Program müteakip Cuma aktifleşir ve Çarşamba 20:00'da kapanır.`);
         return;
     }
 
@@ -567,8 +595,17 @@ export default function TahminlerPortal() {
 
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
+  // 🔴 TEK ŞALTERLİ GÜVENLİK: Mühür kırılmadan aktif haftanın verisi Supabase'den çekilmez! 🔴
   useEffect(() => {
      const fetchLivePreds = async () => {
+        if (!selectedTahminWeek) return;
+
+        // Mühür kapalıysa ve aktif hafta seçilmeye çalışılıyorsa veriyi çekme!
+        if (selectedTahminWeek === activeBulletinWeek && !isSealBroken()) {
+            setLivePredictionsData({});
+            return;
+        }
+
         let allData: any[] = []; let from = 0; let step = 999; let keepFetching = true;
         while(keepFetching) {
             const { data } = await supabase.from('player_predictions').select('*').eq('week_num', selectedTahminWeek).range(from, from + step);
@@ -578,7 +615,6 @@ export default function TahminlerPortal() {
             const newData: Record<number, Record<string, string[]>> = {};
             allData.forEach(row => {
                 const wk = row.week_num; const uid = String(row.user_id);
-                // 🔴 EKMEL ZIRHI: MANKOMAN'I RADARDAN GİZLE
                 if (uid === 'mankoman') return; 
 
                 if(!newData[wk]) newData[wk] = {};
@@ -589,7 +625,7 @@ export default function TahminlerPortal() {
         } else { setLivePredictionsData({}); }
      };
      fetchLivePreds();
-  }, [selectedTahminWeek, view]);
+  }, [selectedTahminWeek, view, activeBulletinWeek]);
 
   const [lobbyMissing, setLobbyMissing] = useState(0);
   const [lobbySubmitted, setLobbySubmitted] = useState(0);
@@ -651,16 +687,17 @@ export default function TahminlerPortal() {
 
   const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
 
-  // 🔴 MÜHÜR KIRILMA VE İFŞA FİLTRESİ
+  // 🔴 TEK ŞALTERLİ MÜHÜR FİLTRESİ (HEM RESMİ DEKLARASYON HEM TAHMİNMATİK İÇİN AYNI ÇALIŞIR) 🔴
   const unlockedWeeks = useMemo(() => {
       return availableWeeks.filter(w => {
-          if (w < activeBulletinWeek) return true; 
+          if (w < activeBulletinWeek) return true; // Geçmiş haftalar her zaman açık
           if (w === activeBulletinWeek) {
-              return checkGateStatus() === 'CLOSED' && isSealBroken() && lobbySubmitted > 0;
+              // Aktif hafta sadece MÜHÜR KIRILINCA (Çarşamba 20:01) açılır!
+              return isSealBroken();
           }
           return false;
       });
-  }, [availableWeeks, activeBulletinWeek, lobbySubmitted]);
+  }, [availableWeeks, activeBulletinWeek]);
 
   useEffect(() => {
       if (unlockedWeeks.length > 0 && (!selectedTahminWeek || !unlockedWeeks.includes(selectedTahminWeek))) {
@@ -690,7 +727,6 @@ export default function TahminlerPortal() {
                <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1>
                <p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p>
                
-               {/* 🔴 GİZLİ İSTİHBARAT BÖLÜMÜ (SADECE ADMİN YAZINCA GÖZÜKÜR) 🔴 */}
                {activeBulletinWeek > 0 && username.trim().toLowerCase() === 'mankoman' && (
                    <div className="mt-4 flex items-center justify-center gap-4 animate-fade-in">
                        <span className="bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
@@ -708,21 +744,21 @@ export default function TahminlerPortal() {
               <div onClick={() => setView('declaration')} className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all group shadow-[0_0_30px_rgba(79,70,229,0.1)]">
                 <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><span className="text-4xl">📜</span></div>
                 <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Pazartesi 21:00'dan itibaren tahmin tabloları mühürlenip herkese açılır.</p>
+                <p className="text-slate-400 text-xs leading-relaxed">Çarşamba 20:01'den itibaren tahmin tabloları mühürlenip herkese açılır.</p>
                 <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">Arşive Giriş Yap</div>
               </div>
 
               <div onClick={() => setView('tahminmatik')} className="bg-slate-900/50 border-2 border-emerald-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-emerald-900/20 hover:border-emerald-500 transition-all group shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_currentColor]"><span className="text-4xl drop-shadow-md">⚡</span></div>
                 <h2 className="text-xl font-black text-emerald-400 tracking-widest mb-3">TAHMİNMATİK</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Maçları anlık takip edin, istediğiniz skoru kimin tahmin ettiğini anında görün.</p>
+                <p className="text-slate-400 text-xs leading-relaxed">Mührü açılmış haftaların maçlarını takip edin, skoru kimin tahmin ettiğini görün.</p>
                 <div className="mt-8 px-6 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-emerald-600 group-hover:text-white transition-colors">Tahminmatik'i Aç</div>
               </div>
 
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)]">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
                    <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${checkGateStatus() === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>
-                      {checkGateStatus() === 'OPEN' ? 'GİŞE AÇIK (CUMA 21:00)' : 'GİŞE KAPALI / ZAMAN KİLİDİ'}
+                      {checkGateStatus() === 'OPEN' ? 'GİŞE AÇIK (CUMA 14:55)' : 'GİŞE KAPALI / ZAMAN KİLİDİ'}
                    </span>
                 </div>
                 
@@ -750,7 +786,7 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== TAHMİNMATİK (ARŞİV) ===================== */}
+        {/* ===================== TAHMİNMATİK ===================== */}
         {view === 'tahminmatik' && (
           <div className="animate-fade-in-up w-full">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)] relative z-50">
@@ -826,7 +862,7 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== RESMİ DEKLARASYON (ZAMAN KİLİTLİ ARŞİV) ===================== */}
+        {/* ===================== RESMİ DEKLARASYON ===================== */}
         {view === 'declaration' && (
           <div className="animate-fade-in-up w-full">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative z-50">
@@ -896,7 +932,7 @@ export default function TahminlerPortal() {
                   <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
                      {unlockedWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
                   </h2>
-                  <p className="text-slate-500 text-sm mt-2">Pazartesi saat 21:00'dan sonra listeler mühürlenip herkese açılır.</p>
+                  <p className="text-slate-500 text-sm mt-2">Çarşamba saat 20:01'den sonra listeler mühürlenip herkese açılır.</p>
                </div> 
             )}
 
@@ -924,7 +960,7 @@ export default function TahminlerPortal() {
           </div>
         )}
 
-        {/* ===================== ELİT TAHMİN GİRİŞ PORTALI (AKTİF HAFTA GİRİŞİ) ===================== */}
+        {/* ===================== ELİT TAHMİN GİRİŞ PORTALI ===================== */}
         {view === 'entry' && (
           <div className="w-full animate-fade-in-up">
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
@@ -974,7 +1010,6 @@ export default function TahminlerPortal() {
                           </div>
                           <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30 relative">
                             
-                            {/* 🔴 TAHMİNLER SAYFASINDA DA LİG LOGOSU GÖRÜNECEK 🔴 */}
                             {theme.leagueLogo && (
                               <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
                                 <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
