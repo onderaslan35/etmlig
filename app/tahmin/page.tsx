@@ -389,7 +389,7 @@ const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => 
         theme = { ...theme, bgImg: "url('/laliga-bg.png')", containerBorder: "border-rose-500/50", containerShadow: "shadow-[0_0_40px_rgba(225,29,72,0.4)]", containerBg: "bg-[#0f0407]", badgeBg: "bg-rose-950/80 backdrop-blur-sm", badgeText: "text-rose-300", badgeBorder: "border-rose-400/80 shadow-[0_0_10px_currentColor]", catText: "text-rose-200 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]", scoreBorder: "border-rose-500/30", colonText: "text-rose-400/50", tagText: "text-rose-300", tagBg: "bg-rose-950/90", tagBorder: "border-rose-400/80", bottomBar: "bg-[#0f0407]/90 border-rose-900/30" };
     }
     else if (upCat.includes("FRANSA") || upCat.includes("LIGUE 1")) {
-        theme = { ...theme, bgImg: "url('/ligue1-bg.png')", containerBorder: "border-lime-500/50", containerShadow: "shadow-[0_0_40px_rgba(132,204,22,0.4)]", containerBg: "bg-[#040a05]", badgeBg: "bg-lime-950/80 backdrop-blur-sm", badgeText: "text-lime-300", badgeBorder: "border-lime-400/80 shadow-[0_0_10px_currentColor]", catText: "text-lime-200 drop-shadow-[0_0_8px_rgba(163,230,53,0.8)]", scoreBorder: "border-lime-500/30", colonText: "text-lime-400/50", tagText: "text-lime-300", tagBg: "bg-lime-950/90", tagBorder: "border-lime-400/80", bottomBar: "bg-[#040a05]/90 border-lime-900/30" };
+         theme = { ...theme, bgImg: "url('/ligue1-bg.png')", containerBorder: "border-lime-500/50", containerShadow: "shadow-[0_0_40px_rgba(132,204,22,0.4)]", containerBg: "bg-[#040a05]", badgeBg: "bg-lime-950/80 backdrop-blur-sm", badgeText: "text-lime-300", badgeBorder: "border-lime-400/80 shadow-[0_0_10px_currentColor]", catText: "text-lime-200 drop-shadow-[0_0_8px_rgba(163,230,53,0.8)]", scoreBorder: "border-lime-500/30", colonText: "text-lime-400/50", tagText: "text-lime-300", tagBg: "bg-lime-950/90", tagBorder: "border-lime-400/80", bottomBar: "bg-[#040a05]/90 border-lime-900/30" };
     }
     else if (upCat.includes("ALMANYA") || upCat.includes("BUNDESLIGA")) {
         theme = { ...theme, bgImg: "url('/bundesliga-bg.png')", containerBorder: "border-red-600/50", containerShadow: "shadow-[0_0_40px_rgba(220,38,38,0.4)]", containerBg: "bg-[#0a0202]", badgeBg: "bg-red-950/80 backdrop-blur-sm", badgeText: "text-red-300", badgeBorder: "border-red-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-slate-500/30", colonText: "text-slate-400/50", tagText: "text-slate-300", tagBg: "bg-slate-800/90", tagBorder: "border-slate-500/80", bottomBar: "bg-[#0a0202]/90 border-red-900/30" };
@@ -693,11 +693,13 @@ export default function TahminlerPortal() {
           if (w < activeBulletinWeek) return true; // Geçmiş haftalar her zaman açık
           if (w === activeBulletinWeek) {
               // Aktif hafta sadece MÜHÜR KIRILINCA (Çarşamba 20:01) açılır!
+              // ADMIN (mankoman) İÇİN MÜHÜR SÜREKLİ KIRIKTIR
+              if (username.trim().toLowerCase() === 'mankoman') return true;
               return isSealBroken();
           }
           return false;
       });
-  }, [availableWeeks, activeBulletinWeek]);
+  }, [availableWeeks, activeBulletinWeek, username]);
 
   useEffect(() => {
       if (unlockedWeeks.length > 0 && (!selectedTahminWeek || !unlockedWeeks.includes(selectedTahminWeek))) {
@@ -723,9 +725,10 @@ export default function TahminlerPortal() {
         
         {view === 'lobby' && (
           <div className="animate-fade-in-up">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
                <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1>
-               <p className="text-slate-400 mt-4 text-lg font-medium">Lütfen yapmak istediğiniz işlemi seçin.</p>
+               <p className="text-amber-400 mt-5 text-lg font-bold tracking-wide">Lütfen tahminlerinizi buradan yapın.</p>
+               <div className="text-amber-500 text-3xl animate-bounce mt-2">⬇</div>
                
                {activeBulletinWeek > 0 && username.trim().toLowerCase() === 'mankoman' && (
                    <div className="mt-4 flex items-center justify-center gap-4 animate-fade-in">
@@ -739,26 +742,14 @@ export default function TahminlerPortal() {
                )}
             </div>
             
+            {/* 🔴 SIRALAMA TERSİNE ÇEVRİLDİ 🔴 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
               
-              <div onClick={() => setView('declaration')} className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all group shadow-[0_0_30px_rgba(79,70,229,0.1)]">
-                <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><span className="text-4xl">📜</span></div>
-                <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Çarşamba 20:01'den itibaren tahmin tabloları mühürlenip herkese açılır.</p>
-                <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">Arşive Giriş Yap</div>
-              </div>
-
-              <div onClick={() => setView('tahminmatik')} className="bg-slate-900/50 border-2 border-emerald-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-emerald-900/20 hover:border-emerald-500 transition-all group shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-                <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_currentColor]"><span className="text-4xl drop-shadow-md">⚡</span></div>
-                <h2 className="text-xl font-black text-emerald-400 tracking-widest mb-3">TAHMİNMATİK</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Mührü açılmış haftaların maçlarını takip edin, skoru kimin tahmin ettiğini görün.</p>
-                <div className="mt-8 px-6 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-emerald-600 group-hover:text-white transition-colors">Tahminmatik'i Aç</div>
-              </div>
-
-              <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+              {/* 1. GİŞE / GİRİŞ KARTI (İLK SIRA) */}
+              <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)] order-1">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
                    <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${checkGateStatus() === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>
-                      {checkGateStatus() === 'OPEN' ? 'GİŞE AÇIK (CUMA 14:55)' : 'GİŞE KAPALI / ZAMAN KİLİDİ'}
+                      {checkGateStatus() === 'OPEN' ? 'TAHMİNLER AÇIK (CUMA 14:55)' : 'TAHMİNLER KAPALI / ZAMAN KİLİDİ'}
                    </span>
                 </div>
                 
@@ -780,6 +771,22 @@ export default function TahminlerPortal() {
                      {checkGateStatus() === 'OPEN' || username.trim() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
                   </button>
                 </form>
+              </div>
+
+              {/* 2. RESMİ DEKLARASYON (İKİNCİ SIRA) */}
+              <div onClick={() => setView('declaration')} className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all group shadow-[0_0_30px_rgba(79,70,229,0.1)] order-2">
+                <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><span className="text-4xl">📜</span></div>
+                <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
+                <p className="text-slate-400 text-xs leading-relaxed">Çarşamba 20:01'den itibaren tahmin tabloları mühürlenip herkese açılır.</p>
+                <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">Arşive Giriş Yap</div>
+              </div>
+
+              {/* 3. TAHMİNMATİK (ÜÇÜNCÜ SIRA) */}
+              <div onClick={() => setView('tahminmatik')} className="bg-slate-900/50 border-2 border-emerald-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-emerald-900/20 hover:border-emerald-500 transition-all group shadow-[0_0_30px_rgba(16,185,129,0.1)] order-3">
+                <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_currentColor]"><span className="text-4xl drop-shadow-md">⚡</span></div>
+                <h2 className="text-xl font-black text-emerald-400 tracking-widest mb-3">TAHMİNMATİK</h2>
+                <p className="text-slate-400 text-xs leading-relaxed">Mührü açılmış haftaların maçlarını takip edin, skoru kimin tahmin ettiğini görün.</p>
+                <div className="mt-8 px-6 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-emerald-600 group-hover:text-white transition-colors">Tahminmatik'i Aç</div>
               </div>
 
             </div>
