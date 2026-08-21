@@ -601,7 +601,8 @@ export default function TahminlerPortal() {
         if (!selectedTahminWeek) return;
 
         // Mühür kapalıysa ve aktif hafta seçilmeye çalışılıyorsa veriyi çekme!
-        if (selectedTahminWeek === activeBulletinWeek && !isSealBroken()) {
+        // (🔴 EKMEL DEVRİMİ: ADMİN "mankoman" HARİÇ! 🔴)
+        if (selectedTahminWeek === activeBulletinWeek && !isSealBroken() && username.trim().toLowerCase() !== 'mankoman') {
             setLivePredictionsData({});
             return;
         }
@@ -625,7 +626,7 @@ export default function TahminlerPortal() {
         } else { setLivePredictionsData({}); }
      };
      fetchLivePreds();
-  }, [selectedTahminWeek, view, activeBulletinWeek]);
+  }, [selectedTahminWeek, view, activeBulletinWeek, username]);
 
   const [lobbyMissing, setLobbyMissing] = useState(0);
   const [lobbySubmitted, setLobbySubmitted] = useState(0);

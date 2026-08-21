@@ -1,10 +1,11 @@
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
 // 🔴 KAYBOLAN ÜST MENÜYÜ (NAVBAR) GERİ ÇAĞIRIYORUZ 🔴
 import Navbar from "@/components/Navbar"; 
-import { Analytics } from "@vercel/analytics/react";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,7 +31,7 @@ export default function RootLayout({
 
         {/* 🔴 VERCEL RADARI 🔴 */}
         <Analytics />
-        
+        <Analytics />
       </body>
     </html>
   );
