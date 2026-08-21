@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+
+// 🔴 KAYBOLAN ÜST MENÜYÜ (NAVBAR) GERİ ÇAĞIRIYORUZ 🔴
+import Navbar from "@/components/Navbar"; 
 import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// 🔴 KARARGAH KÜNYESİ (SEO VE TARAYICI BİLGİLERİ)
 export const metadata: Metadata = {
   title: "ETM Ligi Merkez Portalı",
   description: "Elit Tahmin Skor (Tam İsabet) Merkezi Karargahı",
@@ -20,10 +22,13 @@ export default function RootLayout({
     <html lang="tr">
       <body className={inter.className}>
         
-        {/* 🔴 ANA CEPHELER (SAYFALAR) BURADA YÜKLENİR */}
+        {/* 🔴 SİTENİN TEPESİNDEKİ MENÜ BURADA DEVREYE GİRİYOR 🔴 */}
+        <Navbar />
+        
+        {/* 🔴 ALT SAYFALAR (ARŞİV, TAHMİNLER VB.) BURADA YÜKLENİR 🔴 */}
         {children}
 
-        {/* 🔴 EKMEL DEVRİMİ: VERCEL GÖRÜNMEZ RADARI (GÜNLÜK HİT SAYACI) 🔴 */}
+        {/* 🔴 VERCEL RADARI 🔴 */}
         <Analytics />
         
       </body>
