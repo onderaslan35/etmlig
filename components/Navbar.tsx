@@ -98,7 +98,7 @@ export default function Navbar() {
 
           {/* 🔴 MOBİL MENÜ BUTONU 🔴 */}
           <div className="lg:hidden flex items-center justify-between w-full px-2">
-            <span className="text-white font-black tracking-widest text-xl">MENÜ İÇİN ÜÇ ÇİZGİYE TIKLAYINIZ ---➡️ <span className="text-slate-500 text-sm"></span></span>
+            <span className="text-white font-black tracking-widest text-xl">MENÜ                  ➡️ <span className="text-slate-500 text-sm"></span></span>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-slate-400 hover:text-white focus:outline-none p-2 rounded-lg bg-slate-800/50"
