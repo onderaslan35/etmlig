@@ -690,7 +690,23 @@ export default function AdminRadarPortal() {
       }
 
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
-      const { data: liveData } = await supabase.from('live_matches').select('*');
+      
+      let currentBulten = bultenData || [];
+      if (selectedLiveWeek === 4 && currentBulten.length === 0) {
+         currentBulten = week4Matches.map(m => ({
+            match_index: m.id, week_num: 4, category: m.category, match_date: m.date, match_time: m.time, home_team: m.homeTeam, away_team: m.awayTeam
+         }));
+      }
+
+      setLiveMatchesDB(currentBulten);
+
+      // 🔴 EKMEL DEVRİMİ 2: CANLI MAÇLARDA 1000 SINIRINI ENGELLEYEN NOKTA ATIŞI FİLTRE 🔴
+      const idsToFetch = currentBulten.map((m: any) => getUniqueMatchId(selectedLiveWeek, m.match_index));
+      let liveData: any[] = [];
+      if (idsToFetch.length > 0) {
+         const { data } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
+         if (data) liveData = data;
+      }
       
       let allPredictions: any[] = [];
       let fetchMore = true;
@@ -702,6 +718,9 @@ export default function AdminRadarPortal() {
           .from('player_predictions')
           .select('*')
           .eq('week_num', selectedLiveWeek)
+          // 🔴 EKMEL DEVRİMİ 1: SIRALAMA GARANTİSİ! BUNDAN SONRA KİMSE UÇURUMA DÜŞMEZ! 🔴
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
           .range(from, from + step - 1);
           
         if (error) {
@@ -720,15 +739,6 @@ export default function AdminRadarPortal() {
         }
       }
 
-      let currentBulten = bultenData || [];
-      if (selectedLiveWeek === 4 && currentBulten.length === 0) {
-         currentBulten = week4Matches.map(m => ({
-            match_index: m.id, week_num: 4, category: m.category, match_date: m.date, match_time: m.time, home_team: m.homeTeam, away_team: m.awayTeam
-         }));
-      }
-
-      setLiveMatchesDB(currentBulten);
-
       const initialScores: Record<number, { home: string, away: string }> = {};
       const lockedMatches: Record<number, boolean> = {};
       const infoMap: Record<number, any> = {}; 
@@ -736,7 +746,7 @@ export default function AdminRadarPortal() {
 
       currentBulten.forEach(m => {
          const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
-         const liveInfo = liveData?.find(l => l.id === uniqueId);
+         const liveInfo = liveData.find(l => l.id === uniqueId);
          
          if (liveInfo) {
            initialScores[m.match_index] = { home: liveInfo.home_score, away: liveInfo.away_score };
@@ -833,6 +843,9 @@ export default function AdminRadarPortal() {
           .from('player_predictions')
           .select('*')
           .eq('week_num', selectedPredictionWeek)
+          // 🔴 EKMEL DEVRİMİ 1: SIRALAMA GARANTİSİ! BUNDAN SONRA KİMSE UÇURUMA DÜŞMEZ! 🔴
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
           .range(from, from + step - 1);
           
         if (!error && pDataChunk && pDataChunk.length > 0) {

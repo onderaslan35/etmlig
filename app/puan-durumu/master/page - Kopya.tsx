@@ -1,0 +1,185 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import LiveMatchCard from '@/components/LiveMatchCard';
+
+const allPlayersMasterList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN", "262714": "İSMAİL EKER", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY"
+};
+
+const masterWeek1Data: Record<string, { name: string; puan: number }> = { "262736": { name: "MEHMET ALİ KARA 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 34 }, "262755": { name: "DOĞAÇ ALKAN 🎯 (+3 PUAN HAFTANIN SKOR BONUSU)", puan: 24 }, "262719": { name: "UĞUR VARDAR", puan: 23 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 17 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 14 }, "262786": { name: "SEDAT DİŞLİ", puan: 12 }, "262717": { name: "MURAT ALİ", puan: 11 }, "262731": { name: "FATİH AYAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 10 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 10 }, "262750": { name: "MAHMUT CBR", puan: 9 }, "262728": { name: "ÖNDER ASLAN", puan: 8 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 8 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 8 }, "262716": { name: "BİROL DEMİREL", puan: 7 }, "262733": { name: "MUHSİN ASİLKAN", puan: 7 }, "262790": { name: "CUMALİ SÖKER", puan: 7 }, "262816": { name: "SEDAT SEDAT", puan: 7 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 4 }, "262813": { name: "KEMAL ERSOY", puan: 4 }, "262718": { name: "BEKİR KARADAĞ", puan: 3 }, "262702": { name: "MURAT KARA", puan: 1 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 1 }, "262707": { name: "HAKAN AYAN", puan: 1 }, "262714": { name: "İSMAİL EKER 🏆", puan: 1 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 1 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 1 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 1 }, "262744": { name: "İLYAS UYGUN", puan: 1 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 1 }, "262782": { name: "YUSUF ERBAY", puan: 1 } };
+const masterWeek2Data: Record<string, { name: string; puan: number }> = { "262756": { name: "EYÜP KARACAOĞLU 🏔️ (+3 PUAN HAFTANIN ZİRVE BONUSU)", puan: 19 }, "262709": { name: "SALİH KARACAOĞLU", puan: 13 }, "262755": { name: "DOĞAÇ ALKAN", puan: 13 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 12 }, "262790": { name: "CUMALİ SÖKER", puan: 12 }, "262728": { name: "ÖNDER ASLAN", puan: 11 }, "262726": { name: "HUDAVER TOPARDIC", puan: 9 }, "262711": { name: "RIDVAN DOGER", puan: 8 }, "262717": { name: "MURAT ALİ", puan: 7 }, "262737": { name: "ŞAHİN GEZGİNCİ", puan: 7 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 6 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 6 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 6 }, "262786": { name: "SEDAT DİŞLİ", puan: 6 }, "262816": { name: "SEDAT SEDAT", puan: 6 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 4 }, "262702": { name: "MURAT KARA", puan: 2 }, "262703": { name: "CEMALETTİN BELLİ", puan: 2 }, "262715": { name: "ŞEMSETTİN DÜGER", puan: 2 }, "262730": { name: "ÖNDER IŞIK", puan: 2 }, "262736": { name: "MEHMET ALİ KARA", puan: 2 }, "262740": { name: "ABDULLAH DİK", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262763": { name: "MUSTAFA ELMAS", puan: 2 }, "262708": { name: "BAYRAM YILMAZ", puan: 1 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262725": { name: "İLYAS KAZDAL", puan: 1 }, "262731": { name: "FATİH AYAN", puan: 1 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 1 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 1 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 1 }, "262758": { name: "MELİH PINAR", puan: 1 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 1 } };
+const masterWeek3Data: Record<string, { name: string; puan: number }> = { "262816": { name: "SEDAT SEDAT 👑🎯", puan: 31 }, "262733": { name: "MUHSİN ASİLKAN", puan: 19 }, "262706": { name: "GAZİ AYAN 🏆🏆", puan: 11 }, "262707": { name: "HAKAN AYAN", puan: 11 }, "262721": { name: "MUSTAFA GÜMÜŞÇÜ", puan: 11 }, "262763": { name: "MUSTAFA ELMAS", puan: 11 }, "262771": { name: "ULAŞ ADIGÜZEL", puan: 11 }, "262734": { name: "LEVENT YILDIRIM", puan: 9 }, "262755": { name: "DOĞAÇ ALKAN", puan: 8 }, "262756": { name: "EYÜP KARACAOĞLU", puan: 8 }, "262813": { name: "KEMAL ERSOY", puan: 8 }, "262702": { name: "MURAT KARA", puan: 7 }, "262711": { name: "RIDVAN DOGER", puan: 7 }, "262754": { name: "OSMAN ALİ AYDIN 🏆", puan: 7 }, "262786": { name: "SEDAT DİŞLİ", puan: 7 }, "351925": { name: "ALİOS GÖZTEPE", puan: 7 }, "262725": { name: "İLYAS KAZDAL", puan: 6 }, "262726": { name: "HUDAVER TOPARDIC", puan: 6 }, "262728": { name: "ÖNDER ASLAN", puan: 6 }, "262736": { name: "MEHMET ALİ KARA", puan: 6 }, "262709": { name: "SALİH KARACAOĞLU", puan: 5 }, "262714": { name: "İSMAİL EKER 🏆", puan: 5 }, "262730": { name: "ÖNDER IŞIK", puan: 5 }, "262738": { name: "MEVLÜT EVLER", puan: 5 }, "262753": { name: "YUSUF KIZILTUĞ", puan: 5 }, "262705": { name: "AHMET BİRCAN 🏆", puan: 4 }, "262740": { name: "ABDULLAH DİK", puan: 4 }, "262774": { name: "ŞENOL CAN ÇAKICI", puan: 4 }, "262782": { name: "YUSUF ERBAY", puan: 4 }, "262723": { name: "AYHAN LUŞOĞLU", puan: 3 }, "262731": { name: "FATİH AYAN", puan: 2 }, "262732": { name: "R. İLHAN KARACA 🏆🏆", puan: 2 }, "262739": { name: "UĞUR GÜRBÜZ", puan: 2 }, "262747": { name: "SAVAŞ ÇAĞLAYAN", puan: 2 }, "262749": { name: "B.VEYSELOĞLU EROL", puan: 2 }, "262772": { name: "CEMAL SİVRİKAYA 🏆", puan: 2 }, "262716": { name: "BİROL DEMİREL", puan: 1 }, "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 1 } };
+
+export default function MasterPuanDurumuPage() {
+  const [activeTab, setActiveTab] = useState<string>('total');
+  const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
+  const [tableRows, setTableRows] = useState<any[]>([]);
+  const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
+
+  const loadLeaderboard = () => {
+    const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
+
+    if (activeTab === 'total') {
+      const baseList = Object.keys(allPlayersMasterList).map(id => {
+        const w1 = masterWeek1Data[id]?.puan || 0;
+        const w2 = masterWeek2Data[id]?.puan || 0;
+        const w3 = masterWeek3Data[id]?.puan || 0;
+        const basePuan = w1 + w2 + w3;
+        return { id, basePuan, name: allPlayersMasterList[id] };
+      }).sort((a, b) => b.basePuan - a.basePuan || a.name.localeCompare(b.name));
+
+      const prevRanks: Record<string, number> = {};
+      baseList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      const liveList = Object.keys(allPlayersMasterList).map(id => {
+        const liveIcons = liveLeaderboard[id]?.icons || "";
+        let finalName = allPlayersMasterList[id] + liveIcons;
+        if (id === "262816") finalName = "SEDAT SEDAT 👑🎯" + liveIcons;
+        if (id === "262755") finalName = "DOĞAÇ ALKAN" + liveIcons;
+        if (id === "262736") finalName = "MEHMET ALİ KARA" + liveIcons;
+
+        const w1 = masterWeek1Data[id]?.puan || 0;
+        const w2 = masterWeek2Data[id]?.puan || 0;
+        const w3 = masterWeek3Data[id]?.puan || 0;
+        const basePuan = w1 + w2 + w3;
+        const liveExtra = liveLeaderboard[id]?.master || 0;
+
+        return { id, name: finalName, basePuan, liveExtra, puan: basePuan + liveExtra };
+      }).sort((a, b) => b.puan - a.puan || a.name.localeCompare(b.name));
+
+      const finalRows = liveList.map((player, index) => {
+        const currentRank = index + 1;
+        const prevRank = prevRanks[player.id];
+        let trend = 'same';
+        if (currentRank < prevRank) trend = 'up';
+        else if (currentRank > prevRank) trend = 'down';
+        return { ...player, currentRank, prevRank, trend };
+      });
+
+      setTableRows(finalRows);
+    } else {
+      const dataMap = activeTab === 'week1' ? masterWeek1Data : activeTab === 'week2' ? masterWeek2Data : masterWeek3Data;
+      const list = Object.keys(allPlayersMasterList).map(id => {
+        const rawObj = dataMap[id];
+        return { id, name: rawObj ? rawObj.name : allPlayersMasterList[id], puan: rawObj ? rawObj.puan : 0, trend: 'none' };
+      });
+      setTableRows(list.sort((a, b) => b.puan - a.puan));
+    }
+  };
+
+  useEffect(() => {
+    loadLeaderboard();
+    window.addEventListener('leaderboardUpdate', loadLeaderboard);
+    return () => window.removeEventListener('leaderboardUpdate', loadLeaderboard);
+  }, [activeTab]);
+
+  const selectTab = (tabKey: string) => {
+    setActiveTab(tabKey);
+    setIsWeekMenuOpen(false);
+  };
+
+  const getActiveTabTitle = () => {
+    if (activeTab === 'total') return 'MASTER TOPLAM PUAN DURUMU';
+    const weekNum = activeTab.replace('week', '');
+    return `MASTER ${weekNum}. HAFTA PUAN DURUMU`;
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      
+      {/* 🔴 EKMEL - BİLGİLENDİRME AFİŞİ */}
+      <div className="w-full bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <span className="text-amber-500 text-xl animate-pulse">🚨</span>
+        <p className="text-amber-200 text-[11px] sm:text-xs font-semibold leading-tight">
+          <strong className="text-amber-400">BİLGİLENDİRME:</strong> Şu anki maç test aşamasıdır. Gerçek lig maçı saat 21:30'da Sturm Graz - Fenerbahçe ile başlayacak. En geç saat 21:00'de her şey aktif olacaktır.
+        </p>
+      </div>
+
+      <div className="flex flex-col items-center text-center mb-5 mt-1">
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase drop-shadow-md">
+          ELİT TAHMİN MASTER LİGİ
+        </h1>
+      </div>
+
+      <div className="w-full mb-6">
+        <LiveMatchCard />
+      </div>
+
+      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
+        <button onClick={() => selectTab('total')} className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
+          MASTER TOPLAM PUAN DURUMU
+        </button>
+        <div className="w-full relative">
+          <button onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}>
+            <span>📅 {getActiveTabTitle()}</span>
+            <span className="text-xs transition-transform duration-200">{isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}</span>
+          </button>
+          {isWeekMenuOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
+              <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
+                {totalWeeks.map((weekNum) => {
+                  const weekKey = `week${weekNum}`;
+                  return (
+                    <button key={weekNum} onClick={() => selectTab(weekKey)} className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === weekKey ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'}`}>
+                      {weekNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        {tableRows.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
+                <tr><th className="px-6 py-3.5 w-20 text-center">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {tableRows.map((row, idx) => (
+                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="px-6 py-3.5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
+                        {row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce" title={`Önceki Sıra: ${row.prevRank}`}>▲</span>}
+                        {row.trend === 'down' && <span className="text-red-500 text-sm" title={`Önceki Sıra: ${row.prevRank}`}>▼</span>}
+                        {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-200 font-semibold">{row.name}</span>
+                        {row.liveExtra > 0 && activeTab === 'total' && (
+                          <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
+                            +{row.liveExtra} CANLI
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                      {row.puan}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler bulunamadı.</div>
+        )}
+      </div>
+    </div>
+  );
+}
