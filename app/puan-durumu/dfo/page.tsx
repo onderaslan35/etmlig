@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT LİSTE
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -21,15 +20,16 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// 🔴 DFO'DAKİ 14 PUAN HATASINA SEBEP OLAN KOPYALANMIŞ YANLIŞ LİSTE SIFIRLANDI!
-const dfoWeek1Data: Record<string, number> = {};
-const dfoWeek2Data: Record<string, number> = {};
-const dfoWeek3Data: Record<string, number> = {}; 
-const dfoWeek4Data: Record<string, number> = {};
-
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category ? category.toUpperCase() : '';
-  return (uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG"));
+  return (
+    uppercaseCat.includes("TÜRKİYE") ||
+    uppercaseCat.includes("TFF") ||
+    uppercaseCat.includes("AMATÖR") ||
+    uppercaseCat.includes("PTT") ||
+    uppercaseCat.includes("2.LİG") ||
+    uppercaseCat.includes("3.LİG")
+  );
 };
 
 export default function DfoPuanDurumuPage() {
@@ -43,13 +43,33 @@ export default function DfoPuanDurumuPage() {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      
+      // SUPABASE GEÇMİŞ HAFTALAR TABLOSU (dfo_weekly_points)
+      const { data: dbHistorical } = await supabase.from('dfo_weekly_points').select('*');
 
-      const mergedPlayersList: Record<string, string> = { ...allPlayersList };
+      const playersList: Record<string, string> = { ...allPlayersList };
       if (dbPlayers) {
-         dbPlayers.forEach(p => { mergedPlayersList[String(p.username)] = p.full_name || p.name; });
+        dbPlayers.forEach(p => {
+          const uid = String(p.username || p.id);
+          playersList[uid] = p.full_name || p.name || allPlayersList[uid] || "Yarışmacı";
+        });
       }
 
-      // 🔴 EKMEL DEVRİMİ: SIRALAMA EKLENDİ, KİMSE ATLANMAYACAK!
+      // GEÇMİŞ PUANLARI HARİTAYA YÜKLE
+      const historicalDict: Record<string, { w1: number; w2: number; w3: number; w4: number }> = {};
+      if (dbHistorical) {
+        dbHistorical.forEach(row => {
+          const rowId = String(row.id || row.user_id || row.username);
+          historicalDict[rowId] = {
+            w1: Number(row.w1) || 0,
+            w2: Number(row.w2) || 0,
+            w3: Number(row.w3) || 0,
+            w4: Number(row.w4) || 0
+          };
+        });
+      }
+
+      // 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -63,27 +83,33 @@ export default function DfoPuanDurumuPage() {
           .order('user_id', { ascending: true })
           .order('match_index', { ascending: true })
           .range(from, from + step - 1);
-          
+
         if (!error && pDataChunk && pDataChunk.length > 0) {
-           dbPredictions = [...dbPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; else from += step; 
-        } else { fetchMore = false; }
+          dbPredictions = [...dbPredictions, ...pDataChunk];
+          if (pDataChunk.length < step) fetchMore = false;
+          else from += step;
+        } else {
+          fetchMore = false;
+        }
       }
 
       const dfoMatchIndexes: number[] = [];
       if (dbBulletin) {
-         dbBulletin.forEach(m => {
-            if (!isTffMatchCheck(m.category)) {
-                dfoMatchIndexes.push(m.match_index);
-            }
-         });
+        dbBulletin.forEach(m => {
+          if (!isTffMatchCheck(m.category)) {
+            dfoMatchIndexes.push(m.match_index);
+          }
+        });
       }
 
-      let w5Base: Record<string, number> = {}; 
-      let w5Live: Record<string, number> = {}; 
+      let w5Base: Record<string, number> = {};
+      let w5Live: Record<string, number> = {};
       let isAnyMatchLive = false;
 
-      Object.keys(mergedPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(playersList).forEach(id => {
+        w5Base[id] = 0;
+        w5Live[id] = 0;
+      });
 
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
@@ -96,26 +122,42 @@ export default function DfoPuanDurumuPage() {
 
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
-        dbMatches.forEach(row => uniqueMatches[row.id] = row);
+        dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+          if (
+            dbMatch.id > 500 &&
+            dbMatch.id < 600 &&
+            dbMatch.home_score &&
+            dbMatch.home_score !== '-' &&
+            dbMatch.away_score &&
+            dbMatch.away_score !== '-'
+          ) {
             const matchIndex = (dbMatch.id % 100) - 1;
-            
+
             if (!dfoMatchIndexes.includes(matchIndex + 1)) return;
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
+            const winnerIds = Object.keys(predDict).filter(id => {
+              const pScore = predDict[id] ? predDict[id][matchIndex] : null;
+              return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
+            });
 
-            // 🔴 BİRLEŞTİRME VE KLON SİLME KALDIRILDI! SADECE MASTER GİBİ ID SAYACAK!
             let points = 1;
             const wCount = winnerIds.length;
-            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
+            if (wCount === 1) points = 12;
+            else if (wCount === 2) points = 6;
+            else if (wCount === 3) points = 5;
+            else if (wCount === 4) points = 4;
+            else if (wCount === 5) points = 3;
+            else if (wCount === 6) points = 2;
+            else points = 1;
 
             winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
-              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                w5Live[wId] += points;
+              if (dbMatch.status === 'FINISHED') {
+                w5Base[wId] = (w5Base[wId] || 0) + points;
+              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                w5Live[wId] = (w5Live[wId] || 0) + points;
                 isAnyMatchLive = true;
               }
             });
@@ -125,68 +167,90 @@ export default function DfoPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      const baseList = Object.keys(mergedPlayersList).map(id => {
-        const w1 = dfoWeek1Data[id] || 0;
-        const w2 = dfoWeek2Data[id] || 0;
-        const w3 = dfoWeek3Data[id] || 0;
-        const w4 = dfoWeek4Data[id] || 0;
-        const past = w1 + w2 + w3 + w4;
-
+      // GEÇMİŞ (dfo_weekly_points) + 5. HAFTA BİRLEŞTİRME
+      const baseList = Object.keys(playersList).map(id => {
+        const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past + w5Total;
+        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
 
-        return { 
-          id, name: mergedPlayersList[id], 
-          w1, w2, w3, w4, w5: w5Total, total, 
-          liveExtra: w5Live[id] || 0 
+        return {
+          id,
+          name: playersList[id],
+          w1: past.w1,
+          w2: past.w2,
+          w3: past.w3,
+          w4: past.w4,
+          w5: w5Total,
+          total,
+          liveExtra: w5Live[id] || 0
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => {
+        const prevA = a.w1 + a.w2 + a.w3 + a.w4;
+        const prevB = b.w1 + b.w2 + b.w3 + b.w4;
+        return prevB - prevA || a.name.localeCompare(b.name, 'tr');
+      });
+
       const prevRanks: Record<string, number> = {};
-      prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+      prevRefList.forEach((player, index) => {
+        prevRanks[player.id] = index + 1;
+      });
 
       const visibleList = baseList;
 
       visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
-        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
+        const scoreA = activeTab === 'total' ? a.total : (a[activeTab] as number);
+        const scoreB = activeTab === 'total' ? b.total : (b[activeTab] as number);
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
       const finalRows = visibleList.map((player, index) => {
         const currentRank = index + 1;
-        let trend = 'same', trendDiff = 0; 
-        
+        let trend = 'same';
+        let trendDiff = 0;
+
         if (activeTab === 'total') {
-            const prevRank = prevRanks[player.id];
-            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+          const prevRank = prevRanks[player.id];
+          if (currentRank < prevRank) {
+            trend = 'up';
+            trendDiff = prevRank - currentRank;
+          } else if (currentRank > prevRank) {
+            trend = 'down';
+            trendDiff = currentRank - prevRank;
+          }
         }
 
-        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        const displayScore = activeTab === 'total' ? player.total : (player[activeTab] as number);
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
-      
-      setTableRows(finalRows);
 
+      setTableRows(finalRows);
     } catch (e) {
-        console.log("Veri çekilirken hata oluştu");
+      console.log("DFO verisi çekilirken hata oluştu");
     }
   };
 
-  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
+  useEffect(() => {
+    loadLeaderboard();
+    const interval = setInterval(loadLeaderboard, 5000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-400 tracking-wider uppercase drop-shadow-md">DFO PUAN DURUMU</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-400 tracking-wider uppercase drop-shadow-md">
+          DFO PUAN DURUMU
+        </h1>
       </div>
-      
-      <div className="w-full mb-6"><LiveMatchCard /></div>
-      
+
+      <div className="w-full mb-6">
+        <LiveMatchCard />
+      </div>
+
       <div className="w-full max-w-3xl mx-auto">
-        <button 
+        <button
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
           className="w-full bg-[#1d4ed8] hover:bg-blue-600 text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
         >
@@ -194,7 +258,7 @@ export default function DfoPuanDurumuPage() {
         </button>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
-          <div 
+          <div
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
           >
@@ -207,7 +271,6 @@ export default function DfoPuanDurumuPage() {
             </div>
           </div>
 
-          {/* 🔴 İLK 4 HAFTA BUTONLARI GERİ GELDİ! */}
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
               {[1, 2, 3, 4, 5].map(num => (
@@ -215,7 +278,9 @@ export default function DfoPuanDurumuPage() {
                   key={num}
                   onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
                   className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                    activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white border-blue-400 border' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                    activeTab === `w${num}`
+                      ? 'bg-[#1d4ed8] text-white border-blue-400 border'
+                      : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
                   }`}
                 >
                   {num}
@@ -246,8 +311,16 @@ export default function DfoPuanDurumuPage() {
                           <div className="w-5 flex justify-center">
                             {activeTab === 'total' ? (
                               <>
-                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
-                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'up' && (
+                                  <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">
+                                    ▲ <span className="text-[8px]">{row.trendDiff}</span>
+                                  </span>
+                                )}
+                                {row.trend === 'down' && (
+                                  <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">
+                                    ▼ <span className="text-[8px]">{row.trendDiff}</span>
+                                  </span>
+                                )}
                                 {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
                               </>
                             ) : (
@@ -284,7 +357,9 @@ export default function DfoPuanDurumuPage() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
+            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
+              ⏳ Veriler yükleniyor...
+            </div>
           )}
         </div>
       </div>
