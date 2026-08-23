@@ -3,15 +3,10 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 GEÇMİŞ HAFTALARIN KESİNLEŞMİŞ (MÜHÜRLÜ) ROZETLERİ 🔴
-const historicalBadges = {
-  w1: { "MEHMET ALİ KARA": ["points"], "DOĞAÇ ALKAN": ["score"] },
-  w2: { "EYÜP KARACAOĞLU": ["points"] },
-  w3: { "SEDAT SEDAT": ["points", "score"] },
-  w4: { "İSMAİL EKER": ["points"], "ŞENOL CAN ÇAKICI": ["score"] }
-};
+// 🔴 SADECE TFF'NİN GEÇMİŞ 3. HAFTA PUANLARI
+const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
 
-export default function MasterPuanDurumuPage() {
+export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,13 +14,12 @@ export default function MasterPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK
+      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK (MASTER BİREBİR)
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbHistorical } = await supabase.from('master_weekly_points').select('*');
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
-      // Artık 1000'de kesilmeyecek, tüm askerlerin tahminleri eksiksiz çekilecek!
+      // 🔴 KOMUTANIN BANA ATTIĞI MASTER'IN 1000 LİMİT KIRICISI 🔴
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -49,31 +43,47 @@ export default function MasterPuanDurumuPage() {
         }
       }
 
-      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (54 Asil Kadro)
+      // TFF MAÇLARINI AYIKLAMA FİLTRESİ
+      const tffMatchIndexes: number[] = [];
+      if (dbBulletin) {
+         dbBulletin.forEach(m => {
+            const cat = m.category ? m.category.toUpperCase() : '';
+            if (cat.includes("TÜRKİYE") || cat.includes("TFF") || cat.includes("AMATÖR") || cat.includes("PTT") || cat.includes("2.LİG") || cat.includes("3.LİG")) {
+                tffMatchIndexes.push(m.match_index);
+            }
+         });
+      }
+
+      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (MASTER BİREBİR)
       const playersList: Record<string, string> = {};
+      const playerUsernames: Record<string, string> = {}; // Eski hafta puanı için
       if (dbPlayers) {
         dbPlayers.forEach(p => {
           playersList[p.id] = p.name || p.full_name; 
+          playerUsernames[p.id] = String(p.username || '');
         });
       }
 
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
-      let w5ExactScores: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
       Object.keys(playersList).forEach(id => { 
           w5Base[id] = 0; 
           w5Live[id] = 0; 
-          w5ExactScores[id] = 0; 
       });
 
+      // TFF İÇİN MANUEL GEÇMİŞ HAFTA VERİSİNİ HARİTALA
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
-      if(dbHistorical) {
-          dbHistorical.forEach(row => {
-              historicalDict[row.id] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
-          });
-      }
+      Object.keys(playersList).forEach(id => {
+          const uname = playerUsernames[id];
+          historicalDict[id] = {
+              w1: 0,
+              w2: 0,
+              w3: tffWeek3Data[uname] || 0,
+              w4: 0
+          };
+      });
 
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
@@ -91,6 +101,10 @@ export default function MasterPuanDurumuPage() {
         Object.values(uniqueMatches).forEach(dbMatch => {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
+            
+            // 🔴 SADECE TFF MAÇLARINI HESAPLA 🔴
+            if (!tffMatchIndexes.includes(matchIndex + 1)) return;
+
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
@@ -98,7 +112,6 @@ export default function MasterPuanDurumuPage() {
             if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
 
             winnerIds.forEach(wId => {
-              w5ExactScores[wId] += 1; 
               if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
               else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
                 w5Live[wId] += points;
@@ -111,41 +124,7 @@ export default function MasterPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 3. DİNAMİK ROZET MOTORU (SONSUZ DÖNGÜ KURALI) 🔴
-      let w5PointsLeaderId: string | null = null;
-      let w5ScoreLeaderId: string | null = null;
-      let showW5Badges = false;
-      let showW5BadgesOnTotal = false;
-
-      const match524 = uniqueMatches[524]; 
-      if (match524 && (match524.status === 'LIVE' || match524.status === 'FINISHED' || match524.status === 'WAITING_APPROVAL')) {
-          showW5Badges = true;
-
-          let maxPts = -1;
-          let ptLeaders: string[] = [];
-          Object.keys(playersList).forEach(id => {
-              const pts = (w5Base[id] || 0) + (w5Live[id] || 0);
-              if (pts > maxPts) { maxPts = pts; ptLeaders = [id]; }
-              else if (pts === maxPts) { ptLeaders.push(id); }
-          });
-          if (ptLeaders.length === 1) w5PointsLeaderId = ptLeaders[0];
-
-          let maxSc = -1;
-          let scLeaders: string[] = [];
-          Object.keys(playersList).forEach(id => {
-              const sc = w5ExactScores[id] || 0;
-              if (sc > maxSc) { maxSc = sc; scLeaders = [id]; }
-              else if (sc === maxSc) { scLeaders.push(id); }
-          });
-          if (scLeaders.length === 1 && maxSc > 0) w5ScoreLeaderId = scLeaders[0];
-
-          const match601 = uniqueMatches[601];
-          if (!match601 || match601.status === 'NOT_STARTED') {
-              showW5BadgesOnTotal = true;
-          }
-      }
-
-      // 4. LİSTEYİ OLUŞTUR VE ETİKETLERİ DAĞIT
+      // 4. LİSTEYİ OLUŞTUR (MASTER BİREBİR)
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
@@ -179,27 +158,8 @@ export default function MasterPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        // 🔴 APOLET (ROZET) KONTROLÜ
-        let badges: string[] = [];
-        const cleanName = player.name.replace(/🏆/g, '').trim().toUpperCase();
-
-        if (activeTab === 'w1' && historicalBadges.w1[cleanName as keyof typeof historicalBadges.w1]) badges = historicalBadges.w1[cleanName as keyof typeof historicalBadges.w1];
-        if (activeTab === 'w2' && historicalBadges.w2[cleanName as keyof typeof historicalBadges.w2]) badges = historicalBadges.w2[cleanName as keyof typeof historicalBadges.w2];
-        if (activeTab === 'w3' && historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3]) badges = historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3];
-        if (activeTab === 'w4' && historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4]) badges = historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4];
-
-        if (activeTab === 'w5' && showW5Badges) {
-            if (player.id === w5PointsLeaderId) badges.push('points');
-            if (player.id === w5ScoreLeaderId) badges.push('score');
-        }
-
-        if (activeTab === 'total' && showW5BadgesOnTotal) {
-            if (player.id === w5PointsLeaderId) badges.push('points');
-            if (player.id === w5ScoreLeaderId) badges.push('score');
-        }
-
         let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
-        return { ...player, currentRank, trend, trendDiff, displayScore, badges };
+        return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
       setTableRows(finalRows);
@@ -214,7 +174,7 @@ export default function MasterPuanDurumuPage() {
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">ELİT TAHMİN MASTER LİGİ</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
       
       <div className="w-full mb-6"><LiveMatchCard /></div>
@@ -224,7 +184,7 @@ export default function MasterPuanDurumuPage() {
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
           className="w-full bg-[#f59e0b] hover:bg-amber-600 text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
         >
-          {activeTab === 'total' ? 'MASTER TOPLAM PUAN DURUMU' : `MASTER ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
+          {activeTab === 'total' ? 'TFF TOPLAM PUAN DURUMU' : `TFF ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
         </button>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
@@ -290,7 +250,6 @@ export default function MasterPuanDurumuPage() {
                         </div>
                       </td>
                       
-                      {/* 🔴 SATIR İÇİ YAN YANA GÖSTERİM MERKEZİ 🔴 */}
                       <td className="px-1 md:px-2 py-3 align-top pt-3.5">
                         <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                           {(() => {
@@ -307,19 +266,6 @@ export default function MasterPuanDurumuPage() {
                           {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
                             <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse whitespace-nowrap">
                               +{row.liveExtra} CANLI
-                            </span>
-                          )}
-                          
-                          {/* 🔴 RESMİ ASKERİ APOLETLER (YANYANA VE AYNI SATIRDA) 🔴 */}
-                          {row.badges && row.badges.includes('points') && (
-                            <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
-                              +3 PUAN HAFTANIN LİDERİ
-                            </span>
-                          )}
-                          
-                          {row.badges && row.badges.includes('score') && (
-                            <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
-                              +3 PUAN SKOR LİDERİ
                             </span>
                           )}
                         </div>
