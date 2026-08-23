@@ -3,11 +3,40 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ESKİ HAFTALARIN KORUNAN (MANUEL) LİSTESİ 🔴
+// 🔴 SABİT LİSTE
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
+};
+
 const tffWeek1Data: Record<string, number> = {};
 const tffWeek2Data: Record<string, number> = {};
 const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
 const tffWeek4Data: Record<string, number> = {}; 
+
+const isTffMatchCheck = (category: string) => {
+  const uppercaseCat = category ? category.toUpperCase() : '';
+  return (
+    uppercaseCat.includes("TÜRKİYE") ||
+    uppercaseCat.includes("TFF") ||
+    uppercaseCat.includes("AMATÖR") ||
+    uppercaseCat.includes("PTT") ||
+    uppercaseCat.includes("2.LİG") ||
+    uppercaseCat.includes("3.LİG")
+  );
+};
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -21,19 +50,15 @@ export default function TffPuanDurumuPage() {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: MASTER İLE BİREBİR AYNI KİMLİK SÖZLÜĞÜ!
-      // Artık "Bu kim?" deyip kimseyi çöpe atmayacak!
-      const playersList: Record<string, string> = {};
-      const idToCode: Record<string, string> = {}; // UUID -> 6 Haneli ID köprüsü
-      
+      // 🔴 EKMEL DEVRİMİ: HİÇBİR İSMİ DIŞLAMAYAN ORTAK LİSTE
+      const unifiedPlayersList: Record<string, string> = { ...allPlayersList };
       if (dbPlayers) {
-        dbPlayers.forEach(p => {
-          playersList[p.id] = p.name || p.full_name;
-          idToCode[p.id] = String(p.username || p.id);
-        });
+         dbPlayers.forEach(p => {
+             unifiedPlayersList[p.id] = p.full_name || p.name; // UUID'yi anahtar olarak kaydet
+         });
       }
 
-      // 🔴 1000 LİMİT KIRICI (Sıralama hatası verdirmeyen en temiz hali)
+      // 1000 LİMİT KIRICI (Sıralama ile eksiksiz çekim)
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -44,25 +69,20 @@ export default function TffPuanDurumuPage() {
           .from('player_predictions')
           .select('*')
           .eq('week_num', 5)
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
           .range(from, from + step - 1);
           
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; 
-           else from += step; 
-        } else {
-           fetchMore = false; 
-        }
+           if (pDataChunk.length < step) fetchMore = false; else from += step; 
+        } else { fetchMore = false; }
       }
 
-      // TFF MAÇLARINI FİLTRELE
       const tffMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
-            const cat = m.category ? m.category.toUpperCase() : '';
-            if (cat.includes("TÜRKİYE") || cat.includes("TFF") || cat.includes("AMATÖR") || cat.includes("PTT") || cat.includes("2.LİG") || cat.includes("3.LİG")) {
-                tffMatchIndexes.push(m.match_index);
-            }
+            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
          });
       }
 
@@ -70,8 +90,9 @@ export default function TffPuanDurumuPage() {
       let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(unifiedPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
+      // TAHMİNLERİ DOĞRUDAN KENDİ UUID'Sİ İLE KAYDET (ÇAKIŞMA VE SİLİNME İMKANSIZ)
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -92,13 +113,16 @@ export default function TffPuanDurumuPage() {
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
+            
+            // BİLENLERİ EKSİKSİZ BUL
             const winnerIds = Object.keys(predDict).filter(id => {
                 const pScore = predDict[id] ? predDict[id][matchIndex] : null;
                 return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
             });
-            
+
+            // 🔴 9 KİŞİ BİLDİYSE 9 SAYACAK! (KİMSENİN HAKKI YENMEYECEK)
             let points = 1;
-            const wCount = winnerIds.length; // 🔴 ARTIK EKSİKSİZ 9 KİŞİ SAYACAK!
+            const wCount = winnerIds.length; 
             if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
@@ -114,31 +138,47 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 ESKİ 6 HANELİ KODLAR İLE YENİ KİMLİKLERİN (UUID) BİRLEŞTİĞİ ADALET MOTORU
-      const baseList = Object.keys(playersList).map(id => {
-        const code = idToCode[id]; // Veritabanındaki uzun kimliği, eski 6 haneli kimliğe çevirir!
-        
-        const w1 = tffWeek1Data[code] || 0;
-        const w2 = tffWeek2Data[code] || 0;
-        const w3 = tffWeek3Data[code] || 0;
-        const w4 = tffWeek4Data[code] || 0;
-        const past = w1 + w2 + w3 + w4;
+      // 🔴 SADECE İSİMLERİ (KUPALARI SİLEREK) BİRLEŞTİREN ADALET MOTORU
+      const aggregatedData: Record<string, any> = {};
 
-        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past + w5Total;
+      Object.keys(unifiedPlayersList).forEach(id => {
+         const originalName = unifiedPlayersList[id];
+         if (!originalName) return;
 
-        return { 
-          id, name: playersList[id], 
-          w1, w2, w3, w4, w5: w5Total, total, 
-          liveExtra: w5Live[id] || 0 
-        };
+         const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
+         
+         // Eğer id eski 6 haneli kod ise geçmişten puan çeker, değilse 0 kalır.
+         const w1 = tffWeek1Data[id] || 0;
+         const w2 = tffWeek2Data[id] || 0;
+         const w3 = tffWeek3Data[id] || 0;
+         const w4 = tffWeek4Data[id] || 0;
+         const past = w1 + w2 + w3 + w4;
+
+         // Eğer id UUID ise 5. haftadan puan çeker, değilse 0 kalır.
+         const w5 = (w5Base[id] || 0);
+         const liveEx = (w5Live[id] || 0);
+
+         if (!aggregatedData[cleanName]) {
+             aggregatedData[cleanName] = { id: cleanName, name: originalName, w1:0, w2:0, w3:0, w4:0, past: 0, w5: 0, liveExtra: 0, total: 0 };
+         } else {
+             if (originalName.includes('🏆') && !aggregatedData[cleanName].name.includes('🏆')) {
+                 aggregatedData[cleanName].name = originalName; 
+             }
+         }
+         
+         aggregatedData[cleanName].w1 += w1;
+         aggregatedData[cleanName].w2 += w2;
+         aggregatedData[cleanName].w3 += w3;
+         aggregatedData[cleanName].w4 += w4;
+         aggregatedData[cleanName].past += past;
+         aggregatedData[cleanName].w5 += w5;
+         aggregatedData[cleanName].liveExtra += liveEx;
+         aggregatedData[cleanName].total += (past + w5 + liveEx);
       });
 
-      const prevRefList = [...baseList].sort((a, b) => {
-         const prevA = a.w1 + a.w2 + a.w3 + a.w4;
-         const prevB = b.w1 + b.w2 + b.w3 + b.w4;
-         return prevB - prevA || a.name.localeCompare(b.name, 'tr');
-      });
+      const baseList = Object.values(aggregatedData);
+
+      const prevRefList = [...baseList].sort((a, b) => a.past - b.past || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
@@ -217,7 +257,7 @@ export default function TffPuanDurumuPage() {
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {tableRows.map((row, idx) => (
-                <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
                   <td className="px-6 py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
