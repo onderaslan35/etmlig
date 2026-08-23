@@ -41,50 +41,24 @@ export default function TffPuanDurumuPage() {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      
-      // 🔴 1. ADIM: ÖNCE BÜLTENİ ÇEKİP "TFF MAÇLARINI" BELİRLİYORUZ! 🔴
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
-      const tffMatchIndexes: number[] = [];
+
+      // 🔴 EKMEL DEVRİMİ: DÖNGÜ ÇÖPE ATILDI, BALYOZ YÖNTEMİ GELDİ! 🔴
+      // Artık döngünün takılma ihtimali SIFIR. Sayfa 1 ve Sayfa 2'yi aynı anda koparıp alıyoruz!
+      const res1 = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(0, 999);
+      const res2 = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(1000, 1999);
       
-      if (dbBulletin) {
-         dbBulletin.forEach(m => {
-            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
-         });
-      }
+      const dbPredictions = [...(res1.data || []), ...(res2.data || [])];
 
-      // 🔴 2. ADIM: KOMUTANIN "KONTENJAN" MANTIĞI İLE NOKTA ATIŞI VERİ ÇEKİMİ! 🔴
-      // Artık 1296 tahmin istemiyoruz! Sadece TFF maçlarının (tffMatchIndexes) tahminlerini istiyoruz!
-      // Bu sayede veri 1000'in altında kalacak, Supabase İKİNCİ sayfaya geçmeyeceği için bizi KESEMEYECEK!
-      let dbPredictions: any[] = [];
-      if (tffMatchIndexes.length > 0) {
-          let fetchMore = true;
-          let from = 0;
-          const step = 1000;
-
-          while (fetchMore) {
-            const { data: pDataChunk, error } = await supabase
-              .from('player_predictions')
-              .select('*')
-              .eq('week_num', 5)
-              .in('match_index', tffMatchIndexes) // İŞTE NÜKLEER ZIRH BURASI! SADECE TFF MAÇLARI GELSİN!
-              .range(from, from + step - 1);
-              
-            if (!error && pDataChunk && pDataChunk.length > 0) {
-               dbPredictions = [...dbPredictions, ...pDataChunk];
-               // Veri zaten ~600 geleceği için (step olan 1000'den küçük), döngü ŞAK diye tek seferde bitecek!
-               if (pDataChunk.length < step) fetchMore = false; else from += step; 
-            } else { fetchMore = false; }
-          }
-      }
-
-      // 🔴 3. ADIM: OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (MASTER MANTIĞI)
-      const playersList: Record<string, string> = {};
-      const playerUsernames: Record<string, string> = {}; 
+      // OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (6 Haneli Kodlarla)
+      const playersList: Record<string, string> = { ...allPlayersList };
       
       if (dbPlayers) {
         dbPlayers.forEach(p => {
-          playersList[p.id] = p.name || p.full_name || "Yarışmacı"; // Anahtarımız UUID
-          playerUsernames[p.id] = String(p.username || ''); // Eski haftalar için 6 haneli köprü
+          const uid = String(p.username || p.id);
+          if (playersList[uid]) {
+              playersList[uid] = p.name || p.full_name || playersList[uid]; 
+          }
         });
       }
 
@@ -94,7 +68,7 @@ export default function TffPuanDurumuPage() {
 
       Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
-      // 🔴 4. ADIM: TAHMİNLERİ "UUID" İLE KAYDET (Eksiksiz!)
+      // TAHMİNLERİ HARİTAYA YÜKLE
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -104,7 +78,15 @@ export default function TffPuanDurumuPage() {
         });
       }
 
-      // 🔴 5. ADIM: MASTER'IN BİREBİR HESAPLAMA MOTORU!
+      // TFF MAÇLARINI FİLTRELE
+      const tffMatchIndexes: number[] = [];
+      if (dbBulletin) {
+         dbBulletin.forEach(m => {
+            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
+         });
+      }
+
+      // 🔴 MASTER'IN BİREBİR HESAPLAMA MOTORU
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
@@ -113,11 +95,10 @@ export default function TffPuanDurumuPage() {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             
-            if (!tffMatchIndexes.includes(matchIndex + 1)) return; // Sadece TFF maçları!
+            if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
             
-            // SADECE UUID ÜZERİNDEN BİLENLERİ BUL (Eksiksiz)
             const winnerIds = Object.keys(predDict).filter(id => {
                 const pScore = predDict[id] ? predDict[id][matchIndex] : null;
                 return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
@@ -128,7 +109,6 @@ export default function TffPuanDurumuPage() {
             if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
-              // Master'da olduğu gibi listeye giren puan alır!
               if (w5Base[wId] !== undefined) {
                   if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
                   else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
@@ -143,13 +123,12 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 6. ADIM: TABLOYU OLUŞTUR
+      // TABLOYU OLUŞTUR
       const baseList = Object.keys(playersList).map(id => {
-        const uname = playerUsernames[id] || id; 
-        const w1 = tffWeek1Data[uname] || 0;
-        const w2 = tffWeek2Data[uname] || 0;
-        const w3 = tffWeek3Data[uname] || 0;
-        const w4 = tffWeek4Data[uname] || 0;
+        const w1 = tffWeek1Data[id] || 0;
+        const w2 = tffWeek2Data[id] || 0;
+        const w3 = tffWeek3Data[id] || 0;
+        const w4 = tffWeek4Data[id] || 0;
         const past = w1 + w2 + w3 + w4;
 
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
