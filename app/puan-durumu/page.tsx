@@ -3,33 +3,8 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT LİSTE
-const allPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
-};
-
-const tffWeek1Data: Record<string, number> = {};
-const tffWeek2Data: Record<string, number> = {};
+// 🔴 SADECE TFF'NİN GEÇMİŞ 3. HAFTA PUANLARI (Başka hiçbir eski listeye bulaşmıyoruz)
 const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
-const tffWeek4Data: Record<string, number> = {}; 
-
-const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category ? category.toUpperCase() : '';
-  return uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG");
-};
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -39,26 +14,42 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
+      // 1. MASTER'IN BİREBİR VERİ ÇEKİMİ
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: DÖNGÜ ÇÖPE ATILDI, BALYOZ YÖNTEMİ GELDİ! 🔴
-      // Artık döngünün takılma ihtimali SIFIR. Sayfa 1 ve Sayfa 2'yi aynı anda koparıp alıyoruz!
-      const res1 = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(0, 999);
-      const res2 = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(1000, 1999);
-      
-      const dbPredictions = [...(res1.data || []), ...(res2.data || [])];
+      // 🔴 MASTER'IN KUSURSUZ ÇALIŞAN "WHILE" DÖNGÜSÜ (Kelimesi kelimesine kopyalandı)
+      let dbPredictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
 
-      // OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (6 Haneli Kodlarla)
-      const playersList: Record<string, string> = { ...allPlayersList };
-      
+      while (fetchMore) {
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', 5)
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
+          .range(from, from + step - 1);
+          
+        if (!error && pDataChunk && pDataChunk.length > 0) {
+           dbPredictions = [...dbPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
+        } else {
+           fetchMore = false; 
+        }
+      }
+
+      // 2. MASTER'IN DİNAMİK OYUNCU SÖZLÜĞÜ (Hiçbir müdahale yok, saf veritabanı ID'si)
+      const playersList: Record<string, string> = {};
+      const playerUsernames: Record<string, string> = {}; // Eski hafta puanlarını bulmak için köprü
       if (dbPlayers) {
         dbPlayers.forEach(p => {
-          const uid = String(p.username || p.id);
-          if (playersList[uid]) {
-              playersList[uid] = p.name || p.full_name || playersList[uid]; 
-          }
+          playersList[p.id] = p.name || p.full_name || "Yarışmacı"; 
+          playerUsernames[p.id] = String(p.username || '');
         });
       }
 
@@ -66,9 +57,12 @@ export default function TffPuanDurumuPage() {
       let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(playersList).forEach(id => { 
+          w5Base[id] = 0; 
+          w5Live[id] = 0; 
+      });
 
-      // TAHMİNLERİ HARİTAYA YÜKLE
+      // TAHMİNLERİ HARİTAYA YÜKLE (Master gibi eksiksiz)
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -78,15 +72,18 @@ export default function TffPuanDurumuPage() {
         });
       }
 
-      // TFF MAÇLARINI FİLTRELE
+      // 🔴 SİZİN EMRİNİZ: "MASTER VERİSİNİ SÜZECEK, SADECE TFF ÇEKECEK" 🔴
       const tffMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
-            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
+            const cat = m.category ? m.category.toUpperCase() : '';
+            if (cat.includes("TÜRKİYE") || cat.includes("TFF") || cat.includes("AMATÖR") || cat.includes("PTT") || cat.includes("2.LİG") || cat.includes("3.LİG")) {
+                tffMatchIndexes.push(m.match_index);
+            }
          });
       }
 
-      // 🔴 MASTER'IN BİREBİR HESAPLAMA MOTORU
+      // 3. MASTER'IN NOKTA ATIŞI HESAPLAMA MOTORU
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
@@ -95,20 +92,19 @@ export default function TffPuanDurumuPage() {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             
+            // 🔴 İŞTE MASTER İLE TFF ARASINDAKİ TEK FARK! Maç TFF değilse atla!
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             
-            const winnerIds = Object.keys(predDict).filter(id => {
-                const pScore = predDict[id] ? predDict[id][matchIndex] : null;
-                return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
-            });
-
+            // Master nasıl Salih ve İsmail'i eksiksiz bulup 7 kişi diyorsa, burada da 7 kişi diyecek!
+            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            
             let points = 1;
-            const wCount = winnerIds.length;
-            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
+            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
 
             winnerIds.forEach(wId => {
+              // Master'da adam listeye girdiyse, puanını şak diye alır!
               if (w5Base[wId] !== undefined) {
                   if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
                   else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
@@ -123,21 +119,16 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // TABLOYU OLUŞTUR
+      // 4. LİSTEYİ OLUŞTUR (MASTER BİREBİR)
       const baseList = Object.keys(playersList).map(id => {
-        const w1 = tffWeek1Data[id] || 0;
-        const w2 = tffWeek2Data[id] || 0;
-        const w3 = tffWeek3Data[id] || 0;
-        const w4 = tffWeek4Data[id] || 0;
-        const past = w1 + w2 + w3 + w4;
-
+        const uname = playerUsernames[id];
+        const pastW3 = tffWeek3Data[uname] || 0;
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past + w5Total;
-
+        const total = pastW3 + w5Total;
         return { 
           id, 
           name: playersList[id], 
-          w1, w2, w3, w4, w5: w5Total, total, 
+          w1: 0, w2: 0, w3: pastW3, w4: 0, w5: w5Total, total, 
           liveExtra: w5Live[id] || 0 
         };
       });
@@ -171,7 +162,7 @@ export default function TffPuanDurumuPage() {
       setTableRows(finalRows);
 
     } catch (e) {
-        console.log("Veri çekilirken hata oluştu");
+        console.error("Master Klonunda Hata:", e);
     }
   };
 
@@ -180,9 +171,9 @@ export default function TffPuanDurumuPage() {
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="w-full bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
-        <span className="text-amber-500 text-xl animate-pulse">🚨</span>
+        <span className="text-amber-500 text-xl animate-pulse">⚡</span>
         <p className="text-amber-200 text-[11px] sm:text-xs font-semibold leading-tight">
-          <strong className="text-amber-400">BİLGİLENDİRME:</strong> TFF Puan Durumu artık Master ile eş zamanlı tam otomatik çalışmaktadır.
+          <strong className="text-amber-400">KARARGAH EMRİ:</strong> TFF sayfası %100 Master filtreleme motoruyla çalışmaktadır.
         </p>
       </div>
 
@@ -234,8 +225,8 @@ export default function TffPuanDurumuPage() {
                     <div className="flex items-center gap-2">
                       <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                           {(() => {
-                            const trophyCount = (row.name.match(/🏆/g) || []).length;
-                            const cleanName = row.name.replace(/🏆/g, '').trim();
+                            const trophyCount = (row.name ? (row.name.match(/🏆/g) || []).length : 0);
+                            const cleanName = (row.name ? row.name.replace(/🏆/g, '').trim() : "Yarışmacı");
                             return (
                               <>
                                 <span className="whitespace-nowrap">{cleanName}</span>
@@ -260,7 +251,7 @@ export default function TffPuanDurumuPage() {
             </tbody>
           </table>
         ) : (
-          <div className="py-12 text-center text-slate-500">⏳ Veriler bulunamadı.</div>
+          <div className="py-12 text-center text-slate-500">⏳ Master motoru yükleniyor...</div>
         )}
       </div>
     </div>
