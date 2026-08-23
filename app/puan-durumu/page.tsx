@@ -3,10 +3,29 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 ESKİ HAFTALARIN KORUNAN (MANUEL) LİSTESİ 🔴
+// 🔴 SABİT VE GÜVENİLİR ASKER LİSTESİ GERİ GELDİ!
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
+};
+
+// ESKİ HAFTALARIN KORUNAN LİSTESİ
 const tffWeek1Data: Record<string, number> = {};
 const tffWeek2Data: Record<string, number> = {};
 const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
+const tffWeek4Data: Record<string, number> = {}; 
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -16,8 +35,6 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI VE CANLI MAÇLARI VERİTABANINDAN ÇEK (İSİMLER BURADAN GELECEK)
-      const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
@@ -45,7 +62,7 @@ export default function TffPuanDurumuPage() {
         }
       }
 
-      // SADECE TFF MAÇLARINI FİLTRELE
+      // TFF MAÇLARINI FİLTRELE
       const tffMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
@@ -56,16 +73,11 @@ export default function TffPuanDurumuPage() {
          });
       }
 
-      const playersList: Record<string, string> = {};
-      if (dbPlayers) {
-        dbPlayers.forEach(p => { playersList[String(p.username)] = p.full_name || p.name; });
-      }
-
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(allPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
@@ -84,7 +96,7 @@ export default function TffPuanDurumuPage() {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             
-            if (!tffMatchIndexes.includes(matchIndex + 1)) return; // Sadece TFF maçları!
+            if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
@@ -105,28 +117,31 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // GEÇMİŞ + CANLI PUANLARI BİRLEŞTİR (ADALET BURADA SAĞLANIYOR)
-      const baseList = Object.keys(playersList).map(id => {
-        const pastTffPoints = (tffWeek1Data[id] || 0) + (tffWeek2Data[id] || 0) + (tffWeek3Data[id] || 0);
+      // GEÇMİŞ (MANUEL) + 5. HAFTA (OTOMATİK) PUANLARI BİRLEŞTİR
+      const baseList = Object.keys(allPlayersList).map(id => {
+        const w1 = tffWeek1Data[id] || 0;
+        const w2 = tffWeek2Data[id] || 0;
+        const w3 = tffWeek3Data[id] || 0;
+        const w4 = tffWeek4Data[id] || 0;
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = pastTffPoints + w5Total;
+        const total = w1 + w2 + w3 + w4 + w5Total;
 
         return { 
-          id, name: playersList[id], 
-          past: pastTffPoints, w5: w5Total, total, 
+          id, name: allPlayersList[id], 
+          w1, w2, w3, w4, w5: w5Total, total, 
           liveExtra: w5Live[id] || 0 
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => b.past - a.past || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
 
       visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a.w5;
-        const scoreB = activeTab === 'total' ? b.total : b.w5;
+        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
+        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -140,7 +155,7 @@ export default function TffPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        let displayScore = activeTab === 'total' ? player.total : player.w5;
+        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
@@ -166,9 +181,7 @@ export default function TffPuanDurumuPage() {
         <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
 
-      <div className="w-full mb-6">
-        <LiveMatchCard />
-      </div>
+      <div className="w-full mb-6"><LiveMatchCard /></div>
 
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }} className={`px-8 py-2.5 rounded-xl font-black transition-all border w-full text-center shadow-md ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>
@@ -180,10 +193,12 @@ export default function TffPuanDurumuPage() {
             <span>{isMenuOpen ? '▲' : '▼'}</span>
           </button>
           {isMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900 p-3 rounded-2xl shadow-2xl flex justify-center">
-               <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w5' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
-                  5. HAFTA 
-               </button>
+            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900 p-3 rounded-2xl shadow-2xl flex flex-wrap justify-center gap-2">
+               {[1, 2, 3, 4, 5].map(num => (
+                 <button key={num} onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === `w${num}` ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
+                    {num}. HAFTA 
+                 </button>
+               ))}
             </div>
           )}
         </div>
@@ -209,14 +224,14 @@ export default function TffPuanDurumuPage() {
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-200 font-semibold">{row.name.replace(/🏆/g, '').trim()}</span>
-                      {row.liveExtra > 0 && activeTab === 'total' && (
+                      {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                           +{row.liveExtra} CANLI
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && activeTab === 'total' ? "text-emerald-400" : "text-amber-400"}`}>
+                  <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') ? "text-emerald-400" : "text-amber-400"}`}>
                     {row.displayScore}
                   </td>
                 </tr>

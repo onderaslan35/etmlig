@@ -3,10 +3,29 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 SABİT VE GÜVENİLİR ASKER LİSTESİ GERİ GELDİ! (GÜVENLİK DUVARINA TAKILMAZ)
+const allPlayersList: Record<string, string> = {
+  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
+  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
+  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
+  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
+  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
+  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
+  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
+  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
+  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
+  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
+  "262723": "AYHAN LUŞOĞLU"
+};
+
 // 🔴 ESKİ HAFTALARIN KORUNAN (MANUEL) DFO LİSTESİ 🔴
 const dfoWeek1Data: Record<string, number> = {};
 const dfoWeek2Data: Record<string, number> = {};
 const dfoWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
+const dfoWeek4Data: Record<string, number> = {};
 
 // TFF kontrolü (TFF olanları DFO'dan ayırmak için)
 const isTffMatchCheck = (category: string) => {
@@ -22,12 +41,10 @@ export default function DfoPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI, CANLI MAÇLARI VE BÜLTENİ ÇEK
-      const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
+      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI 🔴
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -61,17 +78,11 @@ export default function DfoPuanDurumuPage() {
          });
       }
 
-      // OYUNCU SÖZLÜĞÜNÜ OLUŞTUR
-      const playersList: Record<string, string> = {};
-      if (dbPlayers) {
-        dbPlayers.forEach(p => { playersList[String(p.username)] = p.full_name || p.name; });
-      }
-
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(allPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
@@ -92,8 +103,13 @@ export default function DfoPuanDurumuPage() {
             
             if (!dfoMatchIndexes.includes(matchIndex + 1)) return; // Sadece DFO (Avrupa) maçları!
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            // 🔴 BOŞLUK (TRİM) KORUMASI: Aralara boşluk konsa bile sistem affedecek! 🔴
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+            
+            const winnerIds = Object.keys(predDict).filter(id => {
+                const predScore = predDict[id] ? predDict[id][matchIndex] : null;
+                return predScore && predScore.replace(/\s+/g, '') === targetScore;
+            });
             
             let points = 1;
             if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
@@ -112,27 +128,31 @@ export default function DfoPuanDurumuPage() {
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
       // GEÇMİŞ (MANUEL) + 5. HAFTA (OTOMATİK) PUANLARI BİRLEŞTİR
-      const baseList = Object.keys(playersList).map(id => {
-        const pastDfoPoints = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
+      const baseList = Object.keys(allPlayersList).map(id => {
+        const w1 = dfoWeek1Data[id] || 0;
+        const w2 = dfoWeek2Data[id] || 0;
+        const w3 = dfoWeek3Data[id] || 0;
+        const w4 = dfoWeek4Data[id] || 0;
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = pastDfoPoints + w5Total;
+        
+        const total = w1 + w2 + w3 + w4 + w5Total;
 
         return { 
-          id, name: playersList[id], 
-          past: pastDfoPoints, w5: w5Total, total, 
+          id, name: allPlayersList[id], 
+          w1, w2, w3, w4, w5: w5Total, total, 
           liveExtra: w5Live[id] || 0 
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => b.past - a.past || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList;
 
       visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a.w5;
-        const scoreB = activeTab === 'total' ? b.total : b.w5;
+        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
+        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -146,7 +166,7 @@ export default function DfoPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        let displayScore = activeTab === 'total' ? player.total : player.w5;
+        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
@@ -196,11 +216,20 @@ export default function DfoPuanDurumuPage() {
             </div>
           </div>
 
+          {/* 🔴 İLK 4 HAFTA BUTONLARI GERİ GELDİ! 🔴 */}
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w5' ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'}`}>
-                5. HAFTA 
-              </button>
+              {[1, 2, 3, 4, 5].map(num => (
+                <button
+                  key={num}
+                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
+                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
+                    activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white border-blue-400 border' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
           )}
 
