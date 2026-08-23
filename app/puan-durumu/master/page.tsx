@@ -19,11 +19,35 @@ export default function MasterPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI VE VERİLERİ SUPABASE'DEN ÇEK
+      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
       const { data: dbHistorical } = await supabase.from('master_weekly_points').select('*');
+
+      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
+      // Artık 1000'de kesilmeyecek, tüm askerlerin tahminleri eksiksiz çekilecek!
+      let dbPredictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+
+      while (fetchMore) {
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', 5)
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
+          .range(from, from + step - 1);
+          
+        if (!error && pDataChunk && pDataChunk.length > 0) {
+           dbPredictions = [...dbPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
+        } else {
+           fetchMore = false; 
+        }
+      }
 
       // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (54 Asil Kadro)
       const playersList: Record<string, string> = {};
@@ -52,7 +76,7 @@ export default function MasterPuanDurumuPage() {
       }
 
       const predDict: Record<string, string[]> = {};
-      if (dbPredictions) {
+      if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
           const uid = String(pred.user_id);
           if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
