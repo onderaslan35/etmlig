@@ -3,8 +3,12 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 EKMEL DEVRİMİ: TAM OTOMATİK DFO HESAPLAMA VE 1000 LİMİT KIRICI 🔴
+// 🔴 ESKİ HAFTALARIN KORUNAN (MANUEL) DFO LİSTESİ 🔴
+const dfoWeek1Data: Record<string, number> = {};
+const dfoWeek2Data: Record<string, number> = {};
+const dfoWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
 
+// TFF kontrolü (TFF olanları DFO'dan ayırmak için)
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category ? category.toUpperCase() : '';
   return (uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG"));
@@ -18,14 +22,12 @@ export default function DfoPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI VE CANLI MAÇLARI ÇEK
+      // 1. OYUNCULARI, CANLI MAÇLARI VE BÜLTENİ ÇEK
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      
-      // SADECE DFO KASASININ GEÇMİŞ HAFTA VERİLERİ
-      const { data: dbHistorical } = await supabase.from('standings').select('*').eq('league_type', 'DFO');
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
+      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -49,8 +51,7 @@ export default function DfoPuanDurumuPage() {
         }
       }
 
-      // DFO BÜLTENİNİ ÇEK Kİ SADECE AVRUPA MAÇLARINI HESAPLASIN
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      // SADECE DFO (AVRUPA) MAÇLARINI FİLTRELE
       const dfoMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
@@ -60,10 +61,10 @@ export default function DfoPuanDurumuPage() {
          });
       }
 
-      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR
+      // OYUNCU SÖZLÜĞÜNÜ OLUŞTUR
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
-        dbPlayers.forEach(p => { playersList[p.id] = p.name || p.full_name; });
+        dbPlayers.forEach(p => { playersList[String(p.username)] = p.full_name || p.name; });
       }
 
       let w5Base: Record<string, number> = {}; 
@@ -71,12 +72,6 @@ export default function DfoPuanDurumuPage() {
       let isAnyMatchLive = false;
 
       Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
-
-      // GEÇMİŞ DFO PUANLARI SÖZLÜĞÜ
-      const historicalDict: Record<string, number> = {};
-      if(dbHistorical) {
-          dbHistorical.forEach(row => { historicalDict[row.user_id] = row.points || 0; });
-      }
 
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
@@ -92,11 +87,10 @@ export default function DfoPuanDurumuPage() {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             
-            // EĞER BU MAÇ DFO (AVRUPA) MAÇI DEĞİLSE HESAPLAMADAN ATLA!
-            if (!dfoMatchIndexes.includes(matchIndex + 1)) return;
+            if (!dfoMatchIndexes.includes(matchIndex + 1)) return; // Sadece DFO (Avrupa) maçları!
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
@@ -117,21 +111,19 @@ export default function DfoPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 4. LİSTEYİ OLUŞTUR
+      // GEÇMİŞ (MANUEL) + 5. HAFTA (OTOMATİK) PUANLARI BİRLEŞTİR
       const baseList = Object.keys(playersList).map(id => {
-        const pastDfoPoints = historicalDict[id] || 0;
-        
-        // Sadece geçmiş tablo ve canlıyı topluyoruz (Çifte sayımı önlemek için)
-        const total = pastDfoPoints + (w5Live[id] || 0);
+        const pastDfoPoints = (dfoWeek1Data[id] || 0) + (dfoWeek2Data[id] || 0) + (dfoWeek3Data[id] || 0);
+        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
+        const total = pastDfoPoints + w5Total;
 
         return { 
           id, name: playersList[id], 
-          past: pastDfoPoints, w5: w5Base[id] || 0, total, 
+          past: pastDfoPoints, w5: w5Total, total, 
           liveExtra: w5Live[id] || 0 
         };
       });
 
-      // ÖNCEKİ HAFTA SIRALAMASINI BULMAK İÇİN (Canlı Olmayan Hal)
       const prevRefList = [...baseList].sort((a, b) => b.past - a.past || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
@@ -169,6 +161,13 @@ export default function DfoPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      <div className="w-full bg-blue-500/20 border border-blue-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <span className="text-blue-500 text-xl animate-pulse">🌍</span>
+        <p className="text-blue-200 text-[11px] sm:text-xs font-semibold leading-tight">
+          <strong className="text-blue-400">BİLGİLENDİRME:</strong> DFO Puan Durumu artık Master ile eş zamanlı tam otomatik çalışmaktadır.
+        </p>
+      </div>
+
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-400 tracking-wider uppercase drop-shadow-md">DFO PUAN DURUMU</h1>
       </div>
@@ -199,7 +198,9 @@ export default function DfoPuanDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${activeTab === 'w5' ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'}`}>5</button>
+              <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w5' ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'}`}>
+                5. HAFTA 
+              </button>
             </div>
           )}
 
