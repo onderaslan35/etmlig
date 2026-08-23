@@ -21,11 +21,6 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-const tffWeek1Data: Record<string, number> = {};
-const tffWeek2Data: Record<string, number> = {};
-const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
-const tffWeek4Data: Record<string, number> = {}; 
-
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category ? category.toUpperCase() : '';
   return (
@@ -38,15 +33,6 @@ const isTffMatchCheck = (category: string) => {
   );
 };
 
-// 🔴 İSİMLERİ KUSURSUZ EŞLEŞTİRECEK NÜKLEER TEMİZLEYİCİ ZIRH
-const toTurkishUpperCase = (str: string) => {
-    if (!str) return "";
-    return str.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase().trim();
-};
-const getCleanName = (name: string) => {
-    return toTurkishUpperCase(name.replace(/🏆/g, ''));
-};
-
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
@@ -55,44 +41,15 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
+      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      
+      // SUPABASE GEÇMİŞ HAFTALAR TABLOSU (tff_weekly_points)
+      const { data: dbHistorical } = await supabase.from('tff_weekly_points').select('*');
 
-      // 🔴 1. ADIM: TÜM ASKERLERİN GEÇMİŞ PUANLARINI İSME GÖRE HARİTALA
-      const playerStats: Record<string, any> = {};
-
-      Object.keys(allPlayersList).forEach(id => {
-         const originalName = allPlayersList[id];
-         const cName = getCleanName(originalName);
-         
-         const w1 = tffWeek1Data[id] || 0;
-         const w2 = tffWeek2Data[id] || 0;
-         const w3 = tffWeek3Data[id] || 0;
-         const w4 = tffWeek4Data[id] || 0;
-
-         playerStats[cName] = {
-             originalName: originalName,
-             w1, w2, w3, w4,
-             past: w1 + w2 + w3 + w4,
-             w5Base: 0,
-             w5Live: 0
-         };
-      });
-
-      // 🔴 2. ADIM: SUPABASE'DEN GELEN ID'LERİ TEMİZ İSME ÇEVİR
-      const uidToCleanName: Record<string, string> = {};
-      if (dbPlayers) {
-          dbPlayers.forEach(p => {
-              const name = p.full_name || p.name || p.username;
-              if (name) {
-                  uidToCleanName[String(p.id)] = getCleanName(name);
-                  uidToCleanName[String(p.username)] = getCleanName(name); // Yedek köprü
-              }
-          });
-      }
-
-      // 🔴 3. ADIM: 1000 LİMİT KIRICI İLE TAHMİNLERİ ÇEK (Sıralama Komutu Dahil)
+      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -109,71 +66,92 @@ export default function TffPuanDurumuPage() {
           
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; else from += step; 
-        } else { fetchMore = false; }
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
+        } else {
+           fetchMore = false; 
+        }
       }
 
-      const tffMatchIndexes: number[] = [];
-      if (dbBulletin) {
-         dbBulletin.forEach(m => {
-            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
-         });
-      }
-
-      // 🔴 4. ADIM: TAHMİNLERİ İSME GÖRE KAYDET (ID'LERİ ÇÖPE ATTIK!)
-      const predDict: Record<string, string[]> = {};
-      if (dbPredictions && dbPredictions.length > 0) {
-        dbPredictions.forEach(pred => {
-          let cName = uidToCleanName[String(pred.user_id)];
-          
-          // Eğer Supabase'de bu adamın ismi yoksa, eski listede ID'si var mı diye bak
-          if (!cName && allPlayersList[String(pred.user_id)]) {
-              cName = getCleanName(allPlayersList[String(pred.user_id)]);
-          } else if (!cName) {
-              cName = `BİLİNMEYEN ASKER (${pred.user_id})`;
-          }
-
-          if (!predDict[cName]) predDict[cName] = Array(24).fill('-');
-          predDict[cName][pred.match_index - 1] = pred.predicted_score;
+      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (54 Asil Kadro)
+      const playersList: Record<string, string> = { ...allPlayersList }; // Önce sabit listeyi al
+      if (dbPlayers) {
+        dbPlayers.forEach(p => {
+          const uid = String(p.username || p.id);
+          // Eğer veritabanından gelen isim varsa, onu kullan. Yoksa sabit listedeki kalsın.
+          playersList[uid] = p.full_name || p.name || allPlayersList[uid] || "Yarışmacı"; 
         });
       }
 
+      // GEÇMİŞ PUANLARI HARİTAYA YÜKLE
+      const historicalDict: Record<string, { w1: number; w2: number; w3: number; w4: number }> = {};
+      if (dbHistorical) {
+        dbHistorical.forEach(row => {
+          const rowId = String(row.id || row.user_id || row.username);
+          historicalDict[rowId] = {
+            w1: Number(row.w1) || 0,
+            w2: Number(row.w2) || 0,
+            w3: Number(row.w3) || 0,
+            w4: Number(row.w4) || 0
+          };
+        });
+      }
+
+      // SADECE TFF MAÇLARINI FİLTRELE
+      const tffMatchIndexes: number[] = [];
+      if (dbBulletin) {
+        dbBulletin.forEach(m => {
+          if (isTffMatchCheck(m.category)) {
+            tffMatchIndexes.push(m.match_index);
+          }
+        });
+      }
+
+      let w5Base: Record<string, number> = {}; 
+      let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      // 🔴 5. ADIM: MAÇLARI VE BİLENLERİ "İSİM" ÜZERİNDEN HESAPLA (MASTER MOTORU)
+      Object.keys(playersList).forEach(id => { 
+          w5Base[id] = 0; 
+          w5Live[id] = 0; 
+      });
+
+      const predDict: Record<string, string[]> = {};
+      if (dbPredictions && dbPredictions.length > 0) {
+        dbPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
+          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+        });
+      }
+
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             
-            if (!tffMatchIndexes.includes(matchIndex + 1)) return;
+            if (!tffMatchIndexes.includes(matchIndex + 1)) return; // Sadece TFF maçları!
 
+            // 🔴 TRİM VE BOŞLUK KORUMASI 🔴
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
             
-            // Sadece TEMİZ İSİM üzerinden bilenleri bul! (Kimse silinmeyecek!)
-            const winnerCleanNames = Object.keys(predDict).filter(cName => {
-                const pScore = predDict[cName] ? predDict[cName][matchIndex] : null;
+            const winnerIds = Object.keys(predDict).filter(id => {
+                const pScore = predDict[id] ? predDict[id][matchIndex] : null;
                 return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
             });
-
+            
             let points = 1;
-            const wCount = winnerCleanNames.length;
-            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
+            const wCount = winnerIds.length;
+            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else points = 1;
 
-            winnerCleanNames.forEach(cName => {
-              // Eğer bu adam eski listede bile yoksa, sisteme sıfırdan ekle
-              if (!playerStats[cName]) {
-                  playerStats[cName] = { originalName: cName, w1:0, w2:0, w3:0, w4:0, past:0, w5Base:0, w5Live:0 };
-              }
-
-              if (dbMatch.status === 'FINISHED') {
-                  playerStats[cName].w5Base += points;
-              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                  playerStats[cName].w5Live += points;
-                  isAnyMatchLive = true;
+            winnerIds.forEach(wId => {
+              if (dbMatch.status === 'FINISHED') w5Base[wId] = (w5Base[wId] || 0) + points;
+              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                w5Live[wId] = (w5Live[wId] || 0) + points;
+                isAnyMatchLive = true;
               }
             });
           }
@@ -182,25 +160,61 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 6. ADIM: TABLOYU OLUŞTUR VE SIRALA
-      const baseList = Object.values(playerStats).map(p => {
-          const w5Total = p.w5Base + p.w5Live;
-          return {
-              id: p.originalName, // React key için
-              name: p.originalName,
-              w1: p.w1, w2: p.w2, w3: p.w3, w4: p.w4,
-              past: p.past,
-              w5: w5Total,
-              total: p.past + w5Total,
-              liveExtra: p.w5Live
-          };
+      // 4. LİSTEYİ OLUŞTUR (İSİMLERİ BİRLEŞTİREREK)
+      const aggregatedData: Record<string, any> = {};
+
+      Object.keys(playersList).forEach(id => {
+         const originalName = playersList[id];
+         // Kupa olsun ya da olmasın, isimleri temizleyip eşleştir
+         const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
+         
+         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
+         const w5 = (w5Base[id] || 0);
+         const liveEx = (w5Live[id] || 0);
+
+         if (!aggregatedData[cleanName]) {
+             aggregatedData[cleanName] = { 
+                 id: cleanName, 
+                 name: originalName, 
+                 w1: past.w1, 
+                 w2: past.w2, 
+                 w3: past.w3, 
+                 w4: past.w4, 
+                 past: past.w1 + past.w2 + past.w3 + past.w4, 
+                 w5: w5, 
+                 liveExtra: liveEx, 
+                 total: past.w1 + past.w2 + past.w3 + past.w4 + w5 + liveEx 
+             };
+         } else {
+             // Eğer yeni isim kupalıysa eskisini güncelle (Süsleme)
+             if (originalName.includes('🏆') && !aggregatedData[cleanName].name.includes('🏆')) {
+                 aggregatedData[cleanName].name = originalName; 
+             }
+             // Puanları topla (Aynı isimli farklı ID'ler varsa)
+             aggregatedData[cleanName].w1 += past.w1;
+             aggregatedData[cleanName].w2 += past.w2;
+             aggregatedData[cleanName].w3 += past.w3;
+             aggregatedData[cleanName].w4 += past.w4;
+             aggregatedData[cleanName].past += (past.w1 + past.w2 + past.w3 + past.w4);
+             aggregatedData[cleanName].w5 += w5;
+             aggregatedData[cleanName].liveExtra += liveEx;
+             aggregatedData[cleanName].total += (past.w1 + past.w2 + past.w3 + past.w4 + w5 + liveEx);
+         }
       });
 
-      const prevRefList = [...baseList].sort((a, b) => a.past - b.past || a.name.localeCompare(b.name, 'tr'));
+      const baseList = Object.values(aggregatedData);
+
+      const prevRefList = [...baseList].sort((a, b) => {
+         const prevA = a.w1 + a.w2 + a.w3 + a.w4;
+         const prevB = b.w1 + b.w2 + b.w3 + b.w4;
+         return prevB - prevA || a.name.localeCompare(b.name, 'tr');
+      });
+
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
+
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
         const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
@@ -274,7 +288,7 @@ export default function TffPuanDurumuPage() {
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {tableRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                   <td className="px-6 py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
@@ -285,7 +299,20 @@ export default function TffPuanDurumuPage() {
                   </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-200 font-semibold">{row.name.replace(/🏆/g, '').trim()}</span>
+                      {/* İsmi ve kupayı yan yana bas */}
+                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                          {(() => {
+                            const trophyCount = (row.name.match(/🏆/g) || []).length;
+                            const cleanName = row.name.replace(/🏆/g, '').trim();
+                            return (
+                              <>
+                                <span className="whitespace-nowrap">{cleanName}</span>
+                                {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
+                              </>
+                            );
+                          })()}
+                      </div>
+                      
                       {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                           +{row.liveExtra} CANLI
