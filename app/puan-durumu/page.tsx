@@ -3,8 +3,13 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SADECE TFF'NİN GEÇMİŞ 3. HAFTA PUANLARI
+// 🔴 SADECE TFF'NİN GEÇMİŞ 3. HAFTA PUANLARI (Sabit isim listesi falan tamamen çöpe atıldı!)
 const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
+
+const isTffMatchCheck = (category: string) => {
+  const uppercaseCat = category ? category.toUpperCase() : '';
+  return uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG");
+};
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -14,12 +19,12 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK (MASTER BİREBİR)
+      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 KOMUTANIN BANA ATTIĞI MASTER'IN 1000 LİMİT KIRICISI 🔴
+      // 🔴 SİZİN GÖNDERDİĞİNİZ MASTER'IN 1000 LİMİT KIRICISI (BİREBİR AYNISI) 🔴
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -43,18 +48,7 @@ export default function TffPuanDurumuPage() {
         }
       }
 
-      // TFF MAÇLARINI AYIKLAMA FİLTRESİ
-      const tffMatchIndexes: number[] = [];
-      if (dbBulletin) {
-         dbBulletin.forEach(m => {
-            const cat = m.category ? m.category.toUpperCase() : '';
-            if (cat.includes("TÜRKİYE") || cat.includes("TFF") || cat.includes("AMATÖR") || cat.includes("PTT") || cat.includes("2.LİG") || cat.includes("3.LİG")) {
-                tffMatchIndexes.push(m.match_index);
-            }
-         });
-      }
-
-      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (MASTER BİREBİR)
+      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (SADECE SUPABASE'DEN GELENLER)
       const playersList: Record<string, string> = {};
       const playerUsernames: Record<string, string> = {}; // Eski hafta puanı için
       if (dbPlayers) {
@@ -73,18 +67,14 @@ export default function TffPuanDurumuPage() {
           w5Live[id] = 0; 
       });
 
-      // TFF İÇİN MANUEL GEÇMİŞ HAFTA VERİSİNİ HARİTALA
+      // GEÇMİŞ PUANLARI HARİTALA
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       Object.keys(playersList).forEach(id => {
           const uname = playerUsernames[id];
-          historicalDict[id] = {
-              w1: 0,
-              w2: 0,
-              w3: tffWeek3Data[uname] || 0,
-              w4: 0
-          };
+          historicalDict[id] = { w1: 0, w2: 0, w3: tffWeek3Data[uname] || 0, w4: 0 };
       });
 
+      // TAHMİNLERİ YÜKLE
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -94,6 +84,15 @@ export default function TffPuanDurumuPage() {
         });
       }
 
+      // TFF MAÇLARINI FİLTRELE
+      const tffMatchIndexes: number[] = [];
+      if (dbBulletin) {
+         dbBulletin.forEach(m => {
+            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
+         });
+      }
+
+      // 🔴 3. MASTER'IN MAÇ HESAPLAMA MOTORU (SADECE TFF FİLTRESİ VAR)
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
@@ -102,7 +101,6 @@ export default function TffPuanDurumuPage() {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
             
-            // 🔴 SADECE TFF MAÇLARINI HESAPLA 🔴
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
@@ -124,7 +122,7 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 4. LİSTEYİ OLUŞTUR (MASTER BİREBİR)
+      // 4. LİSTEYİ OLUŞTUR
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
@@ -173,8 +171,15 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      <div className="w-full bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <span className="text-amber-500 text-xl animate-pulse">🚨</span>
+        <p className="text-amber-200 text-[11px] sm:text-xs font-semibold leading-tight">
+          <strong className="text-amber-400">BİLGİLENDİRME:</strong> TFF Puan Durumu artık Master ile eş zamanlı tam otomatik çalışmaktadır.
+        </p>
+      </div>
+
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
       
       <div className="w-full mb-6"><LiveMatchCard /></div>
