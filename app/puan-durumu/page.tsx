@@ -43,14 +43,22 @@ export default function TffPuanDurumuPage() {
          dbPlayers.forEach(p => { mergedPlayersList[String(p.username)] = p.full_name || p.name; });
       }
 
-      // 🔴 EKMEL DEVRİMİ: .ORDER SİLİNDİ
+      // 🔴 İŞTE SİZİN TESPİT ETTİĞİNİZ O "ÇEKEMİYOR" HATASININ ÇÖZÜMÜ! 
+      // .order() eklendi, artık Master gibi çatır çatır eksiksiz çekecek!
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
       const step = 1000;
 
       while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(from, from + step - 1);
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', 5)
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
+          .range(from, from + step - 1);
+          
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
            if (pDataChunk.length < step) fetchMore = false; else from += step; 
@@ -95,7 +103,7 @@ export default function TffPuanDurumuPage() {
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
 
-            // 🔴 KOPYA/KLON SİLİCİ KALDIRILDI! ADMİN PANELİ GİBİ 9 ID'NİN 9'UNU DA SAYACAK!
+            // 🔴 BİRLEŞTİRME VE KLON SİLME KALDIRILDI! SADECE MASTER GİBİ ID SAYACAK!
             let points = 1;
             const wCount = winnerIds.length;
             if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
@@ -113,41 +121,25 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      const aggregatedData: Record<string, any> = {};
+      // 🔴 SADECE ID ÜZERİNDEN HESAP (HAKAN AYAN'A ÇİFT PUAN GİTMESİ ENGELLENDİ)
+      const baseList = Object.keys(mergedPlayersList).map(id => {
+        const w1 = tffWeek1Data[id] || 0;
+        const w2 = tffWeek2Data[id] || 0;
+        const w3 = tffWeek3Data[id] || 0;
+        const w4 = tffWeek4Data[id] || 0;
+        const past = w1 + w2 + w3 + w4;
 
-      Object.keys(mergedPlayersList).forEach(id => {
-         const originalName = mergedPlayersList[id];
-         const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
-         
-         const w1 = tffWeek1Data[id] || 0;
-         const w2 = tffWeek2Data[id] || 0;
-         const w3 = tffWeek3Data[id] || 0;
-         const w4 = tffWeek4Data[id] || 0;
-         const past = w1 + w2 + w3 + w4;
+        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
+        const total = past + w5Total;
 
-         const w5 = (w5Base[id] || 0);
-         const liveEx = (w5Live[id] || 0);
-
-         if (!aggregatedData[cleanName]) {
-             aggregatedData[cleanName] = { id: cleanName, name: originalName, w1:0, w2:0, w3:0, w4:0, past: 0, w5: 0, liveExtra: 0, total: 0 };
-         } else {
-             if (originalName.includes('🏆') && !aggregatedData[cleanName].name.includes('🏆')) {
-                 aggregatedData[cleanName].name = originalName; 
-             }
-         }
-         aggregatedData[cleanName].w1 += w1;
-         aggregatedData[cleanName].w2 += w2;
-         aggregatedData[cleanName].w3 += w3;
-         aggregatedData[cleanName].w4 += w4;
-         aggregatedData[cleanName].past += past;
-         aggregatedData[cleanName].w5 += w5;
-         aggregatedData[cleanName].liveExtra += liveEx;
-         aggregatedData[cleanName].total += (past + w5 + liveEx);
+        return { 
+          id, name: mergedPlayersList[id], 
+          w1, w2, w3, w4, w5: w5Total, total, 
+          liveExtra: w5Live[id] || 0 
+        };
       });
 
-      const baseList = Object.values(aggregatedData);
-
-      const prevRefList = [...baseList].sort((a, b) => a.past - b.past || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
