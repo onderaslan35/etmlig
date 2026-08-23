@@ -1,16 +1,15 @@
 'use client';
-
 import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT LİSTE 
+// 🔴 SABİT VE GÜVENİLİR ASKER LİSTESİ
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTFA ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -99,60 +98,7 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
-  "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
-  "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
-  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
-  "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", 
-  "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
-  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
-  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
-  "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
-  "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
-  "RB LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
-  "STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
-  "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
-  "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
-  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
-  "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9799.png",
-  "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
-  "MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
-  "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
-  "AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
-  "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
-  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
-  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
-  "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
-  "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
-  "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIC LYON": "https://www.etmlig.com.tr/logos/lyon.png",
-  "MALAGA": "https://en.wikipedia.org/wiki/Special:FilePath/M%C3%A1laga_CF.svg",
-  "LOSC LILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
-  "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
-  "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
-  "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
-  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
-  "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
-  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
-  "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
-  "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
-  "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
-  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
-  "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
-  "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
-  "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
-  "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
-  "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
-  "JUVENTUS": "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png",
-  "SLAVIA PRAG": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Slavia_Praha_logo.svg",
-  "DINAMO ZAGREP": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
-  "LUGANO": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Lugano_logo.svg",
-  "LENS": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Lens_logo.svg",
-  "FC HEIDENHEIM": "https://en.wikipedia.org/wiki/Special:FilePath/1._FC_Heidenheim_1846.svg",
-  "HACKEN": "https://en.wikipedia.org/wiki/Special:FilePath/BK_H%C3%A4cken_logo.png"
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png"
 };
 
 const getLocalLogoUrl = (teamName: string) => {
@@ -179,7 +125,6 @@ export default function MacArsiviPage() {
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
-        // 🔴 EKMEL DEVRİMİ 1: VERİTABANINDAN YENİ İSİMLERİ (ID'LERİ) ÇEK VE ESKİLERLE BİRLEŞTİR
         const { data: dbPlayers } = await supabase.from('players').select('*');
         const mergedPlayersList: Record<string, string> = { ...allPlayersList };
         if (dbPlayers) {
@@ -187,8 +132,7 @@ export default function MacArsiviPage() {
              mergedPlayersList[String(p.username)] = p.full_name || p.name; 
            });
         }
-        setDynamicPlayersList(mergedPlayersList);
-
+        
         const { data: liveData } = await supabase.from('live_matches').select('*');
         if (liveData) {
           const liveMap: Record<number, any> = {};
@@ -216,25 +160,16 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
-        // 🔴 EKMEL DEVRİMİ 2: 1000 LİMİTİNİ KIR
         let allPredictions: any[] = [];
         let fetchMore = true;
         let from = 0;
         const step = 1000;
 
         while (fetchMore) {
-          const { data: pDataChunk, error } = await supabase
-            .from('player_predictions')
-            .select('*')
-            .eq('week_num', selectedWeek)
-            .order('user_id', { ascending: true })
-            .order('match_index', { ascending: true })
-            .range(from, from + step - 1);
-            
+          const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', selectedWeek).order('user_id', { ascending: true }).order('match_index', { ascending: true }).range(from, from + step - 1);
           if (!error && pDataChunk && pDataChunk.length > 0) {
              allPredictions = [...allPredictions, ...pDataChunk];
-             if (pDataChunk.length < step) fetchMore = false; 
-             else from += step; 
+             if (pDataChunk.length < step) fetchMore = false; else from += step; 
           } else { fetchMore = false; }
         }
 
@@ -242,11 +177,18 @@ export default function MacArsiviPage() {
            const pMap: Record<string, string[]> = {};
            allPredictions.forEach(row => {
               const rowUserId = String(row.user_id);
+              // 🔴 MİSAFİR ASKER PROTOKOLÜ: Tanımadığımız ID gelirse çöpe atma, listeye ekle! 🔴
+              if (!mergedPlayersList[rowUserId]) {
+                 mergedPlayersList[rowUserId] = `MİSAFİR ASKER (${rowUserId})`;
+              }
               if(!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
               pMap[rowUserId][row.match_index - 1] = row.predicted_score;
            });
            setPredictionsDB(pMap);
         }
+        
+        setDynamicPlayersList(mergedPlayersList);
+
       } catch (e) {
         console.log("Supabase baglantisi bekleniyor...");
       }
@@ -359,7 +301,6 @@ export default function MacArsiviPage() {
                   isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL');
                   
                   if (isFinished && homeScore !== '-' && awayScore !== '-') {
-                    // 🔴 BOŞLUKLARI SİLEN KORUMA (TRIM) ZIRHI 🔴
                     const targetScore = `${homeScore}-${awayScore}`.replace(/\s+/g, '');
                     const predictionsToUse = predictionsDB;
                     
@@ -368,10 +309,8 @@ export default function MacArsiviPage() {
                          const pScore = predictionsToUse[id] ? predictionsToUse[id][match.id - 1] : null;
                          return pScore && pScore.replace(/\s+/g, '') === targetScore;
                       })
-                      .map(id => dynamicPlayersList[id] || "Bilinmeyen")
-                      .filter(name => name !== "Bilinmeyen");
+                      .map(id => dynamicPlayersList[id]);
 
-                    // 🔴 AYNI KİŞİ FARKLI ID İLE GİRERSE ÇİFT SAYMAYI ENGELLEYEN KLON SİLİCİ
                     const uniqueWinnersMap: Record<string, string> = {};
                     rawWinners.forEach(name => {
                        const cleanName = name.replace(/🏆/g, '').trim().toUpperCase();

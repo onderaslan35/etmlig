@@ -21,7 +21,6 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// MANUEL KORUNAN ESKİ PUANLAR
 const tffWeek1Data: Record<string, number> = {};
 const tffWeek2Data: Record<string, number> = {};
 const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
@@ -57,6 +56,14 @@ export default function TffPuanDurumuPage() {
         } else { fetchMore = false; }
       }
 
+      // 🔴 MİSAFİR ASKER PROTOKOLÜ 🔴
+      if (dbPredictions && dbPredictions.length > 0) {
+        dbPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (!mergedPlayersList[uid]) mergedPlayersList[uid] = `MİSAFİR ASKER (${uid})`;
+        });
+      }
+
       const tffMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
@@ -89,21 +96,18 @@ export default function TffPuanDurumuPage() {
         Object.values(uniqueMatches).forEach(dbMatch => {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
-            
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
-            // 🔴 TRİM KORUMASI 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
             const winnerIds = Object.keys(predDict).filter(id => {
                 const pScore = predDict[id] ? predDict[id][matchIndex] : null;
                 return pScore && pScore.replace(/\s+/g, '') === targetScore;
             });
 
-            // 🔴 İSİM KLON SİLİCİ (ÇİFT ID ENGELLEYİCİ)
             const uniqueWinners = Array.from(new Set(winnerIds.map(id => {
-                const name = mergedPlayersList[id] || "Bilinmeyen";
+                const name = mergedPlayersList[id];
                 return name.replace(/🏆/g, '').trim().toUpperCase();
-            }))).filter(name => name !== "BİLİNMEYEN");
+            })));
             
             let points = 1;
             const wCount = uniqueWinners.length;
@@ -122,9 +126,7 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 ESKİ VE YENİ KİMLİKLERİ İSİM ÜZERİNDEN BİRLEŞTİRME MOTORU 🔴
       const aggregatedData: Record<string, any> = {};
-
       Object.keys(mergedPlayersList).forEach(id => {
          const originalName = mergedPlayersList[id];
          const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
@@ -162,7 +164,6 @@ export default function TffPuanDurumuPage() {
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
-
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
         const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
