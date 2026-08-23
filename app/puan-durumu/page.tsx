@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT LİSTE 
+// Sabit Liste Sadece Süsleme İçin
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -50,8 +50,8 @@ export default function TffPuanDurumuPage() {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 KOMUTANIN PAGINATION (SAYFALAMA) DÖNGÜSÜ 🔴
-      // "Önce 1'den 999'a iste, gelince bir 999 daha iste" kuralı!
+      // 🔴 EKMEL DEVRİMİ: KOMUTANIN "TERSİNE ÇEVİR" EMRİ! 🔴
+      // Verileri SONDAN BAŞA doğru çekiyoruz! Uğur Gürbüz ve 41. kişiden sonrakiler İLK Sırada gelecek!
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -62,43 +62,29 @@ export default function TffPuanDurumuPage() {
           .from('player_predictions')
           .select('*')
           .eq('week_num', 5)
-          .order('user_id', { ascending: true })
-          .order('match_index', { ascending: true })
-          .range(from, from + step - 1); // Önce 0-999, sonra 1000-1999 çeker!
+          .order('user_id', { ascending: false }) // 🔴 İŞTE BURASI: TERSİNE ÇEVİRDİK! 🔴
+          .order('match_index', { ascending: false })
+          .range(from, from + step - 1);
           
         if (!error && pDataChunk && pDataChunk.length > 0) {
-           dbPredictions = [...dbPredictions, ...pDataChunk]; // Gelenleri cebe at
-           
-           // Eğer gelen veri 1000'den azsa, demek ki son paketi aldık.
-           if (pDataChunk.length < step) {
-               fetchMore = false; 
-           } else {
-               // Tam 1000 tane geldiyse, sistemde daha veri var demektir. Bir 1000 daha iste!
-               from += step; 
-           }
+           dbPredictions = [...dbPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
         } else {
            fetchMore = false; 
         }
       }
 
-      // OYUNCU SÖZLÜĞÜNÜ OLUŞTUR
+      // MASTER İLE BİREBİR AYNI OYUNCU LİSTESİ
       const playersList: Record<string, string> = {};
       const playerUsernames: Record<string, string> = {}; 
       
       if (dbPlayers) {
         dbPlayers.forEach(p => {
-          const uname = String(p.username || '');
-          playerUsernames[p.id] = uname; 
-          playersList[p.id] = (uname && allPlayersList[uname]) ? allPlayersList[uname] : (p.name || p.full_name || "Yarışmacı");
+          playerUsernames[p.id] = String(p.username || ''); 
+          playersList[p.id] = p.name || p.full_name || "Yarışmacı";
         });
       }
-
-      Object.keys(allPlayersList).forEach(code => {
-          if (!Object.values(playerUsernames).includes(code)) {
-              playersList[code] = allPlayersList[code];
-              playerUsernames[code] = code; 
-          }
-      });
 
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
@@ -106,7 +92,7 @@ export default function TffPuanDurumuPage() {
 
       Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
-      // 🔴 TAHMİNLERİ EŞLEŞTİR (TRİM YOK, KLON SİLME YOK! SADECE MASTER MANTIĞI)
+      // TAHMİNLERİ YÜKLE (Filtre, Trim, Silme Yok! Saf Haliyle)
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -133,13 +119,13 @@ export default function TffPuanDurumuPage() {
             
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
-            // 🔴 MASTER'IN HESAPLAMA MOTORU (Saf ve Eksiksiz Okuma)
+            // MASTER'IN BİREBİR OKUMA MOTORU
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
 
             let points = 1;
             const wCount = winnerIds.length;
-            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
+            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else points = 1;
 
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
@@ -209,10 +195,19 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      <div className="w-full bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <span className="text-amber-500 text-xl animate-pulse">🚨</span>
+        <p className="text-amber-200 text-[11px] sm:text-xs font-semibold leading-tight">
+          <strong className="text-amber-400">BİLGİLENDİRME:</strong> TFF Puan Durumu artık Master ile eş zamanlı tam otomatik çalışmaktadır.
+        </p>
+      </div>
+
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
+
       <div className="w-full mb-6"><LiveMatchCard /></div>
+
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
         <button onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }} className={`px-8 py-2.5 rounded-xl font-black transition-all border w-full text-center shadow-md ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>
           TFF TOPLAM PUAN DURUMU
@@ -265,7 +260,6 @@ export default function TffPuanDurumuPage() {
                             );
                           })()}
                       </div>
-                      
                       {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                           +{row.liveExtra} CANLI
