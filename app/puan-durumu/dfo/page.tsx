@@ -3,12 +3,11 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// allPlayersList BURADAN TAMAMEN SİLİNDİ!
-// Artık oyuncular Supabase "players" tablosundan çekiliyor.
+// 🔴 EKMEL DEVRİMİ: TAM OTOMATİK DFO HESAPLAMA VE 1000 LİMİT KIRICI 🔴
 
 const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category.toUpperCase();
-  return (uppercaseCat.includes("TÜRKİYE SÜPER LİG") || uppercaseCat.includes("TÜRKİYE 1.LİG") || uppercaseCat.includes("TÜRKİYE SÜPER KUPA"));
+  const uppercaseCat = category ? category.toUpperCase() : '';
+  return (uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG"));
 };
 
 export default function DfoPuanDurumuPage() {
@@ -19,17 +18,52 @@ export default function DfoPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
+      // 1. OYUNCULARI VE CANLI MAÇLARI ÇEK
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbPredictions } = await supabase.from('player_predictions').select('*').eq('week_num', 5);
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
-      const { data: dbHistorical } = await supabase.from('dfo_weekly_points').select('*');
+      
+      // SADECE DFO KASASININ GEÇMİŞ HAFTA VERİLERİ
+      const { data: dbHistorical } = await supabase.from('standings').select('*').eq('league_type', 'DFO');
 
+      // 🔴 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
+      let dbPredictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+
+      while (fetchMore) {
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', 5)
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
+          .range(from, from + step - 1);
+          
+        if (!error && pDataChunk && pDataChunk.length > 0) {
+           dbPredictions = [...dbPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
+        } else {
+           fetchMore = false; 
+        }
+      }
+
+      // DFO BÜLTENİNİ ÇEK Kİ SADECE AVRUPA MAÇLARINI HESAPLASIN
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      const dfoMatchIndexes: number[] = [];
+      if (dbBulletin) {
+         dbBulletin.forEach(m => {
+            if (!isTffMatchCheck(m.category)) {
+                dfoMatchIndexes.push(m.match_index);
+            }
+         });
+      }
+
+      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
-        dbPlayers.forEach(p => {
-          playersList[p.id] = p.name;
-        });
+        dbPlayers.forEach(p => { playersList[p.id] = p.name || p.full_name; });
       }
 
       let w5Base: Record<string, number> = {}; 
@@ -38,15 +72,14 @@ export default function DfoPuanDurumuPage() {
 
       Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
-      const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
+      // GEÇMİŞ DFO PUANLARI SÖZLÜĞÜ
+      const historicalDict: Record<string, number> = {};
       if(dbHistorical) {
-          dbHistorical.forEach(row => {
-              historicalDict[row.id] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
-          });
+          dbHistorical.forEach(row => { historicalDict[row.user_id] = row.points || 0; });
       }
 
       const predDict: Record<string, string[]> = {};
-      if (dbPredictions) {
+      if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
           const uid = String(pred.user_id);
           if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
@@ -54,58 +87,60 @@ export default function DfoPuanDurumuPage() {
         });
       }
 
-      const catDict: Record<number, string> = {};
-      if (dbBulletin) {
-        dbBulletin.forEach(m => { catDict[m.match_index] = m.category; });
-      }
-
+      const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
-        dbMatches.forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const matchIndex = (dbMatch.id % 100) - 1;
-            const category = catDict[matchIndex + 1] || "";
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            
-            if (!isTffMatchCheck(category)) {
-              const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
-              let points = 1;
-              if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
+        dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
-              winnerIds.forEach(wId => {
-                if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
-                else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                  w5Live[wId] += points;
-                  isAnyMatchLive = true;
-                }
-              });
-            }
+        Object.values(uniqueMatches).forEach(dbMatch => {
+          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+            const matchIndex = (dbMatch.id % 100) - 1;
+            
+            // EĞER BU MAÇ DFO (AVRUPA) MAÇI DEĞİLSE HESAPLAMADAN ATLA!
+            if (!dfoMatchIndexes.includes(matchIndex + 1)) return;
+
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            
+            let points = 1;
+            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
+
+            winnerIds.forEach(wId => {
+              if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
+              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                w5Live[wId] += points;
+                isAnyMatchLive = true;
+              }
+            });
           }
         });
       }
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
+      // 4. LİSTEYİ OLUŞTUR
       const baseList = Object.keys(playersList).map(id => {
-        const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
-        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
+        const pastDfoPoints = historicalDict[id] || 0;
+        
+        // Sadece geçmiş tablo ve canlıyı topluyoruz (Çifte sayımı önlemek için)
+        const total = pastDfoPoints + (w5Live[id] || 0);
+
         return { 
           id, name: playersList[id], 
-          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4, w5: w5Total, total, 
+          past: pastDfoPoints, w5: w5Base[id] || 0, total, 
           liveExtra: w5Live[id] || 0 
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
+      // ÖNCEKİ HAFTA SIRALAMASINI BULMAK İÇİN (Canlı Olmayan Hal)
+      const prevRefList = [...baseList].sort((a, b) => b.past - a.past || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      // SIFIR PUANI OLANLARI GİZLEME KURALI KALDIRILDI!
       const visibleList = baseList;
 
       visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
-        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
+        const scoreA = activeTab === 'total' ? a.total : a.w5;
+        const scoreB = activeTab === 'total' ? b.total : b.w5;
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -119,7 +154,7 @@ export default function DfoPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        let displayScore = activeTab === 'total' ? player.total : player.w5;
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
@@ -164,17 +199,7 @@ export default function DfoPuanDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[1, 2, 3, 4, 5].map(num => (
-                <button
-                  key={num}
-                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
-                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                    activeTab === `w${num}` ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
+              <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${activeTab === 'w5' ? 'bg-[#1d4ed8] text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'}`}>5</button>
             </div>
           )}
 
