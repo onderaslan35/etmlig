@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
+// 🔴 SABİT LİSTE
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -20,9 +21,10 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
+// 🔴 DFO İÇİN İLK 4 HAFTA SIFIRLANDI (14 Puan Hatasının Sebebi Burasıydı)
 const dfoWeek1Data: Record<string, number> = {};
 const dfoWeek2Data: Record<string, number> = {};
-const dfoWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
+const dfoWeek3Data: Record<string, number> = {}; 
 const dfoWeek4Data: Record<string, number> = {};
 
 const isTffMatchCheck = (category: string) => {
@@ -47,33 +49,24 @@ export default function DfoPuanDurumuPage() {
          dbPlayers.forEach(p => { mergedPlayersList[String(p.username)] = p.full_name || p.name; });
       }
 
+      // 🔴 EKMEL DEVRİMİ: .ORDER (SIRALAMA) KOMUTU SİLİNDİ, HİÇBİR TAHMİN YUTULMAYACAK!
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
       const step = 1000;
 
       while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', 5).order('user_id', { ascending: true }).order('match_index', { ascending: true }).range(from, from + step - 1);
+        const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(from, from + step - 1);
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
            if (pDataChunk.length < step) fetchMore = false; else from += step; 
         } else { fetchMore = false; }
       }
 
-      // 🔴 MİSAFİR ASKER PROTOKOLÜ 🔴
-      if (dbPredictions && dbPredictions.length > 0) {
-        dbPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          if (!mergedPlayersList[uid]) mergedPlayersList[uid] = `MİSAFİR ASKER (${uid})`;
-        });
-      }
-
       const dfoMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
-            if (!isTffMatchCheck(m.category)) {
-                dfoMatchIndexes.push(m.match_index);
-            }
+            if (!isTffMatchCheck(m.category)) dfoMatchIndexes.push(m.match_index);
          });
       }
 
@@ -102,19 +95,12 @@ export default function DfoPuanDurumuPage() {
             
             if (!dfoMatchIndexes.includes(matchIndex + 1)) return;
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-            const winnerIds = Object.keys(predDict).filter(id => {
-                const pScore = predDict[id] ? predDict[id][matchIndex] : null;
-                return pScore && pScore.replace(/\s+/g, '') === targetScore;
-            });
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
 
-            const uniqueWinners = Array.from(new Set(winnerIds.map(id => {
-                const name = mergedPlayersList[id];
-                return name.replace(/🏆/g, '').trim().toUpperCase();
-            })));
-            
+            // 🔴 KOPYA/KLON SİLİCİ KALDIRILDI! ADMİN PANELİ GİBİ 9 ID'NİN 9'UNU DA SAYACAK!
             let points = 1;
-            const wCount = uniqueWinners.length;
+            const wCount = winnerIds.length;
             if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
@@ -201,13 +187,6 @@ export default function DfoPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="w-full bg-blue-500/20 border border-blue-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
-        <span className="text-blue-500 text-xl animate-pulse">🌍</span>
-        <p className="text-blue-200 text-[11px] sm:text-xs font-semibold leading-tight">
-          <strong className="text-blue-400">BİLGİLENDİRME:</strong> DFO Puan Durumu artık Master ile eş zamanlı tam otomatik çalışmaktadır.
-        </p>
-      </div>
-
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-400 tracking-wider uppercase drop-shadow-md">DFO PUAN DURUMU</h1>
       </div>

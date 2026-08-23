@@ -43,25 +43,18 @@ export default function TffPuanDurumuPage() {
          dbPlayers.forEach(p => { mergedPlayersList[String(p.username)] = p.full_name || p.name; });
       }
 
+      // 🔴 EKMEL DEVRİMİ: .ORDER SİLİNDİ
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
       const step = 1000;
 
       while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', 5).order('user_id', { ascending: true }).order('match_index', { ascending: true }).range(from, from + step - 1);
+        const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', 5).range(from, from + step - 1);
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
            if (pDataChunk.length < step) fetchMore = false; else from += step; 
         } else { fetchMore = false; }
-      }
-
-      // 🔴 MİSAFİR ASKER PROTOKOLÜ 🔴
-      if (dbPredictions && dbPredictions.length > 0) {
-        dbPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          if (!mergedPlayersList[uid]) mergedPlayersList[uid] = `MİSAFİR ASKER (${uid})`;
-        });
       }
 
       const tffMatchIndexes: number[] = [];
@@ -96,21 +89,15 @@ export default function TffPuanDurumuPage() {
         Object.values(uniqueMatches).forEach(dbMatch => {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
+            
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-            const winnerIds = Object.keys(predDict).filter(id => {
-                const pScore = predDict[id] ? predDict[id][matchIndex] : null;
-                return pScore && pScore.replace(/\s+/g, '') === targetScore;
-            });
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
 
-            const uniqueWinners = Array.from(new Set(winnerIds.map(id => {
-                const name = mergedPlayersList[id];
-                return name.replace(/🏆/g, '').trim().toUpperCase();
-            })));
-            
+            // 🔴 KOPYA/KLON SİLİCİ KALDIRILDI! ADMİN PANELİ GİBİ 9 ID'NİN 9'UNU DA SAYACAK!
             let points = 1;
-            const wCount = uniqueWinners.length;
+            const wCount = winnerIds.length;
             if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
@@ -127,6 +114,7 @@ export default function TffPuanDurumuPage() {
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
       const aggregatedData: Record<string, any> = {};
+
       Object.keys(mergedPlayersList).forEach(id => {
          const originalName = mergedPlayersList[id];
          const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
@@ -164,6 +152,7 @@ export default function TffPuanDurumuPage() {
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
+
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
         const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
@@ -195,13 +184,6 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="w-full bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
-        <span className="text-amber-500 text-xl animate-pulse">🚨</span>
-        <p className="text-amber-200 text-[11px] sm:text-xs font-semibold leading-tight">
-          <strong className="text-amber-400">BİLGİLENDİRME:</strong> TFF Puan Durumu artık Master ile eş zamanlı tam otomatik çalışmaktadır.
-        </p>
-      </div>
-
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
