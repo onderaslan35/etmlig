@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT VE GÜVENİLİR ASKER LİSTESİ GERİ GELDİ!
+// 🔴 SABİT LİSTE
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -21,7 +21,7 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU"
 };
 
-// ESKİ HAFTALARIN KORUNAN LİSTESİ
+// MANUEL KORUNAN ESKİ PUANLAR
 const tffWeek1Data: Record<string, number> = {};
 const tffWeek2Data: Record<string, number> = {};
 const tffWeek3Data: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
@@ -35,34 +35,28 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
+      const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
+      const mergedPlayersList: Record<string, string> = { ...allPlayersList };
+      if (dbPlayers) {
+         dbPlayers.forEach(p => { mergedPlayersList[String(p.username)] = p.full_name || p.name; });
+      }
+
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
       const step = 1000;
 
       while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase
-          .from('player_predictions')
-          .select('*')
-          .eq('week_num', 5)
-          .order('user_id', { ascending: true })
-          .order('match_index', { ascending: true })
-          .range(from, from + step - 1);
-          
+        const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').eq('week_num', 5).order('user_id', { ascending: true }).order('match_index', { ascending: true }).range(from, from + step - 1);
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; 
-           else from += step; 
-        } else {
-           fetchMore = false; 
-        }
+           if (pDataChunk.length < step) fetchMore = false; else from += step; 
+        } else { fetchMore = false; }
       }
 
-      // TFF MAÇLARINI FİLTRELE
       const tffMatchIndexes: number[] = [];
       if (dbBulletin) {
          dbBulletin.forEach(m => {
@@ -77,7 +71,7 @@ export default function TffPuanDurumuPage() {
       let w5Live: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(allPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+      Object.keys(mergedPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
 
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
@@ -98,11 +92,22 @@ export default function TffPuanDurumuPage() {
             
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            // 🔴 TRİM KORUMASI 
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+            const winnerIds = Object.keys(predDict).filter(id => {
+                const pScore = predDict[id] ? predDict[id][matchIndex] : null;
+                return pScore && pScore.replace(/\s+/g, '') === targetScore;
+            });
+
+            // 🔴 İSİM KLON SİLİCİ (ÇİFT ID ENGELLEYİCİ)
+            const uniqueWinners = Array.from(new Set(winnerIds.map(id => {
+                const name = mergedPlayersList[id] || "Bilinmeyen";
+                return name.replace(/🏆/g, '').trim().toUpperCase();
+            }))).filter(name => name !== "BİLİNMEYEN");
             
             let points = 1;
-            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
+            const wCount = uniqueWinners.length;
+            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
@@ -117,23 +122,42 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // GEÇMİŞ (MANUEL) + 5. HAFTA (OTOMATİK) PUANLARI BİRLEŞTİR
-      const baseList = Object.keys(allPlayersList).map(id => {
-        const w1 = tffWeek1Data[id] || 0;
-        const w2 = tffWeek2Data[id] || 0;
-        const w3 = tffWeek3Data[id] || 0;
-        const w4 = tffWeek4Data[id] || 0;
-        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = w1 + w2 + w3 + w4 + w5Total;
+      // 🔴 ESKİ VE YENİ KİMLİKLERİ İSİM ÜZERİNDEN BİRLEŞTİRME MOTORU 🔴
+      const aggregatedData: Record<string, any> = {};
 
-        return { 
-          id, name: allPlayersList[id], 
-          w1, w2, w3, w4, w5: w5Total, total, 
-          liveExtra: w5Live[id] || 0 
-        };
+      Object.keys(mergedPlayersList).forEach(id => {
+         const originalName = mergedPlayersList[id];
+         const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
+         
+         const w1 = tffWeek1Data[id] || 0;
+         const w2 = tffWeek2Data[id] || 0;
+         const w3 = tffWeek3Data[id] || 0;
+         const w4 = tffWeek4Data[id] || 0;
+         const past = w1 + w2 + w3 + w4;
+
+         const w5 = (w5Base[id] || 0);
+         const liveEx = (w5Live[id] || 0);
+
+         if (!aggregatedData[cleanName]) {
+             aggregatedData[cleanName] = { id: cleanName, name: originalName, w1:0, w2:0, w3:0, w4:0, past: 0, w5: 0, liveExtra: 0, total: 0 };
+         } else {
+             if (originalName.includes('🏆') && !aggregatedData[cleanName].name.includes('🏆')) {
+                 aggregatedData[cleanName].name = originalName; 
+             }
+         }
+         aggregatedData[cleanName].w1 += w1;
+         aggregatedData[cleanName].w2 += w2;
+         aggregatedData[cleanName].w3 += w3;
+         aggregatedData[cleanName].w4 += w4;
+         aggregatedData[cleanName].past += past;
+         aggregatedData[cleanName].w5 += w5;
+         aggregatedData[cleanName].liveExtra += liveEx;
+         aggregatedData[cleanName].total += (past + w5 + liveEx);
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
+      const baseList = Object.values(aggregatedData);
+
+      const prevRefList = [...baseList].sort((a, b) => a.past - b.past || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 

@@ -4,13 +4,13 @@ import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT VE GÜVENİLİR ASKER LİSTESİ GERİ GELDİ! (GÜVENLİK DUVARINA TAKILMAZ)
+// 🔴 SABİT LİSTE 
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -99,7 +99,7 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png" ,
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
@@ -174,10 +174,21 @@ export default function MacArsiviPage() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [bulletinData, setBulletinData] = useState<Record<number, any>>({});
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({});
+  const [dynamicPlayersList, setDynamicPlayersList] = useState<Record<string, string>>({}); 
 
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
+        // 🔴 EKMEL DEVRİMİ 1: VERİTABANINDAN YENİ İSİMLERİ (ID'LERİ) ÇEK VE ESKİLERLE BİRLEŞTİR
+        const { data: dbPlayers } = await supabase.from('players').select('*');
+        const mergedPlayersList: Record<string, string> = { ...allPlayersList };
+        if (dbPlayers) {
+           dbPlayers.forEach(p => { 
+             mergedPlayersList[String(p.username)] = p.full_name || p.name; 
+           });
+        }
+        setDynamicPlayersList(mergedPlayersList);
+
         const { data: liveData } = await supabase.from('live_matches').select('*');
         if (liveData) {
           const liveMap: Record<number, any> = {};
@@ -205,6 +216,7 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
+        // 🔴 EKMEL DEVRİMİ 2: 1000 LİMİTİNİ KIR
         let allPredictions: any[] = [];
         let fetchMore = true;
         let from = 0;
@@ -347,16 +359,30 @@ export default function MacArsiviPage() {
                   isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL');
                   
                   if (isFinished && homeScore !== '-' && awayScore !== '-') {
-                    const targetScore = `${homeScore}-${awayScore}`;
+                    // 🔴 BOŞLUKLARI SİLEN KORUMA (TRIM) ZIRHI 🔴
+                    const targetScore = `${homeScore}-${awayScore}`.replace(/\s+/g, '');
                     const predictionsToUse = predictionsDB;
                     
-                    // 🔴 EKMEL DEVRİMİ 3: KİMLİKLER SABİT (GÜVENLİ) LİSTEDEN EŞLEŞİYOR!
-                    currentWinners = Object.keys(predictionsToUse)
-                      .filter(id => predictionsToUse[id] && predictionsToUse[id][match.id - 1] === targetScore)
-                      .map(id => allPlayersList[id] || "Bilinmeyen")
-                      .filter(name => name !== "Bilinmeyen")
-                      .sort((a, b) => a.localeCompare(b, 'tr'));
-                      
+                    let rawWinners = Object.keys(predictionsToUse)
+                      .filter(id => {
+                         const pScore = predictionsToUse[id] ? predictionsToUse[id][match.id - 1] : null;
+                         return pScore && pScore.replace(/\s+/g, '') === targetScore;
+                      })
+                      .map(id => dynamicPlayersList[id] || "Bilinmeyen")
+                      .filter(name => name !== "Bilinmeyen");
+
+                    // 🔴 AYNI KİŞİ FARKLI ID İLE GİRERSE ÇİFT SAYMAYI ENGELLEYEN KLON SİLİCİ
+                    const uniqueWinnersMap: Record<string, string> = {};
+                    rawWinners.forEach(name => {
+                       const cleanName = name.replace(/🏆/g, '').trim().toUpperCase();
+                       if (!uniqueWinnersMap[cleanName]) {
+                           uniqueWinnersMap[cleanName] = name;
+                       } else if (name.includes('🏆')) {
+                           uniqueWinnersMap[cleanName] = name; 
+                       }
+                    });
+
+                    currentWinners = Object.values(uniqueWinnersMap).sort((a, b) => a.localeCompare(b, 'tr'));
                     winnersCount = currentWinners.length;
                     
                     if(winnersCount === 1) displayPoints = 12; else if(winnersCount === 2) displayPoints = 6; else if(winnersCount === 3) displayPoints = 5; else if(winnersCount === 4) displayPoints = 4; else if(winnersCount === 5) displayPoints = 3; else if(winnersCount === 6) displayPoints = 2; else if(winnersCount >= 7) displayPoints = 1; else displayPoints = 0;
