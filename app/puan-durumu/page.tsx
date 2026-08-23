@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// Sabit Liste Sadece Süsleme İçin
+// 🔴 SABİT LİSTE (Sadece ekranı süslemek için kullanılacak)
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -50,8 +50,46 @@ export default function TffPuanDurumuPage() {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: KOMUTANIN "TERSİNE ÇEVİR" EMRİ! 🔴
-      // Verileri SONDAN BAŞA doğru çekiyoruz! Uğur Gürbüz ve 41. kişiden sonrakiler İLK Sırada gelecek!
+      // 🔴 EKMEL DEVRİMİ 1: SİZİN EMRİNİZ OLAN "GERÇEK ID" KÖPRÜSÜ! 🔴
+      // Artık her şey Master'ın kullandığı GERÇEK veritabanı ID'si (UUID) ile çalışacak!
+      const playersList: Record<string, string> = {}; 
+      const codeToUuidMap: Record<string, string> = {}; 
+      
+      if (dbPlayers) {
+        dbPlayers.forEach(p => {
+          const uuid = String(p.id);
+          const oldCode = String(p.username || '');
+          
+          // Ekranda süslü isim görünsün diye allPlayersList'i kullan
+          let displayName = p.name || p.full_name || "Yarışmacı";
+          if (oldCode && allPlayersList[oldCode]) {
+              displayName = allPlayersList[oldCode];
+          }
+          
+          playersList[uuid] = displayName; // Anahtarlarımız artık tamamen UUID!
+          if (oldCode) codeToUuidMap[oldCode] = uuid; // 6 haneli kodu UUID'ye bağla
+        });
+      }
+
+      // 🔴 EKMEL DEVRİMİ 2: ESKİ HAFTALARI GERÇEK ID KASASINA AKTAR 🔴
+      const pastPointsDict: Record<string, { w1:number, w2:number, w3:number, w4:number }> = {};
+      
+      Object.keys(allPlayersList).forEach(code => {
+         const uuid = codeToUuidMap[code] || code; // DB'de yoksa kendi kodunu kullan
+         
+         if (!playersList[uuid]) {
+             playersList[uuid] = allPlayersList[code];
+         }
+
+         pastPointsDict[uuid] = {
+             w1: tffWeek1Data[code] || 0,
+             w2: tffWeek2Data[code] || 0,
+             w3: tffWeek3Data[code] || 0,
+             w4: tffWeek4Data[code] || 0
+         };
+      });
+
+      // 🔴 EKMEL DEVRİMİ 3: MASTER GİBİ 1000 LİMİT KIRICI (Döngülü ve Güvenli)
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -62,44 +100,14 @@ export default function TffPuanDurumuPage() {
           .from('player_predictions')
           .select('*')
           .eq('week_num', 5)
-          .order('user_id', { ascending: false }) // 🔴 İŞTE BURASI: TERSİNE ÇEVİRDİK! 🔴
-          .order('match_index', { ascending: false })
+          .order('user_id', { ascending: true })
+          .order('match_index', { ascending: true })
           .range(from, from + step - 1);
           
         if (!error && pDataChunk && pDataChunk.length > 0) {
            dbPredictions = [...dbPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; 
-           else from += step; 
-        } else {
-           fetchMore = false; 
-        }
-      }
-
-      // MASTER İLE BİREBİR AYNI OYUNCU LİSTESİ
-      const playersList: Record<string, string> = {};
-      const playerUsernames: Record<string, string> = {}; 
-      
-      if (dbPlayers) {
-        dbPlayers.forEach(p => {
-          playerUsernames[p.id] = String(p.username || ''); 
-          playersList[p.id] = p.name || p.full_name || "Yarışmacı";
-        });
-      }
-
-      let w5Base: Record<string, number> = {}; 
-      let w5Live: Record<string, number> = {}; 
-      let isAnyMatchLive = false;
-
-      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
-
-      // TAHMİNLERİ YÜKLE (Filtre, Trim, Silme Yok! Saf Haliyle)
-      const predDict: Record<string, string[]> = {};
-      if (dbPredictions && dbPredictions.length > 0) {
-        dbPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-          predDict[uid][pred.match_index - 1] = pred.predicted_score;
-        });
+           if (pDataChunk.length < step) fetchMore = false; else from += step; 
+        } else { fetchMore = false; }
       }
 
       const tffMatchIndexes: number[] = [];
@@ -109,6 +117,23 @@ export default function TffPuanDurumuPage() {
          });
       }
 
+      let w5Base: Record<string, number> = {}; 
+      let w5Live: Record<string, number> = {}; 
+      let isAnyMatchLive = false;
+
+      Object.keys(playersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
+
+      // TAHMİNLERİ KESİNLİKLE GERÇEK ID (UUID) İLE KAYDET
+      const predDict: Record<string, string[]> = {};
+      if (dbPredictions && dbPredictions.length > 0) {
+        dbPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
+          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+        });
+      }
+
+      // 🔴 4. ADIM: MASTER'IN BİREBİR HESAPLAMA MOTORU (Filtresiz Saf Gerçeklik)
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
@@ -116,16 +141,16 @@ export default function TffPuanDurumuPage() {
         Object.values(uniqueMatches).forEach(dbMatch => {
           if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             const matchIndex = (dbMatch.id % 100) - 1;
-            
             if (!tffMatchIndexes.includes(matchIndex + 1)) return;
 
-            // MASTER'IN BİREBİR OKUMA MOTORU
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+            
+            // İşte Adaletin Sağlandığı Yer! Tamamen Gerçek ID Eşleşmesi!
             const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
 
             let points = 1;
             const wCount = winnerIds.length;
-            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else points = 1;
+            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
               if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
@@ -140,20 +165,15 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
+      // TABLO VERİSİNİ OLUŞTUR (Gerçek ID Kasasından Eski Puanları Çekerek)
       const baseList = Object.keys(playersList).map(id => {
-        const uname = playerUsernames[id] || id; 
-        const w1 = tffWeek1Data[uname] || 0;
-        const w2 = tffWeek2Data[uname] || 0;
-        const w3 = tffWeek3Data[uname] || 0;
-        const w4 = tffWeek4Data[uname] || 0;
-        const past = w1 + w2 + w3 + w4;
-
+        const past = pastPointsDict[id] || { w1:0, w2:0, w3:0, w4:0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past + w5Total;
+        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
 
         return { 
           id, name: playersList[id], 
-          w1, w2, w3, w4, w5: w5Total, total, 
+          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4, w5: w5Total, total, 
           liveExtra: w5Live[id] || 0 
         };
       });
@@ -237,7 +257,7 @@ export default function TffPuanDurumuPage() {
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {tableRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
                   <td className="px-6 py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
@@ -260,6 +280,7 @@ export default function TffPuanDurumuPage() {
                             );
                           })()}
                       </div>
+                      
                       {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                           +{row.liveExtra} CANLI
