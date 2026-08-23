@@ -38,6 +38,15 @@ const isTffMatchCheck = (category: string) => {
   );
 };
 
+// 🔴 İSİMLERİ KUSURSUZ EŞLEŞTİRECEK NÜKLEER TEMİZLEYİCİ ZIRH
+const toTurkishUpperCase = (str: string) => {
+    if (!str) return "";
+    return str.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase().trim();
+};
+const getCleanName = (name: string) => {
+    return toTurkishUpperCase(name.replace(/🏆/g, ''));
+};
+
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
@@ -50,15 +59,40 @@ export default function TffPuanDurumuPage() {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
 
-      // 🔴 EKMEL DEVRİMİ: HİÇBİR İSMİ DIŞLAMAYAN ORTAK LİSTE
-      const unifiedPlayersList: Record<string, string> = { ...allPlayersList };
+      // 🔴 1. ADIM: TÜM ASKERLERİN GEÇMİŞ PUANLARINI İSME GÖRE HARİTALA
+      const playerStats: Record<string, any> = {};
+
+      Object.keys(allPlayersList).forEach(id => {
+         const originalName = allPlayersList[id];
+         const cName = getCleanName(originalName);
+         
+         const w1 = tffWeek1Data[id] || 0;
+         const w2 = tffWeek2Data[id] || 0;
+         const w3 = tffWeek3Data[id] || 0;
+         const w4 = tffWeek4Data[id] || 0;
+
+         playerStats[cName] = {
+             originalName: originalName,
+             w1, w2, w3, w4,
+             past: w1 + w2 + w3 + w4,
+             w5Base: 0,
+             w5Live: 0
+         };
+      });
+
+      // 🔴 2. ADIM: SUPABASE'DEN GELEN ID'LERİ TEMİZ İSME ÇEVİR
+      const uidToCleanName: Record<string, string> = {};
       if (dbPlayers) {
-         dbPlayers.forEach(p => {
-             unifiedPlayersList[p.id] = p.full_name || p.name; // UUID'yi anahtar olarak kaydet
-         });
+          dbPlayers.forEach(p => {
+              const name = p.full_name || p.name || p.username;
+              if (name) {
+                  uidToCleanName[String(p.id)] = getCleanName(name);
+                  uidToCleanName[String(p.username)] = getCleanName(name); // Yedek köprü
+              }
+          });
       }
 
-      // 1000 LİMİT KIRICI (Sıralama ile eksiksiz çekim)
+      // 🔴 3. ADIM: 1000 LİMİT KIRICI İLE TAHMİNLERİ ÇEK (Sıralama Komutu Dahil)
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -86,22 +120,27 @@ export default function TffPuanDurumuPage() {
          });
       }
 
-      let w5Base: Record<string, number> = {}; 
-      let w5Live: Record<string, number> = {}; 
-      let isAnyMatchLive = false;
-
-      Object.keys(unifiedPlayersList).forEach(id => { w5Base[id] = 0; w5Live[id] = 0; });
-
-      // TAHMİNLERİ DOĞRUDAN KENDİ UUID'Sİ İLE KAYDET (ÇAKIŞMA VE SİLİNME İMKANSIZ)
+      // 🔴 4. ADIM: TAHMİNLERİ İSME GÖRE KAYDET (ID'LERİ ÇÖPE ATTIK!)
       const predDict: Record<string, string[]> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+          let cName = uidToCleanName[String(pred.user_id)];
+          
+          // Eğer Supabase'de bu adamın ismi yoksa, eski listede ID'si var mı diye bak
+          if (!cName && allPlayersList[String(pred.user_id)]) {
+              cName = getCleanName(allPlayersList[String(pred.user_id)]);
+          } else if (!cName) {
+              cName = `BİLİNMEYEN ASKER (${pred.user_id})`;
+          }
+
+          if (!predDict[cName]) predDict[cName] = Array(24).fill('-');
+          predDict[cName][pred.match_index - 1] = pred.predicted_score;
         });
       }
 
+      let isAnyMatchLive = false;
+
+      // 🔴 5. ADIM: MAÇLARI VE BİLENLERİ "İSİM" ÜZERİNDEN HESAPLA (MASTER MOTORU)
       const uniqueMatches: Record<number, any> = {};
       if (dbMatches) {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
@@ -114,22 +153,27 @@ export default function TffPuanDurumuPage() {
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
             
-            // BİLENLERİ EKSİKSİZ BUL
-            const winnerIds = Object.keys(predDict).filter(id => {
-                const pScore = predDict[id] ? predDict[id][matchIndex] : null;
+            // Sadece TEMİZ İSİM üzerinden bilenleri bul! (Kimse silinmeyecek!)
+            const winnerCleanNames = Object.keys(predDict).filter(cName => {
+                const pScore = predDict[cName] ? predDict[cName][matchIndex] : null;
                 return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
             });
 
-            // 🔴 9 KİŞİ BİLDİYSE 9 SAYACAK! (KİMSENİN HAKKI YENMEYECEK)
             let points = 1;
-            const wCount = winnerIds.length; 
+            const wCount = winnerCleanNames.length;
             if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
 
-            winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') w5Base[wId] = (w5Base[wId] || 0) + points;
-              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                w5Live[wId] = (w5Live[wId] || 0) + points;
-                isAnyMatchLive = true;
+            winnerCleanNames.forEach(cName => {
+              // Eğer bu adam eski listede bile yoksa, sisteme sıfırdan ekle
+              if (!playerStats[cName]) {
+                  playerStats[cName] = { originalName: cName, w1:0, w2:0, w3:0, w4:0, past:0, w5Base:0, w5Live:0 };
+              }
+
+              if (dbMatch.status === 'FINISHED') {
+                  playerStats[cName].w5Base += points;
+              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                  playerStats[cName].w5Live += points;
+                  isAnyMatchLive = true;
               }
             });
           }
@@ -138,52 +182,25 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 SADECE İSİMLERİ (KUPALARI SİLEREK) BİRLEŞTİREN ADALET MOTORU
-      const aggregatedData: Record<string, any> = {};
-
-      Object.keys(unifiedPlayersList).forEach(id => {
-         const originalName = unifiedPlayersList[id];
-         if (!originalName) return;
-
-         const cleanName = originalName.replace(/🏆/g, '').trim().toUpperCase();
-         
-         // Eğer id eski 6 haneli kod ise geçmişten puan çeker, değilse 0 kalır.
-         const w1 = tffWeek1Data[id] || 0;
-         const w2 = tffWeek2Data[id] || 0;
-         const w3 = tffWeek3Data[id] || 0;
-         const w4 = tffWeek4Data[id] || 0;
-         const past = w1 + w2 + w3 + w4;
-
-         // Eğer id UUID ise 5. haftadan puan çeker, değilse 0 kalır.
-         const w5 = (w5Base[id] || 0);
-         const liveEx = (w5Live[id] || 0);
-
-         if (!aggregatedData[cleanName]) {
-             aggregatedData[cleanName] = { id: cleanName, name: originalName, w1:0, w2:0, w3:0, w4:0, past: 0, w5: 0, liveExtra: 0, total: 0 };
-         } else {
-             if (originalName.includes('🏆') && !aggregatedData[cleanName].name.includes('🏆')) {
-                 aggregatedData[cleanName].name = originalName; 
-             }
-         }
-         
-         aggregatedData[cleanName].w1 += w1;
-         aggregatedData[cleanName].w2 += w2;
-         aggregatedData[cleanName].w3 += w3;
-         aggregatedData[cleanName].w4 += w4;
-         aggregatedData[cleanName].past += past;
-         aggregatedData[cleanName].w5 += w5;
-         aggregatedData[cleanName].liveExtra += liveEx;
-         aggregatedData[cleanName].total += (past + w5 + liveEx);
+      // 🔴 6. ADIM: TABLOYU OLUŞTUR VE SIRALA
+      const baseList = Object.values(playerStats).map(p => {
+          const w5Total = p.w5Base + p.w5Live;
+          return {
+              id: p.originalName, // React key için
+              name: p.originalName,
+              w1: p.w1, w2: p.w2, w3: p.w3, w4: p.w4,
+              past: p.past,
+              w5: w5Total,
+              total: p.past + w5Total,
+              liveExtra: p.w5Live
+          };
       });
-
-      const baseList = Object.values(aggregatedData);
 
       const prevRefList = [...baseList].sort((a, b) => a.past - b.past || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
-
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
         const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
