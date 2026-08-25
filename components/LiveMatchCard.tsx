@@ -141,90 +141,10 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
-  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
-
-  // 🔴 ALMANYA BUNDESLIGA TAKIMLARI (FOTMOB ÖZEL)
-  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
-  "BAYERN MUNICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
-  "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
-  "B. DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
-  "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
-  "LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
-  "RB LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
-  "LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
-  "STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
-  "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
-  "FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
-  "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
-  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
-  "BORUSSIA MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
-  "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9799.png",
-  "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
-  "MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
-  "MAINZ": "https://images.fotmob.com/image_resources/logo/teamlogo/9781.png",
-  "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
-  "AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
-  "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
-  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
-  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
-  "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
-  "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
-
-  "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
-  "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
-  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
-  "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
-  "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
-  "HAMMARBY": "/logos/hammarby.png", 
-  "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
-  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
-  // 🔴 PORTEKİZ LİGİ (PRIMEIRA LIGA)
-  "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
-  "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
-  "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
-  "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
-  
-  // 🔴 HOLLANDA LİGİ (EREDIVISIE)
-  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
-  "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
-  "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
- 
-  "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/10229.png",
- 
-
-  // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
-  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
-  
-  "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
-  "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
- 
-  "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
-
-  // 🔴 İSKOÇYA LİGİ (PREMIERSHIP)
-  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
-  "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
-  "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
-  "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
-  
-  "OLİMPİC LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLİMPİQUE LYON": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "OLYMPIC LYON": "https://www.etmlig.com.tr/logos/lyon.png",
-  "OLYMPIQUE LYON": "/logos/lyon.png",
-  "OLYMPIQUE LYONNAIS": "https://upload.wikimedia.org/wikipedia/en/c/c6/Olympique_Lyonnais.svg",
-  "LYON": "/logos/lyon.png",
-  
-  "YOUNG BOYS": "https://en.wikipedia.org/wiki/Special:FilePath/BSC_Young_Boys_logo.svg",
-  "BODO/GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
-  "LILLE": "https://en.wikipedia.org/wiki/Special:FilePath/LOSC_Lille_logo.svg",
-  "SLAVIA PRAG": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Slavia_Praha_logo.svg",
-  "DINAMO ZAGREP": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
-  "LUGANO": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Lugano_logo.svg",
-  "LENS": "https://en.wikipedia.org/wiki/Special:FilePath/RC_Lens_logo.svg",
-  "FC HEIDENHEIM": "https://en.wikipedia.org/wiki/Special:FilePath/1._FC_Heidenheim_1846.svg",
-  "HACKEN": "https://en.wikipedia.org/wiki/Special:FilePath/BK_H%C3%A4cken_logo.png"
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png"
 };
 
+// 🔴 4. ve 5. HAFTA SİLİNDİ, AKTİF HAFTA 6'DAN BAŞLAR 🔴
 const getActiveWeekByDate = () => {
   const nowUTC = new Date();
   const nowTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
@@ -233,13 +153,14 @@ const getActiveWeekByDate = () => {
   const diffTime = nowTurkey.getTime() - baseDate;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
-  if (diffDays < 0) return 4; 
-  return 5 + Math.floor(diffDays / 7);
+  let calculatedWeek = 5 + Math.floor(diffDays / 7);
+  // Asla 6'nın altına inmez (Geçmiş haftalar silindi)
+  if (calculatedWeek < 6) calculatedWeek = 6;
+  return calculatedWeek;
 };
 
 const getUniqueMatchId = (week: number, index: number) => {
-    if (week === 4) return index; 
-    return (week * 100) + index;
+  return (week * 100) + index;
 };
 
 const getLocalLogoUrl = (teamName: string) => {
@@ -329,8 +250,6 @@ export default function LiveMatchCard() {
     else if (upCat.includes("BELÇİKA") || upCat.includes("PRO LEAGUE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/40.png";
     else if (upCat.includes("İSKOÇYA") || upCat.includes("PREMIERSHIP")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/46.png";
 
-    
-
     let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
 
     if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
@@ -340,6 +259,13 @@ export default function LiveMatchCard() {
     else theme = { ...theme, bgImg: null, containerBorder: "border-blue-500/30", containerShadow: "shadow-[0_0_30px_rgba(30,58,138,0.5)]", containerBg: "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/60 via-[#0a1120] to-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/80 shadow-[0_0_10px_currentColor]", catText: "text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]", scoreBorder: "border-blue-600/40", colonText: "text-blue-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     
     return theme;
+  };
+
+  const getMatchTimeMs = (dateStr: string, timeStr: string) => {
+    const [d, m, y] = dateStr.split('.');
+    const [hr, min] = timeStr.split(':');
+    const matchTime = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr) - 3, parseInt(min), 0));
+    return matchTime.getTime();
   };
 
   useEffect(() => {
@@ -354,7 +280,7 @@ export default function LiveMatchCard() {
         .from('live_matches')
         .select('*');
 
-      // 🔴 İŞTE MUCİZE BURADA! 1000'ER 1000'ER ÇEKME MOTORU (LİMİT YOK) 🔴
+      // 🔴 1000'ER 1000'ER ÇEKME MOTORU (LİMİT YOK) 🔴
       let allPredictions: any[] = [];
       let from = 0;
       let step = 999;
@@ -381,7 +307,7 @@ export default function LiveMatchCard() {
         allPredictions.forEach(pred => {
           const rowUserId = String(pred.user_id);
           
-          // 🔴 EKMEL ZIRHI 3: ADMİNİ (mankoman) RADARDAN VE LİSTEDEN GİZLE!
+          // 🔴 EKMEL ZIRHI: ADMİNİ GİZLE!
           if (rowUserId === 'mankoman') return;
           
           if (!predDict[rowUserId]) {
@@ -401,7 +327,7 @@ export default function LiveMatchCard() {
         const yyyy = todayTurkey.getUTCFullYear();
         const todayFormatted = `${dd}.${mm}.${yyyy}`;
 
-        const currentWeekMatches = dbBulletinMatches.map((m, idx) => ({
+        const currentWeekMatches = dbBulletinMatches.map((m) => ({
           id: m.match_index,
           weekLabel: `${activeWeek}. HAFTA ${m.match_index}. MAÇ`,
           category: m.category,
@@ -411,14 +337,44 @@ export default function LiveMatchCard() {
           awayTeam: m.away_team
         }));
 
-        const todaysMatches = currentWeekMatches.filter(m => m.date === todayFormatted);
-        setTodaysMatchesList(todaysMatches);
-        
         const liveMap: Record<number, any> = {};
         if (dbLiveMatches) {
           dbLiveMatches.forEach(row => liveMap[row.id] = row); 
         }
         setLiveMatchesData(liveMap);
+
+        // 🔴 KÜLKEDİSİ KURALI (GECE YARISI NÖBETİ) 🔴
+        const todaysMatches = currentWeekMatches.filter(m => {
+             const uniqueId = getUniqueMatchId(activeWeek, m.id);
+             const dbMatch = liveMap[uniqueId];
+             const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
+
+             const isToday = m.date === todayFormatted;
+             const isLiveOrWaiting = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
+
+             // KÜLKEDİSİ: Maç bitmediyse ve önceden başladıysa (veya bekliyorsa) ekranda çakılı kalır.
+             if (isLiveOrWaiting) return true;
+
+             // Bitenler veya henüz başlamayanlar sadece bugünün maçları listesine dahil olur.
+             return isToday;
+        });
+        
+        setTodaysMatchesList(todaysMatches);
+        
+        // 🔴 OTOMATİK 3 SAAT KURALI (HAFTA ATLATMA MOTORU) 🔴
+        const match24Id = getUniqueMatchId(activeWeek, 24);
+        const dbMatch24 = liveMap[match24Id];
+
+        if (dbMatch24 && dbMatch24.status === 'FINISHED') {
+            const m24 = currentWeekMatches.find(m => m.id === 24);
+            if (m24) {
+                const matchTimeMs = getMatchTimeMs(m24.date, m24.time);
+                // Maç başlama saatinden 5 saat sonra (Maç bitiminden tahmini 3 saat sonra)
+                if (new Date().getTime() > matchTimeMs + (5 * 60 * 60 * 1000)) {
+                    setActiveWeek(prev => prev + 1);
+                }
+            }
+        }
 
         let currentBoard: Record<string, any> = {}; 
         let hasLiveScores = false;
@@ -479,13 +435,6 @@ export default function LiveMatchCard() {
 
   const toggleMatchExpansion = (matchId: number) => {
     setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
-  };
-
-  const getMatchTimeMs = (dateStr: string, timeStr: string) => {
-    const [d, m, y] = dateStr.split('.');
-    const [hr, min] = timeStr.split(':');
-    const matchTime = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr) - 3, parseInt(min), 0));
-    return matchTime.getTime();
   };
 
   if (todaysMatchesList.length === 0) {
