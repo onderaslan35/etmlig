@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 SABİT LİSTE
+// 🔴 SABİT LİSTE (Misafir Askerler asil kadroya eklendi!)
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -19,7 +19,7 @@ const allPlayersList: Record<string, string> = {
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
   "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
+  "262723": "AYHAN LUŞOĞLU", "262735": "AYGÜN AKKEÇELİ", "262741": "SABAHATTİN ÇAYLAK"
 };
 
 const localTeamLogos: Record<string, string> = {
@@ -115,7 +115,7 @@ const getLocalLogoUrl = (teamName: string) => {
 };
 
 export default function MacArsiviPage() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(5);
+  const [selectedWeek, setSelectedWeek] = useState<number>(6); // Default olarak aktif 6. haftaya çekildi
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
@@ -161,7 +161,7 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
-        // 🔴 EKMEL DEVRİMİ: .ORDER() VE LİMİT KIRICI GERİ DÖNDÜ! 🔴
+        // 🔴 EKMEL DEVRİMİ: .ORDER() VE LİMİT KIRICI
         let allPredictions: any[] = [];
         let fetchMore = true;
         let from = 0;
@@ -264,7 +264,8 @@ export default function MacArsiviPage() {
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
               className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg cursor-pointer outline-none transition-all shadow text-sm"
             >
-              {[4, 5, 6, 7, 8, 9].map(week => (
+              {/* 🔴 TÜM HAFTALAR SERBEST BIRAKILDI 🔴 */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(week => (
                   <option key={week} value={week}>{week}. HAFTA BÜLTENİ</option>
               ))}
             </select>
@@ -275,7 +276,7 @@ export default function MacArsiviPage() {
            <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
               <span className="text-5xl mb-4 block opacity-50">🏟️</span>
               <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{selectedWeek}. HAFTA BÜLTENİ HAZIRLANIYOR</h2>
-              <p className="text-slate-500 text-sm">Bu haftanın maç programı yönetici tarafından henüz yayınlanmadı.</p>
+              <p className="text-slate-500 text-sm">Bu haftanın maç programı veya sonuçları henüz sisteme düşmedi.</p>
            </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -296,7 +297,7 @@ export default function MacArsiviPage() {
               let displayPoints = 0;
               let isFinished = false;
 
-              if (selectedWeek >= 4) {
+              if (selectedWeek >= 1) {
                 const uniqueId = getUniqueMatchId(selectedWeek, match.id);
                 const dbMatch = liveMatchesData[uniqueId];
                 if (dbMatch && dbMatch.status !== 'NOT_STARTED') {
@@ -309,7 +310,6 @@ export default function MacArsiviPage() {
                     const targetScore = `${homeScore}-${awayScore}`;
                     const predictionsToUse = predictionsDB;
                     
-                    // 🔴 KLON SİLİCİ KALDIRILDI! ARTIK MASTER GİBİ KAÇ TAHMİN VARSA O KADAR KİŞİ SAYACAK!
                     currentWinners = Object.keys(predictionsToUse)
                       .filter(id => predictionsToUse[id] && predictionsToUse[id][match.id - 1] === targetScore)
                       .map(id => dynamicPlayersList[id] || `MİSAFİR ASKER (${id})`)
