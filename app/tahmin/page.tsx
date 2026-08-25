@@ -178,7 +178,7 @@ const localTeamLogos: Record<string, string> = {
 
   // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
-  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
+ 
   "BOURNEMOUTH": "https://en.wikipedia.org/wiki/Special:FilePath/AFC_Bournemouth_(2013).svg",
   "BRENTFORD": "https://en.wikipedia.org/wiki/Special:FilePath/Brentford_FC_crest.svg",
   "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
@@ -191,7 +191,7 @@ const localTeamLogos: Record<string, string> = {
   "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
   "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
   "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
-  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
+  
   "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
   "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
   "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
@@ -256,7 +256,7 @@ const localTeamLogos: Record<string, string> = {
   // 🇫🇷 FRANSA
   "PSG": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
   "PARİS SG": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
-  "PARIS SG": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
+  
   "MARSİLYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8592.png",
   "MARSEILLE": "https://images.fotmob.com/image_resources/logo/teamlogo/8592.png",
   "MONACO": "https://images.fotmob.com/image_resources/logo/teamlogo/9829.png",
