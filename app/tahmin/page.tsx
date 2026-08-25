@@ -91,11 +91,14 @@ const localTeamLogos: Record<string, string> = {
   "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
   "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
   "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
+  "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
   "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
   "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
   "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
+  "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
@@ -244,10 +247,10 @@ const localTeamLogos: Record<string, string> = {
   "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
   "AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
   "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
-  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
-  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
-  "FC HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
+  "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/9911.png",
   "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
+  "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/8295.png",
+  "FC HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",
   "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8276.png",
 
   // 🇫🇷 FRANSA
@@ -406,21 +409,38 @@ const cleanTeamName = (name: string) => {
     return name.trim().toUpperCase();
 };
 
-// 🚀 ZAMAN VE HAFTA MANTIĞI 🚀
-const getSystemCurrentTime = () => {
-    return new Date();
+// 🚀 ZAMAN VE HAFTA MANTIĞI (TAM OTOMATİK ADALET MOTORU) 🚀
+const getWeekTimings = (weekNum: number) => {
+    // Referans: 7. Hafta
+    // Açılış (Gişe): 28 Ağustos 2026 Cuma 20:00
+    // Kapanış (Kilit): 31 Ağustos 2026 Pazartesi 21:00
+    // Mühür Kırılması: 31 Ağustos 2026 Pazartesi 21:01
+    const openDate = new Date(2026, 7, 28, 20, 0, 0); // Aylar 0'dan başlar (7 = Ağustos)
+    openDate.setDate(openDate.getDate() + (weekNum - 7) * 7);
+
+    const closeDate = new Date(2026, 7, 31, 21, 0, 0);
+    closeDate.setDate(closeDate.getDate() + (weekNum - 7) * 7);
+
+    const revealDate = new Date(2026, 7, 31, 21, 1, 0);
+    revealDate.setDate(revealDate.getDate() + (weekNum - 7) * 7);
+
+    return { openDate, closeDate, revealDate };
 };
 
-// 🔴 EKMEL DEVRİMİ: GİŞE KONTROLÜ (TAHMİNLER TAMAMEN VE ZORLA KAPATILDI!) 🔴
-const checkGateStatus = () => {
-    // SADECE VE SADECE KAPALI DÖNER! 
-    return 'CLOSED';
+const checkGateStatus = (weekNum: number) => {
+    if (!weekNum) return 'CLOSED';
+    const now = new Date();
+    const { openDate, closeDate } = getWeekTimings(weekNum);
+    if (now < openDate) return 'NOT_OPEN_YET';
+    if (now > closeDate) return 'CLOSED';
+    return 'OPEN';
 };
 
-// 🔴 EKMEL DEVRİMİ: MÜHÜR ŞALTERİ (DEKLARASYON ZORLA VE HERKESE AÇILDI!) 🔴
-const isSealBroken = () => {
-    // SADECE VE SADECE AÇIK DÖNER! MÜHÜR ARTIK KIRIK!
-    return true;
+const isSealBroken = (weekNum: number) => {
+    if (!weekNum) return false;
+    const now = new Date();
+    const { revealDate } = getWeekTimings(weekNum);
+    return now >= revealDate;
 };
 
 export default function TahminlerPortal() {
@@ -493,14 +513,19 @@ export default function TahminlerPortal() {
     fetchInitialData();
   }, []);
 
+  const gateStatus = checkGateStatus(activeBulletinWeek);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     
-    const gateStatus = checkGateStatus();
-    if (gateStatus === 'CLOSED' && username.trim() !== 'mankoman') {
-        const prevWk = activeBulletinWeek > 1 ? activeBulletinWeek - 1 : activeBulletinWeek;
-        setLoginError(`6. hafta için tahmin yapma süresi bitmiştir. 7. hafta programı için lütfen bu Cuma saat 21:00'ı bekleyiniz. Program müteakip Cuma aktifleşir ve Pazartesi 22:00'da kapanır.`);
-        return;
+    if (username.trim().toLowerCase() !== 'mankoman') {
+        if (gateStatus === 'NOT_OPEN_YET') {
+            setLoginError(`${activeBulletinWeek}. Hafta tahminleri Cuma saat 20:00'da açılacaktır.`);
+            return;
+        } else if (gateStatus === 'CLOSED') {
+            setLoginError(`${activeBulletinWeek}. Hafta için tahmin yapma süresi Pazartesi 21:00'da sona ermiştir.`);
+            return;
+        }
     }
 
     const userKey = username.trim(); const passKey = password.trim(); 
@@ -572,7 +597,7 @@ export default function TahminlerPortal() {
      const fetchLivePreds = async () => {
         if (!selectedTahminWeek) return;
 
-        if (selectedTahminWeek === activeBulletinWeek && !isSealBroken() && username.trim().toLowerCase() !== 'mankoman') {
+        if (selectedTahminWeek === activeBulletinWeek && !isSealBroken(selectedTahminWeek) && username.trim().toLowerCase() !== 'mankoman') {
             setLivePredictionsData({});
             return;
         }
@@ -656,18 +681,15 @@ export default function TahminlerPortal() {
     return Object.keys(mergedAccounts).filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS')).sort((a, b) => mergedAccounts[a].name.localeCompare(mergedAccounts[b].name, 'tr'));
   }, [selectedTahminWeek, livePredictionsData, mergedAccounts]);
 
-  const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
+  // 🔴 5. HAFTA VE ÖNCESİ SİLİNDİ, SADECE 6 VE SONRASI
+  const availableWeeks = Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => a - b);
 
   const unlockedWeeks = useMemo(() => {
       return availableWeeks.filter(w => {
-          if (w < activeBulletinWeek) return true;
-          if (w === activeBulletinWeek) {
-              if (username.trim().toLowerCase() === 'mankoman') return true;
-              return isSealBroken();
-          }
-          return false;
+          if (username.trim().toLowerCase() === 'mankoman') return true;
+          return isSealBroken(w);
       });
-  }, [availableWeeks, activeBulletinWeek, username]);
+  }, [availableWeeks, username]);
 
   useEffect(() => {
       if (unlockedWeeks.length > 0 && (!selectedTahminWeek || !unlockedWeeks.includes(selectedTahminWeek))) {
@@ -715,8 +737,8 @@ export default function TahminlerPortal() {
               {/* 1. GİŞE / GİRİŞ KARTI (İLK SIRA) */}
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)] order-1">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
-                   <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${checkGateStatus() === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>
-                      {checkGateStatus() === 'OPEN' ? 'TAHMİNLER AÇIK (CUMA 14:55)' : 'TAHMİNLER KAPALI / ZAMAN KİLİDİ'}
+                   <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${gateStatus === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : (gateStatus === 'NOT_OPEN_YET' ? 'bg-blue-500/10 text-blue-500 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]')}`}>
+                      {gateStatus === 'OPEN' ? 'TAHMİNLER AÇIK' : (gateStatus === 'NOT_OPEN_YET' ? 'TAHMİNLER CUMA 20:00\'DA AÇILACAK' : 'TAHMİNLER KAPANDI (MÜHÜRLENDİ)')}
                    </span>
                 </div>
                 
@@ -734,8 +756,8 @@ export default function TahminlerPortal() {
                   <input type="password" placeholder="Şifre" value={password} onChange={e => setPassword(e.target.value)} className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none text-center tracking-widest text-sm" />
                   {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-2 px-2 rounded-lg border border-red-500/30 leading-relaxed">{loginError}</p>}
                   
-                  <button type="submit" className={`${checkGateStatus() === 'OPEN' || username.trim() === 'mankoman' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
-                     {checkGateStatus() === 'OPEN' || username.trim() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
+                  <button type="submit" className={`${gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
+                     {gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
                   </button>
                 </form>
               </div>
@@ -744,7 +766,7 @@ export default function TahminlerPortal() {
               <div onClick={() => setView('declaration')} className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all group shadow-[0_0_30px_rgba(79,70,229,0.1)] order-2">
                 <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><span className="text-4xl">📜</span></div>
                 <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Çarşamba 20:01'den itibaren tahmin tabloları mühürlenip herkese açılır.</p>
+                <p className="text-slate-400 text-xs leading-relaxed">Pazartesi 21:01'den itibaren tahmin tabloları mühürlenip herkese açılır.</p>
                 <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">Arşive Giriş Yap</div>
               </div>
 
@@ -906,7 +928,7 @@ export default function TahminlerPortal() {
                   <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
                      {unlockedWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
                   </h2>
-                  <p className="text-slate-500 text-sm mt-2">Çarşamba saat 20:01'den sonra listeler mühürlenip herkese açılır.</p>
+                  <p className="text-slate-500 text-sm mt-2">Pazartesi saat 21:01'den sonra listeler mühürlenip herkese açılır.</p>
                </div> 
             )}
 
