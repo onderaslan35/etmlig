@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 54 KİŞİLİK SABİT SÖZLÜK (Misafir Asker İsimleri Düzeltilmiş Halde)
+// 54 KİŞİLİK SABİT SÖZLÜK
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -21,7 +21,6 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU", "262735": "AYGÜN AKKEÇELİ", "262741": "SABAHATTİN ÇAYLAK"
 };
 
-// 3. HAFTA
 const w3Kutu: Record<string, number> = {
   "262707": 10, "262816": 9, "262733": 7, "262755": 6, "262706": 6, "262736": 6, "262754": 6, "262728": 6,
   "262734": 5, "262771": 5, "262740": 4, "262705": 4, "262756": 4, "262714": 4, "262763": 4, "262774": 4,
@@ -29,7 +28,6 @@ const w3Kutu: Record<string, number> = {
   "262770": 1, "262730": 1, "262739": 1
 };
 
-// 4. HAFTA
 const w4Kutu: Record<string, number> = {
   "262714": 17, "262758": 13, "262730": 13, "262786": 13, "262717": 12, "262813": 11, "262736": 10, "262704": 10,
   "262723": 9, "262707": 9, "262774": 9, "262734": 8, "262702": 8, "262755": 7, "262726": 5, "262733": 5,
@@ -38,7 +36,6 @@ const w4Kutu: Record<string, number> = {
   "262716": 1, "262790": 1, "262721": 1, "262732": 1, "262709": 1, "262771": 1
 };
 
-// 5. HAFTA
 const w5Kutu: Record<string, number> = {
   "262782": 16, "262749": 14, "262758": 14, "262732": 14, "262726": 12, "262744": 9,  "262730": 9,  "262736": 7,
   "262717": 7,  "262790": 5,  "262735": 4,  "262721": 4,  "262725": 3,  "351925": 3,  "262716": 2,  "262747": 2,
@@ -54,7 +51,7 @@ const isTffMatchCheck = (category: string) => {
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'w6'|'total'>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
@@ -112,7 +109,6 @@ export default function TffPuanDurumuPage() {
       Object.keys(allPlayersList).forEach(code => { w6Base[code] = 0; w6Live[code] = 0; });
       let isAnyMatchLive = false;
 
-      // 6. HAFTA CANLI HESAPLAMA MOTORU (Sadece toplama etki eder)
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
           const weekNum = Math.floor(dbMatch.id / 100);
@@ -161,6 +157,7 @@ export default function TffPuanDurumuPage() {
           w3: vW3,
           w4: vW4,
           w5: vW5,
+          w6: vW6Total,
           total: vW3 + vW4 + vW5 + vW6Total, 
           liveExtra: w6Live[code] || 0 
         };
@@ -171,8 +168,8 @@ export default function TffPuanDurumuPage() {
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
-        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
+        const scoreA = activeTab === 'total' ? a.total : (a[activeTab] as number);
+        const scoreB = activeTab === 'total' ? b.total : (b[activeTab] as number);
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -186,7 +183,7 @@ export default function TffPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        const displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        const displayScore = activeTab === 'total' ? player.total : (player[activeTab] as number);
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
@@ -203,43 +200,43 @@ export default function TffPuanDurumuPage() {
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-amber-500 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
 
       <div className="w-full mb-6"><LiveMatchCard /></div>
 
-      <div className="max-w-xl flex flex-col items-center mb-6 w-full">
+      {/* 🔴 TFF GENİŞLİK FIX (max-w-3xl) EKLENDİ 🔴 */}
+      <div className="w-full max-w-3xl mx-auto">
         <button 
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }} 
-          className="w-full py-3 mb-6 rounded-xl font-black transition-all text-center shadow-[0_4px_14px_0_rgba(245,158,11,0.39)] bg-amber-500 text-slate-950 hover:bg-amber-400 hover:shadow-[0_6px_20px_rgba(245,158,11,0.23)]"
+          className="w-full bg-[#dc2626] hover:bg-red-500 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide shadow-[0_4px_14px_0_rgba(220,38,38,0.39)]"
         >
           TFF TOPLAM PUAN DURUMU
         </button>
         
-        <div className="w-full bg-[#0a1128] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-          {/* Master Stili Başlık Çubuğu */}
-          <div className="px-4 py-3 border-b border-slate-800 flex justify-between items-center bg-[#0a1128]">
-            <div className="flex items-center gap-2 text-slate-300 font-bold text-[13px]">
+        <div className="w-full bg-[#0a0f1c] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="px-4 py-3 border-b border-[#1e293b] flex justify-between items-center bg-[#0f172a]">
+            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
               <span>📅</span>
-              <span className="uppercase">{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
+              <span>{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
             </div>
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)} 
-              className="text-[11px] font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+              className="text-[10px] font-bold text-slate-400 hover:text-white flex items-center gap-1 uppercase tracking-widest transition-colors"
             >
               {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
             </button>
           </div>
 
-          {/* Master Stili 1-2-3-4-5 Butonları */}
+          {/* KIRMIZI/BEYAZ TEMA BUTONLARI */}
           {isMenuOpen && (
-            <div className="p-4 flex justify-center gap-3 border-b border-slate-800 bg-[#0f172a]">
-              {['1', '2', '3', '4', '5'].map(w => (
+            <div className="p-4 flex justify-center gap-3 border-b border-[#1e293b] bg-[#0a0f1c]">
+              {['1', '2', '3', '4', '5', '6'].map(w => (
                 <button
                   key={w}
                   onClick={() => setActiveTab(`w${w}` as any)}
                   className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                    activeTab === `w${w}` ? 'bg-slate-700 text-white shadow-inner' : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white'
+                    activeTab === `w${w}` ? 'bg-[#dc2626] text-white shadow-inner' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155] hover:text-white'
                   }`}
                 >
                   {w}
@@ -248,33 +245,43 @@ export default function TffPuanDurumuPage() {
             </div>
           )}
 
-          {/* Tablo veya Boş Durum Gösterimi */}
           {activeTab === 'w1' || activeTab === 'w2' ? (
-             <div className="py-16 text-center text-slate-500 font-medium">
+             <div className="py-16 text-center text-slate-500 font-medium text-xs sm:text-sm">
                Bu haftaya ait veri bulunmamaktadır.
              </div>
           ) : tableRows.length > 0 ? (
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr>
-                  <th className="px-6 py-3.5 text-center w-20">SIRA</th>
-                  <th className="px-6 py-3.5">YARIŞMACI</th>
-                  <th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'PUAN'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {tableRows.map((row, idx) => (
-                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-3.5 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-slate-300 font-medium text-sm">{row.currentRank || idx + 1}</span>
-                        {row.trend === 'up' && <span className="text-emerald-400 text-sm animate-bounce">▲</span>}
-                        {row.trend === 'down' && <span className="text-red-500 text-sm">▼</span>}
-                        {row.trend === 'same' && <span className="text-slate-600 text-[10px]">▶</span>}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs md:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                  <tr>
+                    <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
+                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                    <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">
+                      {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e293b]">
+                  {tableRows.map((row, idx) => (
+                    <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
+                        <div className="flex items-center gap-1">
+                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
+                          <span className="text-[#475569]">-</span>
+                          <div className="w-5 flex justify-center">
+                            {activeTab === 'total' ? (
+                              <>
+                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
+                              </>
+                            ) : (
+                              <span className="text-transparent">-</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-1 md:px-2 py-3 align-top pt-3.5">
                         <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                             {(() => {
                               const trophyCount = (row.name ? (row.name.match(/🏆/g) || []).length : 0);
@@ -286,24 +293,24 @@ export default function TffPuanDurumuPage() {
                                 </>
                               );
                             })()}
-                        </div>
                         
-                        {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total') && (
-                          <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse whitespace-nowrap">
-                            +{row.liveExtra} CANLI
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total') ? "text-emerald-400" : "text-amber-500"}`}>
-                      {row.displayScore}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') && (
+                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse whitespace-nowrap">
+                              +{row.liveExtra} CANLI
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className={`pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm align-top pt-3.5 ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') ? "text-emerald-400" : "text-red-500"}`}>
+                        {row.displayScore}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div className="py-12 text-center text-slate-500">⏳ Puanlar yükleniyor...</div>
+            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Puanlar yükleniyor...</div>
           )}
         </div>
       </div>
