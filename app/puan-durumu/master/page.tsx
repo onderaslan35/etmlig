@@ -13,19 +13,17 @@ const historicalBadges = {
 
 export default function MasterPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'w6'|'total'>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
   const loadLeaderboard = async () => {
     try {
-      // 1. OYUNCULARI VE KÜÇÜK VERİLERİ SUPABASE'DEN ÇEK
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbHistorical } = await supabase.from('master_weekly_points').select('*');
 
-      // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE SIRALAMA GARANTİSİ 🔴
-      // Artık 1000'de kesilmeyecek, tüm askerlerin tahminleri eksiksiz çekilecek!
+      // 🔴 DİNAMİK MOTOR: 5. ve 6. HAFTA TAHMİNLERİNİN TAMAMINI ÇEKER 🔴
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -35,9 +33,8 @@ export default function MasterPuanDurumuPage() {
         const { data: pDataChunk, error } = await supabase
           .from('player_predictions')
           .select('*')
-          .eq('week_num', 5)
-          .order('user_id', { ascending: true })
-          .order('match_index', { ascending: true })
+          .gte('week_num', 5) // 🔥 5. Hafta ve sonrası her şeyi çeker!
+          .order('id', { ascending: true }) // id'ye göre sıralamak sayfalama için en güvenlisidir
           .range(from, from + step - 1);
           
         if (!error && pDataChunk && pDataChunk.length > 0) {
@@ -49,23 +46,24 @@ export default function MasterPuanDurumuPage() {
         }
       }
 
-      // 2. DİNAMİK OYUNCU SÖZLÜĞÜNÜ OLUŞTUR (54 Asil Kadro)
+      // OYUNCU SÖZLÜĞÜ
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
-        dbPlayers.forEach(p => {
-          playersList[p.id] = p.name || p.full_name; 
-        });
+        dbPlayers.forEach(p => { playersList[p.id] = p.name || p.full_name; });
       }
 
       let w5Base: Record<string, number> = {}; 
       let w5Live: Record<string, number> = {}; 
       let w5ExactScores: Record<string, number> = {}; 
+
+      let w6Base: Record<string, number> = {}; 
+      let w6Live: Record<string, number> = {}; 
+
       let isAnyMatchLive = false;
 
       Object.keys(playersList).forEach(id => { 
-          w5Base[id] = 0; 
-          w5Live[id] = 0; 
-          w5ExactScores[id] = 0; 
+          w5Base[id] = 0; w5Live[id] = 0; w5ExactScores[id] = 0; 
+          w6Base[id] = 0; w6Live[id] = 0;
       });
 
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
@@ -75,12 +73,12 @@ export default function MasterPuanDurumuPage() {
           });
       }
 
-      const predDict: Record<string, string[]> = {};
+      // 🔥 TAHMİNLERİ "KULLANICI-HAFTA-MAÇ" OLARAK KUSURSUZ EŞLEŞTİR 🔥
+      const predDict: Record<string, string> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
           const uid = String(pred.user_id);
-          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+          predDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
         });
       }
 
@@ -89,20 +87,31 @@ export default function MasterPuanDurumuPage() {
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.id < 600 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const matchIndex = (dbMatch.id % 100) - 1;
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+          const weekNum = Math.floor(dbMatch.id / 100);
+          const matchIndex = dbMatch.id % 100;
+
+          // Sadece 5. ve 6. hafta maçlarını işle (Skor girildiyse)
+          if (weekNum >= 5 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
             
-            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            // Kimler bildi? 
+            const winnerIds = Object.keys(playersList).filter(id => {
+                const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
+                return pScore && pScore === targetScore;
+            });
+            
+            // Puan Dağılımı
             let points = 1;
-            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else points = 1;
+            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else if(winnerIds.length >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
-              w5ExactScores[wId] += 1; 
-              if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
-              else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                w5Live[wId] += points;
-                isAnyMatchLive = true;
+              if (weekNum === 5) {
+                  w5ExactScores[wId] += 1; 
+                  if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
+                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') { w5Live[wId] += points; isAnyMatchLive = true; }
+              } else if (weekNum === 6) {
+                  if (dbMatch.status === 'FINISHED') w6Base[wId] += points;
+                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') { w6Live[wId] += points; isAnyMatchLive = true; }
               }
             });
           }
@@ -111,7 +120,7 @@ export default function MasterPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 3. DİNAMİK ROZET MOTORU (SONSUZ DÖNGÜ KURALI) 🔴
+      // 🔴 ROZET MOTORU (W5) 🔴
       let w5PointsLeaderId: string | null = null;
       let w5ScoreLeaderId: string | null = null;
       let showW5Badges = false;
@@ -145,21 +154,22 @@ export default function MasterPuanDurumuPage() {
           }
       }
 
-      // 4. LİSTEYİ OLUŞTUR VE ETİKETLERİ DAĞIT
+      // LİSTEYİ OLUŞTUR
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
+        const w6Total = (w6Base[id] || 0) + (w6Live[id] || 0);
+        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total + w6Total;
         return { 
           id, name: playersList[id], 
-          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4, w5: w5Total, total, 
-          liveExtra: w5Live[id] || 0 
+          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4, w5: w5Total, w6: w6Total, total, 
+          liveExtra: (w5Live[id] || 0) + (w6Live[id] || 0) 
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.w1+b.w2+b.w3+b.w4) - (a.w1+a.w2+a.w3+a.w4) || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => (a.total - a.liveExtra) - (b.total - b.liveExtra) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
-      prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+      prevRefList.reverse().forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
 
@@ -179,7 +189,6 @@ export default function MasterPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        // 🔴 APOLET (ROZET) KONTROLÜ
         let badges: string[] = [];
         const cleanName = player.name.replace(/🏆/g, '').trim().toUpperCase();
 
@@ -243,7 +252,7 @@ export default function MasterPuanDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[1, 2, 3, 4, 5].map(num => (
+              {[1, 2, 3, 4, 5, 6].map(num => (
                 <button
                   key={num}
                   onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
@@ -290,7 +299,6 @@ export default function MasterPuanDurumuPage() {
                         </div>
                       </td>
                       
-                      {/* 🔴 SATIR İÇİ YAN YANA GÖSTERİM MERKEZİ 🔴 */}
                       <td className="px-1 md:px-2 py-3 align-top pt-3.5">
                         <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                           {(() => {
@@ -304,13 +312,12 @@ export default function MasterPuanDurumuPage() {
                             );
                           })()}
                           
-                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6' || activeTab === 'w5') && (
                             <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse whitespace-nowrap">
                               +{row.liveExtra} CANLI
                             </span>
                           )}
                           
-                          {/* 🔴 RESMİ ASKERİ APOLETLER (YANYANA VE AYNI SATIRDA) 🔴 */}
                           {row.badges && row.badges.includes('points') && (
                             <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
                               +3 PUAN HAFTANIN LİDERİ
