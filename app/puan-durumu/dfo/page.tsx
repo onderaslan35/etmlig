@@ -34,7 +34,7 @@ const isTffMatchCheck = (category: string) => {
 
 export default function DfoPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'w6'|'total'>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
@@ -42,7 +42,9 @@ export default function DfoPuanDurumuPage() {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      
+      // 🔥 BÜTÜN DFO MAÇLARINI ÇEKER
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
       
       // SUPABASE GEÇMİŞ HAFTALAR TABLOSU (dfo_weekly_points)
       const { data: dbHistorical } = await supabase.from('dfo_weekly_points').select('*');
@@ -69,7 +71,7 @@ export default function DfoPuanDurumuPage() {
         });
       }
 
-      // 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI
+      // 🔥 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI (5 ve 6. HAFTA) 🔥
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -79,9 +81,8 @@ export default function DfoPuanDurumuPage() {
         const { data: pDataChunk, error } = await supabase
           .from('player_predictions')
           .select('*')
-          .eq('week_num', 5)
-          .order('user_id', { ascending: true })
-          .order('match_index', { ascending: true })
+          .gte('week_num', 5)
+          .order('id', { ascending: true })
           .range(from, from + step - 1);
 
         if (!error && pDataChunk && pDataChunk.length > 0) {
@@ -93,30 +94,32 @@ export default function DfoPuanDurumuPage() {
         }
       }
 
-      const dfoMatchIndexes: number[] = [];
+      const dfoMatchSet = new Set<string>();
       if (dbBulletin) {
         dbBulletin.forEach(m => {
           if (!isTffMatchCheck(m.category)) {
-            dfoMatchIndexes.push(m.match_index);
+            dfoMatchSet.add(`${m.week_num}-${m.match_index}`);
           }
         });
       }
 
       let w5Base: Record<string, number> = {};
       let w5Live: Record<string, number> = {};
+      let w6Base: Record<string, number> = {};
+      let w6Live: Record<string, number> = {};
       let isAnyMatchLive = false;
 
       Object.keys(playersList).forEach(id => {
-        w5Base[id] = 0;
-        w5Live[id] = 0;
+        w5Base[id] = 0; w5Live[id] = 0;
+        w6Base[id] = 0; w6Live[id] = 0;
       });
 
-      const predDict: Record<string, string[]> = {};
+      // 🔥 TAHMİNLERİ "KULLANICI-HAFTA-MAÇ" OLARAK KUSURSUZ EŞLEŞTİR 🔥
+      const predDict: Record<string, string> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
           const uid = String(pred.user_id);
-          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+          predDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
         });
       }
 
@@ -125,22 +128,24 @@ export default function DfoPuanDurumuPage() {
         dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
 
         Object.values(uniqueMatches).forEach(dbMatch => {
+          const weekNum = Math.floor(dbMatch.id / 100);
+          const matchIndex = dbMatch.id % 100;
+
           if (
-            dbMatch.id > 500 &&
-            dbMatch.id < 600 &&
+            weekNum >= 5 &&
             dbMatch.home_score &&
             dbMatch.home_score !== '-' &&
             dbMatch.away_score &&
             dbMatch.away_score !== '-'
           ) {
-            const matchIndex = (dbMatch.id % 100) - 1;
-
-            if (!dfoMatchIndexes.includes(matchIndex + 1)) return;
+            
+            if (!dfoMatchSet.has(`${weekNum}-${matchIndex}`)) return;
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
-            const winnerIds = Object.keys(predDict).filter(id => {
-              const pScore = predDict[id] ? predDict[id][matchIndex] : null;
-              return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
+            
+            const winnerIds = Object.keys(playersList).filter(id => {
+              const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
+              return pScore && pScore === targetScore;
             });
 
             let points = 1;
@@ -151,14 +156,22 @@ export default function DfoPuanDurumuPage() {
             else if (wCount === 4) points = 4;
             else if (wCount === 5) points = 3;
             else if (wCount === 6) points = 2;
-            else points = 1;
+            else if (wCount >= 7) points = 1;
+            else points = 0;
 
             winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') {
-                w5Base[wId] = (w5Base[wId] || 0) + points;
-              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                w5Live[wId] = (w5Live[wId] || 0) + points;
-                isAnyMatchLive = true;
+              if (weekNum === 5) {
+                  if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
+                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                    w5Live[wId] += points;
+                    isAnyMatchLive = true;
+                  }
+              } else if (weekNum === 6) {
+                  if (dbMatch.status === 'FINISHED') w6Base[wId] += points;
+                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                    w6Live[wId] += points;
+                    isAnyMatchLive = true;
+                  }
               }
             });
           }
@@ -167,11 +180,12 @@ export default function DfoPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // GEÇMİŞ (dfo_weekly_points) + 5. HAFTA BİRLEŞTİRME
+      // GEÇMİŞ + 5. HAFTA + 6. HAFTA BİRLEŞTİRME
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total;
+        const w6Total = (w6Base[id] || 0) + (w6Live[id] || 0);
+        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total + w6Total;
 
         return {
           id,
@@ -181,14 +195,15 @@ export default function DfoPuanDurumuPage() {
           w3: past.w3,
           w4: past.w4,
           w5: w5Total,
+          w6: w6Total,
           total,
-          liveExtra: w5Live[id] || 0
+          liveExtra: (w5Live[id] || 0) + (w6Live[id] || 0)
         };
       });
 
       const prevRefList = [...baseList].sort((a, b) => {
-        const prevA = a.w1 + a.w2 + a.w3 + a.w4;
-        const prevB = b.w1 + b.w2 + b.w3 + b.w4;
+        const prevA = a.total - a.liveExtra;
+        const prevB = b.total - b.liveExtra;
         return prevB - prevA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -273,7 +288,7 @@ export default function DfoPuanDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[1, 2, 3, 4, 5].map(num => (
+              {[1, 2, 3, 4, 5, 6].map(num => (
                 <button
                   key={num}
                   onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
@@ -341,7 +356,7 @@ export default function DfoPuanDurumuPage() {
                               </>
                             );
                           })()}
-                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5' || activeTab === 'w6') && (
                             <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
                               +{row.liveExtra} CANLI
                             </span>
