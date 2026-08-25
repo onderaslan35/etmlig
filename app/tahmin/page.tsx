@@ -499,7 +499,7 @@ export default function TahminlerPortal() {
     const gateStatus = checkGateStatus();
     if (gateStatus === 'CLOSED' && username.trim() !== 'mankoman') {
         const prevWk = activeBulletinWeek > 1 ? activeBulletinWeek - 1 : activeBulletinWeek;
-        setLoginError(`${prevWk}. hafta için tahmin yapma süresi bitmiştir. ${activeBulletinWeek}. hafta programı için lütfen bu Cuma saat 14:55'i bekleyiniz. Program müteakip Cuma aktifleşir ve Çarşamba 20:00'da kapanır.`);
+        setLoginError(`6. hafta için tahmin yapma süresi bitmiştir. 7. hafta programı için lütfen bu Cuma saat 21:00'ı bekleyiniz. Program müteakip Cuma aktifleşir ve Pazartesi 22:00'da kapanır.`);
         return;
     }
 
