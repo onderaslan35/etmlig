@@ -411,43 +411,16 @@ const getSystemCurrentTime = () => {
     return new Date();
 };
 
-// 🔴 GİŞE KONTROLÜ (TEST: CUMA 14:55 AÇILIŞ - ÇARŞAMBA 20:00 KAPANIŞ) 🔴
+// 🔴 EKMEL DEVRİMİ: GİŞE KONTROLÜ (TAHMİNLER TAMAMEN VE ZORLA KAPATILDI!) 🔴
 const checkGateStatus = () => {
-    const now = getSystemCurrentTime();
-    const d = now.getDay(); 
-    const h = now.getHours();
-    const m = now.getMinutes();
-
-    // 1. Cuma (5) saat 14:55 ve sonrası AÇIK
-    if (d === 5 && (h > 14 || (h === 14 && m >= 55))) return 'OPEN';
-    
-    // 2. Cumartesi (6), Pazar (0), Pazartesi (1), Salı (2) TAM GÜN AÇIK
-    if (d === 6 || d === 0 || d === 1 || d === 2) return 'OPEN';
-    
-    // 3. Çarşamba (3) saat 20:00'a kadar AÇIK
-    if (d === 3 && h < 20) return 'OPEN';
-
-    // Diğer tüm zamanlar KAPALI
+    // SADECE VE SADECE KAPALI DÖNER! 
     return 'CLOSED';
 };
 
-// 🔴 MÜHÜR ŞALTERİ (ÇARŞAMBA 20:01'DE KIRILIR) 🔴
+// 🔴 EKMEL DEVRİMİ: MÜHÜR ŞALTERİ (DEKLARASYON ZORLA VE HERKESE AÇILDI!) 🔴
 const isSealBroken = () => {
-    const now = getSystemCurrentTime();
-    const d = now.getDay();
-    const h = now.getHours();
-    const m = now.getMinutes();
-
-    // 1. Çarşamba (3) saat 20:01 ve sonrası MÜHÜR KIRIK (Açık)
-    if (d === 3 && (h > 20 || (h === 20 && m >= 1))) return true;
-    
-    // 2. Perşembe (4) tam gün boyunca MÜHÜR KIRIK (Açık)
-    if (d === 4) return true;
-    
-    // 3. Cuma (5) saat 14:55'e kadar MÜHÜR KIRIK (Açık)
-    if (d === 5 && (h < 14 || (h === 14 && m < 55))) return true;
-
-    return false;
+    // SADECE VE SADECE AÇIK DÖNER! MÜHÜR ARTIK KIRIK!
+    return true;
 };
 
 export default function TahminlerPortal() {
@@ -595,13 +568,10 @@ export default function TahminlerPortal() {
 
   const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
 
-  // 🔴 TEK ŞALTERLİ GÜVENLİK: Mühür kırılmadan aktif haftanın verisi Supabase'den çekilmez! 🔴
   useEffect(() => {
      const fetchLivePreds = async () => {
         if (!selectedTahminWeek) return;
 
-        // Mühür kapalıysa ve aktif hafta seçilmeye çalışılıyorsa veriyi çekme!
-        // (🔴 EKMEL DEVRİMİ: ADMİN "mankoman" HARİÇ! 🔴)
         if (selectedTahminWeek === activeBulletinWeek && !isSealBroken() && username.trim().toLowerCase() !== 'mankoman') {
             setLivePredictionsData({});
             return;
@@ -688,13 +658,10 @@ export default function TahminlerPortal() {
 
   const availableWeeks = Object.keys(bulletinMap).map(Number).sort((a, b) => a - b);
 
-  // 🔴 TEK ŞALTERLİ MÜHÜR FİLTRESİ (HEM RESMİ DEKLARASYON HEM TAHMİNMATİK İÇİN AYNI ÇALIŞIR) 🔴
   const unlockedWeeks = useMemo(() => {
       return availableWeeks.filter(w => {
-          if (w < activeBulletinWeek) return true; // Geçmiş haftalar her zaman açık
+          if (w < activeBulletinWeek) return true;
           if (w === activeBulletinWeek) {
-              // Aktif hafta sadece MÜHÜR KIRILINCA (Çarşamba 20:01) açılır!
-              // ADMIN (mankoman) İÇİN MÜHÜR SÜREKLİ KIRIKTIR
               if (username.trim().toLowerCase() === 'mankoman') return true;
               return isSealBroken();
           }
@@ -743,7 +710,6 @@ export default function TahminlerPortal() {
                )}
             </div>
             
-            {/* 🔴 SIRALAMA TERSİNE ÇEVRİLDİ 🔴 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
               
               {/* 1. GİŞE / GİRİŞ KARTI (İLK SIRA) */}
