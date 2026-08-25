@@ -3,13 +3,13 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// 54 KİŞİLİK SABİT SÖZLÜK
+// 54 KİŞİLİK SABİT SÖZLÜK (Misafir Asker İsimleri Düzeltilmiş Halde)
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
   "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
   "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUST ELMAS",
+  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
   "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
   "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
   "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
@@ -54,7 +54,8 @@ const isTffMatchCheck = (category: string) => {
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w3'|'w4'|'w5'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
   const loadLeaderboard = async () => {
@@ -111,6 +112,7 @@ export default function TffPuanDurumuPage() {
       Object.keys(allPlayersList).forEach(code => { w6Base[code] = 0; w6Live[code] = 0; });
       let isAnyMatchLive = false;
 
+      // 6. HAFTA CANLI HESAPLAMA MOTORU (Sadece toplama etki eder)
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
           const weekNum = Math.floor(dbMatch.id / 100);
@@ -154,16 +156,17 @@ export default function TffPuanDurumuPage() {
         return { 
           id: code, 
           name: allPlayersList[code], 
+          w1: 0,
+          w2: 0,
           w3: vW3,
           w4: vW4,
           w5: vW5,
-          w6: vW6Total, 
           total: vW3 + vW4 + vW5 + vW6Total, 
           liveExtra: w6Live[code] || 0 
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.total - a.w6) - (a.total - a.w6) || a.name.localeCompare(b.name, 'tr'));
+      const prevRefList = [...baseList].sort((a, b) => (b.total - a.liveExtra) - (a.total - a.liveExtra) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
@@ -198,48 +201,66 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-amber-500 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
 
       <div className="w-full mb-6"><LiveMatchCard /></div>
 
       <div className="max-w-xl flex flex-col items-center mb-6 w-full">
         <button 
-          onClick={() => setActiveTab('total')} 
+          onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }} 
           className="w-full py-3 mb-6 rounded-xl font-black transition-all text-center shadow-[0_4px_14px_0_rgba(245,158,11,0.39)] bg-amber-500 text-slate-950 hover:bg-amber-400 hover:shadow-[0_6px_20px_rgba(245,158,11,0.23)]"
         >
           TFF TOPLAM PUAN DURUMU
         </button>
         
-        <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-          {/* Başlık Çubuğu */}
-          <div className="px-4 py-3 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+        <div className="w-full bg-[#0a1128] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+          {/* Master Stili Başlık Çubuğu */}
+          <div className="px-4 py-3 border-b border-slate-800 flex justify-between items-center bg-[#0a1128]">
             <div className="flex items-center gap-2 text-slate-300 font-bold text-[13px]">
               <span>📅</span>
-              <span>{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
+              <span className="uppercase">{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
             </div>
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              className="text-[11px] font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+            >
+              {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+            </button>
           </div>
 
-          {/* Master Stili Kutu Seçenekleri (Sadece 3, 4, 5) */}
-          <div className="p-4 flex justify-center gap-3 border-b border-slate-800 bg-slate-950/50">
-            {['3', '4', '5'].map(w => (
-              <button
-                key={w}
-                onClick={() => setActiveTab(`w${w}` as any)}
-                className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                  activeTab === `w${w}` ? 'bg-slate-700 text-white shadow-inner' : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white'
-                }`}
-              >
-                {w}
-              </button>
-            ))}
-          </div>
+          {/* Master Stili 1-2-3-4-5 Butonları */}
+          {isMenuOpen && (
+            <div className="p-4 flex justify-center gap-3 border-b border-slate-800 bg-[#0f172a]">
+              {['1', '2', '3', '4', '5'].map(w => (
+                <button
+                  key={w}
+                  onClick={() => setActiveTab(`w${w}` as any)}
+                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
+                    activeTab === `w${w}` ? 'bg-slate-700 text-white shadow-inner' : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white'
+                  }`}
+                >
+                  {w}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {tableRows.length > 0 ? (
+          {/* Tablo veya Boş Durum Gösterimi */}
+          {activeTab === 'w1' || activeTab === 'w2' ? (
+             <div className="py-16 text-center text-slate-500 font-medium">
+               Bu haftaya ait veri bulunmamaktadır.
+             </div>
+          ) : tableRows.length > 0 ? (
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
-                <tr><th className="px-6 py-3.5 text-center w-20">SIRA</th><th className="px-6 py-3.5">YARIŞMACI</th><th className="px-6 py-3.5 text-right">PUAN</th></tr>
+                <tr>
+                  <th className="px-6 py-3.5 text-center w-20">SIRA</th>
+                  <th className="px-6 py-3.5">YARIŞMACI</th>
+                  <th className="px-6 py-3.5 text-right">{activeTab === 'total' ? 'TOPLAM PUAN' : 'PUAN'}</th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {tableRows.map((row, idx) => (
@@ -274,7 +295,7 @@ export default function TffPuanDurumuPage() {
                         )}
                       </div>
                     </td>
-                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total') ? "text-emerald-400" : "text-amber-400"}`}>
+                    <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total') ? "text-emerald-400" : "text-amber-500"}`}>
                       {row.displayScore}
                     </td>
                   </tr>
