@@ -3,17 +3,23 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-// allPlayersList BURADAN TAMAMEN SİLİNDİ!
-// Artık oyuncular Supabase "players" tablosundan çekiliyor.
+// Oyuncular Supabase "players" tablosundan dinamik çekiliyor.
 
 const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category.toUpperCase();
-  return (uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG"));
+  const uppercaseCat = category ? category.toUpperCase() : '';
+  return (
+    uppercaseCat.includes("TÜRKİYE") || 
+    uppercaseCat.includes("TFF") || 
+    uppercaseCat.includes("AMATÖR") || 
+    uppercaseCat.includes("PTT") || 
+    uppercaseCat.includes("2.LİG") || 
+    uppercaseCat.includes("3.LİG")
+  );
 };
 
 export default function SkorDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'w6'|'total'>('total');
   const [leagueFilter, setLeagueFilter] = useState<'MASTER'|'DFO'|'TFF'>('MASTER');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
@@ -22,27 +28,31 @@ export default function SkorDurumuPage() {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', 5);
+      
+      // 🔥 BÜLTEN: 5. ve Sonrası Tüm Maçları Çek
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
+      
       const { data: dfoHistorical } = await supabase.from('dfo_weekly_scores').select('*');
       const { data: tffHistorical } = await supabase.from('tff_weekly_scores').select('*');
 
-      // 🔴 EKMEL DEVRİMİ: 1000 SATIR LİMİTİNİ KIRAN SONSUZ DÖNGÜ (PAGINATION) 🔴
+      // 🔴 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI 🔴
       let allPredictions: any[] = [];
       let from = 0;
-      let step = 999;
+      let step = 1000;
       let keepFetching = true;
 
       while(keepFetching) {
-          const { data } = await supabase
+          const { data, error } = await supabase
               .from('player_predictions')
               .select('*')
-              .eq('week_num', 5)
-              .range(from, from + step);
+              .gte('week_num', 5) // Sadece 5 değil, 6. haftayı da al!
+              .order('id', { ascending: true })
+              .range(from, from + step - 1);
           
-          if (data && data.length > 0) {
+          if (!error && data && data.length > 0) {
               allPredictions = [...allPredictions, ...data];
-              if (data.length <= step) keepFetching = false;
-              else from += step + 1;
+              if (data.length < step) keepFetching = false;
+              else from += step;
           } else {
               keepFetching = false;
           }
@@ -52,21 +62,27 @@ export default function SkorDurumuPage() {
       if (dbPlayers) {
         dbPlayers.forEach(p => {
           if (p.id !== 'mankoman') {
-             playersList[p.id] = p.name;
+             playersList[p.id] = p.name || p.full_name;
           }
         });
       }
 
-      // 🔴 BİTEN MAÇLAR VE CANLI MAÇLAR İÇİN KASALAR AYRILDI! 🔴
+      // 🔴 BİTEN MAÇLAR VE CANLI MAÇLAR İÇİN KASALAR (5. VE 6. HAFTA AYRI) 🔴
       let w5DfoBase: Record<string, number> = {}; 
       let w5TffBase: Record<string, number> = {}; 
       let w5DfoLive: Record<string, number> = {}; 
       let w5TffLive: Record<string, number> = {}; 
+
+      let w6DfoBase: Record<string, number> = {}; 
+      let w6TffBase: Record<string, number> = {}; 
+      let w6DfoLive: Record<string, number> = {}; 
+      let w6TffLive: Record<string, number> = {}; 
+
       let isAnyMatchLive = false;
 
       Object.keys(playersList).forEach(id => { 
-          w5DfoBase[id] = 0; w5TffBase[id] = 0; 
-          w5DfoLive[id] = 0; w5TffLive[id] = 0; 
+          w5DfoBase[id] = 0; w5TffBase[id] = 0; w5DfoLive[id] = 0; w5TffLive[id] = 0; 
+          w6DfoBase[id] = 0; w6TffBase[id] = 0; w6DfoLive[id] = 0; w6TffLive[id] = 0; 
       });
 
       const dfoDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
@@ -74,43 +90,62 @@ export default function SkorDurumuPage() {
       const tffDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(tffHistorical) tffHistorical.forEach(r => tffDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
 
-      const predDict: Record<string, string[]> = {};
+      // 🔥 TAHMİNLERİ "KULLANICI-HAFTA-MAÇ" OLARAK KUSURSUZ EŞLEŞTİR 🔥
+      const predDict: Record<string, string> = {};
       if (allPredictions.length > 0) {
         allPredictions.forEach(pred => {
           const uid = String(pred.user_id);
-          if (!predDict[uid]) predDict[uid] = Array(24).fill('-');
-          predDict[uid][pred.match_index - 1] = pred.predicted_score;
+          predDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
         });
       }
 
-      const catDict: Record<number, string> = {};
-      if (dbBulletin) dbBulletin.forEach(m => catDict[m.match_index] = m.category);
+      // Kategori haritasını HAFTA-MAÇ formatında oluştur
+      const catDict: Record<string, string> = {};
+      if (dbBulletin) {
+        dbBulletin.forEach(m => {
+          catDict[`${m.week_num}-${m.match_index}`] = m.category;
+        });
+      }
 
       if (dbMatches) {
         const uniqueMatches: Record<number, any> = {};
         dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
         Object.values(uniqueMatches).forEach(dbMatch => {
-          if (dbMatch.id > 500 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const matchIndex = (dbMatch.id % 100) - 1;
-            const category = catDict[matchIndex + 1] || "";
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+          const weekNum = Math.floor(dbMatch.id / 100);
+          const matchIndex = dbMatch.id % 100;
+
+          if (weekNum >= 5 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+            const category = catDict[`${weekNum}-${matchIndex}`] || "";
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
             const isTff = isTffMatchCheck(category);
             
-            const winnerIds = Object.keys(predDict).filter(id => predDict[id] && predDict[id][matchIndex] === targetScore);
+            // SADECE TAM SKORU BİLENLER
+            const winnerIds = Object.keys(playersList).filter(id => {
+              const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
+              return pScore && pScore === targetScore;
+            });
             
             const isFinished = dbMatch.status === 'FINISHED';
             const isLiveMatch = dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL';
 
             winnerIds.forEach(wId => {
-              if (isFinished) {
-                  // MAÇ BİTMİŞSE KESİNLEŞMİŞ (BASE) KASAYA EKLE
-                  if (isTff && w5TffBase[wId] !== undefined) w5TffBase[wId] += 1;
-                  else if (!isTff && w5DfoBase[wId] !== undefined) w5DfoBase[wId] += 1;
-              } else if (isLiveMatch) {
-                  // MAÇ CANLIYSA SADECE CANLI KASAYA EKLE!
-                  if (isTff && w5TffLive[wId] !== undefined) w5TffLive[wId] += 1;
-                  else if (!isTff && w5DfoLive[wId] !== undefined) w5DfoLive[wId] += 1;
+              if (weekNum === 5) {
+                  if (isFinished) {
+                      if (isTff && w5TffBase[wId] !== undefined) w5TffBase[wId] += 1;
+                      else if (!isTff && w5DfoBase[wId] !== undefined) w5DfoBase[wId] += 1;
+                  } else if (isLiveMatch) {
+                      if (isTff && w5TffLive[wId] !== undefined) w5TffLive[wId] += 1;
+                      else if (!isTff && w5DfoLive[wId] !== undefined) w5DfoLive[wId] += 1;
+                  }
+              } else if (weekNum === 6) {
+                  if (isFinished) {
+                      if (isTff && w6TffBase[wId] !== undefined) w6TffBase[wId] += 1;
+                      else if (!isTff && w6DfoBase[wId] !== undefined) w6DfoBase[wId] += 1;
+                  } else if (isLiveMatch) {
+                      if (isTff && w6TffLive[wId] !== undefined) w6TffLive[wId] += 1;
+                      else if (!isTff && w6DfoLive[wId] !== undefined) w6DfoLive[wId] += 1;
+                  }
               }
             });
 
@@ -121,38 +156,48 @@ export default function SkorDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE İKİ AYRI SKORU (BASE VE CANLI) OLUŞTUR
+      // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE SKORLARI OLUŞTUR
       const baseList = Object.keys(playersList).map(id => {
         const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
-        let w1=0, w2=0, w3=0, w4=0, w5Base=0, liveExtra=0;
+        let w1=0, w2=0, w3=0, w4=0, w5Base=0, w6Base=0;
+        let w5LiveExtra=0, w6LiveExtra=0;
         
         if (leagueFilter === 'MASTER') {
             w1 = dfo.w1 + tff.w1; w2 = dfo.w2 + tff.w2; w3 = dfo.w3 + tff.w3; w4 = dfo.w4 + tff.w4;
             w5Base = w5DfoBase[id] + w5TffBase[id];
-            liveExtra = w5DfoLive[id] + w5TffLive[id];
+            w6Base = w6DfoBase[id] + w6TffBase[id];
+            w5LiveExtra = w5DfoLive[id] + w5TffLive[id];
+            w6LiveExtra = w6DfoLive[id] + w6TffLive[id];
         } else if (leagueFilter === 'DFO') {
             w1 = dfo.w1; w2 = dfo.w2; w3 = dfo.w3; w4 = dfo.w4;
-            w5Base = w5DfoBase[id];
-            liveExtra = w5DfoLive[id];
+            w5Base = w5DfoBase[id]; w5LiveExtra = w5DfoLive[id];
+            w6Base = w6DfoBase[id]; w6LiveExtra = w6DfoLive[id];
         } else if (leagueFilter === 'TFF') {
             w1 = tff.w1; w2 = tff.w2; w3 = tff.w3; w4 = tff.w4;
-            w5Base = w5TffBase[id];
-            liveExtra = w5TffLive[id];
+            w5Base = w5TffBase[id]; w5LiveExtra = w5TffLive[id];
+            w6Base = w6TffBase[id]; w6LiveExtra = w6TffLive[id];
         }
         
-        const baseTotal = w1 + w2 + w3 + w4 + w5Base; // CANLI YOKKENKİ TOPLAM
-        const finalTotal = baseTotal + liveExtra;       // CANLI EKLENDİĞİNDEKİ TOPLAM
-        const w5Final = w5Base + liveExtra;             // CANLI EKLENDİĞİNDEKİ W5
+        const baseTotal = w1 + w2 + w3 + w4 + w5Base + w6Base; // SADECE BİTENLER
+        const finalTotal = baseTotal + w5LiveExtra + w6LiveExtra; // CANLI DAHİL
+        const w5Final = w5Base + w5LiveExtra;
+        const w6Final = w6Base + w6LiveExtra;
+        const liveExtra = w5LiveExtra + w6LiveExtra;
 
-        return { id, name: playersList[id], w1, w2, w3, w4, w5Base, w5Final, baseTotal, finalTotal, liveExtra };
+        return { 
+          id, name: playersList[id], 
+          w1, w2, w3, w4, w5Base, w6Base, 
+          w5Final, w6Final, baseTotal, finalTotal, 
+          liveExtra, w5LiveExtra, w6LiveExtra 
+        };
       });
 
-      // 🔴 İKİNCİ AŞAMA: ESKİ SIRALAMAYI (CANLI YOKKEN) HESAPLA
+      // 🔴 İKİNCİ AŞAMA: ESKİ SIRALAMAYI HESAPLA (OK YÖNLERİ İÇİN)
       const prevRefList = [...baseList].sort((a, b) => {
-          const scoreA = activeTab === 'total' ? a.baseTotal : (activeTab === 'w5' ? a.w5Base : (a as any)[activeTab]);
-          const scoreB = activeTab === 'total' ? b.baseTotal : (activeTab === 'w5' ? b.w5Base : (b as any)[activeTab]);
+          const scoreA = activeTab === 'total' ? a.baseTotal : (activeTab === 'w5' ? a.w5Base : (activeTab === 'w6' ? a.w6Base : (a as any)[activeTab]));
+          const scoreB = activeTab === 'total' ? b.baseTotal : (activeTab === 'w5' ? b.w5Base : (activeTab === 'w6' ? b.w6Base : (b as any)[activeTab]));
           return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -161,22 +206,20 @@ export default function SkorDurumuPage() {
 
       // 🔴 ÜÇÜNCÜ AŞAMA: YENİ SIRALAMAYI (CANLI DAHİL) HESAPLA VE FARKINI BUL
       const currentRefList = [...baseList].sort((a, b) => {
-          const scoreA = activeTab === 'total' ? a.finalTotal : (activeTab === 'w5' ? a.w5Final : (a as any)[activeTab]);
-          const scoreB = activeTab === 'total' ? b.finalTotal : (activeTab === 'w5' ? b.w5Final : (b as any)[activeTab]);
+          const scoreA = activeTab === 'total' ? a.finalTotal : (activeTab === 'w5' ? a.w5Final : (activeTab === 'w6' ? a.w6Final : (a as any)[activeTab]));
+          const scoreB = activeTab === 'total' ? b.finalTotal : (activeTab === 'w5' ? b.w5Final : (activeTab === 'w6' ? b.w6Final : (b as any)[activeTab]));
           return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
       const finalRows = currentRefList.map((player, index) => {
         const currentRank = index + 1;
         const prevRank = prevRanks[player.id];
-
         let trend = 'same', trendDiff = 0; 
         
-        // DÜZELTME: Oklar sadece 'total' sekmesinde değil, tüm sekmelerde çalışacak!
         if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
         else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
 
-        let displayScore = activeTab === 'total' ? player.finalTotal : (activeTab === 'w5' ? player.w5Final : (player as any)[activeTab]);
+        let displayScore = activeTab === 'total' ? player.finalTotal : (activeTab === 'w5' ? player.w5Final : (activeTab === 'w6' ? player.w6Final : (player as any)[activeTab]));
 
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
@@ -237,7 +280,7 @@ export default function SkorDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[1, 2, 3, 4, 5].map(num => (
+              {[1, 2, 3, 4, 5, 6].map(num => (
                 <button
                   key={num}
                   onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
@@ -271,7 +314,6 @@ export default function SkorDurumuPage() {
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
                           <div className="w-5 flex justify-center">
-                            {/* DÜZELTME: Oklar artık "5. Hafta" sekmesinde de çalışıyor! */}
                             {row.trend === 'up' && <span className="text-[#10b981] text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
                             {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
                             {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
@@ -291,11 +333,19 @@ export default function SkorDurumuPage() {
                             );
                           })()}
                           
-                          {/* 🔴 DÜZELTME: Sadece gerçekten CANLI skoru bilenlere rozet verilir! 🔴 */}
-                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5') && (
-                            <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">
-                              +{row.liveExtra} CANLI
-                            </span>
+                          {/* 🔴 SADECE HANGİ SEKMEDEYSEK O SEKMENİN CANLI VERİSİNİ GÖSTER 🔴 */}
+                          {adminStatus === 'LIVE' && (
+                            <>
+                              {activeTab === 'total' && row.liveExtra > 0 && (
+                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.liveExtra} CANLI</span>
+                              )}
+                              {activeTab === 'w5' && row.w5LiveExtra > 0 && (
+                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.w5LiveExtra} CANLI</span>
+                              )}
+                              {activeTab === 'w6' && row.w6LiveExtra > 0 && (
+                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.w6LiveExtra} CANLI</span>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
