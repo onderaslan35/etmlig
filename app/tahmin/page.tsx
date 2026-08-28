@@ -177,17 +177,18 @@ const localTeamLogos: Record<string, string> = {
   "RACING SANTANDER": "https://images.fotmob.com/image_resources/logo/teamlogo/8696_large.png",
 
 
-  // YENİ İKMAL LOGOLARI
+  /// YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
-  "KORTRİJK": "https://images.fotmob.com/image_resources/logo/teamlogo/8571_large.png",
+  "KORTRIJK": "https://images.fotmob.com/image_resources/logo/teamlogo/8571_large.png",
   "SANTOS FC": "https://images.fotmob.com/image_resources/logo/teamlogo/8514_large.png",
-  "PALMERİAS": "https://images.fotmob.com/image_resources/logo/teamlogo/10283_large.png",
-  "VÉLEZ SARSFIELD": "https://images.fotmob.com/image_resources/logo/teamlogo/10079_large.png",
+  "PALMERIAS": "https://images.fotmob.com/image_resources/logo/teamlogo/10283_large.png",
+  "VELEZ SARSFIELD": "https://images.fotmob.com/image_resources/logo/teamlogo/10079_large.png",
   "BOCA JUNIORS": "https://images.fotmob.com/image_resources/logo/teamlogo/10077_large.png",
   "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
   "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png",
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
-  "US CREMONESE": "https://tr.wikipedia.org/wiki/US_Cremonese#/media/Dosya:US_Cremonese_logo.png",
+  "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
+  "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
 
   // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
@@ -227,7 +228,7 @@ const localTeamLogos: Record<string, string> = {
   "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
   "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
   "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
-  "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876.png",
+
   "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
   "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
   "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
