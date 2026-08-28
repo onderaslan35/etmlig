@@ -97,6 +97,8 @@ const localTeamLogos: Record<string, string> = {
   "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
   "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
+  "PARIS SG": "https://en.wikipedia.org/wiki/Special:FilePath/Paris_Saint-Germain_F.C..svg",
+  "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
@@ -413,26 +415,11 @@ const getMatchTimeMs = (dateStr: string, timeStr: string) => {
     try {
         const [d, m, y] = dateStr.split('.');
         const [hr, min] = timeStr.split(':');
-        // Türkiye saati (UTC+3) ile ISO formatı
         const isoString = `${y}-${m}-${d}T${hr}:${min}:00+03:00`;
         return new Date(isoString).getTime();
     } catch(e) {
         return Infinity;
     }
-};
-
-// 🚀 ZAMAN VE HAFTA MANTIĞI (TAM OTOMATİK ADALET MOTORU) 🚀
-// 7. Hafta referans alınarak diğer haftaların otomatik takvimi hesaplanır.
-const getWeekTimings = (weekNum: number) => {
-    // 7. Hafta İçin:
-    // Açılış: Cuma 20:00 (28 Ağustos 2026)
-    // Kapanış: Pazartesi 21:00 (31 Ağustos 2026) -> Ama dinamik kilit olduğu için artık toptan kapanış esnetildi.
-    // Tahminmatik/Deklarasyon ise MAÇ MAÇ açılacağı için genel bir hafta mührü yok.
-
-    const openDate = new Date("2026-08-28T20:00:00+03:00");
-    openDate.setDate(openDate.getDate() + (weekNum - 7) * 7);
-
-    return { openDate };
 };
 
 export default function TahminlerPortal() {
@@ -512,20 +499,23 @@ export default function TahminlerPortal() {
     fetchInitialData();
   }, []);
 
+  // 🔴 EVENT-DRIVEN KİLİT MEKANİZMASI (TOPTAN KAPATMA YOK!) 🔴
   const gateStatus = useMemo(() => {
-      if (!activeBulletinWeek) return 'CLOSED';
-      if (activeBulletinWeek < 7) return 'OPEN'; // Eski sistem (6. hafta vs. açık kalır)
-      const { openDate } = getWeekTimings(activeBulletinWeek);
-      if (now < openDate.getTime()) return 'NOT_OPEN_YET';
-      return 'OPEN'; // Kilitler maç bazlı atılacak!
-  }, [activeBulletinWeek, now]);
+      if (!activeBulletinWeek || !bulletinMap[activeBulletinWeek]) return 'CLOSED';
+      
+      const matches = bulletinMap[activeBulletinWeek];
+      // Eğer haftanın içinde maç saati gelmemiş EN AZ BİR maç bile varsa KAPI AÇIKTIR!
+      const hasOpenMatch = matches.some(m => now < getMatchTimeMs(m.date, m.time) - 60000);
+      
+      return hasOpenMatch ? 'OPEN' : 'CLOSED';
+  }, [activeBulletinWeek, bulletinMap, now]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     
     if (username.trim().toLowerCase() !== 'mankoman') {
-        if (gateStatus === 'NOT_OPEN_YET') {
-            setLoginError(`${activeBulletinWeek}. Hafta tahminleri Cuma saat 20:00'da açılacaktır.`);
+        if (gateStatus === 'CLOSED') {
+            setLoginError(`${activeBulletinWeek}. Hafta bültenindeki tüm maçlar başladığı için tahminler kapanmıştır.`);
             return;
         }
     }
@@ -549,7 +539,7 @@ export default function TahminlerPortal() {
       const initialPreds: Record<number, { home: string, away: string }> = {};
       bData.forEach((m:any) => {
         const existingPred = pData?.find(p => p.match_index === m.id);
-        if (existingPred && existingPred.predicted_score) {
+        if (existingPred && existingPred.predicted_score && existingPred.predicted_score !== 'PAS' && existingPred.predicted_score !== '---') {
           const [h, a] = existingPred.predicted_score.split('-');
           initialPreds[m.id] = { home: h || '-', away: a || '-' };
         } else { initialPreds[m.id] = { home: '-', away: '-' }; }
@@ -565,10 +555,9 @@ export default function TahminlerPortal() {
     const newPreds = { ...predictions };
     Object.keys(newPreds).forEach(matchIndex => {
       const matchObj = bulletinMap[activeBulletinWeek].find((m:any) => m.id === Number(matchIndex));
-      // SADECE 7. Hafta ve sonrasında KİLİTLİ DEĞİLSE rastgele atar. 
-      // Eski haftalar (6 ve altı) için her zaman atar.
-      const isLocked = activeBulletinWeek >= 7 && matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
+      const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
       
+      // SADECE KİLİTLENMEMİŞ VE BOŞ OLAN MAÇLARI RASTGELE DOLDURUR
       if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
         newPreds[Number(matchIndex)] = { home: Math.floor(Math.random() * 4).toString(), away: Math.floor(Math.random() * 4).toString() };
       }
@@ -577,6 +566,7 @@ export default function TahminlerPortal() {
   };
 
   const savePredictions = async () => {
+    // 🔴 24 MAÇI ZORLA DOLDURMA KURALI SİLİNDİ! 🔴
     setIsSaving(true);
     try {
       const payload = Object.keys(predictions).map(matchIndex => ({
@@ -684,21 +674,11 @@ export default function TahminlerPortal() {
   // 🔴 5. HAFTA VE ÖNCESİ SİLİNDİ, SADECE 6 VE SONRASI 🔴
   const availableWeeks = Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => a - b);
 
-  // Tahminmatik ve Deklarasyon İçin Açık Haftalar
-  const unlockedWeeks = useMemo(() => {
-      return availableWeeks.filter(w => {
-          if (username.trim().toLowerCase() === 'mankoman') return true;
-          // 7. hafta ve sonrası, bülten açılır açılmaz burada görünür, AMA İÇİ MAÇ MAÇ GİZLENİR!
-          // Dolayısıyla artık toptan mühür beklemiyoruz.
-          return true; 
-      });
-  }, [availableWeeks, username]);
-
   useEffect(() => {
-      if (unlockedWeeks.length > 0 && (!selectedTahminWeek || !unlockedWeeks.includes(selectedTahminWeek))) {
-          setSelectedTahminWeek(Math.max(...unlockedWeeks));
+      if (availableWeeks.length > 0 && (!selectedTahminWeek || !availableWeeks.includes(selectedTahminWeek))) {
+          setSelectedTahminWeek(Math.max(...availableWeeks));
       }
-  }, [unlockedWeeks, selectedTahminWeek]);
+  }, [availableWeeks, selectedTahminWeek]);
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
@@ -708,7 +688,7 @@ export default function TahminlerPortal() {
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div><div className="text-6xl mb-6 mt-2 drop-shadow-lg">🏆</div>
             <h3 className="text-3xl font-black text-emerald-400 mb-3 tracking-widest">TEBRİKLER!</h3>
-            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz {activeBulletinWeek}. Hafta için sisteme kaydedilmiştir.</p>
+            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz {activeBulletinWeek}. Hafta için sisteme kaydedilmiştir. (İsterseniz daha sonra kilitlenmemiş maçlarınızı güncelleyebilirsiniz.)</p>
             <button onClick={() => { setShowSuccessModal(false); setView('lobby'); setUsername(''); setPassword(''); }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] uppercase">TAMAM</button>
           </div>
         </div>
@@ -740,16 +720,28 @@ export default function TahminlerPortal() {
               {/* 1. GİŞE / GİRİŞ KARTI (İLK SIRA) */}
               <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)] order-1">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
-                   <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${gateStatus === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-blue-500/10 text-blue-500 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]'}`}>
-                      {gateStatus === 'OPEN' ? 'TAHMİNLER AÇIK (PARÇA PARÇA KAYIT)' : 'TAHMİNLER CUMA 20:00\'DA AÇILACAK'}
+                   <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${gateStatus === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>
+                      {gateStatus === 'OPEN' ? 'TAHMİNLER AÇIK (PARÇA KAYIT)' : 'TAHMİNLER KAPANDI (TÜM MAÇLAR BAŞLADI)'}
                    </span>
                 </div>
                 
                 <div className="mt-6 mb-4">
                    <label className="block text-center text-xs font-bold text-slate-400 tracking-widest mb-2">GİRİŞ YAPILACAK HAFTA</label>
-                   <div className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xl px-4 py-4 rounded-xl text-center shadow-inner cursor-not-allowed">
-                     {activeBulletinWeek > 0 ? `${activeBulletinWeek}. HAFTA BÜLTENİ` : 'BÜLTEN BEKLENİYOR'}
-                   </div>
+                   {availableWeeks.length > 0 ? (
+                     <select
+                       value={activeBulletinWeek}
+                       onChange={e => setActiveBulletinWeek(Number(e.target.value))}
+                       className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xl px-4 py-4 rounded-xl text-center shadow-inner cursor-pointer outline-none focus:border-amber-500"
+                     >
+                       {availableWeeks.map(w => (
+                         <option key={w} value={w}>{w}. HAFTA BÜLTENİ</option>
+                       ))}
+                     </select>
+                   ) : (
+                     <div className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xl px-4 py-4 rounded-xl text-center shadow-inner cursor-not-allowed">
+                       BÜLTEN BEKLENİYOR
+                     </div>
+                   )}
                 </div>
                 
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-5"></div>
@@ -760,7 +752,7 @@ export default function TahminlerPortal() {
                   {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-2 px-2 rounded-lg border border-red-500/30 leading-relaxed">{loginError}</p>}
                   
                   <button type="submit" className={`${gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
-                     {gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'BEKLENİYOR'}
+                     {gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
                   </button>
                 </form>
               </div>
@@ -792,9 +784,9 @@ export default function TahminlerPortal() {
               <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors"><span>⬅</span> Lobiye Dön</button>
               <div className="text-center"><h2 className="text-2xl md:text-3xl font-black text-emerald-500 tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] uppercase flex items-center justify-center gap-3"><span className="text-3xl md:text-4xl">⚡</span> TAHMİNMATİK</h2></div>
               <div>
-                  {unlockedWeeks.length > 0 ? (
+                  {availableWeeks.length > 0 ? (
                       <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm">
-                          {unlockedWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option> ))}
+                          {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{week}. HAFTA</option> ))}
                       </select>
                   ) : (
                       <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Açık Hafta Yok</div>
@@ -803,7 +795,7 @@ export default function TahminlerPortal() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {bulletinMap[selectedTahminWeek] && unlockedWeeks.includes(selectedTahminWeek) ? bulletinMap[selectedTahminWeek].map((match: any) => {
+              {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
                 const hName = cleanTeamName(match.homeTeam || match.home_team);
                 const aName = cleanTeamName(match.awayTeam || match.away_team);
                 const theme = getEliteTheme(match.category, hName, aName);
@@ -817,8 +809,7 @@ export default function TahminlerPortal() {
 
                 // 🔴 MAÇ MÜHRÜ KONTROLÜ (MAÇA 1 DK KALDIKTAN SONRA MÜHÜR AÇILIR)
                 const matchTimeMs = getMatchTimeMs(match.date, match.time);
-                // 7. Hafta ve sonrası için dinamik saat kontrolü
-                const isRevealed = selectedTahminWeek < 7 || (now >= matchTimeMs - 60000);
+                const isRevealed = (now >= matchTimeMs - 60000);
 
                 return (
                   <div key={`tm-${match.id}`} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
@@ -882,7 +873,7 @@ export default function TahminlerPortal() {
                     </div>
                   </div>
                 );
-              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{unlockedWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
+              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{availableWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
             </div>
           </div>
         )}
@@ -900,9 +891,9 @@ export default function TahminlerPortal() {
                   {isSearchFocused && ( <div className="absolute top-full left-0 w-full bg-slate-900 border border-slate-700 mt-1 rounded-lg shadow-2xl z-[100] max-h-48 overflow-y-auto custom-scrollbar"> {finalPlayersList.map(id => ( <div key={`drop-${id}`} className="px-4 py-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 border-b border-slate-800/50" onClick={() => { setSearchTerm(mergedAccounts[id].name); setIsSearchFocused(false); }}>{mergedAccounts[id].name}</div> ))} </div> )}
                 </div>
                 
-                {unlockedWeeks.length > 0 ? (
+                {availableWeeks.length > 0 ? (
                     <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md">
-                        {unlockedWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}
+                        {availableWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{week}. HAFTA BÜLTENİ</option> ))}
                     </select>
                 ) : (
                     <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Deklare Yok</div>
@@ -910,15 +901,13 @@ export default function TahminlerPortal() {
               </div>
             </div>
 
-            {bulletinMap[selectedTahminWeek] && unlockedWeeks.includes(selectedTahminWeek) ? (
+            {bulletinMap[selectedTahminWeek] ? (
               <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
                 
                 {/* DİNAMİK MÜHÜR BİLGİLENDİRMESİ */}
-                {selectedTahminWeek >= 7 && (
-                   <div className="mb-4 text-center bg-indigo-950/30 border border-indigo-500/30 p-2 rounded-lg text-indigo-300 text-xs font-bold tracking-widest shadow-inner">
-                       BAŞLAMAMIŞ MAÇLARIN TAHMİNLERİ "🔒" İLE GİZLENMİŞTİR. (MAÇA 1 DK KALA AÇILIR)
-                   </div>
-                )}
+                <div className="mb-4 text-center bg-indigo-950/30 border border-indigo-500/30 p-2 rounded-lg text-indigo-300 text-xs font-bold tracking-widest shadow-inner">
+                    BAŞLAMAMIŞ MAÇLARIN TAHMİNLERİ "🔒" İLE GİZLENMİŞTİR. (MAÇA 1 DK KALA AÇILIR)
+                </div>
 
                 <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
@@ -959,7 +948,7 @@ export default function TahminlerPortal() {
                                   // 🔴 MAÇ MÜHRÜ KONTROLÜ
                                   const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === idx + 1);
                                   let isRevealed = true;
-                                  if (selectedTahminWeek >= 7 && matchObj) {
+                                  if (matchObj) {
                                       const matchTimeMs = getMatchTimeMs(matchObj.date, matchObj.time);
                                       if (now < matchTimeMs - 60000) isRevealed = false;
                                   }
@@ -981,7 +970,7 @@ export default function TahminlerPortal() {
                <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
                   <span className="text-5xl mb-4 block opacity-50">⏳</span>
                   <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
-                     {unlockedWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
+                     {availableWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${selectedTahminWeek}. HAFTA TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
                   </h2>
                </div> 
             )}
@@ -1006,7 +995,7 @@ export default function TahminlerPortal() {
                                     // 🔴 MAÇ MÜHRÜ KONTROLÜ
                                     const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === idx + 1);
                                     let isRevealed = true;
-                                    if (selectedTahminWeek >= 7 && matchObj) {
+                                    if (matchObj) {
                                         const matchTimeMs = getMatchTimeMs(matchObj.date, matchObj.time);
                                         if (now < matchTimeMs - 60000) isRevealed = false;
                                     }
@@ -1034,15 +1023,13 @@ export default function TahminlerPortal() {
             </div>
 
             {/* 🔴 BİLGİLENDİRME PANELİ 🔴 */}
-            {activeBulletinWeek >= 7 && (
-                <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
-                   <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
-                   <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
-                      Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
-                      <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
-                   </p>
-                </div>
-            )}
+            <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
+               <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
+               <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
+                  Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
+                  <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
+               </p>
+            </div>
 
             {(!bulletinMap[activeBulletinWeek] || bulletinMap[activeBulletinWeek].length === 0) ? (
                <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{activeBulletinWeek}. HAFTA BÜLTENİ BEKLENİYOR</h2></div>
@@ -1056,9 +1043,9 @@ export default function TahminlerPortal() {
                   
                   const isTff = isTffMatchCheck(match.category);
 
-                  // 🔴 MAÇ MÜHRÜ (KİLİDİ) 🔴
+                  // 🔴 MAÇ MÜHRÜ (KİLİDİ) - 1 DK KALA KAPATIR 🔴
                   const matchTimeMs = getMatchTimeMs(match.date, match.time);
-                  const isLocked = activeBulletinWeek >= 7 && (now >= matchTimeMs - 60000);
+                  const isLocked = (now >= matchTimeMs - 60000);
 
                   return (
                     <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg} ${isLocked ? 'opacity-85 grayscale-[15%]' : ''}`}>
