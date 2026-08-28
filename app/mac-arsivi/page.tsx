@@ -83,6 +83,20 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
+    "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823_large.png",
+
+  // YENİ İKMAL LOGOLARI
+  "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
+  "KORTRİJK": "https://images.fotmob.com/image_resources/logo/teamlogo/8571_large.png",
+  "SANTOS FC": "https://images.fotmob.com/image_resources/logo/teamlogo/8514_large.png",
+  "PALMERİAS": "https://images.fotmob.com/image_resources/logo/teamlogo/10283_large.png",
+  "VÉLEZ SARSFIELD": "https://images.fotmob.com/image_resources/logo/teamlogo/10079_large.png",
+  "BOCA JUNIORS": "https://images.fotmob.com/image_resources/logo/teamlogo/10077_large.png",
+  "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
+  "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png",
+  "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
+  "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
+  
 
   // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -95,7 +109,7 @@ const localTeamLogos: Record<string, string> = {
   "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
   "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png", "ARSENAL": "/logos/arsenal.png",
   // 🔴 ALMANYA BUNDESLIGA TAKIMLARI
-  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  
   "BAYERN MUNICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
   "B. DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
@@ -640,8 +654,10 @@ export default function MacArsiviPage() {
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
               className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg cursor-pointer outline-none transition-all shadow text-sm"
             >
-              {/* 🔴 LİSTEYİ SADECE 1'DEN 6'YA KADAR KİLİTLEDİM 🔴 */}
-              {[1, 2, 3, 4, 5, 6].map(week => (
+              {/* 🔴 TAM OTOMATİK MENÜ: YENİ BÜLTEN GELDİKÇE KENDİ EKLER 🔴 */}
+              {[1, 2, 3, 4, ...Object.keys(bulletinData).map(Number).filter(w => w > 4)]
+                .sort((a, b) => a - b)
+                .map(week => (
                   <option key={week} value={week}>{week}. HAFTA BÜLTENİ</option>
               ))}
             </select>

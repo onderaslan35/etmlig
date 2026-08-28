@@ -187,7 +187,7 @@ const localTeamLogos: Record<string, string> = {
   "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
   "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png",
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
-  "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
+  "US CREMONESE": "https://tr.wikipedia.org/wiki/US_Cremonese#/media/Dosya:US_Cremonese_logo.png",
 
   // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
@@ -210,6 +210,7 @@ const localTeamLogos: Record<string, string> = {
   "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
   "SUNDERLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+  
 
   // 🇮🇹 İTALYA
   "INTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",

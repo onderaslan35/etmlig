@@ -147,6 +147,20 @@ const localTeamLogos: Record<string, string> = {
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
+  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823_large.png",
+
+  // YENİ İKMAL LOGOLARI
+  "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
+  "KORTRİJK": "https://images.fotmob.com/image_resources/logo/teamlogo/8571_large.png",
+  "SANTOS FC": "https://images.fotmob.com/image_resources/logo/teamlogo/8514_large.png",
+  "PALMERİAS": "https://images.fotmob.com/image_resources/logo/teamlogo/10283_large.png",
+  "VÉLEZ SARSFIELD": "https://images.fotmob.com/image_resources/logo/teamlogo/10079_large.png",
+  "BOCA JUNIORS": "https://images.fotmob.com/image_resources/logo/teamlogo/10077_large.png",
+  "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
+  "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png",
+  "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
+  "CREMONESE": "https://tr.wikipedia.org/wiki/US_Cremonese#/media/Dosya:US_Cremonese_logo.png",
+  "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
 
   // YEREL KLASÖRLER
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -183,7 +197,7 @@ const localTeamLogos: Record<string, string> = {
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
 
   // 🔴 ALMANYA (BUNDESLIGA) - FOTMOB
-  "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+  
   "BAYERN MUNCHEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
   "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8178.png",
