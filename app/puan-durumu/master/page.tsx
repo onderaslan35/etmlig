@@ -139,12 +139,11 @@ export default function MasterPuanDurumuPage() {
 
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
+  // 🔴 MÜKEMMEL SUPABASE FİŞ (POINTS) SİSTEMİ: Geçmişteki tüm eksikleri bulup çıkartır 🔴
   useEffect(() => {
     const fetchSupabaseData = async () => {
-      // 1. TARİHİ ARŞİV: 4, 5 ve 6. Haftanın tarayıcıdaki kayıtlarını OKU!
-      const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
-
-      // İlk 3 haftanın STATİK puanları + 4, 5 ve 6. haftanın LOKAL puanlarını topla
+      
+      // 1. STATİK İLK 3 HAFTANIN PUANLARI
       const basePoints: Record<string, number> = {};
       Object.keys(allPlayersMasterList).forEach(id => {
         const w1 = masterWeek1Data[id]?.puan || 0;
@@ -155,34 +154,42 @@ export default function MasterPuanDurumuPage() {
         const b2 = masterBonusData[id]?.week2 || 0;
         const b3 = masterBonusData[id]?.week3 || 0;
         
-        const historyLocalPoints = liveLeaderboard[id]?.master || 0; 
-
-        basePoints[id] = w1 + w2 + w3DFO + w3TFF + b1 + b2 + b3 + historyLocalPoints;
+        basePoints[id] = w1 + w2 + w3DFO + w3TFF + b1 + b2 + b3;
       });
 
       if (activeTab === 'total') {
-        // 2. YENİ SİSTEM: 7. Hafta itibariyle Admin panelinden kestiğimiz ÇİFT FİŞLERİ Uzaydan (Supabase) ÇEK
-        const { data } = await supabase
-          .from('standings')
-          .select('user_id, points')
-          .eq('league_type', 'MASTER');
+        // 2. SUPABASE 'points' (FİŞLER) TABLOSUNDAN TÜM GEÇMİŞİ OKU
+        const { data: allPoints } = await supabase
+          .from('points')
+          .select('username, puan, hafta, kategori')
+          .gte('hafta', 4); // 4. Haftadan bugüne kadar kesilen TÜM fişleri getir
 
-        const dbPoints: Record<string, number> = {};
-        if (data) {
-          data.forEach(row => {
-            dbPoints[row.user_id] = row.points;
+        const dynamicPoints: Record<string, number> = {};
+        if (allPoints) {
+          allPoints.forEach(row => {
+            if (!dynamicPoints[row.username]) dynamicPoints[row.username] = 0;
+
+            // KURAL 1: 4, 5 ve 6. haftalarda "Tek Fiş" vardı. Kategori ne olursa olsun hepsi Master'a yazılır.
+            if (row.hafta >= 4 && row.hafta <= 6) {
+              dynamicPoints[row.username] += row.puan;
+            }
+            // KURAL 2: 7. hafta ve sonrasında "Çift Fiş" var. Çifte saymamak için SADECE 'MASTER' fişleri toplanır.
+            else if (row.hafta >= 7) {
+              if (row.kategori === 'MASTER') {
+                dynamicPoints[row.username] += row.puan;
+              }
+            }
           });
         }
 
-        // TARİHİ ARŞİV İLE UZAY VERİSİNİ BİRLEŞTİR!
+        // BİRLEŞTİR VE EKRANA BAS! (İşte 73'ler ve 46'lar burada doğuyor)
         const combinedList = Object.keys(allPlayersMasterList).map(id => {
-          const historicalTotal = basePoints[id] || 0;
-          const newSystemTotal = dbPoints[id] || 0;
-          
+          const historical = basePoints[id] || 0; // Ilk 3 hafta statik
+          const dynamic = dynamicPoints[id] || 0; // 4. haftadan sonsuza kadar veritabanı (Fişler)
           return {
             id,
             name: allPlayersMasterList[id],
-            puan: historicalTotal + newSystemTotal
+            puan: historical + dynamic
           };
         });
 
@@ -211,11 +218,14 @@ export default function MasterPuanDurumuPage() {
         // GELECEK HAFTALAR İÇİN DİREKT SUPABASE KONTROLÜ
         const weekNum = parseInt(activeTab.replace('week', ''));
         
-        const { data } = await supabase
-          .from('points')
-          .select('username, puan')
-          .eq('kategori', 'MASTER')
-          .eq('hafta', weekNum);
+        let query = supabase.from('points').select('username, puan').eq('hafta', weekNum);
+
+        // 7. hafta ve sonrası için Çift Fiş okumamak adına sadece MASTER kategorisini filtrele
+        if (weekNum >= 7) {
+            query = query.eq('kategori', 'MASTER');
+        }
+
+        const { data } = await query;
 
         const weekPoints: Record<string, number> = {};
         Object.keys(allPlayersMasterList).forEach(id => weekPoints[id] = 0);
@@ -242,9 +252,6 @@ export default function MasterPuanDurumuPage() {
 
     // Canlı Güncellemeler İçin Abonelik
     const channel = supabase.channel('master_puan_updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'standings' }, () => {
-         fetchSupabaseData();
-      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'points' }, () => {
          fetchSupabaseData();
       })
