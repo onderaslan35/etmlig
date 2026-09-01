@@ -137,30 +137,14 @@ export default function MasterPuanDurumuPage() {
   const [isWeekMenuOpen, setIsWeekMenuOpen] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<any[]>([]);
 
-  const [currentTime, setCurrentTime] = useState<string>('');
-  const [currentDateFormatted, setCurrentDateFormatted] = useState<string>('');
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setCurrentDateFormatted(now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }).toUpperCase());
-    };
-    updateClock();
-    const timer = setInterval(updateClock, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const totalWeeks = Array.from({ length: 48 }, (_, i) => i + 1);
 
-  const todaysMatches = [
-    { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
-  ];
-
-  // 🔴 SİSTEM ARTIK DİREKT OLARAK SUPABASE'DEN (CANLI VERİTABANINDAN) VERİ OKUYACAK 🔴
   useEffect(() => {
     const fetchSupabaseData = async () => {
-      // İlk 3 haftanın STATİK puanlarını hesapla (Geçmiş silinmesin diye koruyoruz)
+      // 1. TARİHİ ARŞİV: 4, 5 ve 6. Haftanın tarayıcıdaki kayıtlarını OKU!
+      const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
+
+      // İlk 3 haftanın STATİK puanları + 4, 5 ve 6. haftanın LOKAL puanlarını topla
       const basePoints: Record<string, number> = {};
       Object.keys(allPlayersMasterList).forEach(id => {
         const w1 = masterWeek1Data[id]?.puan || 0;
@@ -170,11 +154,14 @@ export default function MasterPuanDurumuPage() {
         const b1 = masterBonusData[id]?.week1 || 0;
         const b2 = masterBonusData[id]?.week2 || 0;
         const b3 = masterBonusData[id]?.week3 || 0;
-        basePoints[id] = w1 + w2 + w3DFO + w3TFF + b1 + b2 + b3;
+        
+        const historyLocalPoints = liveLeaderboard[id]?.master || 0; 
+
+        basePoints[id] = w1 + w2 + w3DFO + w3TFF + b1 + b2 + b3 + historyLocalPoints;
       });
 
       if (activeTab === 'total') {
-        // 🔴 CANLI KASA: Supabase'den MASTER standings verisini çek
+        // 2. YENİ SİSTEM: 7. Hafta itibariyle Admin panelinden kestiğimiz ÇİFT FİŞLERİ Uzaydan (Supabase) ÇEK
         const { data } = await supabase
           .from('standings')
           .select('user_id, points')
@@ -187,15 +174,15 @@ export default function MasterPuanDurumuPage() {
           });
         }
 
-        // Statik Puanlar + Canlı Veritabanı Puanlarını Birleştir
+        // TARİHİ ARŞİV İLE UZAY VERİSİNİ BİRLEŞTİR!
         const combinedList = Object.keys(allPlayersMasterList).map(id => {
-          const staticPuan = basePoints[id] || 0;
-          const livePuan = dbPoints[id] || 0; // Admin panelinden onaylanan tüm Hakan Ayan 12 puanları vb. buraya düşecek!
+          const historicalTotal = basePoints[id] || 0;
+          const newSystemTotal = dbPoints[id] || 0;
           
           return {
             id,
             name: allPlayersMasterList[id],
-            puan: staticPuan + livePuan
+            puan: historicalTotal + newSystemTotal
           };
         });
 
@@ -221,7 +208,7 @@ export default function MasterPuanDurumuPage() {
         });
         setTableRows(list.sort((a, b) => b.puan - a.puan));
       } else {
-        // 🔴 4, 5, 6, 7 VE SONRAKİ TÜM HAFTALAR İÇİN SUPABASE'DEN CANLI ÇEKİM
+        // GELECEK HAFTALAR İÇİN DİREKT SUPABASE KONTROLÜ
         const weekNum = parseInt(activeTab.replace('week', ''));
         
         const { data } = await supabase
@@ -253,7 +240,7 @@ export default function MasterPuanDurumuPage() {
 
     fetchSupabaseData();
 
-    // Canlı Güncellemeler İçin Abonelik (Admin puan verdikçe sayfa kendi yenilenir)
+    // Canlı Güncellemeler İçin Abonelik
     const channel = supabase.channel('master_puan_updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'standings' }, () => {
          fetchSupabaseData();
@@ -279,77 +266,18 @@ export default function MasterPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-400 tracking-wider uppercase">
+      <div className="flex flex-col items-center text-center mb-8 mt-4">
+        <h1 className="text-2xl md:text-3xl font-black text-center text-amber-500 tracking-widest uppercase drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">
           ELİT TAHMİN MASTER LİGİ
         </h1>
       </div>
 
-      <div className="w-full mb-6 bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl shadow-xl backdrop-blur-sm">
-        <div className="flex flex-wrap items-center justify-between mb-3 px-1 border-b border-slate-800/80 pb-2 gap-2">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-            </span>
-            <h2 className="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-wider">
-              BUGÜNÜN MÜSABAKALARI ({todaysMatches.length} MAÇ)
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full shadow-inner">
-              📅 {currentDateFormatted || 'YÜKLENİYOR...'}
-            </span>
-            
-            {currentTime && (
-              <span className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono font-bold text-emerald-400 bg-slate-950 border border-emerald-500/40 px-2.5 py-1 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.15)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                {currentTime}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-3 overflow-x-auto pb-2 pt-1 justify-center scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-slate-950">
-          {todaysMatches.map((m) => (
-            <div
-              key={m.id}
-              className="min-w-[240px] sm:min-w-[280px] max-w-sm flex-shrink-0 bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 rounded-xl p-3.5 flex flex-col justify-between shadow-md"
-            >
-              <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold mb-2">
-                <span className="text-amber-400/90 truncate font-extrabold">{m.league}</span>
-                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-black">
-                  ⏰ {m.time}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between my-2">
-                <span className="font-extrabold text-xs sm:text-sm text-slate-100 uppercase truncate w-2/5 text-left">
-                  {m.home}
-                </span>
-                <span className="text-[9px] font-black text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
-                  VS
-                </span>
-                <span className="font-extrabold text-xs sm:text-sm text-slate-100 uppercase truncate w-2/5 text-right">
-                  {m.away}
-                </span>
-              </div>
-
-              <div className="mt-2 text-center text-[9px] font-bold text-slate-500 uppercase tracking-widest border-t border-slate-800/80 pt-1.5">
-                MAÇ #{m.id}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
+      <div className="max-w-xl flex flex-col items-center mb-8 space-y-3 w-full">
         <button
           onClick={() => selectTab('total')}
-          className={`px-8 py-2.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-md uppercase tracking-wider ${
+          className={`px-8 py-3.5 rounded-xl font-black text-sm md:text-base transition-all duration-200 border w-full text-center shadow-lg uppercase tracking-widest ${
             activeTab === 'total'
-              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20 scale-[1.02]'
+              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-[1.02]'
               : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
           }`}
         >
@@ -359,24 +287,24 @@ export default function MasterPuanDurumuPage() {
         <div className="w-full relative">
           <button
             onClick={() => setIsWeekMenuOpen(!isWeekMenuOpen)}
-            className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-md ${
+            className={`w-full py-3.5 px-6 rounded-xl font-extrabold text-xs md:text-sm border transition-all flex items-center justify-between shadow-lg ${
               activeTab !== 'total'
-                ? 'bg-amber-500 text-slate-950 border-amber-400'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
                 : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
             }`}
           >
-            <span>📅 {getActiveTabTitle()}</span>
-            <span className="text-xs transition-transform duration-200">
+            <span className="tracking-widest">📅 {getActiveTabTitle()}</span>
+            <span className="text-xs transition-transform duration-200 font-black">
               {isWeekMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
             </span>
           </button>
 
           {isWeekMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700/80 p-3 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="text-[11px] font-bold text-slate-400 mb-2 text-center uppercase tracking-wider border-b border-slate-800 pb-1">
+            <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900/95 border border-slate-700 p-4 rounded-2xl shadow-2xl backdrop-blur-md">
+              <div className="text-[11px] font-bold text-slate-400 mb-3 text-center uppercase tracking-widest border-b border-slate-800 pb-2">
                 İncelemek İstediğiniz Haftayı Seçin
               </div>
-              <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-h-56 overflow-y-auto pr-1">
+              <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
                 {totalWeeks.map((weekNum) => {
                   const weekKey = `week${weekNum}`;
                   const isActive = activeTab === weekKey;
@@ -384,10 +312,10 @@ export default function MasterPuanDurumuPage() {
                     <button
                       key={weekNum}
                       onClick={() => selectTab(weekKey)}
-                      className={`py-1.5 text-xs font-bold rounded-lg border transition-all text-center ${
+                      className={`py-2 text-xs font-black rounded-lg border transition-all text-center shadow-inner ${
                         isActive
-                          ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-sm'
-                          : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300'
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                          : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-amber-500/20 hover:text-amber-300 hover:border-amber-500/50'
                       }`}
                     >
                       {weekNum}
@@ -404,21 +332,21 @@ export default function MasterPuanDurumuPage() {
         {tableRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
+              <thead className="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-3.5 w-16 text-center">SIRA</th>
-                  <th className="px-6 py-3.5">YARIŞMACI</th>
-                  <th className="px-6 py-3.5 text-right">
+                  <th className="px-6 py-4 w-16 text-center font-black tracking-widest">SIRA</th>
+                  <th className="px-6 py-4 font-black tracking-widest">YARIŞMACI</th>
+                  <th className="px-6 py-4 text-right font-black tracking-widest">
                     {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-800/50">
                 {tableRows.map((row, idx) => (
-                  <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-3.5 text-center font-medium text-slate-400">{idx + 1}</td>
-                    <td className="px-6 py-3.5 font-semibold text-slate-200">{row.name}</td>
-                    <td className="px-6 py-3.5 text-right font-bold text-amber-400 text-base">
+                  <tr key={row.id || idx} className="hover:bg-slate-800/60 transition-colors">
+                    <td className="px-6 py-4 text-center font-black text-slate-500">{idx + 1}</td>
+                    <td className="px-6 py-4 font-black text-slate-200 tracking-wide">{row.name}</td>
+                    <td className="px-6 py-4 text-right font-black text-amber-500 text-lg drop-shadow-md">
                       {row.puan}
                     </td>
                   </tr>
@@ -427,7 +355,7 @@ export default function MasterPuanDurumuPage() {
             </table>
           </div>
         ) : (
-          <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
+          <div className="py-16 text-center text-slate-500 font-bold text-sm tracking-widest uppercase">
             ⏳ {activeTab.replace('week', '')}. Haftanın verileri bulunamadı veya henüz hesaplanmadı.
           </div>
         )}
