@@ -34,9 +34,10 @@ const isTffMatchCheck = (category: string) => {
 
 export default function DfoPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'w6'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+  const [maxWeek, setMaxWeek] = useState<number>(6); // SONSUZ DÖNGÜ İÇİN DİNAMİK HAFTA
 
   const loadLeaderboard = async () => {
     try {
@@ -71,7 +72,7 @@ export default function DfoPuanDurumuPage() {
         });
       }
 
-      // 🔥 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI (5 ve 6. HAFTA) 🔥
+      // 🔥 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI (5. HAFTADAN SONSUZA) 🔥
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -94,6 +95,7 @@ export default function DfoPuanDurumuPage() {
         }
       }
 
+      // SADECE DFO KATEGORİSİNDEKİ MAÇLARI SÜZER (SENİN ORİJİNAL KURALIN)
       const dfoMatchSet = new Set<string>();
       if (dbBulletin) {
         dbBulletin.forEach(m => {
@@ -103,16 +105,18 @@ export default function DfoPuanDurumuPage() {
         });
       }
 
-      let w5Base: Record<string, number> = {};
-      let w5Live: Record<string, number> = {};
-      let w6Base: Record<string, number> = {};
-      let w6Live: Record<string, number> = {};
-      let isAnyMatchLive = false;
+      // 🔴 ESKİ KÖR LİMİTLER KALDIRILDI! 38. HAFTAYA KADAR HAZIR KASALAR 🔴
+      let dynamicBase: Record<number, Record<string, number>> = {};
+      let dynamicLive: Record<number, Record<string, number>> = {};
+      for (let w = 5; w <= 38; w++) {
+          dynamicBase[w] = {}; dynamicLive[w] = {};
+          Object.keys(playersList).forEach(id => {
+              dynamicBase[w][id] = 0; dynamicLive[w][id] = 0;
+          });
+      }
 
-      Object.keys(playersList).forEach(id => {
-        w5Base[id] = 0; w5Live[id] = 0;
-        w6Base[id] = 0; w6Live[id] = 0;
-      });
+      let isAnyMatchLive = false;
+      let highestWeekFound = 6; // En az 6 sekmesi görünsün
 
       // 🔥 TAHMİNLERİ "KULLANICI-HAFTA-MAÇ" OLARAK KUSURSUZ EŞLEŞTİR 🔥
       const predDict: Record<string, string> = {};
@@ -131,15 +135,19 @@ export default function DfoPuanDurumuPage() {
           const weekNum = Math.floor(dbMatch.id / 100);
           const matchIndex = dbMatch.id % 100;
 
+          // 🔥 5 VE 38 ARASINDAKİ TÜM HAFTALARI OTOMATİK TANIR 🔥
           if (
-            weekNum >= 5 &&
+            weekNum >= 5 && weekNum <= 38 &&
             dbMatch.home_score &&
             dbMatch.home_score !== '-' &&
             dbMatch.away_score &&
             dbMatch.away_score !== '-'
           ) {
             
+            // Eğer maç DFO bülteninde (havuzunda) yoksa DFO'ya puan VERME (TFF maçıdır)
             if (!dfoMatchSet.has(`${weekNum}-${matchIndex}`)) return;
+
+            if (weekNum > highestWeekFound) highestWeekFound = weekNum;
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
             
@@ -160,45 +168,48 @@ export default function DfoPuanDurumuPage() {
             else points = 0;
 
             winnerIds.forEach(wId => {
-              if (weekNum === 5) {
-                  if (dbMatch.status === 'FINISHED') w5Base[wId] += points;
-                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                    w5Live[wId] += points;
-                    isAnyMatchLive = true;
-                  }
-              } else if (weekNum === 6) {
-                  if (dbMatch.status === 'FINISHED') w6Base[wId] += points;
-                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                    w6Live[wId] += points;
-                    isAnyMatchLive = true;
-                  }
+              if (dbMatch.status === 'FINISHED') {
+                 dynamicBase[weekNum][wId] += points;
+              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+                 dynamicLive[weekNum][wId] += points;
+                 isAnyMatchLive = true;
               }
             });
           }
         });
       }
 
+      setMaxWeek(highestWeekFound);
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // GEÇMİŞ + 5. HAFTA + 6. HAFTA BİRLEŞTİRME
+      // GEÇMİŞ + SONSUZ HAFTALARI BİRLEŞTİRME
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
-        const w5Total = (w5Base[id] || 0) + (w5Live[id] || 0);
-        const w6Total = (w6Base[id] || 0) + (w6Live[id] || 0);
-        const total = past.w1 + past.w2 + past.w3 + past.w4 + w5Total + w6Total;
-
-        return {
+        
+        let playerObj: any = {
           id,
           name: playersList[id],
           w1: past.w1,
           w2: past.w2,
           w3: past.w3,
-          w4: past.w4,
-          w5: w5Total,
-          w6: w6Total,
-          total,
-          liveExtra: (w5Live[id] || 0) + (w6Live[id] || 0)
+          w4: past.w4
         };
+
+        let totalDynBase = 0;
+        let totalDynLive = 0;
+
+        // BÜTÜN HAFTALARI OTOMATİK TOPLAR (7. Hafta da buraya dahil!)
+        for (let w = 5; w <= highestWeekFound; w++) {
+            const wTotal = dynamicBase[w][id] + dynamicLive[w][id];
+            playerObj[`w${w}`] = wTotal;
+            totalDynBase += dynamicBase[w][id];
+            totalDynLive += dynamicLive[w][id];
+        }
+
+        playerObj.total = past.w1 + past.w2 + past.w3 + past.w4 + totalDynBase + totalDynLive;
+        playerObj.liveExtra = totalDynLive;
+
+        return playerObj;
       });
 
       const prevRefList = [...baseList].sort((a, b) => {
@@ -215,8 +226,8 @@ export default function DfoPuanDurumuPage() {
       const visibleList = baseList;
 
       visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : (a[activeTab] as number);
-        const scoreB = activeTab === 'total' ? b.total : (b[activeTab] as number);
+        const scoreA = activeTab === 'total' ? a.total : (a[activeTab] || 0);
+        const scoreB = activeTab === 'total' ? b.total : (b[activeTab] || 0);
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -236,7 +247,7 @@ export default function DfoPuanDurumuPage() {
           }
         }
 
-        const displayScore = activeTab === 'total' ? player.total : (player[activeTab] as number);
+        const displayScore = activeTab === 'total' ? player.total : (player[activeTab] || 0);
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
 
@@ -288,19 +299,22 @@ export default function DfoPuanDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[1, 2, 3, 4, 5, 6].map(num => (
-                <button
-                  key={num}
-                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
-                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                    activeTab === `w${num}`
-                      ? 'bg-[#1d4ed8] text-white border-blue-400 border'
-                      : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
+              {[...Array(maxWeek)].map((_, idx) => {
+                const num = idx + 1;
+                return (
+                  <button
+                    key={num}
+                    onClick={() => { setActiveTab(`w${num}`); setIsMenuOpen(false); }}
+                    className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
+                      activeTab === `w${num}`
+                        ? 'bg-[#1d4ed8] text-white border-blue-400 border'
+                        : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -356,7 +370,9 @@ export default function DfoPuanDurumuPage() {
                               </>
                             );
                           })()}
-                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w5' || activeTab === 'w6') && (
+                          
+                          {/* 🔴 "CANLI" YAZISI ARTIK 7 VE SONRASI İÇİN DE DEVREDE 🔴 */}
+                          {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab.startsWith('w')) && (
                             <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
                               +{row.liveExtra} CANLI
                             </span>
