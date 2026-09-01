@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/utils/supabase'; // 🔴 İŞTE EKSİK OLAN CAN DAMARI EKLENDİ!
 
 // ALL 52 PLAYERS FULL REGISTRY
 const allPlayersMasterList: Record<string, string> = {
@@ -156,63 +157,113 @@ export default function MasterPuanDurumuPage() {
     { id: 24, home: "PENDİKSPOR", away: "BATMAN PETROL SPOR", time: "21:30", league: "TFF 1. LİG" },
   ];
 
-  // 🔴 İŞTE BURASI DÜZELTİLDİ: SADECE VERİ OKUMA KISMI (TASARIM AYNI)
+  // 🔴 SİSTEM ARTIK DİREKT OLARAK SUPABASE'DEN VERİ OKUYACAK 🔴
   useEffect(() => {
-    const liveLeaderboard = JSON.parse(localStorage.getItem('elitTahmin_Leaderboard') || '{}');
-
-    if (activeTab === 'total') {
-      const combinedList = Object.keys(allPlayersMasterList).map(id => {
-        const name = allPlayersMasterList[id];
-
+    const fetchSupabaseData = async () => {
+      // 1. İlk 3 haftanın STATİK puanlarını hesapla (Silinmesin diye koruyoruz)
+      const basePoints: Record<string, number> = {};
+      Object.keys(allPlayersMasterList).forEach(id => {
         const w1 = masterWeek1Data[id]?.puan || 0;
         const w2 = masterWeek2Data[id]?.puan || 0;
         const w3DFO = dfoWeek3[id] || 0;
         const w3TFF = tffWeek3[id] || 0;
-
         const b1 = masterBonusData[id]?.week1 || 0;
         const b2 = masterBonusData[id]?.week2 || 0;
         const b3 = masterBonusData[id]?.week3 || 0;
-
-        // Admin panelinden anlık gelen puan (+6 bonuslar dahil)
-        const liveExtra = liveLeaderboard[id]?.master || 0;
-
-        const totalPuan = w1 + b1 + w2 + b2 + w3DFO + w3TFF + b3 + liveExtra;
-
-        return { id, name, puan: totalPuan };
+        basePoints[id] = w1 + w2 + w3DFO + w3TFF + b1 + b2 + b3;
       });
 
-      setTableRows(combinedList.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week1') {
-      const list = Object.keys(allPlayersMasterList).map(id => {
-        const rawObj = masterWeek1Data[id];
-        const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
-        const basePuan = rawObj ? rawObj.puan : 0;
-        const b1 = masterBonusData[id]?.week1 || 0;
-        return { id, name: displayName, puan: basePuan + b1 };
-      });
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week2') {
-      const list = Object.keys(allPlayersMasterList).map(id => {
-        const rawObj = masterWeek2Data[id];
-        const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
-        const basePuan = rawObj ? rawObj.puan : 0;
-        const b2 = masterBonusData[id]?.week2 || 0;
-        return { id, name: displayName, puan: basePuan + b2 };
-      });
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else if (activeTab === 'week3') {
-      const list = Object.keys(allPlayersMasterList).map(id => {
-        const displayName = allPlayersMasterList[id];
-        const w3DFO = dfoWeek3[id] || 0;
-        const w3TFF = tffWeek3[id] || 0;
-        const b3 = masterBonusData[id]?.week3 || 0;
-        const liveExtra = liveLeaderboard[id]?.master || 0; // 3. haftaya canlı veriyi de yansıtıyoruz
-        return { id, name: displayName, puan: w3DFO + w3TFF + b3 + liveExtra };
-      });
-      setTableRows(list.sort((a, b) => b.puan - a.puan));
-    } else {
-      setTableRows([]);
-    }
+      if (activeTab === 'total') {
+        // 🔴 CANLI KASA: Supabase'den MASTER standings verisini çek
+        const { data } = await supabase
+          .from('standings')
+          .select('user_id, points')
+          .eq('league_type', 'MASTER');
+
+        const dbPoints: Record<string, number> = {};
+        if (data) {
+          data.forEach(row => {
+            dbPoints[row.user_id] = row.points;
+          });
+        }
+
+        // Statik + Canlı Veritabanı Puanlarını Birleştir
+        const combinedList = Object.keys(allPlayersMasterList).map(id => {
+          const staticPuan = basePoints[id] || 0;
+          const livePuan = dbPoints[id] || 0; // Admin panelinden onaylanan tüm yeni puanlar buraya düşecek!
+          
+          return {
+            id,
+            name: allPlayersMasterList[id],
+            puan: staticPuan + livePuan
+          };
+        });
+
+        setTableRows(combinedList.sort((a, b) => b.puan - a.puan));
+
+      } else if (activeTab === 'week1') {
+        const list = Object.keys(allPlayersMasterList).map(id => {
+          const rawObj = masterWeek1Data[id];
+          const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
+          return { id, name: displayName, puan: (rawObj ? rawObj.puan : 0) + (masterBonusData[id]?.week1 || 0) };
+        });
+        setTableRows(list.sort((a, b) => b.puan - a.puan));
+      } else if (activeTab === 'week2') {
+        const list = Object.keys(allPlayersMasterList).map(id => {
+          const rawObj = masterWeek2Data[id];
+          const displayName = rawObj ? rawObj.name : allPlayersMasterList[id];
+          return { id, name: displayName, puan: (rawObj ? rawObj.puan : 0) + (masterBonusData[id]?.week2 || 0) };
+        });
+        setTableRows(list.sort((a, b) => b.puan - a.puan));
+      } else if (activeTab === 'week3') {
+        const list = Object.keys(allPlayersMasterList).map(id => {
+          return { id, name: allPlayersMasterList[id], puan: (dfoWeek3[id] || 0) + (tffWeek3[id] || 0) + (masterBonusData[id]?.week3 || 0) };
+        });
+        setTableRows(list.sort((a, b) => b.puan - a.puan));
+      } else {
+        // 🔴 4, 5, 6, 7 VE SONRAKİ TÜM HAFTALAR İÇİN SUPABASE'DEN CANLI ÇEKİM
+        const weekNum = parseInt(activeTab.replace('week', ''));
+        
+        const { data } = await supabase
+          .from('points')
+          .select('username, puan')
+          .eq('kategori', 'MASTER')
+          .eq('hafta', weekNum);
+
+        const weekPoints: Record<string, number> = {};
+        Object.keys(allPlayersMasterList).forEach(id => weekPoints[id] = 0);
+
+        if (data) {
+          data.forEach(row => {
+            if (weekPoints[row.username] !== undefined) {
+              weekPoints[row.username] += row.puan;
+            }
+          });
+        }
+
+        const list = Object.keys(allPlayersMasterList).map(id => ({
+          id,
+          name: allPlayersMasterList[id],
+          puan: weekPoints[id]
+        }));
+        
+        setTableRows(list.sort((a, b) => b.puan - a.puan));
+      }
+    };
+
+    fetchSupabaseData();
+
+    // Canlı Güncellemeler İçin Abonelik (Admin puan verdikçe sayfa kendi yenilenir)
+    const channel = supabase.channel('master_puan_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'standings' }, () => {
+         fetchSupabaseData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points' }, () => {
+         fetchSupabaseData();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [activeTab]);
 
   const selectTab = (tabKey: string) => {
