@@ -95,7 +95,7 @@ const localTeamLogos: Record<string, string> = {
   "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
   "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png",
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
-  "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
+  "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png" ,
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
 
   // Yerel Logolar

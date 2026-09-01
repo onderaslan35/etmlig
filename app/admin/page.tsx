@@ -197,7 +197,7 @@ const localTeamLogos: Record<string, string> = {
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
 
   // 🔴 ALMANYA (BUNDESLIGA) - FOTMOB
-  
+
   "BAYERN MUNCHEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
   "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8178.png",
@@ -258,7 +258,7 @@ const localTeamLogos: Record<string, string> = {
   "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
   "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
   "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
-  
+
   "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
   "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
   "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
@@ -295,7 +295,7 @@ const localTeamLogos: Record<string, string> = {
   "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8614.png",
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/8656.png",
   "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
-  
+
   // 🔴 PORTEKİZ (PRIMEIRA LIGA) - FOTMOB
   "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
   "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
@@ -344,7 +344,7 @@ const generateWeekDates = (weekNum: number) => {
   const baseDate = new Date(2026, 7, 18); 
   const diffDays = (weekNum - 5) * 7;
   baseDate.setDate(baseDate.getDate() + diffDays);
-  
+
   const dates = [];
   for (let i = 0; i < 7; i++) {
       const d = new Date(baseDate);
@@ -370,12 +370,12 @@ const getLocalLogoUrl = (teamName: string) => {
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-');
-    
+
   return `/logos/${slug}.png`;
 };
 
 export default function AdminRadarPortal() {
-  
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
@@ -393,7 +393,7 @@ export default function AdminRadarPortal() {
   const [dynamicLigHavuzu, setDynamicLigHavuzu] = useState<Record<string, string[]>>(LIG_HAVUZU);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamLeague, setNewTeamLeague] = useState('');
-  
+
   const [editTeamName, setEditTeamName] = useState('');
   const [editTargetLeague, setEditTargetLeague] = useState('');
 
@@ -406,10 +406,8 @@ export default function AdminRadarPortal() {
      'skorcum34': true
   });
 
-  // 🔴 DEFAULT OLARAK "SADECE BUGÜN" AÇIK GELİR 🔴
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(true);
 
-  // 🔴 HAFTA BİLGİLERİ (GEÇMİŞ SİLİNDİ, DİNAMİK YAPILDI) 🔴
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(6); 
   const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([6]);
 
@@ -508,7 +506,6 @@ export default function AdminRadarPortal() {
   useEffect(() => {
     if (isAuthenticated) {
         fetchAllSystemPlayers();
-        // 🔴 HAFTALARI DİNAMİK OLARAK ÇEK VE 4-5'İ TEMİZLE 🔴
         const fetchAvailableWeeks = async () => {
             const { data } = await supabase.from('matches_bulletin').select('week_num');
             if (data) {
@@ -529,7 +526,7 @@ export default function AdminRadarPortal() {
        sessionStorage.setItem('admin_role', 'master');
        return;
     } 
-    
+
     const validSkorcular: Record<string, string> = {
        'skorcum01': '150101',
        'skorcum06': '191006',
@@ -554,7 +551,7 @@ export default function AdminRadarPortal() {
           return;
        }
     }
-    
+
     alert("❌ Erişim Reddedildi! Hatalı Kullanıcı Adı veya Şifre.");
     setPasswordInput('');
   };
@@ -582,7 +579,7 @@ export default function AdminRadarPortal() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    
+
     const fetchLiveAdminData = async () => {
       if (userRole && userRole.startsWith('skorcum')) {
          try {
@@ -595,7 +592,7 @@ export default function AdminRadarPortal() {
       }
 
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
-      
+
       let currentBulten = bultenData || [];
       setLiveMatchesDB(currentBulten);
 
@@ -605,7 +602,7 @@ export default function AdminRadarPortal() {
          const { data } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
          if (data) liveData = data;
       }
-      
+
       let allPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -619,7 +616,7 @@ export default function AdminRadarPortal() {
           .order('user_id', { ascending: true })
           .order('match_index', { ascending: true })
           .range(from, from + step - 1);
-          
+
         if (error) break;
 
         if (pDataChunk && pDataChunk.length > 0) {
@@ -639,11 +636,11 @@ export default function AdminRadarPortal() {
       currentBulten.forEach(m => {
          const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
          const liveInfo = liveData.find(l => l.id === uniqueId);
-         
+
          if (liveInfo) {
            initialScores[m.match_index] = { home: liveInfo.home_score, away: liveInfo.away_score };
            infoMap[m.match_index] = liveInfo; 
-           
+
            if (liveInfo.status === 'FINISHED') {
               lockedMatches[m.match_index] = true;
            }
@@ -658,7 +655,7 @@ export default function AdminRadarPortal() {
            initialScores[m.match_index] = { home: "-", away: "-" };
          }
       });
-      
+
       setAdminScores(initialScores);
       setDistributedMatches(lockedMatches);
       setLiveInfoStateMap(infoMap);
@@ -678,7 +675,7 @@ export default function AdminRadarPortal() {
          setPredictionsDB(pMap);
       }
     };
-    
+
     if (activeTab === 'live') {
         fetchLiveAdminData();
         const channel = supabase.channel('public:live_matches')
@@ -738,7 +735,7 @@ export default function AdminRadarPortal() {
           .order('user_id', { ascending: true })
           .order('match_index', { ascending: true })
           .range(from, from + step - 1);
-          
+
         if (!error && pDataChunk && pDataChunk.length > 0) {
            allPredictions = [...allPredictions, ...pDataChunk];
            if (pDataChunk.length < step) fetchMore = false; 
@@ -875,13 +872,13 @@ export default function AdminRadarPortal() {
   };
 
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-  
+
   const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
     setAdminScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "-", away: "-" }), [team]: score } }));
   };
-  
+
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
-  
+
   const isTffMatchCheck = (category: string) => {
     if(!category) return false;
     const uppercaseCat = category.toUpperCase();
@@ -897,11 +894,11 @@ export default function AdminRadarPortal() {
      liveMatchesDB.forEach(match => {
          const hScore = adminScores[match.match_index]?.home || "-";
          const aScore = adminScores[match.match_index]?.away || "-";
-         
+
          if (hScore !== "-" && aScore !== "-") {
              const targetScore = `${hScore}-${aScore}`;
              const predsSource = predictionsDB;
-             
+
              const winners = Object.keys(predsSource).filter(uid => {
                  const targetIndex = match.match_index - 1;
                  return predsSource[uid] && predsSource[uid][targetIndex] === targetScore;
@@ -948,11 +945,12 @@ export default function AdminRadarPortal() {
      return { pointsLeader, scoreLeader, stats, maxPts, maxScores };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
 
+  // 🔴 ÇİFT FİŞ SİSTEMİ EKLENDİ VE GERİ ALMA GÜNCELLENDİ 🔴
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     const homeScore = adminScores[matchId]?.home || "-";
     const awayScore = adminScores[matchId]?.away || "-";
     const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
-    
+
     const now = new Date();
     const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
@@ -974,24 +972,24 @@ export default function AdminRadarPortal() {
 
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
-      
+
       let confirmMsg = "";
       if (matchId === 24) {
           confirmMsg = `FİNAL MAÇI ONAYI VE BONUS DAĞITIMI (24. MAÇ) 🚨\n\n`;
           confirmMsg += `Bu maçı ${currentWinners.length} kişi bildi (${displayPoints} Puan)\n\n`;
           if (weeklyStats.pointsLeader) confirmMsg += `🏆 Puan Lideri (+3 Puan): ${mergedPlayers[weeklyStats.pointsLeader]}\n`;
           else confirmMsg += `🏆 Puan Lideri: MÜSTAKİL LİDER YOK (Bonus İptal)\n`;
-          
+
           if (weeklyStats.scoreLeader) confirmMsg += `🔥 Skor Kralı (+3 Master Puan): ${mergedPlayers[weeklyStats.scoreLeader]}\n`;
           else confirmMsg += `🔥 Skor Kralı: MÜSTAKİL KRAL YOK (Bonus İptal)\n`;
-          
+
           confirmMsg += `\nİşlemi onaylıyor musun Kumandanım?`;
       } else {
           confirmMsg = currentWinners.length === 0
             ? `Bu skoru bilen aslan parçası çıkmadı.\n\nPuan dağıtılmayacak ama maç "BİTTİ" olarak işaretlenip kilitlenecek.\n\nOnaylıyor musun Kumandanım?`
-            : `${currentWinners.length} kişiye ${displayPoints} puan dağıtılacak.\n\nMotor 1: 'points' tablosuna fiş kesilecek.\nMotor 2: 'standings' tablosundaki (MASTER ve ${leagueName}) bakiyesi güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
+            : `${currentWinners.length} kişiye ${displayPoints} puan dağıtılacak.\n\nMotor 1: 'points' tablosuna (HEM ${leagueName} HEM MASTER) ÇİFT fiş kesilecek.\nMotor 2: 'standings' tablosundaki bakiyeler güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
       }
-      
+
       if (!window.confirm(confirmMsg)) return;
 
       try {
@@ -1001,12 +999,19 @@ export default function AdminRadarPortal() {
         }, { onConflict: 'id' });
 
         if (currentWinners.length > 0) {
-          const inserts = currentWinners.map(winnerName => {
+          const inserts: any[] = [];
+          
+          currentWinners.forEach(winnerName => {
             const userId = getPlayerIdByName(winnerName);
-            return {
-              hafta: selectedLiveWeek, user_name: winnerName, username: userId, kategori: leagueName, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
+            const baseData = {
+              hafta: selectedLiveWeek, user_name: winnerName, username: userId, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
               gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
             };
+            
+            // 🔴 1. FİŞ (Kendi Ligi: TFF veya DFO)
+            inserts.push({ ...baseData, kategori: leagueName });
+            // 🔴 2. FİŞ (MASTER Ligi)
+            inserts.push({ ...baseData, kategori: 'MASTER' });
           });
 
           const { error: insertError } = await supabase.from('points').insert(inserts);
@@ -1054,10 +1059,10 @@ export default function AdminRadarPortal() {
                         if (stData) {
                             const mRow = stData.find(r => r.league_type === 'MASTER');
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                            
+
                             const tffRow = stData.find(r => r.league_type === 'TFF');
                             if (tffRow) await supabase.from('standings').update({ points: tffRow.points + 3 }).eq('id', tffRow.id);
-                            
+
                             const dfoRow = stData.find(r => r.league_type === 'DFO');
                             if (dfoRow) await supabase.from('standings').update({ points: dfoRow.points + 3 }).eq('id', dfoRow.id);
                         }
@@ -1074,9 +1079,9 @@ export default function AdminRadarPortal() {
             }
         }
 
-        if (currentWinners.length > 0) alert(`✅ NORMAL MAÇ İŞLEMİ BAŞARILI! (Kasaya Eklendi)`);
+        if (currentWinners.length > 0) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
         else alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
-        
+
         setDistributedMatches(prev => ({...prev, [matchId]: true})); 
 
       } catch (error: any) { alert("❌ BEKLENMEYEN HATA: " + error.message); }
@@ -1090,9 +1095,6 @@ export default function AdminRadarPortal() {
         if (!confirmUndo) return;
 
         try {
-          const isTff = isTffMatchCheck(matchData.category);
-          const leagueName = isTff ? 'TFF' : 'DFO';
-          
           if (matchId === 24) {
                const { data: bonusPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
                if (bonusPoints && bonusPoints.length > 0) {
@@ -1117,13 +1119,14 @@ export default function AdminRadarPortal() {
           const { data: existingPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
           if (existingPoints && existingPoints.length > 0) {
             for (const row of existingPoints) {
-              const pts = row.puan; const uid = row.username;
+              const pts = row.puan; const uid = row.username; const rowCategory = row.kategori;
               const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
               if (stData) {
-                const lRow = stData.find(r => r.league_type === leagueName);
-                if (lRow) await supabase.from('standings').update({ points: Math.max(0, lRow.points - pts) }).eq('id', lRow.id);
-                const mRow = stData.find(r => r.league_type === 'MASTER');
-                if (mRow) await supabase.from('standings').update({ points: Math.max(0, mRow.points - pts) }).eq('id', mRow.id);
+                // 🔴 DİKKAT: Artık sistem HANGİ FİŞİ siliyorsa SADECE o ligin kasasından puanı düşer!
+                const targetRow = stData.find(r => r.league_type === rowCategory);
+                if (targetRow) {
+                   await supabase.from('standings').update({ points: Math.max(0, targetRow.points - pts) }).eq('id', targetRow.id);
+                }
               }
             }
             await supabase.from('points').delete().eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
@@ -1131,7 +1134,7 @@ export default function AdminRadarPortal() {
           alert("✅ GERİ ALMA BAŞARILI! Puanlar ve varsa Bonuslar kasadan düşüldü, fişler silindi.");
         } catch (error: any) { alert("❌ HATA: " + error.message); return; }
       }
-      
+
       await supabase.from('live_matches').upsert({ 
          id: uniqueId, home_score: '-', away_score: '-', status: 'NOT_STARTED',
          updated_by: userRole, updated_at: timeString 
@@ -1145,9 +1148,9 @@ export default function AdminRadarPortal() {
 
   const getEliteTheme = (category: string) => {
     const upCat = category ? category.toUpperCase() : '';
-    
+
     let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900" };
-    
+
     if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) {
       theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
     } else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) {
@@ -1173,7 +1176,7 @@ export default function AdminRadarPortal() {
     const currentMatch = bulletinMatches[currentIndex];
     const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
     const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-    
+
     if (!currentCat) return [];
 
     let havuz = dynamicLigHavuzu[currentCat];
@@ -1187,9 +1190,9 @@ export default function AdminRadarPortal() {
 
     bulletinMatches.forEach((m, idx) => {
        if (idx === currentIndex) return; 
-       
+
        const mCat = m.category ? m.category.toUpperCase() : '';
-       
+
        if (currentCat === mCat) {
            if (m.home_team) usedTeams.add(m.home_team);
            if (m.away_team) usedTeams.add(m.away_team);
@@ -1244,7 +1247,7 @@ export default function AdminRadarPortal() {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
           <span className="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">🛡️</span>
           <h1 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-md">Karargah Girişi</h1>
-          
+
           <form onSubmit={handleLogin} className="flex flex-col gap-4 mt-6">
             <input 
               type="text" 
@@ -1272,31 +1275,28 @@ export default function AdminRadarPortal() {
     );
   }
 
-  // 🔴 YENİ: KÜLKEDİSİ KURALI VE SADECE BUGÜN FİLTRESİ 🔴
   const displayedMatches = liveMatchesDB.filter(match => {
       const logInfo = liveInfoStateMap[match.match_index];
       const status = logInfo?.status || 'NOT_STARTED';
-      
+
       const isFinished = status === 'FINISHED';
-      // Gece 12'yi geçse bile ekranda tutulacak statüler
       const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
       const isToday = match.match_date === getTodayDateString();
 
-      // Skorcular mecburi olarak "Sadece Bugün" filtresindedir.
       const enforceToday = showOnlyToday || (userRole && userRole.startsWith('skorcum'));
 
       if (enforceToday) {
-          if (isFinished) return false; // Biten maçı ayak altından gizle
-          if (isLive) return true;      // Gece 12'yi geçmiş ama bitmemiş maçı KORU
-          return isToday;               // Bugün oynanacak maçları göster
+          if (isFinished) return false; 
+          if (isLive) return true;      
+          return isToday;               
       }
-      return true; // Tüm Listeyi görüntüle (Geri Al vb. işlemler için)
+      return true; 
   });
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
       <div className="max-w-7xl mx-auto pt-6">
-        
+
         <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
            <button 
              onClick={() => setActiveTab('live')}
@@ -1304,7 +1304,7 @@ export default function AdminRadarPortal() {
            >
              🔴 CANLI YÖNETİM
            </button>
-           
+
            {userRole === 'master' && (
              <>
                <button 
@@ -1409,7 +1409,7 @@ export default function AdminRadarPortal() {
                   Veritabanındaki maçların skorunu gir ve puanları dağıt.
                 </p>
               </div>
-              
+
               <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3">
                  <button 
                    onClick={handleLogout} 
@@ -1473,7 +1473,7 @@ export default function AdminRadarPortal() {
               {displayedMatches.map((match) => {
                 const isWinnersOpen = !!openWinnersMap[match.match_index];
                 const isTffMatch = isTffMatchCheck(match.category);
-                
+
                 const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase();
                 const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase();
 
@@ -1484,7 +1484,7 @@ export default function AdminRadarPortal() {
 
                 const homeScore = adminScores[match.match_index]?.home || "-";
                 const awayScore = adminScores[match.match_index]?.away || "-";
-                
+
                 let currentWinners: string[] = [];
                 let winnersCount = 0;
                 let displayPoints = 0;
@@ -1499,9 +1499,9 @@ export default function AdminRadarPortal() {
                     })
                     .map(uid => mergedPlayers[uid] || "Bilinmeyen")
                     .sort((a, b) => a.localeCompare(b, 'tr'));
-                    
+
                   winnersCount = currentWinners.length;
-                  
+
                   if(winnersCount === 1) displayPoints = 12;
                   else if(winnersCount === 2) displayPoints = 6;
                   else if(winnersCount === 3) displayPoints = 5;
@@ -1525,7 +1525,7 @@ export default function AdminRadarPortal() {
                         </>
                       )}
                       <div className="relative z-10 flex flex-col h-full justify-between">
-                        
+
                         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
                           <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
                             {match.week_num}. Hafta - {match.match_index}. MAÇ
@@ -1534,8 +1534,7 @@ export default function AdminRadarPortal() {
                             🏆 {match.category}
                           </span>
                         </div>
-                        
-                        {/* 🔴 RESİMLİ (LOGOLU) VE GÖSTERİŞLİ KART BLOĞU GERİ GELDİ 🔴 */}
+
                         <div className="flex items-center justify-between px-0 sm:px-4">
                           <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
                             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
@@ -1619,7 +1618,7 @@ export default function AdminRadarPortal() {
                             </button>
                          )}
                       </div>
-                      
+
                       {isWinnersOpen && winnersCount > 0 && (
                          <div className="flex items-center justify-center border-t border-slate-700/50 pt-3 animate-fadeIn">
                             <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
@@ -1652,18 +1651,18 @@ export default function AdminRadarPortal() {
                    </select>
                 </div>
              </div>
-             
+
              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl">
                 <button onClick={copyDateTimeToAll} className="mb-4 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors shadow-sm">
                     📅 1. Maçın Tarihini Alta Kopyala
                 </button>
-                
+
                 <div className="overflow-x-auto custom-scrollbar pb-4">
                    <table className="w-full text-left text-xs min-w-[800px]">
                       <tbody>
                          {bulletinMatches.map((m, idx) => {
                             const isReady = m.category && m.match_date && m.match_time && m.home_team && m.away_team;
-                            
+
                             return (
                               <tr key={m.match_index} className={`border-b border-slate-800 transition-colors ${isReady ? 'bg-emerald-950/20' : 'hover:bg-slate-800/30'}`}>
                                  <td className="p-2 w-10 text-center">
@@ -1671,33 +1670,33 @@ export default function AdminRadarPortal() {
                                        {isReady ? '✓' : m.match_index}
                                     </div>
                                  </td>
-                                 
+
                                  <td className="p-2 w-[22%]">
                                     <select value={m.category} onChange={e=>handleBulletinChange(idx,'category',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold`}>
                                        <option value="">-- KATEGORİ SEÇİN --</option>
                                        {getDynamicCategories().map(c => <option key={`cat-${m.match_index}-${c}`} value={c}>{c}</option>)}
                                     </select>
                                  </td>
-                                 
+
                                  <td className="p-2 w-[15%]">
                                     <select value={m.match_date} onChange={e=>handleBulletinChange(idx,'match_date',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
                                        {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
                                     </select>
                                  </td>
-                                 
+
                                  <td className="p-2 w-[12%]">
                                     <select value={m.match_time} onChange={e=>handleBulletinChange(idx,'match_time',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold text-center">
                                        {timeOptionsArr.map(t => <option key={`time-${m.match_index}-${t}`} value={t}>{t}</option>)}
                                     </select>
                                  </td>
-                                 
+
                                  <td className="p-2 w-[22%]">
                                     <select value={m.home_team} onChange={e=>handleBulletinChange(idx,'home_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
                                        <option value="">-- EV SAHİBİ SEÇ --</option>
                                        {getAvailableTeams(idx, true).map(t => <option key={`home-${m.match_index}-${t}`} value={t}>{t}</option>)}
                                     </select>
                                  </td>
-                                 
+
                                  <td className="p-2 w-[22%]">
                                     <select value={m.away_team} onChange={e=>handleBulletinChange(idx,'away_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
                                        <option value="">-- DEPLASMAN SEÇ --</option>
@@ -1710,7 +1709,7 @@ export default function AdminRadarPortal() {
                       </tbody>
                    </table>
                 </div>
-                
+
                 <button 
                   onClick={saveBulletinToDB} 
                   disabled={isPublishing} 
@@ -1769,14 +1768,14 @@ export default function AdminRadarPortal() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              
+
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
                  <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
                     <h2 className="text-lg font-black text-fuchsia-400 flex items-center gap-2">
                        <span className="text-xl">➕</span> YENİ ASLAN PARÇASI EKLE
                     </h2>
                  </div>
-                 
+
                  <form onSubmit={handleAddNewPlayer} className="flex flex-col gap-5">
                     <div>
                        <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">6 HANELİ YARIŞMACI ID</label>
@@ -1829,7 +1828,7 @@ export default function AdminRadarPortal() {
                        {dbPlayersList.length + Object.keys(staticPlayersList).length} Toplam Aktif
                     </span>
                  </div>
-                 
+
                  <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                     {dbPlayersList.map(p => (
                       <div key={`dyn-${p.id}`} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
@@ -1847,7 +1846,7 @@ export default function AdminRadarPortal() {
                          </button>
                       </div>
                     ))}
-                    
+
                     {Object.keys(staticPlayersList).map(id => (
                       <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
                          <div className="flex flex-col">
@@ -1884,7 +1883,7 @@ export default function AdminRadarPortal() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              
+
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
                  <div className="absolute top-0 right-0 bg-cyan-600 text-white text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">YENİ KAYIT</div>
                  <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
@@ -1892,7 +1891,7 @@ export default function AdminRadarPortal() {
                        <span className="text-xl">➕</span> YENİ TAKIM VE LİG OLUŞTUR
                     </h2>
                  </div>
-                 
+
                  <form onSubmit={handleAddLocalTeam} className="flex flex-col gap-5">
                     <div>
                        <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">TAKIMIN TAM ADI</label>
@@ -1935,7 +1934,7 @@ export default function AdminRadarPortal() {
                        <span className="text-xl">🔄</span> BİRLİK KAYDIRMA (TRANSFER)
                     </h2>
                  </div>
-                 
+
                  <form onSubmit={handleMoveTeam} className="flex flex-col gap-5">
                     <div>
                        <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">TAŞINACAK TAKIM (MEVCUT)</label>
