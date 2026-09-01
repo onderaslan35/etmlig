@@ -885,7 +885,7 @@ export default function AdminRadarPortal() {
     return ( uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG") );
   };
 
-  // 🔴 YENİ "CÖMERT SİSTEM" İÇİN MÜKEMMELLEŞTİRİLMİŞ HAFTALIK İSTATİSTİK MOTORU 🔴
+  // 🔴 TEK TABANCA KURALI ORİJİNAL HALİNE GERİ DÖNDÜRÜLDÜ 🔴
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach(uid => {
@@ -977,17 +977,21 @@ export default function AdminRadarPortal() {
           confirmMsg = `FİNAL MAÇI ONAYI VE BONUS DAĞITIMI (24. MAÇ) 🚨\n\n`;
           confirmMsg += `Bu maçı ${currentWinners.length} kişi bildi (${displayPoints} Puan)\n\n`;
 
-          // 🔴 YENİ CÖMERT SİSTEM BİLGİLENDİRMESİ 🔴
-          if (weeklyStats.pLeadersArray.length > 0) {
-              const pNames = weeklyStats.pLeadersArray.map(uid => mergedPlayers[uid]).join(', ');
-              confirmMsg += `🏆 Puan Lideri (+3 Puan): ${pNames} (${weeklyStats.maxPts} Puan)\n`;
+          // 🔴 KATI KURAL UYGULANDI: SADECE TEK TABANCA İSE ONAY VERİR, BERABERLİKTE İPTAL EDER 🔴
+          if (weeklyStats.pLeadersArray.length === 1) {
+              confirmMsg += `🏆 Puan Lideri (+3 Puan): ${mergedPlayers[weeklyStats.pLeadersArray[0]]} (${weeklyStats.maxPts} Puan)\n`;
+          } else if (weeklyStats.pLeadersArray.length > 1) {
+              const tiedPNames = weeklyStats.pLeadersArray.map(uid => mergedPlayers[uid]).join(', ');
+              confirmMsg += `🏆 Puan Lideri: MÜSTAKİL LİDER YOK\n(Sistemin Bonusu İptal Etme Sebebi - Berabere Kalanlar: ${tiedPNames})\n`;
           } else {
               confirmMsg += `🏆 Puan Lideri: KİMSE PUAN ALAMADI\n`;
           }
 
-          if (weeklyStats.sLeadersArray.length > 0) {
-              const sNames = weeklyStats.sLeadersArray.map(uid => mergedPlayers[uid]).join(', ');
-              confirmMsg += `🔥 Skor Kralı (+3 Master Puan): ${sNames} (${weeklyStats.maxScores} Maç)\n`;
+          if (weeklyStats.sLeadersArray.length === 1) {
+              confirmMsg += `🔥 Skor Kralı (+3 Master Puan): ${mergedPlayers[weeklyStats.sLeadersArray[0]]} (${weeklyStats.maxScores} Maç)\n`;
+          } else if (weeklyStats.sLeadersArray.length > 1) {
+              const tiedSNames = weeklyStats.sLeadersArray.map(uid => mergedPlayers[uid]).join(', ');
+              confirmMsg += `🔥 Skor Kralı: MÜSTAKİL KRAL YOK\n(Sistemin Bonusu İptal Etme Sebebi - Berabere Kalanlar: ${tiedSNames})\n`;
           } else {
               confirmMsg += `🔥 Skor Kralı: KİMSE SKOR BİLEMEDİ\n`;
           }
@@ -1017,9 +1021,7 @@ export default function AdminRadarPortal() {
               gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
             };
             
-            // 🔴 1. FİŞ (Kendi Ligi: TFF veya DFO)
             inserts.push({ ...baseData, kategori: leagueName });
-            // 🔴 2. FİŞ (MASTER Ligi)
             inserts.push({ ...baseData, kategori: 'MASTER' });
           });
 
@@ -1042,34 +1044,31 @@ export default function AdminRadarPortal() {
           }
         }
 
+        // 🔴 KATI KURAL UYGULANDI: SADECE TEK TABANCA İSE VERİTABANINA YAZAR 🔴
         if (matchId === 24) {
             let bonusInserts: any[] = [];
-            let pLeaders = weeklyStats.pLeadersArray;
-            let sLeaders = weeklyStats.sLeadersArray;
+            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
+            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
 
-            // 🔴 PUAN LİDERİ BONUSU (EŞİTLİK OLSA BİLE HERKESE VERİR)
-            pLeaders.forEach(uid => {
+            if (finalPLeader) {
                 bonusInserts.push({
-                    hafta: selectedLiveWeek, user_name: mergedPlayers[uid], username: uid, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ',
+                    hafta: selectedLiveWeek, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ',
                     gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
                 });
-            });
+            }
 
-            // 🔴 SKOR KRALI BONUSU (EŞİTLİK OLSA BİLE HERKESE VERİR)
-            sLeaders.forEach(uid => {
+            if (finalSLeader) {
                 bonusInserts.push({
-                    hafta: selectedLiveWeek, user_name: mergedPlayers[uid], username: uid, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI',
+                    hafta: selectedLiveWeek, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI',
                     gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
                 });
-            });
+            }
 
             if (bonusInserts.length > 0) {
                 const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
                 if (!bInsertError) {
-                    
-                    // PUAN LİDERLERİNİN KASASINI GÜNCELLE
-                    for (const uid of pLeaders) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
+                    if (finalPLeader) {
+                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', finalPLeader);
                         if (stData) {
                             const mRow = stData.find(r => r.league_type === 'MASTER');
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
@@ -1082,22 +1081,22 @@ export default function AdminRadarPortal() {
                         }
                     }
 
-                    // SKOR KRALLARININ KASASINI GÜNCELLE
-                    for (const uid of sLeaders) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
+                    if (finalSLeader) {
+                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', finalSLeader);
                         if (stData) {
                             const mRow = stData.find(r => r.league_type === 'MASTER');
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
                         }
                     }
-
-                    alert(`🎁 HAFTANIN BONUSLARI BAŞARIYLA DAĞITILDI! (Berabere kalan aslanlara da hakları verildi)`);
+                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Sistem sadece Tek Tabanca liderlere bonus verdi)`);
                 }
+            } else {
+               alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
             }
+        } else {
+           if (currentWinners.length > 0) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
+           else alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
         }
-
-        if (currentWinners.length > 0) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
-        else alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
 
         setDistributedMatches(prev => ({...prev, [matchId]: true})); 
 
