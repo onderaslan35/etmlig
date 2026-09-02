@@ -19,10 +19,11 @@ const isTffMatchCheck = (category: string) => {
 
 export default function SkorDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'w1'|'w2'|'w3'|'w4'|'w5'|'w6'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<string>('total');
   const [leagueFilter, setLeagueFilter] = useState<'MASTER'|'DFO'|'TFF'>('MASTER');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+  const [maxWeek, setMaxWeek] = useState<number>(6); // SONSUZ MOTOR İÇİN
 
   const loadLeaderboard = async () => {
     try {
@@ -35,7 +36,7 @@ export default function SkorDurumuPage() {
       const { data: dfoHistorical } = await supabase.from('dfo_weekly_scores').select('*');
       const { data: tffHistorical } = await supabase.from('tff_weekly_scores').select('*');
 
-      // 🔴 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI 🔴
+      // 🔴 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI (5. HAFTADAN SONSUZA) 🔴
       let allPredictions: any[] = [];
       let from = 0;
       let step = 1000;
@@ -45,7 +46,7 @@ export default function SkorDurumuPage() {
           const { data, error } = await supabase
               .from('player_predictions')
               .select('*')
-              .gte('week_num', 5) // Sadece 5 değil, 6. haftayı da al!
+              .gte('week_num', 5)
               .order('id', { ascending: true })
               .range(from, from + step - 1);
           
@@ -67,23 +68,23 @@ export default function SkorDurumuPage() {
         });
       }
 
-      // 🔴 BİTEN MAÇLAR VE CANLI MAÇLAR İÇİN KASALAR (5. VE 6. HAFTA AYRI) 🔴
-      let w5DfoBase: Record<string, number> = {}; 
-      let w5TffBase: Record<string, number> = {}; 
-      let w5DfoLive: Record<string, number> = {}; 
-      let w5TffLive: Record<string, number> = {}; 
+      // 🔴 ESKİ KÖR LİMİTLER KALDIRILDI! 38. HAFTAYA KADAR HAZIR KASALAR 🔴
+      let dynDfoBase: Record<number, Record<string, number>> = {};
+      let dynTffBase: Record<number, Record<string, number>> = {};
+      let dynDfoLive: Record<number, Record<string, number>> = {};
+      let dynTffLive: Record<number, Record<string, number>> = {};
 
-      let w6DfoBase: Record<string, number> = {}; 
-      let w6TffBase: Record<string, number> = {}; 
-      let w6DfoLive: Record<string, number> = {}; 
-      let w6TffLive: Record<string, number> = {}; 
+      for (let w = 5; w <= 38; w++) {
+          dynDfoBase[w] = {}; dynTffBase[w] = {};
+          dynDfoLive[w] = {}; dynTffLive[w] = {};
+          Object.keys(playersList).forEach(id => {
+              dynDfoBase[w][id] = 0; dynTffBase[w][id] = 0;
+              dynDfoLive[w][id] = 0; dynTffLive[w][id] = 0;
+          });
+      }
 
       let isAnyMatchLive = false;
-
-      Object.keys(playersList).forEach(id => { 
-          w5DfoBase[id] = 0; w5TffBase[id] = 0; w5DfoLive[id] = 0; w5TffLive[id] = 0; 
-          w6DfoBase[id] = 0; w6TffBase[id] = 0; w6DfoLive[id] = 0; w6TffLive[id] = 0; 
-      });
+      let highestWeekFound = 6; 
 
       const dfoDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dfoHistorical) dfoHistorical.forEach(r => dfoDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
@@ -115,7 +116,10 @@ export default function SkorDurumuPage() {
           const weekNum = Math.floor(dbMatch.id / 100);
           const matchIndex = dbMatch.id % 100;
 
-          if (weekNum >= 5 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+          // 🔥 5 VE 38 ARASINDAKİ TÜM HAFTALARI OTOMATİK TANIR 🔥
+          if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+            if (weekNum > highestWeekFound) highestWeekFound = weekNum;
+
             const category = catDict[`${weekNum}-${matchIndex}`] || "";
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
             const isTff = isTffMatchCheck(category);
@@ -130,23 +134,13 @@ export default function SkorDurumuPage() {
             const isLiveMatch = dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL';
 
             winnerIds.forEach(wId => {
-              if (weekNum === 5) {
-                  if (isFinished) {
-                      if (isTff && w5TffBase[wId] !== undefined) w5TffBase[wId] += 1;
-                      else if (!isTff && w5DfoBase[wId] !== undefined) w5DfoBase[wId] += 1;
-                  } else if (isLiveMatch) {
-                      if (isTff && w5TffLive[wId] !== undefined) w5TffLive[wId] += 1;
-                      else if (!isTff && w5DfoLive[wId] !== undefined) w5DfoLive[wId] += 1;
-                  }
-              } else if (weekNum === 6) {
-                  if (isFinished) {
-                      if (isTff && w6TffBase[wId] !== undefined) w6TffBase[wId] += 1;
-                      else if (!isTff && w6DfoBase[wId] !== undefined) w6DfoBase[wId] += 1;
-                  } else if (isLiveMatch) {
-                      if (isTff && w6TffLive[wId] !== undefined) w6TffLive[wId] += 1;
-                      else if (!isTff && w6DfoLive[wId] !== undefined) w6DfoLive[wId] += 1;
-                  }
-              }
+                if (isFinished) {
+                    if (isTff && dynTffBase[weekNum][wId] !== undefined) dynTffBase[weekNum][wId] += 1;
+                    else if (!isTff && dynDfoBase[weekNum][wId] !== undefined) dynDfoBase[weekNum][wId] += 1;
+                } else if (isLiveMatch) {
+                    if (isTff && dynTffLive[weekNum][wId] !== undefined) dynTffLive[weekNum][wId] += 1;
+                    else if (!isTff && dynDfoLive[weekNum][wId] !== undefined) dynDfoLive[weekNum][wId] += 1;
+                }
             });
 
             if (isLiveMatch) isAnyMatchLive = true;
@@ -154,6 +148,7 @@ export default function SkorDurumuPage() {
         });
       }
 
+      setMaxWeek(highestWeekFound);
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
       // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE SKORLARI OLUŞTUR
@@ -161,43 +156,56 @@ export default function SkorDurumuPage() {
         const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
-        let w1=0, w2=0, w3=0, w4=0, w5Base=0, w6Base=0;
-        let w5LiveExtra=0, w6LiveExtra=0;
+        let w1=0, w2=0, w3=0, w4=0;
         
         if (leagueFilter === 'MASTER') {
             w1 = dfo.w1 + tff.w1; w2 = dfo.w2 + tff.w2; w3 = dfo.w3 + tff.w3; w4 = dfo.w4 + tff.w4;
-            w5Base = w5DfoBase[id] + w5TffBase[id];
-            w6Base = w6DfoBase[id] + w6TffBase[id];
-            w5LiveExtra = w5DfoLive[id] + w5TffLive[id];
-            w6LiveExtra = w6DfoLive[id] + w6TffLive[id];
         } else if (leagueFilter === 'DFO') {
             w1 = dfo.w1; w2 = dfo.w2; w3 = dfo.w3; w4 = dfo.w4;
-            w5Base = w5DfoBase[id]; w5LiveExtra = w5DfoLive[id];
-            w6Base = w6DfoBase[id]; w6LiveExtra = w6DfoLive[id];
         } else if (leagueFilter === 'TFF') {
             w1 = tff.w1; w2 = tff.w2; w3 = tff.w3; w4 = tff.w4;
-            w5Base = w5TffBase[id]; w5LiveExtra = w5TffLive[id];
-            w6Base = w6TffBase[id]; w6LiveExtra = w6TffLive[id];
         }
         
-        const baseTotal = w1 + w2 + w3 + w4 + w5Base + w6Base; // SADECE BİTENLER
-        const finalTotal = baseTotal + w5LiveExtra + w6LiveExtra; // CANLI DAHİL
-        const w5Final = w5Base + w5LiveExtra;
-        const w6Final = w6Base + w6LiveExtra;
-        const liveExtra = w5LiveExtra + w6LiveExtra;
+        const playerObj: any = { id, name: playersList[id], w1, w2, w3, w4 };
+        
+        let totalDynBase = 0;
+        let totalDynLive = 0;
 
-        return { 
-          id, name: playersList[id], 
-          w1, w2, w3, w4, w5Base, w6Base, 
-          w5Final, w6Final, baseTotal, finalTotal, 
-          liveExtra, w5LiveExtra, w6LiveExtra 
-        };
+        // BÜTÜN HAFTALARI OTOMATİK TOPLAR (7. Hafta da buraya dahil!)
+        for (let w = 5; w <= highestWeekFound; w++) {
+            let wBase = 0;
+            let wLive = 0;
+
+            if (leagueFilter === 'MASTER') {
+                wBase = dynDfoBase[w][id] + dynTffBase[w][id];
+                wLive = dynDfoLive[w][id] + dynTffLive[w][id];
+            } else if (leagueFilter === 'DFO') {
+                wBase = dynDfoBase[w][id];
+                wLive = dynDfoLive[w][id];
+            } else if (leagueFilter === 'TFF') {
+                wBase = dynTffBase[w][id];
+                wLive = dynTffLive[w][id];
+            }
+
+            playerObj[`w${w}Base`] = wBase;
+            playerObj[`w${w}LiveExtra`] = wLive;
+            playerObj[`w${w}Final`] = wBase + wLive;
+
+            totalDynBase += wBase;
+            totalDynLive += wLive;
+        }
+
+        playerObj.baseTotal = w1 + w2 + w3 + w4 + totalDynBase; // SADECE BİTENLER
+        playerObj.liveExtra = totalDynLive; 
+        playerObj.finalTotal = playerObj.baseTotal + totalDynLive; // CANLI DAHİL
+
+        return playerObj;
       });
 
       // 🔴 İKİNCİ AŞAMA: ESKİ SIRALAMAYI HESAPLA (OK YÖNLERİ İÇİN)
       const prevRefList = [...baseList].sort((a, b) => {
-          const scoreA = activeTab === 'total' ? a.baseTotal : (activeTab === 'w5' ? a.w5Base : (activeTab === 'w6' ? a.w6Base : (a as any)[activeTab]));
-          const scoreB = activeTab === 'total' ? b.baseTotal : (activeTab === 'w5' ? b.w5Base : (activeTab === 'w6' ? b.w6Base : (b as any)[activeTab]));
+          const scoreA = activeTab === 'total' ? a.baseTotal : (a[`${activeTab}Base`] || 0);
+          const scoreB = activeTab === 'total' ? b.baseTotal : (b[`${activeTab}Base`] || 0);
           return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -206,8 +214,8 @@ export default function SkorDurumuPage() {
 
       // 🔴 ÜÇÜNCÜ AŞAMA: YENİ SIRALAMAYI (CANLI DAHİL) HESAPLA VE FARKINI BUL
       const currentRefList = [...baseList].sort((a, b) => {
-          const scoreA = activeTab === 'total' ? a.finalTotal : (activeTab === 'w5' ? a.w5Final : (activeTab === 'w6' ? a.w6Final : (a as any)[activeTab]));
-          const scoreB = activeTab === 'total' ? b.finalTotal : (activeTab === 'w5' ? b.w5Final : (activeTab === 'w6' ? b.w6Final : (b as any)[activeTab]));
+          const scoreA = activeTab === 'total' ? a.finalTotal : (a[`${activeTab}Final`] || 0);
+          const scoreB = activeTab === 'total' ? b.finalTotal : (b[`${activeTab}Final`] || 0);
           return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
@@ -219,7 +227,7 @@ export default function SkorDurumuPage() {
         if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
         else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
 
-        let displayScore = activeTab === 'total' ? player.finalTotal : (activeTab === 'w5' ? player.w5Final : (activeTab === 'w6' ? player.w6Final : (player as any)[activeTab]));
+        let displayScore = activeTab === 'total' ? player.finalTotal : (player[`${activeTab}Final`] || 0);
 
         return { ...player, currentRank, trend, trendDiff, displayScore };
       });
@@ -280,17 +288,20 @@ export default function SkorDurumuPage() {
 
           {isMenuOpen && (
             <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[1, 2, 3, 4, 5, 6].map(num => (
-                <button
-                  key={num}
-                  onClick={() => { setActiveTab(`w${num}` as any); setIsMenuOpen(false); }}
-                  className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                    activeTab === `w${num}` ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
+              {[...Array(maxWeek)].map((_, idx) => {
+                const num = idx + 1;
+                return (
+                  <button
+                    key={num}
+                    onClick={() => { setActiveTab(`w${num}`); setIsMenuOpen(false); }}
+                    className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
+                      activeTab === `w${num}` ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -333,17 +344,14 @@ export default function SkorDurumuPage() {
                             );
                           })()}
                           
-                          {/* 🔴 SADECE HANGİ SEKMEDEYSEK O SEKMENİN CANLI VERİSİNİ GÖSTER 🔴 */}
+                          {/* 🔴 "CANLI" YAZISI ARTIK 7. HAFTA VE SONRASI İÇİN DE DİNAMİK 🔴 */}
                           {adminStatus === 'LIVE' && (
                             <>
                               {activeTab === 'total' && row.liveExtra > 0 && (
                                 <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.liveExtra} CANLI</span>
                               )}
-                              {activeTab === 'w5' && row.w5LiveExtra > 0 && (
-                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.w5LiveExtra} CANLI</span>
-                              )}
-                              {activeTab === 'w6' && row.w6LiveExtra > 0 && (
-                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.w6LiveExtra} CANLI</span>
+                              {activeTab.startsWith('w') && row[`${activeTab}LiveExtra`] > 0 && (
+                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row[`${activeTab}LiveExtra`]} CANLI</span>
                               )}
                             </>
                           )}
