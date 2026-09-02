@@ -197,7 +197,6 @@ const localTeamLogos: Record<string, string> = {
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
 
   // 🔴 ALMANYA (BUNDESLIGA) - FOTMOB
-
   "BAYERN MUNCHEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
   "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8178.png",
@@ -258,7 +257,6 @@ const localTeamLogos: Record<string, string> = {
   "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
   "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
   "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
-
   "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
   "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
   "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
@@ -340,21 +338,38 @@ const generateTimeOptions = () => {
 };
 const timeOptionsArr = generateTimeOptions();
 
+// 🔴 İŞTE ÖZGÜRLÜK: 8. HAFTA VE SONRASI İÇİN SERBEST TARİH MOTORU 🔴
 const generateWeekDates = (weekNum: number) => {
-  const baseDate = new Date(2026, 7, 18); 
-  const diffDays = (weekNum - 5) * 7;
-  baseDate.setDate(baseDate.getDate() + diffDays);
+  if (weekNum < 8) {
+    // 6 ve 7. Hafta için eski sabit döngü (Arşiv bozulmasın diye)
+    const baseDate = new Date(2026, 7, 18); 
+    const diffDays = (weekNum - 5) * 7;
+    baseDate.setDate(baseDate.getDate() + diffDays);
 
-  const dates = [];
-  for (let i = 0; i < 7; i++) {
-      const d = new Date(baseDate);
-      d.setDate(d.getDate() + i);
-      const day = d.getDate().toString().padStart(2, '0');
-      const month = (d.getMonth() + 1).toString().padStart(2, '0');
-      const year = d.getFullYear();
-      dates.push(`${day}.${month}.${year}`);
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        dates.push(`${day}.${month}.${year}`);
+    }
+    return dates;
+  } else {
+    // 🔥 8. HAFTA VE SONRASI İÇİN 4 EYLÜL 2026'DAN BAŞLAYAN AYLARCA SÜREN SERBEST SKALA 🔥
+    const baseDate = new Date(2026, 8, 4); // 4 Eylül 2026 (Javascript'te aylar 0'dan başlar, 8 = Eylül)
+    const dates = [];
+    for (let i = 0; i < 150; i++) { // 150 GÜN ileriye kadar serbest seçim
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        dates.push(`${day}.${month}.${year}`);
+    }
+    return dates;
   }
-  return dates;
 };
 
 const getUniqueMatchId = (week: number, index: number) => {
@@ -878,12 +893,6 @@ export default function AdminRadarPortal() {
   };
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
-
-  const isTffMatchCheck = (category: string) => {
-    if(!category) return false;
-    const uppercaseCat = category.toUpperCase();
-    return ( uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG") );
-  };
 
   // 🔴 TEK TABANCA KURALI ORİJİNAL HALİNE GERİ DÖNDÜRÜLDÜ 🔴
   const weeklyStats = useMemo(() => {
@@ -1665,8 +1674,9 @@ export default function AdminRadarPortal() {
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-black text-indigo-400">🏭 BÜLTEN FABRİKASI</h2>
                 <div className="flex items-center gap-3">
+                   {/* 🔴 BÜLTEN SEÇİMİ 38 HAFTAYA ÇIKARILDI 🔴 */}
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
-                      <option value={6}>6. HAFTA</option><option value={7}>7. HAFTA</option><option value={8}>8. HAFTA</option><option value={9}>9. HAFTA</option><option value={10}>10. HAFTA</option>
+                      {[...Array(34)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                    </select>
                 </div>
              </div>
@@ -1745,8 +1755,9 @@ export default function AdminRadarPortal() {
            <div className="animate-fade-in">
               <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
                  <h2 className="text-xl font-black text-emerald-400">📊 TAHMİNLER (CANLI DURUM)</h2>
+                 {/* 🔴 TAHMİNLER SEÇİMİ 38 HAFTAYA ÇIKARILDI 🔴 */}
                  <select value={selectedPredictionWeek} onChange={e => setSelectedPredictionWeek(Number(e.target.value))} className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded outline-none border border-emerald-700/50 cursor-pointer">
-                    <option value={6}>6. HAFTA</option><option value={7}>7. HAFTA</option><option value={8}>8. HAFTA</option><option value={9}>9. HAFTA</option>
+                    {[...Array(34)].map((_, i) => <option key={`pw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                  </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
