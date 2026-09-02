@@ -197,6 +197,7 @@ const localTeamLogos: Record<string, string> = {
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
 
   // 🔴 ALMANYA (BUNDESLIGA) - FOTMOB
+
   "BAYERN MUNCHEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
   "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8178.png",
@@ -257,6 +258,7 @@ const localTeamLogos: Record<string, string> = {
   "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
   "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
   "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
+
   "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
   "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
   "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
@@ -387,6 +389,20 @@ const getLocalLogoUrl = (teamName: string) => {
     .replace(/\s+/g, '-');
 
   return `/logos/${slug}.png`;
+};
+
+// 🔴 VERCEL'İN ÇÖKMESİNİ ENGELLEYEN FONKSİYON 🔴
+const isTffMatchCheck = (category: string) => {
+  if(!category) return false;
+  const uppercaseCat = category.toUpperCase();
+  return ( 
+    uppercaseCat.includes("TÜRKİYE") || 
+    uppercaseCat.includes("TFF") || 
+    uppercaseCat.includes("AMATÖR") || 
+    uppercaseCat.includes("PTT") || 
+    uppercaseCat.includes("2.LİG") || 
+    uppercaseCat.includes("3.LİG") 
+  );
 };
 
 export default function AdminRadarPortal() {
