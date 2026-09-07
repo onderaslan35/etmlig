@@ -190,7 +190,7 @@ const localTeamLogos: Record<string, string> = {
 
   // 🔴 İNGİLTERE (PREMIER LİG) - FOTMOB
   "ARSENAL": "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png",
-  "ASTON VILLA": "https://images.fotmob.com/image_resources/logo/teamlogo/8622.png",
+  "ASTON VILLA": "https://images.fotmob.com/image_resources/logo/teamlogo/10252_large.png",
   "BOURNEMOUTH": "https://images.fotmob.com/image_resources/logo/teamlogo/8678.png",
   "BRENTFORD": "https://images.fotmob.com/image_resources/logo/teamlogo/9937.png",
   "BRIGHTON": "https://images.fotmob.com/image_resources/logo/teamlogo/8659.png",
