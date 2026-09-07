@@ -142,6 +142,18 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
   "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823_large.png",
+    "AEK Athens": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
+  "LASK": "https://images.fotmob.com/image_resources/logo/teamlogo/9977_large.png",
+  "Middlesbrough": "https://images.fotmob.com/image_resources/logo/teamlogo/8549_large.png",
+  "São Paulo": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
+  "Levski Sofia": "https://images.fotmob.com/image_resources/logo/teamlogo/8632_large.png",
+  "CSKA Sofia": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
+  "VİKİNG": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
+  "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
+  "Shakhtar Donetsk": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
+  "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
+  "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "Slavia Prague": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
 
   //// YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",

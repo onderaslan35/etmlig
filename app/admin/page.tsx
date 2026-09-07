@@ -161,6 +161,19 @@ const localTeamLogos: Record<string, string> = {
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
   "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
+  "AEK Athens": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
+  "LASK": "https://images.fotmob.com/image_resources/logo/teamlogo/9977_large.png",
+  "Middlesbrough": "https://images.fotmob.com/image_resources/logo/teamlogo/8549_large.png",
+  "São Paulo": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
+  "Levski Sofia": "https://images.fotmob.com/image_resources/logo/teamlogo/8632_large.png",
+  "CSKA Sofia": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
+  "VİKİNG": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
+  "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
+  "Shakhtar Donetsk": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
+  "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
+  "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "Slavia Prague": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  
 
   // YEREL KLASÖRLER
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -170,8 +183,7 @@ const localTeamLogos: Record<string, string> = {
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
-  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
+  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png",   
   "OLYMPIC LYON": "/logos/lyon.png", "OLYMPIQUE LYON": "/logos/lyon.png", "OLYMPIQUE LYONNAIS": "/logos/lyon.png", "LYON": "/logos/lyon.png",
 
   // 🔴 İNGİLTERE (PREMIER LİG) - FOTMOB
