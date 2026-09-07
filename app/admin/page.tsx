@@ -120,7 +120,6 @@ const localTeamLogos: Record<string, string> = {
   "LEVSKI SOFYA": "https://en.wikipedia.org/wiki/Special:FilePath/Levski_Sofia_crest_(2026).svg",
   "UNIVERSITATEA CRAIOVA": "https://ro.wikipedia.org/wiki/Special:FilePath/CS_Universitatea_Craiova.svg",
   "POLISSYA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Polissya_Zhytomyr.png",
-  "KOPENAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
   "KOPENHAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
   "SANTA COLOMA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Santa_Coloma_logo.svg",
   "RAPID WIEN": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Rapid_Wien_Logo.svg",
@@ -148,8 +147,6 @@ const localTeamLogos: Record<string, string> = {
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
   "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823_large.png",
-
-  // YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
   "KORTRIJK": "https://images.fotmob.com/image_resources/logo/teamlogo/8571_large.png",
   "SANTOS FC": "https://images.fotmob.com/image_resources/logo/teamlogo/8514_large.png",
@@ -161,19 +158,24 @@ const localTeamLogos: Record<string, string> = {
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
   "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
-  "AEK Athens": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
+  "AEK ATHENS": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
   "LASK": "https://images.fotmob.com/image_resources/logo/teamlogo/9977_large.png",
-  "Middlesbrough": "https://images.fotmob.com/image_resources/logo/teamlogo/8549_large.png",
-  "São Paulo": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
-  "Levski Sofia": "https://images.fotmob.com/image_resources/logo/teamlogo/8632_large.png",
-  "CSKA Sofia": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
+  "MIDDLESBROUGH": "https://images.fotmob.com/image_resources/logo/teamlogo/8549_large.png",
+  "SAO PAULO": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
+  "SÃO PAULO": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
+  "LEVSKI SOFIA": "https://images.fotmob.com/image_resources/logo/teamlogo/8632_large.png",
+  "CSKA SOFIA": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
   "VİKİNG": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
+  "VIKING": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
   "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
-  "Shakhtar Donetsk": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
+  "ST. MIRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
+  "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
+  "SABAH": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
-  "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
-  "Slavia Prague": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
-  
+  "BODØ/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
 
   // YEREL KLASÖRLER
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -183,7 +185,8 @@ const localTeamLogos: Record<string, string> = {
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
   "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
-  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png",   
+  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
+  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
   "OLYMPIC LYON": "/logos/lyon.png", "OLYMPIQUE LYON": "/logos/lyon.png", "OLYMPIQUE LYONNAIS": "/logos/lyon.png", "LYON": "/logos/lyon.png",
 
   // 🔴 İNGİLTERE (PREMIER LİG) - FOTMOB
@@ -209,7 +212,6 @@ const localTeamLogos: Record<string, string> = {
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
 
   // 🔴 ALMANYA (BUNDESLIGA) - FOTMOB
-
   "BAYERN MUNCHEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
   "BORUSSIA DORTMUND": "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png",
   "BAYER LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8178.png",
@@ -270,7 +272,6 @@ const localTeamLogos: Record<string, string> = {
   "BOLOGNA": "https://images.fotmob.com/image_resources/logo/teamlogo/9857.png",
   "TORINO": "https://images.fotmob.com/image_resources/logo/teamlogo/9804.png",
   "GENOA": "https://images.fotmob.com/image_resources/logo/teamlogo/10233.png",
-
   "LECCE": "https://images.fotmob.com/image_resources/logo/teamlogo/9888.png",
   "UDINESE": "https://images.fotmob.com/image_resources/logo/teamlogo/8600.png",
   "MONZA": "https://images.fotmob.com/image_resources/logo/teamlogo/6504.png",
@@ -341,6 +342,13 @@ const getTodayDateString = () => {
   return `${dd}.${mm}.${yyyy}`;
 };
 
+const parseDateLocal = (ds: string) => {
+    if (!ds) return new Date(0);
+    const parts = ds.split('.');
+    if(parts.length !== 3) return new Date(0);
+    return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+};
+
 const generateTimeOptions = () => {
   const times = ["00:00"];
   for (let h = 23; h >= 12; h--) {
@@ -352,14 +360,11 @@ const generateTimeOptions = () => {
 };
 const timeOptionsArr = generateTimeOptions();
 
-// 🔴 İŞTE ÖZGÜRLÜK: 8. HAFTA VE SONRASI İÇİN SERBEST TARİH MOTORU 🔴
 const generateWeekDates = (weekNum: number) => {
   if (weekNum < 8) {
-    // 6 ve 7. Hafta için eski sabit döngü (Arşiv bozulmasın diye)
     const baseDate = new Date(2026, 7, 18); 
     const diffDays = (weekNum - 5) * 7;
     baseDate.setDate(baseDate.getDate() + diffDays);
-
     const dates = [];
     for (let i = 0; i < 7; i++) {
         const d = new Date(baseDate);
@@ -371,10 +376,9 @@ const generateWeekDates = (weekNum: number) => {
     }
     return dates;
   } else {
-    // 🔥 8. HAFTA VE SONRASI İÇİN 4 EYLÜL 2026'DAN BAŞLAYAN AYLARCA SÜREN SERBEST SKALA 🔥
-    const baseDate = new Date(2026, 8, 4); // 4 Eylül 2026 (Javascript'te aylar 0'dan başlar, 8 = Eylül)
+    const baseDate = new Date(2026, 8, 4); 
     const dates = [];
-    for (let i = 0; i < 150; i++) { // 150 GÜN ileriye kadar serbest seçim
+    for (let i = 0; i < 150; i++) { 
         const d = new Date(baseDate);
         d.setDate(d.getDate() + i);
         const day = d.getDate().toString().padStart(2, '0');
@@ -403,7 +407,6 @@ const getLocalLogoUrl = (teamName: string) => {
   return `/logos/${slug}.png`;
 };
 
-// 🔴 VERCEL'İN ÇÖKMESİNİ ENGELLEYEN FONKSİYON 🔴
 const isTffMatchCheck = (category: string) => {
   if(!category) return false;
   const uppercaseCat = category.toUpperCase();
@@ -546,14 +549,31 @@ export default function AdminRadarPortal() {
     }
   };
 
+  // 🔴 OTOMATİK RADAR (AUTO-FOCUS): Bugünün tarihine göre doğru haftayı otomatik bulur 🔴
   useEffect(() => {
     if (isAuthenticated) {
         fetchAllSystemPlayers();
         const fetchAvailableWeeks = async () => {
-            const { data } = await supabase.from('matches_bulletin').select('week_num');
+            const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
             if (data) {
-                const weeks = Array.from(new Set(data.map(d => d.week_num))).filter(w => w >= 6).sort((a,b) => a-b);
+                const todayDate = new Date();
+                todayDate.setHours(0,0,0,0);
+
+                const weeksSet = new Set<number>(data.map(d => d.week_num));
+                const weeks = Array.from(weeksSet).filter(w => w >= 6).sort((a,b) => a-b);
+                
+                let targetWeek = 6;
+                // Bugüne veya geleceğe ait ilk maçı bul
+                const upcomingMatches = data.filter(d => parseDateLocal(d.match_date) >= todayDate).sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
+                
+                if (upcomingMatches.length > 0) {
+                    targetWeek = upcomingMatches[0].week_num;
+                } else if (weeks.length > 0) {
+                    targetWeek = Math.max(...weeks);
+                }
+
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
+                setSelectedLiveWeek(targetWeek);
             }
         };
         fetchAvailableWeeks();
@@ -922,7 +942,6 @@ export default function AdminRadarPortal() {
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
-  // 🔴 TEK TABANCA KURALI ORİJİNAL HALİNE GERİ DÖNDÜRÜLDÜ 🔴
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach(uid => {
@@ -1014,7 +1033,6 @@ export default function AdminRadarPortal() {
           confirmMsg = `FİNAL MAÇI ONAYI VE BONUS DAĞITIMI (24. MAÇ) 🚨\n\n`;
           confirmMsg += `Bu maçı ${currentWinners.length} kişi bildi (${displayPoints} Puan)\n\n`;
 
-          // 🔴 KATI KURAL UYGULANDI: SADECE TEK TABANCA İSE ONAY VERİR, BERABERLİKTE İPTAL EDER 🔴
           if (weeklyStats.pLeadersArray.length === 1) {
               confirmMsg += `🏆 Puan Lideri (+3 Puan): ${mergedPlayers[weeklyStats.pLeadersArray[0]]} (${weeklyStats.maxPts} Puan)\n`;
           } else if (weeklyStats.pLeadersArray.length > 1) {
@@ -1081,7 +1099,6 @@ export default function AdminRadarPortal() {
           }
         }
 
-        // 🔴 KATI KURAL UYGULANDI: SADECE TEK TABANCA İSE VERİTABANINA YAZAR 🔴
         if (matchId === 24) {
             let bonusInserts: any[] = [];
             let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
@@ -1224,109 +1241,7 @@ export default function AdminRadarPortal() {
     return theme;
   };
 
-  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
-    const currentMatch = bulletinMatches[currentIndex];
-    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
-    const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-
-    if (!currentCat) return [];
-
-    let havuz = dynamicLigHavuzu[currentCat];
-
-    if (!havuz || currentCat.includes("UEFA") || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
-       havuz = Object.values(dynamicLigHavuzu).flat();
-    }
-
-    const fullHavuz = Array.from(new Set([...havuz]));
-    const usedTeams = new Set<string>();
-
-    bulletinMatches.forEach((m, idx) => {
-       if (idx === currentIndex) return; 
-
-       const mCat = m.category ? m.category.toUpperCase() : '';
-
-       if (currentCat === mCat) {
-           if (m.home_team) usedTeams.add(m.home_team);
-           if (m.away_team) usedTeams.add(m.away_team);
-       }
-    });
-
-    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const handleBulletinChange = (index: number, field: string, value: string) => {
-    const newMatches = [...bulletinMatches];
-    (newMatches[index] as any)[field] = value;
-    if (field === 'category') {
-        newMatches[index].home_team = ''; newMatches[index].away_team = '';
-    }
-    setBulletinMatches(newMatches);
-  };
-
-  const copyDateTimeToAll = () => {
-    const firstDate = bulletinMatches[0].match_date;
-    const firstTime = bulletinMatches[0].match_time;
-    if(!firstDate || !firstTime) return alert("Önce 1. maçın tarih ve saatini doldurun!");
-    const updated = bulletinMatches.map(m => ({ ...m, match_date: firstDate, match_time: firstTime }));
-    setBulletinMatches(updated);
-  };
-
-  const saveBulletinToDB = async () => {
-    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
-    if (hasEmpty) {
-       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
-    }
-
-    setIsPublishing(true);
-    try {
-      const payload = bulletinMatches.map(m => ({
-         week_num: bulletinWeek, match_index: m.match_index, category: m.category,
-         match_date: m.match_date, match_time: m.match_time,
-         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase()
-      }));
-
-      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
-      if (error) throw error;
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni veritabanına mühürlendi!\n\nŞu an:\n1. Maç Arşivi'nde ${bulletinWeek}. Hafta otomatik olarak oluştu.\n2. Lobi ekranı kapılarını açmak için Cuma 21:00'ı bekliyor.`);
-    } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
-    setIsPublishing(false);
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-900 border border-slate-700 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
-          <span className="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">🛡️</span>
-          <h1 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-md">Karargah Girişi</h1>
-
-          <form onSubmit={handleLogin} className="flex flex-col gap-4 mt-6">
-            <input 
-              type="text" 
-              value={usernameInput} 
-              onChange={e => setUsernameInput(e.target.value)} 
-              className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600 lowercase" 
-              placeholder="KULLANICI ADI" 
-            />
-            <input 
-              type="password" 
-              value={passwordInput} 
-              onChange={e => setPasswordInput(e.target.value)} 
-              className="bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-[0.3em] font-black text-lg shadow-inner placeholder:text-slate-600" 
-              placeholder="••••••••" 
-            />
-            <button 
-              type="submit" 
-              className="bg-amber-600 hover:bg-amber-500 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] mt-2"
-            >
-              KAPIYI AÇ
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
+  // 🔴 SKORCU ZAMAN KİLİDİ: Gösterilecek maçları süzer 🔴
   const displayedMatches = liveMatchesDB.filter(match => {
       const logInfo = liveInfoStateMap[match.match_index];
       const status = logInfo?.status || 'NOT_STARTED';
@@ -1335,9 +1250,18 @@ export default function AdminRadarPortal() {
       const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
       const isToday = match.match_date === getTodayDateString();
 
-      const enforceToday = showOnlyToday || (userRole && userRole.startsWith('skorcum'));
+      // Skorcular sadece BUGÜNÜ ve İLERİSİNİ görebilir
+      if (userRole && userRole.startsWith('skorcum')) {
+          const mDate = parseDateLocal(match.match_date);
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          
+          if (mDate < today) return false; // GEÇMİŞ GÜNLER ASLA GÖRÜNMEZ!
+          return true; // Bugün veya gelecek günlerin maçları açılır
+      }
 
-      if (enforceToday) {
+      // Master (mankoman) için: showOnlyToday mantığı
+      if (showOnlyToday) {
           if (isFinished) return false; 
           if (isLive) return true;      
           return isToday;               
@@ -1497,21 +1421,16 @@ export default function AdminRadarPortal() {
 
                     <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
                        <span className="text-slate-400 font-bold text-xs tracking-wider">AKTİF HAFTA:</span>
-                       {userRole === 'master' ? (
-                          <select 
-                            value={selectedLiveWeek}
-                            onChange={(e) => setSelectedLiveWeek(Number(e.target.value))}
-                            className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
-                          >
-                             {liveWeekOptions.map(w => (
-                                 <option key={w} value={w}>{w}. HAFTA</option>
-                             ))}
-                          </select>
-                       ) : (
-                          <div className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-3 py-1 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] select-none">
-                             {selectedLiveWeek}. HAFTA
-                          </div>
-                       )}
+                       {/* 🔴 SKORCULARA MENÜ ÖZGÜRLÜĞÜ VERİLDİ 🔴 */}
+                       <select 
+                         value={selectedLiveWeek}
+                         onChange={(e) => setSelectedLiveWeek(Number(e.target.value))}
+                         className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
+                       >
+                          {liveWeekOptions.map(w => (
+                              <option key={w} value={w}>{w}. HAFTA</option>
+                          ))}
+                       </select>
                     </div>
                  </div>
               </div>
@@ -1519,9 +1438,9 @@ export default function AdminRadarPortal() {
 
             {displayedMatches.length === 0 ? (
                  <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl shadow-inner">
-                    <span className="text-5xl mb-4 block opacity-50">{userRole && userRole.startsWith('skorcum') || showOnlyToday ? '🛡️' : '📡'}</span>
-                    <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') || showOnlyToday ? 'text-amber-500' : 'text-slate-400'}`}>
-                       {userRole && userRole.startsWith('skorcum') || showOnlyToday ? `EKRANDA İŞLEM YAPILACAK (BEKLEYEN) MAÇ YOK` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
+                    <span className="text-5xl mb-4 block opacity-50">{userRole && userRole.startsWith('skorcum') ? '🛡️' : '📡'}</span>
+                    <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') ? 'text-amber-500' : 'text-slate-400'}`}>
+                       {userRole && userRole.startsWith('skorcum') ? `EKRANDA İŞLEM YAPILACAK (BEKLEYEN VEYA GELECEK) MAÇ YOK` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
                     </h2>
                  </div>
             ) : (
@@ -1584,7 +1503,7 @@ export default function AdminRadarPortal() {
 
                         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
                           <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
-                            {match.week_num}. Hafta - {match.match_index}. MAÇ
+                            {match.week_num}. Hafta - {match.match_index}. MAÇ ({match.match_date} - {match.match_time})
                           </span>
                           <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
                             🏆 {match.category}
@@ -1696,13 +1615,12 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 2. CEPHE: BÜLTEN ÜRETİM FABRİKASI 🚀 */}
+        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI... (Aşağıdaki kısımlar olduğu gibi korundu) */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-black text-indigo-400">🏭 BÜLTEN FABRİKASI</h2>
                 <div className="flex items-center gap-3">
-                   {/* 🔴 BÜLTEN SEÇİMİ 38 HAFTAYA ÇIKARILDI 🔴 */}
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
                       {[...Array(34)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                    </select>
@@ -1778,12 +1696,11 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 3. CEPHE: TAHMİNLER DURUM PANELİ 🚀 */}
+        {/* 🚀 TAHMİNLER DURUM PANELİ 🚀 */}
         {activeTab === 'predictions' && userRole === 'master' && (
            <div className="animate-fade-in">
               <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
                  <h2 className="text-xl font-black text-emerald-400">📊 TAHMİNLER (CANLI DURUM)</h2>
-                 {/* 🔴 TAHMİNLER SEÇİMİ 38 HAFTAYA ÇIKARILDI 🔴 */}
                  <select value={selectedPredictionWeek} onChange={e => setSelectedPredictionWeek(Number(e.target.value))} className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded outline-none border border-emerald-700/50 cursor-pointer">
                     {[...Array(34)].map((_, i) => <option key={`pw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                  </select>
@@ -1811,7 +1728,7 @@ export default function AdminRadarPortal() {
            </div>
         )}
 
-        {/* 🚀 4. CEPHE: YARIŞMACI YÖNETİMİ ODASI 🚀 */}
+        {/* 🚀 YARIŞMACI YÖNETİMİ ODASI 🚀 */}
         {activeTab === 'players' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
@@ -1926,7 +1843,7 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 5. CEPHE: TAKIM LOJİSTİK VE TRANSFER MERKEZİ 🚀 */}
+        {/* 🚀 TAKIM LOJİSTİK VE TRANSFER MERKEZİ 🚀 */}
         {activeTab === 'teams' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
