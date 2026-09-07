@@ -134,7 +134,6 @@ const localTeamLogos: Record<string, string> = {
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
-  
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
@@ -156,14 +155,13 @@ const localTeamLogos: Record<string, string> = {
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
   "ATLETICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
-
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
-
   "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "BODØ/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
-
 
   //// YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
@@ -180,19 +178,12 @@ const localTeamLogos: Record<string, string> = {
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
 };
 
-// 🔴 4. ve 5. HAFTA SİLİNDİ, AKTİF HAFTA 6'DAN BAŞLAR 🔴
-const getActiveWeekByDate = () => {
-  const nowUTC = new Date();
-  const nowTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
-  const baseDate = new Date(Date.UTC(2026, 7, 18, 0, 0, 0)).getTime(); 
-  
-  const diffTime = nowTurkey.getTime() - baseDate;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
-  let calculatedWeek = 5 + Math.floor(diffDays / 7);
-  // Asla 6'nın altına inmez (Geçmiş haftalar silindi)
-  if (calculatedWeek < 6) calculatedWeek = 6;
-  return calculatedWeek;
+// 🔴 KUSURSUZ TARİH OKUMA FONKSİYONU 🔴
+const parseDateLocal = (ds: string) => {
+  if (!ds) return new Date(0);
+  const parts = ds.split('.');
+  if(parts.length !== 3) return new Date(0);
+  return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
 };
 
 const getUniqueMatchId = (week: number, index: number) => {
@@ -212,8 +203,23 @@ const getLocalLogoUrl = (teamName: string) => {
   return `/logos/${slug}.png`;
 };
 
+const isTffMatchCheck = (category: string) => {
+  if(!category) return false;
+  const uppercaseCat = category.toUpperCase();
+  return (
+    uppercaseCat.includes("TÜRKİYE") ||
+    uppercaseCat.includes("TFF") ||
+    uppercaseCat.includes("AMATÖR") ||
+    uppercaseCat.includes("PTT") ||
+    uppercaseCat.includes("2.LİG") ||
+    uppercaseCat.includes("3.LİG")
+  );
+};
+
 export default function LiveMatchCard() {
-  const [activeWeek, setActiveWeek] = useState(getActiveWeekByDate());
+  const [activeWeek, setActiveWeek] = useState(6);
+  const [isWeekLoaded, setIsWeekLoaded] = useState(false);
+
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
@@ -244,25 +250,37 @@ export default function LiveMatchCard() {
      fetchDbPlayers();
   }, []);
 
+  // 🔴 OTOMATİK RADAR: Sisteme girince bugünün haftasını otomatik bulur 🔴
+  useEffect(() => {
+      const initWeek = async () => {
+          const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
+          if (data) {
+              const nowUTC = new Date();
+              const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
+              const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
+
+              const upcomingMatches = data
+                  .filter(d => parseDateLocal(d.match_date) >= todayMidnight)
+                  .sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
+              
+              if (upcomingMatches.length > 0) {
+                  setActiveWeek(upcomingMatches[0].week_num);
+              } else {
+                  const weeks = Array.from(new Set(data.map(d => d.week_num)));
+                  if (weeks.length > 0) setActiveWeek(Math.max(...weeks));
+              }
+          }
+          setIsWeekLoaded(true);
+      };
+      initWeek();
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
         setNow(new Date().getTime());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const isTffMatchCheck = (category: string) => {
-    if(!category) return false;
-    const uppercaseCat = category.toUpperCase();
-    return (
-      uppercaseCat.includes("TÜRKİYE") ||
-      uppercaseCat.includes("TFF") ||
-      uppercaseCat.includes("AMATÖR") ||
-      uppercaseCat.includes("PTT") ||
-      uppercaseCat.includes("2.LİG") ||
-      uppercaseCat.includes("3.LİG")
-    );
-  };
 
   const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
     const upCat = category ? category.toUpperCase() : '';
@@ -305,6 +323,8 @@ export default function LiveMatchCard() {
   };
 
   useEffect(() => {
+    if (!isWeekLoaded) return;
+    
     const fetchMatchesAndPredictions = async () => {
       const { data: dbBulletinMatches } = await supabase
         .from('matches_bulletin')
@@ -316,7 +336,7 @@ export default function LiveMatchCard() {
         .from('live_matches')
         .select('*');
 
-      // 🔴 1000'ER 1000'ER ÇEKME MOTORU (LİMİT YOK) 🔴
+      // 🔴 1000'ER 1000'ER ÇEKME MOTORU 🔴
       let allPredictions: any[] = [];
       let from = 0;
       let step = 999;
@@ -342,8 +362,6 @@ export default function LiveMatchCard() {
       if (allPredictions.length > 0) {
         allPredictions.forEach(pred => {
           const rowUserId = String(pred.user_id);
-          
-          // 🔴 EKMEL ZIRHI: ADMİNİ GİZLE!
           if (rowUserId === 'mankoman') return;
           
           if (!predDict[rowUserId]) {
@@ -357,11 +375,7 @@ export default function LiveMatchCard() {
       if (dbBulletinMatches) {
         const nowUTC = new Date();
         const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
-        
-        const dd = String(todayTurkey.getUTCDate()).padStart(2, '0');
-        const mm = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
-        const yyyy = todayTurkey.getUTCFullYear();
-        const todayFormatted = `${dd}.${mm}.${yyyy}`;
+        const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
 
         const currentWeekMatches = dbBulletinMatches.map((m) => ({
           id: m.match_index,
@@ -379,25 +393,23 @@ export default function LiveMatchCard() {
         }
         setLiveMatchesData(liveMap);
 
-        // 🔴 KÜLKEDİSİ KURALI (GECE YARISI NÖBETİ) 🔴
+        // 🔴 KUSURSUZ ZAMAN KİLİDİ 🔴
         const todaysMatches = currentWeekMatches.filter(m => {
              const uniqueId = getUniqueMatchId(activeWeek, m.id);
              const dbMatch = liveMap[uniqueId];
              const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
 
-             const isToday = m.date === todayFormatted;
+             const mDate = parseDateLocal(m.date);
+             const isToday = mDate.getTime() === todayMidnight.getTime();
              const isLiveOrWaiting = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
 
-             // KÜLKEDİSİ: Maç bitmediyse ve önceden başladıysa (veya bekliyorsa) ekranda çakılı kalır.
              if (isLiveOrWaiting) return true;
-
-             // Bitenler veya henüz başlamayanlar sadece bugünün maçları listesine dahil olur.
              return isToday;
         });
         
         setTodaysMatchesList(todaysMatches);
         
-        // 🔴 OTOMATİK 3 SAAT KURALI (HAFTA ATLATMA MOTORU) 🔴
+        // 🔴 OTOMATİK HAFTA ATLATMA 🔴
         const match24Id = getUniqueMatchId(activeWeek, 24);
         const dbMatch24 = liveMap[match24Id];
 
@@ -405,7 +417,6 @@ export default function LiveMatchCard() {
             const m24 = currentWeekMatches.find(m => m.id === 24);
             if (m24) {
                 const matchTimeMs = getMatchTimeMs(m24.date, m24.time);
-                // Maç başlama saatinden 5 saat sonra (Maç bitiminden tahmini 3 saat sonra)
                 if (new Date().getTime() > matchTimeMs + (5 * 60 * 60 * 1000)) {
                     setActiveWeek(prev => prev + 1);
                 }
@@ -457,7 +468,7 @@ export default function LiveMatchCard() {
     fetchMatchesAndPredictions(); 
     const interval = setInterval(fetchMatchesAndPredictions, 5000); 
     return () => clearInterval(interval);
-  }, [activeWeek]);
+  }, [activeWeek, isWeekLoaded]);
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
@@ -472,6 +483,14 @@ export default function LiveMatchCard() {
   const toggleMatchExpansion = (matchId: number) => {
     setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
   };
+
+  if (!isWeekLoaded) {
+    return (
+      <div className="w-full max-w-6xl mx-auto mb-8 flex justify-center py-10">
+         <span className="text-slate-500 text-sm font-medium animate-pulse tracking-widest">📡 Radar Ayarlanıyor...</span>
+      </div>
+    );
+  }
 
   if (todaysMatchesList.length === 0) {
     return (
