@@ -160,6 +160,8 @@ const localTeamLogos: Record<string, string> = {
   "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
+
 
   //// YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",

@@ -78,12 +78,14 @@ const localTeamLogos: Record<string, string> = {
   "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
+  
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
   "DEBRECEN": "https://fr.wikipedia.org/wiki/Special:FilePath/Debreceni_VSC_(logo).svg",
   "SHELBOURNE": "https://tr.wikipedia.org/wiki/Special:FilePath/Shelbourne_logo.png",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
   "FK KAUNO ZALGIRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/439132.png",
     "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823_large.png",
+    
 
   // YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
@@ -115,6 +117,7 @@ const localTeamLogos: Record<string, string> = {
   "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
 
   // Yerel Logolar
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
@@ -182,7 +185,7 @@ const localTeamLogos: Record<string, string> = {
 
   // 🔴 İSKOÇYA LİGİ (PREMIERSHIP)
   "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
-  "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
+  
   "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
   "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
   
