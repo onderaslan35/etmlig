@@ -141,9 +141,9 @@ const localTeamLogos: Record<string, string> = {
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
-  "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
-  "BODØ/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
-  "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  
+  
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",

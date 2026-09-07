@@ -134,7 +134,7 @@ const localTeamLogos: Record<string, string> = {
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
-  "BODO-GLIMT": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Bodo_Glimt_logo.svg",
+  
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
@@ -156,8 +156,8 @@ const localTeamLogos: Record<string, string> = {
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "SABAH": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
-  "BODØ/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
-  "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  
+  "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
