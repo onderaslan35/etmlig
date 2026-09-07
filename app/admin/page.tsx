@@ -107,8 +107,8 @@ const localTeamLogos: Record<string, string> = {
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
   "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
   "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
-  "SABAH FK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
-  "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
+  "SABAH FK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
+  
   "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
   "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
   "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
