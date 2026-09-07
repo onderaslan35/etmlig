@@ -111,6 +111,8 @@ const localTeamLogos: Record<string, string> = {
   "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "ST. MIRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
+  "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
+  "ATLETICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
   
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
   "BODØ/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
