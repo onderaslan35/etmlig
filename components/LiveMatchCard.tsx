@@ -111,7 +111,7 @@ const localTeamLogos: Record<string, string> = {
   "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
   "KIZILYILDIZ": "https://en.wikipedia.org/wiki/Special:FilePath/Red_Star_Belgrade_crest.svg",
   "LEVADIA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Levadia_Tallinnin.png",
-  "LEVSKI SOFİA": "https://images.fotmob.com/image_resources/logo/teamlogo/8632_large.png",
+  "LEVSKİ SOFİA": "https://images.fotmob.com/image_resources/logo/teamlogo/8632_large.png",
   "UNIVERSITATEA CRAIOVA": "https://ro.wikipedia.org/wiki/Special:FilePath/CS_Universitatea_Craiova.svg",
   "POLISSYA": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Polissya_Zhytomyr.png",
   "KOPENAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
@@ -154,6 +154,8 @@ const localTeamLogos: Record<string, string> = {
   "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "ST. MIRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
+  "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
+  "ATLETICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
 
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
 
