@@ -1041,7 +1041,7 @@ export default function AdminRadarPortal() {
                     kategori: 'MASTER', 
                     ev_sahibi: 'HAFTANIN', 
                     deplasman: 'LİDERİ',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
+                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
                 });
             }
 
@@ -1053,7 +1053,7 @@ export default function AdminRadarPortal() {
                     kategori: 'MASTER', 
                     ev_sahibi: 'SKOR', 
                     deplasman: 'KRALI',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
+                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
                 });
             }
 
@@ -1128,14 +1128,14 @@ export default function AdminRadarPortal() {
             if (finalPLeader) {
                 bonusInserts.push({
                     hafta: selectedLiveWeek, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
+                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
                 });
             }
 
             if (finalSLeader) {
                 bonusInserts.push({
                     hafta: selectedLiveWeek, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
+                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
                 });
             }
 
