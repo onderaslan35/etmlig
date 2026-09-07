@@ -1028,34 +1028,56 @@ export default function AdminRadarPortal() {
       const leagueName = isTff ? 'TFF' : 'DFO';
 
       let confirmMsg = "";
-      if (matchId === 24) {
-          confirmMsg = `FİNAL MAÇI ONAYI VE BONUS DAĞITIMI (24. MAÇ) 🚨\n\n`;
-          confirmMsg += `Bu maçı ${currentWinners.length} kişi bildi (${displayPoints} Puan)\n\n`;
+     if (matchId === 24) {
+            let bonusInserts: any[] = [];
+            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
+            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
 
-          if (weeklyStats.pLeadersArray.length === 1) {
-              confirmMsg += `🏆 Puan Lideri (+3 Puan): ${mergedPlayers[weeklyStats.pLeadersArray[0]]} (${weeklyStats.maxPts} Puan)\n`;
-          } else if (weeklyStats.pLeadersArray.length > 1) {
-              const tiedPNames = weeklyStats.pLeadersArray.map(uid => mergedPlayers[uid]).join(', ');
-              confirmMsg += `🏆 Puan Lideri: MÜSTAKİL LİDER YOK\n(Sistemin Bonusu İptal Etme Sebebi - Berabere Kalanlar: ${tiedPNames})\n`;
-          } else {
-              confirmMsg += `🏆 Puan Lideri: KİMSE PUAN ALAMADI\n`;
-          }
+            if (finalPLeader) {
+                bonusInserts.push({
+                    hafta: selectedLiveWeek, 
+                    user_name: mergedPlayers[finalPLeader], 
+                    username: finalPLeader, 
+                    kategori: 'MASTER', 
+                    ev_sahibi: 'HAFTANIN', 
+                    deplasman: 'LİDERİ',
+                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
+                });
+            }
 
-          if (weeklyStats.sLeadersArray.length === 1) {
-              confirmMsg += `🔥 Skor Kralı (+3 Master Puan): ${mergedPlayers[weeklyStats.sLeadersArray[0]]} (${weeklyStats.maxScores} Maç)\n`;
-          } else if (weeklyStats.sLeadersArray.length > 1) {
-              const tiedSNames = weeklyStats.sLeadersArray.map(uid => mergedPlayers[uid]).join(', ');
-              confirmMsg += `🔥 Skor Kralı: MÜSTAKİL KRAL YOK\n(Sistemin Bonusu İptal Etme Sebebi - Berabere Kalanlar: ${tiedSNames})\n`;
-          } else {
-              confirmMsg += `🔥 Skor Kralı: KİMSE SKOR BİLEMEDİ\n`;
-          }
+            if (finalSLeader) {
+                bonusInserts.push({
+                    hafta: selectedLiveWeek, 
+                    user_name: mergedPlayers[finalSLeader], 
+                    username: finalSLeader, 
+                    kategori: 'MASTER', 
+                    ev_sahibi: 'SKOR', 
+                    deplasman: 'KRALI',
+                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 3
+                });
+            }
 
-          confirmMsg += `\nİşlemi onaylıyor musun Kumandanım?`;
-      } else {
-          confirmMsg = currentWinners.length === 0
-            ? `Bu skoru bilen aslan parçası çıkmadı.\n\nPuan dağıtılmayacak ama maç "BİTTİ" olarak işaretlenip kilitlenecek.\n\nOnaylıyor musun Kumandanım?`
-            : `${currentWinners.length} kişiye ${displayPoints} puan dağıtılacak.\n\nMotor 1: 'points' tablosuna (HEM ${leagueName} HEM MASTER) ÇİFT fiş kesilecek.\nMotor 2: 'standings' tablosundaki bakiyeler güncellenecek.\n\nOnaylıyor musun Kumandanım?`;
-      }
+            if (bonusInserts.length > 0) {
+                const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
+                if (bInsertError) {
+                    alert(`❌ DİKKAT! Bonuslar veritabanına yazılamadı!\nSebep: ${bInsertError.message}`);
+                } else {
+                    for (const insert of bonusInserts) {
+                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', insert.username);
+                        if (stData) {
+                            const mRow = stData.find(r => r.league_type === 'MASTER');
+                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
+                        }
+                    }
+                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Yusuf Erbay gibi Tek Tabanca liderlere kalıcı fiş kesildi!)`);
+                }
+            } else {
+               alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
+            }
+        } else {
+           if (currentWinners.length > 0) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
+           else alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
+        }
 
       if (!window.confirm(confirmMsg)) return;
 

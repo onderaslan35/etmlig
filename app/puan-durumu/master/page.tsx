@@ -253,11 +253,14 @@ export default function MasterPuanDurumuPage() {
             if (liveB) badges = [...badges, ...liveB];
         }
 
-        // Toplam sayfada canlı rozet heyecanını göstermek için
+        // Toplam sayfada hem canlı hem de mühürlü rozetleri göstermek için
         if (activeTab === 'total') {
             for (let w = 5; w <= highestWeekFound; w++) {
                 const liveB = liveBadges[`w${w}-${cleanName}`];
                 if (liveB) badges = [...badges, ...liveB];
+                
+                const dynB = dynamicBadges[`w${w}-${cleanName}`];
+                if (dynB) badges = [...badges, ...dynB];
             }
         }
 
