@@ -314,7 +314,7 @@ const localTeamLogos: Record<string, string> = {
   "SPORTING LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
 
   // 🔴 BELÇİKA (PRO LEAGUE) - FOTMOB
-  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8570.png",
+  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8342_large.png",
   "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
   "ROYAL ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/9982.png"
 };

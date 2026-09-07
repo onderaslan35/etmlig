@@ -172,6 +172,7 @@ const localTeamLogos: Record<string, string> = {
   "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png",
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
   "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
+  "CLUP BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8342_large.png",
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
 };
 

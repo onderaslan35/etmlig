@@ -175,7 +175,7 @@ const localTeamLogos: Record<string, string> = {
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
   
   // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
-  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
+  "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8342_large.png",
   "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
   "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
   "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
