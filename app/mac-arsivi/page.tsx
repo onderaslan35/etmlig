@@ -382,6 +382,14 @@ const week4Matches = [
   { id: 24, weekLabel: "4. Hafta - 24. MAÇ", category: "TÜRKİYE 1.LİG", date: "17.08.2026", time: "21:30", homeTeam: "BATMAN PETROL SPOR", awayTeam: "BOLUSPOR", score: "- : -" }
 ];
 
+// 🔴 KUSURSUZ TARİH OKUMA FONKSİYONU 🔴
+const parseDateLocal = (ds: string) => {
+  if (!ds) return new Date(0);
+  const parts = ds.split('.');
+  if(parts.length !== 3) return new Date(0);
+  return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+};
+
 // 🔴 AKILLI YEREL LOGO BULUCU
 const getLocalLogoUrl = (teamName: string) => {
   if (!teamName || teamName === '') return '/logos/default.png';
@@ -397,12 +405,36 @@ const getLocalLogoUrl = (teamName: string) => {
 };
 
 export default function MacArsiviPage() {
-  const [selectedWeek, setSelectedWeek] = useState<number>(6); // Default 6
+  const [selectedWeek, setSelectedWeek] = useState<number>(6); // Başlangıç 6, ama saniyeler içinde radar doğru haftayı bulacak
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [bulletinData, setBulletinData] = useState<Record<number, any>>({});
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({});
+
+  // 🔴 OTOMATİK RADAR: Sisteme girince bugünün haftasını otomatik bulur 🔴
+  useEffect(() => {
+      const initWeek = async () => {
+          const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
+          if (data && data.length > 0) {
+              const nowUTC = new Date();
+              const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
+              const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
+
+              const upcomingMatches = data
+                  .filter(d => parseDateLocal(d.match_date) >= todayMidnight)
+                  .sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
+              
+              if (upcomingMatches.length > 0) {
+                  setSelectedWeek(upcomingMatches[0].week_num);
+              } else {
+                  const weeks = Array.from(new Set(data.map(d => d.week_num)));
+                  if (weeks.length > 0) setSelectedWeek(Math.max(...weeks));
+              }
+          }
+      };
+      initWeek();
+  }, []);
 
   useEffect(() => {
     const fetchFromDB = async () => {
