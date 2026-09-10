@@ -1,7 +1,7 @@
 [
   { "id": 1, "home": "OLİMPİYAKOS", "away": "NEC NİJMEGEN", "homeCode": "OLI", "awayCode": "NEC", "homeScore": 2, "awayScore": 1, "isFinished": true, "type": "DFO", "matchNo": 1, "date": "5 Ağustos | 20:00" },
   { "id": 2, "home": "SPARTA PRAG", "away": "OLİMPİC LYON", "homeCode": "SPA", "awayCode": "LYO", "homeScore": 1, "awayScore": 2, "isFinished": true, "type": "DFO", "matchNo": 2, "date": "5 Ağustos | 21:00" },
-  { "id": 3, "home": "USG", "away": "BODO-GLIMT", "homeCode": "USG", "awayCode": "BOD", "homeScore": 0, "awayScore": 0, "isFinished": true, "type": "DFO", "matchNo": 3, "date": "5 Ağustos | 21:30" },
+  { "id": 3, "home": "USG", "away": "BODO", "homeCode": "USG", "awayCode": "BOD", "homeScore": 0, "awayScore": 0, "isFinished": true, "type": "DFO", "matchNo": 3, "date": "5 Ağustos | 21:30" },
   { "id": 4, "home": "FENERBAHÇE", "away": "STURM GRAZ", "homeCode": "FB", "awayCode": "STU", "homeScore": 3, "awayScore": 1, "isFinished": true, "type": "DFO", "matchNo": 4, "date": "5 Ağustos | 22:00" },
   { "id": 5, "home": "PANATHİNAİKOS", "away": "CSKA 1948", "homeCode": "PAO", "awayCode": "CSK", "homeScore": 2, "awayScore": 0, "isFinished": true, "type": "DFO", "matchNo": 5, "date": "6 Ağustos | 19:00" },
   { "id": 6, "home": "PAİDE LİNNAMEESKOND", "away": "RAPİD WİEN", "homeCode": "PAI", "awayCode": "RAP", "homeScore": 0, "awayScore": 4, "isFinished": true, "type": "DFO", "matchNo": 6, "date": "6 Ağustos | 19:30" },

@@ -5,7 +5,7 @@ import { useState } from 'react';
 const matchesData = [
   { id: 1, home: "OLIMPIYAKOS", away: "NEC NIJMEGEN", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 1, date: "4 Ağustos | 21:00" },
   { id: 2, home: "SPARTA PRAG", away: "OLIMPIC LYON", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 2, date: "4 Ağustos | 21:00" },
-  { id: 3, home: "USG", away: "BODO-GLIMT", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 3, date: "4 Ağustos | 21:00" },
+  { id: 3, home: "USG", away: "BODO", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 3, date: "4 Ağustos | 21:00" },
   { id: 4, home: "FENERBAHÇE", away: "STURM GRAZ", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 4, date: "5 Ağustos | 21:00" },
   { id: 5, home: "PANATHINAIKOS", away: "CSKA 1948", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 5, date: "5 Ağustos | 21:30" },
   { id: 6, home: "PAIDE LINNAMEESKOND", away: "RAPID WIEN", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 6, date: "6 Ağustos | 19:00" },

@@ -175,7 +175,7 @@ const localTeamLogos: Record<string, string> = {
   "ST. MIRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
-  "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  
 
   // YEREL KLASÖRLER
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",

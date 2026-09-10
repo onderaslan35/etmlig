@@ -1,7 +1,7 @@
 [
   {"id": 1, "week": 3, "home": "OLIMPIYAKOS", "away": "NEC NIJMEGEN", "time": "21:00", "date": "04.08.2026", "dateLabel": "4 AĞUSTOS SALI", "league": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 2, "week": 3, "home": "SPARTA PRAG", "away": "OLIMPIC LYON", "time": "21:00", "date": "04.08.2026", "dateLabel": "4 AĞUSTOS SALI", "league": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
-  {"id": 3, "week": 3, "home": "USG", "away": "BODO-GLIMT", "time": "21:00", "date": "04.08.2026", "dateLabel": "4 AĞUSTOS SALI", "league": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
+  {"id": 3, "week": 3, "home": "USG", "away": "BODO", "time": "21:00", "date": "04.08.2026", "dateLabel": "4 AĞUSTOS SALI", "league": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 4, "week": 3, "home": "FENERBAHÇE", "away": "STURM GRAZ", "time": "21:00", "date": "05.08.2026", "dateLabel": "5 AĞUSTOS ÇARŞAMBA", "league": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 5, "week": 3, "home": "PANATHINAIKOS", "away": "CSKA 1948", "time": "21:30", "date": "05.08.2026", "dateLabel": "5 AĞUSTOS ÇARŞAMBA", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 6, "week": 3, "home": "PAIDE LINNAMEESKOND", "away": "RAPID WIEN", "time": "19:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
