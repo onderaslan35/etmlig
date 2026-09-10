@@ -158,6 +158,7 @@ const localTeamLogos: Record<string, string> = {
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
   "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
   
+  "BODO/GLIMT": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
