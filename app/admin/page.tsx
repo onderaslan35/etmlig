@@ -65,7 +65,7 @@ const LIG_HAVUZU: Record<string, string[]> = {
     "ALMANYA", "ARJANTİN", "BELÇİKA", "BREZİLYA", "FRANSA", "HOLLANDA", "İNGİLTERE", "İSPANYA", "İTALYA", "PORTEKİZ", "TÜRKİYE", "URUGUAY", "HIRVATİSTAN"
   ],
   "ÇEŞİTLİ AVRUPA TAKIMLARI": [
-    "KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG", "OLIMPIYAKOS", "AEK ATHENS", "LASK", "SAO PAULO", "LEVSKI SOFIA", "CSKA SOFIA", "VİKİNG", "ST. MİRREN", "SHAKHTAR DONETSK", "SABAH FK", "BODO GLIMT", "SLAVIA PRAGUE"
+    "KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG", "OLIMPIYAKOS", "AEK ATHENS", "LASK", "SAO PAULO", "LEVSKI SOFIA", "CSKA SOFIA", "VİKİNG", "ST. MİRREN", "SHAKHTAR DONETSK", "SABAH FK", "BODO", "SLAVIA PRAGUE"
   ]
 };
 
@@ -134,7 +134,7 @@ const localTeamLogos: Record<string, string> = {
   "PATOS": "https://en.wikipedia.org/wiki/Special:FilePath/Pafos_FC_crest.svg",
   "CSKA SOFİA": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
   "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
-  
+  "BODO" : "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png", 
   "ST GALLEN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_St._Gallen_logo.svg",
   "SPARTAK TRNAVA": "https://tr.wikipedia.org/wiki/Special:FilePath/Spartak_Trnava_current_logo.png",
   "CSKA 1948": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_1948_logo.png",
