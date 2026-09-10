@@ -220,10 +220,13 @@ export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
-  // 🔴 SEYİRCİ SES MOTORU STATE VE REFLERİ 🔴
+  // 🔴 SEYİRCİ SES VE ŞİMŞEK MOTORU STATE VE REFLERİ 🔴
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
+  
+  // Hangi maçların o an alevlendiğini (gol olduğunu) tutan hafıza
+  const [goalFlashes, setGoalFlashes] = useState<Record<number, boolean>>({});
 
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
@@ -418,8 +421,10 @@ export default function LiveMatchCard() {
         }
         setLiveMatchesData(liveMap);
 
-        // 🔴 CANLI SEYİRCİ GOL RADARI (SES MOTORU) 🔴
+        // 🔴 CANLI SEYİRCİ GOL RADARI (SES & YEŞİL ŞİMŞEK MOTORU) 🔴
         let goalHappened = false;
+        let newGoalIds: number[] = [];
+
         Object.keys(liveMap).forEach(key => {
             const dbMatch = liveMap[Number(key)];
             // Sadece canlı veya bitmiş maçlardaki skor artışını yakalar
@@ -431,6 +436,7 @@ export default function LiveMatchCard() {
                     // Eski bir skor hafızası var ve yeni skorla eşleşmiyorsa GOL OLMUŞTUR!
                     if (prevScore && prevScore !== currentScore) {
                         goalHappened = true;
+                        newGoalIds.push(Number(key)); // Hangi maçta gol olduğunu hafızaya al
                     }
                     // Hafızayı güncelle
                     prevScoresRef.current[key] = currentScore;
@@ -438,10 +444,29 @@ export default function LiveMatchCard() {
             }
         });
 
-        // Eğer gol olduysa ve izleyici ses kilidini (butonla) açtıysa sesi patlat!
-        if (goalHappened && soundEnabledRef.current) {
-            const audio = new Audio('/sounds/goal.mp3');
-            audio.play().catch(e => console.log("Tarayıcı engeli veya ses çalınamadı:", e));
+        if (goalHappened) {
+            // Sesi patlat
+            if (soundEnabledRef.current) {
+                const audio = new Audio('/sounds/goal.mp3');
+                audio.play().catch(e => console.log("Tarayıcı engeli veya ses çalınamadı:", e));
+            }
+            
+            // Yeşil Şimşeği patlat (8 saniye sürecek)
+            if (newGoalIds.length > 0) {
+                setGoalFlashes(prev => {
+                    const next = { ...prev };
+                    newGoalIds.forEach(id => { next[id] = true; });
+                    return next;
+                });
+
+                setTimeout(() => {
+                    setGoalFlashes(prev => {
+                        const next = { ...prev };
+                        newGoalIds.forEach(id => { delete next[id]; });
+                        return next;
+                    });
+                }, 8000);
+            }
         }
 
         // 🔴 YENİ: SEYİRCİLER İÇİN "CANLI LİDERLİK RADARI" MATEMATİĞİ 🔴
@@ -610,6 +635,7 @@ export default function LiveMatchCard() {
 
       const uniqueId = getUniqueMatchId(activeWeek, match.id);
       const dbMatch = liveMatchesData[uniqueId] || {};
+      const isGoalFlashing = goalFlashes[uniqueId]; // GOL OLDU MU?
       
       let matchStatus = dbMatch.status || 'NOT_STARTED';
       let homeScore = dbMatch.home_score || '-';
@@ -698,9 +724,11 @@ export default function LiveMatchCard() {
         <div 
           key={match.id} 
           className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
-            isExpanded 
-              ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
-              : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
+            isGoalFlashing 
+              ? 'goal-lightning' 
+              : isExpanded 
+                ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
+                : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
           }`}
         >
           {theme.bgImg && (
@@ -709,7 +737,7 @@ export default function LiveMatchCard() {
                 className="absolute inset-0 z-0 opacity-100"
                 style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
               ></div>
-              <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
+              <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded || isGoalFlashing ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
             </>
           )}
 
@@ -725,10 +753,12 @@ export default function LiveMatchCard() {
               
               <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
                 <div className={`flex items-center justify-center min-w-[60px] px-3 rounded-lg border shadow-inner backdrop-blur-md transition-all ${
-                  matchStatus === 'LIVE' ? 'py-1.5 bg-red-950/50 border-red-500/50 animate-pulse' : 'py-1.5 bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'
+                  isGoalFlashing ? 'bg-green-900/80 border-green-400 shadow-[0_0_20px_rgba(74,222,128,0.8)] scale-110' :
+                  matchStatus === 'LIVE' ? 'py-1.5 bg-green-950/50 border-green-500/50 animate-pulse' : 'py-1.5 bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'
                 }`}>
                   <span className={`font-black whitespace-nowrap tracking-widest ${
-                    matchStatus === 'LIVE' ? 'text-xs sm:text-sm text-red-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
+                    isGoalFlashing ? 'text-sm sm:text-base text-green-300' :
+                    matchStatus === 'LIVE' ? 'text-xs sm:text-sm text-green-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
                   }`}>
                     {matchStatus === 'NOT_STARTED' ? match.time : `${homeScore} - ${awayScore}`}
                   </span>
@@ -787,9 +817,9 @@ export default function LiveMatchCard() {
                       </div>
                     )}
                     {matchStatus === 'LIVE' && (
-                      <div className="bg-red-950/80 border border-red-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                        <span className="text-red-500 text-[10px] font-black tracking-widest">CANLI</span>
+                      <div className="bg-green-950/80 border border-green-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md z-40 relative">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        <span className="text-green-500 text-[10px] font-black tracking-widest">CANLI</span>
                       </div>
                     )}
                     {matchStatus === 'WAITING_APPROVAL' && (
@@ -803,10 +833,10 @@ export default function LiveMatchCard() {
                       </div>
                     )}
 
-                    <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                      <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{homeScore}</span>
+                    <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-green-400 shadow-[0_0_30px_rgba(74,222,128,0.8)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-green-300 scale-125' : 'text-white'}`}>{homeScore}</span>
                       <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                      <span className="text-xl sm:text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{awayScore}</span>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-green-300 scale-125' : 'text-white'}`}>{awayScore}</span>
                     </div>
 
                     {matchStatus === 'NOT_STARTED' && countdownText && (
@@ -931,6 +961,24 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
+      {/* 🔴 ŞİMŞEK ÇAKMASI ANİMASYON STİLİ 🔴 */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes lightning {
+          0% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
+          15% { box-shadow: 0 0 60px #22c55e, inset 0 0 40px #22c55e; border-color: #22c55e; background-color: rgba(34, 197, 94, 0.4); }
+          30% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
+          45% { box-shadow: 0 0 80px #16a34a, inset 0 0 60px #16a34a; border-color: #16a34a; background-color: rgba(22, 163, 74, 0.5); }
+          60% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
+          100% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
+        }
+        .goal-lightning {
+          animation: lightning 0.5s ease-in-out infinite;
+          z-index: 50;
+          transform: scale(1.02);
+          transition: all 0.3s;
+        }
+      `}} />
+
       {/* 🔴 SEYİRCİ SES KONTROLÜ */}
       <div className="w-full flex justify-end px-2 sm:px-0">
           <button
@@ -945,7 +993,7 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
-      {/* 🔴 YENİ: DEV CANLI LİDERLİK RADARI (SADECE BİRİLERİ PUAN ALDIYSA GÖRÜNÜR) 🔴 */}
+      {/* 🔴 DEV CANLI LİDERLİK RADARI 🔴 */}
       {weeklyLiveStats.maxPts > 0 && (
           <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
               <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
@@ -1019,11 +1067,11 @@ export default function LiveMatchCard() {
               >
                 <div className="flex-1 flex items-center gap-2">
                   <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                   </span>
                 </div> 
-                <h2 className="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest drop-shadow-md text-center">
+                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">
                   GÜNÜN CANLI MAÇLARI ({activeMatches.length})
                 </h2>
                 <div className="flex-1 flex justify-end">
