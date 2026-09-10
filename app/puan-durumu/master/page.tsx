@@ -128,7 +128,7 @@ export default function MasterPuanDurumuPage() {
             if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else if(winnerIds.length >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
-                dynamicExactScores[weekNum][wId] += 1; 
+                dynamicExactScores[weekNum][wId] += 1; // SKOR KRALI SAYACI
                 if (dbMatch.status === 'FINISHED') dynamicBase[weekNum][wId] += points;
                 else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') { 
                     dynamicLive[weekNum][wId] += points; 
@@ -149,11 +149,7 @@ export default function MasterPuanDurumuPage() {
 
       for (let w = 5; w <= highestWeekFound; w++) {
           const match24 = uniqueMatches[w * 100 + 24];
-          
-          // 🔴 EKMEL KANUNU KİLİDİ 🔴
-          // Sadece EN YÜKSEK (Güncel) haftanın 24. maçı canlıysa heyecan motorunu çalıştırır.
-          // Yeni haftanın maçı başladığında (highestWeekFound artınca), eski haftanın canlı bonusları anında sıfırlanır!
-          if (w === highestWeekFound && match24 && (match24.status === 'LIVE' || match24.status === 'WAITING_APPROVAL')) {
+          if (match24 && (match24.status === 'LIVE' || match24.status === 'WAITING_APPROVAL')) {
               
               let maxPts = -1;
               let ptLeaders: string[] = [];
@@ -171,6 +167,7 @@ export default function MasterPuanDurumuPage() {
                   else if (sc === maxSc) { scLeaders.push(id); }
               });
 
+              // SADECE TEK TABANCAYSA CANLI ROZET VER
               if (ptLeaders.length === 1) {
                   const leaderId = ptLeaders[0];
                   const cleanName = playersList[leaderId].replace(/🏆/g, '').trim().toUpperCase();
@@ -204,7 +201,7 @@ export default function MasterPuanDurumuPage() {
             const wBase = dynamicBase[w][id];
             const wLive = dynamicLive[w][id];
             const wBonusAdmin = (dynamicBonuses[w] && dynamicBonuses[w][id]) ? dynamicBonuses[w][id] : 0;
-            const wBonusLive = liveBonusPoints[w][id] || 0; 
+            const wBonusLive = liveBonusPoints[w][id] || 0; // Canlı heyecan puanı
             
             playerObj[`w${w}`] = wBase + wLive + wBonusAdmin + wBonusLive;
             totalDynBase += wBase + wBonusAdmin;
@@ -246,22 +243,22 @@ export default function MasterPuanDurumuPage() {
         if (activeTab === 'w3' && historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3]) badges = historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3];
         if (activeTab === 'w4' && historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4]) badges = historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4];
 
+        // Mühürlü Rozetler
         if (activeTab.startsWith('w') && parseInt(activeTab.replace('w', '')) >= 5) {
             const dynamicB = dynamicBadges[`${activeTab}-${cleanName}`];
             if (dynamicB) badges = [...badges, ...dynamicB];
             
+            // Canlı Önizleme Rozetleri
             const liveB = liveBadges[`${activeTab}-${cleanName}`];
             if (liveB) badges = [...badges, ...liveB];
         }
 
-     // 🔴 EKMEL KEMER KANUNU: ŞAMPİYONLUK ROZETİ SADECE GÜNCEL HAFTADA TAKILIR 🔴
+        // Toplam sayfada hem canlı hem de mühürlü rozetleri göstermek için
+        // 🔴 EKMEL KEMER KANUNU: ŞAMPİYONLUK ROZETİ SADECE GÜNCEL HAFTADA TAKILIR 🔴
         if (activeTab === 'total') {
-            // Sadece içinde bulunduğumuz (En yüksek) haftanın mühürlü rozetini Total'de gösterir.
-            // Yeni haftanın 1. maçı başladığı an (highestWeekFound artınca) bu rozet Total'den anında silinir!
             const dynB = dynamicBadges[`w${highestWeekFound}-${cleanName}`];
             if (dynB) badges = [...badges, ...dynB];
 
-            // Canlı rozetler zaten sadece o an oynanan 24. maça aittir
             const liveB = liveBadges[`w${highestWeekFound}-${cleanName}`];
             if (liveB) badges = [...badges, ...liveB];
         }
