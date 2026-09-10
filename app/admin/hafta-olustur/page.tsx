@@ -23,7 +23,7 @@ type ScoreState = {
 const MOCK_FIXTURES: MatchItem[] = [
   { id: 1, mac_no: 1, ev_sahibi: "OLIMPIYAKOS", deplasman: "NEC NUMEGEN", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
   { id: 2, mac_no: 2, ev_sahibi: "SPARTA PRAG", deplasman: "OLIMPIC LYON", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
-  { id: 3, mac_no: 3, ev_sahibi: "USG", deplasman: "BODO-GLIMT", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
+  { id: 3, mac_no: 3, ev_sahibi: "USG", deplasman: "BODO", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
   { id: 4, mac_no: 4, ev_sahibi: "FENERBAHÇE", deplasman: "STURM GRAZ", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
   { id: 5, mac_no: 5, ev_sahibi: "PANATHINAIKOS", deplasman: "CSKA 1948", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
   { id: 6, mac_no: 6, ev_sahibi: "HRADEC KRALOVE", deplasman: "BEŞİKTAŞ", tur: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İL", kategori: "dfo" },
