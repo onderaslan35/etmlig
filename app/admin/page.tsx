@@ -304,7 +304,7 @@ const localTeamLogos: Record<string, string> = {
   "REIMS": "https://images.fotmob.com/image_resources/logo/teamlogo/9837.png",
 
   // 🔴 HOLLANDA (EREDIVISIE) - FOTMOB
-  "PSV Eindhoven": "https://img.uefa.com/imgml/TP/teams/logos/240x240/50062.png",
+  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640_large.png",
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/8656.png",
   "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
 
