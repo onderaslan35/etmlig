@@ -174,7 +174,7 @@ const localTeamLogos: Record<string, string> = {
   "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "ST. MIRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
-  "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "SLAVIA PRAGUE": "https://img.uefa.com/imgml/TP/teams/logos/240x240/52498.png",
   
 
   // YEREL KLASÖRLER
