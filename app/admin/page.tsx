@@ -445,6 +445,30 @@ export default function AdminRadarPortal() {
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 1. ADIM: Sayfa açıldığında sesi mermiye sür (Preload)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+       audioRef.current = new Audio('/sounds/goal.mp3');
+       audioRef.current.load(); 
+    }
+  }, []);
+
+  // 2. ADIM: Tarayıcının ses kilidini açan taktiksel hile
+  const handleSoundToggle = () => {
+     const newState = !isSoundEnabled;
+     setIsSoundEnabled(newState);
+     if (newState && audioRef.current) {
+         // Kilidi açmak için sessizce çalıp durduruyoruz
+         audioRef.current.muted = true;
+         audioRef.current.play().then(() => {
+             audioRef.current!.pause();
+             audioRef.current!.currentTime = 0;
+             audioRef.current!.muted = false; // Sesi tekrar normale çevir
+         }).catch(e => console.log("Ses kilidi açılamadı:", e));
+     }
+  };
 
   const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({
      'skorcum01': true,
@@ -722,9 +746,9 @@ export default function AdminRadarPortal() {
       setDistributedMatches(lockedMatches);
       setLiveInfoStateMap(infoMap);
 
-      if (goalHappened && isSoundEnabled) {
-         const audio = new Audio('/sounds/goal.mp3');
-         audio.play().catch(e => console.log("Ses çalınamadı:", e));
+      if (goalHappened && isSoundEnabled && audioRef.current) {
+         audioRef.current.currentTime = 0; // Üst üste gol olursa sesi anında başa sar
+         audioRef.current.play().catch(e => console.log("Ses çalınamadı:", e));
       }
 
       if (allPredictions.length > 0) {
@@ -1520,7 +1544,7 @@ export default function AdminRadarPortal() {
                  </button>
 
                  <button 
-                    onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                    onClick={handleSoundToggle}
                     className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md ${
                         isSoundEnabled ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500' : 'bg-slate-800/50 text-slate-500 border border-slate-700 hover:bg-slate-800'
                     }`}
