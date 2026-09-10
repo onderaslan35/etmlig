@@ -1326,7 +1326,7 @@ export default function AdminRadarPortal() {
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni veritabanına mühürlendi!\n\nŞu an:\n1. Maç Arşivi'nde ${bulletinWeek}. Hafta otomatik olarak oluştu.\n2. Lobi ekranı kapılarını açmak için Cuma 21:00'ı bekliyor.`);
+      alert("✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nTahminler kapısı an itibarıyla aslanlara açıldı, Cuma 21:00 kuralı iptal!");
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
     setIsPublishing(false);
   };
