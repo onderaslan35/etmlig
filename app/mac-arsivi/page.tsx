@@ -174,8 +174,8 @@ const localTeamLogos: Record<string, string> = {
   "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
   
   // 🔴 HOLLANDA LİGİ (EREDIVISIE)
-  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
-  "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8640.png",
+  "PSV Eindhoven": "https://images.fotmob.com/image_resources/logo/teamlogo/8640_large.png",
+  
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
   
   // 🔴 BELÇİKA LİGİ (PRO LEAGUE)
