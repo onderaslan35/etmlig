@@ -254,14 +254,16 @@ export default function MasterPuanDurumuPage() {
             if (liveB) badges = [...badges, ...liveB];
         }
 
+     // 🔴 EKMEL KEMER KANUNU: ŞAMPİYONLUK ROZETİ SADECE GÜNCEL HAFTADA TAKILIR 🔴
         if (activeTab === 'total') {
-            for (let w = 5; w <= highestWeekFound; w++) {
-                const liveB = liveBadges[`w${w}-${cleanName}`];
-                if (liveB) badges = [...badges, ...liveB];
-                
-                const dynB = dynamicBadges[`w${w}-${cleanName}`];
-                if (dynB) badges = [...badges, ...dynB];
-            }
+            // Sadece içinde bulunduğumuz (En yüksek) haftanın mühürlü rozetini Total'de gösterir.
+            // Yeni haftanın 1. maçı başladığı an (highestWeekFound artınca) bu rozet Total'den anında silinir!
+            const dynB = dynamicBadges[`w${highestWeekFound}-${cleanName}`];
+            if (dynB) badges = [...badges, ...dynB];
+
+            // Canlı rozetler zaten sadece o an oynanan 24. maça aittir
+            const liveB = liveBadges[`w${highestWeekFound}-${cleanName}`];
+            if (liveB) badges = [...badges, ...liveB];
         }
 
         let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
