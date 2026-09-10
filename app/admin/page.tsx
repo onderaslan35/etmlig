@@ -1033,10 +1033,17 @@ export default function AdminRadarPortal() {
     const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
     if (action === 'Skoru Güncelle') {
+      // 🔴 SESİ BURADA PATLATIYORUZ (Kullanıcı tıkladığı an çaldığı için tarayıcı ENGELLEYEMEZ!)
+      if (isSoundEnabled && audioRef.current) {
+         audioRef.current.currentTime = 0;
+         audioRef.current.play().catch(e => console.log("Ses çalınamadı:", e));
+      }
+
       const { error: liveError } = await supabase.from('live_matches').upsert({ 
          id: uniqueId, home_score: homeScore, away_score: awayScore, status: 'LIVE',
          updated_by: userRole, updated_at: timeString 
       }, { onConflict: 'id' });
+      
       if (liveError) alert("Canlı skor tablosu güncellenirken hata: " + liveError.message);
       else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek.`);
       return;
