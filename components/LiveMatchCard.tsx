@@ -163,7 +163,6 @@ const localTeamLogos: Record<string, string> = {
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
 
-
   //// YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
   "KORTRIJK": "https://images.fotmob.com/image_resources/logo/teamlogo/8571_large.png",
@@ -231,6 +230,9 @@ export default function LiveMatchCard() {
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
   const [now, setNow] = useState<number>(new Date().getTime());
   
+  // 🔴 CANLI LİDERLİK RADARI STATE'İ 🔴
+  const [weeklyLiveStats, setWeeklyLiveStats] = useState<{ pLeaders: string[], maxPts: number, sLeaders: string[], maxScores: number }>({ pLeaders: [], maxPts: 0, sLeaders: [], maxScores: 0 });
+
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   
@@ -442,6 +444,50 @@ export default function LiveMatchCard() {
             audio.play().catch(e => console.log("Tarayıcı engeli veya ses çalınamadı:", e));
         }
 
+        // 🔴 YENİ: SEYİRCİLER İÇİN "CANLI LİDERLİK RADARI" MATEMATİĞİ 🔴
+        let stats: Record<string, { points: number, exactScores: number }> = {};
+        Object.keys(mergedAccounts).forEach(uid => {
+            stats[uid] = { points: 0, exactScores: 0 };
+        });
+
+        dbBulletinMatches.forEach(m => {
+            const uniqueId = getUniqueMatchId(activeWeek, m.match_index);
+            const dbMatch = liveMap[uniqueId];
+            
+            if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+                const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+                
+                const winnerIds = Object.keys(predDict).filter(id => predDict[id][m.match_index - 1] === targetScore);
+                
+                let pts = 1;
+                if(winnerIds.length === 1) pts = 12;
+                else if(winnerIds.length === 2) pts = 6;
+                else if(winnerIds.length === 3) pts = 5;
+                else if(winnerIds.length === 4) pts = 4;
+                else if(winnerIds.length === 5) pts = 3;
+                else if(winnerIds.length === 6) pts = 2;
+                else if(winnerIds.length >= 7) pts = 1;
+                else pts = 0;
+
+                winnerIds.forEach(wId => {
+                    if(!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
+                    stats[wId].points += pts;
+                    stats[wId].exactScores += 1;
+                });
+            }
+        });
+
+        let mPts = 0; let mScores = 0;
+        Object.values(stats).forEach(s => {
+            if (s.points > mPts) mPts = s.points;
+            if (s.exactScores > mScores) mScores = s.exactScores;
+        });
+
+        let pLeadersList = Object.keys(stats).filter(uid => stats[uid].points === mPts && mPts > 0);
+        let sLeadersList = Object.keys(stats).filter(uid => stats[uid].exactScores === mScores && mScores > 0);
+
+        setWeeklyLiveStats({ pLeaders: pLeadersList, maxPts: mPts, sLeaders: sLeadersList, maxScores: mScores });
+
         // 🔴 KUSURSUZ ZAMAN KİLİDİ 🔴
         const todaysMatches = currentWeekMatches.filter(m => {
              const uniqueId = getUniqueMatchId(activeWeek, m.id);
@@ -517,7 +563,7 @@ export default function LiveMatchCard() {
     fetchMatchesAndPredictions(); 
     const interval = setInterval(fetchMatchesAndPredictions, 5000); 
     return () => clearInterval(interval);
-  }, [activeWeek, isWeekLoaded]);
+  }, [activeWeek, isWeekLoaded, mergedAccounts]);
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
@@ -537,17 +583,6 @@ export default function LiveMatchCard() {
     return (
       <div className="w-full max-w-6xl mx-auto mb-8 flex justify-center py-10">
          <span className="text-slate-500 text-sm font-medium animate-pulse tracking-widest">📡 Radar Ayarlanıyor...</span>
-      </div>
-    );
-  }
-
-  if (todaysMatchesList.length === 0) {
-    return (
-      <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
-        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
-          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
-          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
-        </div>
       </div>
     );
   }
@@ -896,7 +931,7 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
-      {/* 🔴 SEYİRCİ SES KONTROLÜ (BU BUTON SAYESİNDE TARAYICI ENGELİ AŞILIYOR) 🔴 */}
+      {/* 🔴 SEYİRCİ SES KONTROLÜ */}
       <div className="w-full flex justify-end px-2 sm:px-0">
           <button
               onClick={toggleSound}
@@ -910,59 +945,102 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
-      {finishedMatches.length > 0 && (
-        <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
-          <button 
-            onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
-            className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group"
-          >
-            <div className="flex-1"></div> 
-            <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">
-              📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})
-            </h2>
-            <div className="flex-1 flex justify-end">
-              <div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}>
-                <span className="text-slate-500 text-[10px] sm:text-xs">▼</span>
+      {/* 🔴 YENİ: DEV CANLI LİDERLİK RADARI (SADECE BİRİLERİ PUAN ALDIYSA GÖRÜNÜR) 🔴 */}
+      {weeklyLiveStats.maxPts > 0 && (
+          <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
+              <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
+                  <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+                  <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
+                      <span className="text-emerald-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">🔥 HAFTANIN PUAN LİDERİ</span>
+                      <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
+                          {weeklyLiveStats.pLeaders.length > 0 
+                              ? weeklyLiveStats.pLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
+                              : 'MÜSTAKİL LİDER YOK'}
+                      </span>
+                      <span className="text-emerald-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-emerald-950/50 px-2.5 py-0.5 rounded shadow-sm border border-emerald-800/50">
+                          {weeklyLiveStats.pLeaders.length > 0 ? `${weeklyLiveStats.maxPts} PUAN` : '---'}
+                      </span>
+                  </div>
+
+                  <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
+                      <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">⚽ HAFTANIN SKOR KRALI</span>
+                      <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
+                          {weeklyLiveStats.sLeaders.length > 0 
+                              ? weeklyLiveStats.sLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
+                              : 'MÜSTAKİL KRAL YOK'}
+                      </span>
+                      <span className="text-amber-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-amber-950/50 px-2.5 py-0.5 rounded shadow-sm border border-amber-800/50">
+                          {weeklyLiveStats.sLeaders.length > 0 ? `${weeklyLiveStats.maxScores} TAM İSABET` : '---'}
+                      </span>
+                  </div>
               </div>
-            </div>
-          </button>
-          
-          {isFinishedAccordionOpen && (
-            <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
-              {finishedMatches.map(match => renderMatchCard(match, true))}
-            </div>
-          )}
-        </div>
+          </div>
       )}
 
-      {activeMatches.length > 0 && (
-        <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
-          <button 
-            onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
-          >
-            <div className="flex-1 flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-              </span>
-            </div> 
-            <h2 className="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest drop-shadow-md text-center">
-              GÜNÜN CANLI MAÇLARI ({activeMatches.length})
-            </h2>
-            <div className="flex-1 flex justify-end">
-              <div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}>
-                <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
-              </div>
-            </div>
-          </button>
-          
-          {isLiveAccordionOpen && (
-            <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
-              {activeMatches.map(match => renderMatchCard(match, false))}
+      {todaysMatchesList.length === 0 ? (
+        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
+          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
+          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
+        </div>
+      ) : (
+        <>
+          {finishedMatches.length > 0 && (
+            <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
+              <button 
+                onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
+                className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group"
+              >
+                <div className="flex-1"></div> 
+                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">
+                  📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})
+                </h2>
+                <div className="flex-1 flex justify-end">
+                  <div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}>
+                    <span className="text-slate-500 text-[10px] sm:text-xs">▼</span>
+                  </div>
+                </div>
+              </button>
+              
+              {isFinishedAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
+                  {finishedMatches.map(match => renderMatchCard(match, true))}
+                </div>
+              )}
             </div>
           )}
-        </div>
+
+          {activeMatches.length > 0 && (
+            <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
+              <button 
+                onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
+              >
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                  </span>
+                </div> 
+                <h2 className="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest drop-shadow-md text-center">
+                  GÜNÜN CANLI MAÇLARI ({activeMatches.length})
+                </h2>
+                <div className="flex-1 flex justify-end">
+                  <div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}>
+                    <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
+                  </div>
+                </div>
+              </button>
+              
+              {isLiveAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+                  {activeMatches.map(match => renderMatchCard(match, false))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
     </div>
