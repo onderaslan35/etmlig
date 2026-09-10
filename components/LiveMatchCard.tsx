@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 
 // 🔴 ANA YARIŞMACI LİSTESİ (SABİT BETON KADRO) 🔴
@@ -134,6 +134,7 @@ const localTeamLogos: Record<string, string> = {
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
+  
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
@@ -155,10 +156,13 @@ const localTeamLogos: Record<string, string> = {
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
   "ATLETICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
+
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
-  
-  "PSV Eindhoven" : "https://images.fotmob.com/image_resources/logo/teamlogo/8640_large.png",
+
+  "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "RANGERS" : "https://images.fotmob.com/image_resources/logo/teamlogo/8548_large.png",
+
 
   //// YENİ İKMAL LOGOLARI
   "OH LEUVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/1773_large.png",
@@ -217,6 +221,11 @@ export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
+  // 🔴 SEYİRCİ SES MOTORU STATE VE REFLERİ 🔴
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+  const prevScoresRef = useRef<Record<string, string>>({});
+
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
@@ -233,6 +242,23 @@ export default function LiveMatchCard() {
 
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
+  // 🔴 SEYİRCİ SES KİLİDİ AÇICI 🔴
+  const toggleSound = () => {
+      const newState = !soundEnabled;
+      setSoundEnabled(newState);
+      soundEnabledRef.current = newState;
+      
+      // İlk tıklamada sessizce çalıp tarayıcı güvenlik kilidini kırıyoruz!
+      if (newState) {
+          const audio = new Audio('/sounds/goal.mp3');
+          audio.muted = true;
+          audio.play().then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+          }).catch(e => console.log("Ses kilidi kırılamadı:", e));
+      }
+  };
+
   useEffect(() => {
      const fetchDbPlayers = async () => {
         const { data } = await supabase.from('players').select('*');
@@ -247,7 +273,7 @@ export default function LiveMatchCard() {
      fetchDbPlayers();
   }, []);
 
-  // 🔴 OTOMATİK RADAR: Sisteme girince bugünün haftasını otomatik bulur 🔴
+  // 🔴 OTOMATİK RADAR 🔴
   useEffect(() => {
       const initWeek = async () => {
           const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
@@ -389,6 +415,32 @@ export default function LiveMatchCard() {
           dbLiveMatches.forEach(row => liveMap[row.id] = row); 
         }
         setLiveMatchesData(liveMap);
+
+        // 🔴 CANLI SEYİRCİ GOL RADARI (SES MOTORU) 🔴
+        let goalHappened = false;
+        Object.keys(liveMap).forEach(key => {
+            const dbMatch = liveMap[Number(key)];
+            // Sadece canlı veya bitmiş maçlardaki skor artışını yakalar
+            if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL' || dbMatch.status === 'FINISHED') {
+                if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+                    const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+                    const prevScore = prevScoresRef.current[key];
+
+                    // Eski bir skor hafızası var ve yeni skorla eşleşmiyorsa GOL OLMUŞTUR!
+                    if (prevScore && prevScore !== currentScore) {
+                        goalHappened = true;
+                    }
+                    // Hafızayı güncelle
+                    prevScoresRef.current[key] = currentScore;
+                }
+            }
+        });
+
+        // Eğer gol olduysa ve izleyici ses kilidini (butonla) açtıysa sesi patlat!
+        if (goalHappened && soundEnabledRef.current) {
+            const audio = new Audio('/sounds/goal.mp3');
+            audio.play().catch(e => console.log("Tarayıcı engeli veya ses çalınamadı:", e));
+        }
 
         // 🔴 KUSURSUZ ZAMAN KİLİDİ 🔴
         const todaysMatches = currentWeekMatches.filter(m => {
@@ -844,6 +896,20 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
+      {/* 🔴 SEYİRCİ SES KONTROLÜ (BU BUTON SAYESİNDE TARAYICI ENGELİ AŞILIYOR) 🔴 */}
+      <div className="w-full flex justify-end px-2 sm:px-0">
+          <button
+              onClick={toggleSound}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
+                  soundEnabled
+                  ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                  : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
+              }`}
+          >
+              {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
+          </button>
+      </div>
+
       {finishedMatches.length > 0 && (
         <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
           <button 
