@@ -141,7 +141,7 @@ const localTeamLogos: Record<string, string> = {
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
-  "Bodø/Glimt": "https://images.fotmob.com/image_resources/logo/teamlogo/8402_large.png",
+  
   
   
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
@@ -304,8 +304,7 @@ const localTeamLogos: Record<string, string> = {
   "REIMS": "https://images.fotmob.com/image_resources/logo/teamlogo/9837.png",
 
   // 🔴 HOLLANDA (EREDIVISIE) - FOTMOB
-  "PSV": "https://images.fotmob.com/image_resources/logo/teamlogo/8614.png",
-  "PSV EINDHOVEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8614.png",
+  "PSV Eindhoven": "https://images.fotmob.com/image_resources/logo/teamlogo/8614.png",
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/8656.png",
   "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
 
