@@ -46,7 +46,7 @@ const localTeamLogos: Record<string, string> = {
   "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
   "SABAH FK": "https://en.wikipedia.org/wiki/Special:FilePath/Sabah_FC_(Azerbaijan).png",
   "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
-  "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
+  "THUN": "https://tr.wikipedia.org/wikidSpecial:FilePath/FC_Thun_Logo_2011.svg",
   "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
   "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
   "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
