@@ -217,6 +217,7 @@ const isTffMatchCheck = (category: string) => {
 };
 
 export default function LiveMatchCard() {
+  console.log("VERCEL KURTARMA SOKU");
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
