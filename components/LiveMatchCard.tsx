@@ -156,6 +156,7 @@ const localTeamLogos: Record<string, string> = {
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "ATLÉTICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
   "ATLETICO MADRID": "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png",
+  "LIVERPOOL": "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png",
 
   "SABAHFK": "https://images.fotmob.com/image_resources/logo/teamlogo/951893_large.png",
 
