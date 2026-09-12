@@ -199,7 +199,7 @@ const localTeamLogos: Record<string, string> = {
   "COVENTRY CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8288.png",
   "CRYSTAL PALACE": "https://images.fotmob.com/image_resources/logo/teamlogo/9826.png",
   "EVERTON": "https://images.fotmob.com/image_resources/logo/teamlogo/8668.png",
-  "FULHAM": "https://images.fotmob.com/image_resources/logo/teamlogo/8701.png",
+  "FULHAM": "https://images.fotmob.com/image_resources/logo/teamlogo/9879_large.png",
   "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
   "IPSWICH TOWN": "https://images.fotmob.com/image_resources/logo/teamlogo/8677.png",
   "LEEDS UNITED": "https://images.fotmob.com/image_resources/logo/teamlogo/8463.png",
