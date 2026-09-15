@@ -36,7 +36,11 @@ export default function MasterPuanDurumuPage() {
       
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
-        dbPlayers.forEach(p => { playersList[p.id] = p.name || p.full_name; });
+        dbPlayers.forEach(p => { 
+          // Yeni ID sütununu (username) kullanarak eşleştir
+          const pid = p.username || p.id;
+          playersList[pid] = p.name || p.full_name; 
+        });
       }
 
       if (dbBonusPoints) {
@@ -186,6 +190,7 @@ export default function MasterPuanDurumuPage() {
           }
       }
 
+      // 🔴 SIFIR PUANI OLANLARI DA VİTRİNE KOYAN MOTOR 🔴
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
@@ -198,8 +203,8 @@ export default function MasterPuanDurumuPage() {
         let totalDynLive = 0;
 
         for (let w = 5; w <= highestWeekFound; w++) {
-            const wBase = dynamicBase[w][id];
-            const wLive = dynamicLive[w][id];
+            const wBase = dynamicBase[w][id] || 0;
+            const wLive = dynamicLive[w][id] || 0;
             const wBonusAdmin = (dynamicBonuses[w] && dynamicBonuses[w][id]) ? dynamicBonuses[w][id] : 0;
             const wBonusLive = liveBonusPoints[w][id] || 0; // Canlı heyecan puanı
             
