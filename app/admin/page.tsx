@@ -561,13 +561,24 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated, userRole]);
 
+  const fetchDbPlayers = async () => {
+      const { data } = await supabase.from('players').select('*');
+      if (data) {
+         const newAccounts = { ...TEST_ACCOUNTS };
+         data.forEach(p => {
+             newAccounts[String(p.username)] = { pass: p.password, name: p.name };
+         });
+         setMergedAccounts(newAccounts);
+      }
+  };
+
   const fetchAllSystemPlayers = async () => {
-    const { data } = await supabase.from('players').select('*').order('full_name');
+    const { data } = await supabase.from('players').select('*').order('name');
     if (data) {
        setDbPlayersList(data);
        const newMergedMap = { ...staticPlayersList };
        data.forEach((p: any) => {
-          newMergedMap[String(p.username)] = p.full_name; 
+          newMergedMap[String(p.username)] = p.name; 
        });
        setMergedPlayers(newMergedMap); 
     }
@@ -866,7 +877,7 @@ export default function AdminRadarPortal() {
     if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
     setIsPlayerLoading(true);
     try {
-       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), full_name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
+       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
        if (error) throw error;
        alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
        setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
@@ -1356,7 +1367,7 @@ export default function AdminRadarPortal() {
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
-      alert("✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nTahminler kapısı an itibarıyla aslanlara açıldı, Cuma 21:00 kuralı iptal!");
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nTahminler kapısı an itibarıyla aslanlara açıldı, Cuma 21:00 kuralı iptal!`);
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
     setIsPublishing(false);
   };
@@ -1416,7 +1427,7 @@ export default function AdminRadarPortal() {
       if (showOnlyToday) {
           if (isFinished) return false; 
           if (isLive) return true;      
-          return isToday;               
+          return isToday;                
       }
       return true; 
   });
@@ -1960,12 +1971,12 @@ export default function AdminRadarPortal() {
                       <div key={`dyn-${p.id}`} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
                          <div className="flex flex-col">
                             <span className="font-black text-fuchsia-400 text-sm uppercase tracking-wide flex items-center gap-2">
-                               {p.full_name} <span className="text-[8px] bg-fuchsia-950/50 border border-fuchsia-500/30 px-1.5 py-0.5 rounded text-fuchsia-300">YENİ</span>
+                               {p.name} <span className="text-[8px] bg-fuchsia-950/50 border border-fuchsia-500/30 px-1.5 py-0.5 rounded text-fuchsia-300">YENİ</span>
                             </span>
                             <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.username} | ŞİFRE: {p.password}</span>
                          </div>
                          <button 
-                           onClick={() => handleBanishPlayer(p.username, p.full_name)}
+                           onClick={() => handleBanishPlayer(p.username, p.name)}
                            className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
                          >
                            ❌ İHRAÇ ET
