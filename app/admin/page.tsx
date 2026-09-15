@@ -561,16 +561,7 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated, userRole]);
 
-  const fetchDbPlayers = async () => {
-      const { data } = await supabase.from('players').select('*');
-      if (data) {
-         const newAccounts = { ...TEST_ACCOUNTS };
-         data.forEach(p => {
-             newAccounts[String(p.username)] = { pass: p.password, name: p.name };
-         });
-         setMergedAccounts(newAccounts);
-      }
-  };
+  
 
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('name');
