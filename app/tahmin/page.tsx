@@ -488,8 +488,8 @@ export default function TahminlerPortal() {
         if (data) {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
-               if (!newAccounts[String(p.user_id)]) {
-                 newAccounts[String(p.user_id)] = { pass: p.password, name: p.full_name };
+               if (!newAccounts[String(p.username)]) {
+                 newAccounts[String(p.username)] = { pass: p.password, name: p.name };
                }
            });
            setMergedAccounts(newAccounts);
