@@ -62,8 +62,10 @@ export default function SkorDurumuPage() {
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
         dbPlayers.forEach(p => {
-          if (p.id !== 'mankoman') {
-             playersList[p.id] = p.name || p.full_name;
+          if (p.id !== 'mankoman' && p.username !== 'mankoman') {
+             // Yeni ID sütununu (username) kullanarak eşleştir
+             const pid = p.username || p.id;
+             playersList[pid] = p.name || p.full_name;
           }
         });
       }
@@ -151,7 +153,7 @@ export default function SkorDurumuPage() {
       setMaxWeek(highestWeekFound);
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE SKORLARI OLUŞTUR
+      // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE SKORLARI OLUŞTUR 🔴
       const baseList = Object.keys(playersList).map(id => {
         const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
@@ -171,7 +173,7 @@ export default function SkorDurumuPage() {
         let totalDynBase = 0;
         let totalDynLive = 0;
 
-        // BÜTÜN HAFTALARI OTOMATİK TOPLAR (7. Hafta da buraya dahil!)
+        // BÜTÜN HAFTALARI OTOMATİK TOPLAR
         for (let w = 5; w <= highestWeekFound; w++) {
             let wBase = 0;
             let wLive = 0;
