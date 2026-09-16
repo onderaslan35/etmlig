@@ -143,7 +143,8 @@ export const localTeamLogos: Record<string, string> = {
   "VIKING": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
-  "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "Jagiellonia Białystok": "https://images.fotmob.com/image_resources/logo/teamlogo/1957_large.png",
+    "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
 
   // İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
@@ -158,7 +159,7 @@ export const localTeamLogos: Record<string, string> = {
   "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
   "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
   "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
-  "LIVERPOOL": "https://en.wikipedia.org/wiki/Special:FilePath/Liverpool_FC.svg",
+  "LIVERPOOL": "https://images.fotmob.com/image_resources/logo/teamlogo/8650_large.png",
   "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "MANCHESTER UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Manchester_United_FC_crest.svg",
   "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
