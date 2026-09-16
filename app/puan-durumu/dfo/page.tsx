@@ -3,32 +3,21 @@ import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
-const allPlayersList: Record<string, string> = {
-  "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
-  "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
-  "262709": "SALİH KARACAOĞLU", "262719": "UĞUR VARDAR", "262754": "OSMAN ALİ AYDIN 🏆", "262771": "ULAŞ ADIGÜZEL",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262790": "CUMALİ SÖKER", "262717": "MURAT ALİ", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262711": "RIDVAN DOGER", "262731": "FATİH AYAN", "262772": "CEMAL SİVRİKAYA 🏆", "262763": "MUSTAFA ELMAS",
-  "262707": "HAKAN AYAN", "262706": "GAZİ AYAN 🏆🏆", "262813": "KEMAL ERSOY", "262774": "ŞENOL CAN ÇAKICI",
-  "262747": "SAVAŞ ÇAĞLAYAN", "262705": "AHMET BİRCAN 🏆", "262714": "İSMAİL EKER 🏆", "262740": "ABDULLAH DİK",
-  "262702": "MURAT KARA", "262738": "MEVLÜT EVLER", "262753": "YUSUF KIZILTUĞ", "262716": "BİROL DEMİREL",
-  "262750": "MAHMUT CBR", "262734": "LEVENT YILDIRIM", "262725": "İLYAS KAZDAL", "262737": "ŞAHİN GEZGİNCİ",
-  "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY",
-  "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
-  "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA",
-  "262723": "AYHAN LUŞOĞLU"
+// 🔴 DFO İÇİN KESİNLEŞMİŞ (MÜHÜRLÜ) ROZETLER 🔴
+const historicalBadges = {
+  w1: {}, w2: {}, w3: {}, w4: {}
 };
 
 const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category ? category.toUpperCase() : '';
-  return (
-    uppercaseCat.includes("TÜRKİYE") ||
-    uppercaseCat.includes("TFF") ||
-    uppercaseCat.includes("AMATÖR") ||
-    uppercaseCat.includes("PTT") ||
-    uppercaseCat.includes("2.LİG") ||
-    uppercaseCat.includes("3.LİG")
+  if(!category) return false;
+  const uppercaseCat = category.toUpperCase();
+  return ( 
+    uppercaseCat.includes("TÜRKİYE") || 
+    uppercaseCat.includes("TFF") || 
+    uppercaseCat.includes("AMATÖR") || 
+    uppercaseCat.includes("PTT") || 
+    uppercaseCat.includes("2.LİG") || 
+    uppercaseCat.includes("3.LİG") 
   );
 };
 
@@ -37,42 +26,29 @@ export default function DfoPuanDurumuPage() {
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  const [maxWeek, setMaxWeek] = useState<number>(6); // SONSUZ DÖNGÜ İÇİN DİNAMİK HAFTA
+  const [maxWeek, setMaxWeek] = useState<number>(6);
 
   const loadLeaderboard = async () => {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      
-      // 🔥 BÜTÜN DFO MAÇLARINI ÇEKER
+      const { data: dbHistorical } = await supabase.from('dfo_weekly_scores').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
+
+      const dynamicBonuses: Record<number, Record<string, number>> = {};
+      const dynamicBadges: Record<string, string[]> = {};
       
-      // SUPABASE GEÇMİŞ HAFTALAR TABLOSU (dfo_weekly_points)
-      const { data: dbHistorical } = await supabase.from('dfo_weekly_points').select('*');
-
-      const playersList: Record<string, string> = { ...allPlayersList };
+      const playersList: Record<string, string> = {};
       if (dbPlayers) {
-        dbPlayers.forEach(p => {
-          const uid = String(p.username || p.id);
-          playersList[uid] = p.full_name || p.name || allPlayersList[uid] || "Yarışmacı";
+        dbPlayers.forEach(p => { 
+          // 🔴 ŞİFRE ANAHTARI: Username tabanlı ID eşleşmesi 🔴
+          const pid = p.username || p.id;
+          if (pid !== 'mankoman') {
+              playersList[pid] = p.name || p.full_name; 
+          }
         });
       }
 
-      // GEÇMİŞ PUANLARI HARİTAYA YÜKLE
-      const historicalDict: Record<string, { w1: number; w2: number; w3: number; w4: number }> = {};
-      if (dbHistorical) {
-        dbHistorical.forEach(row => {
-          const rowId = String(row.id || row.user_id || row.username);
-          historicalDict[rowId] = {
-            w1: Number(row.w1) || 0,
-            w2: Number(row.w2) || 0,
-            w3: Number(row.w3) || 0,
-            w4: Number(row.w4) || 0
-          };
-        });
-      }
-
-      // 🔥 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI (5. HAFTADAN SONSUZA) 🔥
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -83,31 +59,21 @@ export default function DfoPuanDurumuPage() {
           .from('player_predictions')
           .select('*')
           .gte('week_num', 5)
-          .order('id', { ascending: true })
+          .order('id', { ascending: true }) 
           .range(from, from + step - 1);
-
+          
         if (!error && pDataChunk && pDataChunk.length > 0) {
-          dbPredictions = [...dbPredictions, ...pDataChunk];
-          if (pDataChunk.length < step) fetchMore = false;
-          else from += step;
+           dbPredictions = [...dbPredictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; 
+           else from += step; 
         } else {
-          fetchMore = false;
+           fetchMore = false; 
         }
       }
 
-      // SADECE DFO KATEGORİSİNDEKİ MAÇLARI SÜZER (SENİN ORİJİNAL KURALIN)
-      const dfoMatchSet = new Set<string>();
-      if (dbBulletin) {
-        dbBulletin.forEach(m => {
-          if (!isTffMatchCheck(m.category)) {
-            dfoMatchSet.add(`${m.week_num}-${m.match_index}`);
-          }
-        });
-      }
-
-      // 🔴 ESKİ KÖR LİMİTLER KALDIRILDI! 38. HAFTAYA KADAR HAZIR KASALAR 🔴
       let dynamicBase: Record<number, Record<string, number>> = {};
       let dynamicLive: Record<number, Record<string, number>> = {};
+      
       for (let w = 5; w <= 38; w++) {
           dynamicBase[w] = {}; dynamicLive[w] = {};
           Object.keys(playersList).forEach(id => {
@@ -116,9 +82,15 @@ export default function DfoPuanDurumuPage() {
       }
 
       let isAnyMatchLive = false;
-      let highestWeekFound = 6; // En az 6 sekmesi görünsün
+      let highestWeekFound = 6; 
 
-      // 🔥 TAHMİNLERİ "KULLANICI-HAFTA-MAÇ" OLARAK KUSURSUZ EŞLEŞTİR 🔥
+      const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
+      if(dbHistorical) {
+          dbHistorical.forEach(row => {
+              historicalDict[row.id] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
+          });
+      }
+
       const predDict: Record<string, string> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -127,53 +99,46 @@ export default function DfoPuanDurumuPage() {
         });
       }
 
-      const uniqueMatches: Record<number, any> = {};
+      const catDict: Record<string, string> = {};
+      if (dbBulletin) {
+        dbBulletin.forEach(m => {
+          catDict[`${m.week_num}-${m.match_index}`] = m.category;
+        });
+      }
+
       if (dbMatches) {
-        dbMatches.forEach(row => { uniqueMatches[row.id] = row; });
+        const uniqueMatches: Record<number, any> = {};
+        dbMatches.forEach(row => uniqueMatches[row.id] = row);
 
         Object.values(uniqueMatches).forEach(dbMatch => {
           const weekNum = Math.floor(dbMatch.id / 100);
           const matchIndex = dbMatch.id % 100;
 
-          // 🔥 5 VE 38 ARASINDAKİ TÜM HAFTALARI OTOMATİK TANIR 🔥
-          if (
-            weekNum >= 5 && weekNum <= 38 &&
-            dbMatch.home_score &&
-            dbMatch.home_score !== '-' &&
-            dbMatch.away_score &&
-            dbMatch.away_score !== '-'
-          ) {
-            
-            // Eğer maç DFO bülteninde (havuzunda) yoksa DFO'ya puan VERME (TFF maçıdır)
-            if (!dfoMatchSet.has(`${weekNum}-${matchIndex}`)) return;
-
+          if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
             if (weekNum > highestWeekFound) highestWeekFound = weekNum;
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
+            const category = catDict[`${weekNum}-${matchIndex}`] || "";
+            const isTff = isTffMatchCheck(category);
+            
+            // DFO SADECE DFO (AVRUPA) MAÇLARINI TOPLAR!
+            if (isTff) return; 
+
+            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
             
             const winnerIds = Object.keys(playersList).filter(id => {
-              const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
-              return pScore && pScore === targetScore;
+                const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
+                return pScore && pScore === targetScore;
             });
-
+            
             let points = 1;
-            const wCount = winnerIds.length;
-            if (wCount === 1) points = 12;
-            else if (wCount === 2) points = 6;
-            else if (wCount === 3) points = 5;
-            else if (wCount === 4) points = 4;
-            else if (wCount === 5) points = 3;
-            else if (wCount === 6) points = 2;
-            else if (wCount >= 7) points = 1;
-            else points = 0;
+            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else if(winnerIds.length >= 7) points = 1; else points = 0;
 
             winnerIds.forEach(wId => {
-              if (dbMatch.status === 'FINISHED') {
-                 dynamicBase[weekNum][wId] += points;
-              } else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                 dynamicLive[weekNum][wId] += points;
-                 isAnyMatchLive = true;
-              }
+                if (dbMatch.status === 'FINISHED') dynamicBase[weekNum][wId] += points;
+                else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') { 
+                    dynamicLive[weekNum][wId] += points; 
+                    isAnyMatchLive = true; 
+                }
             });
           }
         });
@@ -182,109 +147,88 @@ export default function DfoPuanDurumuPage() {
       setMaxWeek(highestWeekFound);
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // GEÇMİŞ + SONSUZ HAFTALARI BİRLEŞTİRME
+      // 🔴 SIFIR PUANI OLANLARI DA VİTRİNE KOYAN MOTOR 🔴
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
-        let playerObj: any = {
-          id,
-          name: playersList[id],
-          w1: past.w1,
-          w2: past.w2,
-          w3: past.w3,
-          w4: past.w4
+        let playerObj: any = { 
+          id, name: playersList[id], 
+          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4
         };
 
         let totalDynBase = 0;
         let totalDynLive = 0;
 
-        // BÜTÜN HAFTALARI OTOMATİK TOPLAR (7. Hafta da buraya dahil!)
         for (let w = 5; w <= highestWeekFound; w++) {
-            const wTotal = dynamicBase[w][id] + dynamicLive[w][id];
-            playerObj[`w${w}`] = wTotal;
-            totalDynBase += dynamicBase[w][id];
-            totalDynLive += dynamicLive[w][id];
+            const wBase = dynamicBase[w][id] || 0;
+            const wLive = dynamicLive[w][id] || 0;
+            
+            playerObj[`w${w}`] = wBase + wLive;
+            totalDynBase += wBase;
+            totalDynLive += wLive;
         }
 
         playerObj.total = past.w1 + past.w2 + past.w3 + past.w4 + totalDynBase + totalDynLive;
         playerObj.liveExtra = totalDynLive;
-
         return playerObj;
       });
 
-      const prevRefList = [...baseList].sort((a, b) => {
-        const prevA = a.total - a.liveExtra;
-        const prevB = b.total - b.liveExtra;
-        return prevB - prevA || a.name.localeCompare(b.name, 'tr');
-      });
-
+      const prevRefList = [...baseList].sort((a, b) => (a.total - a.liveExtra) - (b.total - b.liveExtra) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
-      prevRefList.forEach((player, index) => {
-        prevRanks[player.id] = index + 1;
-      });
+      prevRefList.reverse().forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
-      const visibleList = baseList;
+      const visibleList = baseList; 
 
       visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : (a[activeTab] || 0);
-        const scoreB = activeTab === 'total' ? b.total : (b[activeTab] || 0);
+        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
+        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
         return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
       });
 
       const finalRows = visibleList.map((player, index) => {
         const currentRank = index + 1;
-        let trend = 'same';
-        let trendDiff = 0;
-
+        let trend = 'same', trendDiff = 0; 
+        
         if (activeTab === 'total') {
-          const prevRank = prevRanks[player.id];
-          if (currentRank < prevRank) {
-            trend = 'up';
-            trendDiff = prevRank - currentRank;
-          } else if (currentRank > prevRank) {
-            trend = 'down';
-            trendDiff = currentRank - prevRank;
-          }
+            const prevRank = prevRanks[player.id];
+            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        const displayScore = activeTab === 'total' ? player.total : (player[activeTab] || 0);
-        return { ...player, currentRank, trend, trendDiff, displayScore };
-      });
+        let badges: string[] = [];
+        const cleanName = player.name.replace(/🏆/g, '').trim().toUpperCase();
 
+        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
+        return { ...player, currentRank, trend, trendDiff, displayScore, badges };
+      });
+      
       setTableRows(finalRows);
+
     } catch (e) {
-      console.log("DFO verisi çekilirken hata oluştu");
+        console.log("Veri çekilirken hata oluştu");
     }
   };
 
-  useEffect(() => {
-    loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 5000);
-    return () => clearInterval(interval);
-  }, [activeTab]);
+  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-400 tracking-wider uppercase drop-shadow-md">
-          DFO PUAN DURUMU
-        </h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-500 tracking-wider uppercase drop-shadow-md">DFO PUAN DURUMU</h1>
       </div>
-
-      <div className="w-full mb-6">
-        <LiveMatchCard />
-      </div>
-
+      
+      <div className="w-full mb-6"><LiveMatchCard /></div>
+      
       <div className="w-full max-w-3xl mx-auto">
-        <button
+        <button 
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
-          className="w-full bg-[#1d4ed8] hover:bg-blue-600 text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide shadow-md border border-blue-500/50"
         >
           {activeTab === 'total' ? 'DFO TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
         </button>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
-          <div
+          <div 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
           >
@@ -306,9 +250,7 @@ export default function DfoPuanDurumuPage() {
                     key={num}
                     onClick={() => { setActiveTab(`w${num}`); setIsMenuOpen(false); }}
                     className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                      activeTab === `w${num}`
-                        ? 'bg-[#1d4ed8] text-white border-blue-400 border'
-                        : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
+                      activeTab === `w${num}` ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
                     }`}
                   >
                     {num}
@@ -333,23 +275,15 @@ export default function DfoPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium">
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
                         <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
                           <div className="w-5 flex justify-center">
                             {activeTab === 'total' ? (
                               <>
-                                {row.trend === 'up' && (
-                                  <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">
-                                    ▲ <span className="text-[8px]">{row.trendDiff}</span>
-                                  </span>
-                                )}
-                                {row.trend === 'down' && (
-                                  <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">
-                                    ▼ <span className="text-[8px]">{row.trendDiff}</span>
-                                  </span>
-                                )}
+                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
                                 {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
                               </>
                             ) : (
@@ -358,28 +292,29 @@ export default function DfoPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-1 md:px-2 py-3">
-                        <div className="flex items-center gap-1 md:gap-2 text-white font-semibold whitespace-nowrap">
+                      
+                      <td className="px-1 md:px-2 py-3 align-top pt-3.5">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                           {(() => {
                             const trophyCount = (row.name.match(/🏆/g) || []).length;
                             const cleanName = row.name.replace(/🏆/g, '').trim();
                             return (
                               <>
-                                <span>{cleanName}</span>
+                                <span className="whitespace-nowrap">{cleanName}</span>
                                 {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
                               </>
                             );
                           })()}
                           
-                          {/* 🔴 "CANLI" YAZISI ARTIK 7 VE SONRASI İÇİN DE DEVREDE 🔴 */}
                           {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab.startsWith('w')) && (
-                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse">
+                            <span className="text-emerald-400 bg-emerald-950/30 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 animate-pulse whitespace-nowrap">
                               +{row.liveExtra} CANLI
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-white">
+
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-500 align-top pt-3.5">
                         {row.displayScore}
                       </td>
                     </tr>
@@ -388,9 +323,7 @@ export default function DfoPuanDurumuPage() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">
-              ⏳ Veriler yükleniyor...
-            </div>
+            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
           )}
         </div>
       </div>
