@@ -2,24 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
-
-// 🔴 TFF İÇİN KESİNLEŞMİŞ (MÜHÜRLÜ) ROZETLER 🔴
-const historicalBadges = {
-  w1: {}, w2: {}, w3: {}, w4: {}
-};
-
-const isTffMatchCheck = (category: string) => {
-  if(!category) return false;
-  const uppercaseCat = category.toUpperCase();
-  return ( 
-    uppercaseCat.includes("TÜRKİYE") || 
-    uppercaseCat.includes("TFF") || 
-    uppercaseCat.includes("AMATÖR") || 
-    uppercaseCat.includes("PTT") || 
-    uppercaseCat.includes("2.LİG") || 
-    uppercaseCat.includes("3.LİG") 
-  );
-};
+import { staticPlayersList, isTffMatchCheck } from '@/utils/themeEngine';
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -32,16 +15,14 @@ export default function TffPuanDurumuPage() {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbHistorical } = await supabase.from('tff_weekly_scores').select('*');
+      
+      // 🔴 EKMEL KANUNU: TFF PUAN TABLOSUNDAN (tff_weekly_points) DOĞRU VERİ ÇEKİLDİ 🔴
+      const { data: dbHistorical } = await supabase.from('tff_weekly_points').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
-
-      const dynamicBonuses: Record<number, Record<string, number>> = {};
-      const dynamicBadges: Record<string, string[]> = {};
       
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
         dbPlayers.forEach(p => { 
-          // 🔴 ŞİFRE ANAHTARI: Username tabanlı ID eşleşmesi 🔴
           const pid = p.username || p.id;
           if (pid !== 'mankoman') {
               playersList[pid] = p.name || p.full_name; 
@@ -87,7 +68,8 @@ export default function TffPuanDurumuPage() {
       const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
       if(dbHistorical) {
           dbHistorical.forEach(row => {
-              historicalDict[row.id] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
+              const pid = String(row.username || row.user_id || row.id);
+              historicalDict[pid] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
           });
       }
 
@@ -120,7 +102,7 @@ export default function TffPuanDurumuPage() {
             const category = catDict[`${weekNum}-${matchIndex}`] || "";
             const isTff = isTffMatchCheck(category);
             
-            // TFF SADECE TFF MAÇLARINI TOPLAR!
+            // 🔴 EKMEL KANUNU: TFF SADECE TFF MAÇLARINI DİKKATE ALIR
             if (!isTff) return; 
 
             const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
@@ -147,7 +129,6 @@ export default function TffPuanDurumuPage() {
       setMaxWeek(highestWeekFound);
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 SIFIR PUANI OLANLARI DA VİTRİNE KOYAN MOTOR 🔴
       const baseList = Object.keys(playersList).map(id => {
         const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
         
@@ -163,6 +144,7 @@ export default function TffPuanDurumuPage() {
             const wBase = dynamicBase[w][id] || 0;
             const wLive = dynamicLive[w][id] || 0;
             
+            // 🔴 EKMEL KANUNU: TFF'YE ASLA BONUS EKLENMEZ, SADECE HAM MAÇ PUANI 🔴
             playerObj[`w${w}`] = wBase + wLive;
             totalDynBase += wBase;
             totalDynLive += wLive;
@@ -195,11 +177,8 @@ export default function TffPuanDurumuPage() {
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
         }
 
-        let badges: string[] = [];
-        const cleanName = player.name.replace(/🏆/g, '').trim().toUpperCase();
-
         let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
-        return { ...player, currentRank, trend, trendDiff, displayScore, badges };
+        return { ...player, currentRank, trend, trendDiff, displayScore };
       });
       
       setTableRows(finalRows);
