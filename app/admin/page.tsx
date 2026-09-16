@@ -78,7 +78,8 @@ export default function AdminRadarPortal() {
      'skorcum34': true
   });
 
-  const [showOnlyToday, setShowOnlyToday] = useState<boolean>(true);
+  // 🔴 PANİK KIRICI: Master Admin için filtre kapalı gelsin, tüm listeyi görsün 🔴
+  const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(6); 
   const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([6]);
@@ -117,6 +118,8 @@ export default function AdminRadarPortal() {
        if (auth === 'true' && role) {
           setIsAuthenticated(true);
           setUserRole(role);
+          // Eğer skorcuysa kendi işine odaklansın diye bugünü açık bırakıyoruz, master ise kapalı.
+          if (role.startsWith('skorcum')) setShowOnlyToday(true);
        }
 
        const savedHavuz = localStorage.getItem('ekmel_lig_havuzu');
@@ -279,6 +282,7 @@ export default function AdminRadarPortal() {
        setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'master');
+       setShowOnlyToday(false); // Master girince liste açık gelsin
        return;
     } 
 
@@ -303,6 +307,7 @@ export default function AdminRadarPortal() {
           sessionStorage.setItem('admin_auth', 'true');
           sessionStorage.setItem('admin_role', usernameInput);
           setActiveTab('live');
+          setShowOnlyToday(true); // Skorcu girince sadece bugünü görsün
           return;
        }
     }
@@ -848,12 +853,6 @@ export default function AdminRadarPortal() {
                         if (stData) {
                             const mRow = stData.find(r => r.league_type === 'MASTER');
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-
-                            const tffRow = stData.find(r => r.league_type === 'TFF');
-                            if (tffRow) await supabase.from('standings').update({ points: tffRow.points + 3 }).eq('id', tffRow.id);
-
-                            const dfoRow = stData.find(r => r.league_type === 'DFO');
-                            if (dfoRow) await supabase.from('standings').update({ points: dfoRow.points + 3 }).eq('id', dfoRow.id);
                         }
                     }
 
@@ -896,12 +895,6 @@ export default function AdminRadarPortal() {
                        if (stData) {
                            const mRow = stData.find(r => r.league_type === 'MASTER');
                            if (mRow) await supabase.from('standings').update({ points: Math.max(0, mRow.points - pts) }).eq('id', mRow.id);
-                           if (row.ev_sahibi === 'HAFTANIN') {
-                               const lRowTFF = stData.find(r => r.league_type === 'TFF');
-                               if (lRowTFF) await supabase.from('standings').update({ points: Math.max(0, lRowTFF.points - pts) }).eq('id', lRowTFF.id);
-                               const lRowDFO = stData.find(r => r.league_type === 'DFO');
-                               if (lRowDFO) await supabase.from('standings').update({ points: Math.max(0, lRowDFO.points - pts) }).eq('id', lRowDFO.id);
-                           }
                        }
                    }
                    await supabase.from('points').delete().eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
@@ -947,7 +940,6 @@ export default function AdminRadarPortal() {
       const isToday = match.match_date === getTodayDateString();
 
       const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
-      // Eğer maç saatinden itibaren henüz 5 saat geçmediyse (gece yarısını geçse bile ekranda kalsın diye)
       const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
 
       if (userRole && userRole.startsWith('skorcum')) {
@@ -1140,8 +1132,13 @@ export default function AdminRadarPortal() {
                  <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl shadow-inner">
                     <span className="text-5xl mb-4 block opacity-50">{userRole && userRole.startsWith('skorcum') ? '🛡️' : '📡'}</span>
                     <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') ? 'text-amber-500' : 'text-slate-400'}`}>
-                       {userRole && userRole.startsWith('skorcum') ? `EKRANDA İŞLEM YAPILACAK (BEKLEYEN VEYA GELECEK) MAÇ YOK` : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`}
+                       {userRole && userRole.startsWith('skorcum') 
+                          ? `EKRANDA İŞLEM YAPILACAK MAÇ YOK` 
+                          : (liveMatchesDB.length > 0 ? "FİLTREYE UYGUN MAÇ BULUNMUYOR" : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`)}
                     </h2>
+                    {userRole === 'master' && liveMatchesDB.length > 0 && showOnlyToday && (
+                        <p className="text-amber-400 text-sm mt-2 font-bold animate-pulse">DİKKAT: "SADECE BUGÜN" filtresi açık. Tüm listeyi görmek için yukarıdaki butona tıklayın.</p>
+                    )}
                  </div>
             ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -1187,7 +1184,6 @@ export default function AdminRadarPortal() {
                 const isLocked = distributedMatches[match.match_index];
                 const logInfo = liveInfoStateMap[match.match_index];
                 
-                // 🔴 "1 DK KALA AÇILIR" KİLİDİ 🔴
                 const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
                 const isTimeAllowed = now >= matchTimeMs - 60000;
 
@@ -1222,11 +1218,11 @@ export default function AdminRadarPortal() {
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select disabled={isLocked || !isTimeAllowed} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
-                                {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
+                                {timeOptionsArr.map((_, i) => <option key={`h-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
                               </select>
                               <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
                               <select disabled={isLocked || !isTimeAllowed} value={awayScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
-                                {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
+                                {timeOptionsArr.map((_, i) => <option key={`a-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
                               </select>
                             </div>
                           </div>
