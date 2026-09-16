@@ -143,7 +143,7 @@ export const localTeamLogos: Record<string, string> = {
   "VIKING": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
-  "Jagiellonia Białystok": "https://images.fotmob.com/image_resources/logo/teamlogo/1957_large.png",
+  "Jagiellonia Białystok": "https://images.fotmob.com/image_resources/logo/teamlogo/1957.png",
     "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
 
   // İNGİLTERE
