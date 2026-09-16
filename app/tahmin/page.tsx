@@ -47,8 +47,16 @@ export default function TahminlerPortal() {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
                const pid = String(p.username || p.id);
-               // 🔴 HATA BURADAYDI DÜZELTİLDİ: Veritabanındaki şifre her zaman statik şifreyi ezer!
-               newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
+               // 🔴 ZIRH EKLENDİ: Veritabanındaki şifre bizim orjinal listemizi EZEMEZ! 🔴
+               if (TEST_ACCOUNTS[pid]) {
+                   newAccounts[pid] = { 
+                       pass: TEST_ACCOUNTS[pid].pass, 
+                       name: p.name || p.full_name || TEST_ACCOUNTS[pid].name 
+                   };
+               } else {
+                   // Sadece Karargahtan (Admin) yeni eklenmiş oyuncular DB'den alınır
+                   newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
+               }
            });
            setMergedAccounts(newAccounts);
         }
@@ -99,7 +107,7 @@ export default function TahminlerPortal() {
     
     if (username.trim().toLowerCase() !== 'mankoman') {
         if (gateStatus === 'CLOSED') {
-            setLoginError(`${activeBulletinWeek}. Hafta bültenindeki tüm maçlar başladığı için tahminler kapanmıştır.`);
+            setLoginError(`${activeBulletinWeek}. Hafta bültenindeki tüm maçlar başladığı veya henüz bülten olmadığı için tahminler kapanmıştır.`);
             return;
         }
     }
