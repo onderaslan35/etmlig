@@ -341,10 +341,10 @@ export const localTeamLogos: Record<string, string> = {
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
-  "GENT": "/logos/gent.png", "AJAX": "/logos/ajax.png", 
-  "BRAGA": "/logos/braga.png", "PAOK": "/logos/paok.png", "ANDERLECHT": "/logos/anderlecht.png", 
-  "TWENTE": "/logos/twente.png", "BENFICA": "/logos/benfica.png",
-  "OLYMPIC LYON": "/logos/lyon.png", "OLYMPIQUE LYON": "/logos/lyon.png", "OLYMPIQUE LYONNAIS": "/logos/lyon.png", "LYON": "/logos/lyon.png",
+   
+   "PAOK": "/logos/paok.png",  
+ 
+  "OLYMPIC LYON": "/logos/lyon.png",  "OLYMPIQUE LYONNAIS": "/logos/lyon.png", 
 };
 
 // 🔴 4. YARDIMCI FONKSİYONLAR 🔴
