@@ -142,8 +142,6 @@ const localTeamLogos: Record<string, string> = {
   "GOTEBORG": "https://en.wikipedia.org/wiki/Special:FilePath/IFK_Goteborg_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
   
-  
-  
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
   "USG": "https://en.wikipedia.org/wiki/Special:FilePath/Royale_Union_Saint-Gilloise_logo.svg",
   "PAIDE LINNAMEESKOND": "https://en.wikipedia.org/wiki/Special:FilePath/Paide_Linnameeskond_logo.png",
@@ -311,7 +309,7 @@ const localTeamLogos: Record<string, string> = {
   // 🔴 PORTEKİZ (PRIMEIRA LIGA) - FOTMOB
   "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
   "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
-  "SPORTING LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
+  "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
 
   // 🔴 BELÇİKA (PRO LEAGUE) - FOTMOB
   "CLUB BRUGGE": "https://images.fotmob.com/image_resources/logo/teamlogo/8342_large.png",
@@ -420,7 +418,25 @@ const isTffMatchCheck = (category: string) => {
   );
 };
 
+// 🔴 SAAT VE TARİH DÖNÜŞTÜRÜCÜ MOTORU 🔴
+const getMatchTimeMs = (dateStr: string, timeStr: string) => {
+    if (!dateStr || !timeStr) return Infinity;
+    try {
+        const [d, m, y] = dateStr.split('.');
+        const [hr, min] = timeStr.split(':');
+        const isoString = `${y}-${m}-${d}T${hr}:${min}:00+03:00`;
+        return new Date(isoString).getTime();
+    } catch(e) {
+        return Infinity;
+    }
+};
+
 export default function AdminRadarPortal() {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+      const interval = setInterval(() => setNow(Date.now()), 1000);
+      return () => clearInterval(interval);
+  }, []);
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
@@ -560,8 +576,6 @@ export default function AdminRadarPortal() {
        fetchSkorcuStatus();
     }
   }, [isAuthenticated, userRole]);
-
-  
 
   const fetchAllSystemPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('name');
@@ -868,9 +882,12 @@ export default function AdminRadarPortal() {
     if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
     setIsPlayerLoading(true);
     try {
-       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: newPlayerName.trim().toUpperCase(), password: newPlayerPass.trim() });
+       // 🔴 TÜRKÇE KARAKTER ('ISMAIL' SENDROMU) KIRICI MOTOR 🔴
+       const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
+       
+       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: cleanName, password: newPlayerPass.trim() });
        if (error) throw error;
-       alert(`✅ BAŞARILI! ${newPlayerName.toUpperCase()} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
+       alert(`✅ BAŞARILI! ${cleanName} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
        setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
        fetchAllSystemPlayers(); 
     } catch (err: any) { alert("❌ HATA: " + err.message); }
@@ -1031,8 +1048,8 @@ export default function AdminRadarPortal() {
     const awayScore = adminScores[matchId]?.away || "-";
     const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
 
-    const now = new Date();
-    const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    const nowTime = new Date();
+    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
 
     if (action === 'Skoru Güncelle') {
       // 🔴 SESİ BURADA PATLATIYORUZ (Kullanıcı tıkladığı an çaldığı için tarayıcı ENGELLEYEMEZ!)
@@ -1398,6 +1415,7 @@ export default function AdminRadarPortal() {
     );
   }
 
+  // 🔴 GECE YARISI SENDROMU DÜZELTİCİ FİLTRE 🔴
   const displayedMatches = liveMatchesDB.filter(match => {
       const logInfo = liveInfoStateMap[match.match_index];
       const status = logInfo?.status || 'NOT_STARTED';
@@ -1406,18 +1424,25 @@ export default function AdminRadarPortal() {
       const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
       const isToday = match.match_date === getTodayDateString();
 
+      const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
+      // Eğer maç saatinden itibaren henüz 5 saat geçmediyse (gece yarısını geçse bile ekranda kalsın diye)
+      const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+
       if (userRole && userRole.startsWith('skorcum')) {
+          if (isFinished) return false; 
+          if (isLive || isWithinLast5Hours) return true; 
+          
           const mDate = parseDateLocal(match.match_date);
           const today = new Date();
           today.setHours(0,0,0,0);
           
-          if (mDate < today) return false; 
+          if (mDate < today && !isWithinLast5Hours) return false; 
           return true; 
       }
 
       if (showOnlyToday) {
           if (isFinished) return false; 
-          if (isLive) return true;      
+          if (isLive || isWithinLast5Hours) return true;      
           return isToday;                
       }
       return true; 
@@ -1642,6 +1667,10 @@ export default function AdminRadarPortal() {
 
                 const isLocked = distributedMatches[match.match_index];
                 const logInfo = liveInfoStateMap[match.match_index];
+                
+                // 🔴 "1 DK KALA AÇILIR" KİLİDİ 🔴
+                const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
+                const isTimeAllowed = now >= matchTimeMs - 60000;
 
                 return (
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
@@ -1673,11 +1702,11 @@ export default function AdminRadarPortal() {
 
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                              <select disabled={isLocked} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
+                              <select disabled={isLocked || !isTimeAllowed} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
                                 {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                               </select>
                               <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
-                              <select disabled={isLocked} value={awayScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
+                              <select disabled={isLocked || !isTimeAllowed} value={awayScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
                                 {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt} className="bg-slate-900 text-base">{opt}</option>)}
                               </select>
                             </div>
@@ -1711,6 +1740,12 @@ export default function AdminRadarPortal() {
                               <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
                                 İPTAL ET & PUANLARI GERİ AL
                               </button>
+                            </div>
+                          ) : !isTimeAllowed ? (
+                            <div className="w-full text-center">
+                              <div className="bg-slate-900/80 text-amber-500 text-[9px] sm:text-[10px] font-bold px-6 py-2 rounded-lg border border-slate-700 uppercase tracking-widest shadow-inner inline-block w-full">
+                                ⏳ MÜDAHALE KİLİTLİ: MAÇA 1 DK KALA AÇILIR
+                              </div>
                             </div>
                           ) : (
                             <>
