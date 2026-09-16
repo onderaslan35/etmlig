@@ -34,7 +34,6 @@ export default function TahminlerPortal() {
   
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
-  // 🔴 DİNAMİK SAAT SİSTEMİ (HER SANİYE GÜNCELLENİR) 🔴
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
      const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -47,9 +46,9 @@ export default function TahminlerPortal() {
         if (data) {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
-               if (!newAccounts[String(p.username)]) {
-                 newAccounts[String(p.username)] = { pass: p.password, name: p.name };
-               }
+               const pid = String(p.username || p.id);
+               // 🔴 HATA BURADAYDI DÜZELTİLDİ: Veritabanındaki şifre her zaman statik şifreyi ezer!
+               newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
            });
            setMergedAccounts(newAccounts);
         }
@@ -88,14 +87,10 @@ export default function TahminlerPortal() {
     fetchInitialData();
   }, []);
 
-  // 🔴 EVENT-DRIVEN KİLİT MEKANİZMASI (TOPTAN KAPATMA YOK!) 🔴
   const gateStatus = useMemo(() => {
       if (!activeBulletinWeek || !bulletinMap[activeBulletinWeek]) return 'CLOSED';
-      
       const matches = bulletinMap[activeBulletinWeek];
-      // Eğer haftanın içinde maç saati gelmemiş EN AZ BİR maç bile varsa KAPI AÇIKTIR!
       const hasOpenMatch = matches.some(m => now < getMatchTimeMs(m.date, m.time) - 60000);
-      
       return hasOpenMatch ? 'OPEN' : 'CLOSED';
   }, [activeBulletinWeek, bulletinMap, now]);
 
@@ -117,7 +112,7 @@ export default function TahminlerPortal() {
       await fetchBulletinAndPredictions(userKey); 
       setView('entry');
     } else { 
-        setLoginError('ID veya Şifre Hatalı! Yetkisiz giriş yapılamaz.'); 
+        setLoginError('ID veya Şifre Hatalı! Lütfen bilgilerinizi kontrol ediniz.'); 
     }
   };
 
@@ -146,7 +141,6 @@ export default function TahminlerPortal() {
       const matchObj = bulletinMap[activeBulletinWeek].find((m:any) => m.id === Number(matchIndex));
       const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
       
-      // SADECE KİLİTLENMEMİŞ VE BOŞ OLAN MAÇLARI RASTGELE DOLDURUR
       if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
         newPreds[Number(matchIndex)] = { home: Math.floor(Math.random() * 4).toString(), away: Math.floor(Math.random() * 4).toString() };
       }

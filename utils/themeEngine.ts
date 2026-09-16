@@ -2,32 +2,71 @@
 // 🏭 ETM LİGİ MERKEZ LOJİSTİK DEPOSU (THEME & LOGO ENGINE) 🏭
 // ============================================================================
 
-// 🔴 1. ANA YARIŞMACI LİSTESİ (SABİT VERİLER)
-export const staticPlayersList: Record<string, string> = {
-  "262702": "MURAT KARA", "262703": "CEMALETTİN BELLİ", "262704": "YAPAY ZEKA", "262705": "AHMET BİRCAN 🏆",
-  "262706": "GAZİ AYAN 🏆🏆", "262707": "HAKAN AYAN", "262708": "BAYRAM YILMAZ", "262709": "SALİH KARACAOĞLU",
-  "262711": "RIDVAN DOGER", "262712": "MURAT AYDEMİR", "262714": "İSMAİL EKER 🏆", "262715": "ŞEMSETTIN DÜGER",
-  "262716": "BİROL DEMİREL", "262717": "MURAT ALİ", "262718": "BEKİR KARADAĞ", "262719": "UĞUR VARDAR",
-  "262721": "MUSTAFA GÜMÜŞÇÜ", "262723": "AYHAN LUŞOĞLU", "262725": "İLYAS KAZDAL", "262726": "HUDAVER TOPARDIC",
-  "262728": "ÖNDER ASLAN", "262730": "ÖNDER IŞIK", "262731": "FATİH AYAN", "262732": "R. İLHAN KARACA 🏆🏆",
-  "262733": "MUHSİN ASİLKAN", "262734": "LEVENT YILDIRIM", "262735": "AYGÜN AKKEÇELİ", "262736": "MEHMET ALİ KARA",
-  "262737": "ŞAHİN GEZGİNCİ", "262738": "MEVLÜT EVLER", "262739": "UĞUR GÜRBÜZ", "262740": "ABDULLAH DİK",
-  "262741": "SABAHATTİN ÇAYLAK", "262744": "İLYAS UYGUN", "262747": "SAVAŞ ÇAĞLAYAN", "262749": "B.VEYSELOĞLU EROL",
-  "262750": "MAHMUT CBR", "262753": "YUSUF KIZILTUĞ", "262754": "OSMAN ALİ AYDIN 🏆", "262755": "DOĞAÇ ALKAN",
-  "262756": "EYÜP KARACAOĞLU", "262758": "MELİH PINAR", "262763": "MUSTAFA ELMAS", "262770": "OZKAYA MAZAKALI BAYRAM",
-  "262771": "ULAŞ ADIGÜZEL", "262772": "CEMAL SİVRİKAYA 🏆", "262774": "ŞENOL CAN ÇAKICI", "262782": "YUSUF ERBAY",
-  "262786": "SEDAT DİŞLİ", "262787": "MUSTAFA TUCİ", "262790": "CUMALİ SÖKER", "262813": "KEMAL ERSOY",
-  "262816": "SEDAT SEDAT", "351925": "ALİOS GÖZTEPE"
-};
-
+// 🔴 1. ANA YARIŞMACI LİSTESİ (ORJİNAL ŞİFRELER GERİ GELDİ)
 export const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
-  ...Object.entries(staticPlayersList).reduce((acc, [id, name]) => {
-      // Varsayılan bir şifre üretimi veya listeden taşıma
-      acc[id] = { pass: id.substring(id.length - 4), name }; 
-      return acc;
-  }, {} as Record<string, { pass: string, name: string }>)
+  "262740": { pass: "4940", name: "ABDULLAH DİK" },
+  "262705": { pass: "1405", name: "AHMET BİRCAN 🏆" },
+  "351925": { pass: "1925", name: "ALİOS GÖZTEPE" },
+  "262735": { pass: "1925", name: "AYGÜN AKKEÇELİ" },
+  "262723": { pass: "3223", name: "AYHAN LUŞOĞLU" },
+  "262749": { pass: "5849", name: "B.VEYSELOĞLU EROL" },
+  "262708": { pass: "1708", name: "BAYRAM YILMAZ" },
+  "262718": { pass: "2718", name: "BEKİR KARADAĞ" },
+  "262716": { pass: "2516", name: "BİROL DEMİREL" },
+  "262772": { pass: "8172", name: "CEMAL SİVRİKAYA 🏆" },
+  "262703": { pass: "1203", name: "CEMALETTİN BELLİ" },
+  "262790": { pass: "9988", name: "CUMALİ SÖKER" },
+  "262755": { pass: "6455", name: "DOĞAÇ ALKAN" },
+  "262756": { pass: "7181", name: "EYÜP KARACAOĞLU" },
+  "262731": { pass: "4031", name: "FATİH AYAN" },
+  "262706": { pass: "1506", name: "GAZİ AYAN 🏆🏆" },
+  "262707": { pass: "1607", name: "HAKAN AYAN" },
+  "262726": { pass: "3526", name: "HUDAVER TOPARDIC" },
+  "262725": { pass: "3425", name: "İLYAS KAZDAL" },
+  "262744": { pass: "5344", name: "İLYAS UYGUN" },
+  "262714": { pass: "2314", name: "İSMAİL EKER 🏆" },
+  "262813": { pass: "2862", name: "KEMAL ERSOY" },
+  "262734": { pass: "4334", name: "LEVENT YILDIRIM" },
+  "262750": { pass: "5950", name: "MAHMUT CBR" },
+  "262736": { pass: "4536", name: "MEHMET ALİ KARA" },
+  "262758": { pass: "6758", name: "MELİH PINAR" },
+  "262738": { pass: "4738", name: "MEVLÜT EVLER" },
+  "262733": { pass: "4233", name: "MUHSİN ASİLKAN" },
+  "262717": { pass: "2617", name: "MURAT ALİ" },
+  "262712": { pass: "2112", name: "MURAT AYDEMİR" },
+  "262702": { pass: "1102", name: "MURAT KARA" },
+  "262763": { pass: "7263", name: "MUSTAFA ELMAS" },
+  "262721": { pass: "3021", name: "MUSTAFA GÜMÜŞÇÜ" },
+  "262787": { pass: "9687", name: "MUSTAFA TUCİ" },
+  "262754": { pass: "6354", name: "OSMAN ALİ AYDIN 🏆" },
+  "262770": { pass: "7970", name: "OZKAYA MAZAKALI BAYRAM" },
+  "262728": { pass: "3528", name: "ÖNDER ASLAN" },
+  "262730": { pass: "3930", name: "ÖNDER IŞIK" },
+  "262732": { pass: "4132", name: "R. İLHAN KARACA 🏆🏆" },
+  "262711": { pass: "2011", name: "RIDVAN DOGER" },
+  "262741": { pass: "5041", name: "SABAHATTİN ÇAYLAK" },
+  "262709": { pass: "1809", name: "SALİH KARACAOĞLU" },
+  "262747": { pass: "5647", name: "SAVAŞ ÇAĞLAYAN" },
+  "262786": { pass: "9586", name: "SEDAT DİŞLİ" },
+  "262816": { pass: "6182", name: "SEDAT SEDAT" },
+  "262737": { pass: "4637", name: "ŞAHİN GEZGİNCİ" },
+  "262715": { pass: "2415", name: "ŞEMSETTIN DÜGER" },
+  "262774": { pass: "8374", name: "ŞENOL CAN ÇAKICI" },
+  "262739": { pass: "4839", name: "UĞUR GÜRBÜZ" },
+  "262719": { pass: "2819", name: "UĞUR VARDAR" },
+  "262771": { pass: "8071", name: "ULAŞ ADIGÜZEL" },
+  "262704": { pass: "1304", name: "YAPAY ZEKA" },
+  "262782": { pass: "9182", name: "YUSUF ERBAY" },
+  "262753": { pass: "6253", name: "YUSUF KIZILTUĞ" }
 };
+
+export const staticPlayersList: Record<string, string> = Object.keys(TEST_ACCOUNTS).reduce((acc, key) => {
+  if (key !== "mankoman") acc[key] = TEST_ACCOUNTS[key].name;
+  return acc;
+}, {} as Record<string, string>);
+
+
 
 // 🔴 2. LİG HAVUZU VE KATEGORİLER
 export const LIG_HAVUZU: Record<string, string[]> = {
