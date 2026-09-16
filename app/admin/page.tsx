@@ -78,7 +78,7 @@ export default function AdminRadarPortal() {
      'skorcum34': true
   });
 
-  // 🔴 PANİK KIRICI: Master Admin için filtre kapalı gelsin, tüm listeyi görsün 🔴
+  // 🔴 BUGÜNÜN FİLTRESİ (Master için kapalı, Skorcu için açık başlar)
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(6); 
@@ -118,7 +118,6 @@ export default function AdminRadarPortal() {
        if (auth === 'true' && role) {
           setIsAuthenticated(true);
           setUserRole(role);
-          // Eğer skorcuysa kendi işine odaklansın diye bugünü açık bırakıyoruz, master ise kapalı.
           if (role.startsWith('skorcum')) setShowOnlyToday(true);
        }
 
@@ -147,74 +146,6 @@ export default function AdminRadarPortal() {
          all = [...all, ...teams];
      });
      return Array.from(new Set(all)).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
-    const currentMatch = bulletinMatches[currentIndex];
-    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
-    const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-
-    if (!currentCat) return [];
-
-    let havuz = dynamicLigHavuzu[currentCat];
-
-    if (!havuz || currentCat.includes("UEFA") || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
-       havuz = Object.values(dynamicLigHavuzu).flat();
-    }
-
-    const fullHavuz = Array.from(new Set([...havuz]));
-    const usedTeams = new Set<string>();
-
-    bulletinMatches.forEach((m, idx) => {
-       if (idx === currentIndex) return; 
-
-       const mCat = m.category ? m.category.toUpperCase() : '';
-
-       if (currentCat === mCat) {
-           if (m.home_team) usedTeams.add(m.home_team);
-           if (m.away_team) usedTeams.add(m.away_team);
-       }
-    });
-
-    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const handleBulletinChange = (index: number, field: string, value: string) => {
-    const newMatches = [...bulletinMatches];
-    (newMatches[index] as any)[field] = value;
-    if (field === 'category') {
-        newMatches[index].home_team = ''; newMatches[index].away_team = '';
-    }
-    setBulletinMatches(newMatches);
-  };
-
-  const copyDateTimeToAll = () => {
-    const firstDate = bulletinMatches[0].match_date;
-    const firstTime = bulletinMatches[0].match_time;
-    if(!firstDate || !firstTime) return alert("Önce 1. maçın tarih ve saatini doldurun!");
-    const updated = bulletinMatches.map(m => ({ ...m, match_date: firstDate, match_time: firstTime }));
-    setBulletinMatches(updated);
-  };
-
-  const saveBulletinToDB = async () => {
-    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
-    if (hasEmpty) {
-       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
-    }
-
-    setIsPublishing(true);
-    try {
-      const payload = bulletinMatches.map(m => ({
-         week_num: bulletinWeek, match_index: m.match_index, category: m.category,
-         match_date: m.match_date, match_time: m.match_time,
-         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase()
-      }));
-
-      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
-      if (error) throw error;
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nTahminler kapısı an itibarıyla aslanlara açıldı, Cuma 21:00 kuralı iptal!`);
-    } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
-    setIsPublishing(false);
   };
 
   const fetchSkorcuStatus = async () => {
@@ -282,7 +213,7 @@ export default function AdminRadarPortal() {
        setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'master');
-       setShowOnlyToday(false); // Master girince liste açık gelsin
+       setShowOnlyToday(false);
        return;
     } 
 
@@ -307,7 +238,7 @@ export default function AdminRadarPortal() {
           sessionStorage.setItem('admin_auth', 'true');
           sessionStorage.setItem('admin_role', usernameInput);
           setActiveTab('live');
-          setShowOnlyToday(true); // Skorcu girince sadece bugünü görsün
+          setShowOnlyToday(true);
           return;
        }
     }
@@ -448,7 +379,6 @@ export default function AdminRadarPortal() {
     }
   }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
-
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master') return;
     const loadBulletinData = async () => {
@@ -541,7 +471,6 @@ export default function AdminRadarPortal() {
     setIsPlayerLoading(true);
     try {
        const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
-       
        const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: cleanName, password: newPlayerPass.trim() });
        if (error) throw error;
        alert(`✅ BAŞARILI! ${cleanName} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
@@ -734,7 +663,9 @@ export default function AdminRadarPortal() {
       const leagueName = isTff ? 'TFF' : 'DFO';
 
       let confirmMsg = "";
-     if (matchId === 24) {
+      
+      // 🔴 EKMEL KANUNU (GÜNCELLENDİ): BONUSLAR SADECE MASTER'A 🔴
+      if (matchId === 24) {
             let bonusInserts: any[] = [];
             let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
             let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
@@ -775,7 +706,7 @@ export default function AdminRadarPortal() {
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
                         }
                     }
-                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Tek Tabanca liderlere kalıcı fiş kesildi!)`);
+                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Tek Tabanca liderlere kalıcı fiş kesildi ve sadece MASTER kasasına işlendi!)`);
                 }
             } else {
                alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
@@ -824,53 +755,6 @@ export default function AdminRadarPortal() {
               else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
             }
           }
-        }
-
-        if (matchId === 24) {
-            let bonusInserts: any[] = [];
-            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
-            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
-
-            if (finalPLeader) {
-                bonusInserts.push({
-                    hafta: selectedLiveWeek, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                });
-            }
-
-            if (finalSLeader) {
-                bonusInserts.push({
-                    hafta: selectedLiveWeek, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                });
-            }
-
-            if (bonusInserts.length > 0) {
-                const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
-                if (!bInsertError) {
-                    if (finalPLeader) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', finalPLeader);
-                        if (stData) {
-                            const mRow = stData.find(r => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
-
-                    if (finalSLeader) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', finalSLeader);
-                        if (stData) {
-                            const mRow = stData.find(r => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
-                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Sistem sadece Tek Tabanca liderlere bonus verdi)`);
-                }
-            } else {
-               alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
-            }
-        } else {
-           if (currentWinners.length > 0) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
-           else alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
         }
 
         setDistributedMatches(prev => ({...prev, [matchId]: true})); 
@@ -930,7 +814,75 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔴 GECE YARISI SENDROMU DÜZELTİCİ FİLTRE 🔴
+  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
+    const currentMatch = bulletinMatches[currentIndex];
+    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
+    const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
+
+    if (!currentCat) return [];
+
+    let havuz = dynamicLigHavuzu[currentCat];
+
+    if (!havuz || currentCat.includes("UEFA") || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
+       havuz = Object.values(dynamicLigHavuzu).flat();
+    }
+
+    const fullHavuz = Array.from(new Set([...havuz]));
+    const usedTeams = new Set<string>();
+
+    bulletinMatches.forEach((m, idx) => {
+       if (idx === currentIndex) return; 
+
+       const mCat = m.category ? m.category.toUpperCase() : '';
+
+       if (currentCat === mCat) {
+           if (m.home_team) usedTeams.add(m.home_team);
+           if (m.away_team) usedTeams.add(m.away_team);
+       }
+    });
+
+    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
+  };
+
+  const handleBulletinChange = (index: number, field: string, value: string) => {
+    const newMatches = [...bulletinMatches];
+    (newMatches[index] as any)[field] = value;
+    if (field === 'category') {
+        newMatches[index].home_team = ''; newMatches[index].away_team = '';
+    }
+    setBulletinMatches(newMatches);
+  };
+
+  const copyDateTimeToAll = () => {
+    const firstDate = bulletinMatches[0].match_date;
+    const firstTime = bulletinMatches[0].match_time;
+    if(!firstDate || !firstTime) return alert("Önce 1. maçın tarih ve saatini doldurun!");
+    const updated = bulletinMatches.map(m => ({ ...m, match_date: firstDate, match_time: firstTime }));
+    setBulletinMatches(updated);
+  };
+
+  const saveBulletinToDB = async () => {
+    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
+    if (hasEmpty) {
+       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const payload = bulletinMatches.map(m => ({
+         week_num: bulletinWeek, match_index: m.match_index, category: m.category,
+         match_date: m.match_date, match_time: m.match_time,
+         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase()
+      }));
+
+      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
+      if (error) throw error;
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nTahminler kapısı an itibarıyla aslanlara açıldı, Cuma 21:00 kuralı iptal!`);
+    } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
+    setIsPublishing(false);
+  };
+
+  // 🔴 GECE YARISI SENDROMU VE GÜN FİLTRESİ MOTORU (GÜNCELLENDİ) 🔴
   const displayedMatches = liveMatchesDB.filter(match => {
       const logInfo = liveInfoStateMap[match.match_index];
       const status = logInfo?.status || 'NOT_STARTED';
@@ -962,10 +914,46 @@ export default function AdminRadarPortal() {
       return true; 
   });
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-700 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
+          <span className="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">🛡️</span>
+          <h1 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-md">Karargah Girişi</h1>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-4 mt-6">
+            <input 
+              type="text" 
+              value={usernameInput} 
+              onChange={e => setUsernameInput(e.target.value)} 
+              className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600 lowercase" 
+              placeholder="KULLANICI ADI" 
+            />
+            <input 
+              type="password" 
+              value={passwordInput} 
+              onChange={e => setPasswordInput(e.target.value)} 
+              className="bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-[0.3em] font-black text-lg shadow-inner placeholder:text-slate-600" 
+              placeholder="••••••••" 
+            />
+            <button 
+              type="submit" 
+              className="bg-amber-600 hover:bg-amber-500 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] mt-2"
+            >
+              KAPIYI AÇ
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
       <div className="max-w-7xl mx-auto pt-6">
 
+        {/* 🔴 SENİN ALIŞTIĞIN SEKME (TAB) MENÜSÜ 🔴 */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
            <button 
              onClick={() => setActiveTab('live')}
@@ -1004,6 +992,7 @@ export default function AdminRadarPortal() {
            )}
         </div>
 
+        {/* 🚀 CANLI YÖNETİM EKRANI 🚀 */}
         {activeTab === 'live' && (
           <div className="animate-fade-in">
             {userRole === 'master' && (
@@ -1133,12 +1122,9 @@ export default function AdminRadarPortal() {
                     <span className="text-5xl mb-4 block opacity-50">{userRole && userRole.startsWith('skorcum') ? '🛡️' : '📡'}</span>
                     <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') ? 'text-amber-500' : 'text-slate-400'}`}>
                        {userRole && userRole.startsWith('skorcum') 
-                          ? `EKRANDA İŞLEM YAPILACAK MAÇ YOK` 
+                          ? `EKRANDA İŞLEM YAPILACAK (BEKLEYEN VEYA GELECEK) MAÇ YOK` 
                           : (liveMatchesDB.length > 0 ? "FİLTREYE UYGUN MAÇ BULUNMUYOR" : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`)}
                     </h2>
-                    {userRole === 'master' && liveMatchesDB.length > 0 && showOnlyToday && (
-                        <p className="text-amber-400 text-sm mt-2 font-bold animate-pulse">DİKKAT: "SADECE BUGÜN" filtresi açık. Tüm listeyi görmek için yukarıdaki butona tıklayın.</p>
-                    )}
                  </div>
             ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -1184,6 +1170,7 @@ export default function AdminRadarPortal() {
                 const isLocked = distributedMatches[match.match_index];
                 const logInfo = liveInfoStateMap[match.match_index];
                 
+                // 🔴 1 DK KİLİDİ 🔴
                 const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
                 const isTimeAllowed = now >= matchTimeMs - 60000;
 
@@ -1288,7 +1275,7 @@ export default function AdminRadarPortal() {
                              </span>
                          </div>
                          <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                            {isTffMatch ? "TFF MAÇI" : "DFO MAÇI"}
+                            {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                          </span>
                          {winnersCount > 0 && (
                             <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
