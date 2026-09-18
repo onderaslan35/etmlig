@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
   TEST_ACCOUNTS,
@@ -15,7 +15,7 @@ import {
 } from '@/utils/themeEngine';
 
 export default function LiveMatchCard() {
-  console.log("VERCEL KURTARMA SOKU - KÜRSÜ TASARIMI VE KUSURSUZ PUAN MOTORU");
+  console.log("VERCEL KURTARMA SOKU - KÜRSÜ TASARIMI, ÜST ÜSTE BİNME FİX VE NET PUAN MOTORU");
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
@@ -29,9 +29,8 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
   
-  // 🔴 ANA KASA (Geçmiş ve Manuel Puanları Tutar) 🔴
+  // 🔴 ANA KASA VE AKTİF HAFTA KASASI 🔴
   const [baseStandings, setBaseStandings] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
-  // 🔴 AKTİF HAFTA KASASI (O hafta biten maçları tutar) 🔴
   const [activeWeekBase, setActiveWeekBase] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
 
   const [now, setNow] = useState<number>(new Date().getTime());
@@ -104,7 +103,6 @@ export default function LiveMatchCard() {
     return () => clearInterval(timer);
   }, []);
 
-  // İsmi normalize edip boşlukları ve Türkçe harfleri temizleyen kalkan
   const normalizeName = (name: string) => {
     if (!name) return "";
     return name.toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/\s+/g, '').trim();
@@ -114,26 +112,25 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 SIFIR HATA GERÇEK PUAN MOTORU (HER ŞEYİ TOPLAR) 🔴
+      // 🔴 ÇİFT SAYMAYI ENGELLEYEN YENİ PUAN MOTORU 🔴
       const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
 
       const [tffData, dfoData, masterData, skorData, manualPointsData] = await Promise.all([
           fetchTable('tff_weekly_points'), fetchTable('dfo_weekly_points'),
           fetchTable('master_weekly_points'), fetchTable('skor_weekly_points'),
-          fetchTable('points') // Manuel/Bonus girilen puan tablosu
+          fetchTable('points')
       ]);
 
       const st: Record<string, any> = {};
       const initSt = (key: string) => { if (key && !st[key]) st[key] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; };
 
-      // 1. Mühürlü Haftalık Tabloları Topla
+      // SADECE w1, w2, w3 ve w4 SÜTUNLARINI TOPLAR (Çift saymayı engeller)
       const processWeekly = (data: any[], cat: 'TFF'|'DFO'|'MASTER'|'SKOR') => {
           data.forEach(row => {
               const uid = String(row.id || row.user_id || '').trim();
               const uname = normalizeName(String(row.name || row.user_name || ''));
-              let sum = 0;
-              Object.keys(row).forEach(k => { if (/^w\d+$/.test(k)) sum += (Number(row[k]) || 0); });
-              if (sum === 0) sum = Number(row.points ?? row.puan ?? row.totalPoints) || 0;
+              let sum = (Number(row.w1) || 0) + (Number(row.w2) || 0) + (Number(row.w3) || 0) + (Number(row.w4) || 0);
+              
               if (uid) { initSt(uid); st[uid][cat] += sum; }
               if (uname) { initSt(uname); st[uname][cat] += sum; }
           });
@@ -141,11 +138,10 @@ export default function LiveMatchCard() {
       processWeekly(tffData, 'TFF'); processWeekly(dfoData, 'DFO');
       processWeekly(masterData, 'MASTER'); processWeekly(skorData, 'SKOR');
 
-      // 2. Manuel/Bonus Puanları Topla (points tablosu)
       manualPointsData.forEach(row => {
           const uid = String(row.username || row.user_id || row.id || '').trim();
-          const uname = normalizeName(String(row.user_name || row.name || ''));
-          const cat = String(row.kategori || row.league_type || '').toUpperCase().trim();
+          const uname = normalizeName(String(row.user_name || row.name || uid));
+          const cat = String(row.kategori || row.league_type || 'MASTER').toUpperCase().trim();
           const pts = Number(row.puan ?? row.points ?? row.totalPoints) || 0;
           
           const applyManual = (key: string) => {
@@ -160,7 +156,6 @@ export default function LiveMatchCard() {
           applyManual(uid); applyManual(uname);
       });
 
-      // 3. Bülten ve Tahminleri Çek (5. Haftadan İtibaren Tüm Dinamik Puanlar İçin)
       const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
       const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
 
@@ -431,7 +426,7 @@ export default function LiveMatchCard() {
       else if(winnersCount === 5) displayPoints = 3; else if(winnersCount === 6) displayPoints = 2;
       else if(winnersCount >= 7) displayPoints = 1; else displayPoints = 0;
 
-      // 🔴 SANAL SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
+      // 🔴 SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
       let simulatedTff: any[] = [];
       let simulatedDfo: any[] = [];
       let simulatedMaster: any[] = [];
@@ -636,11 +631,11 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 AÇILIR KAPANIR KÜRSÜ TASARIMI (BEYAZ PARLAK YAZILARLA) 🔴 */}
+                      {/* 🔴 TAM İSABET EDENLER (KÜRSÜ TASARIMI) 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
                           <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
-                             <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300 tracking-widest text-center">
+                             <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-sm border border-emerald-300 tracking-widest text-center">
                                 +{displayPoints} PUAN YAZILIYOR
                              </span>
                           </div>
@@ -661,39 +656,39 @@ export default function LiveMatchCard() {
                               const skorPts = getPts(simulatedSkor, winner.id);
 
                               return (
-                                <div key={idx} className="bg-slate-950 border border-slate-700/80 rounded-lg shadow-xl relative overflow-hidden transition-all duration-300">
+                                <div key={idx} className="flex-shrink-0 bg-slate-950 border border-slate-700/80 rounded-lg shadow-md relative overflow-hidden transition-all duration-300">
                                    
                                    {/* İSİM BUTONU (ORTALANMIŞ) */}
                                    <button 
                                       onClick={() => togglePlayerRank(uniquePlayerKey)}
                                       className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}
                                    >
-                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center drop-shadow-md">
+                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center">
                                            {winner.name} 
                                            <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
                                        </span>
                                    </button>
                                    
-                                   {/* AÇILAN KÜRSÜ (PARLAK BEYAZ YAZILAR) */}
+                                   {/* AÇILAN KÜRSÜ (DÜZ VE NET RENKLER) */}
                                    {isRankOpen && (
                                      <div className="flex flex-col items-center gap-1.5 w-full pb-4 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
                                          {/* 1. SIRA - TEPEDE (MASTER) */}
-                                         <div className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)] bg-amber-950/60 border border-amber-500/50 px-5 py-2 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center justify-center w-[85%] max-w-[220px]">
+                                         <div className="text-white bg-amber-600 border border-amber-500 px-5 py-2 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest flex items-center justify-center w-[85%] max-w-[220px] shadow-md">
                                              MASTER SIRA {masterRank} / {masterPts} PUAN
                                          </div>
                                          
                                          {/* 2. VE 3. SIRA - YAN YANA (TFF/DFO Solda, SKOR Sağda) */}
                                          <div className="flex justify-center gap-2 w-[95%] max-w-[300px]">
                                              {isTffMatch ? (
-                                                 <div className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)] bg-rose-950/60 border border-rose-500/50 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(225,29,72,0.4)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                 <div className="text-white bg-rose-600 border border-rose-500 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest flex-1 text-center flex items-center justify-center leading-snug shadow-md">
                                                      TFF <br className="sm:hidden" /> SIRA {tffRank} / {tffPts} PUAN
                                                  </div>
                                              ) : (
-                                                 <div className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)] bg-blue-950/60 border border-blue-500/50 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.4)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                 <div className="text-white bg-blue-600 border border-blue-500 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest flex-1 text-center flex items-center justify-center leading-snug shadow-md">
                                                      DFO <br className="sm:hidden" /> SIRA {dfoRank} / {dfoPts} PUAN
                                                  </div>
                                              )}
-                                             <div className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)] bg-emerald-950/60 border border-emerald-500/50 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.4)] flex-1 text-center flex items-center justify-center leading-snug">
+                                             <div className="text-white bg-emerald-600 border border-emerald-500 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest flex-1 text-center flex items-center justify-center leading-snug shadow-md">
                                                  SKOR <br className="sm:hidden" /> SIRA {skorRank} / {skorPts} İSABET
                                              </div>
                                          </div>
