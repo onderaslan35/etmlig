@@ -15,7 +15,7 @@ import {
 } from '@/utils/themeEngine';
 
 export default function LiveMatchCard() {
-  console.log("VERCEL KURTARMA SOKU - SKORLAR VE SABİT RADAR EKLENDİ");
+  console.log("VERCEL KURTARMA SOKU - RADAR SENKRONİZASYONU TAMAMLANDI");
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
@@ -112,7 +112,6 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 SIFIR HATA: ÇİFT SAYMAYI ENGELLEYEN VE MANUEL/BONUS PUANLARI HESAPLAYAN MOTOR 🔴
       const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
 
       const [tffData, dfoData, masterData, skorData, manualPointsData] = await Promise.all([
@@ -134,7 +133,7 @@ export default function LiveMatchCard() {
       const st: Record<string, any> = {};
       const initSt = (key: string) => { if (key && !st[key]) st[key] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; };
 
-      // 1. MÜHÜRLÜ HAFTALAR (SADECE w1, w2, w3 ve w4 TOPLANIR)
+      // 1. MÜHÜRLÜ HAFTALAR
       const processWeekly = (data: any[], cat: 'TFF'|'DFO'|'MASTER'|'SKOR') => {
           data.forEach(row => {
               const mappedUid = mapUid(String(row.id || row.user_id || '').trim(), String(row.name || row.user_name || ''));
@@ -145,7 +144,7 @@ export default function LiveMatchCard() {
       processWeekly(tffData, 'TFF'); processWeekly(dfoData, 'DFO');
       processWeekly(masterData, 'MASTER'); processWeekly(skorData, 'SKOR');
 
-      // 2. MANUEL ELLE GİRİLEN LİDERLİK BONUSLARI ('HAFTANIN' VEYA 'SKOR')
+      // 2. MANUEL BONUSLAR
       manualPointsData.forEach(row => {
           const ev = String(row.ev_sahibi || '').toUpperCase();
           if (ev === 'HAFTANIN' || ev === 'SKOR') {
@@ -159,13 +158,12 @@ export default function LiveMatchCard() {
                   else if (cat === 'DFO') st[mappedUid].DFO += pts;
                   else if (cat === 'SKOR') st[mappedUid].SKOR += pts;
                   else st[mappedUid].MASTER += pts; 
-
                   if (ev === 'SKOR') st[mappedUid].SKOR += 1;
               }
           }
       });
 
-      // 3. 5. HAFTADAN İTİBAREN TAHMİNLER VE CANLI MAÇLAR
+      // 3. TAHMİNLER VE CANLI MAÇLAR
       const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
       const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
 
@@ -218,7 +216,7 @@ export default function LiveMatchCard() {
           }
       });
       
-      // 4. HAFTALIK +3 PUAN CANLI BONUSLARI EKLENİYOR
+      // 4. HAFTALIK +3 PUAN BONUSLARI
       let dynamicBonusPoints: Record<string, { MASTER: number, TFF: number, DFO: number, SKOR: number }> = {};
       const initDyn = (key: string) => { if (!dynamicBonusPoints[key]) dynamicBonusPoints[key] = { MASTER: 0, TFF: 0, DFO: 0, SKOR: 0 }; };
 
@@ -309,6 +307,7 @@ export default function LiveMatchCard() {
           }
       }
 
+      // 🔴 RADAR DÜZELTMESİ: BURADA pDict DEĞİL, mergedAccounts KULLANILIYOR 🔴
       let stats: Record<string, { points: number, exactScores: number }> = {};
       Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
@@ -317,7 +316,10 @@ export default function LiveMatchCard() {
           const dbMatch = liveMap[uniqueId];
           if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
               const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-              const winnerIds = Object.keys(pDict).filter(id => pDict[`${id}-${activeWeek}-${m.id}`] === targetScore);
+              
+              // HATA BURADAYDI, ARTIK DOĞRU OYUNCU LİSTESİNDE (mergedAccounts) DÖNÜYOR
+              const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${activeWeek}-${m.id}`] === targetScore);
+              
               let pts = 1;
               if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
               else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
@@ -654,7 +656,7 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 TAM İSABET EDENLER (YENİ MİNİMALİST KÜRSÜ TASARIMI) 🔴 */}
+                      {/* 🔴 TAM İSABET EDENLER (KÜRSÜ TASARIMI) 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
                           <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
@@ -716,7 +718,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {/* ŞANSI DEVAM EDENLER (SKORLAR GERİ GELDİ) */}
+                      {/* ŞANSI DEVAM EDENLER (SKOR EKLENDİ) */}
                       {!isFinished && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
                         <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
                           <button onClick={() => togglePossible(match.id)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
@@ -736,7 +738,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {/* ELENENLER (SKORLAR GERİ GELDİ) */}
+                      {/* ELENENLER (SKOR EKLENDİ) */}
                       {eliminatedPlayers.length > 0 && (
                         <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
                           <button onClick={() => toggleEliminated(match.id)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
@@ -804,7 +806,7 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
-      {/* 🔴 CANLI LİDERLİK RADARI (ARTIK SÜREKLİ GÖRÜNÜR SABİTLENDİ) 🔴 */}
+      {/* 🔴 CANLI LİDERLİK RADARI (ARTIK SÜREKLİ GÖRÜNÜR SABİTLENDİ, YAZILAR SENKRONİZE EDİLDİ) 🔴 */}
       <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
           <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
               <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
@@ -815,10 +817,10 @@ export default function LiveMatchCard() {
                   <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
                       {weeklyLiveStats.pLeaders.length > 0 
                           ? weeklyLiveStats.pLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
-                          : 'MÜSTAKİL LİDER YOK'}
+                          : 'HENÜZ PUAN ALAN YOK'}
                   </span>
                   <span className="text-emerald-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-emerald-950/50 px-2.5 py-0.5 rounded shadow-sm border border-emerald-800/50">
-                      {weeklyLiveStats.pLeaders.length > 0 ? `${weeklyLiveStats.maxPts} PUAN` : '---'}
+                      {weeklyLiveStats.pLeaders.length > 0 ? `${weeklyLiveStats.maxPts} PUAN TOPLADI` : '---'}
                   </span>
               </div>
 
@@ -827,10 +829,10 @@ export default function LiveMatchCard() {
                   <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
                       {weeklyLiveStats.sLeaders.length > 0 
                           ? weeklyLiveStats.sLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
-                          : 'MÜSTAKİL KRAL YOK'}
+                          : 'HENÜZ PUAN ALAN YOK'}
                   </span>
                   <span className="text-amber-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-amber-950/50 px-2.5 py-0.5 rounded shadow-sm border border-amber-800/50">
-                      {weeklyLiveStats.sLeaders.length > 0 ? `${weeklyLiveStats.maxScores} TAM İSABET` : '---'}
+                      {weeklyLiveStats.sLeaders.length > 0 ? `${weeklyLiveStats.maxScores} MAÇ BİLDİ` : '---'}
                   </span>
               </div>
           </div>
