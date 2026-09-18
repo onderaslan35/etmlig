@@ -29,7 +29,7 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
   
-  // 🔴 GENEL KASA (STANDINGS) VERİSİ
+  // 🔴 ANA KASA (Puanlar) 🔴
   const [baseStandings, setBaseStandings] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
 
   const [now, setNow] = useState<number>(new Date().getTime());
@@ -110,22 +110,26 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 PUAN TABLOSUNU (KASAYI) ÇEK VE ZIRHLI BİR ŞEKİLDE KAYDET 🔴
-      const { data: stdData } = await supabase.from('standings').select('*');
+      // 🔴 SIFIR HATA İLE PUAN TABLOSUNU ÇEKME MOTORU 🔴
+      const { data: stdData, error: stdErr } = await supabase.from('standings').select('*');
+      if (stdErr) console.error("Standings çekilemedi:", stdErr);
       if (stdData) {
         const st: Record<string, any> = {};
         stdData.forEach(row => {
-          const uid = String(row.user_id);
-          if (!st[uid]) st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+          // İsim ve ID uyuşmazlıklarına karşı çift taraflı eşleştirme kalkanı
+          const rowUid = String(row.user_id).trim();
+          const rowUname = String(row.user_name).trim().toUpperCase();
           
-          // Tablodaki olası büyük/küçük harf veya tip hatalarını önleyen sağlam yapı
+          if (!st[rowUid]) st[rowUid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+          if (!st[rowUname]) st[rowUname] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+          
           const lType = String(row.league_type).toUpperCase().trim();
           const pts = Number(row.points) || 0;
 
-          if (lType === 'TFF') st[uid].TFF = pts;
-          if (lType === 'DFO') st[uid].DFO = pts;
-          if (lType === 'MASTER') st[uid].MASTER = pts;
-          if (lType === 'SKOR') st[uid].SKOR = pts; 
+          if (lType === 'TFF') { st[rowUid].TFF = pts; st[rowUname].TFF = pts; }
+          if (lType === 'DFO') { st[rowUid].DFO = pts; st[rowUname].DFO = pts; }
+          if (lType === 'MASTER') { st[rowUid].MASTER = pts; st[rowUname].MASTER = pts; }
+          if (lType === 'SKOR') { st[rowUid].SKOR = pts; st[rowUname].SKOR = pts; }
         });
         setBaseStandings(st);
       }
@@ -301,7 +305,7 @@ export default function LiveMatchCard() {
      return dbMatch.status === 'FINISHED';
   });
 
-  // 🔴 YENİ: KUSURSUZ SIRALAMA HESAPLAYICISI 🔴
+  // 🔴 SIRALAMA HESAPLAMA MOTORU 🔴
   const getRank = (arr: any[], uid: string) => {
     const item = arr.find(x => x.id === uid);
     if (!item) return '-';
@@ -402,7 +406,7 @@ export default function LiveMatchCard() {
       else if(winnersCount >= 7) displayPoints = 1;
       else displayPoints = 0;
 
-      // 🔴 SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
+      // 🔴 SANAL SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
       let simulatedTff: any[] = [];
       let simulatedDfo: any[] = [];
       let simulatedMaster: any[] = [];
@@ -410,7 +414,10 @@ export default function LiveMatchCard() {
 
       Object.keys(mergedAccounts).forEach(uid => {
          const isWinner = exactWinners.some(w => w.id === uid);
-         const base = baseStandings[uid] || { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+         const uName = mergedAccounts[uid]?.name?.trim().toUpperCase() || '';
+         
+         // Hem ID hem İsme göre çifte eşleşme kontrolü (Sıfır Hata İçin)
+         const base = baseStandings[uid] || baseStandings[uName] || { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
          
          const ptsToAdd = isWinner ? displayPoints : 0;
          const skorToAdd = isWinner ? 1 : 0;
@@ -606,16 +613,17 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 SADELEŞTİRİLMİŞ İSTATİSTİK PANELLERİ 🔴 */}
+                      {/* 🔴 SAF VE TEMİZ İSTATİSTİK PANELLERİ 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
-                          <div className="bg-emerald-950/80 p-2.5 border-b border-emerald-500/50 flex justify-end items-center relative overflow-hidden">
+                          <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-end items-center relative overflow-hidden">
+                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
                              <span className="bg-emerald-500 text-slate-950 font-black px-3 py-1 rounded text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300">
                                 +{displayPoints} PUAN YAZILIYOR
                              </span>
                           </div>
                           
-                          <div className="flex flex-col gap-1.5 p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                          <div className="flex flex-col gap-2 p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
                               const tffRank = getRank(simulatedTff, winner.id);
                               const dfoRank = getRank(simulatedDfo, winner.id);
@@ -628,21 +636,27 @@ export default function LiveMatchCard() {
                               const skorPts = getPts(simulatedSkor, winner.id);
 
                               return (
-                                <div key={idx} className="bg-slate-950 border border-slate-700/80 rounded-md p-2 sm:p-3 flex items-center justify-between gap-2 shadow-sm">
+                                <div key={idx} className="bg-slate-950 border border-slate-700/80 rounded-md p-2 flex items-center justify-between gap-2 shadow-sm">
                                    <div className="flex-shrink-0">
-                                      <span className="text-slate-100 font-black text-[10px] sm:text-[11px] uppercase whitespace-nowrap">{winner.name}</span>
+                                      <span className="text-slate-100 font-black text-[11px] sm:text-xs uppercase whitespace-nowrap">{winner.name}</span>
                                    </div>
 
-                                   <div className="flex flex-wrap justify-end gap-x-2 sm:gap-x-3 gap-y-0.5 text-[9px] sm:text-[10px] font-bold text-right">
+                                   <div className="flex flex-wrap justify-end gap-1 text-[9px] sm:text-[10px] font-black tracking-widest">
                                       {isTffMatch ? (
-                                        <span className="text-rose-400">TFF ({tffPts}p) {tffRank}. Sıra</span>
+                                        <div className="text-rose-400 bg-rose-950/40 border border-rose-800/50 px-2 py-1.5 rounded flex items-center">
+                                            TFF ({tffPts}p) {tffRank}. Sıra
+                                        </div>
                                       ) : (
-                                        <span className="text-blue-400">DFO ({dfoPts}p) {dfoRank}. Sıra</span>
+                                        <div className="text-blue-400 bg-blue-950/40 border border-blue-800/50 px-2 py-1.5 rounded flex items-center">
+                                            DFO ({dfoPts}p) {dfoRank}. Sıra
+                                        </div>
                                       )}
-                                      <span className="text-slate-600 hidden sm:inline">|</span>
-                                      <span className="text-amber-400">MASTER ({masterPts}p) {masterRank}. Sıra</span>
-                                      <span className="text-slate-600 hidden sm:inline">|</span>
-                                      <span className="text-emerald-400">SKOR ({skorPts}) {skorRank}. Sıra</span>
+                                      <div className="text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-1.5 rounded flex items-center">
+                                          MASTER ({masterPts}p) {masterRank}. Sıra
+                                      </div>
+                                      <div className="text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2 py-1.5 rounded flex items-center">
+                                          SKOR ({skorPts}) {skorRank}. Sıra
+                                      </div>
                                    </div>
                                 </div>
                               )
