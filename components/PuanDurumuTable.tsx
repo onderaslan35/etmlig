@@ -62,21 +62,21 @@ export default function PuanDurumuTable({ data, leagueTitle }: PuanDurumuTablePr
         </span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="w-full overflow-hidden">
+        <table className="w-full table-fixed text-left border-collapse">
           <thead>
             <tr className="bg-slate-950/60 text-slate-400 text-[11px] font-black uppercase border-b border-slate-800">
-              <th className="p-4 w-16 text-center">SIRA</th>
-              <th className="p-4">YARIŞMACI</th>
-              <th className="p-4 text-right">TOPLAM PUAN</th>
+              <th className="p-3 sm:p-4 w-12 sm:w-16 text-center">SIRA</th>
+              <th className="p-3 sm:p-4">YARIŞMACI</th>
+              <th className="p-3 sm:p-4 w-20 sm:w-28 text-right">PUAN</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-xs font-bold">
             {tableRows.map((row, idx) => (
               <tr key={row.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                <td className="p-4 text-center font-black text-amber-400">#{idx + 1}</td>
-                <td className="p-4 text-slate-100 font-black">{row.name || row.player || row.username}</td>
-                <td className="p-4 text-right font-black text-amber-400 text-sm">
+                <td className="p-3 sm:p-4 text-center font-black text-amber-400">#{idx + 1}</td>
+                <td className="p-3 sm:p-4 text-slate-100 font-black truncate">{row.name || row.player || row.username}</td>
+                <td className="p-3 sm:p-4 text-right font-black text-amber-400 text-sm">
                   {row.calculatedPoints}
                 </td>
               </tr>
