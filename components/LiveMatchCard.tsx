@@ -24,15 +24,17 @@ export default function LiveMatchCard() {
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
   
-  // Hangi maçların o an alevlendiğini (gol olduğunu) tutan hafıza
   const [goalFlashes, setGoalFlashes] = useState<Record<number, boolean>>({});
 
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
+  
+  // 🔴 YENİ: GENEL KASA (STANDINGS) VERİSİ 🔴
+  const [baseStandings, setBaseStandings] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
+
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  // 🔴 CANLI LİDERLİK RADARI STATE'İ 🔴
   const [weeklyLiveStats, setWeeklyLiveStats] = useState<{ pLeaders: string[], maxPts: number, sLeaders: string[], maxScores: number }>({ pLeaders: [], maxPts: 0, sLeaders: [], maxScores: 0 });
 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
@@ -46,13 +48,11 @@ export default function LiveMatchCard() {
 
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
-  // 🔴 SEYİRCİ SES KİLİDİ AÇICI 🔴
   const toggleSound = () => {
       const newState = !soundEnabled;
       setSoundEnabled(newState);
       soundEnabledRef.current = newState;
       
-      // İlk tıklamada sessizce çalıp tarayıcı güvenlik kilidini kırıyoruz!
       if (newState) {
           const audio = new Audio('/sounds/goal.mp3');
           audio.muted = true;
@@ -69,7 +69,6 @@ export default function LiveMatchCard() {
         if (data) {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
-               // Username tabanlı eşleştirme
                const pid = p.username || p.id;
                newAccounts[String(pid)] = { pass: p.password, name: p.name || p.full_name };
            });
@@ -79,7 +78,6 @@ export default function LiveMatchCard() {
      fetchDbPlayers();
   }, []);
 
-  // 🔴 OTOMATİK RADAR 🔴
   useEffect(() => {
       const initWeek = async () => {
           const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
@@ -115,6 +113,20 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
+      // Puan Tablosunu (Standings) Çek
+      const { data: stdData } = await supabase.from('standings').select('*');
+      if (stdData) {
+        const st: Record<string, any> = {};
+        stdData.forEach(row => {
+          if (!st[row.user_id]) st[row.user_id] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+          if (row.league_type === 'TFF') st[row.user_id].TFF = row.points;
+          if (row.league_type === 'DFO') st[row.user_id].DFO = row.points;
+          if (row.league_type === 'MASTER') st[row.user_id].MASTER = row.points;
+          if (row.league_type === 'SKOR') st[row.user_id].SKOR = row.points; 
+        });
+        setBaseStandings(st);
+      }
+
       const { data: dbBulletinMatches } = await supabase
         .from('matches_bulletin')
         .select('*')
@@ -125,7 +137,6 @@ export default function LiveMatchCard() {
         .from('live_matches')
         .select('*');
 
-      // 🔴 1000'ER 1000'ER ÇEKME MOTORU 🔴
       let allPredictions: any[] = [];
       let from = 0;
       let step = 999;
@@ -182,37 +193,31 @@ export default function LiveMatchCard() {
         }
         setLiveMatchesData(liveMap);
 
-        // 🔴 CANLI SEYİRCİ GOL RADARI (SES & YEŞİL ŞİMŞEK MOTORU) 🔴
         let goalHappened = false;
         let newGoalIds: number[] = [];
 
         Object.keys(liveMap).forEach(key => {
             const dbMatch = liveMap[Number(key)];
-            // Sadece canlı veya bitmiş maçlardaki skor artışını yakalar
             if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL' || dbMatch.status === 'FINISHED') {
                 if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
                     const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
                     const prevScore = prevScoresRef.current[key];
 
-                    // Eski bir skor hafızası var ve yeni skorla eşleşmiyorsa GOL OLMUŞTUR!
                     if (prevScore && prevScore !== currentScore) {
                         goalHappened = true;
-                        newGoalIds.push(Number(key)); // Hangi maçta gol olduğunu hafızaya al
+                        newGoalIds.push(Number(key)); 
                     }
-                    // Hafızayı güncelle
                     prevScoresRef.current[key] = currentScore;
                 }
             }
         });
 
         if (goalHappened) {
-            // Sesi patlat
             if (soundEnabledRef.current) {
                 const audio = new Audio('/sounds/goal.mp3');
                 audio.play().catch(e => console.log("Tarayıcı engeli veya ses çalınamadı:", e));
             }
             
-            // Yeşil Şimşeği patlat (8 saniye sürecek)
             if (newGoalIds.length > 0) {
                 setGoalFlashes(prev => {
                     const next = { ...prev };
@@ -230,7 +235,6 @@ export default function LiveMatchCard() {
             }
         }
 
-        // 🔴 YENİ: SEYİRCİLER İÇİN "CANLI LİDERLİK RADARI" MATEMATİĞİ 🔴
         let stats: Record<string, { points: number, exactScores: number }> = {};
         Object.keys(mergedAccounts).forEach(uid => {
             stats[uid] = { points: 0, exactScores: 0 };
@@ -242,7 +246,6 @@ export default function LiveMatchCard() {
             
             if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
                 const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-                
                 const winnerIds = Object.keys(predDict).filter(id => predDict[id][m.match_index - 1] === targetScore);
                 
                 let pts = 1;
@@ -274,7 +277,6 @@ export default function LiveMatchCard() {
 
         setWeeklyLiveStats({ pLeaders: pLeadersList, maxPts: mPts, sLeaders: sLeadersList, maxScores: mScores });
 
-        // 🔴 KUSURSUZ ZAMAN KİLİDİ 🔴
         const todaysMatches = currentWeekMatches.filter(m => {
              const uniqueId = getUniqueMatchId(activeWeek, m.id);
              const dbMatch = liveMap[uniqueId];
@@ -284,14 +286,12 @@ export default function LiveMatchCard() {
              const isToday = mDate.getTime() === todayMidnight.getTime();
              const isLiveOrWaiting = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
 
-             // ZAMAN FİLTRESİ:
              if (isLiveOrWaiting) return true;
              return isToday;
         });
         
         setTodaysMatchesList(todaysMatches);
         
-        // 🔴 OTOMATİK HAFTA ATLATMA 🔴
         const match24Id = getUniqueMatchId(activeWeek, 24);
         const dbMatch24 = liveMap[match24Id];
 
@@ -304,46 +304,6 @@ export default function LiveMatchCard() {
                 }
             }
         }
-
-        let currentBoard: Record<string, any> = {}; 
-        let hasLiveScores = false;
-
-        todaysMatches.forEach(match => {
-          const uniqueId = getUniqueMatchId(activeWeek, match.id);
-          const dbMatch = liveMap[uniqueId];
-          
-          if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            hasLiveScores = true;
-            const isTff = isTffMatchCheck(match.category);
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-            
-            const winnerIds = Object.keys(predDict).filter(id => predDict[id][match.id - 1] === targetScore);
-            
-            let points = 1;
-            if(winnerIds.length === 1) points = 12;
-            else if(winnerIds.length === 2) points = 6;
-            else if(winnerIds.length === 3) points = 5;
-            else if(winnerIds.length === 4) points = 4;
-            else if(winnerIds.length === 5) points = 3;
-            else if(winnerIds.length === 6) points = 2;
-            else points = 1;
-
-            winnerIds.forEach(wId => {
-              if(!currentBoard[wId]) currentBoard[wId] = { dfo: 0, tff: 0, master: 0, skor: 0 };
-              if (isTff) currentBoard[wId].tff += points;
-              else currentBoard[wId].dfo += points;
-              currentBoard[wId].master += points;
-              currentBoard[wId].skor += 1;
-            });
-          }
-        });
-
-        if (hasLiveScores) {
-          localStorage.setItem('elitTahmin_Leaderboard', JSON.stringify(currentBoard));
-        } else {
-          localStorage.removeItem('elitTahmin_Leaderboard');
-        }
-        window.dispatchEvent(new Event('leaderboardUpdate')); 
       }
     };
 
@@ -352,19 +312,10 @@ export default function LiveMatchCard() {
     return () => clearInterval(interval);
   }, [activeWeek, isWeekLoaded, mergedAccounts]);
 
-  const toggleWinners = (matchId: number) => {
-    setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
-  };
-  const togglePossible = (matchId: number) => {
-    setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-  };
-  const toggleEliminated = (matchId: number) => {
-    setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-  };
-
-  const toggleMatchExpansion = (matchId: number) => {
-    setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
-  };
+  const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
+  const togglePossible = (matchId: number) => setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  const toggleEliminated = (matchId: number) => setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  const toggleMatchExpansion = (matchId: number) => setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
 
   if (!isWeekLoaded) {
     return (
@@ -386,6 +337,23 @@ export default function LiveMatchCard() {
      return dbMatch.status === 'FINISHED';
   });
 
+  // Sıralama Hesaplama Formülü (Eşitlikleri sayar)
+  const getRank = (arr: any[], uid: string) => {
+    const index = arr.findIndex(x => x.id === uid);
+    if (index === -1) return '-';
+    const myPts = arr[index].pts;
+    let rank = 1;
+    for(let i=0; i<arr.length; i++) {
+      if(arr[i].pts > myPts) rank++;
+    }
+    return rank;
+  };
+
+  const getPts = (arr: any[], uid: string) => {
+    const item = arr.find(x => x.id === uid);
+    return item ? item.pts : 0;
+  };
+
   const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
       const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
       const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
@@ -397,7 +365,7 @@ export default function LiveMatchCard() {
 
       const uniqueId = getUniqueMatchId(activeWeek, match.id);
       const dbMatch = liveMatchesData[uniqueId] || {};
-      const isGoalFlashing = goalFlashes[uniqueId]; // GOL OLDU MU?
+      const isGoalFlashing = goalFlashes[uniqueId]; 
       
       let matchStatus = dbMatch.status || 'NOT_STARTED';
       let homeScore = dbMatch.home_score || '-';
@@ -424,7 +392,7 @@ export default function LiveMatchCard() {
       const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
       const isFinished = matchStatus === 'FINISHED'; 
 
-      let exactWinners: {name: string, score: string}[] = [];
+      let exactWinners: {id: string, name: string, score: string}[] = [];
       let possibleWinners: {name: string, score: string}[] = [];
       let eliminatedPlayers: {name: string, score: string}[] = [];
 
@@ -446,7 +414,7 @@ export default function LiveMatchCard() {
           const pA = parseInt(pAStr);
 
           if (pH === currentH && pA === currentA) {
-             exactWinners.push({ name, score: predStr });
+             exactWinners.push({ id, name, score: predStr });
           } else if (pH >= currentH && pA >= currentA && !isFinished && matchStatus !== 'WAITING_APPROVAL') {
              possibleWinners.push({ name, score: predStr });
           } else {
@@ -460,7 +428,6 @@ export default function LiveMatchCard() {
       }
       
       const winnersCount = exactWinners.length;
-
       let displayPoints = 1;
       if(winnersCount === 1) displayPoints = 12;
       else if(winnersCount === 2) displayPoints = 6;
@@ -470,6 +437,31 @@ export default function LiveMatchCard() {
       else if(winnersCount === 6) displayPoints = 2;
       else if(winnersCount >= 7) displayPoints = 1;
       else displayPoints = 0;
+
+      // 🔴 SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
+      let simulatedTff: any[] = [];
+      let simulatedDfo: any[] = [];
+      let simulatedMaster: any[] = [];
+      let simulatedSkor: any[] = [];
+
+      Object.keys(mergedAccounts).forEach(uid => {
+         const isWinner = exactWinners.some(w => w.id === uid);
+         const base = baseStandings[uid] || { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+         
+         const ptsToAdd = isWinner ? displayPoints : 0;
+         const skorToAdd = isWinner ? 1 : 0;
+
+         if (isTffMatch) simulatedTff.push({ id: uid, pts: base.TFF + ptsToAdd });
+         else simulatedDfo.push({ id: uid, pts: base.DFO + ptsToAdd });
+         
+         simulatedMaster.push({ id: uid, pts: base.MASTER + ptsToAdd });
+         simulatedSkor.push({ id: uid, pts: base.SKOR + skorToAdd });
+      });
+
+      simulatedTff.sort((a,b) => b.pts - a.pts);
+      simulatedDfo.sort((a,b) => b.pts - a.pts);
+      simulatedMaster.sort((a,b) => b.pts - a.pts);
+      simulatedSkor.sort((a,b) => b.pts - a.pts);
 
       let countdownText = "";
       if (now < matchTimeMs && matchStatus === 'NOT_STARTED') {
@@ -485,7 +477,7 @@ export default function LiveMatchCard() {
       return (
         <div 
           key={match.id} 
-          className={`w-full max-w-lg mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+          className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
             isGoalFlashing 
               ? 'goal-lightning' 
               : isExpanded 
@@ -652,47 +644,74 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 1. CEPHE: TAM İSABET (CANLI YAYIN LİDERLİK ETKİSİ) */}
+                      {/* 🔴 YENİ: SADE İSTATİSTİK PANELLERİ 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
-                          <div className="bg-emerald-950/80 p-2.5 border-b border-emerald-500/50 flex justify-between items-center relative overflow-hidden">
+                          <div className="bg-emerald-950/80 p-2.5 border-b border-emerald-500/50 flex justify-end items-center relative overflow-hidden">
                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                             <span className="text-emerald-400 font-black tracking-widest text-[9px] sm:text-[11px] drop-shadow-md z-10 flex items-center gap-2">
-                                <span className="animate-pulse text-sm">🔴</span> {isFinished ? "MAÇ SONUCU: KASAYI DOLDURANLAR" : "CANLI RADAR: TAM İSABET ETKİSİ"}
-                             </span>
                              <span className="bg-emerald-500 text-slate-950 font-black px-3 py-1 rounded text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300">
                                 +{displayPoints} PUAN YAZILIYOR
                              </span>
                           </div>
-                          <div className="flex flex-col gap-1.5 p-2 max-h-[220px] overflow-y-auto custom-scrollbar bg-slate-900/50">
-                            {exactWinners.map((winner, idx) => (
-                              <div key={idx} className="relative bg-slate-950/90 border border-slate-700/80 rounded-lg p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden group hover:border-emerald-400 transition-all hover:bg-slate-900 shadow-sm">
-                                 {/* Yükseliş Efekti Sol Çizgi */}
-                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-t from-emerald-600 via-green-400 to-emerald-600"></div>
-                                 
-                                 <div className="flex items-center gap-3 pl-2">
-                                    <span className="text-amber-400 font-black text-sm tracking-widest bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700 shadow-inner">
-                                       {winner.score}
-                                    </span>
-                                    <span className="text-slate-100 font-extrabold text-[11px] sm:text-xs uppercase drop-shadow-md">{winner.name}</span>
-                                 </div>
+                          
+                          <div className="flex flex-col gap-2 p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                            {exactWinners.map((winner, idx) => {
+                              const tffRank = getRank(simulatedTff, winner.id);
+                              const dfoRank = getRank(simulatedDfo, winner.id);
+                              const masterRank = getRank(simulatedMaster, winner.id);
+                              const skorRank = getRank(simulatedSkor, winner.id);
 
-                                 <div className="flex flex-col sm:flex-row gap-2 pl-2 sm:pl-0 w-full sm:w-auto">
-                                    <div className="flex items-center justify-center gap-1.5 bg-emerald-950/60 border border-emerald-700/50 px-2.5 py-1.5 rounded-md shadow-inner flex-1 sm:flex-none">
-                                       <span className="text-emerald-400 text-sm animate-bounce">⬆️</span>
-                                       <span className="text-emerald-400 text-[8px] sm:text-[9px] font-black tracking-widest drop-shadow-sm">
-                                          {isTffMatch ? 'TFF' : 'DFO'} LİGİNDE YÜKSELİŞTE!
-                                       </span>
-                                    </div>
-                                    <div className="flex items-center justify-center gap-1.5 bg-amber-950/60 border border-amber-700/50 px-2.5 py-1.5 rounded-md shadow-inner flex-1 sm:flex-none">
-                                       <span className="text-amber-400 text-sm animate-bounce" style={{ animationDelay: '0.2s' }}>⬆️</span>
-                                       <span className="text-amber-400 text-[8px] sm:text-[9px] font-black tracking-widest drop-shadow-sm">
-                                          MASTER LİGDE FIRLADI!
-                                       </span>
-                                    </div>
-                                 </div>
-                              </div>
-                            ))}
+                              const tffPts = getPts(simulatedTff, winner.id);
+                              const dfoPts = getPts(simulatedDfo, winner.id);
+                              const masterPts = getPts(simulatedMaster, winner.id);
+                              const skorPts = getPts(simulatedSkor, winner.id);
+
+                              return (
+                                <div key={idx} className="relative bg-slate-950 border border-slate-700/80 rounded-lg p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden group hover:border-emerald-400 transition-all hover:bg-slate-900 shadow-sm">
+                                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-t from-emerald-600 via-green-400 to-emerald-600"></div>
+                                   
+                                   <div className="flex items-center pl-2 md:w-[25%]">
+                                      <span className="text-slate-100 font-black text-xs sm:text-sm uppercase drop-shadow-md">{winner.name}</span>
+                                   </div>
+
+                                   <div className="flex flex-col sm:flex-row gap-2 pl-2 sm:pl-0 flex-1 justify-end">
+                                      
+                                      {/* TFF/DFO KUTUSU */}
+                                      {isTffMatch ? (
+                                        <div className="flex justify-between items-center bg-rose-950/40 border border-rose-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
+                                           <span className="text-rose-400 text-[10px] sm:text-[11px] font-black tracking-widest">
+                                              TFF ({tffPts}<span className="text-rose-200/50 font-bold">p</span>)
+                                           </span>
+                                           <span className="text-rose-300 text-[10px] sm:text-[11px] font-bold">{tffRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
+                                        </div>
+                                      ) : (
+                                        <div className="flex justify-between items-center bg-blue-950/40 border border-blue-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
+                                           <span className="text-blue-400 text-[10px] sm:text-[11px] font-black tracking-widest">
+                                              DFO ({dfoPts}<span className="text-blue-200/50 font-bold">p</span>)
+                                           </span>
+                                           <span className="text-blue-300 text-[10px] sm:text-[11px] font-bold">{dfoRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
+                                        </div>
+                                      )}
+
+                                      {/* MASTER KUTUSU */}
+                                      <div className="flex justify-between items-center bg-amber-950/40 border border-amber-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
+                                         <span className="text-amber-400 text-[10px] sm:text-[11px] font-black tracking-widest">
+                                            MASTER ({masterPts}<span className="text-amber-200/50 font-bold">p</span>)
+                                         </span>
+                                         <span className="text-amber-300 text-[10px] sm:text-[11px] font-bold">{masterRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
+                                      </div>
+
+                                      {/* SKOR KUTUSU */}
+                                      <div className="flex justify-between items-center bg-emerald-950/40 border border-emerald-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
+                                         <span className="text-emerald-400 text-[10px] sm:text-[11px] font-black tracking-widest">
+                                            SKOR ({skorPts} <span className="text-emerald-200/50 font-bold text-[9px]">İsabet</span>)
+                                         </span>
+                                         <span className="text-emerald-300 text-[10px] sm:text-[11px] font-bold">{skorRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
+                                      </div>
+                                   </div>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       )}
