@@ -15,7 +15,7 @@ import {
 } from '@/utils/themeEngine';
 
 export default function LiveMatchCard() {
-  console.log("VERCEL KURTARMA SOKU - ŞIK TASARIM VE KUSURSUZ PUAN MOTORU");
+  console.log("VERCEL KURTARMA SOKU - SKORLAR VE SABİT RADAR EKLENDİ");
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
@@ -663,7 +663,6 @@ export default function LiveMatchCard() {
                              </span>
                           </div>
                           
-                          {/* Üst Üste Binmeyi Engelleyen BLOCK Sistem */}
                           <div className="block p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
                               const uniquePlayerKey = `${match.id}-${winner.id}`;
@@ -681,7 +680,6 @@ export default function LiveMatchCard() {
 
                               return (
                                 <div key={idx} className="mb-2 bg-slate-950 border border-slate-700/80 rounded-lg shadow-xl relative overflow-hidden transition-all duration-300">
-                                   
                                    <button 
                                       onClick={() => togglePlayerRank(uniquePlayerKey)}
                                       className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}
@@ -692,14 +690,11 @@ export default function LiveMatchCard() {
                                        </span>
                                    </button>
                                    
-                                   {/* ŞANSI DEVAM EDENLER STİLİNDE İNCE VE ZARİF KÜRSÜ */}
                                    {isRankOpen && (
                                      <div className="flex flex-wrap justify-center gap-1.5 w-full pb-3 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
-                                         
                                          <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">
                                             MASTER SIRA {masterRank} / {masterPts} PUAN
                                          </span>
-                                         
                                          {isTffMatch ? (
                                              <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">
                                                 TFF SIRA {tffRank} / {tffPts} PUAN
@@ -709,14 +704,11 @@ export default function LiveMatchCard() {
                                                 DFO SIRA {dfoRank} / {dfoPts} PUAN
                                              </span>
                                          )}
-                                         
                                          <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">
                                             SKOR SIRA {skorRank} / {skorPts} İSABET
                                          </span>
-                                         
                                      </div>
                                    )}
-
                                 </div>
                               )
                             })}
@@ -724,7 +716,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {/* ŞANSI DEVAM EDENLER */}
+                      {/* ŞANSI DEVAM EDENLER (SKORLAR GERİ GELDİ) */}
                       {!isFinished && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
                         <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
                           <button onClick={() => togglePossible(match.id)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
@@ -736,6 +728,7 @@ export default function LiveMatchCard() {
                               {possibleWinners.map((winner, idx) => (
                                 <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center">
                                   <span>{winner.name}</span>
+                                  <span className="text-cyan-400 font-black tracking-widest ml-0.5">[{winner.score}]</span>
                                 </span>
                               ))}
                             </div>
@@ -743,7 +736,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {/* ELENENLER */}
+                      {/* ELENENLER (SKORLAR GERİ GELDİ) */}
                       {eliminatedPlayers.length > 0 && (
                         <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
                           <button onClick={() => toggleEliminated(match.id)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
@@ -755,6 +748,7 @@ export default function LiveMatchCard() {
                               {eliminatedPlayers.map((winner, idx) => (
                                 <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-red-950/40 text-slate-400 border-red-900/50 flex gap-1 items-center opacity-70">
                                   <span className="line-through">{winner.name}</span>
+                                  <span className="text-red-500 font-black tracking-widest ml-0.5">[{winner.score}]</span>
                                 </span>
                               ))}
                             </div>
@@ -810,38 +804,37 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
-      {weeklyLiveStats.maxPts > 0 && (
-          <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
-              <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
-                  <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-                  <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
-                      <span className="text-emerald-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">🔥 HAFTANIN PUAN LİDERİ</span>
-                      <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
-                          {weeklyLiveStats.pLeaders.length > 0 
-                              ? weeklyLiveStats.pLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
-                              : 'MÜSTAKİL LİDER YOK'}
-                      </span>
-                      <span className="text-emerald-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-emerald-950/50 px-2.5 py-0.5 rounded shadow-sm border border-emerald-800/50">
-                          {weeklyLiveStats.pLeaders.length > 0 ? `${weeklyLiveStats.maxPts} PUAN` : '---'}
-                      </span>
-                  </div>
+      {/* 🔴 CANLI LİDERLİK RADARI (ARTIK SÜREKLİ GÖRÜNÜR SABİTLENDİ) 🔴 */}
+      <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
+          <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
+              <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+              <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
+                  <span className="text-emerald-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">🔥 HAFTANIN PUAN LİDERİ</span>
+                  <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
+                      {weeklyLiveStats.pLeaders.length > 0 
+                          ? weeklyLiveStats.pLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
+                          : 'MÜSTAKİL LİDER YOK'}
+                  </span>
+                  <span className="text-emerald-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-emerald-950/50 px-2.5 py-0.5 rounded shadow-sm border border-emerald-800/50">
+                      {weeklyLiveStats.pLeaders.length > 0 ? `${weeklyLiveStats.maxPts} PUAN` : '---'}
+                  </span>
+              </div>
 
-                  <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
-                      <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">⚽ HAFTANIN SKOR KRALI</span>
-                      <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
-                          {weeklyLiveStats.sLeaders.length > 0 
-                              ? weeklyLiveStats.sLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
-                              : 'MÜSTAKİL KRAL YOK'}
-                      </span>
-                      <span className="text-amber-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-amber-950/50 px-2.5 py-0.5 rounded shadow-sm border border-amber-800/50">
-                          {weeklyLiveStats.sLeaders.length > 0 ? `${weeklyLiveStats.maxScores} TAM İSABET` : '---'}
-                      </span>
-                  </div>
+              <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
+                  <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">⚽ HAFTANIN SKOR KRALI</span>
+                  <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
+                      {weeklyLiveStats.sLeaders.length > 0 
+                          ? weeklyLiveStats.sLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
+                          : 'MÜSTAKİL KRAL YOK'}
+                  </span>
+                  <span className="text-amber-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-amber-950/50 px-2.5 py-0.5 rounded shadow-sm border border-amber-800/50">
+                      {weeklyLiveStats.sLeaders.length > 0 ? `${weeklyLiveStats.maxScores} TAM İSABET` : '---'}
+                  </span>
               </div>
           </div>
-      )}
+      </div>
 
       {todaysMatchesList.length === 0 ? (
         <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
