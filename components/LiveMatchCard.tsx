@@ -15,7 +15,7 @@ import {
 } from '@/utils/themeEngine';
 
 export default function LiveMatchCard() {
-  console.log("VERCEL KURTARMA SOKU - KÜRSÜ TASARIMI, ÜST ÜSTE BİNME FİX VE NET PUAN MOTORU");
+  console.log("VERCEL KURTARMA SOKU - ŞIK TASARIM VE KUSURSUZ PUAN MOTORU");
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
@@ -112,7 +112,7 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 ÇİFT SAYMAYI ENGELLEYEN YENİ PUAN MOTORU 🔴
+      // 🔴 SIFIR HATA: ÇİFT SAYMAYI ENGELLEYEN VE MANUEL/BONUS PUANLARI HESAPLAYAN MOTOR 🔴
       const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
 
       const [tffData, dfoData, masterData, skorData, manualPointsData] = await Promise.all([
@@ -121,38 +121,51 @@ export default function LiveMatchCard() {
           fetchTable('points')
       ]);
 
+      const pMap: Record<string, string> = {};
+      Object.keys(mergedAccounts).forEach(k => { pMap[normalizeName(mergedAccounts[k].name)] = k; });
+      
+      const mapUid = (uid: string, name: string) => {
+          if (mergedAccounts[uid]) return uid;
+          const normName = normalizeName(name);
+          if (pMap[normName]) return pMap[normName];
+          return uid;
+      };
+
       const st: Record<string, any> = {};
       const initSt = (key: string) => { if (key && !st[key]) st[key] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; };
 
-      // 1. SADECE w1, w2, w3 ve w4 SÜTUNLARINI TOPLAR (Geçmiş Mühürlü Haftalar)
+      // 1. MÜHÜRLÜ HAFTALAR (SADECE w1, w2, w3 ve w4 TOPLANIR)
       const processWeekly = (data: any[], cat: 'TFF'|'DFO'|'MASTER'|'SKOR') => {
           data.forEach(row => {
-              const uid = String(row.id || row.user_id || '').trim();
+              const mappedUid = mapUid(String(row.id || row.user_id || '').trim(), String(row.name || row.user_name || ''));
               let sum = (Number(row.w1) || 0) + (Number(row.w2) || 0) + (Number(row.w3) || 0) + (Number(row.w4) || 0);
-              if (uid && sum > 0) { initSt(uid); st[uid][cat] += sum; }
+              if (sum > 0) { initSt(mappedUid); st[mappedUid][cat] += sum; }
           });
       };
       processWeekly(tffData, 'TFF'); processWeekly(dfoData, 'DFO');
       processWeekly(masterData, 'MASTER'); processWeekly(skorData, 'SKOR');
 
-      // 2. MANUEL ELLE GİRİLEN PUANLARI EKLER
+      // 2. MANUEL ELLE GİRİLEN LİDERLİK BONUSLARI ('HAFTANIN' VEYA 'SKOR')
       manualPointsData.forEach(row => {
-          const uid = String(row.username || row.user_id || row.id || '').trim();
-          const cat = String(row.kategori || row.league_type || 'MASTER').toUpperCase().trim();
-          const pts = Number(row.puan ?? row.points ?? row.totalPoints) || 0;
-          
-          if (uid && pts !== 0) {
-              initSt(uid);
-              if (cat === 'TFF') st[uid].TFF += pts;
-              else if (cat === 'DFO') st[uid].DFO += pts;
-              else if (cat === 'SKOR') st[uid].SKOR += pts;
-              else st[uid].MASTER += pts; 
+          const ev = String(row.ev_sahibi || '').toUpperCase();
+          if (ev === 'HAFTANIN' || ev === 'SKOR') {
+              const mappedUid = mapUid(String(row.username || row.user_id || row.id || '').trim(), String(row.user_name || row.name || ''));
+              const cat = String(row.kategori || row.league_type || 'MASTER').toUpperCase().trim();
+              const pts = Number(row.puan ?? row.points ?? row.totalPoints) || 0;
+              
+              if (pts !== 0) {
+                  initSt(mappedUid);
+                  if (cat === 'TFF') st[mappedUid].TFF += pts;
+                  else if (cat === 'DFO') st[mappedUid].DFO += pts;
+                  else if (cat === 'SKOR') st[mappedUid].SKOR += pts;
+                  else st[mappedUid].MASTER += pts; 
 
-              if (String(row.ev_sahibi).toUpperCase() === 'SKOR') st[uid].SKOR += 1;
+                  if (ev === 'SKOR') st[mappedUid].SKOR += 1;
+              }
           }
       });
 
-      // 3. 5. HAFTADAN İTİBAREN CANLI VE BİTEN TAHMİNLERİ EKLER
+      // 3. 5. HAFTADAN İTİBAREN TAHMİNLER VE CANLI MAÇLAR
       const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
       const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
 
@@ -177,7 +190,6 @@ export default function LiveMatchCard() {
       setLiveMatchesData(liveMap);
 
       (dbBulletinMatches || []).forEach(m => {
-          // 🔴 KRİTİK FİLTRE: 1, 2, 3 ve 4. haftaları tekrar hesaplayıp puanları şişirmeyi engeller! 🔴
           if (m.week_num < 5) return; 
 
           const uniqueId = getUniqueMatchId(m.week_num, m.match_index);
@@ -206,7 +218,42 @@ export default function LiveMatchCard() {
           }
       });
       
-      // Global Puanları ve Sıralamaları (Rank) Tek Seferde Hesaplayıp Hafızaya Al
+      // 4. HAFTALIK +3 PUAN CANLI BONUSLARI EKLENİYOR
+      let dynamicBonusPoints: Record<string, { MASTER: number, TFF: number, DFO: number, SKOR: number }> = {};
+      const initDyn = (key: string) => { if (!dynamicBonusPoints[key]) dynamicBonusPoints[key] = { MASTER: 0, TFF: 0, DFO: 0, SKOR: 0 }; };
+
+      for (let w = 5; w <= activeWeek; w++) {
+          const match24 = liveMap[getUniqueMatchId(w, 24)];
+          if (match24 && (match24.status === 'LIVE' || match24.status === 'WAITING_APPROVAL' || match24.status === 'FINISHED')) {
+              let wkMaster: any = {}, wkSkor: any = {};
+              (dbBulletinMatches || []).filter(m => m.week_num === w).forEach(m => {
+                  const dbM = liveMap[getUniqueMatchId(w, m.match_index)];
+                  if (dbM && dbM.status !== 'NOT_STARTED' && dbM.home_score !== '-') {
+                      const targetScore = `${dbM.home_score}-${dbM.away_score}`.replace(/\s+/g, '');
+                      const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${w}-${m.match_index}`] === targetScore);
+                      let pts = 1; if(winnerIds.length===1)pts=12; else if(winnerIds.length===2)pts=6; else if(winnerIds.length===3)pts=5; else if(winnerIds.length===4)pts=4; else if(winnerIds.length===5)pts=3; else if(winnerIds.length===6)pts=2; else if(winnerIds.length>=7)pts=1; else pts=0;
+                      winnerIds.forEach(id => { wkMaster[id] = (wkMaster[id]||0) + pts; wkSkor[id] = (wkSkor[id]||0) + 1; });
+                  }
+              });
+
+              const applyBonus = (wkScores: any) => {
+                  let maxP = -1; let leaders: string[] = [];
+                  Object.keys(wkScores).forEach(id => {
+                      if (wkScores[id] > maxP) { maxP = wkScores[id]; leaders = [id]; }
+                      else if (wkScores[id] === maxP) leaders.push(id);
+                  });
+                  if (leaders.length === 1 && maxP > 0) { initDyn(leaders[0]); dynamicBonusPoints[leaders[0]].MASTER += 3; }
+              };
+              applyBonus(wkMaster); applyBonus(wkSkor);
+          }
+      }
+
+      Object.keys(dynamicBonusPoints).forEach(id => {
+          initSt(id);
+          st[id].MASTER += dynamicBonusPoints[id].MASTER;
+      });
+
+      // GLOBAL HESAPLAMA SONU
       setGlobalLiveScores(st);
       
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
@@ -607,7 +654,7 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 AÇILIR KAPANIR KÜRSÜ TASARIMI (BEMBEYAZ YAZILARLA BLOCK SİSTEMİ) 🔴 */}
+                      {/* 🔴 TAM İSABET EDENLER (YENİ MİNİMALİST KÜRSÜ TASARIMI) 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
                           <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
@@ -616,13 +663,12 @@ export default function LiveMatchCard() {
                              </span>
                           </div>
                           
-                          {/* ÜST ÜSTE BİNMEYİ ENGELLEYEN YENİ BLOCK SİSTEMİ */}
-                          <div className="block max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50 p-2">
+                          {/* Üst Üste Binmeyi Engelleyen BLOCK Sistem */}
+                          <div className="block p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
                               const uniquePlayerKey = `${match.id}-${winner.id}`;
                               const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
 
-                              // Global canlı puanlardan doğrudan okuma
                               const tffPts = globalLiveScores[winner.id]?.TFF || 0;
                               const dfoPts = globalLiveScores[winner.id]?.DFO || 0;
                               const masterPts = globalLiveScores[winner.id]?.MASTER || 0;
@@ -646,28 +692,28 @@ export default function LiveMatchCard() {
                                        </span>
                                    </button>
                                    
+                                   {/* ŞANSI DEVAM EDENLER STİLİNDE İNCE VE ZARİF KÜRSÜ */}
                                    {isRankOpen && (
-                                     <div className="flex flex-col items-center gap-1.5 w-full pb-4 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
-                                         {/* 1. SIRA - TEPEDE (MASTER) */}
-                                         <div className="text-white bg-amber-600 border border-amber-500 px-5 py-2 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest flex items-center justify-center w-[85%] max-w-[220px] shadow-sm">
-                                             MASTER SIRA {masterRank} / {masterPts} PUAN
-                                         </div>
+                                     <div className="flex flex-wrap justify-center gap-1.5 w-full pb-3 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
                                          
-                                         {/* 2. VE 3. SIRA - YAN YANA (TFF/DFO Solda, SKOR Sağda) */}
-                                         <div className="flex justify-center gap-2 w-[95%] max-w-[300px]">
-                                             {isTffMatch ? (
-                                                 <div className="text-white bg-rose-600 border border-rose-500 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest flex-1 text-center flex items-center justify-center leading-snug shadow-sm">
-                                                     TFF <br className="sm:hidden" /> SIRA {tffRank} / {tffPts} PUAN
-                                                 </div>
-                                             ) : (
-                                                 <div className="text-white bg-blue-600 border border-blue-500 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest flex-1 text-center flex items-center justify-center leading-snug shadow-sm">
-                                                     DFO <br className="sm:hidden" /> SIRA {dfoRank} / {dfoPts} PUAN
-                                                 </div>
-                                             )}
-                                             <div className="text-white bg-emerald-600 border border-emerald-500 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest flex-1 text-center flex items-center justify-center leading-snug shadow-sm">
-                                                 SKOR <br className="sm:hidden" /> SIRA {skorRank} / {skorPts} İSABET
-                                             </div>
-                                         </div>
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">
+                                            MASTER SIRA {masterRank} / {masterPts} PUAN
+                                         </span>
+                                         
+                                         {isTffMatch ? (
+                                             <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">
+                                                TFF SIRA {tffRank} / {tffPts} PUAN
+                                             </span>
+                                         ) : (
+                                             <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-900/30 text-blue-400 border-blue-700/50 tracking-wider whitespace-nowrap">
+                                                DFO SIRA {dfoRank} / {dfoPts} PUAN
+                                             </span>
+                                         )}
+                                         
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">
+                                            SKOR SIRA {skorRank} / {skorPts} İSABET
+                                         </span>
+                                         
                                      </div>
                                    )}
 
@@ -690,7 +736,6 @@ export default function LiveMatchCard() {
                               {possibleWinners.map((winner, idx) => (
                                 <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center">
                                   <span>{winner.name}</span>
-                                  <span className="text-cyan-400 font-black tracking-widest">[{winner.score}]</span>
                                 </span>
                               ))}
                             </div>
@@ -710,7 +755,6 @@ export default function LiveMatchCard() {
                               {eliminatedPlayers.map((winner, idx) => (
                                 <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-red-950/40 text-slate-400 border-red-900/50 flex gap-1 items-center opacity-70">
                                   <span className="line-through">{winner.name}</span>
-                                  <span className="text-red-500 font-black tracking-widest">[{winner.score}]</span>
                                 </span>
                               ))}
                             </div>
