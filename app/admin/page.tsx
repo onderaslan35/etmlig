@@ -83,6 +83,22 @@ export default function AdminRadarPortal() {
 
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(6); 
   const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([6]);
+  const [systemActiveWeek, setSystemActiveWeek] = useState<number>(6);
+
+  // 🔴 ÖNBELLEK TEMİZLİĞİ: Hafta değiştiğinde takılı kalan skorları uçur
+  useEffect(() => {
+    setAdminScores({});
+    setLiveMatchesDB([]);
+    setLiveInfoStateMap({});
+  }, [selectedLiveWeek]);
+const [systemActiveWeek, setSystemActiveWeek] = useState<number>(6);
+
+// 🔴 1. ÇÖZÜM: Hafta değiştiğinde önceki skorları ve önbelleği temizle
+useEffect(() => {
+  setAdminScores({});
+  setLiveMatchesDB([]);
+  setLiveInfoStateMap({});
+}, [selectedLiveWeek]);
 
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
@@ -197,6 +213,8 @@ export default function AdminRadarPortal() {
                 } else if (weeks.length > 0) {
                     targetWeek = Math.max(...weeks);
                 }
+
+                setSystemActiveWeek(targetWeek); // 🔴 SİSTEMİN AKTİF HAFTASI KAYDEDİLDİ
 
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
                 setSelectedLiveWeek(targetWeek);
@@ -1173,6 +1191,7 @@ export default function AdminRadarPortal() {
                 // 🔴 1 DK KİLİDİ 🔴
                 const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
                 const isTimeAllowed = now >= matchTimeMs - 60000;
+                const isPastWeek = selectedLiveWeek < systemActiveWeek; // 🔴 GEÇMİŞ HAFTA KONTROLÜ
 
                 return (
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
@@ -1204,11 +1223,11 @@ export default function AdminRadarPortal() {
 
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                              <select disabled={isLocked || !isTimeAllowed} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
+                              <select disabled={isLocked || !isTimeAllowed || isPastWeek} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
                                 {timeOptionsArr.map((_, i) => <option key={`h-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
                               </select>
                               <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
-                              <select disabled={isLocked || !isTimeAllowed} value={awayScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
+                              <select disabled={isLocked || !isTimeAllowed || isPastWeek} value={awayScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
                                 {timeOptionsArr.map((_, i) => <option key={`a-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
                               </select>
                             </div>
@@ -1242,6 +1261,12 @@ export default function AdminRadarPortal() {
                               <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
                                 İPTAL ET & PUANLARI GERİ AL
                               </button>
+                            </div>
+                          ) : isPastWeek ? (
+                            <div className="w-full text-center">
+                              <div className="bg-rose-900/80 text-rose-300 text-[9px] sm:text-[10px] font-bold px-6 py-2 rounded-lg border border-rose-700 uppercase tracking-widest shadow-inner inline-block w-full">
+                                🔒 GEÇMİŞ HAFTA KİLİTLİ: SKOR DEĞİŞTİRİLEMEZ
+                              </div>
                             </div>
                           ) : !isTimeAllowed ? (
                             <div className="w-full text-center">
