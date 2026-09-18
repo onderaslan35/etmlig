@@ -43,7 +43,7 @@ export default function LiveMatchCard() {
   const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
   const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
   
-  // 🔴 YENİ: AÇILIR KAPANIR KÜRSÜ STATE'İ 🔴
+  // 🔴 AÇILIR KAPANIR KÜRSÜ STATE'İ 🔴
   const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
 
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
@@ -109,7 +109,6 @@ export default function LiveMatchCard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Türkçe karakter ve boşlukları normalize eden fonksiyon (Sıfır Hata İçin)
   const normalizeName = (name: string) => {
     if (!name) return "";
     return name.toUpperCase()
@@ -119,7 +118,7 @@ export default function LiveMatchCard() {
       .replace(/Ş/g, 'S')
       .replace(/Ö/g, 'O')
       .replace(/Ç/g, 'C')
-      .replace(/\s+/g, '') // Tüm boşlukları siler
+      .replace(/\s+/g, '')
       .trim();
   };
 
@@ -127,15 +126,14 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 SIFIR HATA İLE PUAN TABLOSUNU ÇEKME MOTORU 🔴
+      // 🔴 PUAN TABLOSUNU ÇEKME (Burayı senin yardımınla düzelteceğiz) 🔴
       const { data: stdData, error: stdErr } = await supabase.from('standings').select('*');
-      if (stdErr) console.error("KASA CEKILEMEDI:", stdErr);
       
       if (stdData) {
         const st: Record<string, any> = {};
         stdData.forEach(row => {
           const rowUid = String(row.user_id || row.id || '').trim();
-          const rowUname = normalizeName(String(row.user_name || row.name || '')); // Normalize edilmiş isim
+          const rowUname = normalizeName(String(row.user_name || row.name || ''));
           
           const lType = String(row.league_type || row.kategori || '').toUpperCase().trim();
           const pts = Number(row.points ?? row.puan ?? row.totalPoints) || 0;
@@ -433,7 +431,7 @@ export default function LiveMatchCard() {
       else if(winnersCount >= 7) displayPoints = 1;
       else displayPoints = 0;
 
-      // 🔴 SANAL SİMÜLASYON MOTORU (KUSURSUZ EŞLEŞTİRME) 🔴
+      // 🔴 SANAL SİMÜLASYON MOTORU 🔴
       let simulatedTff: any[] = [];
       let simulatedDfo: any[] = [];
       let simulatedMaster: any[] = [];
@@ -681,24 +679,24 @@ export default function LiveMatchCard() {
                                    {isRankOpen && (
                                      <div className="flex flex-col items-center gap-1.5 w-full pb-4 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
                                          {/* 1. SIRA - TEPEDE (MASTER) */}
-                                         <div className="text-amber-400 bg-amber-950/60 border border-amber-500/50 px-5 py-2 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center w-[85%] max-w-[200px]">
-                                             MASTER (S{masterRank} / {masterPts}P)
+                                         <div className="text-amber-400 bg-amber-950/60 border border-amber-500/50 px-5 py-2 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center w-[85%] max-w-[220px]">
+                                             MASTER Sıra {masterRank} / {masterPts} Puan
                                          </div>
                                          
-                                         {/* 2. VE 3. SIRA - YAN YANA (SKOR ve TFF/DFO) */}
-                                         <div className="flex justify-center gap-2 w-[95%] max-w-[280px]">
-                                             <div className="text-emerald-400 bg-emerald-950/60 border border-emerald-500/50 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
-                                                 SKOR <br className="sm:hidden" /> (S{skorRank} / {skorPts}P)
-                                             </div>
+                                         {/* 2. VE 3. SIRA - YAN YANA (TFF/DFO Solda, SKOR Sağda) */}
+                                         <div className="flex justify-center gap-2 w-[95%] max-w-[300px]">
                                              {isTffMatch ? (
-                                                 <div className="text-rose-400 bg-rose-950/60 border border-rose-500/50 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(225,29,72,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
-                                                     TFF <br className="sm:hidden" /> (S{tffRank} / {tffPts}P)
+                                                 <div className="text-rose-400 bg-rose-950/60 border border-rose-500/50 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(225,29,72,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                     TFF <br className="sm:hidden" /> Sıra {tffRank} / {tffPts} Puan
                                                  </div>
                                              ) : (
-                                                 <div className="text-blue-400 bg-blue-950/60 border border-blue-500/50 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
-                                                     DFO <br className="sm:hidden" /> (S{dfoRank} / {dfoPts}P)
+                                                 <div className="text-blue-400 bg-blue-950/60 border border-blue-500/50 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                     DFO <br className="sm:hidden" /> Sıra {dfoRank} / {dfoPts} Puan
                                                  </div>
                                              )}
+                                             <div className="text-emerald-400 bg-emerald-950/60 border border-emerald-500/50 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                 SKOR <br className="sm:hidden" /> Sıra {skorRank} / {skorPts} Puan
+                                             </div>
                                          </div>
                                      </div>
                                    )}
