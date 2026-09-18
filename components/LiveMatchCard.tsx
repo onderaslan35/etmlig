@@ -19,7 +19,6 @@ export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
-  // 🔴 SEYİRCİ SES VE ŞİMŞEK MOTORU STATE VE REFLERİ 🔴
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
@@ -30,7 +29,7 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
   
-  // 🔴 YENİ: GENEL KASA (STANDINGS) VERİSİ 🔴
+  // 🔴 GENEL KASA (STANDINGS) VERİSİ
   const [baseStandings, setBaseStandings] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
 
   const [now, setNow] = useState<number>(new Date().getTime());
@@ -103,9 +102,7 @@ export default function LiveMatchCard() {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-        setNow(new Date().getTime());
-    }, 1000);
+    const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -113,49 +110,39 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // Puan Tablosunu (Standings) Çek
+      // 🔴 PUAN TABLOSUNU (KASAYI) ÇEK VE ZIRHLI BİR ŞEKİLDE KAYDET 🔴
       const { data: stdData } = await supabase.from('standings').select('*');
       if (stdData) {
         const st: Record<string, any> = {};
         stdData.forEach(row => {
-          if (!st[row.user_id]) st[row.user_id] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
-          if (row.league_type === 'TFF') st[row.user_id].TFF = row.points;
-          if (row.league_type === 'DFO') st[row.user_id].DFO = row.points;
-          if (row.league_type === 'MASTER') st[row.user_id].MASTER = row.points;
-          if (row.league_type === 'SKOR') st[row.user_id].SKOR = row.points; 
+          const uid = String(row.user_id);
+          if (!st[uid]) st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+          
+          // Tablodaki olası büyük/küçük harf veya tip hatalarını önleyen sağlam yapı
+          const lType = String(row.league_type).toUpperCase().trim();
+          const pts = Number(row.points) || 0;
+
+          if (lType === 'TFF') st[uid].TFF = pts;
+          if (lType === 'DFO') st[uid].DFO = pts;
+          if (lType === 'MASTER') st[uid].MASTER = pts;
+          if (lType === 'SKOR') st[uid].SKOR = pts; 
         });
         setBaseStandings(st);
       }
 
-      const { data: dbBulletinMatches } = await supabase
-        .from('matches_bulletin')
-        .select('*')
-        .eq('week_num', activeWeek)
-        .order('match_index', { ascending: true });
-
-      const { data: dbLiveMatches } = await supabase
-        .from('live_matches')
-        .select('*');
+      const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true });
+      const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
 
       let allPredictions: any[] = [];
-      let from = 0;
-      let step = 999;
-      let keepFetching = true;
+      let from = 0; let step = 999; let keepFetching = true;
 
       while(keepFetching) {
-          const { data } = await supabase
-              .from('player_predictions')
-              .select('*')
-              .eq('week_num', activeWeek)
-              .range(from, from + step);
-          
+          const { data } = await supabase.from('player_predictions').select('*').eq('week_num', activeWeek).range(from, from + step);
           if (data && data.length > 0) {
               allPredictions = [...allPredictions, ...data];
               if (data.length <= step) keepFetching = false;
               else from += step + 1;
-          } else {
-              keepFetching = false;
-          }
+          } else keepFetching = false;
       }
 
       const predDict: Record<string, string[]> = {};
@@ -163,10 +150,7 @@ export default function LiveMatchCard() {
         allPredictions.forEach(pred => {
           const rowUserId = String(pred.user_id);
           if (rowUserId === 'mankoman') return;
-          
-          if (!predDict[rowUserId]) {
-            predDict[rowUserId] = Array(24).fill('-');
-          }
+          if (!predDict[rowUserId]) predDict[rowUserId] = Array(24).fill('-');
           predDict[rowUserId][pred.match_index - 1] = pred.predicted_score;
         });
       }
@@ -188,9 +172,7 @@ export default function LiveMatchCard() {
         }));
 
         const liveMap: Record<number, any> = {};
-        if (dbLiveMatches) {
-          dbLiveMatches.forEach(row => liveMap[row.id] = row); 
-        }
+        if (dbLiveMatches) dbLiveMatches.forEach(row => liveMap[row.id] = row); 
         setLiveMatchesData(liveMap);
 
         let goalHappened = false;
@@ -202,7 +184,6 @@ export default function LiveMatchCard() {
                 if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
                     const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
                     const prevScore = prevScoresRef.current[key];
-
                     if (prevScore && prevScore !== currentScore) {
                         goalHappened = true;
                         newGoalIds.push(Number(key)); 
@@ -215,16 +196,14 @@ export default function LiveMatchCard() {
         if (goalHappened) {
             if (soundEnabledRef.current) {
                 const audio = new Audio('/sounds/goal.mp3');
-                audio.play().catch(e => console.log("Tarayıcı engeli veya ses çalınamadı:", e));
+                audio.play().catch(e => console.log("Ses çalınamadı:", e));
             }
-            
             if (newGoalIds.length > 0) {
                 setGoalFlashes(prev => {
                     const next = { ...prev };
                     newGoalIds.forEach(id => { next[id] = true; });
                     return next;
                 });
-
                 setTimeout(() => {
                     setGoalFlashes(prev => {
                         const next = { ...prev };
@@ -236,27 +215,19 @@ export default function LiveMatchCard() {
         }
 
         let stats: Record<string, { points: number, exactScores: number }> = {};
-        Object.keys(mergedAccounts).forEach(uid => {
-            stats[uid] = { points: 0, exactScores: 0 };
-        });
+        Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
         dbBulletinMatches.forEach(m => {
             const uniqueId = getUniqueMatchId(activeWeek, m.match_index);
             const dbMatch = liveMap[uniqueId];
-            
             if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
                 const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
                 const winnerIds = Object.keys(predDict).filter(id => predDict[id][m.match_index - 1] === targetScore);
-                
                 let pts = 1;
-                if(winnerIds.length === 1) pts = 12;
-                else if(winnerIds.length === 2) pts = 6;
-                else if(winnerIds.length === 3) pts = 5;
-                else if(winnerIds.length === 4) pts = 4;
-                else if(winnerIds.length === 5) pts = 3;
-                else if(winnerIds.length === 6) pts = 2;
-                else if(winnerIds.length >= 7) pts = 1;
-                else pts = 0;
+                if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
+                else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
+                else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
+                else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
                 winnerIds.forEach(wId => {
                     if(!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
@@ -281,27 +252,20 @@ export default function LiveMatchCard() {
              const uniqueId = getUniqueMatchId(activeWeek, m.id);
              const dbMatch = liveMap[uniqueId];
              const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
-
              const mDate = parseDateLocal(m.date);
              const isToday = mDate.getTime() === todayMidnight.getTime();
-             const isLiveOrWaiting = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
-
-             if (isLiveOrWaiting) return true;
+             if (status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT') return true;
              return isToday;
         });
-        
         setTodaysMatchesList(todaysMatches);
         
         const match24Id = getUniqueMatchId(activeWeek, 24);
         const dbMatch24 = liveMap[match24Id];
-
         if (dbMatch24 && dbMatch24.status === 'FINISHED') {
             const m24 = currentWeekMatches.find(m => m.id === 24);
             if (m24) {
                 const matchTimeMs = getMatchTimeMs(m24.date, m24.time);
-                if (new Date().getTime() > matchTimeMs + (5 * 60 * 60 * 1000)) {
-                    setActiveWeek(prev => prev + 1);
-                }
+                if (new Date().getTime() > matchTimeMs + (5 * 60 * 60 * 1000)) setActiveWeek(prev => prev + 1);
             }
         }
       }
@@ -337,11 +301,11 @@ export default function LiveMatchCard() {
      return dbMatch.status === 'FINISHED';
   });
 
-  // Sıralama Hesaplama Formülü (Eşitlikleri sayar)
+  // 🔴 YENİ: KUSURSUZ SIRALAMA HESAPLAYICISI 🔴
   const getRank = (arr: any[], uid: string) => {
-    const index = arr.findIndex(x => x.id === uid);
-    if (index === -1) return '-';
-    const myPts = arr[index].pts;
+    const item = arr.find(x => x.id === uid);
+    if (!item) return '-';
+    const myPts = item.pts;
     let rank = 1;
     for(let i=0; i<arr.length; i++) {
       if(arr[i].pts > myPts) rank++;
@@ -451,11 +415,10 @@ export default function LiveMatchCard() {
          const ptsToAdd = isWinner ? displayPoints : 0;
          const skorToAdd = isWinner ? 1 : 0;
 
-         if (isTffMatch) simulatedTff.push({ id: uid, pts: base.TFF + ptsToAdd });
-         else simulatedDfo.push({ id: uid, pts: base.DFO + ptsToAdd });
-         
-         simulatedMaster.push({ id: uid, pts: base.MASTER + ptsToAdd });
-         simulatedSkor.push({ id: uid, pts: base.SKOR + skorToAdd });
+         simulatedTff.push({ id: uid, pts: (base.TFF || 0) + (isTffMatch ? ptsToAdd : 0) });
+         simulatedDfo.push({ id: uid, pts: (base.DFO || 0) + (!isTffMatch ? ptsToAdd : 0) });
+         simulatedMaster.push({ id: uid, pts: (base.MASTER || 0) + ptsToAdd });
+         simulatedSkor.push({ id: uid, pts: (base.SKOR || 0) + skorToAdd });
       });
 
       simulatedTff.sort((a,b) => b.pts - a.pts);
@@ -558,7 +521,6 @@ export default function LiveMatchCard() {
                   </div>
 
                   <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30 relative">
-                    
                     {theme.leagueLogo && (
                       <div className="w-10 h-10 sm:w-14 sm:h-14 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform duration-500 z-40">
                         <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
@@ -644,17 +606,16 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 YENİ: SADE İSTATİSTİK PANELLERİ 🔴 */}
+                      {/* 🔴 SADELEŞTİRİLMİŞ İSTATİSTİK PANELLERİ 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
                           <div className="bg-emerald-950/80 p-2.5 border-b border-emerald-500/50 flex justify-end items-center relative overflow-hidden">
-                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
                              <span className="bg-emerald-500 text-slate-950 font-black px-3 py-1 rounded text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300">
                                 +{displayPoints} PUAN YAZILIYOR
                              </span>
                           </div>
                           
-                          <div className="flex flex-col gap-2 p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                          <div className="flex flex-col gap-1.5 p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
                               const tffRank = getRank(simulatedTff, winner.id);
                               const dfoRank = getRank(simulatedDfo, winner.id);
@@ -667,47 +628,21 @@ export default function LiveMatchCard() {
                               const skorPts = getPts(simulatedSkor, winner.id);
 
                               return (
-                                <div key={idx} className="relative bg-slate-950 border border-slate-700/80 rounded-lg p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden group hover:border-emerald-400 transition-all hover:bg-slate-900 shadow-sm">
-                                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-t from-emerald-600 via-green-400 to-emerald-600"></div>
-                                   
-                                   <div className="flex items-center pl-2 md:w-[25%]">
-                                      <span className="text-slate-100 font-black text-xs sm:text-sm uppercase drop-shadow-md">{winner.name}</span>
+                                <div key={idx} className="bg-slate-950 border border-slate-700/80 rounded-md p-2 sm:p-3 flex items-center justify-between gap-2 shadow-sm">
+                                   <div className="flex-shrink-0">
+                                      <span className="text-slate-100 font-black text-[10px] sm:text-[11px] uppercase whitespace-nowrap">{winner.name}</span>
                                    </div>
 
-                                   <div className="flex flex-col sm:flex-row gap-2 pl-2 sm:pl-0 flex-1 justify-end">
-                                      
-                                      {/* TFF/DFO KUTUSU */}
+                                   <div className="flex flex-wrap justify-end gap-x-2 sm:gap-x-3 gap-y-0.5 text-[9px] sm:text-[10px] font-bold text-right">
                                       {isTffMatch ? (
-                                        <div className="flex justify-between items-center bg-rose-950/40 border border-rose-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
-                                           <span className="text-rose-400 text-[10px] sm:text-[11px] font-black tracking-widest">
-                                              TFF ({tffPts}<span className="text-rose-200/50 font-bold">p</span>)
-                                           </span>
-                                           <span className="text-rose-300 text-[10px] sm:text-[11px] font-bold">{tffRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
-                                        </div>
+                                        <span className="text-rose-400">TFF ({tffPts}p) {tffRank}. Sıra</span>
                                       ) : (
-                                        <div className="flex justify-between items-center bg-blue-950/40 border border-blue-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
-                                           <span className="text-blue-400 text-[10px] sm:text-[11px] font-black tracking-widest">
-                                              DFO ({dfoPts}<span className="text-blue-200/50 font-bold">p</span>)
-                                           </span>
-                                           <span className="text-blue-300 text-[10px] sm:text-[11px] font-bold">{dfoRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
-                                        </div>
+                                        <span className="text-blue-400">DFO ({dfoPts}p) {dfoRank}. Sıra</span>
                                       )}
-
-                                      {/* MASTER KUTUSU */}
-                                      <div className="flex justify-between items-center bg-amber-950/40 border border-amber-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
-                                         <span className="text-amber-400 text-[10px] sm:text-[11px] font-black tracking-widest">
-                                            MASTER ({masterPts}<span className="text-amber-200/50 font-bold">p</span>)
-                                         </span>
-                                         <span className="text-amber-300 text-[10px] sm:text-[11px] font-bold">{masterRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
-                                      </div>
-
-                                      {/* SKOR KUTUSU */}
-                                      <div className="flex justify-between items-center bg-emerald-950/40 border border-emerald-800/50 px-3 py-2 rounded-md flex-1 min-w-[130px]">
-                                         <span className="text-emerald-400 text-[10px] sm:text-[11px] font-black tracking-widest">
-                                            SKOR ({skorPts} <span className="text-emerald-200/50 font-bold text-[9px]">İsabet</span>)
-                                         </span>
-                                         <span className="text-emerald-300 text-[10px] sm:text-[11px] font-bold">{skorRank}. Sıra <span className="text-emerald-400 animate-bounce inline-block ml-1">⬆️</span></span>
-                                      </div>
+                                      <span className="text-slate-600 hidden sm:inline">|</span>
+                                      <span className="text-amber-400">MASTER ({masterPts}p) {masterRank}. Sıra</span>
+                                      <span className="text-slate-600 hidden sm:inline">|</span>
+                                      <span className="text-emerald-400">SKOR ({skorPts}) {skorRank}. Sıra</span>
                                    </div>
                                 </div>
                               )
@@ -716,7 +651,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {/* 2. CEPHE: ŞANSI DEVAM EDENLER */}
+                      {/* ŞANSI DEVAM EDENLER */}
                       {!isFinished && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
                         <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
                           <button onClick={() => togglePossible(match.id)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
@@ -736,11 +671,11 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {/* 3. CEPHE: ELENENLER */}
+                      {/* ELENENLER */}
                       {eliminatedPlayers.length > 0 && (
                         <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
                           <button onClick={() => toggleEliminated(match.id)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
-                            <span className="text-red-400 font-bold text-[9px] sm:text-[10px]">❌ TAM İSABET ŞANSI KALMAYANLAR ({eliminatedPlayers.length} KİŞİ)</span>
+                            <span className="text-red-400 font-bold text-[9px] sm:text-[10px]">❌ ŞANSI KALMAYANLAR ({eliminatedPlayers.length} KİŞİ)</span>
                             <span className="text-red-400 text-[10px]">{isEliminatedOpen ? '▲' : '▼'}</span>
                           </button>
                           {isEliminatedOpen && (
@@ -791,7 +726,6 @@ export default function LiveMatchCard() {
         }
       `}} />
 
-      {/* 🔴 SEYİRCİ SES KONTROLÜ */}
       <div className="w-full flex justify-end px-2 sm:px-0">
           <button
               onClick={toggleSound}
@@ -805,7 +739,6 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
-      {/* 🔴 DEV CANLI LİDERLİK RADARI 🔴 */}
       {weeklyLiveStats.maxPts > 0 && (
           <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
               <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
