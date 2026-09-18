@@ -105,11 +105,6 @@ export default function LiveMatchCard() {
     return () => clearInterval(timer);
   }, []);
 
-  const normalizeName = (name: string) => {
-    if (!name) return "";
-    return name.toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/\s+/g, '').trim();
-  };
-
   useEffect(() => {
     if (!isWeekLoaded) return;
     
@@ -127,18 +122,17 @@ export default function LiveMatchCard() {
       const st: Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }> = {};
       Object.keys(mergedAccounts).forEach(uid => { st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; });
 
-      // 🔴 GEÇMİŞİ SAYFALARLA 100% AYNI MANTIKTA ÇEK (HATA BURADAYDI, DÜZELTİLDİ) 🔴
-      const masterDict: Record<string, any> = {};
-      masterData.forEach(r => masterDict[String(r.id || r.username || '').trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
-      
-      const dfoDict: Record<string, any> = {};
-      dfoData.forEach(r => dfoDict[String(r.id || r.username || '').trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
-      
-      const skorDfoDict: Record<string, any> = {};
-      skorDfoData.forEach(r => skorDfoDict[String(r.id || r.username || '').trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
-      
-      const skorTffDict: Record<string, any> = {};
-      skorTffData.forEach(r => skorTffDict[String(r.id || r.username || '').trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
+      // 🔴 SAYFALARLA %100 AYNI ID EŞLEŞTİRİCİSİ (Hata buradaydı, düzeltildi) 🔴
+      const getDict = (data: any[]) => {
+          const dict: Record<string, any> = {};
+          data.forEach(r => dict[String(r.username || r.user_id || r.id).trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
+          return dict;
+      };
+
+      const masterDict = getDict(masterData);
+      const dfoDict = getDict(dfoData);
+      const skorDfoDict = getDict(skorDfoData);
+      const skorTffDict = getDict(skorTffData);
 
       Object.keys(mergedAccounts).forEach(uid => {
           if (!st[uid]) return;
@@ -151,15 +145,19 @@ export default function LiveMatchCard() {
           
           const sd = skorDfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           const stff = skorTffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
+          // SKOR = Geçmiş 4 Haftanın DFO ve TFF İsabetlerinin Toplamı
           st[uid].SKOR += (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + 
                           (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4));
           
           st[uid].TFF += (tffIlk4Hafta[uid] || 0) + (tffHafta5Kasa[uid] || 0);
       });
 
-      // 🔴 TAHMİNLERİ VE BÜLTENİ ÇEK 🔴
+      // 🔴 TAHMİNLER VE BÜLTEN KATEGORİLERİ 🔴
       const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
-      const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
+      const catDict: Record<string, string> = {};
+      (dbBulletinMatches || []).forEach(m => {
+          catDict[`${m.week_num}-${m.match_index}`] = m.category;
+      });
 
       let allPredictions: any[] = [];
       let from = 0; let step = 999; let keepFetching = true;
@@ -177,20 +175,20 @@ export default function LiveMatchCard() {
       });
       setPredictionsData(pDict);
 
+      const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
       const liveMap: Record<number, any> = {};
       (dbLiveMatches || []).forEach(row => liveMap[row.id] = row); 
       setLiveMatchesData(liveMap);
 
-      // 🔴 CANLI MAÇ HESAPLAMALARI (5. HAFTADAN İTİBAREN) 🔴
-      (dbBulletinMatches || []).forEach(m => {
-          if (m.week_num < 5) return; 
+      // 🔴 CANLI MAÇ HESAPLAMALARI (TAMAMEN SAYFAYLA AYNI DÖNGÜYE ALINDI) 🔴
+      Object.values(liveMap).forEach(dbMatch => {
+          const weekNum = Math.floor(dbMatch.id / 100);
+          const matchIndex = dbMatch.id % 100;
 
-          const uniqueId = getUniqueMatchId(m.week_num, m.match_index);
-          const dbMatch = liveMap[uniqueId];
-          
-          if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+          // Sadece 5. hafta ve sonrası, skoru girilmiş maçları dahil et
+          if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
               const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-              const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${m.week_num}-${m.match_index}`] === targetScore);
+              const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${weekNum}-${matchIndex}`] === targetScore);
               
               let pts = 1;
               if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
@@ -198,15 +196,16 @@ export default function LiveMatchCard() {
               else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
               else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
-              const isTff = isTffMatchCheck(m.category);
+              const category = catDict[`${weekNum}-${matchIndex}`] || "";
+              const isTff = isTffMatchCheck(category);
 
               if (dbMatch.status === 'FINISHED' || dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
                   winnerIds.forEach(wId => {
                       if (st[wId]) {
-                          if (isTff && m.week_num >= 6) st[wId].TFF += pts; 
+                          if (isTff && weekNum >= 6) st[wId].TFF += pts; 
                           if (!isTff) st[wId].DFO += pts;
                           st[wId].MASTER += pts;
-                          st[wId].SKOR += 1;
+                          st[wId].SKOR += 1; // TAM İSABET EKLENİR
                       }
                   });
               }
@@ -255,7 +254,7 @@ export default function LiveMatchCard() {
           if (st[id]) st[id].MASTER += dynamicBonusPoints[id];
       });
 
-      // 🔴 SAYFALARLA BİREBİR AYNI SIRALAMA MANTIĞI (HATANIN ÇÖZÜMÜ BURADA) 🔴
+      // 🔴 SAYFALARLA BİREBİR AYNI SIRALAMA MANTIĞI (Puan + Alfabetik) 🔴
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
       Object.keys(st).forEach(id => {
           const name = mergedAccounts[id]?.name || '';
@@ -265,6 +264,7 @@ export default function LiveMatchCard() {
           arrSKOR.push({ id, name, pts: st[id].SKOR });
       });
 
+      // Eşitlik bozmada ismi alfabetik sıraya dizer, böylece sayfayla %100 aynı sıra çıkar
       const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
       
       arrTFF.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
@@ -274,7 +274,7 @@ export default function LiveMatchCard() {
 
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
-      // Daily Match Preparation
+      // Günlük Maç Hazırlıkları
       const nowUTC = new Date();
       const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
       const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
@@ -665,7 +665,7 @@ export default function LiveMatchCard() {
                               const uniquePlayerKey = `${match.id}-${winner.id}`;
                               const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
 
-                              // SIRA ÇEKİMİ (SAYFALARLA TAM UYUMLU)
+                              // SAYFALARLA %100 AYNI VERİLER (Sıra Hataları Giderildi)
                               const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
                               const tffPts = tffData?.pts || 0;
                               const tffRank = tffData?.rank || '-';
