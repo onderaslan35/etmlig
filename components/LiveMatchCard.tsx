@@ -652,19 +652,46 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 1. CEPHE: TAM İSABET */}
+                      {/* 1. CEPHE: TAM İSABET (CANLI YAYIN LİDERLİK ETKİSİ) */}
                       {exactWinners.length > 0 && (
-                        <div className="w-full p-2.5 bg-emerald-950/30 rounded-lg border border-emerald-800/50 shadow-inner">
-                          <div className="text-emerald-400 font-bold mb-2 border-b border-emerald-900/50 pb-1.5 flex justify-between items-center text-[9px] sm:text-[10px]">
-                            <span>{isFinished ? "🎯 TAM İSABET (MAÇ SONUCUNU BİLENLER)" : "🎯 ANLIK BİLENLER"}</span>
-                            <span className="bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-700/50 text-emerald-300">Kişi Başı: {displayPoints} Puan</span>
+                        <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
+                          <div className="bg-emerald-950/80 p-2.5 border-b border-emerald-500/50 flex justify-between items-center relative overflow-hidden">
+                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                             <span className="text-emerald-400 font-black tracking-widest text-[9px] sm:text-[11px] drop-shadow-md z-10 flex items-center gap-2">
+                                <span className="animate-pulse text-sm">🔴</span> {isFinished ? "MAÇ SONUCU: KASAYI DOLDURANLAR" : "CANLI RADAR: TAM İSABET ETKİSİ"}
+                             </span>
+                             <span className="bg-emerald-500 text-slate-950 font-black px-3 py-1 rounded text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300">
+                                +{displayPoints} PUAN YAZILIYOR
+                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1">
+                          <div className="flex flex-col gap-1.5 p-2 max-h-[220px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => (
-                              <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-emerald-900/60 text-white border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex gap-1 items-center">
-                                <span>{winner.name}</span>
-                                <span className="text-amber-400 font-black tracking-widest">[{winner.score}]</span>
-                              </span>
+                              <div key={idx} className="relative bg-slate-950/90 border border-slate-700/80 rounded-lg p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden group hover:border-emerald-400 transition-all hover:bg-slate-900 shadow-sm">
+                                 {/* Yükseliş Efekti Sol Çizgi */}
+                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-t from-emerald-600 via-green-400 to-emerald-600"></div>
+                                 
+                                 <div className="flex items-center gap-3 pl-2">
+                                    <span className="text-amber-400 font-black text-sm tracking-widest bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700 shadow-inner">
+                                       {winner.score}
+                                    </span>
+                                    <span className="text-slate-100 font-extrabold text-[11px] sm:text-xs uppercase drop-shadow-md">{winner.name}</span>
+                                 </div>
+
+                                 <div className="flex flex-col sm:flex-row gap-2 pl-2 sm:pl-0 w-full sm:w-auto">
+                                    <div className="flex items-center justify-center gap-1.5 bg-emerald-950/60 border border-emerald-700/50 px-2.5 py-1.5 rounded-md shadow-inner flex-1 sm:flex-none">
+                                       <span className="text-emerald-400 text-sm animate-bounce">⬆️</span>
+                                       <span className="text-emerald-400 text-[8px] sm:text-[9px] font-black tracking-widest drop-shadow-sm">
+                                          {isTffMatch ? 'TFF' : 'DFO'} LİGİNDE YÜKSELİŞTE!
+                                       </span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 bg-amber-950/60 border border-amber-700/50 px-2.5 py-1.5 rounded-md shadow-inner flex-1 sm:flex-none">
+                                       <span className="text-amber-400 text-sm animate-bounce" style={{ animationDelay: '0.2s' }}>⬆️</span>
+                                       <span className="text-amber-400 text-[8px] sm:text-[9px] font-black tracking-widest drop-shadow-sm">
+                                          MASTER LİGDE FIRLADI!
+                                       </span>
+                                    </div>
+                                 </div>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -723,7 +750,7 @@ export default function LiveMatchCard() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
-      {/* 🔴 ŞİMŞEK ÇAKMASI ANİMASYON STİLİ 🔴 */}
+      {/* 🔴 ŞİMŞEK VE PARLAMA ANİMASYON STİLLERİ 🔴 */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes lightning {
           0% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
@@ -732,6 +759,10 @@ export default function LiveMatchCard() {
           45% { box-shadow: 0 0 80px #16a34a, inset 0 0 60px #16a34a; border-color: #16a34a; background-color: rgba(22, 163, 74, 0.5); }
           60% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
           100% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
         .goal-lightning {
           animation: lightning 0.5s ease-in-out infinite;
