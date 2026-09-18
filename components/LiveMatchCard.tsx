@@ -29,7 +29,7 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
   
-  // 🔴 ANA KASA (Çifte Kalkanlı Standings Hafızası) 🔴
+  // 🔴 ANA KASA 🔴
   const [baseStandings, setBaseStandings] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
 
   const [now, setNow] = useState<number>(new Date().getTime());
@@ -42,6 +42,9 @@ export default function LiveMatchCard() {
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
   const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
+  
+  // 🔴 YENİ: AÇILIR KAPANIR KÜRSÜ STATE'İ 🔴
+  const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
 
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
 
@@ -106,20 +109,34 @@ export default function LiveMatchCard() {
     return () => clearInterval(timer);
   }, []);
 
+  // Türkçe karakter ve boşlukları normalize eden fonksiyon (Sıfır Hata İçin)
+  const normalizeName = (name: string) => {
+    if (!name) return "";
+    return name.toUpperCase()
+      .replace(/İ/g, 'I')
+      .replace(/Ğ/g, 'G')
+      .replace(/Ü/g, 'U')
+      .replace(/Ş/g, 'S')
+      .replace(/Ö/g, 'O')
+      .replace(/Ç/g, 'C')
+      .replace(/\s+/g, '') // Tüm boşlukları siler
+      .trim();
+  };
+
   useEffect(() => {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 SIFIR HATA İLE PUAN TABLOSUNU ÇEKME MOTORU (ÇİFTE KALKAN) 🔴
+      // 🔴 SIFIR HATA İLE PUAN TABLOSUNU ÇEKME MOTORU 🔴
       const { data: stdData, error: stdErr } = await supabase.from('standings').select('*');
       if (stdErr) console.error("KASA CEKILEMEDI:", stdErr);
       
       if (stdData) {
         const st: Record<string, any> = {};
         stdData.forEach(row => {
-          // İsim ve ID uyuşmazlıklarına karşı hem ID'yi hem İsmi ayrı ayrı kaydediyoruz.
           const rowUid = String(row.user_id || row.id || '').trim();
-          const rowUname = String(row.user_name || row.name || '').trim().toUpperCase();
+          const rowUname = normalizeName(String(row.user_name || row.name || '')); // Normalize edilmiş isim
+          
           const lType = String(row.league_type || row.kategori || '').toUpperCase().trim();
           const pts = Number(row.points ?? row.puan ?? row.totalPoints) || 0;
 
@@ -292,6 +309,8 @@ export default function LiveMatchCard() {
   const togglePossible = (matchId: number) => setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   const toggleEliminated = (matchId: number) => setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   const toggleMatchExpansion = (matchId: number) => setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
+  
+  const togglePlayerRank = (uniqueKey: string) => setOpenPlayerRanks((prev) => ({ ...prev, [uniqueKey]: !prev[uniqueKey] }));
 
   if (!isWeekLoaded) {
     return (
@@ -414,7 +433,7 @@ export default function LiveMatchCard() {
       else if(winnersCount >= 7) displayPoints = 1;
       else displayPoints = 0;
 
-      // 🔴 SANAL SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
+      // 🔴 SANAL SİMÜLASYON MOTORU (KUSURSUZ EŞLEŞTİRME) 🔴
       let simulatedTff: any[] = [];
       let simulatedDfo: any[] = [];
       let simulatedMaster: any[] = [];
@@ -422,9 +441,8 @@ export default function LiveMatchCard() {
 
       Object.keys(mergedAccounts).forEach(uid => {
          const isWinner = exactWinners.some(w => w.id === uid);
-         const uName = (mergedAccounts[uid]?.name || '').trim().toUpperCase();
+         const uName = normalizeName(mergedAccounts[uid]?.name || '');
          
-         // Çifte Kalkanlı Puan Çekimi: ID bulamazsa isme bakar, yine bulamazsa 0 sayar.
          const base = baseStandings[uid] || baseStandings[uName] || { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
          
          const ptsToAdd = isWinner ? displayPoints : 0;
@@ -621,17 +639,20 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 MADALYA KÜRSÜSÜ TASARIMI 🔴 */}
+                      {/* 🔴 AÇILIR KAPANIR KÜRSÜ TASARIMI 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
-                          <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-end items-center relative overflow-hidden">
-                             <span className="bg-emerald-500 text-slate-950 font-black px-3 py-1 rounded text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300">
+                          <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
+                             <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300 tracking-widest">
                                 +{displayPoints} PUAN YAZILIYOR
                              </span>
                           </div>
                           
-                          <div className="flex flex-col gap-2.5 p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                          <div className="flex flex-col gap-2 p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
+                              const uniquePlayerKey = `${match.id}-${winner.id}`;
+                              const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
+
                               const tffRank = getRank(simulatedTff, winner.id);
                               const dfoRank = getRank(simulatedDfo, winner.id);
                               const masterRank = getRank(simulatedMaster, winner.id);
@@ -643,35 +664,45 @@ export default function LiveMatchCard() {
                               const skorPts = getPts(simulatedSkor, winner.id);
 
                               return (
-                                <div key={idx} className="bg-slate-950 border border-slate-700/80 rounded-lg p-3 flex flex-col items-center gap-1.5 shadow-xl relative overflow-hidden group">
-                                   <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/10 to-transparent pointer-events-none"></div>
+                                <div key={idx} className="bg-slate-950 border border-slate-700/80 rounded-lg shadow-xl relative overflow-hidden transition-all duration-300">
                                    
-                                   <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest z-10 bg-slate-900 px-5 py-1 rounded-full border border-slate-700/50 shadow-inner">
-                                       {winner.name}
-                                   </span>
+                                   {/* İSİM BUTONU (ORTALANMIŞ) */}
+                                   <button 
+                                      onClick={() => togglePlayerRank(uniquePlayerKey)}
+                                      className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}
+                                   >
+                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2">
+                                           {winner.name} 
+                                           <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
+                                       </span>
+                                   </button>
                                    
-                                   <div className="flex flex-col items-center gap-1 w-full z-10 mt-1">
-                                       {/* 1. SIRA - TEPEDE (MASTER) */}
-                                       <div className="text-amber-400 bg-amber-950/60 border border-amber-500/50 px-4 py-1.5 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                                           MASTER (S{masterRank} / {masterPts}P)
-                                       </div>
-                                       
-                                       {/* 2. VE 3. SIRA - YAN YANA (SKOR ve TFF/DFO) */}
-                                       <div className="flex justify-center gap-1.5 w-full">
-                                           <div className="text-emerald-400 bg-emerald-950/60 border border-emerald-500/50 px-3 py-1.5 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-1 text-center max-w-[150px]">
-                                               SKOR (S{skorRank} / {skorPts}P)
-                                           </div>
-                                           {isTffMatch ? (
-                                               <div className="text-rose-400 bg-rose-950/60 border border-rose-500/50 px-3 py-1.5 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(225,29,72,0.2)] flex-1 text-center max-w-[150px]">
-                                                   TFF (S{tffRank} / {tffPts}P)
-                                               </div>
-                                           ) : (
-                                               <div className="text-blue-400 bg-blue-950/60 border border-blue-500/50 px-3 py-1.5 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.2)] flex-1 text-center max-w-[150px]">
-                                                   DFO (S{dfoRank} / {dfoPts}P)
-                                               </div>
-                                           )}
-                                       </div>
-                                   </div>
+                                   {/* AÇILAN KÜRSÜ */}
+                                   {isRankOpen && (
+                                     <div className="flex flex-col items-center gap-1.5 w-full pb-4 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
+                                         {/* 1. SIRA - TEPEDE (MASTER) */}
+                                         <div className="text-amber-400 bg-amber-950/60 border border-amber-500/50 px-5 py-2 rounded-t-xl rounded-b-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center w-[85%] max-w-[200px]">
+                                             MASTER (S{masterRank} / {masterPts}P)
+                                         </div>
+                                         
+                                         {/* 2. VE 3. SIRA - YAN YANA (SKOR ve TFF/DFO) */}
+                                         <div className="flex justify-center gap-2 w-[95%] max-w-[280px]">
+                                             <div className="text-emerald-400 bg-emerald-950/60 border border-emerald-500/50 px-3 py-2 rounded-l-xl rounded-r-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                 SKOR <br className="sm:hidden" /> (S{skorRank} / {skorPts}P)
+                                             </div>
+                                             {isTffMatch ? (
+                                                 <div className="text-rose-400 bg-rose-950/60 border border-rose-500/50 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(225,29,72,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                     TFF <br className="sm:hidden" /> (S{tffRank} / {tffPts}P)
+                                                 </div>
+                                             ) : (
+                                                 <div className="text-blue-400 bg-blue-950/60 border border-blue-500/50 px-3 py-2 rounded-r-xl rounded-l-sm text-[10px] sm:text-[11px] font-black tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.2)] flex-1 text-center flex items-center justify-center leading-snug">
+                                                     DFO <br className="sm:hidden" /> (S{dfoRank} / {dfoPts}P)
+                                                 </div>
+                                             )}
+                                         </div>
+                                     </div>
+                                   )}
+
                                 </div>
                               )
                             })}
