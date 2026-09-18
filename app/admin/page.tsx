@@ -91,7 +91,7 @@ export default function AdminRadarPortal() {
     setLiveMatchesDB([]);
     setLiveInfoStateMap({});
   }, [selectedLiveWeek]);
-const [systemActiveWeek, setSystemActiveWeek] = useState<number>(6);
+
 
 // 🔴 1. ÇÖZÜM: Hafta değiştiğinde önceki skorları ve önbelleği temizle
 useEffect(() => {
