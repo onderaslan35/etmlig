@@ -15,7 +15,7 @@ import {
 } from '@/utils/themeEngine';
 
 export default function LiveMatchCard() {
-  console.log("VERCEL KURTARMA SOKU");
+  console.log("VERCEL KURTARMA SOKU - KÜRSÜ VE PUAN ÇEKME ZIRHLANDI");
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
@@ -29,8 +29,9 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string[]>>({});
   
-  // 🔴 ANA KASA 🔴
+  // 🔴 ANA KASA (Gerçek Puanları Tutar) 🔴
   const [baseStandings, setBaseStandings] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
+  const [activeWeekBase, setActiveWeekBase] = useState<Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }>>({});
 
   const [now, setNow] = useState<number>(new Date().getTime());
   
@@ -43,7 +44,6 @@ export default function LiveMatchCard() {
   const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
   const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
   
-  // 🔴 AÇILIR KAPANIR KÜRSÜ STATE'İ 🔴
   const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
 
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
@@ -71,8 +71,8 @@ export default function LiveMatchCard() {
         if (data) {
            const newAccounts = { ...TEST_ACCOUNTS };
            data.forEach(p => {
-               const pid = p.username || p.id;
-               newAccounts[String(pid)] = { pass: p.password, name: p.name || p.full_name };
+               const pid = String(p.username || p.id).trim();
+               newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
            });
            setMergedAccounts(newAccounts);
         }
@@ -109,53 +109,58 @@ export default function LiveMatchCard() {
     return () => clearInterval(timer);
   }, []);
 
+  // Sıfır Hata İsim Eşleştirme Motoru
   const normalizeName = (name: string) => {
     if (!name) return "";
-    return name.toUpperCase()
-      .replace(/İ/g, 'I')
-      .replace(/Ğ/g, 'G')
-      .replace(/Ü/g, 'U')
-      .replace(/Ş/g, 'S')
-      .replace(/Ö/g, 'O')
-      .replace(/Ç/g, 'C')
-      .replace(/\s+/g, '')
-      .trim();
+    return name.toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/\s+/g, '').trim();
   };
 
   useEffect(() => {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // 🔴 PUAN TABLOSUNU ÇEKME (Burayı senin yardımınla düzelteceğiz) 🔴
-      const { data: stdData, error: stdErr } = await supabase.from('standings').select('*');
-      
-      if (stdData) {
-        const st: Record<string, any> = {};
-        stdData.forEach(row => {
-          const rowUid = String(row.user_id || row.id || '').trim();
-          const rowUname = normalizeName(String(row.user_name || row.name || ''));
-          
-          const lType = String(row.league_type || row.kategori || '').toUpperCase().trim();
-          const pts = Number(row.points ?? row.puan ?? row.totalPoints) || 0;
+      // 🔴 SIFIR HATA GERÇEK TABLOLARLA PUAN ÇEKME MOTORU 🔴
+      const fetchTable = async (t: string) => {
+          const { data } = await supabase.from(t).select('*');
+          return data || [];
+      };
 
-          if (rowUid) {
-             if (!st[rowUid]) st[rowUid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
-             if (lType === 'TFF') st[rowUid].TFF = pts;
-             else if (lType === 'DFO') st[rowUid].DFO = pts;
-             else if (lType === 'MASTER') st[rowUid].MASTER = pts;
-             else if (lType === 'SKOR') st[rowUid].SKOR = pts;
-          }
-          
-          if (rowUname) {
-             if (!st[rowUname]) st[rowUname] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
-             if (lType === 'TFF') st[rowUname].TFF = pts;
-             else if (lType === 'DFO') st[rowUname].DFO = pts;
-             else if (lType === 'MASTER') st[rowUname].MASTER = pts;
-             else if (lType === 'SKOR') st[rowUname].SKOR = pts;
-          }
-        });
-        setBaseStandings(st);
-      }
+      const [tffData, dfoData, masterData, skorData] = await Promise.all([
+          fetchTable('tff_weekly_points'),
+          fetchTable('dfo_weekly_points'),
+          fetchTable('master_weekly_points'),
+          fetchTable('skor_weekly_points')
+      ]);
+
+      const st: Record<string, any> = {};
+      const processTable = (data: any[], category: string) => {
+          data.forEach(row => {
+              const uid = String(row.id || row.user_id || '').trim();
+              const uname = normalizeName(String(row.name || row.user_name || ''));
+              
+              // w1, w2, w3... gibi tüm geçmiş hafta sütunlarını dinamik topla
+              let sum = 0;
+              Object.keys(row).forEach(key => {
+                  if (/^w\d+$/.test(key)) sum += (Number(row[key]) || 0);
+              });
+              if (sum === 0) sum = Number(row.points ?? row.puan ?? row.totalPoints) || 0;
+
+              if (uid) {
+                  if (!st[uid]) st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+                  st[uid][category] = sum;
+              }
+              if (uname) {
+                  if (!st[uname]) st[uname] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+                  st[uname][category] = sum;
+              }
+          });
+      };
+
+      processTable(tffData, 'TFF');
+      processTable(dfoData, 'DFO');
+      processTable(masterData, 'MASTER');
+      processTable(skorData, 'SKOR');
+      setBaseStandings(st);
 
       const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true });
       const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
@@ -184,6 +189,37 @@ export default function LiveMatchCard() {
       setPredictionsData(predDict);
 
       if (dbBulletinMatches) {
+        const liveMap: Record<number, any> = {};
+        if (dbLiveMatches) dbLiveMatches.forEach(row => liveMap[row.id] = row); 
+        setLiveMatchesData(liveMap);
+
+        // 🔴 MEVCUT HAFTANIN (ACTIVE WEEK) BİTEN MAÇLARINI TOPLAMA MOTORU 🔴
+        let currentWkBase: Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }> = {};
+        dbBulletinMatches.forEach(m => {
+            const uniqueId = getUniqueMatchId(activeWeek, m.match_index);
+            const dbMatch = liveMap[uniqueId];
+            
+            // Sadece bitmiş maçların puanı ana kasaya dahil edilir
+            if (dbMatch && dbMatch.status === 'FINISHED' && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+                const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+                const winnerIds = Object.keys(predDict).filter(id => predDict[id][m.match_index - 1] === targetScore);
+                
+                let pts = 1;
+                if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
+                else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
+                else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
+                else if(winnerIds.length >= 7) pts = 1; else pts = 0;
+
+                winnerIds.forEach(wId => {
+                    if (!currentWkBase[wId]) currentWkBase[wId] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+                    if (isTffMatchCheck(m.category)) currentWkBase[wId].TFF += pts; else currentWkBase[wId].DFO += pts;
+                    currentWkBase[wId].MASTER += pts;
+                    currentWkBase[wId].SKOR += 1;
+                });
+            }
+        });
+        setActiveWeekBase(currentWkBase);
+
         const nowUTC = new Date();
         const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
         const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
@@ -197,10 +233,6 @@ export default function LiveMatchCard() {
           homeTeam: m.home_team,
           awayTeam: m.away_team
         }));
-
-        const liveMap: Record<number, any> = {};
-        if (dbLiveMatches) dbLiveMatches.forEach(row => liveMap[row.id] = row); 
-        setLiveMatchesData(liveMap);
 
         let goalHappened = false;
         let newGoalIds: number[] = [];
@@ -330,7 +362,6 @@ export default function LiveMatchCard() {
      return dbMatch.status === 'FINISHED';
   });
 
-  // 🔴 SIRALAMA HESAPLAMA MOTORU 🔴
   const getRank = (arr: any[], uid: string) => {
     const item = arr.find(x => x.id === uid);
     if (!item) return '-';
@@ -431,7 +462,7 @@ export default function LiveMatchCard() {
       else if(winnersCount >= 7) displayPoints = 1;
       else displayPoints = 0;
 
-      // 🔴 SANAL SİMÜLASYON MOTORU 🔴
+      // 🔴 SİMÜLASYON MOTORU (O anki Puanları Dağıtıp Sıralamayı Hesaplar) 🔴
       let simulatedTff: any[] = [];
       let simulatedDfo: any[] = [];
       let simulatedMaster: any[] = [];
@@ -442,14 +473,16 @@ export default function LiveMatchCard() {
          const uName = normalizeName(mergedAccounts[uid]?.name || '');
          
          const base = baseStandings[uid] || baseStandings[uName] || { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
+         const currWk = activeWeekBase[uid] || activeWeekBase[uName] || { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 };
          
-         const ptsToAdd = isWinner ? displayPoints : 0;
-         const skorToAdd = isWinner ? 1 : 0;
+         // Maç BİTMİŞSE puanı zaten activeWeekBase içindedir. Çift yazmamak için LIVE ise simüle ediyoruz.
+         const ptsToAdd = (isWinner && matchStatus !== 'FINISHED') ? displayPoints : 0;
+         const skorToAdd = (isWinner && matchStatus !== 'FINISHED') ? 1 : 0;
 
-         simulatedTff.push({ id: uid, pts: (base.TFF || 0) + (isTffMatch ? ptsToAdd : 0) });
-         simulatedDfo.push({ id: uid, pts: (base.DFO || 0) + (!isTffMatch ? ptsToAdd : 0) });
-         simulatedMaster.push({ id: uid, pts: (base.MASTER || 0) + ptsToAdd });
-         simulatedSkor.push({ id: uid, pts: (base.SKOR || 0) + skorToAdd });
+         simulatedTff.push({ id: uid, pts: base.TFF + currWk.TFF + (isTffMatch ? ptsToAdd : 0) });
+         simulatedDfo.push({ id: uid, pts: base.DFO + currWk.DFO + (!isTffMatch ? ptsToAdd : 0) });
+         simulatedMaster.push({ id: uid, pts: base.MASTER + currWk.MASTER + ptsToAdd });
+         simulatedSkor.push({ id: uid, pts: base.SKOR + currWk.SKOR + skorToAdd });
       });
 
       simulatedTff.sort((a,b) => b.pts - a.pts);
@@ -637,11 +670,11 @@ export default function LiveMatchCard() {
                   {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
-                      {/* 🔴 AÇILIR KAPANIR KÜRSÜ TASARIMI 🔴 */}
+                      {/* 🔴 AÇILIR KAPANIR KÜRSÜ TASARIMI (ORTALANMIŞ & FORMATSIZ) 🔴 */}
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
                           <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
-                             <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300 tracking-widest">
+                             <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-[0_0_15px_rgba(16,185,129,0.8)] border border-emerald-300 tracking-widest text-center">
                                 +{displayPoints} PUAN YAZILIYOR
                              </span>
                           </div>
@@ -669,7 +702,7 @@ export default function LiveMatchCard() {
                                       onClick={() => togglePlayerRank(uniquePlayerKey)}
                                       className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}
                                    >
-                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2">
+                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center">
                                            {winner.name} 
                                            <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
                                        </span>
