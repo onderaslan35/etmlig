@@ -66,7 +66,16 @@ export const staticPlayersList: Record<string, string> = Object.keys(TEST_ACCOUN
   return acc;
 }, {} as Record<string, string>);
 
+// 🔴 HAFTA İSİMLENDİRME SÖZLÜĞÜ (MASKELEME MOTORU) 🔴
+export const customWeekNames: Record<number, string> = {
+  12: "12. HAFTA (18-19 EYLÜL)",
+  13: "13. HAFTA (20 EYLÜL)",
+  14: "14. HAFTA (24-25-26 EYLÜL)"
+};
 
+export const getWeekLabel = (weekNum: number): string => {
+  return customWeekNames[weekNum] || `${weekNum}. HAFTA`;
+};
 
 // 🔴 2. LİG HAVUZU VE KATEGORİLER
 export const LIG_HAVUZU: Record<string, string[]> = {
