@@ -15,8 +15,8 @@ export default function Navbar() {
     { name: 'TFF PUAN DURUMU', path: '/puan-durumu/tff' },
     { name: 'MASTER PUAN DURUMU', path: '/puan-durumu/master', isMaster: true }, // MERKEZ
     { name: 'SKOR DURUMU', path: '/skor-durumu' },
-    { name: 'TAHMİNLER', path: '/tahmin' }, // 🔴 HATA BURADAYDI, '/tahminler' YERİNE '/tahmin' YAPILDI!
-    { name: '🏆 KAZANANLAR', path: '/kazananlar', isKazananlar: true }, // RESMİ KUPA SEMBOLÜ
+    { name: 'TAHMİNLER', path: '/tahmin' }, 
+    { name: '🔴 CANLI', path: '/canli', isCanli: true }, // YENİ CANLI BUTONU
   ];
 
   return (
@@ -33,18 +33,18 @@ export default function Navbar() {
               {navLinks.map((link) => {
                 const isActive = pathname === link.path;
                 
-                if (link.isKazananlar) {
+                if (link.isCanli) {
                   return (
                     <Link
                       key={link.path}
                       href={link.path}
                       className={`px-2 xl:px-3 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
                         isActive
-                          ? 'bg-yellow-900/40 text-yellow-500 border border-yellow-600/50 shadow-[0_0_15px_rgba(202,138,4,0.3)] scale-105'
-                          : 'text-yellow-600/80 hover:text-yellow-500 hover:bg-yellow-950/30'
+                          ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)] scale-105'
+                          : 'text-rose-500/80 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30'
                       }`}
                     >
-                      {link.name}
+                      <span className={isActive ? "animate-pulse" : ""}>{link.name}</span>
                     </Link>
                   );
                 }
@@ -98,7 +98,7 @@ export default function Navbar() {
 
           {/* 🔴 MOBİL MENÜ BUTONU 🔴 */}
           <div className="lg:hidden flex items-center justify-between w-full px-2">
-            <span className="text-white font-black tracking-widest text-xl">MENÜ                  ➡️ <span className="text-slate-500 text-sm"></span></span>
+            <span className="text-white font-black tracking-widest text-xl">MENÜ          ➡️ <span className="text-slate-500 text-sm"></span></span>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-slate-400 hover:text-white focus:outline-none p-2 rounded-lg bg-slate-800/50"
@@ -121,7 +121,7 @@ export default function Navbar() {
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
             
-            if (link.isKazananlar) {
+            if (link.isCanli) {
               return (
                 <Link
                   key={link.path}
@@ -129,11 +129,11 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${
                     isActive
-                      ? 'bg-yellow-900/40 text-yellow-500 border border-yellow-600/50'
-                      : 'text-yellow-600/80 hover:bg-yellow-950/30 hover:text-yellow-500'
+                      ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)]'
+                      : 'text-rose-500/80 hover:bg-rose-950/40 hover:text-rose-400'
                   }`}
                 >
-                  {link.name}
+                  <span className={isActive ? "animate-pulse" : ""}>{link.name}</span>
                 </Link>
               );
             }
