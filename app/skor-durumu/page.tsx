@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
 // Oyuncular Supabase "players" tablosundan dinamik çekiliyor.
@@ -249,9 +248,7 @@ export default function SkorDurumuPage() {
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-[#10b981] tracking-wider uppercase drop-shadow-md">ELİT TAHMİN SKOR (TAM İSABET) MERKEZİ</h1>
       </div>
       
-      <div className="w-full mb-6"><LiveMatchCard /></div>
-      
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-3xl mx-auto mt-4">
         
         <div className="w-full flex flex-col gap-2 mb-4">
           <button onClick={() => setLeagueFilter('MASTER')} className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'MASTER' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#064e3b] text-[#34d399] hover:bg-[#047857]'}`}>
@@ -346,7 +343,6 @@ export default function SkorDurumuPage() {
                             );
                           })()}
                           
-                          {/* 🔴 "CANLI" YAZISI ARTIK 7. HAFTA VE SONRASI İÇİN DE DİNAMİK 🔴 */}
                           {adminStatus === 'LIVE' && (
                             <>
                               {activeTab === 'total' && row.liveExtra > 0 && (

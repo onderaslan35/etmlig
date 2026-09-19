@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 import { staticPlayersList, isTffMatchCheck } from '@/utils/themeEngine';
 
@@ -196,9 +195,7 @@ export default function TffPuanDurumuPage() {
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
       
-      <div className="w-full mb-6"><LiveMatchCard /></div>
-      
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-3xl mx-auto mt-4">
         <button 
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
           className="w-full bg-red-600 hover:bg-red-500 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide shadow-md border border-red-500/50"
