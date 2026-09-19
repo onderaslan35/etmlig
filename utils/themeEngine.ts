@@ -98,6 +98,12 @@ export const defaultCategoriesList = [
   "FIFA DÜNYA KUPASI"
 ];
 
+
+
+
+
+
+
 // 🔴 3. YEREL LOGO BANKASI (TÜM LİNKLER BURADA)
 export const localTeamLogos: Record<string, string> = {
   // TÜRKİYE
@@ -129,6 +135,54 @@ export const localTeamLogos: Record<string, string> = {
   "GÖZTEPE": "https://de.wikipedia.org/wiki/Special:FilePath/G%C3%B6ztepe.svg",
   "KOCAELİSPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Kocaelispor.svg",
   "EYÜPSPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Ey%C3%BCpspor_Logosu.png",
+  // 🌍 14. BÜLTEN MİLLİ TAKIMLAR (FotMob HD Ülke Logoları)
+  "TÜRKİYE": "https://images.fotmob.com/image_resources/logo/teamlogo/8273.png",
+  "HOLLANDA": "https://images.fotmob.com/image_resources/logo/teamlogo/6708.png",
+  "ALMANYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8570.png",
+  "FRANSA": "https://images.fotmob.com/image_resources/logo/teamlogo/6717.png",
+  "İNGİLTERE": "https://images.fotmob.com/image_resources/logo/teamlogo/8491.png",
+  "İSPANYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png",
+  "İTALYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
+  "PORTEKİZ": "https://images.fotmob.com/image_resources/logo/teamlogo/8262.png",
+  "BELÇİKA": "https://images.fotmob.com/image_resources/logo/teamlogo/8295.png",
+  "SIRBİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8205.png",
+  "YUNANİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/6383.png",
+  "NORVEÇ": "https://images.fotmob.com/image_resources/logo/teamlogo/8492.png",
+  "DANİMARKA": "https://images.fotmob.com/image_resources/logo/teamlogo/8263.png",
+  "İSVEÇ": "https://images.fotmob.com/image_resources/logo/teamlogo/8264.png",
+  "HIRVATİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8261.png",
+  "ÇEKYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8265.png",
+  "POLONYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8245.png",
+  "UKRAYNA": "https://images.fotmob.com/image_resources/logo/teamlogo/6130.png",
+  "GALLER": "https://images.fotmob.com/image_resources/logo/teamlogo/5849.png",
+  "İSKOÇYA": "https://images.fotmob.com/image_resources/logo/teamlogo/5550.png",
+  "KOSOVA": "https://images.fotmob.com/image_resources/logo/teamlogo/108328.png",
+  "İRLANDA": "https://images.fotmob.com/image_resources/logo/teamlogo/8565.png",
+  "KUZEY İRLANDA": "https://images.fotmob.com/image_resources/logo/teamlogo/8336.png",
+  "GÜRCİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/6588.png",
+  "MACARİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/6380.png",
+  "ROMANYA": "https://images.fotmob.com/image_resources/logo/teamlogo/6356.png",
+  "BOSNA-HERSEK": "https://images.fotmob.com/image_resources/logo/teamlogo/6133.png",
+  "KARADAĞ": "https://images.fotmob.com/image_resources/logo/teamlogo/5747.png",
+  "SLOVENYA": "https://images.fotmob.com/image_resources/logo/teamlogo/6131.png",
+  "SLOVAKYA": "https://images.fotmob.com/image_resources/logo/teamlogo/6120.png",
+  "İZLANDA": "https://images.fotmob.com/image_resources/logo/teamlogo/6331.png",
+  "KUZEY MAKEDONYA": "https://images.fotmob.com/image_resources/logo/teamlogo/5754.png",
+  "ARNAVUTLUK": "https://images.fotmob.com/image_resources/logo/teamlogo/6589.png",
+  "BULGARİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8282.png",
+  "KAZAKİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/6362.png",
+  "ESTONYA": "https://images.fotmob.com/image_resources/logo/teamlogo/6376.png",
+  "LİTVANYA": "https://images.fotmob.com/image_resources/logo/teamlogo/6377.png",
+  "FİNLANDİYA": "https://images.fotmob.com/image_resources/logo/teamlogo/8260.png",
+  "BELARUS": "https://images.fotmob.com/image_resources/logo/teamlogo/6393.png",
+  "MOLDOVA": "https://images.fotmob.com/image_resources/logo/teamlogo/5744.png",
+  "KIBRIS": "https://images.fotmob.com/image_resources/logo/teamlogo/6584.png",
+  "FAROE ADALARI": "https://images.fotmob.com/image_resources/logo/teamlogo/6185.png",
+  "LÜKSEMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8181.png",
+  "LİHTENŞTAYN": "https://images.fotmob.com/image_resources/logo/teamlogo/8182.png",
+  "SAN MARİNO": "https://images.fotmob.com/image_resources/logo/teamlogo/6384.png",
+  "ANDORRA": "https://images.fotmob.com/image_resources/logo/teamlogo/6386.png",
+  "MALTA": "https://images.fotmob.com/image_resources/logo/teamlogo/6385.png",
 
   // AVRUPA GENEL
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
@@ -490,7 +544,17 @@ export const generateWeekDates = (weekNum: number) => {
     return dates;
   }
 };
+// 🔴 HAFTA İSİMLENDİRME SÖZLÜĞÜ (MASKELEME MOTORU) 🔴
+export const customWeekNames: Record<number, string> = {
+  14: "24-25-26 EYLÜL MİLLİ PROGRAM",
+  // İleride 15. hafta için buraya virgül koyup alt satıra geçerek:
+  // 15: "1-2-3 EKİM ŞAMPİYONLAR LİGİ", 
+  // şeklinde istediğin kadar özel isim ekleyebilirsin Komutanım!
+};
 
+export const getWeekLabel = (weekNum: number): string => {
+  return customWeekNames[weekNum] || `${weekNum}. HAFTA`;
+};
 export const getUniqueMatchId = (week: number, index: number) => {
   return (week * 100) + index;
 };
