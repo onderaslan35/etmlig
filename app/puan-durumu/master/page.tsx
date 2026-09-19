@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 
 // 🔴 GEÇMİŞ HAFTALARIN KESİNLEŞMİŞ (MÜHÜRLÜ) ROZETLERİ 🔴
@@ -287,9 +286,7 @@ export default function MasterPuanDurumuPage() {
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">ELİT TAHMİN MASTER LİGİ</h1>
       </div>
       
-      <div className="w-full mb-6"><LiveMatchCard /></div>
-      
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-3xl mx-auto mt-4">
         <button 
           onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
           className="w-full bg-[#f59e0b] hover:bg-amber-600 text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide"
