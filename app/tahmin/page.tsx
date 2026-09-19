@@ -9,7 +9,7 @@ import {
   getEliteTheme,
   cleanTeamName,
   getMatchTimeMs,
-  getWeekLabel // 🔴 MASKELEME MOTORUNU BURAYA DAHİL ETTİM!
+  getWeekLabel
 } from '@/utils/themeEngine';
 
 export default function TahminlerPortal() {
@@ -73,7 +73,7 @@ export default function TahminlerPortal() {
             if(!newMap[row.week_num]) newMap[row.week_num] = [];
             newMap[row.week_num].push({
                id: row.match_index,
-               weekLabel: `${getWeekLabel(row.week_num)} - ${row.match_index}. MAÇ`, // 🔴 KART İÇİ MASKELEME
+               weekLabel: `${getWeekLabel(row.week_num)} - ${row.match_index}. MAÇ`,
                category: row.category,
                date: row.match_date,
                time: row.match_time,
@@ -106,7 +106,7 @@ export default function TahminlerPortal() {
     
     if (username.trim().toLowerCase() !== 'mankoman') {
         if (gateStatus === 'CLOSED') {
-            setLoginError(`${activeBulletinWeek}. Hafta bültenindeki tüm maçlar başladığı veya henüz bülten olmadığı için tahminler kapanmıştır.`);
+            setLoginError(`${getWeekLabel(activeBulletinWeek)} bültenindeki tüm maçlar başladığı veya henüz bülten olmadığı için tahminler kapanmıştır.`);
             return;
         }
     }
@@ -276,7 +276,7 @@ export default function TahminlerPortal() {
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div><div className="text-6xl mb-6 mt-2 drop-shadow-lg">🏆</div>
             <h3 className="text-3xl font-black text-emerald-400 mb-3 tracking-widest">TEBRİKLER!</h3>
-            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz {activeBulletinWeek}. Hafta için sisteme kaydedilmiştir. (İsterseniz daha sonra kilitlenmemiş maçlarınızı güncelleyebilirsiniz.)</p>
+            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz sisteme kaydedilmiştir. (İsterseniz daha sonra kilitlenmemiş maçlarınızı güncelleyebilirsiniz.)</p>
             <button onClick={() => { setShowSuccessModal(false); setView('lobby'); setUsername(''); setPassword(''); }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] uppercase">TAMAM</button>
           </div>
         </div>
@@ -318,15 +318,14 @@ export default function TahminlerPortal() {
                      <select
                        value={activeBulletinWeek}
                        onChange={e => setActiveBulletinWeek(Number(e.target.value))}
-                       className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xl px-4 py-4 rounded-xl text-center shadow-inner cursor-pointer outline-none focus:border-amber-500"
+                       className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-sm sm:text-base px-2 py-3 rounded-xl text-center shadow-inner cursor-pointer outline-none focus:border-amber-500"
                      >
-                       {/* 🔴 LOBİ AÇILIR MENÜ MASKELEME 🔴 */}
                        {availableWeeks.map(w => (
-                         <option key={w} value={w}>{getWeekLabel(w)} BÜLTENİ</option>
+                         <option key={w} value={w}>{getWeekLabel(w)}</option>
                        ))}
                      </select>
                    ) : (
-                     <div className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-xl px-4 py-4 rounded-xl text-center shadow-inner cursor-not-allowed">
+                     <div className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-sm sm:text-base px-2 py-3 rounded-xl text-center shadow-inner cursor-not-allowed">
                        BÜLTEN BEKLENİYOR
                      </div>
                    )}
@@ -371,8 +370,7 @@ export default function TahminlerPortal() {
               <div className="text-center"><h2 className="text-2xl md:text-3xl font-black text-emerald-500 tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] uppercase flex items-center justify-center gap-3"><span className="text-3xl md:text-4xl">⚡</span> TAHMİNMATİK</h2></div>
               <div>
                   {availableWeeks.length > 0 ? (
-                      <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm">
-                          {/* 🔴 TAHMİNMATİK AÇILIR MENÜ MASKELEME 🔴 */}
+                      <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 sm:px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm max-w-[150px] sm:max-w-none">
                           {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{getWeekLabel(week)}</option> ))}
                       </select>
                   ) : (
@@ -403,7 +401,6 @@ export default function TahminlerPortal() {
                       {theme.bgImg && ( <><div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div><div className="absolute inset-0 bg-slate-900/40 z-0"></div></> )}
                       <div className="relative z-10 flex flex-col h-full justify-between">
                         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
-                           {/* 🔴 TAHMİNMATİK KART İÇİ MASKELEME 🔴 */}
                            <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest">{match.weekLabel}</span>
                            <span className={`text-[10px] sm:text-[11px] font-black uppercase px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>🏆 {match.category}</span>
                         </div>
@@ -479,9 +476,8 @@ export default function TahminlerPortal() {
                 </div>
                 
                 {availableWeeks.length > 0 ? (
-                    <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md">
-                        {/* 🔴 RESMİ DEKLARASYON AÇILIR MENÜ MASKELEME 🔴 */}
-                        {availableWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{getWeekLabel(week)} BÜLTENİ</option> ))}
+                    <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-2 sm:px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md text-xs sm:text-sm max-w-[150px] sm:max-w-none">
+                        {availableWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{getWeekLabel(week)}</option> ))}
                     </select>
                 ) : (
                     <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Deklare Yok</div>
@@ -499,7 +495,6 @@ export default function TahminlerPortal() {
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
                     <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
                       <tr>
-                        {/* 🔴 RESMİ DEKLARASYON TABLO BAŞLIĞI MASKELEME 🔴 */}
                         <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left"><span className="text-amber-500 font-black tracking-widest uppercase">{getWeekLabel(selectedTahminWeek)}</span></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => ( <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th> ))}
                         {ghostColumns.map((_, i) => ( <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
@@ -603,7 +598,6 @@ export default function TahminlerPortal() {
         {view === 'entry' && (
           <div className="w-full animate-fade-in-up">
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-              {/* 🔴 TAHMİN GİRİŞ SAYFASI BAŞLIĞI MASKELEME 🔴 */}
               <div><h2 className="text-2xl font-black text-amber-500 tracking-widest uppercase">{getWeekLabel(activeBulletinWeek)} GÖREV KAĞIDI</h2><p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p></div>
               <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">Oturumu Kapat</button>
             </div>
@@ -644,7 +638,6 @@ export default function TahminlerPortal() {
                         
                         <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
                           <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-[0_0_10px_currentColor] bg-slate-950/80 ${theme.badgeText} ${theme.badgeBorder}`}>
-                            {/* 🔴 TAHMİN GİRİŞİ MAÇ KARTI MASKELEME 🔴 */}
                             {match.weekLabel}
                           </span>
                           <span className={`text-[9px] sm:text-[10px] font-black tracking-widest px-3 py-1 rounded-full border shadow-[0_0_10px_currentColor] bg-slate-950/80 ${theme.badgeText} ${theme.badgeBorder}`}>
