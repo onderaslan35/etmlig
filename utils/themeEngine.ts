@@ -249,7 +249,7 @@ export const localTeamLogos: Record<string, string> = {
   "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
   "FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
   "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
-  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+  "MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
   "BORUSSIA MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9788_large.png",
   "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8697_large.png",
   "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
