@@ -512,43 +512,62 @@ export default function LiveMatchCard() {
             </>
           )}
 
+          {/* 🔴 MOBİL KÜRSÜ TASARIMI (DIŞ KART) 🔴 */}
           {!isExpanded && (
             <div
               onClick={() => toggleMatchExpansion(match.id)}
-              className="cursor-pointer px-3 sm:px-5 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300 py-3 sm:py-4"
+              className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300"
             >
-              <div className="flex-1 flex items-center gap-2 justify-end text-right">
-                <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{homeTeamUpper}</span>
-                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+              {/* EV SAHİBİ İSMİ (Kısaltılabilir) */}
+              <div className="flex-1 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">
+                  {homeTeamUpper}
+                </span>
               </div>
               
-              <div className="px-3 sm:px-5 flex flex-col items-center justify-center">
-                <div className={`flex items-center justify-center min-w-[60px] px-3 rounded-lg border shadow-inner backdrop-blur-md transition-all ${
-                  isGoalFlashing ? 'bg-green-900/80 border-green-400 shadow-[0_0_20px_rgba(74,222,128,0.8)] scale-110' :
-                  matchStatus === 'LIVE' ? 'py-1.5 bg-green-950/50 border-green-500/50 animate-pulse' : 'py-1.5 bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'
-                }`}>
-                  <span className={`font-black whitespace-nowrap tracking-widest flex items-center justify-center ${
-                    isGoalFlashing ? 'text-sm sm:text-base text-green-300' :
-                    matchStatus === 'LIVE' ? 'text-green-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
-                  }`}>
-                    {matchStatus === 'LIVE' && elapsed && (
-                      <span className="mr-2 text-[13px] sm:text-[15px] text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.6)]">
-                        {elapsed >= 90 ? '90+' : `${String(elapsed)}'`}
+              {/* MERKEZ KÜRSÜ (Logo - Skor - Logo, Üstte Dakika) */}
+              <div className="flex items-center justify-center shrink-0">
+                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
+                
+                <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
+                  {/* Üst: Dakika / Zaman */}
+                  <div className="mb-0.5 flex items-center justify-center">
+                    {matchStatus === 'LIVE' ? (
+                      <span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">
+                        {elapsed >= 90 ? '90+' : String(elapsed) + "'"}
                       </span>
+                    ) : matchStatus === 'WAITING_APPROVAL' ? (
+                      <span className="text-[8px] sm:text-[9px] font-black text-amber-500 tracking-wider">ONAY</span>
+                    ) : matchStatus === 'FINISHED' ? (
+                      <span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>
+                    ) : (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>
                     )}
-                    <span className={matchStatus === 'LIVE' ? 'text-xs sm:text-sm' : ''}>
-                      {matchStatus === 'NOT_STARTED' ? match.time : (matchStatus === 'LIVE' ? `${homeScore} - ${awayScore}` : `${homeScore} - ${awayScore}`)}
+                  </div>
+                  
+                  {/* Alt: Skor Kutusu */}
+                  <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${
+                    isGoalFlashing ? 'bg-green-900/80 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.8)] scale-110' :
+                    matchStatus === 'LIVE' ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'
+                  }`}>
+                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-green-300' : 'text-white'}`}>
+                      {matchStatus === 'NOT_STARTED' ? 'v' : `${homeScore}-${awayScore}`}
                     </span>
-                  </span>
+                  </div>
                 </div>
+                
+                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
               </div>
               
-              <div className="flex-1 flex items-center gap-2 justify-start text-left">
-                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-5 h-5 sm:w-7 sm:h-7 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors">{awayTeamUpper}</span>
+              {/* DEPLASMAN İSMİ (Kısaltılabilir) */}
+              <div className="flex-1 flex items-center justify-start overflow-hidden pl-1.5 sm:pl-3">
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-left">
+                  {awayTeamUpper}
+                </span>
               </div>
               
-              <div className="ml-2 opacity-50 text-[10px] text-white group-hover:opacity-100 transition-opacity">▼</div>
+              {/* Ok */}
+              <div className="absolute right-1 sm:right-2 opacity-30 text-[8px] text-white group-hover:opacity-100 transition-opacity">▼</div>
             </div>
           )}
 
@@ -594,7 +613,6 @@ export default function LiveMatchCard() {
                       </div>
                     )}
                     
-                    {/* YENİ ZIRH: DEVOASA CANLI DAKİKA VE 90+ DESTEĞİ */}
                     {matchStatus === 'LIVE' && (
                       <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
                         <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">
