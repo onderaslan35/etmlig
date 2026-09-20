@@ -616,7 +616,76 @@ export default function LiveMatchCard() {
                     <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{awayTeamUpper}</span>
                   </div>
                 </div>
-              
+
+                {/* ------------------------------------------------------------------------- */}
+                {/* YENİ EKLENEN MAÇKOLİK STİLİ CANLI OLAYLAR VE SKOR BİLENLER ALANI */}
+                {/* ------------------------------------------------------------------------- */}
+                {( (dbMatch.events && dbMatch.events.length > 0) || exactWinners.length > 0 ) && (
+                  <div className="w-full mt-1 mb-4 flex flex-col gap-3 px-2 sm:px-6 relative z-30">
+                    
+                    {/* 1. CANLI OLAYLAR SÜTUNLARI (Supabase'den events gelirse otomatik açılır) */}
+                    {dbMatch.events && dbMatch.events.length > 0 && (
+                      <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/60 rounded-xl p-3 border border-slate-700/80 shadow-inner mb-2 backdrop-blur-md">
+                        
+                        {/* Ev Sahibi Sütunu (Sol) */}
+                        <div className="flex-1 flex flex-col gap-2 items-start pr-3 border-r border-slate-700/50">
+                          {dbMatch.events.filter((e: any) => e.type === "Goal" && (e.team?.name === match.homeTeam || e.team?.id === dbMatch.home_team_id)).map((g: any, i: number) => (
+                            <span key={`h-g-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span> 
+                              <span className="font-semibold text-slate-200">{g.player?.name}</span> 
+                              <span className="text-emerald-400 font-bold">({g.time?.elapsed}')</span>
+                            </span>
+                          ))}
+                          {dbMatch.events.filter((e: any) => e.type === "Card" && e.detail === "Red Card" && (e.team?.name === match.homeTeam || e.team?.id === dbMatch.home_team_id)).map((k: any, i: number) => (
+                            <span key={`h-k-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span> 
+                              <span className="font-semibold text-rose-400">{k.player?.name}</span> 
+                              <span className="text-rose-500 font-bold">({k.time?.elapsed}')</span>
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Deplasman Sütunu (Sağ) */}
+                        <div className="flex-1 flex flex-col gap-2 items-end pl-3">
+                          {dbMatch.events.filter((e: any) => e.type === "Goal" && (e.team?.name === match.awayTeam || e.team?.id === dbMatch.away_team_id)).map((g: any, i: number) => (
+                            <span key={`a-g-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-emerald-400 font-bold">({g.time?.elapsed}')</span> 
+                              <span className="font-semibold text-slate-200">{g.player?.name}</span> 
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span>
+                            </span>
+                          ))}
+                          {dbMatch.events.filter((e: any) => e.type === "Card" && e.detail === "Red Card" && (e.team?.name === match.awayTeam || e.team?.id === dbMatch.away_team_id)).map((k: any, i: number) => (
+                            <span key={`a-k-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-rose-500 font-bold">({k.time?.elapsed}')</span> 
+                              <span className="font-semibold text-rose-400">{k.player?.name}</span> 
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2. TAHMİNİ BİLENLER VE PUANLAR ALANI */}
+                    {exactWinners.length > 0 && (
+                      <div className="pt-3 border-t border-slate-700/50 w-full text-center">
+                        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-emerald-400/80 block mb-3 font-bold">
+                          🎯 ANLIK SKORU BİLEN KARARGAH ÜYELERİ
+                        </span>
+                        
+                        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                          {exactWinners.map((winner, idx) => (
+                            <div key={idx} className="bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.1)] transition-all hover:bg-emerald-900/80 cursor-default backdrop-blur-sm">
+                              <span className="text-emerald-500 drop-shadow-md">👤</span> {winner.name} 
+                              <span className="bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-400 ml-1">+{displayPoints} Puan</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* ------------------------------------------------------------------------- */}
+                
                 <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative mt-auto`}>
                   <div className="flex justify-between items-center w-full">
                     <div className="text-left flex-1">
@@ -905,4 +974,3 @@ export default function LiveMatchCard() {
     </div>
   );
 }
-
