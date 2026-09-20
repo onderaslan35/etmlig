@@ -18,7 +18,7 @@ const formatTurkishDate = (dateStr: string) => {
   return dateStr;
 };
 
-export default function DfoPuanDurumuPage() {
+export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [currentWeekNum, setCurrentWeekNum] = useState<number>(0);
   const [lastMatchDate, setLastMatchDate] = useState<string>('');
@@ -42,17 +42,17 @@ export default function DfoPuanDurumuPage() {
           setLastMatchDate(formatTurkishDate(dbBulletin[0].match_date));
       }
 
-      // 🔥 HATA BURADAN KAYNAKLIYDI: Oklar kaldırıldı, sadece DFO puanları çekiliyor!
+      // Sadece TFF puanları (Ok yok, hata yok, sıfır risk)
       const { data } = await supabase
         .from('live_leaderboard')
-        .select('id, name, dfo_pts, dfo_rank');
+        .select('id, name, tff_pts, tff_rank');
 
       if (data && data.length > 0) {
         const list = data.map(row => ({
           id: row.id,
           name: row.name || playersList[row.id] || "Bilinmiyor",
-          displayScore: row.dfo_pts,
-          currentRank: row.dfo_rank
+          displayScore: row.tff_pts,
+          currentRank: row.tff_rank
         }));
         
         setTableRows(list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr')).map((r, i) => ({ ...r, currentRank: i + 1 })));
@@ -66,7 +66,7 @@ export default function DfoPuanDurumuPage() {
 
   useEffect(() => { 
       loadLeaderboard(); 
-      const channel = supabase.channel('dfo_live_updates')
+      const channel = supabase.channel('tff_live_updates')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => {
            loadLeaderboard();
         })
@@ -77,14 +77,14 @@ export default function DfoPuanDurumuPage() {
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-500 tracking-wider uppercase drop-shadow-md">
-          DÜNYA FUTBOL ORGANİZASYONLARI (DFO)
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-red-500 tracking-wider uppercase drop-shadow-md">
+          TÜRKİYE FUTBOL FEDERASYONU (TFF)
         </h1>
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-4">
-        <div className="w-full bg-blue-600 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-blue-500/50">
-          {currentWeekNum > 0 ? `${currentWeekNum}. HAFTA DFO PUAN DURUMU (${lastMatchDate})` : 'DFO PUAN DURUMU YÜKLENİYOR...'}
+        <div className="w-full bg-red-600 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-red-500/50">
+          {currentWeekNum > 0 ? `${currentWeekNum}. HAFTA TFF PUAN DURUMU (${lastMatchDate})` : 'TFF PUAN DURUMU YÜKLENİYOR...'}
         </div>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
@@ -130,7 +130,7 @@ export default function DfoPuanDurumuPage() {
                           })()}
                         </div>
                       </td>
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-500 align-top pt-3.5">
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-red-500 align-top pt-3.5">
                         {row.displayScore}
                       </td>
                     </tr>
