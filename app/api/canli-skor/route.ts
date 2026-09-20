@@ -22,7 +22,6 @@ export async function GET(request: Request) {
     const y = todayTurkey.getUTCFullYear();
     const todayStr = `${d}.${m}.${y}`; 
 
-    // 🔥 HATA BURADAYDI: category kelimesi eklendi!
     const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
     
     if (bulten) {
@@ -70,7 +69,8 @@ export async function GET(request: Request) {
 
         const dynamicBonuses: Record<number, Record<string, number>> = {};
         manualPointsData.forEach(b => {
-            if (String(b.kategori).toUpperCase() === 'MASTER' && ['HAFTANIN', 'SKOR'].includes(b.ev_sahibi)) {
+            const evSahibi = String(b.ev_sahibi).toUpperCase().trim();
+            if (String(b.kategori).toUpperCase().trim() === 'MASTER' && ['HAFTANIN', 'SKOR'].includes(evSahibi)) {
                 if (!dynamicBonuses[b.hafta]) dynamicBonuses[b.hafta] = {};
                 if (!dynamicBonuses[b.hafta][b.username]) dynamicBonuses[b.hafta][b.username] = 0;
                 dynamicBonuses[b.hafta][b.username] += b.puan;
@@ -80,15 +80,24 @@ export async function GET(request: Request) {
         let allPredictions: any[] = [];
         let from = 0; let step = 999; let keepFetching = true;
         while(keepFetching) {
-            const { data } = await supabase.from('player_predictions').select('*').gte('week_num', 5).range(from, from + step);
-            if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length <= step) keepFetching = false; else from += step + 1; } 
+            // 🔥 KRİTİK HATA ÇÖZÜMÜ: order('id') eklendi, tahminlerin kaybolması imkansız hale getirildi!
+            const { data } = await supabase.from('player_predictions')
+                .select('*')
+                .gte('week_num', 5)
+                .order('id', { ascending: true })
+                .range(from, from + step);
+                
+            if (data && data.length > 0) { 
+                allPredictions = [...allPredictions, ...data]; 
+                if (data.length <= step) keepFetching = false; 
+                else from += step + 1; 
+            } 
             else keepFetching = false;
         }
 
         const pDict: Record<string, string> = {};
         allPredictions.forEach(pred => pDict[`${String(pred.user_id)}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, ''));
 
-        // 🔥 KIRMIZI ÇİZGİ HATASI DÜZELTİLDİ: (m: any) eklendi
         const catDict: Record<string, string> = {};
         if (bulten) bulten.forEach((m: any) => catDict[`${m.week_num}-${m.match_index}`] = m.category || "");
 
@@ -196,5 +205,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'ŞİMŞEK MASTER MANTIĞI AKTİF: Puan Şişmesi Engellendi, Trend Okları Geri Döndü!' });
+    return NextResponse.json({ message: 'ŞİMŞEK MASTER MANTIĞI AKTİF: Kayıp Tahminler Bulundu, Doğaç 112 Puan Geri Döndü!' });
 }
