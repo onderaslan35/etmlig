@@ -521,7 +521,6 @@ export default function LiveMatchCard() {
         }
       }
 
-      // 🔴 İSİMLERE BAKMAYI BIRAKTIK! MOTORUN VURDUĞU KİMLİK DAMGASINA (isHome) BAKIYORUZ 🔴
       const homeEvents = safeEvents.filter((e: any) => e.isHome === true || e?.team?.name === match.homeTeam);
       const awayEvents = safeEvents.filter((e: any) => e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam));
 
@@ -693,8 +692,9 @@ export default function LiveMatchCard() {
                   </div>
                 </div>
 
+                {/* 🔴 MOBİL GENİŞ EKRAN OLAYLAR TABLOSU 🔴 */}
                 {safeEvents.length > 0 && (
-                  <div className="w-full mb-3 flex flex-col gap-2 px-3 sm:px-6 relative z-30 animate-fadeIn">
+                  <div className="w-full mb-3 flex flex-col gap-2 px-1.5 sm:px-6 relative z-30 animate-fadeIn">
                     <button 
                       onClick={() => toggleEvents(match.id)}
                       className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm"
@@ -706,9 +706,10 @@ export default function LiveMatchCard() {
                     </button>
 
                     {isEventsOpen && (
-                      <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-2 sm:p-3 border border-slate-800/80 shadow-inner">
+                      <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-1.5 sm:p-3 border border-slate-800/80 shadow-inner">
                         
-                        <div className="flex-1 flex flex-col gap-1.5 items-start pr-2 sm:pr-3 border-r border-slate-700/50">
+                        {/* Sol Kanat (Ev Sahibi) */}
+                        <div className="flex-1 flex flex-col gap-1 items-start pr-1 sm:pr-3 border-r border-slate-700/50 overflow-hidden">
                           {homeEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
                             if (e.type === 'Goal') {
@@ -723,16 +724,17 @@ export default function LiveMatchCard() {
                             } else return null;
 
                             return (
-                              <span key={`h-e-${i}`} className="flex items-center gap-1.5 bg-slate-800/40 px-1.5 sm:px-2 py-0.5 rounded shadow-sm w-full">
-                                <span className="text-[10px] sm:text-xs drop-shadow-md shrink-0">{icon}</span> 
-                                <span className="font-semibold text-slate-200 truncate flex-1 text-left text-[9px] sm:text-[10px]">{text}</span> 
+                              <span key={`h-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full">
+                                <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span> 
+                                <span className="font-medium text-slate-200 flex-1 text-left text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
                                 <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span>
                               </span>
                             );
                           })}
                         </div>
 
-                        <div className="flex-1 flex flex-col gap-1.5 items-end pl-2 sm:pl-3">
+                        {/* Sağ Kanat (Deplasman) */}
+                        <div className="flex-1 flex flex-col gap-1 items-end pl-1 sm:pl-3 overflow-hidden">
                           {awayEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
                             if (e.type === 'Goal') {
@@ -747,10 +749,10 @@ export default function LiveMatchCard() {
                             } else return null;
 
                             return (
-                              <span key={`a-e-${i}`} className="flex items-center gap-1.5 bg-slate-800/40 px-1.5 sm:px-2 py-0.5 rounded shadow-sm w-full justify-end">
+                              <span key={`a-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full justify-end">
                                 <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span> 
-                                <span className="font-semibold text-slate-200 truncate flex-1 text-right text-[9px] sm:text-[10px]">{text}</span> 
-                                <span className="text-[10px] sm:text-xs drop-shadow-md shrink-0">{icon}</span>
+                                <span className="font-medium text-slate-200 flex-1 text-right text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span>
                               </span>
                             );
                           })}
