@@ -15,7 +15,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(request: Request) {
-  // 1. Bugünün tarihini bul (Türkiye Saati - Örn: 20.09.2026)
+  // 1. Bugünün tarihini bul
   const nowUTC = new Date();
   const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
   const d = String(todayTurkey.getUTCDate()).padStart(2, '0');
