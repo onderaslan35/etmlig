@@ -41,7 +41,6 @@ export default function LiveMatchCard() {
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   
-  // YENİ: OLAYLAR HARİTASI İÇİN KONTROL (İlk başta AÇIK kalması için tasarlandı)
   const [openEventsMap, setOpenEventsMap] = useState<{ [key: number]: boolean }>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
@@ -399,7 +398,6 @@ export default function LiveMatchCard() {
       const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
       const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
 
-      // OLAYLAR MENÜSÜ İÇİN KONTROL (İlk başta false gelirse AÇIK kabul edilir)
       const isEventsOpen = openEventsMap[match.id] !== false;
       const isWinnersOpen = openWinnersMap[match.id] !== false;
       const isPossibleOpen = openPossibleMap[match.id] || false;
@@ -529,12 +527,18 @@ export default function LiveMatchCard() {
                   isGoalFlashing ? 'bg-green-900/80 border-green-400 shadow-[0_0_20px_rgba(74,222,128,0.8)] scale-110' :
                   matchStatus === 'LIVE' ? 'py-1.5 bg-green-950/50 border-green-500/50 animate-pulse' : 'py-1.5 bg-[#080d1a]/80 border-slate-700/50 group-hover:border-slate-500/80'
                 }`}>
-                  <span className={`font-black whitespace-nowrap tracking-widest ${
+                  <span className={`font-black whitespace-nowrap tracking-widest flex items-center justify-center ${
                     isGoalFlashing ? 'text-sm sm:text-base text-green-300' :
-                    matchStatus === 'LIVE' ? 'text-xs sm:text-sm text-green-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
+                    matchStatus === 'LIVE' ? 'text-green-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
                   }`}>
-                    {matchStatus === 'LIVE' && elapsed && <span className="mr-1.5 text-[10px] text-green-400">{String(elapsed)}'</span>}
-                    {matchStatus === 'NOT_STARTED' ? match.time : `${homeScore} - ${awayScore}`}
+                    {matchStatus === 'LIVE' && elapsed && (
+                      <span className="mr-2 text-[13px] sm:text-[15px] text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.6)]">
+                        {elapsed >= 90 ? '90+' : `${String(elapsed)}'`}
+                      </span>
+                    )}
+                    <span className={matchStatus === 'LIVE' ? 'text-xs sm:text-sm' : ''}>
+                      {matchStatus === 'NOT_STARTED' ? match.time : (matchStatus === 'LIVE' ? `${homeScore} - ${awayScore}` : `${homeScore} - ${awayScore}`)}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -589,12 +593,19 @@ export default function LiveMatchCard() {
                         <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                       </div>
                     )}
+                    
+                    {/* YENİ ZIRH: DEVOASA CANLI DAKİKA VE 90+ DESTEĞİ */}
                     {matchStatus === 'LIVE' && (
-                      <div className="bg-green-950/80 border border-green-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md z-40 relative">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                        <span className="text-green-500 text-[10px] font-black tracking-widest">{elapsed ? `${String(elapsed)}' CANLI` : 'CANLI'}</span>
+                      <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
+                        <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">
+                          {elapsed ? (elapsed >= 90 ? '90+' : `${String(elapsed)}'`) : ''}
+                        </span>
+                        <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">
+                          🔴 CANLI
+                        </span>
                       </div>
                     )}
+
                     {matchStatus === 'WAITING_APPROVAL' && (
                       <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                         <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span>
@@ -629,7 +640,6 @@ export default function LiveMatchCard() {
                   </div>
                 </div>
 
-                {/* YENİ TAKTİKSEL HARİTA: CANLI OLAYLAR KONTROL PANELİ */}
                 {safeEvents.length > 0 && (
                   <div className="w-full mb-3 flex flex-col gap-2 px-3 sm:px-6 relative z-30 animate-fadeIn">
                     <button 
@@ -645,7 +655,6 @@ export default function LiveMatchCard() {
                     {isEventsOpen && (
                       <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-3 border border-slate-800/80 shadow-inner">
                         
-                        {/* Ev Sahibi Sütunu (Sol) */}
                         <div className="flex-1 flex flex-col gap-2 items-start pr-3 border-r border-slate-700/50">
                           {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((g: any, i: number) => (
                             <span key={`h-g-${i}`} className="flex items-center gap-1.5">
@@ -663,7 +672,6 @@ export default function LiveMatchCard() {
                           ))}
                         </div>
 
-                        {/* Deplasman Sütunu (Sağ) */}
                         <div className="flex-1 flex flex-col gap-2 items-end pl-3">
                           {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((g: any, i: number) => (
                             <span key={`a-g-${i}`} className="flex items-center gap-1.5">
