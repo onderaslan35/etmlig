@@ -32,7 +32,6 @@ export default function LiveMatchCard() {
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
   
-  // 🔴 GLOBAL CANLI KASA 🔴
   const [globalLiveRanks, setGlobalLiveRanks] = useState<{ TFF: any[], DFO: any[], MASTER: any[], SKOR: any[] }>({ TFF: [], DFO: [], MASTER: [], SKOR: [] });
 
   const [now, setNow] = useState<number>(new Date().getTime());
@@ -42,6 +41,8 @@ export default function LiveMatchCard() {
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   
+  // YENİ: OLAYLAR HARİTASI İÇİN KONTROL (İlk başta AÇIK kalması için tasarlandı)
+  const [openEventsMap, setOpenEventsMap] = useState<{ [key: number]: boolean }>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
   const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
@@ -366,6 +367,7 @@ export default function LiveMatchCard() {
     return () => clearInterval(interval);
   }, [activeWeek, isWeekLoaded, mergedAccounts]);
 
+  const toggleEvents = (matchId: number) => setOpenEventsMap((prev) => ({ ...prev, [matchId]: prev[matchId] === false ? true : false })); 
   const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
   const togglePossible = (matchId: number) => setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   const toggleEliminated = (matchId: number) => setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
@@ -397,6 +399,8 @@ export default function LiveMatchCard() {
       const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
       const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
 
+      // OLAYLAR MENÜSÜ İÇİN KONTROL (İlk başta false gelirse AÇIK kabul edilir)
+      const isEventsOpen = openEventsMap[match.id] !== false;
       const isWinnersOpen = openWinnersMap[match.id] !== false;
       const isPossibleOpen = openPossibleMap[match.id] || false;
       const isEliminatedOpen = openEliminatedMap[match.id] || false;
@@ -410,7 +414,6 @@ export default function LiveMatchCard() {
       const safeElapsed = (typeof rawElapsed === 'object' && rawElapsed !== null) ? rawElapsed.elapsed : rawElapsed;
       const elapsed = safeElapsed && safeElapsed > 0 ? safeElapsed : null;
 
-      // 🔥 BÜYÜK ÇÖKÜŞÜ ENGELLEYEN TİTANYUM ZIRH 🔥
       let safeEvents: any[] = [];
       if (Array.isArray(dbMatch.events)) {
          safeEvents = dbMatch.events;
@@ -626,45 +629,59 @@ export default function LiveMatchCard() {
                   </div>
                 </div>
 
-                {/* ZIRHLI: CANLI OLAYLAR */}
+                {/* YENİ TAKTİKSEL HARİTA: CANLI OLAYLAR KONTROL PANELİ */}
                 {safeEvents.length > 0 && (
-                  <div className="w-full mt-1 mb-4 flex flex-col gap-3 px-2 sm:px-6 relative z-30">
-                    <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/60 rounded-xl p-3 border border-slate-700/80 shadow-inner mb-2 backdrop-blur-md">
-                      
-                      <div className="flex-1 flex flex-col gap-2 items-start pr-3 border-r border-slate-700/50">
-                        {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((g: any, i: number) => (
-                          <span key={`h-g-${i}`} className="flex items-center gap-1.5">
-                            <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span> 
-                            <span className="font-semibold text-slate-200">{String(g?.player?.name || 'Oyuncu')}</span> 
-                            <span className="text-emerald-400 font-bold">({String(g?.time?.elapsed || 0)}')</span>
-                          </span>
-                        ))}
-                        {safeEvents.filter((e: any) => e?.type === "Card" && e?.detail === "Red Card" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((k: any, i: number) => (
-                          <span key={`h-k-${i}`} className="flex items-center gap-1.5">
-                            <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span> 
-                            <span className="font-semibold text-rose-400">{String(k?.player?.name || 'Oyuncu')}</span> 
-                            <span className="text-rose-500 font-bold">({String(k?.time?.elapsed || 0)}')</span>
-                          </span>
-                        ))}
-                      </div>
+                  <div className="w-full mb-3 flex flex-col gap-2 px-3 sm:px-6 relative z-30 animate-fadeIn">
+                    <button 
+                      onClick={() => toggleEvents(match.id)}
+                      className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm"
+                    >
+                      <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2">
+                        <span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI
+                      </span>
+                      <span className="text-slate-400 text-[10px]">{isEventsOpen ? '▲' : '▼'}</span>
+                    </button>
 
-                      <div className="flex-1 flex flex-col gap-2 items-end pl-3">
-                        {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((g: any, i: number) => (
-                          <span key={`a-g-${i}`} className="flex items-center gap-1.5">
-                            <span className="text-emerald-400 font-bold">({String(g?.time?.elapsed || 0)}')</span> 
-                            <span className="font-semibold text-slate-200">{String(g?.player?.name || 'Oyuncu')}</span> 
-                            <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span>
-                          </span>
-                        ))}
-                        {safeEvents.filter((e: any) => e?.type === "Card" && e?.detail === "Red Card" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((k: any, i: number) => (
-                          <span key={`a-k-${i}`} className="flex items-center gap-1.5">
-                            <span className="text-rose-500 font-bold">({String(k?.time?.elapsed || 0)}')</span> 
-                            <span className="font-semibold text-rose-400">{String(k?.player?.name || 'Oyuncu')}</span> 
-                            <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span>
-                          </span>
-                        ))}
+                    {isEventsOpen && (
+                      <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-3 border border-slate-800/80 shadow-inner">
+                        
+                        {/* Ev Sahibi Sütunu (Sol) */}
+                        <div className="flex-1 flex flex-col gap-2 items-start pr-3 border-r border-slate-700/50">
+                          {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((g: any, i: number) => (
+                            <span key={`h-g-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span> 
+                              <span className="font-semibold text-slate-200">{String(g?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-emerald-400 font-bold">({String(g?.time?.elapsed || 0)}')</span>
+                            </span>
+                          ))}
+                          {safeEvents.filter((e: any) => e?.type === "Card" && e?.detail === "Red Card" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((k: any, i: number) => (
+                            <span key={`h-k-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span> 
+                              <span className="font-semibold text-rose-400">{String(k?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-rose-500 font-bold">({String(k?.time?.elapsed || 0)}')</span>
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Deplasman Sütunu (Sağ) */}
+                        <div className="flex-1 flex flex-col gap-2 items-end pl-3">
+                          {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((g: any, i: number) => (
+                            <span key={`a-g-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-emerald-400 font-bold">({String(g?.time?.elapsed || 0)}')</span> 
+                              <span className="font-semibold text-slate-200">{String(g?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span>
+                            </span>
+                          ))}
+                          {safeEvents.filter((e: any) => e?.type === "Card" && e?.detail === "Red Card" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((k: any, i: number) => (
+                            <span key={`a-k-${i}`} className="flex items-center gap-1.5">
+                              <span className="text-rose-500 font-bold">({String(k?.time?.elapsed || 0)}')</span> 
+                              <span className="font-semibold text-rose-400">{String(k?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span>
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
                 
