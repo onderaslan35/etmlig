@@ -153,7 +153,7 @@ export default function LiveMatchCard() {
       });
 
       // 🔴 TAHMİNLER VE BÜLTEN KATEGORİLERİ 🔴
-      const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
+      const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5).order('match_index', { ascending: true });
       const catDict: Record<string, string> = {};
       (dbBulletinMatches || []).forEach(m => {
           catDict[`${m.week_num}-${m.match_index}`] = m.category;
