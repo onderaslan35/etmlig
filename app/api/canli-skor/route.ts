@@ -1,11 +1,10 @@
-// 🔥 KESİN TETİKLEME ATIŞI - OTONOM MOTOR (PRO PLAN SÜRÜMÜ) 🔥
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 0; 
 
-// YENİ VE SINIRSIZ MÜHİMMAT: Satın aldığın pakete ait temiz şifreyi (API Key) buraya yaz
-const API_KEY = "BURAYA_YENI_PRO_SIFRENI_YAZ";
+// ASLANLAR GİBİ PRO MÜHİMMAT
+const API_KEY = "933e5ccc09194d0db30171e2bca20ca9";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -36,10 +35,8 @@ export async function GET(request: Request) {
 
   if (!liveData || liveData.length === 0) return NextResponse.json({ message: 'Aktif maç yok, mermi harcanmadı.' });
 
-  // NOKTA ATIŞI: Artık Pro planımız olduğu için doğrudan ID'leri birleştirip API'ye sorabiliriz!
+  // NOKTA ATIŞI: Sadece bizim maçların ID'leri toplanıp tek seferde hedefe gönderiliyor!
   const apiIds = liveData.map(l => l.api_match_id).join('-');
-
-  // YENİ HEDEF: Tüm dünyayı çekmek yok, sadece bizim ID'ler vurulacak!
   const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
   
   let sonuc = null;
