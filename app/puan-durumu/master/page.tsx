@@ -2,14 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// 🔴 GEÇMİŞ HAFTALARIN KESİNLEŞMİŞ (MÜHÜRLÜ) ROZETLERİ 🔴
-const historicalBadges = {
-  w1: { "MEHMET ALİ KARA": ["points"], "DOĞAÇ ALKAN": ["score"] },
-  w2: { "EYÜP KARACAOĞLU": ["points"] },
-  w3: { "SEDAT SEDAT": ["points", "score"] },
-  w4: { "İSMAİL EKER": ["points"], "ŞENOL CAN ÇAKICI": ["score"] }
-};
-
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
   const parts = dateStr.split('.');
@@ -26,10 +18,18 @@ const formatTurkishDate = (dateStr: string) => {
   return dateStr;
 };
 
+// MÜHÜRLÜ ROZETLER (1-4 Haftalar)
+const historicalBadges = {
+  w1: { "MEHMET ALİ KARA": ["points"], "DOĞAÇ ALKAN": ["score"] },
+  w2: { "EYÜP KARACAOĞLU": ["points"] },
+  w3: { "SEDAT SEDAT": ["points", "score"] },
+  w4: { "İSMAİL EKER": ["points"], "ŞENOL CAN ÇAKICI": ["score"] }
+};
+
 export default function MasterPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [currentWeekNum, setCurrentWeekNum] = useState<number>(0);
-  const [lastMatchDate, setLastMatchDate] = useState<string>('');
+  const [displayWeekNum, setDisplayWeekNum] = useState<number>(0);
+  const [displayDate, setDisplayDate] = useState<string>('');
 
   const loadLeaderboard = async () => {
     try {
@@ -45,16 +45,48 @@ export default function MasterPuanDurumuPage() {
         });
       }
 
-      // 2. Dinamik Hafta/Tarih
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num, match_date').order('week_num', { ascending: false }).order('match_index', { ascending: false }).limit(1);
-      let currentMaxWeek = 6;
-      if (dbBulletin && dbBulletin.length > 0) {
-          currentMaxWeek = dbBulletin[0].week_num;
-          setCurrentWeekNum(currentMaxWeek);
-          setLastMatchDate(formatTurkishDate(dbBulletin[0].match_date));
+      // 2. 🔥 AKILLI HAFTA VE TARİH BELİRLEME (Düdük Kuralı)
+      const { data: allMatches } = await supabase.from('live_matches').select('id, status');
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
+      
+      let activeWeek = 5; // Varsayılan en düşük hafta
+      let activeDate = '';
+
+      if (dbBulletin && allMatches) {
+          const statusMap: Record<number, string> = {};
+          allMatches.forEach(m => statusMap[m.id] = m.status);
+
+          const weeksData: Record<number, { date: string, hasStartedMatch: boolean }> = {};
+          
+          dbBulletin.forEach(b => {
+              if (!weeksData[b.week_num]) {
+                  weeksData[b.week_num] = { date: b.match_date, hasStartedMatch: false };
+              }
+              // En son günün tarihini ezerek al (Örn: 24,25,26 ise 26 yazar)
+              weeksData[b.week_num].date = b.match_date; 
+              
+              const mId = (b.week_num * 100) + b.match_index;
+              const status = statusMap[mId];
+              if (status && status !== 'NOT_STARTED') {
+                  weeksData[b.week_num].hasStartedMatch = true;
+              }
+          });
+
+          // Başlamış olan EN BÜYÜK haftayı bul
+          const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
+          if (startedWeeks.length > 0) {
+              activeWeek = Math.max(...startedWeeks);
+          } else {
+              activeWeek = Math.max(...Object.keys(weeksData).map(Number)); // Hiç başlamadıysa en küçüğü al
+          }
+          
+          activeDate = weeksData[activeWeek]?.date || '';
       }
 
-      // 3. Rozetleri Çek (Hata düzeltildi, sorunsuz bağlandı)
+      setDisplayWeekNum(activeWeek);
+      setDisplayDate(formatTurkishDate(activeDate));
+
+      // 3. Rozetleri Çek (Hızlı Motor)
       const { data: dbBonusPoints } = await supabase
         .from('points')
         .select('*')
@@ -73,7 +105,7 @@ export default function MasterPuanDurumuPage() {
           });
       }
 
-      // 4. ŞİMŞEK YÜKLEME
+      // 4. ŞİMŞEK YÜKLEME (Oklar Supabase'den geliyor)
       const { data } = await supabase
         .from('live_leaderboard')
         .select('id, name, master_pts, master_rank, trend_direction, trend_diff');
@@ -83,7 +115,7 @@ export default function MasterPuanDurumuPage() {
           const cleanName = (row.name || playersList[row.id] || "Bilinmiyor").replace(/🏆/g, '').trim().toUpperCase();
           let badges: string[] = [];
           
-          for (let w = 1; w <= currentMaxWeek; w++) {
+          for (let w = 1; w <= activeWeek; w++) {
               if (w <= 4) {
                  const hB = (historicalBadges as any)[`w${w}`]?.[cleanName];
                  if (hB) badges = [...badges, ...hB];
@@ -100,7 +132,7 @@ export default function MasterPuanDurumuPage() {
             currentRank: row.master_rank,
             trend: row.trend_direction || 'same', 
             trendDiff: row.trend_diff || 0,
-            badges: [...new Set(badges)], // Çift rozetleri temizler
+            badges: [...new Set(badges)], 
           };
         });
         
@@ -132,8 +164,9 @@ export default function MasterPuanDurumuPage() {
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-4">
+        {/* DİNAMİK SARI BAR */}
         <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
-          {currentWeekNum > 0 ? `${currentWeekNum}. HAFTA MASTER PUAN DURUMU (${lastMatchDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
+          {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
         </div>
 
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
