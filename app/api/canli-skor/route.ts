@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isTffMatchCheck } from '@/utils/themeEngine'; // 🔥 TFF AYRIMI İÇİN FRONTEND'İN KENDİ BEYNİ ÇAĞRILDI!
 
 export const revalidate = 0; 
 export const maxDuration = 60; 
@@ -92,7 +93,6 @@ export async function GET(request: Request) {
 
       const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
       
-      // 🔥 EKMEL KANUNU: tff_weekly_points EKLENDİ! Sabit kasalar çöpe atıldı.
       const [dfoData, masterData, skorDfoData, skorTffData, tffPointsData, manualPointsData, dbBulletinMatches, dbLiveMatches] = await Promise.all([
           fetchTable('dfo_weekly_points'), fetchTable('master_weekly_points'), fetchTable('dfo_weekly_scores'),
           fetchTable('tff_weekly_scores'), fetchTable('tff_weekly_points'), fetchTable('points'),
@@ -121,7 +121,7 @@ export async function GET(request: Request) {
       const dfoDict = getDict(dfoData);
       const skorDfoDict = getDict(skorDfoData); 
       const skorTffDict = getDict(skorTffData);
-      const tffDict = getDict(tffPointsData); // 🔥 TFF'nin mühürlü veritabanı okundu
+      const tffDict = getDict(tffPointsData); 
 
       Object.keys(mergedAccounts).forEach(uid => {
           if (!st[uid]) return;
@@ -133,7 +133,6 @@ export async function GET(request: Request) {
           const stff = skorTffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           st[uid].SKOR += (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4));
           
-          // 🔥 TFF İLK 4 HAFTA VERİTABANINDAN ÇEKİLİYOR
           const td = tffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           st[uid].TFF += (Number(td.w1) + Number(td.w2) + Number(td.w3) + Number(td.w4));
       });
@@ -165,13 +164,13 @@ export async function GET(request: Request) {
               else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
               const category = catDict[`${weekNum}-${matchIndex}`] || "";
-              const isTff = category.toUpperCase().includes('TÜRKİYE SÜPER LİG') || category.toUpperCase().includes('TRENDYOL SÜPER LİG');
+              // 🔥 ASIL ÇÖZÜM BURADA: Frontend'in birebir kendi ayrım formülünü (isTffMatchCheck) kullandık!
+              const isTff = isTffMatchCheck(category);
 
               const isLiveOrFinished = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
               if (isLiveOrFinished) {
                   winnerIds.forEach(wId => {
                       if (st[wId]) {
-                          // 🔥 5. HAFTA VE SONRASI İÇİN TFF DİNAMİK EKLENİYOR
                           if (isTff) st[wId].TFF += pts; 
                           if (!isTff) st[wId].DFO += pts;
                           st[wId].MASTER += pts;
@@ -193,7 +192,6 @@ export async function GET(request: Request) {
       });
 
       let dynamicBonusPoints: Record<string, number> = {};
-      
       const todayMidnightMs = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate()).getTime();
       const upcomingMatches = (dbBulletinMatches || []).filter(d => parseDateLocalCustom(d.match_date).getTime() >= todayMidnightMs).sort((a,b) => parseDateLocalCustom(a.match_date).getTime() - parseDateLocalCustom(b.match_date).getTime());
       
@@ -279,5 +277,5 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Atis Basarili Ama Mutfak Coktu', error: e });
   }
 
-  return NextResponse.json({ message: 'ŞİMŞEK: TFF Kasaları Silindi, Gerçek Veritabanı Bağlandı!' });
+  return NextResponse.json({ message: 'ŞİMŞEK: TFF Maç Ayrımı Frontend Beyni İle Kusursuz Çözüldü!' });
 }
