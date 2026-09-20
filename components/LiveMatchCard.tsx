@@ -512,25 +512,21 @@ export default function LiveMatchCard() {
             </>
           )}
 
-          {/* 🔴 MOBİL KÜRSÜ TASARIMI (DIŞ KART) 🔴 */}
           {!isExpanded && (
             <div
               onClick={() => toggleMatchExpansion(match.id)}
               className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300"
             >
-              {/* EV SAHİBİ İSMİ (Kısaltılabilir) */}
               <div className="flex-1 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
                 <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">
                   {homeTeamUpper}
                 </span>
               </div>
               
-              {/* MERKEZ KÜRSÜ (Logo - Skor - Logo, Üstte Dakika) */}
               <div className="flex items-center justify-center shrink-0">
                 <img src={theme.homeLogo} alt={homeTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
                 
                 <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
-                  {/* Üst: Dakika / Zaman */}
                   <div className="mb-0.5 flex items-center justify-center">
                     {matchStatus === 'LIVE' ? (
                       <span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">
@@ -545,7 +541,6 @@ export default function LiveMatchCard() {
                     )}
                   </div>
                   
-                  {/* Alt: Skor Kutusu */}
                   <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${
                     isGoalFlashing ? 'bg-green-900/80 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.8)] scale-110' :
                     matchStatus === 'LIVE' ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'
@@ -559,14 +554,12 @@ export default function LiveMatchCard() {
                 <img src={theme.awayLogo} alt={awayTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
               </div>
               
-              {/* DEPLASMAN İSMİ (Kısaltılabilir) */}
               <div className="flex-1 flex items-center justify-start overflow-hidden pl-1.5 sm:pl-3">
                 <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-left">
                   {awayTeamUpper}
                 </span>
               </div>
               
-              {/* Ok */}
               <div className="absolute right-1 sm:right-2 opacity-30 text-[8px] text-white group-hover:opacity-100 transition-opacity">▼</div>
             </div>
           )}
@@ -658,6 +651,7 @@ export default function LiveMatchCard() {
                   </div>
                 </div>
 
+                {/* YENİ ZIRH: GELİŞMİŞ KANAT DİZİLİMLİ OLAYLAR RADARI */}
                 {safeEvents.length > 0 && (
                   <div className="w-full mb-3 flex flex-col gap-2 px-3 sm:px-6 relative z-30 animate-fadeIn">
                     <button 
@@ -673,36 +667,38 @@ export default function LiveMatchCard() {
                     {isEventsOpen && (
                       <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-3 border border-slate-800/80 shadow-inner">
                         
+                        {/* Ev Sahibi Kanadı (Sol) */}
                         <div className="flex-1 flex flex-col gap-2 items-start pr-3 border-r border-slate-700/50">
                           {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((g: any, i: number) => (
-                            <span key={`h-g-${i}`} className="flex items-center gap-1.5">
-                              <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span> 
-                              <span className="font-semibold text-slate-200">{String(g?.player?.name || 'Oyuncu')}</span> 
-                              <span className="text-emerald-400 font-bold">({String(g?.time?.elapsed || 0)}')</span>
+                            <span key={`h-g-${i}`} className="flex items-center gap-1.5 bg-slate-800/40 px-2 py-0.5 rounded shadow-sm w-full">
+                              <span className="text-[10px] sm:text-xs drop-shadow-md shrink-0">⚽</span> 
+                              <span className="font-semibold text-slate-200 truncate flex-1 text-left text-[10px] sm:text-xs">{String(g?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-emerald-400 font-bold text-[9px] sm:text-[10px] shrink-0">({String(g?.time?.elapsed || 0)}')</span>
                             </span>
                           ))}
                           {safeEvents.filter((e: any) => e?.type === "Card" && e?.detail === "Red Card" && (e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id)).map((k: any, i: number) => (
-                            <span key={`h-k-${i}`} className="flex items-center gap-1.5">
-                              <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span> 
-                              <span className="font-semibold text-rose-400">{String(k?.player?.name || 'Oyuncu')}</span> 
-                              <span className="text-rose-500 font-bold">({String(k?.time?.elapsed || 0)}')</span>
+                            <span key={`h-k-${i}`} className="flex items-center gap-1.5 bg-slate-800/40 px-2 py-0.5 rounded shadow-sm w-full mt-1">
+                              <span className="text-[10px] sm:text-xs drop-shadow-md shrink-0">🟥</span> 
+                              <span className="font-semibold text-rose-400 truncate flex-1 text-left text-[10px] sm:text-xs">{String(k?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-rose-500 font-bold text-[9px] sm:text-[10px] shrink-0">({String(k?.time?.elapsed || 0)}')</span>
                             </span>
                           ))}
                         </div>
 
+                        {/* Deplasman Kanadı (Sağ) */}
                         <div className="flex-1 flex flex-col gap-2 items-end pl-3">
                           {safeEvents.filter((e: any) => e?.type === "Goal" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((g: any, i: number) => (
-                            <span key={`a-g-${i}`} className="flex items-center gap-1.5">
-                              <span className="text-emerald-400 font-bold">({String(g?.time?.elapsed || 0)}')</span> 
-                              <span className="font-semibold text-slate-200">{String(g?.player?.name || 'Oyuncu')}</span> 
-                              <span className="text-[10px] sm:text-xs drop-shadow-md">⚽</span>
+                            <span key={`a-g-${i}`} className="flex items-center gap-1.5 bg-slate-800/40 px-2 py-0.5 rounded shadow-sm w-full justify-end">
+                              <span className="text-emerald-400 font-bold text-[9px] sm:text-[10px] shrink-0">({String(g?.time?.elapsed || 0)}')</span> 
+                              <span className="font-semibold text-slate-200 truncate flex-1 text-right text-[10px] sm:text-xs">{String(g?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-[10px] sm:text-xs drop-shadow-md shrink-0">⚽</span>
                             </span>
                           ))}
                           {safeEvents.filter((e: any) => e?.type === "Card" && e?.detail === "Red Card" && (e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id)).map((k: any, i: number) => (
-                            <span key={`a-k-${i}`} className="flex items-center gap-1.5">
-                              <span className="text-rose-500 font-bold">({String(k?.time?.elapsed || 0)}')</span> 
-                              <span className="font-semibold text-rose-400">{String(k?.player?.name || 'Oyuncu')}</span> 
-                              <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span>
+                            <span key={`a-k-${i}`} className="flex items-center gap-1.5 bg-slate-800/40 px-2 py-0.5 rounded shadow-sm w-full justify-end mt-1">
+                              <span className="text-rose-500 font-bold text-[9px] sm:text-[10px] shrink-0">({String(k?.time?.elapsed || 0)}')</span> 
+                              <span className="font-semibold text-rose-400 truncate flex-1 text-right text-[10px] sm:text-xs">{String(k?.player?.name || 'Oyuncu')}</span> 
+                              <span className="text-[10px] sm:text-xs drop-shadow-md shrink-0">🟥</span>
                             </span>
                           ))}
                         </div>
