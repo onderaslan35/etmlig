@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 
 // 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ SKOR (TAM İSABET) LİSTELERİ 🔥
+// Not: Ok altyapısı hazır. Şu an herkes 'same' (yatay tire). Haftaya 'up' veya 'down' ve 'trendDiff' ekleyebilirsin.
 const masterSkor = [
   { name: 'DOĞAÇ ALKAN', score: 32 }, { name: 'OSMAN ALİ AYDIN 🏆', score: 30 }, { name: 'R. İLHAN KARACA 🏆🏆', score: 29 },
   { name: 'SALİH KARACAOĞLU', score: 29 }, { name: 'B.VEYSELOĞLU EROL', score: 28 }, { name: 'EYÜP KARACAOĞLU', score: 28 },
@@ -88,88 +89,49 @@ export default function SkorDurumuPage() {
       </div>
 
       <div className="w-full max-w-3xl mx-auto mt-2">
-        {/* 🔥 ÜÇLÜ SEKME BUTONLARI (MOTORSUZ, ŞİMŞEK HIZINDA) 🔥 */}
         <div className="flex justify-center gap-2 mb-6">
-          <button 
-            onClick={() => setActiveTab('MASTER')}
-            className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${
-              activeTab === 'MASTER' 
-                ? 'bg-amber-600 text-white border-amber-400 scale-105 shadow-amber-500/30' 
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
-            }`}
-          >
-            🏆 MASTER
-          </button>
-          
-          <button 
-            onClick={() => setActiveTab('DFO')}
-            className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${
-              activeTab === 'DFO' 
-                ? 'bg-blue-600 text-white border-blue-400 scale-105 shadow-blue-500/30' 
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
-            }`}
-          >
-            🌍 DFO
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('TFF')}
-            className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${
-              activeTab === 'TFF' 
-                ? 'bg-red-600 text-white border-red-400 scale-105 shadow-red-500/30' 
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
-            }`}
-          >
-            🇹🇷 TFF
-          </button>
+          <button onClick={() => setActiveTab('MASTER')} className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${activeTab === 'MASTER' ? 'bg-amber-600 text-white border-amber-400 scale-105 shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}>🏆 MASTER</button>
+          <button onClick={() => setActiveTab('DFO')} className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${activeTab === 'DFO' ? 'bg-blue-600 text-white border-blue-400 scale-105 shadow-blue-500/30' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}>🌍 DFO</button>
+          <button onClick={() => setActiveTab('TFF')} className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${activeTab === 'TFF' ? 'bg-red-600 text-white border-red-400 scale-105 shadow-red-500/30' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}>🇹🇷 TFF</button>
         </div>
 
-        {/* LİSTE VİTRİNİ */}
         <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
           <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
             <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
               <span>🎯</span>
-              <span>
-                {activeTab === 'MASTER' && 'MASTER TAM İSABET SAYISI'}
-                {activeTab === 'DFO' && 'DFO TAM İSABET SAYISI'}
-                {activeTab === 'TFF' && 'TFF TAM İSABET SAYISI'}
-              </span>
+              <span>{activeTab === 'MASTER' ? 'MASTER' : activeTab === 'DFO' ? 'DFO' : 'TFF'} TAM İSABET SAYISI</span>
             </div>
           </div>
-
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs md:text-sm">
               <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                 <tr>
-                  <th className="pl-4 md:pl-6 pr-2 py-3 w-16 text-left">SIRA</th>
-                  <th className="px-2 py-3 text-left">YARIŞMACI</th>
-                  <th className="pr-4 md:pr-6 pl-2 py-3 text-center whitespace-nowrap">TAM İSABET</th>
+                  <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
+                  <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                  <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">TAM İSABET</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]">
-                {currentList.map((row, idx) => (
+                {currentList.map((row: any, idx) => {
+                  const trend = row.trend || 'same';
+                  const trendDiff = row.trendDiff || 0;
+                  return (
                   <tr key={idx} className="hover:bg-[#0f172a]/40 transition-colors animate-fadeIn">
-                    <td className="pl-4 md:pl-6 pr-2 py-3 text-[#94a3b8] font-medium align-middle">
-                      <div className="flex items-center gap-1.5">
+                    <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
+                      <div className="flex items-center gap-1">
                         <span className="w-4 text-left">{idx + 1}</span>
                         <span className="text-[#475569]">-</span>
+                        <div className="w-5 flex justify-center">
+                          {trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center gap-0.5 animate-bounce">▲ <span className="text-[8px]">{trendDiff}</span></span>}
+                          {trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{trendDiff}</span></span>}
+                          {trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
+                        </div>
                       </div>
                     </td>
-                    
-                    <td className="px-2 py-3 align-middle">
-                      <div className="flex flex-wrap items-center gap-2 text-white font-semibold">
-                        <span className="whitespace-nowrap">{row.name}</span>
-                      </div>
-                    </td>
-
-                    <td className={`pr-4 md:pr-6 pl-2 py-3 text-center font-bold text-sm align-middle ${
-                        activeTab === 'MASTER' ? 'text-amber-500' : 
-                        activeTab === 'DFO' ? 'text-blue-400' : 'text-red-500'
-                    }`}>
-                      {row.score}
-                    </td>
+                    <td className="px-1 md:px-2 py-3 align-middle"><div className="flex flex-wrap items-center gap-2 text-white font-semibold"><span className="whitespace-nowrap">{row.name}</span></div></td>
+                    <td className={`pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm align-middle ${activeTab === 'MASTER' ? 'text-amber-500' : activeTab === 'DFO' ? 'text-blue-400' : 'text-red-500'}`}>{row.score}</td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
