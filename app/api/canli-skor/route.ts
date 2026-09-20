@@ -1,4 +1,4 @@
-// 🔥 KESİN TETİKLEME ATIŞI - OTONOM MOTOR 🔥
+// 🔥 KESİN TETİKLEME ATIŞI - OTONOM MOTOR (ÜCRETSİZ PLAN SÜRÜMÜ) 🔥
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -21,7 +21,9 @@ export async function GET(request: Request) {
   const d = String(todayTurkey.getUTCDate()).padStart(2, '0');
   const m = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
   const y = todayTurkey.getUTCFullYear();
-  const todayStr = `${d}.${m}.${y}`; 
+  
+  const todayStr = `${d}.${m}.${y}`; // Supabase bülten için (DD.MM.YYYY)
+  const apiDateStr = `${y}-${m}-${d}`; // API-Sports araması için (YYYY-MM-DD)
 
   const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
   if (!bulten) return NextResponse.json({ message: 'Bülten çekilemedi.' });
@@ -40,9 +42,12 @@ export async function GET(request: Request) {
 
   if (!liveData || liveData.length === 0) return NextResponse.json({ message: 'Aktif maç yok.' });
 
-  const apiIds = liveData.map(l => l.api_match_id).join('-');
+  // API'ye "ids" ile sormak yasak olduğu için kendi içimizde filtrelemek üzere ID'leri diziye alıyoruz
+  const bizimMacIdleri = liveData.map(l => String(l.api_match_id));
 
-  const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
+  // YENİ HEDEF: Tüm dünyadaki bugünün maçlarını çekiyoruz (Ücretsiz plana uygun sorgu)
+  const HEDEF = `https://v3.football.api-sports.io/fixtures?date=${apiDateStr}`;
+  
   let sonuc = null;
   let sonHata = null;
 
@@ -66,7 +71,9 @@ export async function GET(request: Request) {
   }
 
   if (!sonuc || !sonuc.response) return NextResponse.json({ error: `Mermiler Bitti! Hata: ${sonHata}` }, { status: 500 });
-  const maclar = sonuc.response;
+  
+  // SIZMA HAREKATI: Dünyadaki yüzlerce maç arasından sadece bizim aradığımız ID'leri cımbızlıyoruz
+  const maclar = sonuc.response.filter((mac: any) => bizimMacIdleri.includes(String(mac.fixture.id)));
   
   for (const mac of maclar) {
     const macId = mac.fixture.id; 
@@ -84,5 +91,5 @@ export async function GET(request: Request) {
     await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu, elapsed: dakika, events: olaylar }).eq('api_match_id', macId);
   }
 
-  return NextResponse.json({ message: 'Atis Raporu', cekilenMac: maclar.length, firlatilanIDler: apiIds, apiHatasi: sonuc.errors });
+  return NextResponse.json({ message: 'Sızma Harekatı Başarılı', cekilenMac: maclar.length, arananIDler: bizimMacIdleri, apiHatasi: sonuc.errors });
 }
