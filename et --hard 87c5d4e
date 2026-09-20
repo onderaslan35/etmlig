@@ -1,0 +1,98 @@
+[33m6e764ae[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Master sayfasindahrfhtdfhjrtydjhki cifter rozet ve bonus puan hatasi giderildi
+[33ma262b20[m fix: Master sayfasindaki cifter rozet ve bonus puan hatasi giderildi
+[33meba6037[m perf: Gercek Master sayfasi (rozetli) simsek hizina ulastirildi
+[33m3185714[m perf: Gercek Master sayfasi (rozetli) simsek hizina ulastirildi
+[33m87c5d4e[m perf: Master sayfasi hizlandirildi, hantal standings view yerine anlik live_leaderboard'a gecildi
+[33m9d1b3ff[m perf: LiveMatchCard amelelikten kurtarildi, puanlar artik hazir tablodan aninda cekiliyor
+[33m0ec8927[m fix: TypeScript tarih karsilastirma hatasi (.getTime) giderildi
+[33m20380d8[m feat: Tableti sunucuya ceviren 15 saniyelik otomatik taarruz motoru eklendi
+[33m9b9e072[m fix: Motor canli-skor dosyasinda tam kapasite guncellendi
+[33m6158089[m style: Mobil ekran olaylar tablosu tam ekran yapildi, uzun isimler satir atlayacak sekilde ayarlandi
+[33m88a6ac0[m fix: Olaylar tablosu isim uyusmazligi isHome kimlik dogrulamasi ile yikildi
+[33md1910dc[m feat: Backend motoru canli-skor dosyasina entegre edildi
+[33m4219b56[m feat: Uzatma dakikalari (45+1) ve HT/MS yayin modulleri sisteme entegre edildi
+[33m6733b4e[m feat: Gol animasyonu trafik polisi cakari formatinda (mavi-kirmizi) guncellendi
+[33mf4eda40[m feat: Taktiksel haritaya sari kartlar ve oyuncu degisiklikleri siralı olarak eklendi
+[33m01777df[m feat: Olaylar tablosu takimlarin altinda kanatlara ayrildi
+[33m7c1055d[m style: Mobil dis kartlar madalya kursusu gibi dikey tasarlandi, 90+ eklendi
+[33m772cb44[m feat: Dev dakikalar skorun uzerine tasindi ve 90+ destegi eklendi
+[33m24f7dde[m feat: Olaylar haritası eklendi ve varsayılan olarak açık ayarlandı
+[33md18e10f[m fix: Titanyum zırh eklendi, veri tipi uyumsuzluğu çözüldü
+[33m55bc8a1[m fix: Kırmızı hata duvarı yıkıldı, canlı olaylar için Bordo Bereli zırhı eklendi
+[33mfcc4137[m feat: Aslanlar gibi PRO Plan aktif edildi ve yeni key girildi
+[33m2ace4b4[m feat: API-Sports PRO Plana gecildi, otonom motor nokta atisi icin guncellendi
+[33mcfbcb4c[m fix: API ucretsiz plan kalkanini asmak icin motor guncellendi
+[33m21f0b52[m oldu
+[33m3514fe6[m Limitlere takilan vercel.json silindi
+[33mebe7e5c[m Otonom motor kesin tetikleme
+[33m3ee350c[m Zorla Vercel Tetikleme Operasyonu
+[33mc716ba3[m Vercel zorunlu tetikleme atisi
+[33mcd42b95[m Tam otonom motor dosyaya eklendi
+[33m5166861[m Motor otomatige baglandi ve cron eklendi
+[33mff86a6d[m Canli skor arayuzu temizlendi ve dakikalar eklendi
+[33mfad5fb2[m Canli mac motoruna dakika (elapsed) verisi eklendi
+[33m0acb87e[m Canli mac siralama ziplama sorunu order ile cozuldü
+[33m5ac0646[m Admin paneline API Radar butonu ve otomatik eşleştirme eklendi
+[33mff0daf0[m Canli skor kartina Mackolik stili olaylar ve tahmin puanlari eklendi
+[33m9905d99[m Karargah canli skor ekrani on yuzu eklendi
+[33mae09f37[m Karargah canli skor ekrani on yuzu eklendi
+[33md597e7e[m 3 namlulu api rotasyon motoru kuruldu
+[33md317b7a[m Kacak tunel otomatik firlatma modu
+[33mefa6e0d[m Kacak veri sizma tuneli insa edildi
+[33m6a1c049[m Tahmin menusu yazi boyutlari kucultuldu ve BULTENI yazisi kaldirildi
+[33mf2d2a9f[m Tahmin sayfasindaki hafta secim menusune getWeekLabel maskelemesi baglandi
+[33m068f3f2[m 12, 13 ve 14. haftalarin isimleri tarihlerle guncellendi
+[33mf54882e[m Milli bayraklar eklendi, TFF karismasi cozldu, logo eslesmesi kusursuzlastirildi
+[33mb48ced2[m Milli bayraklar eklendi, TFF karismasi cozldu, logo eslesmesi kusursuzlastirildi
+[33m573c266[m Milli bayraklar eklendi, TFF karismasi cozldu, logo eslesmesi kusursuzlastirildi
+[33mb169a09[m Canli sayfasindaki hata giderildi, orijinal LiveMatchCard duzenine geri donuldu
+[33md103804[m Hafta isimlendirme sozlugu eklendi ve Canli radar ekraninda maskeleme yapildi
+[33m47cc26c[m Logolar themeEngine uzerinde duzeltildi
+[33m955026a[m Logolar themeEngine uzerinde duzeltildi
+[33m837b278[m DFO, TFF ve Skor sayfalarindan canli izleme modulleri tamamen temizlendi
+[33m0fafa7a[m Master Puan hafifletildi, Canli sekmesine LiveMatchCard tasindi
+[33mab398de[m Navbar guncellendi, Kazananlar kaldirildi ve Canli sekmesi eklendi
+[33m425e3f4[m fix: canli radardaki skor durumu ve alfabetik siralama hatalari kalici olarak cozuldu
+[33m8aafb7f[m fix: canli radardaki skor durumu ve alfabetik siralama hatalari kalici olarak cozuldu
+[33m38ac299[m fix: canli radardaki tum lig siralamalari ve skor puanlari sayfalarla 100% senkronize edildi
+[33m8846d66[m fix: şansı devam edenlere skor eklendi ve canli radar yonetim paneliyle senkronize edildi
+[33md2593fd[m fix: eksik skorlar geri eklendi ve canli liderlik radari sabitlendi
+[33m2193d7b[m fix: cift sayma hatasi kesin cozuldu, tasarim tamamen şıklaştırıldı, uste binme onlendi
+[33m9dfd545[m fix: puan hesaplama cift sayma hatasi giderildi, yazilar parlak beyaz yapildi ve kutularin ust uste binmesi engellendi
+[33mc42cdb2[m fix: puan hesaplama cift sayma hatasi giderildi, yazilar parlak beyaz yapildi ve kutularin ust uste binmesi engellendi
+[33m2f39300[m fix: puan motoru kusursuzlastirildi ve kursu tasarimi parlatildi
+[33m78fc050[m feat: canli radar madalya kursusu ve puan cekme motoru tamamlandi
+[33m850d92d[m fix: acilir kapanir ortalanmis kursu tasarimi ve puan cekme zırhı eklendi
+[33m9b77a0e[m fix: acilir kapanir ortalanmis kursu tasarimi ve puan cekme zırhı eklendi
+[33m6a0b0ac[m fix: puan cekme zırhlandırıldı ve madalya kürsüsü eklendi
+[33m0ebd815[m feat: arayuz sadelestirildi ve veritabanli gercek siralama motoru eklendi
+[33mc0e4e9c[m fix: canli radar sadeleştirildi ve siralama matematiği düzeltildi
+[33m4771693[m feat: canli yayin analiz ekrani ve siralama matematiği eklendi
+[33ma6b56da[m feat: canli yayin liderlik radari tasarimi ve animasyonlar sifirdan eklendi
+[33m659cf54[m fix: puan tablosu mobil gorunum sabitlendi
+[33m5d1a0e0[m fix: cache and past week locks
+[33m82ae398[m fix: cache and past week locks
+[33m66125f9[m Tahminler girisindeki otomatik sifre sorunu orjinal listeyle cozuldu
+[33mcd25329[m Tahminler girisindeki otomatik sifre sorunu orjinal listeyle cozuldu
+[33m9e9e80b[m Admin UI stabil koda alindi ve yeni mantik motorlari icine gomuldu
+[33m76a8fba[m SADECE BUGUN filtresi onarildi, eger kapaliysa ve mac yoksa uyari eklendi
+[33mb527392[m Arsenal, Liverpool ve Jagiellonia logolari Merkez Depoda guncellendi
+[33me8420f8[m Ekmel Kanunu uygulandi: DFO ve TFF Puan durumundan bonuslar kaldirildi
+[33m4c9eb43[m Arsenal, Liverpool ve Jagiellonia logolari Merkez Depoda guncellendi
+[33mbb7a411[m Arsenal, Liverpool ve Jagiellonia logolari Merkez Depoda guncellendi
+[33m2a45cb3[m Arsenal, Liverpool ve Jagiellonia logolari Merkez Depoda guncellendi
+[33m25191f8[m Arsenal, Liverpool ve Jagiellonia logolari Merkez Depoda guncellendi
+[33mad9684a[m Arsenal, Liverpool ve Jagiellonia logolari Merkez Depoda guncellendi
+[33m2d590ea[m Mac Arsivi sayfasi Merkez Depoya baglandi ve zayiflatildi
+[33mb0fa7d9[m LiveMatchCard Merkez Depoya baglandi ve kodlar zayiflatildi
+[33m1619496[m Tahminler portali Merkez Depoya (themeEngine) baglandi ve kilitler temizlendi
+[33m26ef0fb[m DFO Puan Durumuna da sifir puanli yarismacilari gosterme motoru takildi
+[33m80474c3[m TFF Puan Durumuna da sifir puanli yarismacilari gosterme motoru takildi
+[33mc7b0343[m Karargaha TR karakter, geceyarisi sendromu ve skorcu 1dk yetki kilidi eklendi
+[33mf48e687[m Skor Durumu sayfasina Sifir Puanli Aslanlari vitrine koyma motoru eklendi
+[33mcaa0861[m Master Puan Durumu sayfasina Sifir Puanli Aslanlari vitrine koyma motoru eklendi
+[33m3c5489a[m Tahminler kapisi guncel Supabase sifrelerine gore kalibre edildi
+[33m69c2c39[m Vercel cokmesine sebep olan curuk fetchDbPlayers motoru imha edildi
+[33m3acffb1[m Oyuncu ekleme ve ihrac etme motorlarindaki sutun hatasi giderildi
+[33m80a40b9[m Acil Mudahale: Kucuk kod degisikligi ile Vercel zorla tetiklendi
+[33m9710280[m Acil Mudahale: Kucuk kod degisikligi ile Vercel zorl

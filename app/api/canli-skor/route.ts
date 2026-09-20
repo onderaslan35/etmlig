@@ -86,7 +86,7 @@ export async function GET(request: Request) {
       }
   }
 
-  // 🔴 2. AŞAMA: MUTFAKTA PUANLARI HESAPLA VE TEPSİYE YAZ (ŞİMŞEK OPERASYONU) 🔴
+  // 🔴 2. AŞAMA: MUTFAKTA PUANLARI HESAPLA VE TEPSİYE YAZ (GERÇEKLİK VE HIZ BİRLEŞİYOR) 🔴
   try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const mergedAccounts: Record<string, { name: string }> = {};
@@ -182,6 +182,7 @@ export async function GET(request: Request) {
           }
       });
 
+      // ADMİNİN VERDİĞİ MANUEL BONUSLARI EKLER
       manualPointsData.forEach(row => {
           const ev = String(row.ev_sahibi || '').toUpperCase();
           if (ev === 'HAFTANIN' || ev === 'SKOR') {
@@ -194,7 +195,6 @@ export async function GET(request: Request) {
 
       let dynamicBonusPoints: Record<string, number> = {};
       
-      // 🔴 FİX EDİLEN KISIM: İKİ TARAFI DA SAYIYA (.getTime()) ÇEVİRDİK 🔴
       const todayMidnightMs = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate()).getTime();
       const upcomingMatches = (dbBulletinMatches || []).filter(d => parseDateLocalCustom(d.match_date).getTime() >= todayMidnightMs).sort((a,b) => parseDateLocalCustom(a.match_date).getTime() - parseDateLocalCustom(b.match_date).getTime());
       
@@ -207,13 +207,17 @@ export async function GET(request: Request) {
 
       for (let w = 5; w <= actWeek; w++) {
           const match24 = liveMap[(w * 100) + 24];
-          const isLiveOrFinished2 = match24 && ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(match24.status);
           
-          if (isLiveOrFinished2) {
+          // 🔥 ASIL DÜZELTME BURADA: Sadece 24. maç OYNANIRKEN otomatik anlık +3 verir.
+          // Maç bittiği (FINISHED) an otomatik bonus durur, puan tablosuna adminin mühürlediği puan kalır. 
+          // Böylece çifter çifter ekleme engellenmiş olur!
+          const isLiveNow = match24 && ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(match24.status);
+          
+          if (isLiveNow) {
               let wkMaster: any = {}, wkSkor: any = {};
               (dbBulletinMatches || []).filter(m => m.week_num === w).forEach(m => {
                   const dbM = liveMap[(w * 100) + m.match_index];
-                  if (dbM && !['NOT_STARTED', 'NS', 'TBD'].includes(dbM.status) && dbM.home_score !== '-') {
+                  if (dbM && ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbM.status) && dbM.home_score !== '-') {
                       const targetScore = `${dbM.home_score}-${dbM.away_score}`.replace(/\s+/g, '');
                       const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${w}-${m.match_index}`] === targetScore);
                       let pts = 1; if(winnerIds.length===1)pts=12; else if(winnerIds.length===2)pts=6; else if(winnerIds.length===3)pts=5; else if(winnerIds.length===4)pts=4; else if(winnerIds.length===5)pts=3; else if(winnerIds.length===6)pts=2; else if(winnerIds.length>=7)pts=1; else pts=0;
@@ -250,7 +254,7 @@ export async function GET(request: Request) {
       arrMASTER.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
       arrSKOR.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
 
-      // EEEEN ÖNEMLİ KISIM: HESAPLANAN VERİYİ TEPSİYE (TABLOYA) YAZIYORUZ!
+      // EEEEN ÖNEMLİ KISIM: HESAPLANAN GERÇEK VERİYİ TEPSİYE (TABLOYA) YAZIYORUZ!
       const upsertData = Object.keys(st).map(id => {
           const tffData = arrTFF.find(x => x.id === id);
           const dfoData = arrDFO.find(x => x.id === id);
@@ -281,5 +285,5 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Atis Basarili Ama Mutfak Coktu', error: e });
   }
 
-  return NextResponse.json({ message: 'ŞİMŞEK OPERASYONU: Skoru Çektim, Puanı Hesapladım, Tepsiye Koydum!' });
+  return NextResponse.json({ message: 'GERÇEKLİK VE HIZ BİRLEŞTİ: Skoru Çektim, Puanı Kusursuz Hesapladım, Tepsiye Koydum!' });
 }
