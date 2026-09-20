@@ -22,6 +22,9 @@ export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
 
+  // 🔴 15 SANİYELİK OTOMATİK MOTOR TETİKLEYİCİ STATE 🔴
+  const [autoEngine, setAutoEngine] = useState(false);
+
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
@@ -61,6 +64,21 @@ export default function LiveMatchCard() {
           audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(e => console.log("Ses kilidi:", e));
       }
   };
+
+  // 🔴 TABLETİ SUNUCUYA ÇEVİREN 15 SANİYELİK ZIRH 🔴
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (autoEngine) {
+      // Açıldığı an ilk kurşunu sıkar
+      fetch('/api/canli-skor').catch(e => console.log("Motor hatası:", e));
+      
+      // Sonra tam 15 saniyede bir düzenli ateş eder
+      interval = setInterval(() => {
+        fetch('/api/canli-skor').catch(e => console.log("Motor hatası:", e));
+      }, 15000);
+    }
+    return () => clearInterval(interval);
+  }, [autoEngine]);
 
   useEffect(() => {
      const fetchDbPlayers = async () => {
@@ -448,18 +466,16 @@ export default function LiveMatchCard() {
          if (awayScore === '-') awayScore = '0';
       }
 
-      // 🔴 TRUVA ATI AJANINI YAKALAMA ZIRHI 🔴
       const rawElapsed = dbMatch.elapsed;
       let safeElapsed = typeof rawElapsed === 'object' && rawElapsed !== null ? rawElapsed.elapsed : rawElapsed;
       
-      // Olayların içine gizlenmiş 'SystemTime' ajanını bul ve uzatmayı çıkar
       const systemTimeEvent = safeEvents.find((e: any) => e.type === 'SystemTime');
       const safeExtra = systemTimeEvent ? systemTimeEvent.detail : null;
 
       let displayMinute = '';
       if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
          if (safeExtra) {
-            displayMinute = `${safeElapsed}+${safeExtra}'`; // 90+2' formatı
+            displayMinute = `${safeElapsed}+${safeExtra}'`;
          } else {
             displayMinute = `${safeElapsed}'`;
          }
@@ -514,7 +530,6 @@ export default function LiveMatchCard() {
         }
       }
 
-      // Ekrana çizerken gizli ajanı (SystemTime) olaylar tablosundan saklıyoruz ki ekranda boş satır çıkmasın
       const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || e?.team?.name === match.homeTeam));
       const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam)));
 
@@ -925,7 +940,19 @@ export default function LiveMatchCard() {
         }
       `}} />
 
-      <div className="w-full flex justify-end px-2 sm:px-0">
+      <div className="w-full flex justify-end gap-2 px-2 sm:px-0">
+          {/* 🔴 MOTOR TETİKLEME BUTONU (15 SN OTO) 🔴 */}
+          <button
+              onClick={() => setAutoEngine(!autoEngine)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
+                  autoEngine
+                  ? 'bg-blue-950/80 text-blue-400 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-pulse'
+                  : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
+              }`}
+          >
+              {autoEngine ? '🚀 MOTOR: 15 SN OTO' : '⚙️ MOTOR: MANUEL'}
+          </button>
+
           <button
               onClick={toggleSound}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
@@ -934,7 +961,7 @@ export default function LiveMatchCard() {
                   : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
               }`}
           >
-              {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
+              {soundEnabled ? '🔊 GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
           </button>
       </div>
 
