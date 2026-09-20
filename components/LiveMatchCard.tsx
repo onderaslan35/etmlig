@@ -14,16 +14,9 @@ import {
   getUniqueMatchId
 } from '@/utils/themeEngine';
 
-// 🔴 TFF İÇİN SABİT KASALAR 🔴
-const tffIlk4Hafta: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
-const tffHafta5Kasa: Record<string, number> = { "262782": 16, "262749": 14, "262758": 14, "262732": 14, "262726": 12, "262744": 9, "262730": 9, "262736": 7, "262717": 7, "262790": 5, "262735": 4, "262721": 4, "262725": 3, "351925": 3, "262716": 2, "262747": 2, "262715": 2, "262719": 2, "262771": 2, "262707": 2, "262714": 2, "262731": 2, "262738": 2, "262741": 2, "262763": 1, "262772": 1, "262703": 1, "262756": 1, "262706": 1, "262750": 1, "262753": 1, "262702": 1, "262754": 1, "262708": 1, "262718": 1, "262770": 1, "262816": 1, "262774": 1, "262723": 1, "262813": 1 };
-
 export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
-
-  // 🔴 15 SANİYELİK OTOMATİK MOTOR TETİKLEYİCİ STATE 🔴
-  const [autoEngine, setAutoEngine] = useState(false);
 
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
@@ -64,21 +57,6 @@ export default function LiveMatchCard() {
           audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(e => console.log("Ses kilidi:", e));
       }
   };
-
-  // 🔴 TABLETİ SUNUCUYA ÇEVİREN 15 SANİYELİK ZIRH 🔴
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (autoEngine) {
-      // Açıldığı an ilk kurşunu sıkar
-      fetch('/api/canli-skor').catch(e => console.log("Motor hatası:", e));
-      
-      // Sonra tam 15 saniyede bir düzenli ateş eder
-      interval = setInterval(() => {
-        fetch('/api/canli-skor').catch(e => console.log("Motor hatası:", e));
-      }, 15000);
-    }
-    return () => clearInterval(interval);
-  }, [autoEngine]);
 
   useEffect(() => {
      const fetchDbPlayers = async () => {
@@ -127,171 +105,52 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
-
-      const [dfoData, masterData, skorDfoData, skorTffData, manualPointsData] = await Promise.all([
-          fetchTable('dfo_weekly_points'),
-          fetchTable('master_weekly_points'),
-          fetchTable('dfo_weekly_scores'),
-          fetchTable('tff_weekly_scores'),
-          fetchTable('points')
+      // ⚡ ŞİMŞEK OPERASYONU: Ekranda hesaplama ameleliği bitti! 
+      // Sadece hazır "live_leaderboard" tepsisini ve bu haftanın maçlarını çekiyoruz.
+      const [leaderboardRes, dbBulletinMatchesRes, dbLiveMatchesRes, currentPredictionsRes] = await Promise.all([
+          supabase.from('live_leaderboard').select('*'),
+          supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true }),
+          supabase.from('live_matches').select('*'),
+          supabase.from('player_predictions').select('*').eq('week_num', activeWeek)
       ]);
 
-      const st: Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }> = {};
-      Object.keys(mergedAccounts).forEach(uid => { st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; });
+      const leaderboardData = leaderboardRes.data || [];
+      const dbBulletinMatches = dbBulletinMatchesRes.data || [];
+      const dbLiveMatches = dbLiveMatchesRes.data || [];
+      const currentPredictions = currentPredictionsRes.data || [];
 
-      const getDict = (data: any[]) => {
-          const dict: Record<string, any> = {};
-          data.forEach(r => dict[String(r.username || r.user_id || r.id).trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
-          return dict;
-      };
-
-      const masterDict = getDict(masterData);
-      const dfoDict = getDict(dfoData);
-      const skorDfoDict = getDict(skorDfoData);
-      const skorTffDict = getDict(skorTffData);
-
-      Object.keys(mergedAccounts).forEach(uid => {
-          if (!st[uid]) return;
-          
-          const md = masterDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].MASTER += (Number(md.w1) + Number(md.w2) + Number(md.w3) + Number(md.w4));
-          
-          const dd = dfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].DFO += (Number(dd.w1) + Number(dd.w2) + Number(dd.w3) + Number(dd.w4));
-          
-          const sd = skorDfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          const stff = skorTffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].SKOR += (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + 
-                          (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4));
-          
-          st[uid].TFF += (tffIlk4Hafta[uid] || 0) + (tffHafta5Kasa[uid] || 0);
+      // 1. HAZIR TABLOYU EKRANA DİZ (0.1 Saniye!)
+      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
+      leaderboardData.forEach(row => {
+          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
+          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
+          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
+          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
       });
+      
+      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
+      arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
+      setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
-      const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5).order('match_index', { ascending: true });
-      const catDict: Record<string, string> = {};
-      (dbBulletinMatches || []).forEach(m => {
-          catDict[`${m.week_num}-${m.match_index}`] = m.category;
-      });
-
-      let allPredictions: any[] = [];
-      let from = 0; let step = 999; let keepFetching = true;
-      while(keepFetching) {
-          const { data } = await supabase.from('player_predictions').select('*').gte('week_num', 5).range(from, from + step);
-          if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length <= step) keepFetching = false; else from += step + 1; } 
-          else keepFetching = false;
-      }
-
+      // 2. RADAR İÇİN BU HAFTANIN TAHMİNLERİ
       const pDict: Record<string, string> = {};
-      allPredictions.forEach(pred => {
+      currentPredictions.forEach(pred => {
           const uid = String(pred.user_id);
           if (uid === 'mankoman') return;
           pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
       });
       setPredictionsData(pDict);
 
-      const { data: dbLiveMatches } = await supabase.from('live_matches').select('*');
+      // 3. CANLI MAÇ HARİTASI
       const liveMap: Record<number, any> = {};
-      (dbLiveMatches || []).forEach(row => liveMap[row.id] = row); 
+      dbLiveMatches.forEach(row => liveMap[row.id] = row); 
       setLiveMatchesData(liveMap);
-
-      Object.values(liveMap).forEach(dbMatch => {
-          const weekNum = Math.floor(dbMatch.id / 100);
-          const matchIndex = dbMatch.id % 100;
-
-          if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-              const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-              const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${weekNum}-${matchIndex}`] === targetScore);
-              
-              let pts = 1;
-              if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
-              else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
-              else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
-              else if(winnerIds.length >= 7) pts = 1; else pts = 0;
-
-              const category = catDict[`${weekNum}-${matchIndex}`] || "";
-              const isTff = isTffMatchCheck(category);
-
-              const isLiveOrFinished = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
-              if (isLiveOrFinished) {
-                  winnerIds.forEach(wId => {
-                      if (st[wId]) {
-                          if (isTff && weekNum >= 6) st[wId].TFF += pts; 
-                          if (!isTff) st[wId].DFO += pts;
-                          st[wId].MASTER += pts;
-                          st[wId].SKOR += 1;
-                      }
-                  });
-              }
-          }
-      });
-
-      manualPointsData.forEach(row => {
-          const ev = String(row.ev_sahibi || '').toUpperCase();
-          if (ev === 'HAFTANIN' || ev === 'SKOR') {
-              const uid = String(row.username || row.user_id || row.id || '').trim();
-              const cat = String(row.kategori || row.league_type || 'MASTER').toUpperCase().trim();
-              const pts = Number(row.puan ?? row.points ?? row.totalPoints) || 0;
-              if (pts !== 0 && st[uid]) { if (cat === 'MASTER') st[uid].MASTER += pts; }
-          }
-      });
-      
-      let dynamicBonusPoints: Record<string, number> = {};
-      for (let w = 5; w <= activeWeek; w++) {
-          const match24 = liveMap[getUniqueMatchId(w, 24)];
-          const isLiveOrFinished2 = match24 && ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(match24.status);
-          
-          if (isLiveOrFinished2) {
-              let wkMaster: any = {}, wkSkor: any = {};
-              (dbBulletinMatches || []).filter(m => m.week_num === w).forEach(m => {
-                  const dbM = liveMap[getUniqueMatchId(w, m.match_index)];
-                  if (dbM && !['NOT_STARTED', 'NS', 'TBD'].includes(dbM.status) && dbM.home_score !== '-') {
-                      const targetScore = `${dbM.home_score}-${dbM.away_score}`.replace(/\s+/g, '');
-                      const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${w}-${m.match_index}`] === targetScore);
-                      let pts = 1; if(winnerIds.length===1)pts=12; else if(winnerIds.length===2)pts=6; else if(winnerIds.length===3)pts=5; else if(winnerIds.length===4)pts=4; else if(winnerIds.length===5)pts=3; else if(winnerIds.length===6)pts=2; else if(winnerIds.length>=7)pts=1; else pts=0;
-                      winnerIds.forEach(id => { wkMaster[id] = (wkMaster[id]||0) + pts; wkSkor[id] = (wkSkor[id]||0) + 1; });
-                  }
-              });
-
-              const applyBonus = (wkScores: any) => {
-                  let maxP = -1; let leaders: string[] = [];
-                  Object.keys(wkScores).forEach(id => {
-                      if (wkScores[id] > maxP) { maxP = wkScores[id]; leaders = [id]; }
-                      else if (wkScores[id] === maxP) leaders.push(id);
-                  });
-                  if (leaders.length === 1 && maxP > 0) { dynamicBonusPoints[leaders[0]] = (dynamicBonusPoints[leaders[0]] || 0) + 3; }
-              };
-              applyBonus(wkMaster); applyBonus(wkSkor);
-          }
-      }
-
-      Object.keys(dynamicBonusPoints).forEach(id => {
-          if (st[id]) st[id].MASTER += dynamicBonusPoints[id];
-      });
-
-      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
-      Object.keys(st).forEach(id => {
-          const name = mergedAccounts[id]?.name || '';
-          arrTFF.push({ id, name, pts: st[id].TFF });
-          arrDFO.push({ id, name, pts: st[id].DFO });
-          arrMASTER.push({ id, name, pts: st[id].MASTER });
-          arrSKOR.push({ id, name, pts: st[id].SKOR });
-      });
-
-      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
-      
-      arrTFF.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-      arrDFO.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-      arrMASTER.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-      arrSKOR.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-
-      setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
       const nowUTC = new Date();
       const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
       const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
 
-      const currentWeekMatches = (dbBulletinMatches || []).filter(m => m.week_num === activeWeek).map((m) => ({
+      const currentWeekMatches = dbBulletinMatches.map((m) => ({
         id: m.match_index,
         weekLabel: `${activeWeek}. HAFTA ${m.match_index}. MAÇ`,
         category: m.category,
@@ -301,6 +160,7 @@ export default function LiveMatchCard() {
         awayTeam: m.away_team
       }));
 
+      // 4. HAFTANIN GOL SESİ SİNYALİ
       let goalHappened = false;
       let newGoalIds: number[] = [];
       Object.keys(liveMap).forEach(key => {
@@ -327,6 +187,7 @@ export default function LiveMatchCard() {
           }
       }
 
+      // 5. HAFTANIN PUAN VE SKOR LİDERLERİNİ BULMA (Hızlı Lokal Hesap)
       let stats: Record<string, { points: number, exactScores: number }> = {};
       Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
@@ -361,6 +222,7 @@ export default function LiveMatchCard() {
       let sLeadersList = Object.keys(stats).filter(uid => stats[uid].exactScores === mScores && mScores > 0);
       setWeeklyLiveStats({ pLeaders: pLeadersList, maxPts: mPts, sLeaders: sLeadersList, maxScores: mScores });
 
+      // 6. GÜNÜN MAÇLARINI FİLTRELE
       const todaysMatches = currentWeekMatches.filter(m => {
            const uniqueId = getUniqueMatchId(activeWeek, m.id);
            const dbMatch = liveMap[uniqueId];
@@ -373,6 +235,7 @@ export default function LiveMatchCard() {
       });
       setTodaysMatchesList(todaysMatches);
       
+      // HAFTA GEÇİŞ KONTROLÜ
       const match24Id = getUniqueMatchId(activeWeek, 24);
       const dbMatch24 = liveMap[match24Id];
       if (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status)) {
@@ -474,11 +337,8 @@ export default function LiveMatchCard() {
 
       let displayMinute = '';
       if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
-         if (safeExtra) {
-            displayMinute = `${safeElapsed}+${safeExtra}'`;
-         } else {
-            displayMinute = `${safeElapsed}'`;
-         }
+         if (safeExtra) { displayMinute = `${safeElapsed}+${safeExtra}'`; } 
+         else { displayMinute = `${safeElapsed}'`; }
       }
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
@@ -815,6 +675,7 @@ export default function LiveMatchCard() {
                               const uniquePlayerKey = `${match.id}-${winner.id}`;
                               const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
 
+                              // ⚡ ŞİMŞEK OPERASYONU: Puanlar ve sıralamalar anında hazır tepsiden alınıyor!
                               const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
                               const tffPts = tffData?.pts || 0;
                               const tffRank = tffData?.rank || '-';
@@ -940,19 +801,7 @@ export default function LiveMatchCard() {
         }
       `}} />
 
-      <div className="w-full flex justify-end gap-2 px-2 sm:px-0">
-          {/* 🔴 MOTOR TETİKLEME BUTONU (15 SN OTO) 🔴 */}
-          <button
-              onClick={() => setAutoEngine(!autoEngine)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
-                  autoEngine
-                  ? 'bg-blue-950/80 text-blue-400 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-pulse'
-                  : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
-              }`}
-          >
-              {autoEngine ? '🚀 MOTOR: 15 SN OTO' : '⚙️ MOTOR: MANUEL'}
-          </button>
-
+      <div className="w-full flex justify-end px-2 sm:px-0">
           <button
               onClick={toggleSound}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
@@ -961,7 +810,7 @@ export default function LiveMatchCard() {
                   : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
               }`}
           >
-              {soundEnabled ? '🔊 GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
+              {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
           </button>
       </div>
 
