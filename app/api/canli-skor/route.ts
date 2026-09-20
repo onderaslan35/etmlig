@@ -97,6 +97,6 @@ export async function GET(request: Request) {
       })
       .eq('api_match_id', macId);
   }
-
+// Vercel zorunlu tetikleme atisi
   return NextResponse.json({ message: 'Kusursuz Atış Başarılı', cekilenMacSayisi: maclar.length, data: sonuc.response });
 }
