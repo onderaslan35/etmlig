@@ -387,7 +387,6 @@ export default function LiveMatchCard() {
     );
   }
 
-  // 🔴 AKTİF VE BİTEN MAÇLARI API-SPORTS STATÜSÜNE GÖRE SÜZÜYORUZ 🔴
   const activeMatches = todaysMatchesList.filter(match => {
      const uniqueId = getUniqueMatchId(activeWeek, match.id);
      const dbMatch = liveMatchesData[uniqueId] || {};
@@ -449,16 +448,14 @@ export default function LiveMatchCard() {
          if (awayScore === '-') awayScore = '0';
       }
 
-      // 🔴 UZATMA SÜRESİ (45+1, 90+5) VE DAKİKA ÇÖZÜCÜ ZIRHI 🔴
       const rawElapsed = dbMatch.elapsed;
       let safeElapsed = null;
-      let safeExtra = dbMatch.extra || null; // DB'de 'extra' kolonu varsa direkt alır
+      let safeExtra = dbMatch.extra || null;
 
       if (typeof rawElapsed === 'object' && rawElapsed !== null) {
          safeElapsed = rawElapsed.elapsed;
          if (!safeExtra && rawElapsed.extra) safeExtra = rawElapsed.extra;
       } else if (typeof rawElapsed === 'string' && rawElapsed.includes('+')) {
-         // Backend '45+2' formatında gönderdiyse parçalar
          const parts = rawElapsed.split('+');
          safeElapsed = parts[0];
          safeExtra = parts[1];
@@ -524,8 +521,9 @@ export default function LiveMatchCard() {
         }
       }
 
-      const homeEvents = safeEvents.filter((e: any) => e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id);
-      const awayEvents = safeEvents.filter((e: any) => e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id);
+      // 🔴 İSİMLERE BAKMAYI BIRAKTIK! MOTORUN VURDUĞU KİMLİK DAMGASINA (isHome) BAKIYORUZ 🔴
+      const homeEvents = safeEvents.filter((e: any) => e.isHome === true || e?.team?.name === match.homeTeam);
+      const awayEvents = safeEvents.filter((e: any) => e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam));
 
       return (
         <div 

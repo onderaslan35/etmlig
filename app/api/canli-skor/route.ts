@@ -35,7 +35,6 @@ export async function GET(request: Request) {
 
   if (!liveData || liveData.length === 0) return NextResponse.json({ message: 'Aktif maç yok, mermi harcanmadı.' });
 
-  // NOKTA ATIŞI: Sadece bizim maçların ID'leri toplanıp tek seferde hedefe gönderiliyor!
   const apiIds = liveData.map(l => l.api_match_id).join('-');
   const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
   
@@ -66,32 +65,32 @@ export async function GET(request: Request) {
     const depSkor = mac.goals.away ?? 0;
     const durum = mac.fixture.status.short; 
     
-    // 🔴 UZATMA DAKİKASI ÇÖZÜCÜ ZIRHI (45+2, 90+5) 🔴
     const dakikaElapsed = mac.fixture.status.elapsed || 0; 
     const dakikaExtra = mac.fixture.status.extra || null;
-    // Eğer hakem uzatma verdiyse araya "+" koyarak birleştir, yoksa sadece normal dakikayı gönder
     const finalDakika = dakikaExtra ? `${dakikaElapsed}+${dakikaExtra}` : dakikaElapsed.toString();
     
     let statu = 'NOT_STARTED';
     if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
     else if (['1H','2H','HT','ET','P'].includes(durum)) statu = 'LIVE';
 
-    // 🔴 MAÇKOLİK TARZI SAF OLAY FİLTRESİ 🔴
+    // 🔴 KESİN KİMLİK DOĞRULAMASI İÇİN EV SAHİBİ ID'SİNİ ALIYORUZ 🔴
+    const homeTeamId = mac.teams.home.id;
+
     const safOlaylar = (mac.events || [])
-      .filter((e: any) => ['Goal', 'Card', 'subst'].includes(e.type)) // Sadece Gol, Kart ve Değişiklik
+      .filter((e: any) => ['Goal', 'Card', 'subst'].includes(e.type))
       .map((e: any) => {
-        // Gollerde asisti atıyoruz (Kalabalık yapmasın diye). 
-        // Fakat değişikliklerde (subst), "Giren" oyuncu assist içinde tutulur, onu koruyoruz!
         let girenOyuncu = null;
         if (e.type === 'subst') { girenOyuncu = { name: e.assist?.name }; }
         
         return {
           time: { elapsed: e.time?.elapsed },
           team: { id: e.team?.id, name: e.team?.name },
-          player: { name: e.player?.name }, // Golü Atan, Kartı Gören veya Çıkan Oyuncu
-          assist: girenOyuncu, // Sadece Değişiklikte Giren Oyuncu
+          player: { name: e.player?.name },
+          assist: girenOyuncu,
           type: e.type,
-          detail: e.detail
+          detail: e.detail,
+          // YENİ ZIRH: İsme bakmaksızın bu olay ev sahibinin mi damgasını basıyoruz!
+          isHome: e.team?.id === homeTeamId
         };
       });
 
