@@ -14,40 +14,41 @@ export default function MasterPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED'); // Uyumluluk için tutuldu
   const [maxWeek, setMaxWeek] = useState<number>(6);
 
   const loadLeaderboard = async () => {
     try {
+      // 1. Oyuncu isimlerini alıyoruz
       const { data: dbPlayers } = await supabase.from('players').select('*');
-      const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbHistorical } = await supabase.from('master_weekly_points').select('*');
-      
-      // 🔴 KALICI (MÜHÜRLÜ) BONUSLARI ÇEKER 🔴
+      const playersList: Record<string, string> = {};
+      if (dbPlayers) {
+        dbPlayers.forEach(p => { 
+          const pid = p.username || p.id;
+          if (pid !== 'mankoman') {
+              playersList[pid] = p.name || p.full_name; 
+          }
+        });
+      }
+
+      // 2. Maksimum (Güncel) Haftayı Belirleme
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num').order('week_num', { ascending: false }).limit(1);
+      let currentMaxWeek = 6;
+      if (dbBulletin && dbBulletin.length > 0) {
+          currentMaxWeek = dbBulletin[0].week_num;
+          setMaxWeek(currentMaxWeek);
+      }
+
+      // 3. KALICI (MÜHÜRLÜ) ROZETLERİ ÇEKME (Çok Hızlı)
       const { data: dbBonusPoints } = await supabase
         .from('points')
         .select('*')
         .eq('kategori', 'MASTER')
         .in('ev_sahibi', ['HAFTANIN', 'SKOR']);
 
-      const dynamicBonuses: Record<number, Record<string, number>> = {};
       const dynamicBadges: Record<string, string[]> = {};
-      
-      const playersList: Record<string, string> = {};
-      if (dbPlayers) {
-        dbPlayers.forEach(p => { 
-          // Yeni ID sütununu (username) kullanarak eşleştir
-          const pid = p.username || p.id;
-          playersList[pid] = p.name || p.full_name; 
-        });
-      }
-
       if (dbBonusPoints) {
           dbBonusPoints.forEach(b => {
-              if (!dynamicBonuses[b.hafta]) dynamicBonuses[b.hafta] = {};
-              if (!dynamicBonuses[b.hafta][b.username]) dynamicBonuses[b.hafta][b.username] = 0;
-              dynamicBonuses[b.hafta][b.username] += b.puan;
-
               const cleanName = playersList[b.username]?.replace(/🏆/g, '').trim().toUpperCase();
               if (cleanName) {
                   if (!dynamicBadges[`w${b.hafta}-${cleanName}`]) dynamicBadges[`w${b.hafta}-${cleanName}`] = [];
@@ -57,228 +58,95 @@ export default function MasterPuanDurumuPage() {
           });
       }
 
-      let dbPredictions: any[] = [];
-      let fetchMore = true;
-      let from = 0;
-      const step = 1000;
+      if (activeTab === 'total') {
+        // ⚡ ŞİMŞEK YÜKLEME: Binlerce tahmin yerine arka plandaki hazır tepsiyi okuyoruz (0.1 Saniye)
+        const { data } = await supabase
+          .from('live_leaderboard')
+          .select('id, name, master_pts, master_rank');
 
-      while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase
-          .from('player_predictions')
-          .select('*')
-          .gte('week_num', 5)
-          .order('id', { ascending: true }) 
-          .range(from, from + step - 1);
+        if (data && data.length > 0) {
+          const list = data.map(row => {
+            const cleanName = (row.name || playersList[row.id] || "Bilinmiyor").replace(/🏆/g, '').trim().toUpperCase();
+            let badges: string[] = [];
+            
+            // Toplam tabloda rozetleri en güncel haftaya göre gösterir
+            if (currentMaxWeek <= 4) {
+               const hB = (historicalBadges as any)[`w${currentMaxWeek}`]?.[cleanName];
+               if (hB) badges = [...badges, ...hB];
+            } else {
+               const dynB = dynamicBadges[`w${currentMaxWeek}-${cleanName}`];
+               if (dynB) badges = [...badges, ...dynB];
+            }
+
+            return {
+              id: row.id,
+              name: row.name || playersList[row.id] || "Bilinmiyor",
+              displayScore: row.master_pts,
+              currentRank: row.master_rank,
+              trend: 'same', 
+              trendDiff: 0,
+              badges,
+              liveExtra: 0 // Hız için canlı artış tepside hesaplanıyor
+            };
+          });
           
-        if (!error && pDataChunk && pDataChunk.length > 0) {
-           dbPredictions = [...dbPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; 
-           else from += step; 
+          setTableRows(list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr')).map((r, i) => ({ ...r, currentRank: i + 1 })));
         } else {
-           fetchMore = false; 
-        }
-      }
-
-      // 🔥 SONSUZ HAFTA VE SKOR KRALI SAYAÇLARI 🔥
-      let dynamicBase: Record<number, Record<string, number>> = {};
-      let dynamicLive: Record<number, Record<string, number>> = {};
-      let dynamicExactScores: Record<number, Record<string, number>> = {};
-      
-      for (let w = 5; w <= 38; w++) {
-          dynamicBase[w] = {}; dynamicLive[w] = {}; dynamicExactScores[w] = {};
-          Object.keys(playersList).forEach(id => {
-              dynamicBase[w][id] = 0; dynamicLive[w][id] = 0; dynamicExactScores[w][id] = 0;
-          });
-      }
-
-      let isAnyMatchLive = false;
-      let highestWeekFound = 6; 
-
-      const historicalDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
-      if(dbHistorical) {
-          dbHistorical.forEach(row => {
-              historicalDict[row.id] = { w1: row.w1||0, w2: row.w2||0, w3: row.w3||0, w4: row.w4||0 };
-          });
-      }
-
-      const predDict: Record<string, string> = {};
-      if (dbPredictions && dbPredictions.length > 0) {
-        dbPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          predDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
-        });
-      }
-
-      const uniqueMatches: Record<number, any> = {};
-      if (dbMatches) {
-        dbMatches.forEach(row => uniqueMatches[row.id] = row);
-
-        Object.values(uniqueMatches).forEach(dbMatch => {
-          const weekNum = Math.floor(dbMatch.id / 100);
-          const matchIndex = dbMatch.id % 100;
-
-          if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            if (weekNum > highestWeekFound) highestWeekFound = weekNum;
-
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-            
-            const winnerIds = Object.keys(playersList).filter(id => {
-                const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
-                return pScore && pScore === targetScore;
-            });
-            
-            let points = 1;
-            if(winnerIds.length === 1) points = 12; else if(winnerIds.length === 2) points = 6; else if(winnerIds.length === 3) points = 5; else if(winnerIds.length === 4) points = 4; else if(winnerIds.length === 5) points = 3; else if(winnerIds.length === 6) points = 2; else if(winnerIds.length >= 7) points = 1; else points = 0;
-
-            winnerIds.forEach(wId => {
-                dynamicExactScores[weekNum][wId] += 1; // SKOR KRALI SAYACI
-                if (dbMatch.status === 'FINISHED') dynamicBase[weekNum][wId] += points;
-                else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') { 
-                    dynamicLive[weekNum][wId] += points; 
-                    isAnyMatchLive = true; 
-                }
-            });
-          }
-        });
-      }
-
-      setMaxWeek(highestWeekFound);
-      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-
-      // 🔴 CANLI 24. MAÇ ÖNİZLEMESİ (HEYECAN MOTORU) 🔴
-      let liveBadges: Record<string, string[]> = {};
-      let liveBonusPoints: Record<number, Record<string, number>> = {};
-      for (let w = 5; w <= highestWeekFound; w++) liveBonusPoints[w] = {};
-
-      for (let w = 5; w <= highestWeekFound; w++) {
-          const match24 = uniqueMatches[w * 100 + 24];
-          if (match24 && (match24.status === 'LIVE' || match24.status === 'WAITING_APPROVAL')) {
-              
-              let maxPts = -1;
-              let ptLeaders: string[] = [];
-              Object.keys(playersList).forEach(id => {
-                  const pts = dynamicBase[w][id] + dynamicLive[w][id];
-                  if (pts > maxPts) { maxPts = pts; ptLeaders = [id]; }
-                  else if (pts === maxPts) { ptLeaders.push(id); }
-              });
-
-              let maxSc = -1;
-              let scLeaders: string[] = [];
-              Object.keys(playersList).forEach(id => {
-                  const sc = dynamicExactScores[w][id];
-                  if (sc > maxSc) { maxSc = sc; scLeaders = [id]; }
-                  else if (sc === maxSc) { scLeaders.push(id); }
-              });
-
-              // SADECE TEK TABANCAYSA CANLI ROZET VER
-              if (ptLeaders.length === 1) {
-                  const leaderId = ptLeaders[0];
-                  const cleanName = playersList[leaderId].replace(/🏆/g, '').trim().toUpperCase();
-                  if (!liveBadges[`w${w}-${cleanName}`]) liveBadges[`w${w}-${cleanName}`] = [];
-                  liveBadges[`w${w}-${cleanName}`].push('points');
-                  liveBonusPoints[w][leaderId] = (liveBonusPoints[w][leaderId] || 0) + 3;
-              }
-
-              if (scLeaders.length === 1 && maxSc > 0) {
-                  const leaderId = scLeaders[0];
-                  const cleanName = playersList[leaderId].replace(/🏆/g, '').trim().toUpperCase();
-                  if (!liveBadges[`w${w}-${cleanName}`]) liveBadges[`w${w}-${cleanName}`] = [];
-                  liveBadges[`w${w}-${cleanName}`].push('score');
-                  liveBonusPoints[w][leaderId] = (liveBonusPoints[w][leaderId] || 0) + 3;
-              }
-          }
-      }
-
-      // 🔴 SIFIR PUANI OLANLARI DA VİTRİNE KOYAN MOTOR 🔴
-      const baseList = Object.keys(playersList).map(id => {
-        const past = historicalDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
-        
-        let playerObj: any = { 
-          id, name: playersList[id], 
-          w1: past.w1, w2: past.w2, w3: past.w3, w4: past.w4
-        };
-
-        let totalDynBase = 0;
-        let totalDynLive = 0;
-
-        for (let w = 5; w <= highestWeekFound; w++) {
-            const wBase = dynamicBase[w][id] || 0;
-            const wLive = dynamicLive[w][id] || 0;
-            const wBonusAdmin = (dynamicBonuses[w] && dynamicBonuses[w][id]) ? dynamicBonuses[w][id] : 0;
-            const wBonusLive = liveBonusPoints[w][id] || 0; // Canlı heyecan puanı
-            
-            playerObj[`w${w}`] = wBase + wLive + wBonusAdmin + wBonusLive;
-            totalDynBase += wBase + wBonusAdmin;
-            totalDynLive += wLive + wBonusLive;
+           setTableRows([]);
         }
 
-        playerObj.total = past.w1 + past.w2 + past.w3 + past.w4 + totalDynBase + totalDynLive;
-        playerObj.liveExtra = totalDynLive;
-        return playerObj;
-      });
+      } else {
+        // 🔴 EKMEL KANUNU: HAFTALIK GÖRÜNÜM İÇİN MÜHÜRLÜ master_weekly_points KULLANILIR
+        const weekNum = parseInt(activeTab.replace('w', ''));
+        const { data } = await supabase.from('master_weekly_points').select('*');
 
-      const prevRefList = [...baseList].sort((a, b) => (a.total - a.liveExtra) - (b.total - b.liveExtra) || a.name.localeCompare(b.name, 'tr'));
-      const prevRanks: Record<string, number> = {};
-      prevRefList.reverse().forEach((player, index) => { prevRanks[player.id] = index + 1; });
+        if (data) {
+           const list = data.map(row => {
+               const uid = String(row.id || row.user_id || row.username);
+               const pName = playersList[uid] || "Bilinmiyor";
+               const cleanName = pName.replace(/🏆/g, '').trim().toUpperCase();
+               let badges: string[] = [];
 
-      const visibleList = baseList; 
+               if (weekNum <= 4) {
+                   const hB = (historicalBadges as any)[`w${weekNum}`]?.[cleanName];
+                   if (hB) badges = [...badges, ...hB];
+               } else {
+                   const dynB = dynamicBadges[`w${weekNum}-${cleanName}`];
+                   if (dynB) badges = [...badges, ...dynB];
+               }
 
-      visibleList.sort((a, b) => {
-        const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
-        const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
-        return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
-      });
-
-      const finalRows = visibleList.map((player, index) => {
-        const currentRank = index + 1;
-        let trend = 'same', trendDiff = 0; 
-        
-        if (activeTab === 'total') {
-            const prevRank = prevRanks[player.id];
-            if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-            else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+               return {
+                   id: uid,
+                   name: pName,
+                   displayScore: row[`w${weekNum}`] || 0,
+                   currentRank: 0,
+                   trend: 'same',
+                   trendDiff: 0,
+                   badges,
+                   liveExtra: 0
+               }
+           });
+           const sortedList = list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
+           setTableRows(sortedList.map((r, i) => ({ ...r, currentRank: i + 1 })));
         }
-
-        let badges: string[] = [];
-        const cleanName = player.name.replace(/🏆/g, '').trim().toUpperCase();
-
-        if (activeTab === 'w1' && historicalBadges.w1[cleanName as keyof typeof historicalBadges.w1]) badges = historicalBadges.w1[cleanName as keyof typeof historicalBadges.w1];
-        if (activeTab === 'w2' && historicalBadges.w2[cleanName as keyof typeof historicalBadges.w2]) badges = historicalBadges.w2[cleanName as keyof typeof historicalBadges.w2];
-        if (activeTab === 'w3' && historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3]) badges = historicalBadges.w3[cleanName as keyof typeof historicalBadges.w3];
-        if (activeTab === 'w4' && historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4]) badges = historicalBadges.w4[cleanName as keyof typeof historicalBadges.w4];
-
-        // Mühürlü Rozetler
-        if (activeTab.startsWith('w') && parseInt(activeTab.replace('w', '')) >= 5) {
-            const dynamicB = dynamicBadges[`${activeTab}-${cleanName}`];
-            if (dynamicB) badges = [...badges, ...dynamicB];
-            
-            // Canlı Önizleme Rozetleri
-            const liveB = liveBadges[`${activeTab}-${cleanName}`];
-            if (liveB) badges = [...badges, ...liveB];
-        }
-
-        // Toplam sayfada hem canlı hem de mühürlü rozetleri göstermek için
-        // 🔴 EKMEL KEMER KANUNU: ŞAMPİYONLUK ROZETİ SADECE GÜNCEL HAFTADA TAKILIR 🔴
-        if (activeTab === 'total') {
-            const dynB = dynamicBadges[`w${highestWeekFound}-${cleanName}`];
-            if (dynB) badges = [...badges, ...dynB];
-
-            const liveB = liveBadges[`w${highestWeekFound}-${cleanName}`];
-            if (liveB) badges = [...badges, ...liveB];
-        }
-
-        let displayScore = activeTab === 'total' ? player.total : player[activeTab] as number;
-        return { ...player, currentRank, trend, trendDiff, displayScore, badges };
-      });
-      
-      setTableRows(finalRows);
+      }
 
     } catch (e) {
         console.log("Veri çekilirken hata oluştu");
     }
   };
 
-  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
+  useEffect(() => { 
+      loadLeaderboard(); 
+      // ⚡ CANLI RADAR: Motor puanı güncellediğinde sayfa anında hisseder
+      const channel = supabase.channel('master_live_updates')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => {
+           loadLeaderboard();
+        })
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+  }, [activeTab]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
