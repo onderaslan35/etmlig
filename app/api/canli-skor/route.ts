@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const revalidate = 120; // 2 Dakikada bir taranır
+export const revalidate = 0; // Her zaman taze veriyi zorla
 
-// 🚨 4 NAMLULU ŞARJÖR 🚨
 const API_KEYS = [
   "f9c02fd1f6df721f93bebc2491c12250",
   "f8c84a423579036585045dafed920ff6",
@@ -16,12 +15,37 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const ids = searchParams.get('ids');
+  // 1. Bugünün tarihini bul (Türkiye Saati - Örn: 20.09.2026)
+  const nowUTC = new Date();
+  const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
+  const d = String(todayTurkey.getUTCDate()).padStart(2, '0');
+  const m = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
+  const y = todayTurkey.getUTCFullYear();
+  const todayStr = `${d}.${m}.${y}`; 
 
-  if (!ids) return NextResponse.json({ error: 'Komutanım, Maç ID eksik!' }, { status: 400 });
+  // 2. Sadece BUGÜN oynanacak maçları bültenden bul
+  const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
+  if (!bulten) return NextResponse.json({ message: 'Bülten çekilemedi.' });
+  
+  const todaysMatches = bulten.filter(match => match.match_date === todayStr);
+  if (todaysMatches.length === 0) return NextResponse.json({ message: 'Bugün oynanacak maç yok, mermi harcanmadı.' });
 
-  const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${ids}`;
+  const matchIds = todaysMatches.map(match => (match.week_num * 100) + match.match_index);
+
+  // 3. Bu maçların live_matches tablosundaki API şifrelerini al (BİTENLER HARİÇ)
+  const { data: liveData } = await supabase
+    .from('live_matches')
+    .select('api_match_id, status')
+    .in('id', matchIds)
+    .neq('status', 'FINISHED')
+    .not('api_match_id', 'is', null);
+
+  if (!liveData || liveData.length === 0) return NextResponse.json({ message: 'Şu an taranacak aktif/canlı maç yok.' });
+
+  const apiIds = liveData.map(l => l.api_match_id).join('-');
+
+  // 4. API-Sports'a TEK BİR MERMİ atarak tüm maçları aynı anda çek
+  const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
   let sonuc = null;
   let sonHata = null;
 
@@ -32,7 +56,8 @@ export async function GET(request: Request) {
         headers: {
           'x-apisports-key': API_KEYS[i],
           'x-rapidapi-host': 'v3.football.api-sports.io'
-        }
+        },
+        cache: 'no-store'
       });
       if (!res.ok) { sonHata = `Kalkan: ${res.status}`; continue; }
       sonuc = await res.json();
@@ -45,6 +70,7 @@ export async function GET(request: Request) {
 
   if (!sonuc || !sonuc.response) return NextResponse.json({ error: `Mermiler Bitti! Hata: ${sonHata}` }, { status: 500 });
 
+  // 5. Gelen verileri Supabase'e yaz
   const maclar = sonuc.response;
   
   for (const mac of maclar) {
@@ -52,7 +78,7 @@ export async function GET(request: Request) {
     const evSkor = mac.goals.home ?? 0;
     const depSkor = mac.goals.away ?? 0;
     const durum = mac.fixture.status.short; 
-    const dakika = mac.fixture.status.elapsed || 0; // 🔴 YENİ: DAKİKA YAKALANIYOR
+    const dakika = mac.fixture.status.elapsed || 0; 
     
     let statu = 'NOT_STARTED';
     if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
@@ -60,17 +86,17 @@ export async function GET(request: Request) {
 
     const olaylar = mac.events || [];
 
-    const { error } = await supabase
+    await supabase
       .from('live_matches')
       .update({
         home_score: evSkor.toString(),
         away_score: depSkor.toString(),
         status: statu,
-        elapsed: dakika, // 🔴 YENİ: VERİTABANINA YAZILIYOR
+        elapsed: dakika,
         events: olaylar 
       })
       .eq('api_match_id', macId);
   }
 
-  return NextResponse.json(sonuc);
+  return NextResponse.json({ message: 'Kusursuz Atış Başarılı', cekilenMacSayisi: maclar.length, data: sonuc.response });
 }
