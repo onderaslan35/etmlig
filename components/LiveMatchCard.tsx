@@ -194,7 +194,8 @@ export default function LiveMatchCard() {
               const category = catDict[`${weekNum}-${matchIndex}`] || "";
               const isTff = isTffMatchCheck(category);
 
-              if (dbMatch.status === 'FINISHED' || dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
+              const isLiveOrFinished = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
+              if (isLiveOrFinished) {
                   winnerIds.forEach(wId => {
                       if (st[wId]) {
                           if (isTff && weekNum >= 6) st[wId].TFF += pts; 
@@ -220,11 +221,13 @@ export default function LiveMatchCard() {
       let dynamicBonusPoints: Record<string, number> = {};
       for (let w = 5; w <= activeWeek; w++) {
           const match24 = liveMap[getUniqueMatchId(w, 24)];
-          if (match24 && (match24.status === 'LIVE' || match24.status === 'WAITING_APPROVAL' || match24.status === 'FINISHED')) {
+          const isLiveOrFinished2 = match24 && ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(match24.status);
+          
+          if (isLiveOrFinished2) {
               let wkMaster: any = {}, wkSkor: any = {};
               (dbBulletinMatches || []).filter(m => m.week_num === w).forEach(m => {
                   const dbM = liveMap[getUniqueMatchId(w, m.match_index)];
-                  if (dbM && dbM.status !== 'NOT_STARTED' && dbM.home_score !== '-') {
+                  if (dbM && !['NOT_STARTED', 'NS', 'TBD'].includes(dbM.status) && dbM.home_score !== '-') {
                       const targetScore = `${dbM.home_score}-${dbM.away_score}`.replace(/\s+/g, '');
                       const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${w}-${m.match_index}`] === targetScore);
                       let pts = 1; if(winnerIds.length===1)pts=12; else if(winnerIds.length===2)pts=6; else if(winnerIds.length===3)pts=5; else if(winnerIds.length===4)pts=4; else if(winnerIds.length===5)pts=3; else if(winnerIds.length===6)pts=2; else if(winnerIds.length>=7)pts=1; else pts=0;
@@ -284,7 +287,8 @@ export default function LiveMatchCard() {
       let newGoalIds: number[] = [];
       Object.keys(liveMap).forEach(key => {
           const dbMatch = liveMap[Number(key)];
-          if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL' || dbMatch.status === 'FINISHED') {
+          const isLiveOrFinished3 = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
+          if (isLiveOrFinished3) {
               if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
                   const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
                   const prevScore = prevScoresRef.current[key];
@@ -343,16 +347,17 @@ export default function LiveMatchCard() {
            const uniqueId = getUniqueMatchId(activeWeek, m.id);
            const dbMatch = liveMap[uniqueId];
            const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
+           const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(status);
            const mDate = parseDateLocal(m.date);
            const isToday = mDate.getTime() === todayMidnight.getTime();
-           if (status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT') return true;
+           if (isLiveOrFinished4) return true;
            return isToday;
       });
       setTodaysMatchesList(todaysMatches);
       
       const match24Id = getUniqueMatchId(activeWeek, 24);
       const dbMatch24 = liveMap[match24Id];
-      if (dbMatch24 && dbMatch24.status === 'FINISHED') {
+      if (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status)) {
           const m24 = currentWeekMatches.find(m => m.id === 24);
           if (m24) {
               const matchTimeMs = getMatchTimeMs(m24.date, m24.time);
@@ -382,16 +387,17 @@ export default function LiveMatchCard() {
     );
   }
 
+  // 🔴 AKTİF VE BİTEN MAÇLARI API-SPORTS STATÜSÜNE GÖRE SÜZÜYORUZ 🔴
   const activeMatches = todaysMatchesList.filter(match => {
      const uniqueId = getUniqueMatchId(activeWeek, match.id);
      const dbMatch = liveMatchesData[uniqueId] || {};
-     return dbMatch.status !== 'FINISHED';
+     return !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
   const finishedMatches = todaysMatchesList.filter(match => {
      const uniqueId = getUniqueMatchId(activeWeek, match.id);
      const dbMatch = liveMatchesData[uniqueId] || {};
-     return dbMatch.status === 'FINISHED';
+     return ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
   const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
@@ -408,10 +414,6 @@ export default function LiveMatchCard() {
       const dbMatch = liveMatchesData[uniqueId] || {};
       const isGoalFlashing = goalFlashes[uniqueId]; 
       
-      const rawElapsed = dbMatch.elapsed;
-      const safeElapsed = (typeof rawElapsed === 'object' && rawElapsed !== null) ? rawElapsed.elapsed : rawElapsed;
-      const elapsed = safeElapsed && safeElapsed > 0 ? safeElapsed : null;
-
       let safeEvents: any[] = [];
       if (Array.isArray(dbMatch.events)) {
          safeEvents = dbMatch.events;
@@ -431,26 +433,57 @@ export default function LiveMatchCard() {
       const matchTimeMs = getMatchTimeMs(match.date, match.time);
       const twoHoursMs = 2 * 60 * 60 * 1000;
       
-      if (matchStatus !== 'FINISHED') {
-        if (now >= matchTimeMs && now < matchTimeMs + twoHoursMs) { matchStatus = 'LIVE'; } 
-        else if (now >= matchTimeMs + twoHoursMs) { matchStatus = 'WAITING_APPROVAL'; }
+      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
+        if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
+            if (now >= matchTimeMs && now < matchTimeMs + twoHoursMs) { matchStatus = 'LIVE'; } 
+            else if (now >= matchTimeMs + twoHoursMs) { matchStatus = 'WAITING_APPROVAL'; }
+        }
       }
 
-      if (matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL') {
+      const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
+      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P'].includes(matchStatus);
+      const isHT = matchStatus === 'HT';
+
+      if (isLiveStatus || matchStatus === 'WAITING_APPROVAL') {
          if (homeScore === '-') homeScore = '0';
          if (awayScore === '-') awayScore = '0';
+      }
+
+      // 🔴 UZATMA SÜRESİ (45+1, 90+5) VE DAKİKA ÇÖZÜCÜ ZIRHI 🔴
+      const rawElapsed = dbMatch.elapsed;
+      let safeElapsed = null;
+      let safeExtra = dbMatch.extra || null; // DB'de 'extra' kolonu varsa direkt alır
+
+      if (typeof rawElapsed === 'object' && rawElapsed !== null) {
+         safeElapsed = rawElapsed.elapsed;
+         if (!safeExtra && rawElapsed.extra) safeExtra = rawElapsed.extra;
+      } else if (typeof rawElapsed === 'string' && rawElapsed.includes('+')) {
+         // Backend '45+2' formatında gönderdiyse parçalar
+         const parts = rawElapsed.split('+');
+         safeElapsed = parts[0];
+         safeExtra = parts[1];
+      } else {
+         safeElapsed = rawElapsed;
+      }
+
+      let displayMinute = '';
+      if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
+         if (safeExtra) {
+            displayMinute = `${safeElapsed}+${safeExtra}'`;
+         } else {
+            displayMinute = `${safeElapsed}'`;
+         }
       }
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
       const isTffMatch = isTffMatchCheck(match.category);
       const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
-      const isFinished = matchStatus === 'FINISHED'; 
 
       let exactWinners: {id: string, name: string, score: string}[] = [];
       let possibleWinners: {name: string, score: string}[] = [];
       let eliminatedPlayers: {name: string, score: string}[] = [];
 
-      if ((matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
+      if ((isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
         const currentH = parseInt(homeScore);
         const currentA = parseInt(awayScore);
 
@@ -464,7 +497,7 @@ export default function LiveMatchCard() {
           const pH = parseInt(pHStr); const pA = parseInt(pAStr);
 
           if (pH === currentH && pA === currentA) { exactWinners.push({ id, name, score: predStr }); } 
-          else if (pH >= currentH && pA >= currentA && !isFinished && matchStatus !== 'WAITING_APPROVAL') { possibleWinners.push({ name, score: predStr }); } 
+          else if (pH >= currentH && pA >= currentA && !isFinishedStatus && matchStatus !== 'WAITING_APPROVAL') { possibleWinners.push({ name, score: predStr }); } 
           else { eliminatedPlayers.push({ name, score: predStr }); }
         });
 
@@ -481,7 +514,7 @@ export default function LiveMatchCard() {
       else if(winnersCount >= 7) displayPoints = 1; else displayPoints = 0;
 
       let countdownText = "";
-      if (now < matchTimeMs && matchStatus === 'NOT_STARTED') {
+      if (now < matchTimeMs && (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD')) {
         const distance = matchTimeMs - now;
         if (distance > 0) {
           const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -531,13 +564,15 @@ export default function LiveMatchCard() {
                 
                 <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
                   <div className="mb-0.5 flex items-center justify-center">
-                    {matchStatus === 'LIVE' ? (
+                    {isHT ? (
+                      <span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>
+                    ) : isLiveStatus ? (
                       <span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">
-                        {elapsed >= 90 ? '90+' : String(elapsed) + "'"}
+                        {displayMinute}
                       </span>
                     ) : matchStatus === 'WAITING_APPROVAL' ? (
                       <span className="text-[8px] sm:text-[9px] font-black text-amber-500 tracking-wider">ONAY</span>
-                    ) : matchStatus === 'FINISHED' ? (
+                    ) : isFinishedStatus ? (
                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>
                     ) : (
                       <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>
@@ -546,10 +581,10 @@ export default function LiveMatchCard() {
                   
                   <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${
                     isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' :
-                    matchStatus === 'LIVE' ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'
+                    (isLiveStatus || isHT) ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'
                   }`}>
                     <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>
-                      {matchStatus === 'NOT_STARTED' ? 'v' : `${homeScore}-${awayScore}`}
+                      {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? 'v' : `${homeScore}-${awayScore}`}
                     </span>
                   </div>
                 </div>
@@ -603,16 +638,22 @@ export default function LiveMatchCard() {
                       </div>
                     )}
 
-                    {matchStatus === 'NOT_STARTED' && (
+                    {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') && (
                       <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                         <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                       </div>
                     )}
                     
-                    {matchStatus === 'LIVE' && (
+                    {isHT && (
+                      <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative">
+                        <span className="text-amber-400 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span>
+                      </div>
+                    )}
+
+                    {isLiveStatus && (
                       <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
                         <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">
-                          {elapsed ? (elapsed >= 90 ? '90+' : `${String(elapsed)}'`) : ''}
+                          {displayMinute}
                         </span>
                         <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">
                           🔴 CANLI
@@ -625,7 +666,7 @@ export default function LiveMatchCard() {
                         <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span>
                       </div>
                     )}
-                    {isFinished && (
+                    {isFinishedStatus && (
                       <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                         <span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
                       </div>
@@ -637,7 +678,7 @@ export default function LiveMatchCard() {
                       <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{awayScore}</span>
                     </div>
 
-                    {matchStatus === 'NOT_STARTED' && countdownText && (
+                    {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') && countdownText && (
                       <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
                         <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
                           {countdownText}
@@ -724,10 +765,10 @@ export default function LiveMatchCard() {
                 <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative mt-auto`}>
                   <div className="flex justify-between items-center w-full">
                     <div className="text-left flex-1">
-                      {matchStatus === 'NOT_STARTED' ? (
+                      {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? (
                         <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
                       ) : exactWinners.length === 0 ? (
-                         !isFinished && possibleWinners.length > 0 ? (
+                         !isFinishedStatus && possibleWinners.length > 0 ? (
                            <span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>
                          ) : (
                            <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>
@@ -744,7 +785,7 @@ export default function LiveMatchCard() {
                       </span>
                     </div>
                     <div className="text-right flex-1">
-                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && matchStatus !== 'NOT_STARTED' && (
+                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
                         <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">
                           {isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}
                         </button>
@@ -752,7 +793,7 @@ export default function LiveMatchCard() {
                     </div>
                   </div>
                 
-                  {isWinnersOpen && (matchStatus === 'LIVE' || matchStatus === 'FINISHED' || matchStatus === 'WAITING_APPROVAL') && (
+                  {isWinnersOpen && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       
                       {exactWinners.length > 0 && (
@@ -822,7 +863,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {!isFinished && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
+                      {!isFinishedStatus && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
                         <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
                           <button onClick={() => togglePossible(match.id)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
                             <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)</span>
