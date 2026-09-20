@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 
+
 export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#020617] to-black relative overflow-hidden">
