@@ -84,5 +84,5 @@ export async function GET(request: Request) {
     await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu, elapsed: dakika, events: olaylar }).eq('api_match_id', macId);
   }
 
-  return NextResponse.json({ message: 'Kusursuz Atış Başarılı', cekilenMacSayisi: maclar.length });
+  return NextResponse.json({ message: 'Atis Raporu', cekilenMac: maclar.length, firlatilanIDler: apiIds, apiHatasi: sonuc.errors });
 }
