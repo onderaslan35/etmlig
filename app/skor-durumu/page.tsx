@@ -1,224 +1,178 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabase';
+import React, { useState } from 'react';
+
+// 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ SKOR (TAM İSABET) LİSTELERİ 🔥
+const masterSkor = [
+  { name: 'DOĞAÇ ALKAN', score: 32 }, { name: 'OSMAN ALİ AYDIN 🏆', score: 30 }, { name: 'R. İLHAN KARACA 🏆🏆', score: 29 },
+  { name: 'SALİH KARACAOĞLU', score: 29 }, { name: 'B.VEYSELOĞLU EROL', score: 28 }, { name: 'EYÜP KARACAOĞLU', score: 28 },
+  { name: 'MUSTAFA GÜMÜŞÇÜ', score: 27 }, { name: 'ÖNDER IŞIK', score: 27 }, { name: 'ŞENOL CAN ÇAKICI', score: 27 },
+  { name: 'MURAT KARA', score: 26 }, { name: 'FATİH AYAN', score: 25 }, { name: 'HAKAN AYAN', score: 25 },
+  { name: 'ÖNDER ASLAN', score: 25 }, { name: 'SEDAT SEDAT', score: 25 }, { name: 'YUSUF KIZILTUĞ', score: 25 },
+  { name: 'MEHMET ALİ KARA', score: 24 }, { name: 'MELİH PINAR', score: 24 }, { name: 'MUHSİN ASİLKAN', score: 24 },
+  { name: 'ULAŞ ADIGÜZEL', score: 24 }, { name: 'YAPAY ZEKA', score: 24 }, { name: 'YUSUF ERBAY', score: 24 },
+  { name: 'İSMAİL EKER 🏆', score: 23 }, { name: 'SABAHATTİN ÇAYLAK', score: 23 }, { name: 'HUDAVER TOPARDIC', score: 22 },
+  { name: 'MUSTAFA ELMAS', score: 22 }, { name: 'SAVAŞ ÇAĞLAYAN', score: 22 }, { name: 'OZKAYA MAZAKALI BAYRAM', score: 20 },
+  { name: 'UĞUR VARDAR', score: 20 }, { name: 'ALİOS GÖZTEPE', score: 19 }, { name: 'ABDULLAH DİK', score: 18 },
+  { name: 'BİROL DEMİREL', score: 18 }, { name: 'CUMALİ SÖKER', score: 18 }, { name: 'İLYAS UYGUN', score: 18 },
+  { name: 'SEDAT DİŞLİ', score: 18 }, { name: 'AHMET BİRCAN 🏆', score: 17 }, { name: 'MAHMUT CBR', score: 17 },
+  { name: 'MEVLÜT EVLER', score: 17 }, { name: 'AYHAN LUŞOĞLU', score: 16 }, { name: 'CEMAL SİVRİKAYA 🏆', score: 16 },
+  { name: 'LEVENT YILDIRIM', score: 16 }, { name: 'RIDVAN DOGER', score: 16 }, { name: 'UĞUR GÜRBÜZ', score: 16 },
+  { name: 'GAZİ AYAN 🏆🏆', score: 15 }, { name: 'İLYAS KAZDAL', score: 15 }, { name: 'BEKİR KARADAĞ', score: 14 },
+  { name: 'KEMAL ERSOY', score: 14 }, { name: 'MURAT ALİ', score: 14 }, { name: 'AYGÜN AKKEÇELİ', score: 9 },
+  { name: 'BAYRAM YILMAZ', score: 8 }, { name: 'CEMALETTİN BELLİ', score: 7 }, { name: 'ŞEMSETTIN DÜGER', score: 5 },
+  { name: 'YAHŞİ ERKAN 🏆', score: 3 }, { name: 'MUHAMMED M.ASLANOĞLU', score: 2 }, { name: 'ŞAHİN GEZGİNCİ', score: 2 },
+  { name: 'MUSTAFA TUCİ', score: 1 }, { name: 'İSMAİL YILDIRIM', score: 0 }, { name: 'MUZAFFER KESKİN', score: 0 }
+];
+
+const dfoSkor = [
+  { name: 'DOĞAÇ ALKAN', score: 26 }, { name: 'SALİH KARACAOĞLU', score: 23 }, { name: 'B.VEYSELOĞLU EROL', score: 21 },
+  { name: 'EYÜP KARACAOĞLU', score: 20 }, { name: 'ŞENOL CAN ÇAKICI', score: 19 }, { name: 'OSMAN ALİ AYDIN 🏆', score: 18 },
+  { name: 'ULAŞ ADIGÜZEL', score: 18 }, { name: 'YUSUF KIZILTUĞ', score: 18 }, { name: 'FATİH AYAN', score: 17 },
+  { name: 'MUHSİN ASİLKAN', score: 17 }, { name: 'MUSTAFA GÜMÜŞÇÜ', score: 17 }, { name: 'ÖNDER ASLAN', score: 17 },
+  { name: 'R. İLHAN KARACA 🏆🏆', score: 17 }, { name: 'YUSUF ERBAY', score: 17 }, { name: 'SEDAT SEDAT', score: 16 },
+  { name: 'MELİH PINAR', score: 15 }, { name: 'MURAT KARA', score: 15 }, { name: 'UĞUR VARDAR', score: 15 },
+  { name: 'HUDAVER TOPARDIC', score: 14 }, { name: 'İSMAİL EKER 🏆', score: 14 }, { name: 'MEHMET ALİ KARA', score: 14 },
+  { name: 'SAVAŞ ÇAĞLAYAN', score: 14 }, { name: 'YAPAY ZEKA', score: 14 }, { name: 'CUMALİ SÖKER', score: 13 },
+  { name: 'HAKAN AYAN', score: 13 }, { name: 'MUSTAFA ELMAS', score: 13 }, { name: 'OZKAYA MAZAKALI BAYRAM', score: 13 },
+  { name: 'SEDAT DİŞLİ', score: 13 }, { name: 'İLYAS UYGUN', score: 12 }, { name: 'MEVLÜT EVLER', score: 12 },
+  { name: 'ÖNDER IŞIK', score: 12 }, { name: 'SABAHATTİN ÇAYLAK', score: 12 }, { name: 'UĞUR GÜRBÜZ', score: 12 },
+  { name: 'ABDULLAH DİK', score: 11 }, { name: 'ALİOS GÖZTEPE', score: 11 }, { name: 'BİROL DEMİREL', score: 11 },
+  { name: 'RIDVAN DOGER', score: 11 }, { name: 'AHMET BİRCAN 🏆', score: 10 }, { name: 'LEVENT YILDIRIM', score: 10 },
+  { name: 'MAHMUT CBR', score: 10 }, { name: 'MURAT ALİ', score: 10 }, { name: 'BEKİR KARADAĞ', score: 9 },
+  { name: 'İLYAS KAZDAL', score: 9 }, { name: 'AYHAN LUŞOĞLU', score: 8 }, { name: 'CEMAL SİVRİKAYA 🏆', score: 8 },
+  { name: 'AYGÜN AKKEÇELİ', score: 7 }, { name: 'BAYRAM YILMAZ', score: 7 }, { name: 'GAZİ AYAN 🏆🏆', score: 7 },
+  { name: 'KEMAL ERSOY', score: 6 }, { name: 'CEMALETTİN BELLİ', score: 4 }, { name: 'ŞEMSETTIN DÜGER', score: 3 },
+  { name: 'MUHAMMED M.ASLANOĞLU', score: 2 }, { name: 'ŞAHİN GEZGİNCİ', score: 2 }, { name: 'YAHŞİ ERKAN 🏆', score: 2 },
+  { name: 'MUSTAFA TUCİ', score: 1 }, { name: 'İSMAİL YILDIRIM', score: 0 }, { name: 'MUZAFFER KESKİN', score: 0 }
+];
+
+const tffSkor = [
+  { name: 'ÖNDER IŞIK', score: 15 }, { name: 'HAKAN AYAN', score: 12 }, { name: 'OSMAN ALİ AYDIN 🏆', score: 12 },
+  { name: 'R. İLHAN KARACA 🏆🏆', score: 12 }, { name: 'MURAT KARA', score: 11 }, { name: 'SABAHATTİN ÇAYLAK', score: 11 },
+  { name: 'MEHMET ALİ KARA', score: 10 }, { name: 'MUSTAFA GÜMÜŞÇÜ', score: 10 }, { name: 'YAPAY ZEKA', score: 10 },
+  { name: 'İSMAİL EKER 🏆', score: 9 }, { name: 'MELİH PINAR', score: 9 }, { name: 'MUSTAFA ELMAS', score: 9 },
+  { name: 'SEDAT SEDAT', score: 9 }, { name: 'ALİOS GÖZTEPE', score: 8 }, { name: 'AYHAN LUŞOĞLU', score: 8 },
+  { name: 'CEMAL SİVRİKAYA 🏆', score: 8 }, { name: 'EYÜP KARACAOĞLU', score: 8 }, { name: 'FATİH AYAN', score: 8 },
+  { name: 'GAZİ AYAN 🏆🏆', score: 8 }, { name: 'HUDAVER TOPARDIC', score: 8 }, { name: 'KEMAL ERSOY', score: 8 },
+  { name: 'ÖNDER ASLAN', score: 8 }, { name: 'SAVAŞ ÇAĞLAYAN', score: 8 }, { name: 'ŞENOL CAN ÇAKICI', score: 8 },
+  { name: 'ABDULLAH DİK', score: 7 }, { name: 'AHMET BİRCAN 🏆', score: 7 }, { name: 'B.VEYSELOĞLU EROL', score: 7 },
+  { name: 'BİROL DEMİREL', score: 7 }, { name: 'MAHMUT CBR', score: 7 }, { name: 'MUHSİN ASİLKAN', score: 7 },
+  { name: 'OZKAYA MAZAKALI BAYRAM', score: 7 }, { name: 'YUSUF ERBAY', score: 7 }, { name: 'YUSUF KIZILTUĞ', score: 7 },
+  { name: 'DOĞAÇ ALKAN', score: 6 }, { name: 'İLYAS KAZDAL', score: 6 }, { name: 'İLYAS UYGUN', score: 6 },
+  { name: 'LEVENT YILDIRIM', score: 6 }, { name: 'SALİH KARACAOĞLU', score: 6 }, { name: 'ULAŞ ADIGÜZEL', score: 6 },
+  { name: 'BEKİR KARADAĞ', score: 5 }, { name: 'CUMALİ SÖKER', score: 5 }, { name: 'MEVLÜT EVLER', score: 5 },
+  { name: 'RIDVAN DOGER', score: 5 }, { name: 'SEDAT DİŞLİ', score: 5 }, { name: 'UĞUR VARDAR', score: 5 },
+  { name: 'MURAT ALİ', score: 4 }, { name: 'UĞUR GÜRBÜZ', score: 4 }, { name: 'CEMALETTİN BELLİ', score: 3 },
+  { name: 'AYGÜN AKKEÇELİ', score: 2 }, { name: 'ŞEMSETTIN DÜGER', score: 2 }, { name: 'BAYRAM YILMAZ', score: 1 },
+  { name: 'YAHŞİ ERKAN 🏆', score: 1 }, { name: 'İSMAİL YILDIRIM', score: 0 }, { name: 'MUHAMMED M.ASLANOĞLU', score: 0 },
+  { name: 'MUSTAFA TUCİ', score: 0 }, { name: 'MUZAFFER KESKİN', score: 0 }, { name: 'ŞAHİN GEZGİNCİ', score: 0 }
+];
 
 export default function SkorDurumuPage() {
-  const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<string>('total');
-  const [leagueFilter, setLeagueFilter] = useState<'MASTER'|'DFO'|'TFF'>('MASTER');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  const [maxWeek, setMaxWeek] = useState<number>(6); 
+  const [activeTab, setActiveTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
 
-  const loadLeaderboard = async () => {
-    try {
-      // 1. Oyuncu isimlerini alıyoruz
-      const { data: dbPlayers } = await supabase.from('players').select('*');
-      const playersList: Record<string, string> = {};
-      if (dbPlayers) {
-        dbPlayers.forEach(p => {
-          if (p.id !== 'mankoman' && p.username !== 'mankoman') {
-             const pid = p.username || p.id;
-             playersList[pid] = p.name || p.full_name;
-          }
-        });
-      }
-
-      // 2. Maksimum (Güncel) Haftayı Belirleme
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num').order('week_num', { ascending: false }).limit(1);
-      let currentMaxWeek = 6;
-      if (dbBulletin && dbBulletin.length > 0) {
-          currentMaxWeek = dbBulletin[0].week_num;
-          setMaxWeek(currentMaxWeek);
-      }
-
-      if (activeTab === 'total') {
-        // ⚡ ŞİMŞEK YÜKLEME: Binlerce tahmin yerine arka plandaki hazır tepsiyi okuyoruz (0.1 Saniye)
-        const { data } = await supabase
-          .from('live_leaderboard')
-          .select('id, name, skor_pts, skor_rank');
-
-        if (data && data.length > 0) {
-          // NOT: Şu anki motor tasarımımızda skor_pts toplamı temsil ediyor. 
-          // Eğer DFO ve TFF ayrımı skor sekmesinde kritikse, ileride motora skor_dfo_pts eklenebilir. 
-          // Şu anki versiyon MASTER (Toplam) Skoru kusursuz getirir.
-          const list = data.map(row => ({
-            id: row.id,
-            name: row.name || playersList[row.id] || "Bilinmiyor",
-            displayScore: row.skor_pts,
-            currentRank: row.skor_rank,
-            trend: 'same', 
-            trendDiff: 0,
-            liveExtra: 0 
-          }));
-          
-          setTableRows(list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr')).map((r, i) => ({ ...r, currentRank: i + 1 })));
-        } else {
-           setTableRows([]);
-        }
-
-      } else {
-        // 🔴 HAFTALIK GÖRÜNÜM: Filtreye göre geçmiş skor tablolarından (mühürlü) veri çeker
-        const weekNum = parseInt(activeTab.replace('w', ''));
-        let targetTable = 'dfo_weekly_scores'; // Varsayılan veya birleştirilmiş tablo yapına göre
-        if (leagueFilter === 'TFF') targetTable = 'tff_weekly_scores';
-        
-        // Eğer MASTER seçiliyse hem DFO hem TFF skorlarını toplayıp göstermemiz gerekir.
-        // Şimşek hızında basitlik için tek tablo örneği:
-        const { data } = await supabase.from(targetTable).select('*');
-        const { data: data2 } = leagueFilter === 'MASTER' ? await supabase.from(targetTable === 'dfo_weekly_scores' ? 'tff_weekly_scores' : 'dfo_weekly_scores').select('*') : { data: null };
-
-        if (data) {
-           const list = data.map(row => {
-               const uid = String(row.id || row.user_id || row.username);
-               const pName = playersList[uid] || "Bilinmiyor";
-               let wScore = row[`w${weekNum}`] || 0;
-
-               // MASTER seçiliyse iki tablonun skorlarını toplar
-               if (leagueFilter === 'MASTER' && data2) {
-                   const row2 = data2.find(r => String(r.id || r.user_id || r.username) === uid);
-                   if (row2) wScore += (row2[`w${weekNum}`] || 0);
-               }
-
-               return {
-                   id: uid,
-                   name: pName,
-                   displayScore: wScore,
-                   currentRank: 0,
-                   trend: 'same',
-                   trendDiff: 0,
-                   liveExtra: 0
-               }
-           });
-           const sortedList = list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
-           setTableRows(sortedList.map((r, i) => ({ ...r, currentRank: i + 1 })));
-        }
-      }
-
-    } catch (e) {
-        console.log("Veri çekilirken hata oluştu");
-    }
+  const getActiveList = () => {
+    if (activeTab === 'DFO') return dfoSkor;
+    if (activeTab === 'TFF') return tffSkor;
+    return masterSkor; 
   };
 
-  useEffect(() => { 
-      loadLeaderboard(); 
-      const channel = supabase.channel('skor_live_updates')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => {
-           loadLeaderboard();
-        })
-        .subscribe();
-
-      return () => { supabase.removeChannel(channel); };
-  }, [activeTab, leagueFilter]);
+  const currentList = getActiveList();
 
   return (
-    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+    <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center min-h-screen">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-[#10b981] tracking-wider uppercase drop-shadow-md">ELİT TAHMİN SKOR (TAM İSABET) MERKEZİ</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md px-2">
+          ELİT TAHMİN SKOR TAM İSABET BARAJ MERKEZİ
+        </h1>
       </div>
-      
-      <div className="w-full max-w-3xl mx-auto mt-4">
-        
-        <div className="w-full flex flex-col gap-2 mb-4">
-          <button onClick={() => setLeagueFilter('MASTER')} className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'MASTER' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#064e3b] text-[#34d399] hover:bg-[#047857]'}`}>
-            MASTER
+
+      <div className="w-full max-w-3xl mx-auto mt-2">
+        {/* 🔥 ÜÇLÜ SEKME BUTONLARI (MOTORSUZ, ŞİMŞEK HIZINDA) 🔥 */}
+        <div className="flex justify-center gap-2 mb-6">
+          <button 
+            onClick={() => setActiveTab('MASTER')}
+            className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${
+              activeTab === 'MASTER' 
+                ? 'bg-amber-600 text-white border-amber-400 scale-105 shadow-amber-500/30' 
+                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
+            }`}
+          >
+            🏆 MASTER
           </button>
-          <div className="flex w-full gap-2">
-            <button onClick={() => setLeagueFilter('DFO')} className={`flex-1 font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'DFO' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#0f172a] text-[#34d399] hover:bg-[#1e293b]'}`}>
-              DFO
-            </button>
-            <button onClick={() => setLeagueFilter('TFF')} className={`flex-1 font-bold text-sm py-3 px-4 rounded-xl transition-colors uppercase tracking-wide ${leagueFilter === 'TFF' ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#0f172a] text-[#34d399] hover:bg-[#1e293b]'}`}>
-              TFF
-            </button>
-          </div>
+          
+          <button 
+            onClick={() => setActiveTab('DFO')}
+            className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${
+              activeTab === 'DFO' 
+                ? 'bg-blue-600 text-white border-blue-400 scale-105 shadow-blue-500/30' 
+                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
+            }`}
+          >
+            🌍 DFO
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('TFF')}
+            className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${
+              activeTab === 'TFF' 
+                ? 'bg-red-600 text-white border-red-400 scale-105 shadow-red-500/30' 
+                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
+            }`}
+          >
+            🇹🇷 TFF
+          </button>
         </div>
 
-        <button 
-          onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
-          className="w-full bg-[#10b981] text-[#022c22] hover:bg-[#059669] hover:text-white font-bold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-        >
-          {activeTab === 'total' ? `${leagueFilter} TOPLAM SKOR DURUMU` : `${leagueFilter} ${activeTab.replace('w', '')}. HAFTA SKOR DURUMU`}
-        </button>
-
-        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
-          <div 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
-          >
+        {/* LİSTE VİTRİNİ */}
+        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
+          <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
             <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
-              <span>📅</span>
-              <span>{activeTab === 'total' ? 'TOPLAM SKOR DURUMU' : `${activeTab.replace('w', '')}. HAFTA SKOR DURUMU`}</span>
-            </div>
-            <div className="text-slate-400 font-bold text-[10px] uppercase flex items-center gap-1 tracking-widest">
-              {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+              <span>🎯</span>
+              <span>
+                {activeTab === 'MASTER' && 'MASTER TAM İSABET SAYISI'}
+                {activeTab === 'DFO' && 'DFO TAM İSABET SAYISI'}
+                {activeTab === 'TFF' && 'TFF TAM İSABET SAYISI'}
+              </span>
             </div>
           </div>
 
-          {isMenuOpen && (
-            <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[...Array(maxWeek)].map((_, idx) => {
-                const num = idx + 1;
-                return (
-                  <button
-                    key={num}
-                    onClick={() => { setActiveTab(`w${num}`); setIsMenuOpen(false); }}
-                    className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                      activeTab === `w${num}` ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
-                    }`}
-                  >
-                    {num}
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs md:text-sm">
+              <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                <tr>
+                  <th className="pl-4 md:pl-6 pr-2 py-3 w-16 text-left">SIRA</th>
+                  <th className="px-2 py-3 text-left">YARIŞMACI</th>
+                  <th className="pr-4 md:pr-6 pl-2 py-3 text-center whitespace-nowrap">TAM İSABET</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1e293b]">
+                {currentList.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-[#0f172a]/40 transition-colors animate-fadeIn">
+                    <td className="pl-4 md:pl-6 pr-2 py-3 text-[#94a3b8] font-medium align-middle">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-4 text-left">{idx + 1}</span>
+                        <span className="text-[#475569]">-</span>
+                      </div>
+                    </td>
+                    
+                    <td className="px-2 py-3 align-middle">
+                      <div className="flex flex-wrap items-center gap-2 text-white font-semibold">
+                        <span className="whitespace-nowrap">{row.name}</span>
+                      </div>
+                    </td>
 
-          {tableRows.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs md:text-sm">
-                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
-                  <tr>
-                    <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
-                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                    <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">
-                      TAM İSABET SKORU
-                    </th>
+                    <td className={`pr-4 md:pr-6 pl-2 py-3 text-center font-bold text-sm align-middle ${
+                        activeTab === 'MASTER' ? 'text-amber-500' : 
+                        activeTab === 'DFO' ? 'text-blue-400' : 'text-red-500'
+                    }`}>
+                      {row.score}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e293b]">
-                  {tableRows.map((row, idx) => (
-                    <tr key={row.id || idx} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium">
-                        <div className="flex items-center gap-1">
-                          <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
-                          <span className="text-[#475569]">-</span>
-                        </div>
-                      </td>
-                      <td className="px-1 md:px-2 py-3">
-                        <div className="flex items-center gap-1 md:gap-2 text-white font-semibold whitespace-nowrap">
-                          {(() => {
-                            const trophyCount = (row.name.match(/🏆/g) || []).length;
-                            const cleanName = row.name.replace(/🏆/g, '').trim();
-                            return (
-                              <>
-                                <span>{cleanName}</span>
-                                {trophyCount > 0 && <span className="text-amber-400 text-[10px]">{'🏆'.repeat(trophyCount)}</span>}
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </td>
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-[#10b981]">
-                        {row.displayScore}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
