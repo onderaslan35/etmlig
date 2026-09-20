@@ -122,7 +122,6 @@ export default function LiveMatchCard() {
       const st: Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }> = {};
       Object.keys(mergedAccounts).forEach(uid => { st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; });
 
-      // 🔴 SAYFALARLA %100 AYNI ID EŞLEŞTİRİCİSİ (Hata buradaydı, düzeltildi) 🔴
       const getDict = (data: any[]) => {
           const dict: Record<string, any> = {};
           data.forEach(r => dict[String(r.username || r.user_id || r.id).trim()] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
@@ -145,14 +144,12 @@ export default function LiveMatchCard() {
           
           const sd = skorDfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           const stff = skorTffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          // SKOR = Geçmiş 4 Haftanın DFO ve TFF İsabetlerinin Toplamı
           st[uid].SKOR += (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + 
                           (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4));
           
           st[uid].TFF += (tffIlk4Hafta[uid] || 0) + (tffHafta5Kasa[uid] || 0);
       });
 
-      // 🔴 TAHMİNLER VE BÜLTEN KATEGORİLERİ 🔴
       const { data: dbBulletinMatches } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5).order('match_index', { ascending: true });
       const catDict: Record<string, string> = {};
       (dbBulletinMatches || []).forEach(m => {
@@ -180,12 +177,10 @@ export default function LiveMatchCard() {
       (dbLiveMatches || []).forEach(row => liveMap[row.id] = row); 
       setLiveMatchesData(liveMap);
 
-      // 🔴 CANLI MAÇ HESAPLAMALARI (TAMAMEN SAYFAYLA AYNI DÖNGÜYE ALINDI) 🔴
       Object.values(liveMap).forEach(dbMatch => {
           const weekNum = Math.floor(dbMatch.id / 100);
           const matchIndex = dbMatch.id % 100;
 
-          // Sadece 5. hafta ve sonrası, skoru girilmiş maçları dahil et
           if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
               const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
               const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${weekNum}-${matchIndex}`] === targetScore);
@@ -205,14 +200,13 @@ export default function LiveMatchCard() {
                           if (isTff && weekNum >= 6) st[wId].TFF += pts; 
                           if (!isTff) st[wId].DFO += pts;
                           st[wId].MASTER += pts;
-                          st[wId].SKOR += 1; // TAM İSABET EKLENİR
+                          st[wId].SKOR += 1;
                       }
                   });
               }
           }
       });
 
-      // 🔴 MANUEL PUANLAR VE BONUSLAR 🔴
       manualPointsData.forEach(row => {
           const ev = String(row.ev_sahibi || '').toUpperCase();
           if (ev === 'HAFTANIN' || ev === 'SKOR') {
@@ -254,7 +248,6 @@ export default function LiveMatchCard() {
           if (st[id]) st[id].MASTER += dynamicBonusPoints[id];
       });
 
-      // 🔴 SAYFALARLA BİREBİR AYNI SIRALAMA MANTIĞI (Puan + Alfabetik) 🔴
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
       Object.keys(st).forEach(id => {
           const name = mergedAccounts[id]?.name || '';
@@ -264,7 +257,6 @@ export default function LiveMatchCard() {
           arrSKOR.push({ id, name, pts: st[id].SKOR });
       });
 
-      // Eşitlik bozmada ismi alfabetik sıraya dizer, böylece sayfayla %100 aynı sıra çıkar
       const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
       
       arrTFF.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
@@ -274,7 +266,6 @@ export default function LiveMatchCard() {
 
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
-      // Günlük Maç Hazırlıkları
       const nowUTC = new Date();
       const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
       const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
@@ -415,6 +406,8 @@ export default function LiveMatchCard() {
       const dbMatch = liveMatchesData[uniqueId] || {};
       const isGoalFlashing = goalFlashes[uniqueId]; 
       
+      const elapsed = dbMatch.elapsed && dbMatch.elapsed > 0 ? dbMatch.elapsed : null;
+
       let matchStatus = dbMatch.status || 'NOT_STARTED';
       let homeScore = dbMatch.home_score || '-';
       let awayScore = dbMatch.away_score || '-';
@@ -522,6 +515,7 @@ export default function LiveMatchCard() {
                     isGoalFlashing ? 'text-sm sm:text-base text-green-300' :
                     matchStatus === 'LIVE' ? 'text-xs sm:text-sm text-green-500' : 'text-xs sm:text-sm text-slate-200 group-hover:text-white'
                   }`}>
+                    {matchStatus === 'LIVE' && elapsed && <span className="mr-1.5 text-[10px] text-green-400">{elapsed}'</span>}
                     {matchStatus === 'NOT_STARTED' ? match.time : `${homeScore} - ${awayScore}`}
                   </span>
                 </div>
@@ -580,7 +574,7 @@ export default function LiveMatchCard() {
                     {matchStatus === 'LIVE' && (
                       <div className="bg-green-950/80 border border-green-700 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 animate-pulse backdrop-blur-md z-40 relative">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                        <span className="text-green-500 text-[10px] font-black tracking-widest">CANLI</span>
+                        <span className="text-green-500 text-[10px] font-black tracking-widest">{elapsed ? `${elapsed}' CANLI` : 'CANLI'}</span>
                       </div>
                     )}
                     {matchStatus === 'WAITING_APPROVAL' && (
@@ -618,9 +612,9 @@ export default function LiveMatchCard() {
                 </div>
 
                 {/* ------------------------------------------------------------------------- */}
-                {/* YENİ EKLENEN MAÇKOLİK STİLİ CANLI OLAYLAR VE SKOR BİLENLER ALANI */}
+                {/* YENİ EKLENEN MAÇKOLİK STİLİ CANLI OLAYLAR */}
                 {/* ------------------------------------------------------------------------- */}
-                {( (dbMatch.events && dbMatch.events.length > 0) || exactWinners.length > 0 ) && (
+                {(dbMatch.events && dbMatch.events.length > 0) && (
                   <div className="w-full mt-1 mb-4 flex flex-col gap-3 px-2 sm:px-6 relative z-30">
                     
                     {/* 1. CANLI OLAYLAR SÜTUNLARI (Supabase'den events gelirse otomatik açılır) */}
@@ -660,24 +654,6 @@ export default function LiveMatchCard() {
                               <span className="font-semibold text-rose-400">{k.player?.name}</span> 
                               <span className="text-[10px] sm:text-xs drop-shadow-md">🟥</span>
                             </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 2. TAHMİNİ BİLENLER VE PUANLAR ALANI */}
-                    {exactWinners.length > 0 && (
-                      <div className="pt-3 border-t border-slate-700/50 w-full text-center">
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-emerald-400/80 block mb-3 font-bold">
-                          🎯 ANLIK SKORU BİLEN KARARGAH ÜYELERİ
-                        </span>
-                        
-                        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-                          {exactWinners.map((winner, idx) => (
-                            <div key={idx} className="bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.1)] transition-all hover:bg-emerald-900/80 cursor-default backdrop-blur-sm">
-                              <span className="text-emerald-500 drop-shadow-md">👤</span> {winner.name} 
-                              <span className="bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-400 ml-1">+{displayPoints} Puan</span>
-                            </div>
                           ))}
                         </div>
                       </div>
@@ -734,7 +710,7 @@ export default function LiveMatchCard() {
                               const uniquePlayerKey = `${match.id}-${winner.id}`;
                               const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
 
-                              // SAYFALARLA %100 AYNI VERİLER (Sıra Hataları Giderildi)
+                              // SAYFALARLA %100 AYNI VERİLER
                               const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
                               const tffPts = tffData?.pts || 0;
                               const tffRank = tffData?.rank || '-';
