@@ -2,18 +2,13 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 0; 
-export const maxDuration = 60; // Motorun hesaplama yapabilmesi için süreyi uzattık
+export const maxDuration = 60; 
 
-// ASLANLAR GİBİ PRO MÜHİMMAT
 const API_KEY = "933e5ccc09194d0db30171e2bca20ca9";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// SABİT KASALAR
-const tffIlk4Hafta: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
-const tffHafta5Kasa: Record<string, number> = { "262782": 16, "262749": 14, "262758": 14, "262732": 14, "262726": 12, "262744": 9, "262730": 9, "262736": 7, "262717": 7, "262790": 5, "262735": 4, "262721": 4, "262725": 3, "351925": 3, "262716": 2, "262747": 2, "262715": 2, "262719": 2, "262771": 2, "262707": 2, "262714": 2, "262731": 2, "262738": 2, "262741": 2, "262763": 1, "262772": 1, "262703": 1, "262756": 1, "262706": 1, "262750": 1, "262753": 1, "262702": 1, "262754": 1, "262708": 1, "262718": 1, "262770": 1, "262816": 1, "262774": 1, "262723": 1, "262813": 1 };
 
 function parseDateLocalCustom(dateStr: string) {
     if (!dateStr) return new Date(0);
@@ -37,7 +32,6 @@ export async function GET(request: Request) {
 
   if (todaysMatches.length > 0) {
       const matchIds = todaysMatches.map(match => (match.week_num * 100) + match.match_index);
-
       const { data: liveData } = await supabase.from('live_matches').select('api_match_id, status').in('id', matchIds).neq('status', 'FINISHED').not('api_match_id', 'is', null);
 
       if (liveData && liveData.length > 0) {
@@ -63,7 +57,6 @@ export async function GET(request: Request) {
                     else if (['1H','2H','HT','ET','P'].includes(durum)) statu = 'LIVE';
 
                     const homeTeamId = mac.teams?.home?.id;
-
                     const safOlaylar = (mac.events || [])
                       .filter((e: any) => ['Goal', 'Card', 'subst'].includes(e.type))
                       .map((e: any) => {
@@ -76,7 +69,6 @@ export async function GET(request: Request) {
                       });
 
                     if (dakikaExtra) safOlaylar.push({ type: 'SystemTime', detail: dakikaExtra.toString() });
-
                     await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu, elapsed: dakikaElapsed, events: safOlaylar }).eq('api_match_id', macId);
                 }
             }
@@ -86,7 +78,6 @@ export async function GET(request: Request) {
       }
   }
 
-  // 🔴 2. AŞAMA: MUTFAKTA PUANLARI HESAPLA VE TEPSİYE YAZ (GERÇEKLİK VE HIZ BİRLEŞİYOR) 🔴
   try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const mergedAccounts: Record<string, { name: string }> = {};
@@ -100,9 +91,11 @@ export async function GET(request: Request) {
       }
 
       const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
-      const [dfoData, masterData, skorDfoData, skorTffData, manualPointsData, dbBulletinMatches, dbLiveMatches] = await Promise.all([
+      
+      // 🔥 EKMEL KANUNU: tff_weekly_points EKLENDİ! Sabit kasalar çöpe atıldı.
+      const [dfoData, masterData, skorDfoData, skorTffData, tffPointsData, manualPointsData, dbBulletinMatches, dbLiveMatches] = await Promise.all([
           fetchTable('dfo_weekly_points'), fetchTable('master_weekly_points'), fetchTable('dfo_weekly_scores'),
-          fetchTable('tff_weekly_scores'), fetchTable('points'),
+          fetchTable('tff_weekly_scores'), fetchTable('tff_weekly_points'), fetchTable('points'),
           supabase.from('matches_bulletin').select('*').gte('week_num', 5).order('match_index', { ascending: true }).then(res => res.data || []),
           fetchTable('live_matches')
       ]);
@@ -124,8 +117,11 @@ export async function GET(request: Request) {
           return dict;
       };
 
-      const masterDict = getDict(masterData); const dfoDict = getDict(dfoData);
-      const skorDfoDict = getDict(skorDfoData); const skorTffDict = getDict(skorTffData);
+      const masterDict = getDict(masterData); 
+      const dfoDict = getDict(dfoData);
+      const skorDfoDict = getDict(skorDfoData); 
+      const skorTffDict = getDict(skorTffData);
+      const tffDict = getDict(tffPointsData); // 🔥 TFF'nin mühürlü veritabanı okundu
 
       Object.keys(mergedAccounts).forEach(uid => {
           if (!st[uid]) return;
@@ -136,7 +132,10 @@ export async function GET(request: Request) {
           const sd = skorDfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           const stff = skorTffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           st[uid].SKOR += (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4));
-          st[uid].TFF += (tffIlk4Hafta[uid] || 0) + (tffHafta5Kasa[uid] || 0);
+          
+          // 🔥 TFF İLK 4 HAFTA VERİTABANINDAN ÇEKİLİYOR
+          const td = tffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
+          st[uid].TFF += (Number(td.w1) + Number(td.w2) + Number(td.w3) + Number(td.w4));
       });
 
       const pDict: Record<string, string> = {};
@@ -166,13 +165,14 @@ export async function GET(request: Request) {
               else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
               const category = catDict[`${weekNum}-${matchIndex}`] || "";
-              const isTff = category.toUpperCase().includes('TÜRKİYE SÜPER LİG');
+              const isTff = category.toUpperCase().includes('TÜRKİYE SÜPER LİG') || category.toUpperCase().includes('TRENDYOL SÜPER LİG');
 
               const isLiveOrFinished = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
               if (isLiveOrFinished) {
                   winnerIds.forEach(wId => {
                       if (st[wId]) {
-                          if (isTff && weekNum >= 6) st[wId].TFF += pts; 
+                          // 🔥 5. HAFTA VE SONRASI İÇİN TFF DİNAMİK EKLENİYOR
+                          if (isTff) st[wId].TFF += pts; 
                           if (!isTff) st[wId].DFO += pts;
                           st[wId].MASTER += pts;
                           st[wId].SKOR += 1;
@@ -182,7 +182,6 @@ export async function GET(request: Request) {
           }
       });
 
-      // ADMİNİN VERDİĞİ MANUEL BONUSLARI EKLER
       manualPointsData.forEach(row => {
           const ev = String(row.ev_sahibi || '').toUpperCase();
           if (ev === 'HAFTANIN' || ev === 'SKOR') {
@@ -207,10 +206,6 @@ export async function GET(request: Request) {
 
       for (let w = 5; w <= actWeek; w++) {
           const match24 = liveMap[(w * 100) + 24];
-          
-          // 🔥 ASIL DÜZELTME BURADA: Sadece 24. maç OYNANIRKEN otomatik anlık +3 verir.
-          // Maç bittiği (FINISHED) an otomatik bonus durur, puan tablosuna adminin mühürlediği puan kalır. 
-          // Böylece çifter çifter ekleme engellenmiş olur!
           const isLiveNow = match24 && ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(match24.status);
           
           if (isLiveNow) {
@@ -254,7 +249,6 @@ export async function GET(request: Request) {
       arrMASTER.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
       arrSKOR.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
 
-      // EEEEN ÖNEMLİ KISIM: HESAPLANAN GERÇEK VERİYİ TEPSİYE (TABLOYA) YAZIYORUZ!
       const upsertData = Object.keys(st).map(id => {
           const tffData = arrTFF.find(x => x.id === id);
           const dfoData = arrDFO.find(x => x.id === id);
@@ -285,5 +279,5 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Atis Basarili Ama Mutfak Coktu', error: e });
   }
 
-  return NextResponse.json({ message: 'GERÇEKLİK VE HIZ BİRLEŞTİ: Skoru Çektim, Puanı Kusursuz Hesapladım, Tepsiye Koydum!' });
+  return NextResponse.json({ message: 'ŞİMŞEK: TFF Kasaları Silindi, Gerçek Veritabanı Bağlandı!' });
 }
