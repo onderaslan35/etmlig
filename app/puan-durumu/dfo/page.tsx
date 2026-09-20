@@ -2,11 +2,30 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// Tarih formatlayıcı (Örn: 20.09.2026 -> 20 EYLÜL 2026)
+const formatTurkishDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('.');
+  if (parts.length !== 3) return dateStr;
+  
+  const months = ['OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN', 'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'];
+  const day = parseInt(parts[0], 10);
+  const monthIndex = parseInt(parts[1], 10) - 1;
+  const year = parts[2];
+  
+  if (monthIndex >= 0 && monthIndex < 12) {
+    return `${day} ${months[monthIndex]} ${year}`;
+  }
+  return dateStr;
+};
+
 export default function DfoPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<string>('total');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [maxWeek, setMaxWeek] = useState<number>(6);
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
+  
+  // Otomatik Başlık Bilgileri
+  const [currentWeekNum, setCurrentWeekNum] = useState<number>(0);
+  const [lastMatchDate, setLastMatchDate] = useState<string>('');
 
   const loadLeaderboard = async () => {
     try {
@@ -22,56 +41,32 @@ export default function DfoPuanDurumuPage() {
         });
       }
 
-      if (activeTab === 'total') {
-        // ⚡ ŞİMŞEK YÜKLEME: Binlerce tahmini hesaplamak yerine arka plandaki hazır tepsiden (live_leaderboard) çekiyoruz (0.1 Saniye)
-        const { data } = await supabase
-          .from('live_leaderboard')
-          .select('id, name, dfo_pts, dfo_rank');
-
-        if (data && data.length > 0) {
-          const list = data.map(row => ({
-            id: row.id,
-            name: row.name || playersList[row.id] || "Bilinmiyor",
-            displayScore: row.dfo_pts,
-            currentRank: row.dfo_rank,
-            trend: 'same', 
-            trendDiff: 0,
-            liveExtra: 0 // Hız için canlı animasyonunu tepsiye bıraktık
-          }));
-          
-          // Puanlara göre sıralayıp sıra numarasını basıyoruz
-          setTableRows(list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr')).map((r, i) => ({ ...r, currentRank: i + 1 })));
-        } else {
-           setTableRows([]);
-        }
-
-      } else {
-        // 🔴 EKMEL KANUNU: HAFTALIK GÖRÜNÜM İÇİN MÜHÜRLÜ dfo_weekly_points KULLANILIR
-        const weekNum = parseInt(activeTab.replace('w', ''));
-        const { data } = await supabase.from('dfo_weekly_points').select('*');
-
-        if (data) {
-           const list = data.map(row => {
-               const uid = String(row.id || row.user_id || row.username);
-               return {
-                   id: uid,
-                   name: playersList[uid] || "Bilinmiyor",
-                   displayScore: row[`w${weekNum}`] || 0,
-                   currentRank: 0,
-                   trend: 'same',
-                   trendDiff: 0,
-                   liveExtra: 0
-               }
-           });
-           const sortedList = list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
-           setTableRows(sortedList.map((r, i) => ({ ...r, currentRank: i + 1 })));
-        }
+      // 2. Otomatik Hafta ve Tarih Belirleme
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num, match_date').order('week_num', { ascending: false }).order('match_index', { ascending: false }).limit(1);
+      if (dbBulletin && dbBulletin.length > 0) {
+          setCurrentWeekNum(dbBulletin[0].week_num);
+          setLastMatchDate(formatTurkishDate(dbBulletin[0].match_date));
       }
 
-      // Max Week (Hafta Butonları)
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num').order('week_num', { ascending: false }).limit(1);
-      if (dbBulletin && dbBulletin.length > 0) {
-          setMaxWeek(dbBulletin[0].week_num);
+      // 3. ⚡ ŞİMŞEK YÜKLEME: Doğrudan tepsiden çekiyoruz (Sadece toplam/güncel durum)
+      const { data } = await supabase
+        .from('live_leaderboard')
+        .select('id, name, dfo_pts, dfo_rank, trend_direction, trend_diff');
+
+      if (data && data.length > 0) {
+        const list = data.map(row => ({
+          id: row.id,
+          name: row.name || playersList[row.id] || "Bilinmiyor",
+          displayScore: row.dfo_pts,
+          currentRank: row.dfo_rank,
+          trend: row.trend_direction || 'same', 
+          trendDiff: row.trend_diff || 0,
+          liveExtra: 0 
+        }));
+        
+        setTableRows(list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr')).map((r, i) => ({ ...r, currentRank: i + 1 })));
+      } else {
+         setTableRows([]);
       }
 
     } catch (e) {
@@ -81,7 +76,6 @@ export default function DfoPuanDurumuPage() {
 
   useEffect(() => { 
       loadLeaderboard(); 
-      // ⚡ CANLI RADAR: Arka plandaki motor tabloyu güncellediğinde DFO sayfası yenilemeye gerek kalmadan anında puanı günceller
       const channel = supabase.channel('dfo_live_updates')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => {
            loadLeaderboard();
@@ -89,54 +83,31 @@ export default function DfoPuanDurumuPage() {
         .subscribe();
 
       return () => { supabase.removeChannel(channel); };
-  }, [activeTab]);
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
-        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-500 tracking-wider uppercase drop-shadow-md">DFO PUAN DURUMU</h1>
+        {/* ANA BAŞLIK DÜZELTİLDİ */}
+        <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-500 tracking-wider uppercase drop-shadow-md">
+          DÜNYA FUTBOL ORGANİZASYONLARI (DFO)
+        </h1>
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-4">
-        <button 
-          onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-3 transition-colors uppercase tracking-wide shadow-md border border-blue-500/50"
-        >
-          {activeTab === 'total' ? 'DFO TOPLAM PUAN DURUMU' : `DFO ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}
-        </button>
+        {/* DİNAMİK MAVİ BAR */}
+        <div className="w-full bg-blue-600 text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-blue-500/50">
+          {currentWeekNum > 0 ? `${currentWeekNum}. HAFTA DFO PUAN DURUMU (${lastMatchDate})` : 'DFO PUAN DURUMU YÜKLENİYOR...'}
+        </div>
 
-        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6">
-          <div 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-[#0f172a] hover:bg-[#1e293b] transition-colors border-b border-[#1e293b]"
-          >
+        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
+          {/* TABLO BAŞLIĞI: Haftalar sekmesi tamamen söküldü */}
+          <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
             <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
               <span>📅</span>
-              <span>{activeTab === 'total' ? 'TOPLAM PUAN DURUMU' : `${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
-            </div>
-            <div className="text-slate-400 font-bold text-[10px] uppercase flex items-center gap-1 tracking-widest">
-              {isMenuOpen ? '▲ KAPAT' : '▼ HAFTALAR'}
+              <span>GÜNCEL PUAN DURUMU</span>
             </div>
           </div>
-
-          {isMenuOpen && (
-            <div className="w-full bg-[#0a0f1c] p-4 flex flex-wrap justify-center gap-3 border-b border-[#1e293b]">
-              {[...Array(maxWeek)].map((_, idx) => {
-                const num = idx + 1;
-                return (
-                  <button
-                    key={num}
-                    onClick={() => { setActiveTab(`w${num}`); setIsMenuOpen(false); }}
-                    className={`w-12 h-10 flex items-center justify-center rounded-lg font-bold text-sm transition-all ${
-                      activeTab === `w${num}` ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-[#94a3b8] hover:bg-[#334155]'
-                    }`}
-                  >
-                    {num}
-                  </button>
-                )
-              })}
-            </div>
-          )}
 
           {tableRows.length > 0 ? (
             <div className="overflow-x-auto">
@@ -146,7 +117,7 @@ export default function DfoPuanDurumuPage() {
                     <th className="pl-2 md:pl-4 pr-1 py-3 w-12 md:w-16 text-left">SIRA</th>
                     <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
                     <th className="pr-2 md:pr-4 pl-1 py-3 text-center whitespace-nowrap">
-                      {activeTab === 'total' ? 'TOPLAM PUAN' : 'HAFTALIK PUAN'}
+                      TOPLAM PUAN
                     </th>
                   </tr>
                 </thead>
@@ -157,6 +128,14 @@ export default function DfoPuanDurumuPage() {
                         <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
+                          {/* DFO'da oklar görünmeyecekse aşağıdaki bloğu sil. TFF ve Master mantığında bıraktım */}
+                          <div className="w-5 flex justify-center">
+                              <>
+                                {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
+                                {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
+                              </>
+                          </div>
                         </div>
                       </td>
                       
