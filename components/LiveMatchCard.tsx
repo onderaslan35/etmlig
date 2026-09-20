@@ -448,25 +448,18 @@ export default function LiveMatchCard() {
          if (awayScore === '-') awayScore = '0';
       }
 
+      // 🔴 TRUVA ATI AJANINI YAKALAMA ZIRHI 🔴
       const rawElapsed = dbMatch.elapsed;
-      let safeElapsed = null;
-      let safeExtra = dbMatch.extra || null;
-
-      if (typeof rawElapsed === 'object' && rawElapsed !== null) {
-         safeElapsed = rawElapsed.elapsed;
-         if (!safeExtra && rawElapsed.extra) safeExtra = rawElapsed.extra;
-      } else if (typeof rawElapsed === 'string' && rawElapsed.includes('+')) {
-         const parts = rawElapsed.split('+');
-         safeElapsed = parts[0];
-         safeExtra = parts[1];
-      } else {
-         safeElapsed = rawElapsed;
-      }
+      let safeElapsed = typeof rawElapsed === 'object' && rawElapsed !== null ? rawElapsed.elapsed : rawElapsed;
+      
+      // Olayların içine gizlenmiş 'SystemTime' ajanını bul ve uzatmayı çıkar
+      const systemTimeEvent = safeEvents.find((e: any) => e.type === 'SystemTime');
+      const safeExtra = systemTimeEvent ? systemTimeEvent.detail : null;
 
       let displayMinute = '';
       if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
          if (safeExtra) {
-            displayMinute = `${safeElapsed}+${safeExtra}'`;
+            displayMinute = `${safeElapsed}+${safeExtra}'`; // 90+2' formatı
          } else {
             displayMinute = `${safeElapsed}'`;
          }
@@ -521,8 +514,9 @@ export default function LiveMatchCard() {
         }
       }
 
-      const homeEvents = safeEvents.filter((e: any) => e.isHome === true || e?.team?.name === match.homeTeam);
-      const awayEvents = safeEvents.filter((e: any) => e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam));
+      // Ekrana çizerken gizli ajanı (SystemTime) olaylar tablosundan saklıyoruz ki ekranda boş satır çıkmasın
+      const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || e?.team?.name === match.homeTeam));
+      const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam)));
 
       return (
         <div 
@@ -692,7 +686,6 @@ export default function LiveMatchCard() {
                   </div>
                 </div>
 
-                {/* 🔴 MOBİL GENİŞ EKRAN OLAYLAR TABLOSU 🔴 */}
                 {safeEvents.length > 0 && (
                   <div className="w-full mb-3 flex flex-col gap-2 px-1.5 sm:px-6 relative z-30 animate-fadeIn">
                     <button 
@@ -708,7 +701,6 @@ export default function LiveMatchCard() {
                     {isEventsOpen && (
                       <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-1.5 sm:p-3 border border-slate-800/80 shadow-inner">
                         
-                        {/* Sol Kanat (Ev Sahibi) */}
                         <div className="flex-1 flex flex-col gap-1 items-start pr-1 sm:pr-3 border-r border-slate-700/50 overflow-hidden">
                           {homeEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
@@ -733,7 +725,6 @@ export default function LiveMatchCard() {
                           })}
                         </div>
 
-                        {/* Sağ Kanat (Deplasman) */}
                         <div className="flex-1 flex flex-col gap-1 items-end pl-1 sm:pl-3 overflow-hidden">
                           {awayEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';

@@ -65,16 +65,15 @@ export async function GET(request: Request) {
     const depSkor = mac.goals.away ?? 0;
     const durum = mac.fixture.status.short; 
     
+    // Saf sayıyı alıyoruz, veritabanını kızdırmıyoruz
     const dakikaElapsed = mac.fixture.status.elapsed || 0; 
     const dakikaExtra = mac.fixture.status.extra || null;
-    const finalDakika = dakikaExtra ? `${dakikaElapsed}+${dakikaExtra}` : dakikaElapsed.toString();
     
     let statu = 'NOT_STARTED';
     if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
     else if (['1H','2H','HT','ET','P'].includes(durum)) statu = 'LIVE';
 
-    // 🔴 KESİN KİMLİK DOĞRULAMASI İÇİN EV SAHİBİ ID'SİNİ ALIYORUZ 🔴
-    const homeTeamId = mac.teams.home.id;
+    const homeTeamId = mac.teams?.home?.id;
 
     const safOlaylar = (mac.events || [])
       .filter((e: any) => ['Goal', 'Card', 'subst'].includes(e.type))
@@ -89,16 +88,23 @@ export async function GET(request: Request) {
           assist: girenOyuncu,
           type: e.type,
           detail: e.detail,
-          // YENİ ZIRH: İsme bakmaksızın bu olay ev sahibinin mi damgasını basıyoruz!
           isHome: e.team?.id === homeTeamId
         };
       });
+
+    // 🔴 TRUVA ATI TAKTİĞİ: Uzatma dakikasını gizlice olayların içine atıyoruz 🔴
+    if (dakikaExtra) {
+        safOlaylar.push({
+            type: 'SystemTime',
+            detail: dakikaExtra.toString()
+        });
+    }
 
     await supabase.from('live_matches').update({ 
         home_score: evSkor.toString(), 
         away_score: depSkor.toString(), 
         status: statu, 
-        elapsed: finalDakika, 
+        elapsed: dakikaElapsed, // Saf sayı
         events: safOlaylar 
     }).eq('api_match_id', macId);
   }
