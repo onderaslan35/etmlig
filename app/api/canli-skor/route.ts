@@ -65,15 +65,43 @@ export async function GET(request: Request) {
     const evSkor = mac.goals.home ?? 0;
     const depSkor = mac.goals.away ?? 0;
     const durum = mac.fixture.status.short; 
-    const dakika = mac.fixture.status.elapsed || 0; 
+    
+    // 🔴 UZATMA DAKİKASI ÇÖZÜCÜ ZIRHI (45+2, 90+5) 🔴
+    const dakikaElapsed = mac.fixture.status.elapsed || 0; 
+    const dakikaExtra = mac.fixture.status.extra || null;
+    // Eğer hakem uzatma verdiyse araya "+" koyarak birleştir, yoksa sadece normal dakikayı gönder
+    const finalDakika = dakikaExtra ? `${dakikaElapsed}+${dakikaExtra}` : dakikaElapsed.toString();
     
     let statu = 'NOT_STARTED';
     if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
     else if (['1H','2H','HT','ET','P'].includes(durum)) statu = 'LIVE';
 
-    const olaylar = mac.events || [];
+    // 🔴 MAÇKOLİK TARZI SAF OLAY FİLTRESİ 🔴
+    const safOlaylar = (mac.events || [])
+      .filter((e: any) => ['Goal', 'Card', 'subst'].includes(e.type)) // Sadece Gol, Kart ve Değişiklik
+      .map((e: any) => {
+        // Gollerde asisti atıyoruz (Kalabalık yapmasın diye). 
+        // Fakat değişikliklerde (subst), "Giren" oyuncu assist içinde tutulur, onu koruyoruz!
+        let girenOyuncu = null;
+        if (e.type === 'subst') { girenOyuncu = { name: e.assist?.name }; }
+        
+        return {
+          time: { elapsed: e.time?.elapsed },
+          team: { id: e.team?.id, name: e.team?.name },
+          player: { name: e.player?.name }, // Golü Atan, Kartı Gören veya Çıkan Oyuncu
+          assist: girenOyuncu, // Sadece Değişiklikte Giren Oyuncu
+          type: e.type,
+          detail: e.detail
+        };
+      });
 
-    await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu, elapsed: dakika, events: olaylar }).eq('api_match_id', macId);
+    await supabase.from('live_matches').update({ 
+        home_score: evSkor.toString(), 
+        away_score: depSkor.toString(), 
+        status: statu, 
+        elapsed: finalDakika, 
+        events: safOlaylar 
+    }).eq('api_match_id', macId);
   }
 
   return NextResponse.json({ message: 'Nokta Atışı Başarılı (PRO PLAN)', cekilenMac: maclar.length, firlatilanIDler: apiIds, apiHatasi: sonuc.errors });
