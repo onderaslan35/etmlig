@@ -111,11 +111,15 @@ useEffect(() => {
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
+  // 🔴 YENİ EKLENEN RADAR DURUM KONTROLÜ 🔴
+  const [isRadarScanning, setIsRadarScanning] = useState<Record<number, boolean>>({});
+
   const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(6);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
 
+  // 🔴 BÜLTEN STATE'İNE API ID ALANI EKLENDİ 🔴
   const [bulletinMatches, setBulletinMatches] = useState(
     Array.from({ length: 24 }, (_, i) => ({
       match_index: i + 1,
@@ -123,7 +127,8 @@ useEffect(() => {
       match_date: generateWeekDates(6)[0],
       match_time: '21:00',
       home_team: '',
-      away_team: ''
+      away_team: '',
+      api_match_id: '' // YENİ EKLENDİ
     }))
   );
 
@@ -411,13 +416,14 @@ useEffect(() => {
             const existing = data.find(m => m.match_index === i + 1);
             return {
               match_index: i + 1, category: existing?.category || '', match_date: existing?.match_date || newDates[0],
-              match_time: existing?.match_time || '21:00', home_team: existing?.home_team || '', away_team: existing?.away_team || ''
+              match_time: existing?.match_time || '21:00', home_team: existing?.home_team || '', away_team: existing?.away_team || '',
+              api_match_id: existing?.api_match_id || '' // 🔴 BÜLTENDEN API ID'Yİ ÇEKER
             };
           });
           setBulletinMatches(mapped as any);
         } else {
           setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
-            match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: ''
+            match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: '', api_match_id: ''
           })));
         }
       }
@@ -879,6 +885,63 @@ useEffect(() => {
     setBulletinMatches(updated);
   };
 
+  // 🔴 YENİ: OTOMATİK RADAR (API'DEN ID BULMA MOTORU) 🔴
+  const runApiRadar = async (idx: number) => {
+     const match = bulletinMatches[idx];
+     if (!match.home_team || !match.away_team || !match.match_date) {
+         alert("Komutanım, radarı çalıştırmadan önce EV SAHİBİ, DEPLASMAN ve TARİH bilgilerini girmelisin!");
+         return;
+     }
+
+     setIsRadarScanning(prev => ({...prev, [idx]: true}));
+
+     try {
+         // Tarihi API-Sports'un anladığı YYYY-MM-DD formatına çevir (20.09.2026 -> 2026-09-20)
+         let formattedDate = match.match_date;
+         if (formattedDate.includes('.')) {
+             const parts = formattedDate.split('.');
+             formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+         }
+
+         // Radar Mermisi Ateşleniyor (Senin dördüncü şifreni kullandım)
+         const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
+             headers: {
+                 'x-apisports-key': 'b19f6602229b82fd8e2d329c102cd1c0',
+                 'x-rapidapi-host': 'v3.football.api-sports.io'
+             }
+         });
+         const data = await res.json();
+
+         if (data.response && data.response.length > 0) {
+             // Takım isimlerindeki ekleri silip akıllı (fuzzy) arama yapar
+             const cleanStr = (s: string) => s.toLowerCase().replace(/spor/g, '').replace(/fk/g, '').replace(/fc/g, '').trim();
+             const myHome = cleanStr(match.home_team);
+             const myAway = cleanStr(match.away_team);
+
+             const found = data.response.find((f: any) => {
+                 const apiHome = cleanStr(f.teams.home.name);
+                 const apiAway = cleanStr(f.teams.away.name);
+                 // Eşleşmeyi bulur (İçinde geçmesi bile yeterli)
+                 return (apiHome.includes(myHome) || myHome.includes(apiHome)) ||
+                        (apiAway.includes(myAway) || myAway.includes(apiAway));
+             });
+
+             if (found) {
+                 const apiId = found.fixture.id;
+                 handleBulletinChange(idx, 'api_match_id', String(apiId));
+             } else {
+                 alert("Sinyal Alınamadı! Bu maç API radarında bulunamadı. Takım adını veya tarihi kontrol et Komutanım.");
+             }
+         } else {
+             alert("Sinyal Yok! API-Sports o tarihte hiçbir maç bulamadı.");
+         }
+     } catch (error) {
+         alert("Radar Sistem Arızası: " + error);
+     } finally {
+         setIsRadarScanning(prev => ({...prev, [idx]: false}));
+     }
+  };
+
   const saveBulletinToDB = async () => {
     const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
     if (hasEmpty) {
@@ -890,12 +953,24 @@ useEffect(() => {
       const payload = bulletinMatches.map(m => ({
          week_num: bulletinWeek, match_index: m.match_index, category: m.category,
          match_date: m.match_date, match_time: m.match_time,
-         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase()
+         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase(),
+         api_match_id: m.api_match_id ? parseInt(String(m.api_match_id)) : null // 🔴 BÜLTENE KAYDET
       }));
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nTahminler kapısı an itibarıyla aslanlara açıldı, Cuma 21:00 kuralı iptal!`);
+      
+      // 🔴 LIVE_MATCHES KÖPRÜSÜNÜ OTOMATİK KUR (Şifreleri anında bağlar)
+      const liveMatchesPayload = bulletinMatches.filter(m => m.api_match_id).map(m => ({
+          id: getUniqueMatchId(bulletinWeek, m.match_index), // Karargah ID (Örn: 601)
+          api_match_id: parseInt(String(m.api_match_id)) // API ID (Örn: 1550136)
+      }));
+
+      if (liveMatchesPayload.length > 0) {
+          await supabase.from('live_matches').upsert(liveMatchesPayload, { onConflict: 'id' });
+      }
+
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nAPI Radarı ile bulunan maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
     setIsPublishing(false);
   };
@@ -1348,7 +1423,7 @@ useEffect(() => {
                 </button>
 
                 <div className="overflow-x-auto custom-scrollbar pb-4">
-                   <table className="w-full text-left text-xs min-w-[800px]">
+                   <table className="w-full text-left text-xs min-w-[950px]">
                       <tbody>
                          {bulletinMatches.map((m, idx) => {
                             const isReady = m.category && m.match_date && m.match_time && m.home_team && m.away_team;
@@ -1361,38 +1436,60 @@ useEffect(() => {
                                     </div>
                                  </td>
 
-                                 <td className="p-2 w-[22%]">
+                                 <td className="p-2 w-[18%]">
                                     <select value={m.category} onChange={e=>handleBulletinChange(idx,'category',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold`}>
                                        <option value="">-- KATEGORİ SEÇİN --</option>
                                        {getDynamicCategories().map(c => <option key={`cat-${m.match_index}-${c}`} value={c}>{c}</option>)}
                                     </select>
                                  </td>
 
-                                 <td className="p-2 w-[15%]">
+                                 <td className="p-2 w-[12%]">
                                     <select value={m.match_date} onChange={e=>handleBulletinChange(idx,'match_date',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
                                        {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
                                     </select>
                                  </td>
 
-                                 <td className="p-2 w-[12%]">
+                                 <td className="p-2 w-[10%]">
                                     <select value={m.match_time} onChange={e=>handleBulletinChange(idx,'match_time',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold text-center">
                                        {timeOptionsArr.map(t => <option key={`time-${m.match_index}-${t}`} value={t}>{t}</option>)}
                                     </select>
                                  </td>
 
-                                 <td className="p-2 w-[22%]">
+                                 <td className="p-2 w-[20%]">
                                     <select value={m.home_team} onChange={e=>handleBulletinChange(idx,'home_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
                                        <option value="">-- EV SAHİBİ SEÇ --</option>
                                        {getAvailableTeams(idx, true).map(t => <option key={`home-${m.match_index}-${t}`} value={t}>{t}</option>)}
                                     </select>
                                  </td>
 
-                                 <td className="p-2 w-[22%]">
+                                 <td className="p-2 w-[20%]">
                                     <select value={m.away_team} onChange={e=>handleBulletinChange(idx,'away_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
                                        <option value="">-- DEPLASMAN SEÇ --</option>
                                        {getAvailableTeams(idx, false).map(t => <option key={`away-${m.match_index}-${t}`} value={t}>{t}</option>)}
                                     </select>
                                  </td>
+
+                                 {/* 🔴 API-SPORTS MAÇ ID RADAR BÖLÜMÜ 🔴 */}
+                                 <td className="p-2 w-[15%]">
+                                    <div className="flex items-center gap-1 w-full">
+                                       <input
+                                          type="text"
+                                          value={m.api_match_id || ''}
+                                          onChange={e => handleBulletinChange(idx, 'api_match_id', e.target.value)}
+                                          placeholder="API ID"
+                                          className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold text-center tracking-widest"
+                                       />
+                                       <button
+                                          onClick={() => runApiRadar(idx)}
+                                          disabled={isRadarScanning[idx]}
+                                          title="Otomatik Bul (Radar)"
+                                          className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 p-2 rounded shadow transition-colors border border-cyan-700/50"
+                                       >
+                                          {isRadarScanning[idx] ? '⏳' : '📡'}
+                                       </button>
+                                    </div>
+                                 </td>
+
                               </tr>
                             );
                          })}
