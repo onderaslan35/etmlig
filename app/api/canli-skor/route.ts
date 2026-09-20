@@ -23,7 +23,6 @@ export async function GET(request: Request) {
     const todayStr = `${d}.${m}.${y}`; 
 
     const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
-    
     if (bulten) {
         const todaysMatches = bulten.filter(match => match.match_date === todayStr);
         if (todaysMatches.length > 0) {
@@ -78,20 +77,10 @@ export async function GET(request: Request) {
         });
 
         let allPredictions: any[] = [];
-        let from = 0; let step = 999; let keepFetching = true;
+        let from = 0; let step = 1000; let keepFetching = true;
         while(keepFetching) {
-            // 🔥 KRİTİK HATA ÇÖZÜMÜ: order('id') eklendi, tahminlerin kaybolması imkansız hale getirildi!
-            const { data } = await supabase.from('player_predictions')
-                .select('*')
-                .gte('week_num', 5)
-                .order('id', { ascending: true })
-                .range(from, from + step);
-                
-            if (data && data.length > 0) { 
-                allPredictions = [...allPredictions, ...data]; 
-                if (data.length <= step) keepFetching = false; 
-                else from += step + 1; 
-            } 
+            const { data } = await supabase.from('player_predictions').select('*').gte('week_num', 5).order('id', { ascending: true }).range(from, from + step - 1);
+            if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length < step) keepFetching = false; else from += step; } 
             else keepFetching = false;
         }
 
@@ -114,7 +103,9 @@ export async function GET(request: Request) {
                 dfoPts: Number(dd.w1||0) + Number(dd.w2||0) + Number(dd.w3||0) + Number(dd.w4||0),
                 tffPts: Number(td.w1||0) + Number(td.w2||0) + Number(td.w3||0) + Number(td.w4||0),
                 skorPts: Number(sd.w1||0) + Number(sd.w2||0) + Number(sd.w3||0) + Number(sd.w4||0) + Number(stff.w1||0) + Number(stff.w2||0) + Number(stff.w3||0) + Number(stff.w4||0),
-                masterBaseAll: 0, masterBasePrev: 0, masterLive: 0
+                masterBaseAll: 0, masterBasePrev: 0, masterLive: 0,
+                dfoBaseAll: 0, dfoBasePrev: 0, dfoLive: 0,
+                tffBaseAll: 0, tffBasePrev: 0, tffLive: 0
             };
         });
 
@@ -150,10 +141,20 @@ export async function GET(request: Request) {
                             st[wId].masterBaseAll += pts;
                             if (weekNum < highestWeekFound) st[wId].masterBasePrev += pts; 
                             
-                            if (isTff) st[wId].tffPts += pts; else st[wId].dfoPts += pts;
+                            if (isTff) {
+                                st[wId].tffPts += pts;
+                                st[wId].tffBaseAll += pts;
+                                if (weekNum < highestWeekFound) st[wId].tffBasePrev += pts; 
+                            } else {
+                                st[wId].dfoPts += pts;
+                                st[wId].dfoBaseAll += pts;
+                                if (weekNum < highestWeekFound) st[wId].dfoBasePrev += pts;
+                            }
                             st[wId].skorPts += 1;
                         } else if (isLive) {
                             st[wId].masterLive += pts;
+                            if (isTff) st[wId].tffLive += pts;
+                            else st[wId].dfoLive += pts;
                         }
                     }
                 });
@@ -164,24 +165,54 @@ export async function GET(request: Request) {
             let t = 0; for (let w = 5; w <= maxW; w++) if (dynamicBonuses[w] && dynamicBonuses[w][uid]) t += dynamicBonuses[w][uid]; return t;
         };
 
+        // 🔥 MASTER
         const prevList = Object.keys(st).map(id => ({ 
             id, score: st[id].masterW1W4 + st[id].masterBasePrev + getAdminBonus(id, highestWeekFound - 1) 
         })).sort((a,b) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr'));
-        
         const prevRanks: Record<string, number> = {};
         prevList.forEach((p, i) => prevRanks[p.id] = i + 1);
-
         const currList = Object.keys(st).map(id => ({ 
             id, score: st[id].masterW1W4 + st[id].masterBaseAll + st[id].masterLive + getAdminBonus(id, highestWeekFound)
+        })).sort((a,b) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr'));
+
+        // 🔥 DFO
+        const prevListDfo = Object.keys(st).map(id => ({ 
+            id, score: st[id].dfoPts - st[id].dfoBaseAll + st[id].dfoBasePrev 
+        })).sort((a,b) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr'));
+        const prevRanksDfo: Record<string, number> = {};
+        prevListDfo.forEach((p, i) => prevRanksDfo[p.id] = i + 1);
+        const currListDfo = Object.keys(st).map(id => ({ 
+            id, score: st[id].dfoPts + st[id].dfoLive 
+        })).sort((a,b) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr'));
+
+        // 🔥 TFF
+        const prevListTff = Object.keys(st).map(id => ({ 
+            id, score: st[id].tffPts - st[id].tffBaseAll + st[id].tffBasePrev 
+        })).sort((a,b) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr'));
+        const prevRanksTff: Record<string, number> = {};
+        prevListTff.forEach((p, i) => prevRanksTff[p.id] = i + 1);
+        const currListTff = Object.keys(st).map(id => ({ 
+            id, score: st[id].tffPts + st[id].tffLive 
         })).sort((a,b) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr'));
 
         const upsertData = currList.map((player, index) => {
             const currentRank = index + 1;
             const prevRank = prevRanks[player.id] || currentRank;
-            
             let trend = 'same', trendDiff = 0; 
             if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
             else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+
+            const currRankDfo = currListDfo.findIndex(p => p.id === player.id) + 1;
+            const prevRankDfo = prevRanksDfo[player.id] || currRankDfo;
+            let dfoTrend = 'same', dfoTrendDiff = 0;
+            if (currRankDfo < prevRankDfo) { dfoTrend = 'up'; dfoTrendDiff = prevRankDfo - currRankDfo; }
+            else if (currRankDfo > prevRankDfo) { dfoTrend = 'down'; dfoTrendDiff = currRankDfo - prevRankDfo; }
+
+            const currRankTff = currListTff.findIndex(p => p.id === player.id) + 1;
+            const prevRankTff = prevRanksTff[player.id] || currRankTff;
+            let tffTrend = 'same', tffTrendDiff = 0;
+            if (currRankTff < prevRankTff) { tffTrend = 'up'; tffTrendDiff = prevRankTff - currRankTff; }
+            else if (currRankTff > prevRankTff) { tffTrend = 'down'; tffTrendDiff = currRankTff - prevRankTff; }
 
             return {
                 id: player.id,
@@ -193,6 +224,10 @@ export async function GET(request: Request) {
                 skor_pts: st[player.id].skorPts,
                 trend_direction: trend,
                 trend_diff: trendDiff,
+                dfo_trend_direction: dfoTrend,
+                dfo_trend_diff: dfoTrendDiff,
+                tff_trend_direction: tffTrend,
+                tff_trend_diff: tffTrendDiff,
                 updated_at: new Date().toISOString()
             };
         });
@@ -205,5 +240,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'ŞİMŞEK MASTER MANTIĞI AKTİF: Kayıp Tahminler Bulundu, Doğaç 112 Puan Geri Döndü!' });
+    return NextResponse.json({ message: 'ŞİMŞEK MANTIĞI AKTİF: DFO ve TFF Okları da Hesaplandı!' });
 }
