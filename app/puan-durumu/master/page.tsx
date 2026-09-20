@@ -14,7 +14,7 @@ export default function MasterPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED'); // Uyumluluk için tutuldu
+  const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
   const [maxWeek, setMaxWeek] = useState<number>(6);
 
   const loadLeaderboard = async () => {
@@ -31,7 +31,7 @@ export default function MasterPuanDurumuPage() {
         });
       }
 
-      // 2. Maksimum (Güncel) Haftayı Belirleme
+      // 2. Maksimum Haftayı Belirleme
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num').order('week_num', { ascending: false }).limit(1);
       let currentMaxWeek = 6;
       if (dbBulletin && dbBulletin.length > 0) {
@@ -39,7 +39,7 @@ export default function MasterPuanDurumuPage() {
           setMaxWeek(currentMaxWeek);
       }
 
-      // 3. KALICI (MÜHÜRLÜ) ROZETLERİ ÇEKME (Çok Hızlı)
+      // 3. KALICI (MÜHÜRLÜ) ROZETLERİ ÇEKME (Hızlı çekim)
       const { data: dbBonusPoints } = await supabase
         .from('points')
         .select('*')
@@ -59,23 +59,26 @@ export default function MasterPuanDurumuPage() {
       }
 
       if (activeTab === 'total') {
-        // ⚡ ŞİMŞEK YÜKLEME: Binlerce tahmin yerine arka plandaki hazır tepsiyi okuyoruz (0.1 Saniye)
+        // ⚡ ŞİMŞEK YÜKLEME: Puan ve Trend okları doğrudan tepsiden alınır
         const { data } = await supabase
           .from('live_leaderboard')
-          .select('id, name, master_pts, master_rank');
+          // 🔥 HATA DÜZELTİLDİ: trend_direction ve trend_diff eklendi
+          .select('id, name, master_pts, master_rank, trend_direction, trend_diff');
 
         if (data && data.length > 0) {
           const list = data.map(row => {
             const cleanName = (row.name || playersList[row.id] || "Bilinmiyor").replace(/🏆/g, '').trim().toUpperCase();
             let badges: string[] = [];
             
-            // Toplam tabloda rozetleri en güncel haftaya göre gösterir
-            if (currentMaxWeek <= 4) {
-               const hB = (historicalBadges as any)[`w${currentMaxWeek}`]?.[cleanName];
-               if (hB) badges = [...badges, ...hB];
-            } else {
-               const dynB = dynamicBadges[`w${currentMaxWeek}-${cleanName}`];
-               if (dynB) badges = [...badges, ...dynB];
+            // Tüm mühürlü rozetleri toplama yansıt
+            for (let w = 1; w <= currentMaxWeek; w++) {
+                if (w <= 4) {
+                   const hB = (historicalBadges as any)[`w${w}`]?.[cleanName];
+                   if (hB) badges = [...new Set([...badges, ...hB])];
+                } else {
+                   const dynB = dynamicBadges[`w${w}-${cleanName}`];
+                   if (dynB) badges = [...new Set([...badges, ...dynB])];
+                }
             }
 
             return {
@@ -83,10 +86,10 @@ export default function MasterPuanDurumuPage() {
               name: row.name || playersList[row.id] || "Bilinmiyor",
               displayScore: row.master_pts,
               currentRank: row.master_rank,
-              trend: 'same', 
-              trendDiff: 0,
+              trend: row.trend_direction || 'same', // 🔥 OK YÖNÜ TEPSİDEN GELDİ
+              trendDiff: row.trend_diff || 0,       // 🔥 OK FARK TEPSİDEN GELDİ
               badges,
-              liveExtra: 0 // Hız için canlı artış tepside hesaplanıyor
+              liveExtra: 0 
             };
           });
           
@@ -96,39 +99,66 @@ export default function MasterPuanDurumuPage() {
         }
 
       } else {
-        // 🔴 EKMEL KANUNU: HAFTALIK GÖRÜNÜM İÇİN MÜHÜRLÜ master_weekly_points KULLANILIR
+        // 🔴 HAFTALAR BOŞ DÖNÜYORDU, ÇÜNKÜ TEK BİR TABLO YETMİYOR 🔴
+        // Master haftalık puanı, DFO + TFF + Bonusların toplamıdır.
         const weekNum = parseInt(activeTab.replace('w', ''));
-        const { data } = await supabase.from('master_weekly_points').select('*');
+        
+        const [dfoData, tffData] = await Promise.all([
+             supabase.from('dfo_weekly_points').select('*'),
+             supabase.from('tff_weekly_points').select('*')
+        ]);
 
-        if (data) {
-           const list = data.map(row => {
-               const uid = String(row.id || row.user_id || row.username);
-               const pName = playersList[uid] || "Bilinmiyor";
-               const cleanName = pName.replace(/🏆/g, '').trim().toUpperCase();
-               let badges: string[] = [];
-
-               if (weekNum <= 4) {
-                   const hB = (historicalBadges as any)[`w${weekNum}`]?.[cleanName];
-                   if (hB) badges = [...badges, ...hB];
-               } else {
-                   const dynB = dynamicBadges[`w${weekNum}-${cleanName}`];
-                   if (dynB) badges = [...badges, ...dynB];
-               }
-
-               return {
-                   id: uid,
-                   name: pName,
-                   displayScore: row[`w${weekNum}`] || 0,
-                   currentRank: 0,
-                   trend: 'same',
-                   trendDiff: 0,
-                   badges,
-                   liveExtra: 0
-               }
-           });
-           const sortedList = list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
-           setTableRows(sortedList.map((r, i) => ({ ...r, currentRank: i + 1 })));
+        const playersDict: Record<string, number> = {};
+        
+        if (dfoData.data) {
+            dfoData.data.forEach(row => {
+                const uid = String(row.id || row.user_id || row.username);
+                playersDict[uid] = (playersDict[uid] || 0) + (row[`w${weekNum}`] || 0);
+            });
         }
+        
+        if (tffData.data) {
+            tffData.data.forEach(row => {
+                const uid = String(row.id || row.user_id || row.username);
+                playersDict[uid] = (playersDict[uid] || 0) + (row[`w${weekNum}`] || 0);
+            });
+        }
+
+        // Haftanın Bonusları
+        if (dbBonusPoints) {
+            dbBonusPoints.filter(b => b.hafta === weekNum).forEach(b => {
+                const uid = String(b.username);
+                playersDict[uid] = (playersDict[uid] || 0) + b.puan;
+            });
+        }
+
+        const list = Object.keys(playersList).map(uid => {
+            const pName = playersList[uid] || "Bilinmiyor";
+            const cleanName = pName.replace(/🏆/g, '').trim().toUpperCase();
+            let badges: string[] = [];
+
+            if (weekNum <= 4) {
+                const hB = (historicalBadges as any)[`w${weekNum}`]?.[cleanName];
+                if (hB) badges = [...badges, ...hB];
+            } else {
+                const dynB = dynamicBadges[`w${weekNum}-${cleanName}`];
+                if (dynB) badges = [...badges, ...dynB];
+            }
+
+            return {
+                id: uid,
+                name: pName,
+                displayScore: playersDict[uid] || 0,
+                currentRank: 0,
+                trend: 'same',
+                trendDiff: 0,
+                badges,
+                liveExtra: 0
+            };
+        });
+
+        const sortedList = list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
+        setTableRows(sortedList.map((r, i) => ({ ...r, currentRank: i + 1 })));
       }
 
     } catch (e) {
@@ -138,7 +168,6 @@ export default function MasterPuanDurumuPage() {
 
   useEffect(() => { 
       loadLeaderboard(); 
-      // ⚡ CANLI RADAR: Motor puanı güncellediğinde sayfa anında hisseder
       const channel = supabase.channel('master_live_updates')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => {
            loadLeaderboard();
