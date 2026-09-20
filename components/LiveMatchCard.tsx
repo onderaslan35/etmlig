@@ -491,7 +491,6 @@ export default function LiveMatchCard() {
         }
       }
 
-      // 🔥 Olayları Takımlara Göre Ayırıyoruz (Kronolojik sırayı bozmaz)
       const homeEvents = safeEvents.filter((e: any) => e?.team?.name === match.homeTeam || e?.team?.id === dbMatch.home_team_id);
       const awayEvents = safeEvents.filter((e: any) => e?.team?.name === match.awayTeam || e?.team?.id === dbMatch.away_team_id);
 
@@ -500,7 +499,7 @@ export default function LiveMatchCard() {
           key={match.id} 
           className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
             isGoalFlashing 
-              ? 'goal-lightning' 
+              ? 'police-siren' 
               : isExpanded 
                 ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
                 : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
@@ -546,10 +545,10 @@ export default function LiveMatchCard() {
                   </div>
                   
                   <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${
-                    isGoalFlashing ? 'bg-green-900/80 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.8)] scale-110' :
+                    isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' :
                     matchStatus === 'LIVE' ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'
                   }`}>
-                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-green-300' : 'text-white'}`}>
+                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>
                       {matchStatus === 'NOT_STARTED' ? 'v' : `${homeScore}-${awayScore}`}
                     </span>
                   </div>
@@ -632,10 +631,10 @@ export default function LiveMatchCard() {
                       </div>
                     )}
 
-                    <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-green-400 shadow-[0_0_30px_rgba(74,222,128,0.8)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
-                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-green-300 scale-125' : 'text-white'}`}>{homeScore}</span>
+                    <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{homeScore}</span>
                       <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-green-300 scale-125' : 'text-white'}`}>{awayScore}</span>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{awayScore}</span>
                     </div>
 
                     {matchStatus === 'NOT_STARTED' && countdownText && (
@@ -655,7 +654,6 @@ export default function LiveMatchCard() {
                   </div>
                 </div>
 
-                {/* YENİ ZIRH: FULL TAKTİKSEL KURMAY TABLOSU */}
                 {safeEvents.length > 0 && (
                   <div className="w-full mb-3 flex flex-col gap-2 px-3 sm:px-6 relative z-30 animate-fadeIn">
                     <button 
@@ -671,7 +669,6 @@ export default function LiveMatchCard() {
                     {isEventsOpen && (
                       <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-2 sm:p-3 border border-slate-800/80 shadow-inner">
                         
-                        {/* EV SAHİBİ KANADI (Sol) */}
                         <div className="flex-1 flex flex-col gap-1.5 items-start pr-2 sm:pr-3 border-r border-slate-700/50">
                           {homeEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
@@ -696,7 +693,6 @@ export default function LiveMatchCard() {
                           })}
                         </div>
 
-                        {/* DEPLASMAN KANADI (Sağ) */}
                         <div className="flex-1 flex flex-col gap-1.5 items-end pl-2 sm:pl-3">
                           {awayEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
@@ -878,23 +874,22 @@ export default function LiveMatchCard() {
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes lightning {
-          0% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
-          15% { box-shadow: 0 0 60px #22c55e, inset 0 0 40px #22c55e; border-color: #22c55e; background-color: rgba(34, 197, 94, 0.4); }
-          30% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
-          45% { box-shadow: 0 0 80px #16a34a, inset 0 0 60px #16a34a; border-color: #16a34a; background-color: rgba(22, 163, 74, 0.5); }
-          60% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
-          100% { box-shadow: 0 0 10px #4ade80, inset 0 0 10px #4ade80; border-color: #4ade80; background-color: rgba(74, 222, 128, 0.1); }
+        @keyframes siren {
+          0% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); }
+          25% { box-shadow: 0 0 80px #1d4ed8, inset 0 0 60px #1d4ed8; border-color: #2563eb; background-color: rgba(29, 78, 216, 0.6); }
+          50% { box-shadow: 0 0 15px #e11d48, inset 0 0 15px #e11d48; border-color: #f43f5e; background-color: rgba(225, 29, 72, 0.2); }
+          75% { box-shadow: 0 0 80px #be123c, inset 0 0 60px #be123c; border-color: #e11d48; background-color: rgba(190, 18, 60, 0.6); }
+          100% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); }
         }
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
         }
-        .goal-lightning {
-          animation: lightning 0.5s ease-in-out infinite;
+        .police-siren {
+          animation: siren 0.4s ease-in-out infinite;
           z-index: 50;
           transform: scale(1.02);
-          transition: all 0.3s;
+          transition: all 0.2s;
         }
       `}} />
 
