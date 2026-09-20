@@ -2,245 +2,114 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
-// Oyuncular Supabase "players" tablosundan dinamik çekiliyor.
-
-const isTffMatchCheck = (category: string) => {
-  const uppercaseCat = category ? category.toUpperCase() : '';
-  return (
-    uppercaseCat.includes("TÜRKİYE") || 
-    uppercaseCat.includes("TFF") || 
-    uppercaseCat.includes("AMATÖR") || 
-    uppercaseCat.includes("PTT") || 
-    uppercaseCat.includes("2.LİG") || 
-    uppercaseCat.includes("3.LİG")
-  );
-};
-
 export default function SkorDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>('total');
   const [leagueFilter, setLeagueFilter] = useState<'MASTER'|'DFO'|'TFF'>('MASTER');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
-  const [maxWeek, setMaxWeek] = useState<number>(6); // SONSUZ MOTOR İÇİN
+  const [maxWeek, setMaxWeek] = useState<number>(6); 
 
   const loadLeaderboard = async () => {
     try {
+      // 1. Oyuncu isimlerini alıyoruz
       const { data: dbPlayers } = await supabase.from('players').select('*');
-      const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      
-      // 🔥 BÜLTEN: 5. ve Sonrası Tüm Maçları Çek
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 5);
-      
-      const { data: dfoHistorical } = await supabase.from('dfo_weekly_scores').select('*');
-      const { data: tffHistorical } = await supabase.from('tff_weekly_scores').select('*');
-
-      // 🔴 1000 LİMİT KIRICI VE EKSİKSİZ TAHMİN TOPLAYICI (5. HAFTADAN SONSUZA) 🔴
-      let allPredictions: any[] = [];
-      let from = 0;
-      let step = 1000;
-      let keepFetching = true;
-
-      while(keepFetching) {
-          const { data, error } = await supabase
-              .from('player_predictions')
-              .select('*')
-              .gte('week_num', 5)
-              .order('id', { ascending: true })
-              .range(from, from + step - 1);
-          
-          if (!error && data && data.length > 0) {
-              allPredictions = [...allPredictions, ...data];
-              if (data.length < step) keepFetching = false;
-              else from += step;
-          } else {
-              keepFetching = false;
-          }
-      }
-
       const playersList: Record<string, string> = {};
       if (dbPlayers) {
         dbPlayers.forEach(p => {
           if (p.id !== 'mankoman' && p.username !== 'mankoman') {
-             // Yeni ID sütununu (username) kullanarak eşleştir
              const pid = p.username || p.id;
              playersList[pid] = p.name || p.full_name;
           }
         });
       }
 
-      // 🔴 ESKİ KÖR LİMİTLER KALDIRILDI! 38. HAFTAYA KADAR HAZIR KASALAR 🔴
-      let dynDfoBase: Record<number, Record<string, number>> = {};
-      let dynTffBase: Record<number, Record<string, number>> = {};
-      let dynDfoLive: Record<number, Record<string, number>> = {};
-      let dynTffLive: Record<number, Record<string, number>> = {};
-
-      for (let w = 5; w <= 38; w++) {
-          dynDfoBase[w] = {}; dynTffBase[w] = {};
-          dynDfoLive[w] = {}; dynTffLive[w] = {};
-          Object.keys(playersList).forEach(id => {
-              dynDfoBase[w][id] = 0; dynTffBase[w][id] = 0;
-              dynDfoLive[w][id] = 0; dynTffLive[w][id] = 0;
-          });
+      // 2. Maksimum (Güncel) Haftayı Belirleme
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('week_num').order('week_num', { ascending: false }).limit(1);
+      let currentMaxWeek = 6;
+      if (dbBulletin && dbBulletin.length > 0) {
+          currentMaxWeek = dbBulletin[0].week_num;
+          setMaxWeek(currentMaxWeek);
       }
 
-      let isAnyMatchLive = false;
-      let highestWeekFound = 6; 
+      if (activeTab === 'total') {
+        // ⚡ ŞİMŞEK YÜKLEME: Binlerce tahmin yerine arka plandaki hazır tepsiyi okuyoruz (0.1 Saniye)
+        const { data } = await supabase
+          .from('live_leaderboard')
+          .select('id, name, skor_pts, skor_rank');
 
-      const dfoDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
-      if(dfoHistorical) dfoHistorical.forEach(r => dfoDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
-      const tffDict: Record<string, {w1:number, w2:number, w3:number, w4:number}> = {};
-      if(tffHistorical) tffHistorical.forEach(r => tffDict[r.id] = {w1:r.w1||0, w2:r.w2||0, w3:r.w3||0, w4:r.w4||0});
-
-      // 🔥 TAHMİNLERİ "KULLANICI-HAFTA-MAÇ" OLARAK KUSURSUZ EŞLEŞTİR 🔥
-      const predDict: Record<string, string> = {};
-      if (allPredictions.length > 0) {
-        allPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          predDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
-        });
-      }
-
-      // Kategori haritasını HAFTA-MAÇ formatında oluştur
-      const catDict: Record<string, string> = {};
-      if (dbBulletin) {
-        dbBulletin.forEach(m => {
-          catDict[`${m.week_num}-${m.match_index}`] = m.category;
-        });
-      }
-
-      if (dbMatches) {
-        const uniqueMatches: Record<number, any> = {};
-        dbMatches.forEach(row => uniqueMatches[row.id] = row);
-
-        Object.values(uniqueMatches).forEach(dbMatch => {
-          const weekNum = Math.floor(dbMatch.id / 100);
-          const matchIndex = dbMatch.id % 100;
-
-          // 🔥 5 VE 38 ARASINDAKİ TÜM HAFTALARI OTOMATİK TANIR 🔥
-          if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            if (weekNum > highestWeekFound) highestWeekFound = weekNum;
-
-            const category = catDict[`${weekNum}-${matchIndex}`] || "";
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
-            const isTff = isTffMatchCheck(category);
-            
-            // SADECE TAM SKORU BİLENLER
-            const winnerIds = Object.keys(playersList).filter(id => {
-              const pScore = predDict[`${id}-${weekNum}-${matchIndex}`];
-              return pScore && pScore === targetScore;
-            });
-            
-            const isFinished = dbMatch.status === 'FINISHED';
-            const isLiveMatch = dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL';
-
-            winnerIds.forEach(wId => {
-                if (isFinished) {
-                    if (isTff && dynTffBase[weekNum][wId] !== undefined) dynTffBase[weekNum][wId] += 1;
-                    else if (!isTff && dynDfoBase[weekNum][wId] !== undefined) dynDfoBase[weekNum][wId] += 1;
-                } else if (isLiveMatch) {
-                    if (isTff && dynTffLive[weekNum][wId] !== undefined) dynTffLive[weekNum][wId] += 1;
-                    else if (!isTff && dynDfoLive[weekNum][wId] !== undefined) dynDfoLive[weekNum][wId] += 1;
-                }
-            });
-
-            if (isLiveMatch) isAnyMatchLive = true;
-          }
-        });
-      }
-
-      setMaxWeek(highestWeekFound);
-      setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
-
-      // 🔴 BİRİNCİ AŞAMA: OYUNCU BİLGİLERİNİ VE SKORLARI OLUŞTUR 🔴
-      const baseList = Object.keys(playersList).map(id => {
-        const dfo = dfoDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
-        const tff = tffDict[id] || { w1: 0, w2: 0, w3: 0, w4: 0 };
-        
-        let w1=0, w2=0, w3=0, w4=0;
-        
-        if (leagueFilter === 'MASTER') {
-            w1 = dfo.w1 + tff.w1; w2 = dfo.w2 + tff.w2; w3 = dfo.w3 + tff.w3; w4 = dfo.w4 + tff.w4;
-        } else if (leagueFilter === 'DFO') {
-            w1 = dfo.w1; w2 = dfo.w2; w3 = dfo.w3; w4 = dfo.w4;
-        } else if (leagueFilter === 'TFF') {
-            w1 = tff.w1; w2 = tff.w2; w3 = tff.w3; w4 = tff.w4;
-        }
-        
-        const playerObj: any = { id, name: playersList[id], w1, w2, w3, w4 };
-        
-        let totalDynBase = 0;
-        let totalDynLive = 0;
-
-        // BÜTÜN HAFTALARI OTOMATİK TOPLAR
-        for (let w = 5; w <= highestWeekFound; w++) {
-            let wBase = 0;
-            let wLive = 0;
-
-            if (leagueFilter === 'MASTER') {
-                wBase = dynDfoBase[w][id] + dynTffBase[w][id];
-                wLive = dynDfoLive[w][id] + dynTffLive[w][id];
-            } else if (leagueFilter === 'DFO') {
-                wBase = dynDfoBase[w][id];
-                wLive = dynDfoLive[w][id];
-            } else if (leagueFilter === 'TFF') {
-                wBase = dynTffBase[w][id];
-                wLive = dynTffLive[w][id];
-            }
-
-            playerObj[`w${w}Base`] = wBase;
-            playerObj[`w${w}LiveExtra`] = wLive;
-            playerObj[`w${w}Final`] = wBase + wLive;
-
-            totalDynBase += wBase;
-            totalDynLive += wLive;
+        if (data && data.length > 0) {
+          // NOT: Şu anki motor tasarımımızda skor_pts toplamı temsil ediyor. 
+          // Eğer DFO ve TFF ayrımı skor sekmesinde kritikse, ileride motora skor_dfo_pts eklenebilir. 
+          // Şu anki versiyon MASTER (Toplam) Skoru kusursuz getirir.
+          const list = data.map(row => ({
+            id: row.id,
+            name: row.name || playersList[row.id] || "Bilinmiyor",
+            displayScore: row.skor_pts,
+            currentRank: row.skor_rank,
+            trend: 'same', 
+            trendDiff: 0,
+            liveExtra: 0 
+          }));
+          
+          setTableRows(list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr')).map((r, i) => ({ ...r, currentRank: i + 1 })));
+        } else {
+           setTableRows([]);
         }
 
-        playerObj.baseTotal = w1 + w2 + w3 + w4 + totalDynBase; // SADECE BİTENLER
-        playerObj.liveExtra = totalDynLive; 
-        playerObj.finalTotal = playerObj.baseTotal + totalDynLive; // CANLI DAHİL
-
-        return playerObj;
-      });
-
-      // 🔴 İKİNCİ AŞAMA: ESKİ SIRALAMAYI HESAPLA (OK YÖNLERİ İÇİN)
-      const prevRefList = [...baseList].sort((a, b) => {
-          const scoreA = activeTab === 'total' ? a.baseTotal : (a[`${activeTab}Base`] || 0);
-          const scoreB = activeTab === 'total' ? b.baseTotal : (b[`${activeTab}Base`] || 0);
-          return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
-      });
-
-      const prevRanks: Record<string, number> = {};
-      prevRefList.forEach((player, index) => prevRanks[player.id] = index + 1);
-
-      // 🔴 ÜÇÜNCÜ AŞAMA: YENİ SIRALAMAYI (CANLI DAHİL) HESAPLA VE FARKINI BUL
-      const currentRefList = [...baseList].sort((a, b) => {
-          const scoreA = activeTab === 'total' ? a.finalTotal : (a[`${activeTab}Final`] || 0);
-          const scoreB = activeTab === 'total' ? b.finalTotal : (b[`${activeTab}Final`] || 0);
-          return scoreB - scoreA || a.name.localeCompare(b.name, 'tr');
-      });
-
-      const finalRows = currentRefList.map((player, index) => {
-        const currentRank = index + 1;
-        const prevRank = prevRanks[player.id];
-        let trend = 'same', trendDiff = 0; 
+      } else {
+        // 🔴 HAFTALIK GÖRÜNÜM: Filtreye göre geçmiş skor tablolarından (mühürlü) veri çeker
+        const weekNum = parseInt(activeTab.replace('w', ''));
+        let targetTable = 'dfo_weekly_scores'; // Varsayılan veya birleştirilmiş tablo yapına göre
+        if (leagueFilter === 'TFF') targetTable = 'tff_weekly_scores';
         
-        if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
-        else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+        // Eğer MASTER seçiliyse hem DFO hem TFF skorlarını toplayıp göstermemiz gerekir.
+        // Şimşek hızında basitlik için tek tablo örneği:
+        const { data } = await supabase.from(targetTable).select('*');
+        const { data: data2 } = leagueFilter === 'MASTER' ? await supabase.from(targetTable === 'dfo_weekly_scores' ? 'tff_weekly_scores' : 'dfo_weekly_scores').select('*') : { data: null };
 
-        let displayScore = activeTab === 'total' ? player.finalTotal : (player[`${activeTab}Final`] || 0);
+        if (data) {
+           const list = data.map(row => {
+               const uid = String(row.id || row.user_id || row.username);
+               const pName = playersList[uid] || "Bilinmiyor";
+               let wScore = row[`w${weekNum}`] || 0;
 
-        return { ...player, currentRank, trend, trendDiff, displayScore };
-      });
-      
-      setTableRows(finalRows);
+               // MASTER seçiliyse iki tablonun skorlarını toplar
+               if (leagueFilter === 'MASTER' && data2) {
+                   const row2 = data2.find(r => String(r.id || r.user_id || r.username) === uid);
+                   if (row2) wScore += (row2[`w${weekNum}`] || 0);
+               }
+
+               return {
+                   id: uid,
+                   name: pName,
+                   displayScore: wScore,
+                   currentRank: 0,
+                   trend: 'same',
+                   trendDiff: 0,
+                   liveExtra: 0
+               }
+           });
+           const sortedList = list.sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
+           setTableRows(sortedList.map((r, i) => ({ ...r, currentRank: i + 1 })));
+        }
+      }
 
     } catch (e) {
         console.log("Veri çekilirken hata oluştu");
     }
   };
 
-  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab, leagueFilter]);
+  useEffect(() => { 
+      loadLeaderboard(); 
+      const channel = supabase.channel('skor_live_updates')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => {
+           loadLeaderboard();
+        })
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+  }, [activeTab, leagueFilter]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
@@ -323,11 +192,6 @@ export default function SkorDurumuPage() {
                         <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank || idx + 1}</span>
                           <span className="text-[#475569]">-</span>
-                          <div className="w-5 flex justify-center">
-                            {row.trend === 'up' && <span className="text-[#10b981] text-[10px] font-bold animate-bounce flex items-center gap-0.5">▲ <span className="text-[8px]">{row.trendDiff}</span></span>}
-                            {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center gap-0.5">▼ <span className="text-[8px]">{row.trendDiff}</span></span>}
-                            {row.trend === 'same' && <span className="text-transparent text-[8px]">-</span>}
-                          </div>
                         </div>
                       </td>
                       <td className="px-1 md:px-2 py-3">
@@ -342,17 +206,6 @@ export default function SkorDurumuPage() {
                               </>
                             );
                           })()}
-                          
-                          {adminStatus === 'LIVE' && (
-                            <>
-                              {activeTab === 'total' && row.liveExtra > 0 && (
-                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row.liveExtra} CANLI</span>
-                              )}
-                              {activeTab.startsWith('w') && row[`${activeTab}LiveExtra`] > 0 && (
-                                <span className="text-[#10b981] bg-[#10b981]/20 text-[8px] font-black px-1.5 py-0.5 rounded border border-[#10b981]/30 animate-pulse">+{row[`${activeTab}LiveExtra`]} CANLI</span>
-                              )}
-                            </>
-                          )}
                         </div>
                       </td>
                       <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-[#10b981]">
