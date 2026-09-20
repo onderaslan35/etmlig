@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { isTffMatchCheck } from '@/utils/themeEngine'; // 🔥 TFF AYRIMI İÇİN FRONTEND'İN KENDİ BEYNİ ÇAĞRILDI!
+import { isTffMatchCheck } from '@/utils/themeEngine';
 
 export const revalidate = 0; 
 export const maxDuration = 60; 
@@ -50,27 +50,11 @@ export async function GET(request: Request) {
                     const depSkor = mac.goals.away ?? 0;
                     const durum = mac.fixture.status.short; 
                     
-                    const dakikaElapsed = mac.fixture.status.elapsed || 0; 
-                    const dakikaExtra = mac.fixture.status.extra || null;
-                    
                     let statu = 'NOT_STARTED';
                     if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
                     else if (['1H','2H','HT','ET','P'].includes(durum)) statu = 'LIVE';
 
-                    const homeTeamId = mac.teams?.home?.id;
-                    const safOlaylar = (mac.events || [])
-                      .filter((e: any) => ['Goal', 'Card', 'subst'].includes(e.type))
-                      .map((e: any) => {
-                        let girenOyuncu = null;
-                        if (e.type === 'subst') { girenOyuncu = { name: e.assist?.name }; }
-                        return {
-                          time: { elapsed: e.time?.elapsed }, team: { id: e.team?.id, name: e.team?.name }, player: { name: e.player?.name },
-                          assist: girenOyuncu, type: e.type, detail: e.detail, isHome: e.team?.id === homeTeamId
-                        };
-                      });
-
-                    if (dakikaExtra) safOlaylar.push({ type: 'SystemTime', detail: dakikaExtra.toString() });
-                    await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu, elapsed: dakikaElapsed, events: safOlaylar }).eq('api_match_id', macId);
+                    await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu }).eq('api_match_id', macId);
                 }
             }
           } catch (e) {
@@ -81,13 +65,12 @@ export async function GET(request: Request) {
 
   try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
-      const mergedAccounts: Record<string, { name: string }> = {};
-      mergedAccounts["262730"] = { name: "🏆 DİNÇER ASLAN" };
-      mergedAccounts["262782"] = { name: "MUSTAFA ELMAS" };
+      const playersList: Record<string, string> = {};
       
       if (dbPlayers) {
           dbPlayers.forEach(p => {
-              mergedAccounts[String(p.username || p.id).trim()] = { name: p.name || p.full_name };
+              const pid = p.username || p.id;
+              if (pid !== 'mankoman') playersList[pid] = p.name || p.full_name;
           });
       }
 
@@ -100,6 +83,16 @@ export async function GET(request: Request) {
           fetchTable('live_matches')
       ]);
 
+      // 🔥 MANUEL (MÜHÜRLÜ) BONUSLARI HAFTA HAFTA YAKALIYORUZ (Yusuf Erbay vb. için)
+      const dynamicBonuses: Record<number, Record<string, number>> = {};
+      manualPointsData.forEach(b => {
+          if (String(b.kategori).toUpperCase() === 'MASTER') {
+              if (!dynamicBonuses[b.hafta]) dynamicBonuses[b.hafta] = {};
+              if (!dynamicBonuses[b.hafta][b.username]) dynamicBonuses[b.hafta][b.username] = 0;
+              dynamicBonuses[b.hafta][b.username] += b.puan;
+          }
+      });
+
       let allPredictions: any[] = [];
       let from = 0; let step = 999; let keepFetching = true;
       while(keepFetching) {
@@ -107,9 +100,6 @@ export async function GET(request: Request) {
           if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length <= step) keepFetching = false; else from += step + 1; } 
           else keepFetching = false;
       }
-
-      const st: Record<string, { TFF: number, DFO: number, MASTER: number, SKOR: number }> = {};
-      Object.keys(mergedAccounts).forEach(uid => { st[uid] = { TFF: 0, DFO: 0, MASTER: 0, SKOR: 0 }; });
 
       const getDict = (data: any[]) => {
           const dict: Record<string, any> = {};
@@ -123,24 +113,30 @@ export async function GET(request: Request) {
       const skorTffDict = getDict(skorTffData);
       const tffDict = getDict(tffPointsData); 
 
-      Object.keys(mergedAccounts).forEach(uid => {
-          if (!st[uid]) return;
+      // 🔥 BÜTÜN KASALAR (Geçmiş + Canlı + Base + Admin Bonus)
+      let st: Record<string, any> = {};
+      Object.keys(playersList).forEach(uid => {
           const md = masterDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].MASTER += (Number(md.w1) + Number(md.w2) + Number(md.w3) + Number(md.w4));
           const dd = dfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].DFO += (Number(dd.w1) + Number(dd.w2) + Number(dd.w3) + Number(dd.w4));
+          const td = tffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           const sd = skorDfoDict[uid] || {w1:0, w2:0, w3:0, w4:0};
           const stff = skorTffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].SKOR += (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4));
-          
-          const td = tffDict[uid] || {w1:0, w2:0, w3:0, w4:0};
-          st[uid].TFF += (Number(td.w1) + Number(td.w2) + Number(td.w3) + Number(td.w4));
+
+          st[uid] = { 
+              MASTER: Number(md.w1) + Number(md.w2) + Number(md.w3) + Number(md.w4),
+              MASTER_W1_W4: Number(md.w1) + Number(md.w2) + Number(md.w3) + Number(md.w4),
+              DFO: Number(dd.w1) + Number(dd.w2) + Number(dd.w3) + Number(dd.w4),
+              TFF: Number(td.w1) + Number(td.w2) + Number(td.w3) + Number(td.w4),
+              SKOR: (Number(sd.w1) + Number(sd.w2) + Number(sd.w3) + Number(sd.w4)) + (Number(stff.w1) + Number(stff.w2) + Number(stff.w3) + Number(stff.w4)),
+              dynMasterBase: 0,
+              dynMasterLive: 0,
+              liveMasterBonus: 0
+          };
       });
 
       const pDict: Record<string, string> = {};
       allPredictions.forEach(pred => {
           const uid = String(pred.user_id);
-          if (uid === 'mankoman') return;
           pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
       });
 
@@ -150,12 +146,14 @@ export async function GET(request: Request) {
       const catDict: Record<string, string> = {};
       (dbBulletinMatches || []).forEach(m => { catDict[`${m.week_num}-${m.match_index}`] = m.category; });
 
+      // 🔥 5. HAFTADAN İTİBAREN MAÇLARI HESAPLA 🔥
       Object.values(liveMap).forEach(dbMatch => {
           const weekNum = Math.floor(dbMatch.id / 100);
           const matchIndex = dbMatch.id % 100;
+          
           if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
               const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-              const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${weekNum}-${matchIndex}`] === targetScore);
+              const winnerIds = Object.keys(playersList).filter(id => pDict[`${id}-${weekNum}-${matchIndex}`] === targetScore);
               
               let pts = 1;
               if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
@@ -164,106 +162,72 @@ export async function GET(request: Request) {
               else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
               const category = catDict[`${weekNum}-${matchIndex}`] || "";
-              // 🔥 ASIL ÇÖZÜM BURADA: Frontend'in birebir kendi ayrım formülünü (isTffMatchCheck) kullandık!
               const isTff = isTffMatchCheck(category);
+              const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
+              const isLive = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
 
-              const isLiveOrFinished = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
-              if (isLiveOrFinished) {
-                  winnerIds.forEach(wId => {
-                      if (st[wId]) {
+              winnerIds.forEach(wId => {
+                  if (st[wId]) {
+                      if (isFinished) {
                           if (isTff) st[wId].TFF += pts; 
                           if (!isTff) st[wId].DFO += pts;
-                          st[wId].MASTER += pts;
+                          st[wId].dynMasterBase += pts;
                           st[wId].SKOR += 1;
+                      } else if (isLive) {
+                          st[wId].dynMasterLive += pts;
                       }
-                  });
-              }
-          }
-      });
-
-      manualPointsData.forEach(row => {
-          const ev = String(row.ev_sahibi || '').toUpperCase();
-          if (ev === 'HAFTANIN' || ev === 'SKOR') {
-              const uid = String(row.username || row.user_id || row.id || '').trim();
-              const cat = String(row.kategori || row.league_type || 'MASTER').toUpperCase().trim();
-              const pts = Number(row.puan ?? row.points ?? row.totalPoints) || 0;
-              if (pts !== 0 && st[uid]) { if (cat === 'MASTER') st[uid].MASTER += pts; }
-          }
-      });
-
-      let dynamicBonusPoints: Record<string, number> = {};
-      const todayMidnightMs = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate()).getTime();
-      const upcomingMatches = (dbBulletinMatches || []).filter(d => parseDateLocalCustom(d.match_date).getTime() >= todayMidnightMs).sort((a,b) => parseDateLocalCustom(a.match_date).getTime() - parseDateLocalCustom(b.match_date).getTime());
-      
-      let actWeek = 6;
-      if (upcomingMatches.length > 0) actWeek = upcomingMatches[0].week_num;
-      else {
-          const weeks = Array.from(new Set((dbBulletinMatches || []).map(d => d.week_num)));
-          if (weeks.length > 0) actWeek = Math.max(...weeks);
-      }
-
-      for (let w = 5; w <= actWeek; w++) {
-          const match24 = liveMap[(w * 100) + 24];
-          const isLiveNow = match24 && ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(match24.status);
-          
-          if (isLiveNow) {
-              let wkMaster: any = {}, wkSkor: any = {};
-              (dbBulletinMatches || []).filter(m => m.week_num === w).forEach(m => {
-                  const dbM = liveMap[(w * 100) + m.match_index];
-                  if (dbM && ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbM.status) && dbM.home_score !== '-') {
-                      const targetScore = `${dbM.home_score}-${dbM.away_score}`.replace(/\s+/g, '');
-                      const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${w}-${m.match_index}`] === targetScore);
-                      let pts = 1; if(winnerIds.length===1)pts=12; else if(winnerIds.length===2)pts=6; else if(winnerIds.length===3)pts=5; else if(winnerIds.length===4)pts=4; else if(winnerIds.length===5)pts=3; else if(winnerIds.length===6)pts=2; else if(winnerIds.length>=7)pts=1; else pts=0;
-                      winnerIds.forEach(id => { wkMaster[id] = (wkMaster[id]||0) + pts; wkSkor[id] = (wkSkor[id]||0) + 1; });
                   }
               });
-
-              const applyBonus = (wkScores: any) => {
-                  let maxP = -1; let leaders: string[] = [];
-                  Object.keys(wkScores).forEach(id => {
-                      if (wkScores[id] > maxP) { maxP = wkScores[id]; leaders = [id]; }
-                      else if (wkScores[id] === maxP) leaders.push(id);
-                  });
-                  if (leaders.length === 1 && maxP > 0) { dynamicBonusPoints[leaders[0]] = (dynamicBonusPoints[leaders[0]] || 0) + 3; }
-              };
-              applyBonus(wkMaster); applyBonus(wkSkor);
           }
-      }
-
-      Object.keys(dynamicBonusPoints).forEach(id => { if (st[id]) st[id].MASTER += dynamicBonusPoints[id]; });
-
-      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
-      Object.keys(st).forEach(id => {
-          const name = mergedAccounts[id]?.name || '';
-          arrTFF.push({ id, name, pts: st[id].TFF });
-          arrDFO.push({ id, name, pts: st[id].DFO });
-          arrMASTER.push({ id, name, pts: st[id].MASTER });
-          arrSKOR.push({ id, name, pts: st[id].SKOR });
       });
 
-      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
-      arrTFF.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-      arrDFO.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-      arrMASTER.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
-      arrSKOR.sort(sortFunc).forEach((x, i) => x.rank = i + 1);
+      let highestWeekFound = 6; 
+      const weeks = Array.from(new Set((dbBulletinMatches || []).map((d: any) => d.week_num)));
+      if (weeks.length > 0) highestWeekFound = Math.max(...(weeks as number[]));
 
-      const upsertData = Object.keys(st).map(id => {
-          const tffData = arrTFF.find(x => x.id === id);
-          const dfoData = arrDFO.find(x => x.id === id);
-          const masterData = arrMASTER.find(x => x.id === id);
-          const skorData = arrSKOR.find(x => x.id === id);
+      // 🔴 FRONTEND'İN BİREBİR OK VE TREND MANTIĞI: (Sadece Bitmiş Maçlar + Admin Bonusları vs Canlı Maçlar Dahil)
+      
+      const calcBase = (uid: string) => {
+          let totalAdminBonus = 0;
+          for (let w = 5; w <= highestWeekFound; w++) {
+              if (dynamicBonuses[w] && dynamicBonuses[w][uid]) totalAdminBonus += dynamicBonuses[w][uid];
+          }
+          return st[uid].MASTER_W1_W4 + st[uid].dynMasterBase + totalAdminBonus;
+      };
+
+      const calcFinal = (uid: string) => {
+          return calcBase(uid) + st[uid].dynMasterLive + st[uid].liveMasterBonus;
+      };
+
+      const baseList = Object.keys(st).map(id => ({ id, name: playersList[id] || "", baseScore: calcBase(id) }));
+      const prevRefList = [...baseList].sort((a, b) => b.baseScore - a.baseScore || a.name.localeCompare(b.name, 'tr'));
+      
+      const prevRanks: Record<string, number> = {};
+      prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
+
+      const finalRefList = Object.keys(st).map(id => ({ id, name: playersList[id] || "", finalScore: calcFinal(id) }))
+                                         .sort((a, b) => b.finalScore - a.finalScore || a.name.localeCompare(b.name, 'tr'));
+
+      const upsertData = finalRefList.map((player, index) => {
+          const currentRank = index + 1;
+          const prevRank = prevRanks[player.id];
           
+          let trend = 'same', trendDiff = 0; 
+          if (currentRank < prevRank) { trend = 'up'; trendDiff = prevRank - currentRank; } 
+          else if (currentRank > prevRank) { trend = 'down'; trendDiff = currentRank - prevRank; }
+
           return {
-              id: id,
-              name: mergedAccounts[id].name,
-              tff_pts: st[id].TFF,
-              dfo_pts: st[id].DFO,
-              master_pts: st[id].MASTER,
-              skor_pts: st[id].SKOR,
-              tff_rank: tffData?.rank || 0,
-              dfo_rank: dfoData?.rank || 0,
-              master_rank: masterData?.rank || 0,
-              skor_rank: skorData?.rank || 0,
+              id: player.id,
+              name: player.name,
+              master_pts: player.finalScore,
+              master_rank: currentRank,
+              trend_direction: trend,     // 🔥 OK YÖNÜ TEPSİYE YAZILIYOR
+              trend_diff: trendDiff,      // 🔥 FARK TEPSİYE YAZILIYOR
+              
+              // Diğerlerini de unutmuyoruz
+              tff_pts: st[player.id].TFF,
+              dfo_pts: st[player.id].DFO,
+              skor_pts: st[player.id].SKOR,
               updated_at: new Date().toISOString()
           };
       });
@@ -277,5 +241,5 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Atis Basarili Ama Mutfak Coktu', error: e });
   }
 
-  return NextResponse.json({ message: 'ŞİMŞEK: TFF Maç Ayrımı Frontend Beyni İle Kusursuz Çözüldü!' });
+  return NextResponse.json({ message: 'ŞİMŞEK MASTER MANTIĞI: Trend Okları ve Admin Bonusları Kusursuz Çalışıyor!' });
 }
