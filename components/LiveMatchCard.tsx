@@ -2,37 +2,24 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
-import {
-  TEST_ACCOUNTS,
-  localTeamLogos,
-  getLocalLogoUrl,
-  isTffMatchCheck,
-  getEliteTheme,
-  getMatchTimeMs,
-  getTodayDateString,
-  parseDateLocal,
-  getUniqueMatchId
-} from '@/utils/themeEngine';
+import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck } from '@/utils/themeEngine';
 
 export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
-
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
-  
   const [goalFlashes, setGoalFlashes] = useState<Record<number, boolean>>({});
-
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
-  
   const [globalLiveRanks, setGlobalLiveRanks] = useState<{ TFF: any[], DFO: any[], MASTER: any[], SKOR: any[] }>({ TFF: [], DFO: [], MASTER: [], SKOR: [] });
-
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  const [weeklyLiveStats, setWeeklyLiveStats] = useState<{ pLeaders: string[], maxPts: number, sLeaders: string[], maxScores: number }>({ pLeaders: [], maxPts: 0, sLeaders: [], maxScores: 0 });
+  // HAFTALIK LİDERLER VE SIRALAMALAR
+  const [weeklySortedStats, setWeeklySortedStats] = useState<{ id: string, points: number, exactScores: number }[]>([]);
+  const [is24thMatchFinished, setIs24thMatchFinished] = useState(false);
 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
@@ -41,9 +28,7 @@ export default function LiveMatchCard() {
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
   const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
   const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
-  
   const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
-
   const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
@@ -105,8 +90,6 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      // ⚡ ŞİMŞEK OPERASYONU: Ekranda hesaplama ameleliği bitti! 
-      // Sadece hazır "live_leaderboard" tepsisini ve bu haftanın maçlarını çekiyoruz.
       const [leaderboardRes, dbBulletinMatchesRes, dbLiveMatchesRes, currentPredictionsRes] = await Promise.all([
           supabase.from('live_leaderboard').select('*'),
           supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true }),
@@ -119,7 +102,6 @@ export default function LiveMatchCard() {
       const dbLiveMatches = dbLiveMatchesRes.data || [];
       const currentPredictions = currentPredictionsRes.data || [];
 
-      // 1. HAZIR TABLOYU EKRANA DİZ (0.1 Saniye!)
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
       leaderboardData.forEach(row => {
           arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
@@ -132,7 +114,6 @@ export default function LiveMatchCard() {
       arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
-      // 2. RADAR İÇİN BU HAFTANIN TAHMİNLERİ
       const pDict: Record<string, string> = {};
       currentPredictions.forEach(pred => {
           const uid = String(pred.user_id);
@@ -141,7 +122,6 @@ export default function LiveMatchCard() {
       });
       setPredictionsData(pDict);
 
-      // 3. CANLI MAÇ HARİTASI
       const liveMap: Record<number, any> = {};
       dbLiveMatches.forEach(row => liveMap[row.id] = row); 
       setLiveMatchesData(liveMap);
@@ -160,7 +140,17 @@ export default function LiveMatchCard() {
         awayTeam: m.away_team
       }));
 
-      // 4. HAFTANIN GOL SESİ SİNYALİ
+      // 🔥 24. MAÇ KONTROLÜ (ACI MASIZ KURAL İÇİN) 🔥
+      const match24Id = getUniqueMatchId(activeWeek, 24);
+      const dbMatch24 = liveMap[match24Id];
+      let is24Finished = false;
+      if (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status)) {
+          is24Finished = true;
+          setIs24thMatchFinished(true);
+      } else {
+          setIs24thMatchFinished(false);
+      }
+
       let goalHappened = false;
       let newGoalIds: number[] = [];
       Object.keys(liveMap).forEach(key => {
@@ -187,7 +177,7 @@ export default function LiveMatchCard() {
           }
       }
 
-      // 5. HAFTANIN PUAN VE SKOR LİDERLERİNİ BULMA (Hızlı Lokal Hesap)
+      // 🔥 LİDERLİK TABLOSU HESAPLAMASI (Sıralı Liste İçin)
       let stats: Record<string, { points: number, exactScores: number }> = {};
       Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
@@ -212,17 +202,13 @@ export default function LiveMatchCard() {
           }
       });
 
-      let mPts = 0; let mScores = 0;
-      Object.values(stats).forEach(s => {
-          if (s.points > mPts) mPts = s.points;
-          if (s.exactScores > mScores) mScores = s.exactScores;
-      });
+      const sortedStats = Object.keys(stats)
+          .map(uid => ({ id: uid, points: stats[uid].points, exactScores: stats[uid].exactScores }))
+          .filter(s => s.points > 0 || s.exactScores > 0)
+          .sort((a, b) => b.points - a.points || b.exactScores - a.exactScores || mergedAccounts[a.id]?.name.localeCompare(mergedAccounts[b.id]?.name, 'tr'));
+      
+      setWeeklySortedStats(sortedStats);
 
-      let pLeadersList = Object.keys(stats).filter(uid => stats[uid].points === mPts && mPts > 0);
-      let sLeadersList = Object.keys(stats).filter(uid => stats[uid].exactScores === mScores && mScores > 0);
-      setWeeklyLiveStats({ pLeaders: pLeadersList, maxPts: mPts, sLeaders: sLeadersList, maxScores: mScores });
-
-      // 6. GÜNÜN MAÇLARINI FİLTRELE
       const todaysMatches = currentWeekMatches.filter(m => {
            const uniqueId = getUniqueMatchId(activeWeek, m.id);
            const dbMatch = liveMap[uniqueId];
@@ -235,10 +221,7 @@ export default function LiveMatchCard() {
       });
       setTodaysMatchesList(todaysMatches);
       
-      // HAFTA GEÇİŞ KONTROLÜ
-      const match24Id = getUniqueMatchId(activeWeek, 24);
-      const dbMatch24 = liveMap[match24Id];
-      if (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status)) {
+      if (is24Finished) {
           const m24 = currentWeekMatches.find(m => m.id === 24);
           if (m24) {
               const matchTimeMs = getMatchTimeMs(m24.date, m24.time);
@@ -257,7 +240,6 @@ export default function LiveMatchCard() {
   const togglePossible = (matchId: number) => setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   const toggleEliminated = (matchId: number) => setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   const toggleMatchExpansion = (matchId: number) => setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
-  
   const togglePlayerRank = (uniqueKey: string) => setOpenPlayerRanks((prev) => ({ ...prev, [uniqueKey]: !prev[uniqueKey] }));
 
   if (!isWeekLoaded) {
@@ -394,99 +376,49 @@ export default function LiveMatchCard() {
       const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam)));
 
       return (
-        <div 
-          key={match.id} 
-          className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
-            isGoalFlashing 
-              ? 'police-siren' 
-              : isExpanded 
-                ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg 
-                : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
-          }`}
-        >
+        <div key={match.id} className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+            isGoalFlashing ? 'police-siren' : isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
+        }`}>
           {theme.bgImg && (
             <>
-              <div 
-                className="absolute inset-0 z-0 opacity-100"
-                style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
-              ></div>
+              <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}></div>
               <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded || isGoalFlashing ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
             </>
           )}
 
           {!isExpanded && (
-            <div
-              onClick={() => toggleMatchExpansion(match.id)}
-              className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300"
-            >
+            <div onClick={() => toggleMatchExpansion(match.id)} className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300">
               <div className="flex-1 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
-                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">
-                  {homeTeamUpper}
-                </span>
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">{homeTeamUpper}</span>
               </div>
-              
               <div className="flex items-center justify-center shrink-0">
                 <img src={theme.homeLogo} alt={homeTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
-                
                 <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
                   <div className="mb-0.5 flex items-center justify-center">
-                    {isHT ? (
-                      <span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>
-                    ) : isLiveStatus ? (
-                      <span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">
-                        {displayMinute}
-                      </span>
-                    ) : matchStatus === 'WAITING_APPROVAL' ? (
-                      <span className="text-[8px] sm:text-[9px] font-black text-amber-500 tracking-wider">ONAY</span>
-                    ) : isFinishedStatus ? (
-                      <span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>
-                    ) : (
-                      <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>
-                    )}
+                    {isHT ? (<span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>) : isLiveStatus ? (<span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">{displayMinute}</span>) : matchStatus === 'WAITING_APPROVAL' ? (<span className="text-[8px] sm:text-[9px] font-black text-amber-500 tracking-wider">ONAY</span>) : isFinishedStatus ? (<span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>) : (<span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>)}
                   </div>
-                  
-                  <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${
-                    isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' :
-                    (isLiveStatus || isHT) ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'
-                  }`}>
-                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>
-                      {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? 'v' : `${homeScore}-${awayScore}`}
-                    </span>
+                  <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' : (isLiveStatus || isHT) ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'}`}>
+                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>{(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? 'v' : `${homeScore}-${awayScore}`}</span>
                   </div>
                 </div>
-                
                 <img src={theme.awayLogo} alt={awayTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
               </div>
-              
               <div className="flex-1 flex items-center justify-start overflow-hidden pl-1.5 sm:pl-3">
-                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-left">
-                  {awayTeamUpper}
-                </span>
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-left">{awayTeamUpper}</span>
               </div>
-              
               <div className="absolute right-1 sm:right-2 opacity-30 text-[8px] text-white group-hover:opacity-100 transition-opacity">▼</div>
             </div>
           )}
 
           {isExpanded && (
             <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
-              <button 
-                onClick={() => toggleMatchExpansion(match.id)}
-                className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors"
-                title="Küçült"
-              >
-                ✕
-              </button>
+              <button onClick={() => toggleMatchExpansion(match.id)} className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors" title="Küçült">✕</button>
               <div className="relative z-10 flex flex-col h-full">
                 <div className="w-full text-center pt-3 pb-1">
-                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
-                    {match.weekLabel}
-                  </span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{match.weekLabel}</span>
                 </div>
                 <div className="w-full text-center px-2 mt-2 relative z-30">
-                  <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                    {match.category}
-                  </span>
+                  <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
                 </div>
 
                 <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
@@ -503,53 +435,27 @@ export default function LiveMatchCard() {
                         <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
                       </div>
                     )}
-
                     {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') && (
                       <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                         <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                       </div>
                     )}
-                    
-                    {isHT && (
-                      <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative">
-                        <span className="text-amber-400 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span>
-                      </div>
-                    )}
-
+                    {isHT && (<div className="flex flex-col items-center justify-center mb-1.5 z-40 relative"><span className="text-amber-400 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span></div>)}
                     {isLiveStatus && (
                       <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
-                        <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">
-                          {displayMinute}
-                        </span>
-                        <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">
-                          🔴 CANLI
-                        </span>
+                        <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">{displayMinute}</span>
+                        <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">🔴 CANLI</span>
                       </div>
                     )}
-
-                    {matchStatus === 'WAITING_APPROVAL' && (
-                      <div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                        <span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span>
-                      </div>
-                    )}
-                    {isFinishedStatus && (
-                      <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                        <span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
-                      </div>
-                    )}
-
+                    {matchStatus === 'WAITING_APPROVAL' && (<div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md"><span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span></div>)}
+                    {isFinishedStatus && (<div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md"><span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span></div>)}
                     <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
                       <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{homeScore}</span>
                       <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
                       <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{awayScore}</span>
                     </div>
-
                     {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') && countdownText && (
-                      <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1">
-                        <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">
-                          {countdownText}
-                        </span>
-                      </div>
+                      <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1"><span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">{countdownText}</span></div>
                     )}
                   </div>
 
@@ -563,33 +469,18 @@ export default function LiveMatchCard() {
 
                 {safeEvents.length > 0 && (
                   <div className="w-full mb-3 flex flex-col gap-2 px-1.5 sm:px-6 relative z-30 animate-fadeIn">
-                    <button 
-                      onClick={() => toggleEvents(match.id)}
-                      className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm"
-                    >
-                      <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2">
-                        <span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI
-                      </span>
+                    <button onClick={() => toggleEvents(match.id)} className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm">
+                      <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2"><span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI</span>
                       <span className="text-slate-400 text-[10px]">{isEventsOpen ? '▲' : '▼'}</span>
                     </button>
-
                     {isEventsOpen && (
                       <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-1.5 sm:p-3 border border-slate-800/80 shadow-inner">
-                        
                         <div className="flex-1 flex flex-col gap-1 items-start pr-1 sm:pr-3 border-r border-slate-700/50 overflow-hidden">
                           {homeEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
-                            if (e.type === 'Goal') {
-                                icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽');
-                                text = String(e.player?.name || 'Oyuncu');
-                            } else if (e.type === 'Card') {
-                                icon = e.detail === 'Yellow Card' ? '🟨' : '🟥';
-                                text = String(e.player?.name || 'Oyuncu');
-                            } else if (e.type === 'subst') {
-                                icon = '🔄';
-                                text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`;
-                            } else return null;
-
+                            if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
                             return (
                               <span key={`h-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full">
                                 <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span> 
@@ -599,21 +490,12 @@ export default function LiveMatchCard() {
                             );
                           })}
                         </div>
-
                         <div className="flex-1 flex flex-col gap-1 items-end pl-1 sm:pl-3 overflow-hidden">
                           {awayEvents.map((e: any, i: number) => {
                             let icon = ''; let text = '';
-                            if (e.type === 'Goal') {
-                                icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽');
-                                text = String(e.player?.name || 'Oyuncu');
-                            } else if (e.type === 'Card') {
-                                icon = e.detail === 'Yellow Card' ? '🟨' : '🟥';
-                                text = String(e.player?.name || 'Oyuncu');
-                            } else if (e.type === 'subst') {
-                                icon = '🔄';
-                                text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`;
-                            } else return null;
-
+                            if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
                             return (
                               <span key={`a-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full justify-end">
                                 <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span> 
@@ -634,93 +516,46 @@ export default function LiveMatchCard() {
                       {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? (
                         <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
                       ) : exactWinners.length === 0 ? (
-                         !isFinishedStatus && possibleWinners.length > 0 ? (
-                           <span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>
-                         ) : (
-                           <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>
-                         )
+                         !isFinishedStatus && possibleWinners.length > 0 ? (<span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>) : (<span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>)
                       ) : (
-                        <span className="text-[9px] sm:text-[10px] font-medium text-emerald-300">
-                          <strong className="text-emerald-400">{exactWinners.length} kişi</strong> tam isabetli
-                        </span>
+                        <span className="text-[9px] sm:text-[10px] font-medium text-emerald-300"><strong className="text-emerald-400">{exactWinners.length} kişi</strong> tam isabetli</span>
                       )}
                     </div>
                     <div className="flex-0 text-center px-1">
-                      <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                        {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
-                      </span>
+                      <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>{isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}</span>
                     </div>
                     <div className="text-right flex-1">
                       {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
-                        <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">
-                          {isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}
-                        </button>
+                        <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">{isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}</button>
                       )}
                     </div>
                   </div>
                 
                   {isWinnersOpen && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
-                      
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
                           <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
-                              <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-sm border border-emerald-300 tracking-widest text-center">
-                                +{displayPoints} PUAN YAZILIYOR
-                              </span>
+                              <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-sm border border-emerald-300 tracking-widest text-center">+{displayPoints} PUAN YAZILIYOR</span>
                           </div>
-                          
                           <div className="block p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
                               const uniquePlayerKey = `${match.id}-${winner.id}`;
                               const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
-
-                              // ⚡ ŞİMŞEK OPERASYONU: Puanlar ve sıralamalar anında hazır tepsiden alınıyor!
                               const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
-                              const tffPts = tffData?.pts || 0;
-                              const tffRank = tffData?.rank || '-';
-
                               const dfoData = globalLiveRanks.DFO.find(x => x.id === winner.id);
-                              const dfoPts = dfoData?.pts || 0;
-                              const dfoRank = dfoData?.rank || '-';
-
                               const masterData = globalLiveRanks.MASTER.find(x => x.id === winner.id);
-                              const masterPts = masterData?.pts || 0;
-                              const masterRank = masterData?.rank || '-';
-
                               const skorData = globalLiveRanks.SKOR.find(x => x.id === winner.id);
-                              const skorPts = skorData?.pts || 0;
-                              const skorRank = skorData?.rank || '-';
-
                               return (
                                 <div key={idx} className="mb-2 bg-slate-950 border border-slate-700/80 rounded-lg shadow-xl relative overflow-hidden transition-all duration-300">
-                                   <button 
-                                      onClick={() => togglePlayerRank(uniquePlayerKey)}
-                                      className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}
-                                   >
-                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center">
-                                           {winner.name} 
-                                           <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
-                                       </span>
+                                   <button onClick={() => togglePlayerRank(uniquePlayerKey)} className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}>
+                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center">{winner.name} <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span></span>
                                    </button>
-                                   
                                    {isRankOpen && (
                                      <div className="flex flex-wrap justify-center gap-1.5 w-full pb-3 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
-                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">
-                                            MASTER SIRA {masterRank} / {masterPts} PUAN
-                                         </span>
-                                         {isTffMatch ? (
-                                             <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">
-                                                TFF SIRA {tffRank} / {tffPts} PUAN
-                                             </span>
-                                         ) : (
-                                             <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-900/30 text-blue-400 border-blue-700/50 tracking-wider whitespace-nowrap">
-                                                DFO SIRA {dfoRank} / {dfoPts} PUAN
-                                             </span>
-                                         )}
-                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">
-                                            SKOR SIRA {skorRank} / {skorPts} İSABET
-                                         </span>
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">MASTER SIRA {masterData?.rank||'-'} / {masterData?.pts||0} PUAN</span>
+                                         {isTffMatch ? (<span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">TFF SIRA {tffData?.rank||'-'} / {tffData?.pts||0} PUAN</span>) : (<span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-900/30 text-blue-400 border-blue-700/50 tracking-wider whitespace-nowrap">DFO SIRA {dfoData?.rank||'-'} / {dfoData?.pts||0} PUAN</span>)}
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">SKOR SIRA {skorData?.rank||'-'} / {skorData?.pts||0} İSABET</span>
                                      </div>
                                    )}
                                 </div>
@@ -740,8 +575,7 @@ export default function LiveMatchCard() {
                             <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-blue-900/50">
                               {possibleWinners.map((winner, idx) => (
                                 <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center">
-                                  <span>{winner.name}</span>
-                                  <span className="text-cyan-400 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                  <span>{winner.name}</span><span className="text-cyan-400 font-black tracking-widest ml-0.5">[{winner.score}]</span>
                                 </span>
                               ))}
                             </div>
@@ -759,15 +593,13 @@ export default function LiveMatchCard() {
                             <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-red-900/30">
                               {eliminatedPlayers.map((winner, idx) => (
                                 <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-red-950/40 text-slate-400 border-red-900/50 flex gap-1 items-center opacity-70">
-                                  <span className="line-through">{winner.name}</span>
-                                  <span className="text-red-500 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                  <span className="line-through">{winner.name}</span><span className="text-red-500 font-black tracking-widest ml-0.5">[{winner.score}]</span>
                                 </span>
                               ))}
                             </div>
                           )}
                         </div>
                       )}
-
                     </div>
                   )}
                 </div>
@@ -778,69 +610,106 @@ export default function LiveMatchCard() {
       );
   };
 
+  // 🔥 YENİ: ACI MASIZ LİDERLİK KURALI (MÜSTAKİL LİDER KONTROLÜ)
+  const maxPts = weeklySortedStats.length > 0 ? weeklySortedStats[0].points : 0;
+  const maxScores = weeklySortedStats.length > 0 ? Math.max(...weeklySortedStats.map(s => s.exactScores)) : 0;
+  const ptsLeaders = weeklySortedStats.filter(s => s.points === maxPts && maxPts > 0);
+  const scoreLeaders = weeklySortedStats.filter(s => s.exactScores === maxScores && maxScores > 0);
+
+  const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
+      if (!is24thMatchFinished) return null; // 24. maç bitmeden rozet verilmez!
+      
+      if (type === 'points') {
+          if (ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
+              return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-amber-500 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🏆 +3 PUAN KAZANDI</span>;
+          }
+      } else if (type === 'scores') {
+          if (scoreLeaders.length === 1 && scoreLeaders[0].id === uid) {
+              return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🎯 +3 PUAN KAZANDI</span>;
+          }
+      }
+      return null;
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes siren {
-          0% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); }
-          25% { box-shadow: 0 0 80px #1d4ed8, inset 0 0 60px #1d4ed8; border-color: #2563eb; background-color: rgba(29, 78, 216, 0.6); }
-          50% { box-shadow: 0 0 15px #e11d48, inset 0 0 15px #e11d48; border-color: #f43f5e; background-color: rgba(225, 29, 72, 0.2); }
-          75% { box-shadow: 0 0 80px #be123c, inset 0 0 60px #be123c; border-color: #e11d48; background-color: rgba(190, 18, 60, 0.6); }
-          100% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .police-siren {
-          animation: siren 0.4s ease-in-out infinite;
-          z-index: 50;
-          transform: scale(1.02);
-          transition: all 0.2s;
-        }
+        @keyframes siren { 0% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); } 25% { box-shadow: 0 0 80px #1d4ed8, inset 0 0 60px #1d4ed8; border-color: #2563eb; background-color: rgba(29, 78, 216, 0.6); } 50% { box-shadow: 0 0 15px #e11d48, inset 0 0 15px #e11d48; border-color: #f43f5e; background-color: rgba(225, 29, 72, 0.2); } 75% { box-shadow: 0 0 80px #be123c, inset 0 0 60px #be123c; border-color: #e11d48; background-color: rgba(190, 18, 60, 0.6); } 100% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); } }
+        .police-siren { animation: siren 0.4s ease-in-out infinite; z-index: 50; transform: scale(1.02); transition: all 0.2s; }
       `}} />
 
       <div className="w-full flex justify-end px-2 sm:px-0">
-          <button
-              onClick={toggleSound}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
-                  soundEnabled
-                  ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                  : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
-              }`}
-          >
+          <button onClick={toggleSound} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${soundEnabled ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'}`}>
               {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
           </button>
       </div>
 
-      <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn">
+      {/* 🔥 VİTRİN DEĞİŞTİ: SIRALI LİDERLİK TABLOSU EN TEPEDE 🔥 */}
+      <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto">
           <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
               <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
           </h2>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-              <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
-                  <span className="text-emerald-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">🔥 HAFTANIN PUAN LİDERİ</span>
-                  <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
-                      {weeklyLiveStats.pLeaders.length > 0 
-                          ? weeklyLiveStats.pLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
-                          : 'HENÜZ PUAN ALAN YOK'}
-                  </span>
-                  <span className="text-emerald-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-emerald-950/50 px-2.5 py-0.5 rounded shadow-sm border border-emerald-800/50">
-                      {weeklyLiveStats.pLeaders.length > 0 ? `${weeklyLiveStats.maxPts} PUAN TOPLADI` : '---'}
-                  </span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* HAFTANIN PUAN TABLOSU */}
+              <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                  <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
+                      <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
+                      {is24thMatchFinished && ptsLeaders.length > 1 && (
+                          <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                      )}
+                  </div>
+                  <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                      {weeklySortedStats.length > 0 ? (
+                          <table className="w-full text-left text-xs">
+                              <tbody className="divide-y divide-slate-800/50">
+                                  {weeklySortedStats.map((s, idx) => (
+                                      <tr key={s.id} className="hover:bg-slate-900/50">
+                                          <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                          <td className="py-2 font-bold text-slate-200">
+                                              {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                              {getLeaderBadge(s.id, 'points')}
+                                          </td>
+                                          <td className="py-2 pr-2 text-right font-black text-emerald-400">{s.points} P</td>
+                                      </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      ) : (
+                          <div className="text-center py-4 text-slate-500 text-xs">HENÜZ PUAN ALAN YOK</div>
+                      )}
+                  </div>
               </div>
 
-              <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center transition-all hover:scale-105">
-                  <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold tracking-widest mb-1">⚽ HAFTANIN SKOR KRALI</span>
-                  <span className="text-white font-black text-xs sm:text-sm uppercase text-center leading-snug">
-                      {weeklyLiveStats.sLeaders.length > 0 
-                          ? weeklyLiveStats.sLeaders.map(uid => mergedAccounts[uid]?.name.replace(/🏆/g, '').trim()).join(' & ') 
-                          : 'HENÜZ PUAN ALAN YOK'}
-                  </span>
-                  <span className="text-amber-500 font-bold text-[10px] sm:text-xs mt-1.5 bg-amber-950/50 px-2.5 py-0.5 rounded shadow-sm border border-amber-800/50">
-                      {weeklyLiveStats.sLeaders.length > 0 ? `${weeklyLiveStats.maxScores} MAÇ BİLDİ` : '---'}
-                  </span>
+              {/* HAFTANIN SKOR TABLOSU */}
+              <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                  <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
+                      <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
+                      {is24thMatchFinished && scoreLeaders.length > 1 && (
+                          <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                      )}
+                  </div>
+                  <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                      {weeklySortedStats.length > 0 && maxScores > 0 ? (
+                          <table className="w-full text-left text-xs">
+                              <tbody className="divide-y divide-slate-800/50">
+                                  {weeklySortedStats.filter(s => s.exactScores > 0).sort((a,b) => b.exactScores - a.exactScores).map((s, idx) => (
+                                      <tr key={s.id} className="hover:bg-slate-900/50">
+                                          <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                          <td className="py-2 font-bold text-slate-200">
+                                              {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                              {getLeaderBadge(s.id, 'scores')}
+                                          </td>
+                                          <td className="py-2 pr-2 text-right font-black text-amber-500">{s.exactScores} Maç</td>
+                                      </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      ) : (
+                          <div className="text-center py-4 text-slate-500 text-xs">HENÜZ SKOR BİLEN YOK</div>
+                      )}
+                  </div>
               </div>
           </div>
       </div>
@@ -854,21 +723,11 @@ export default function LiveMatchCard() {
         <>
           {finishedMatches.length > 0 && (
             <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
-              <button 
-                onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
-                className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group"
-              >
+              <button onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)} className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group">
                 <div className="flex-1"></div> 
-                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">
-                  📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})
-                </h2>
-                <div className="flex-1 flex justify-end">
-                  <div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}>
-                    <span className="text-slate-500 text-[10px] sm:text-xs">▼</span>
-                  </div>
-                </div>
+                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-500 text-[10px] sm:text-xs">▼</span></div></div>
               </button>
-              
               {isFinishedAccordionOpen && (
                 <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
                   {finishedMatches.map(match => renderMatchCard(match, true))}
@@ -879,26 +738,11 @@ export default function LiveMatchCard() {
 
           {activeMatches.length > 0 && (
             <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
-              <button 
-                onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
-              >
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                  </span>
-                </div> 
-                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">
-                  GÜNÜN CANLI MAÇLARI ({activeMatches.length})
-                </h2>
-                <div className="flex-1 flex justify-end">
-                  <div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}>
-                    <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
-                  </div>
-                </div>
+              <button onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)} className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group">
+                <div className="flex-1 flex items-center gap-2"><span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span></div> 
+                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">GÜNÜN CANLI MAÇLARI ({activeMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-400 text-[10px] sm:text-xs">▼</span></div></div>
               </button>
-              
               {isLiveAccordionOpen && (
                 <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
                   {activeMatches.map(match => renderMatchCard(match, false))}
