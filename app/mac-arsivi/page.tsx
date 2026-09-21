@@ -177,6 +177,7 @@ const week4Matches = [
 export default function MacArsiviPage() {
   const [selectedWeek, setSelectedWeek] = useState<number>(6); 
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
+  const [openEventsMap, setOpenEventsMap] = useState<{ [key: number]: boolean }>({});
   
   const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
   const [bulletinData, setBulletinData] = useState<Record<number, any>>({});
@@ -200,7 +201,6 @@ export default function MacArsiviPage() {
      fetchDbPlayers();
   }, []);
 
-  // 🔴 OTOMATİK RADAR: Sisteme girince bugünün haftasını otomatik bulur 🔴
   useEffect(() => {
       const initWeek = async () => {
           const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
@@ -258,7 +258,6 @@ export default function MacArsiviPage() {
            setBulletinData(bultenMap);
         }
 
-        // 🔴 EKMEL DEVRİMİ: 1000 LİMİT KIRICI VE ZIRHLI MOTOR EKLENDİ 🔴
         let allPredictions: any[] = [];
         let fetchMore = true;
         let from = 0;
@@ -307,6 +306,10 @@ export default function MacArsiviPage() {
 
   const toggleWinners = (matchId: number) => {
     setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
+
+  const toggleEvents = (matchId: number) => {
+    setOpenEventsMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   };
 
   const getWeekDateRange = (weekNum: number) => {
@@ -365,6 +368,7 @@ export default function MacArsiviPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             {currentMatches.map((match: any) => {
               const isWinnersOpen = !!openWinnersMap[match.id];
+              const isEventsOpen = !!openEventsMap[match.id];
               const isTffMatch = isTffMatchCheck(match.category);
               
               const homeUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase() || "";
@@ -379,6 +383,7 @@ export default function MacArsiviPage() {
               let winnersCount = match.winnersCount || 0;
               let displayPoints = match.earnedPoints || 0;
               let isFinished = false;
+              let safeEvents: any[] = [];
 
               if (selectedWeek >= 4) {
                 const uniqueId = getUniqueMatchId(selectedWeek, match.id);
@@ -389,6 +394,18 @@ export default function MacArsiviPage() {
                   awayScore = dbMatch.away_score;
                   isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL');
                   
+                  // 🔥 MAÇ OLAYLARINI (GOL/KART) VERİTABANINDAN ÇEKME 🔥
+                  if (Array.isArray(dbMatch.events)) {
+                     safeEvents = dbMatch.events;
+                  } else if (typeof dbMatch.events === 'string') {
+                     try {
+                        const parsed = JSON.parse(dbMatch.events);
+                        safeEvents = Array.isArray(parsed) ? parsed : [];
+                     } catch (e) {
+                        safeEvents = [];
+                     }
+                  }
+
                   if (isFinished && homeScore !== '-' && awayScore !== '-') {
                     const targetScore = `${homeScore}-${awayScore}`;
                     const predictionsToUse = selectedWeek === 4 ? week4PredictionsData : predictionsDB;
@@ -419,6 +436,9 @@ export default function MacArsiviPage() {
                   awayScore = parts[1] || "-";
                 }
               }
+
+              const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || e?.team?.name === match.homeTeam));
+              const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam)));
 
               return (
                 <div 
@@ -474,6 +494,51 @@ export default function MacArsiviPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* 🔥 MAÇ OLAYLARI (GOL / KART) VİTRİNİ 🔥 */}
+                  {safeEvents.length > 0 && (
+                    <div className="w-full mb-3 flex flex-col gap-2 px-4 relative z-30 animate-fadeIn mt-2">
+                      <button onClick={() => toggleEvents(match.id)} className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm">
+                        <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2"><span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI</span>
+                        <span className="text-slate-400 text-[10px]">{isEventsOpen ? '▲' : '▼'}</span>
+                      </button>
+                      {isEventsOpen && (
+                        <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-1.5 sm:p-3 border border-slate-800/80 shadow-inner">
+                          <div className="flex-1 flex flex-col gap-1 items-start pr-1 sm:pr-3 border-r border-slate-700/50 overflow-hidden">
+                            {homeEvents.map((e: any, i: number) => {
+                              let icon = ''; let text = '';
+                              if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                              else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                              else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
+                              return (
+                                <span key={`h-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full">
+                                  <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span> 
+                                  <span className="font-medium text-slate-200 flex-1 text-left text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                  <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <div className="flex-1 flex flex-col gap-1 items-end pl-1 sm:pl-3 overflow-hidden">
+                            {awayEvents.map((e: any, i: number) => {
+                              let icon = ''; let text = '';
+                              if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                              else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                              else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
+                              return (
+                                <span key={`a-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full justify-end">
+                                  <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span> 
+                                  <span className="font-medium text-slate-200 flex-1 text-right text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                  <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative mt-auto`}>
                     <div className="flex justify-between items-center w-full">
                       <div className="text-left flex-1">
