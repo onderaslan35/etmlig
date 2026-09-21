@@ -17,7 +17,6 @@ export default function LiveMatchCard() {
   const [globalLiveRanks, setGlobalLiveRanks] = useState<{ TFF: any[], DFO: any[], MASTER: any[], SKOR: any[] }>({ TFF: [], DFO: [], MASTER: [], SKOR: [] });
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  // HAFTALIK LİDERLER VE SIRALAMALAR
   const [weeklySortedStats, setWeeklySortedStats] = useState<{ id: string, points: number, exactScores: number }[]>([]);
   const [is24thMatchFinished, setIs24thMatchFinished] = useState(false);
 
@@ -140,7 +139,6 @@ export default function LiveMatchCard() {
         awayTeam: m.away_team
       }));
 
-      // 🔥 24. MAÇ KONTROLÜ (ACI MASIZ KURAL İÇİN) 🔥
       const match24Id = getUniqueMatchId(activeWeek, 24);
       const dbMatch24 = liveMap[match24Id];
       let is24Finished = false;
@@ -177,7 +175,6 @@ export default function LiveMatchCard() {
           }
       }
 
-      // 🔥 LİDERLİK TABLOSU HESAPLAMASI (Sıralı Liste İçin)
       let stats: Record<string, { points: number, exactScores: number }> = {};
       Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
@@ -610,14 +607,13 @@ export default function LiveMatchCard() {
       );
   };
 
-  // 🔥 YENİ: ACI MASIZ LİDERLİK KURALI (MÜSTAKİL LİDER KONTROLÜ)
   const maxPts = weeklySortedStats.length > 0 ? weeklySortedStats[0].points : 0;
   const maxScores = weeklySortedStats.length > 0 ? Math.max(...weeklySortedStats.map(s => s.exactScores)) : 0;
   const ptsLeaders = weeklySortedStats.filter(s => s.points === maxPts && maxPts > 0);
   const scoreLeaders = weeklySortedStats.filter(s => s.exactScores === maxScores && maxScores > 0);
 
   const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
-      if (!is24thMatchFinished) return null; // 24. maç bitmeden rozet verilmez!
+      if (!is24thMatchFinished) return null; 
       
       if (type === 'points') {
           if (ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
@@ -645,14 +641,53 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
-      {/* 🔥 VİTRİN DEĞİŞTİ: SIRALI LİDERLİK TABLOSU EN TEPEDE 🔥 */}
-      <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto">
+      {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
+      {todaysMatchesList.length === 0 ? (
+        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl mt-2">
+          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
+          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
+        </div>
+      ) : (
+        <>
+          {finishedMatches.length > 0 && (
+            <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden mt-2">
+              <button onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)} className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group">
+                <div className="flex-1"></div> 
+                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-500 text-[10px] sm:text-xs">▼</span></div></div>
+              </button>
+              {isFinishedAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
+                  {finishedMatches.map(match => renderMatchCard(match, true))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeMatches.length > 0 && (
+            <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden mt-2">
+              <button onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)} className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group">
+                <div className="flex-1 flex items-center gap-2"><span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span></div> 
+                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">GÜNÜN CANLI MAÇLARI ({activeMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-400 text-[10px] sm:text-xs">▼</span></div></div>
+              </button>
+              {isLiveAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+                  {activeMatches.map(match => renderMatchCard(match, false))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 🔥 LİDERLİK RADARI (ALTTA) 🔥 */}
+      <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto mt-4">
           <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
               <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* HAFTANIN PUAN TABLOSU */}
               <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
                   <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
                       <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
@@ -682,7 +717,6 @@ export default function LiveMatchCard() {
                   </div>
               </div>
 
-              {/* HAFTANIN SKOR TABLOSU */}
               <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
                   <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
                       <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
@@ -713,45 +747,6 @@ export default function LiveMatchCard() {
               </div>
           </div>
       </div>
-
-      {todaysMatchesList.length === 0 ? (
-        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
-          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
-          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
-        </div>
-      ) : (
-        <>
-          {finishedMatches.length > 0 && (
-            <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden">
-              <button onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)} className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group">
-                <div className="flex-1"></div> 
-                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})</h2>
-                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-500 text-[10px] sm:text-xs">▼</span></div></div>
-              </button>
-              {isFinishedAccordionOpen && (
-                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
-                  {finishedMatches.map(match => renderMatchCard(match, true))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeMatches.length > 0 && (
-            <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden">
-              <button onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)} className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group">
-                <div className="flex-1 flex items-center gap-2"><span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span></div> 
-                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">GÜNÜN CANLI MAÇLARI ({activeMatches.length})</h2>
-                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-400 text-[10px] sm:text-xs">▼</span></div></div>
-              </button>
-              {isLiveAccordionOpen && (
-                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
-                  {activeMatches.map(match => renderMatchCard(match, false))}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
 
     </div>
   );
