@@ -52,6 +52,10 @@ export default function AdminRadarPortal() {
   const previousScoresRef = useRef<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // 🔴 YENİ RADAR (HAVUZ) SİSTEMİ STATE'LERİ 🔴
+  const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
+  const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
        audioRef.current = new Audio('/sounds/goal.mp3');
@@ -78,27 +82,17 @@ export default function AdminRadarPortal() {
      'skorcum34': true
   });
 
-  // 🔴 BUGÜNÜN FİLTRESİ (Master için kapalı, Skorcu için açık başlar)
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(6); 
   const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([6]);
   const [systemActiveWeek, setSystemActiveWeek] = useState<number>(6);
 
-  // 🔴 ÖNBELLEK TEMİZLİĞİ: Hafta değiştiğinde takılı kalan skorları uçur
   useEffect(() => {
-    setAdminScores({});
-    setLiveMatchesDB([]);
-    setLiveInfoStateMap({});
-  }, [selectedLiveWeek]);
-
-
-// 🔴 1. ÇÖZÜM: Hafta değiştiğinde önceki skorları ve önbelleği temizle
-useEffect(() => {
   setAdminScores({});
   setLiveMatchesDB([]);
   setLiveInfoStateMap({});
-}, [selectedLiveWeek]);
+  }, [selectedLiveWeek]);
 
   const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
   const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
@@ -111,15 +105,11 @@ useEffect(() => {
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  // 🔴 YENİ EKLENEN RADAR DURUM KONTROLÜ 🔴
-  const [isRadarScanning, setIsRadarScanning] = useState<Record<number, boolean>>({});
-
   const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(6);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
 
-  // 🔴 BÜLTEN STATE'İNE API ID ALANI EKLENDİ 🔴
   const [bulletinMatches, setBulletinMatches] = useState(
     Array.from({ length: 24 }, (_, i) => ({
       match_index: i + 1,
@@ -128,7 +118,7 @@ useEffect(() => {
       match_time: '21:00',
       home_team: '',
       away_team: '',
-      api_match_id: '' // YENİ EKLENDİ
+      api_match_id: '' 
     }))
   );
 
@@ -219,7 +209,7 @@ useEffect(() => {
                     targetWeek = Math.max(...weeks);
                 }
 
-                setSystemActiveWeek(targetWeek); // 🔴 SİSTEMİN AKTİF HAFTASI KAYDEDİLDİ
+                setSystemActiveWeek(targetWeek);
 
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
                 setSelectedLiveWeek(targetWeek);
@@ -417,7 +407,7 @@ useEffect(() => {
             return {
               match_index: i + 1, category: existing?.category || '', match_date: existing?.match_date || newDates[0],
               match_time: existing?.match_time || '21:00', home_team: existing?.home_team || '', away_team: existing?.away_team || '',
-              api_match_id: existing?.api_match_id || '' // 🔴 BÜLTENDEN API ID'Yİ ÇEKER
+              api_match_id: existing?.api_match_id || '' 
             };
           });
           setBulletinMatches(mapped as any);
@@ -688,7 +678,6 @@ useEffect(() => {
 
       let confirmMsg = "";
       
-      // 🔴 EKMEL KANUNU (GÜNCELLENDİ): BONUSLAR SADECE MASTER'A 🔴
       if (matchId === 24) {
             let bonusInserts: any[] = [];
             let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
@@ -885,61 +874,45 @@ useEffect(() => {
     setBulletinMatches(updated);
   };
 
-  // 🔴 YENİ: OTOMATİK RADAR (API'DEN ID BULMA MOTORU) 🔴
-  const runApiRadar = async (idx: number) => {
-     const match = bulletinMatches[idx];
-     if (!match.home_team || !match.away_team || !match.match_date) {
-         alert("Komutanım, radarı çalıştırmadan önce EV SAHİBİ, DEPLASMAN ve TARİH bilgilerini girmelisin!");
-         return;
-     }
+  // 🔴 YENİ: AÇILIR LİSTE ŞEKLİNDE MANUEL RADAR (API) MOTORU 🔴
+  const fetchApiMatchesForDate = async (dateStr: string) => {
+      setIsApiLoading(true);
+      try {
+          let formattedDate = dateStr;
+          if (formattedDate.includes('.')) {
+              const parts = formattedDate.split('.');
+              formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          }
 
-     setIsRadarScanning(prev => ({...prev, [idx]: true}));
+          if (apiMatchesByDate[formattedDate]) {
+              setIsApiLoading(false);
+              return;
+          }
 
-     try {
-         // Tarihi API-Sports'un anladığı YYYY-MM-DD formatına çevir (20.09.2026 -> 2026-09-20)
-         let formattedDate = match.match_date;
-         if (formattedDate.includes('.')) {
-             const parts = formattedDate.split('.');
-             formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-         }
-
-         // Radar Mermisi Ateşleniyor (Senin dördüncü şifreni kullandım)
-         const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
-             headers: {
-                 'x-apisports-key': 'b19f6602229b82fd8e2d329c102cd1c0',
-                 'x-rapidapi-host': 'v3.football.api-sports.io'
-             }
-         });
-         const data = await res.json();
-
-         if (data.response && data.response.length > 0) {
-             // Takım isimlerindeki ekleri silip akıllı (fuzzy) arama yapar
-             const cleanStr = (s: string) => s.toLowerCase().replace(/spor/g, '').replace(/fk/g, '').replace(/fc/g, '').trim();
-             const myHome = cleanStr(match.home_team);
-             const myAway = cleanStr(match.away_team);
-
-             const found = data.response.find((f: any) => {
-                 const apiHome = cleanStr(f.teams.home.name);
-                 const apiAway = cleanStr(f.teams.away.name);
-                 // Eşleşmeyi bulur (İçinde geçmesi bile yeterli)
-                 return (apiHome.includes(myHome) || myHome.includes(apiHome)) ||
-                        (apiAway.includes(myAway) || myAway.includes(apiAway));
-             });
-
-             if (found) {
-                 const apiId = found.fixture.id;
-                 handleBulletinChange(idx, 'api_match_id', String(apiId));
-             } else {
-                 alert("Sinyal Alınamadı! Bu maç API radarında bulunamadı. Takım adını veya tarihi kontrol et Komutanım.");
-             }
-         } else {
-             alert("Sinyal Yok! API-Sports o tarihte hiçbir maç bulamadı.");
-         }
-     } catch (error) {
-         alert("Radar Sistem Arızası: " + error);
-     } finally {
-         setIsRadarScanning(prev => ({...prev, [idx]: false}));
-     }
+          const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
+              headers: {
+                  'x-apisports-key': 'b19f6602229b82fd8e2d329c102cd1c0',
+                  'x-rapidapi-host': 'v3.football.api-sports.io'
+              }
+          });
+          const data = await res.json();
+          
+          if (data.response && data.response.length > 0) {
+              const sortedMatches = data.response.sort((a: any, b: any) => {
+                  const timeA = new Date(a.fixture.date).getTime();
+                  const timeB = new Date(b.fixture.date).getTime();
+                  return timeA - timeB;
+              });
+              
+              setApiMatchesByDate(prev => ({...prev, [formattedDate]: sortedMatches}));
+          } else {
+              setApiMatchesByDate(prev => ({...prev, [formattedDate]: []}));
+          }
+      } catch (error) {
+          console.error("API Bağlantı Hatası:", error);
+      } finally {
+          setIsApiLoading(false);
+      }
   };
 
   const saveBulletinToDB = async () => {
@@ -954,28 +927,26 @@ useEffect(() => {
          week_num: bulletinWeek, match_index: m.match_index, category: m.category,
          match_date: m.match_date, match_time: m.match_time,
          home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase(),
-         api_match_id: m.api_match_id ? parseInt(String(m.api_match_id)) : null // 🔴 BÜLTENE KAYDET
+         api_match_id: m.api_match_id ? parseInt(String(m.api_match_id)) : null 
       }));
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
       
-      // 🔴 LIVE_MATCHES KÖPRÜSÜNÜ OTOMATİK KUR (Şifreleri anında bağlar)
       const liveMatchesPayload = bulletinMatches.filter(m => m.api_match_id).map(m => ({
-          id: getUniqueMatchId(bulletinWeek, m.match_index), // Karargah ID (Örn: 601)
-          api_match_id: parseInt(String(m.api_match_id)) // API ID (Örn: 1550136)
+          id: getUniqueMatchId(bulletinWeek, m.match_index), 
+          api_match_id: parseInt(String(m.api_match_id)) 
       }));
 
       if (liveMatchesPayload.length > 0) {
           await supabase.from('live_matches').upsert(liveMatchesPayload, { onConflict: 'id' });
       }
 
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nAPI Radarı ile bulunan maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nAPI Radarı ile seçilen maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
     setIsPublishing(false);
   };
 
-  // 🔴 GECE YARISI SENDROMU VE GÜN FİLTRESİ MOTORU (GÜNCELLENDİ) 🔴
   const displayedMatches = liveMatchesDB.filter(match => {
       const logInfo = liveInfoStateMap[match.match_index];
       const status = logInfo?.status || 'NOT_STARTED';
@@ -1046,7 +1017,7 @@ useEffect(() => {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
       <div className="max-w-7xl mx-auto pt-6">
 
-        {/* 🔴 SENİN ALIŞTIĞIN SEKME (TAB) MENÜSÜ 🔴 */}
+        {/* 🔴 SEKME (TAB) MENÜSÜ 🔴 */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
            <button 
              onClick={() => setActiveTab('live')}
@@ -1263,10 +1234,9 @@ useEffect(() => {
                 const isLocked = distributedMatches[match.match_index];
                 const logInfo = liveInfoStateMap[match.match_index];
                 
-                // 🔴 1 DK KİLİDİ 🔴
                 const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
                 const isTimeAllowed = now >= matchTimeMs - 60000;
-                const isPastWeek = selectedLiveWeek < systemActiveWeek; // 🔴 GEÇMİŞ HAFTA KONTROLÜ
+                const isPastWeek = selectedLiveWeek < systemActiveWeek; 
 
                 return (
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
@@ -1405,7 +1375,7 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI 🚀 */}
+        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI (YENİ RADARLI HALİ) 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
@@ -1427,6 +1397,12 @@ useEffect(() => {
                       <tbody>
                          {bulletinMatches.map((m, idx) => {
                             const isReady = m.category && m.match_date && m.match_time && m.home_team && m.away_team;
+                            let formattedDate = m.match_date;
+                            if (formattedDate.includes('.')) {
+                                const parts = formattedDate.split('.');
+                                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            }
+                            const apiMatchesList = apiMatchesByDate[formattedDate] || [];
 
                             return (
                               <tr key={m.match_index} className={`border-b border-slate-800 transition-colors ${isReady ? 'bg-emerald-950/20' : 'hover:bg-slate-800/30'}`}>
@@ -1444,7 +1420,10 @@ useEffect(() => {
                                  </td>
 
                                  <td className="p-2 w-[12%]">
-                                    <select value={m.match_date} onChange={e=>handleBulletinChange(idx,'match_date',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
+                                    <select value={m.match_date} onChange={e=>{
+                                      handleBulletinChange(idx,'match_date',e.target.value);
+                                      handleBulletinChange(idx, 'api_match_id', ''); // Tarih değişirse ID sıfırlansın
+                                    }} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
                                        {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
                                     </select>
                                  </td>
@@ -1469,27 +1448,40 @@ useEffect(() => {
                                     </select>
                                  </td>
 
-                                 {/* 🔴 API-SPORTS MAÇ ID RADAR BÖLÜMÜ 🔴 */}
+                                 {/* 🔥 YENİ: AÇILIR LİSTE (HAVUZ) MANUEL RADAR BÖLÜMÜ 🔥 */}
                                  <td className="p-2 w-[15%]">
-                                    <div className="flex items-center gap-1 w-full">
-                                       <input
-                                          type="text"
-                                          value={m.api_match_id || ''}
-                                          onChange={e => handleBulletinChange(idx, 'api_match_id', e.target.value)}
-                                          placeholder="API ID"
-                                          className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold text-center tracking-widest"
-                                       />
-                                       <button
-                                          onClick={() => runApiRadar(idx)}
-                                          disabled={isRadarScanning[idx]}
-                                          title="Otomatik Bul (Radar)"
-                                          className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 p-2 rounded shadow transition-colors border border-cyan-700/50"
-                                       >
-                                          {isRadarScanning[idx] ? '⏳' : '📡'}
-                                       </button>
+                                    <div className="flex flex-col gap-1 w-full relative">
+                                       <div className="flex items-center gap-1 w-full">
+                                          <select
+                                            value={m.api_match_id || ''}
+                                            onChange={(e) => handleBulletinChange(idx, 'api_match_id', e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold tracking-widest text-[10px]"
+                                          >
+                                            <option value="">-- API HAVUZUNDAN SEÇ --</option>
+                                            {apiMatchesList.map(apiM => (
+                                                <option key={`api-${m.match_index}-${apiM.fixture.id}`} value={apiM.fixture.id}>
+                                                    {new Date(apiM.fixture.date).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})} | {apiM.teams.home.name} vs {apiM.teams.away.name}
+                                                </option>
+                                            ))}
+                                          </select>
+                                          
+                                          <button
+                                             onClick={(e) => {
+                                                e.preventDefault();
+                                                fetchApiMatchesForDate(m.match_date);
+                                             }}
+                                             disabled={isApiLoading}
+                                             title="O Günün API Maçlarını Getir"
+                                             className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 px-3 py-2 rounded shadow transition-colors border border-cyan-700/50 flex items-center justify-center shrink-0"
+                                          >
+                                             {isApiLoading ? '⏳' : '📡'}
+                                          </button>
+                                       </div>
+                                       {!m.api_match_id && apiMatchesList.length > 0 && (
+                                           <span className="text-[8px] text-amber-500 italic mt-0.5 ml-1 animate-pulse">Lütfen yukarıdan maçınızı seçin</span>
+                                       )}
                                     </div>
                                  </td>
-
                               </tr>
                             );
                          })}
