@@ -44,12 +44,10 @@ export async function GET(request: Request) {
                             const depSkor = mac.goals.away ?? 0;
                             const durum = mac.fixture.status.short; 
                             
-                            // 🔥 EKSİK OLAN HAYATİ BİLGİLER BURAYA EKLENDİ 🔥
                             const dakika = mac.fixture.status.elapsed ?? null; 
                             const olaylar = mac.events ?? []; 
                             
                             let statu = 'NOT_STARTED';
-                            // Devre arası (HT) durumunu da LIVE olarak değil direkt HT olarak güncelleyelim ki ekranda İLK YARI yazsın
                             if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
                             else if (durum === 'HT') statu = 'HT';
                             else if (['1H','2H','ET','P'].includes(durum)) statu = 'LIVE';
@@ -58,8 +56,9 @@ export async function GET(request: Request) {
                                 home_score: evSkor.toString(), 
                                 away_score: depSkor.toString(), 
                                 status: statu,
-                                elapsed: dakika, // Dakika veritabanına işleniyor
-                                events: olaylar  // Gol ve kart olayları veritabanına işleniyor
+                                elapsed: dakika,
+                                // 🔥 İŞTE KRİTİK ÇÖZÜM BURASI: JSON.stringify EKLENDİ 🔥
+                                events: JSON.stringify(olaylar) 
                             }).eq('api_match_id', macId);
                         }
                     }
