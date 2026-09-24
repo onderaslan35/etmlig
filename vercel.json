@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/canli-skor",
-      "schedule": "*/0 0 * * *"
-    }
-  ]
-  }
+{}
