@@ -4,9 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck } from '@/utils/themeEngine';
 
-// VERCEL UYANDIRMA ZİLİ 🚀
-
-// 🔥 TERCÜMAN VE İSİM DÜZELTİCİ MOTOR BURADA 🔥
 const engToTr: Record<string, string> = {
   "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
   "TURKEY": "TÜRKİYE", "TURKIYE": "TÜRKİYE", "FRANCE": "FRANSA", "ITALY": "İTALYA",
@@ -118,17 +115,32 @@ export default function LiveMatchCard() {
     if (!isWeekLoaded) return;
     
     const fetchMatchesAndPredictions = async () => {
-      const [leaderboardRes, dbBulletinMatchesRes, dbLiveMatchesRes, currentPredictionsRes] = await Promise.all([
+      // 1000 satır limitine takılmayan diğer verileri çekiyoruz
+      const [leaderboardRes, dbBulletinMatchesRes, dbLiveMatchesRes] = await Promise.all([
           supabase.from('live_leaderboard').select('*'),
           supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true }),
-          supabase.from('live_matches').select('*'),
-          supabase.from('player_predictions').select('*').eq('week_num', activeWeek)
+          supabase.from('live_matches').select('*')
       ]);
+
+      // 🔥 İŞTE ÖLÜMCÜL HATANIN ÇÖZÜMÜ: 1000 SATIR LİMİTİNİ AŞAN DÖNGÜ (PAGINATION) 🔥
+      let allPredictions: any[] = [];
+      let from = 0; 
+      const step = 1000; 
+      let keepFetching = true;
+      while(keepFetching) {
+          const { data } = await supabase.from('player_predictions').select('*').eq('week_num', activeWeek).range(from, from + step - 1);
+          if (data && data.length > 0) { 
+              allPredictions = [...allPredictions, ...data]; 
+              if (data.length < step) keepFetching = false; else from += step; 
+          } else { 
+              keepFetching = false; 
+          }
+      }
 
       const leaderboardData = leaderboardRes.data || [];
       const dbBulletinMatches = dbBulletinMatchesRes.data || [];
       const dbLiveMatches = dbLiveMatchesRes.data || [];
-      const currentPredictions = currentPredictionsRes.data || [];
+      const currentPredictions = allPredictions; // Artık eksiksiz 1296 tahminin hepsi burada!
 
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
       leaderboardData.forEach(row => {
@@ -353,7 +365,6 @@ export default function LiveMatchCard() {
       const isTffMatch = isTffMatchCheck(match.category);
       const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
 
-      // 🔥 AKILLI TAKIM EŞLEŞTİRME BAŞLIYOR 🔥
       const hName = sanitizeStr(homeTeamUpper);
       const aName = sanitizeStr(awayTeamUpper);
 
