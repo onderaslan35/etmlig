@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck } from '@/utils/themeEngine';
 
+// VERCEL UYANDIRMA ZİLİ 🚀
+
 // 🔥 TERCÜMAN VE İSİM DÜZELTİCİ MOTOR BURADA 🔥
 const engToTr: Record<string, string> = {
   "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
