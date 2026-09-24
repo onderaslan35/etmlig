@@ -4,6 +4,33 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck } from '@/utils/themeEngine';
 
+// 🔥 TERCÜMAN VE İSİM DÜZELTİCİ MOTOR BURADA 🔥
+const engToTr: Record<string, string> = {
+  "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
+  "TURKEY": "TÜRKİYE", "TURKIYE": "TÜRKİYE", "FRANCE": "FRANSA", "ITALY": "İTALYA",
+  "SPAIN": "İSPANYA", "ENGLAND": "İNGİLTERE", "BELGIUM": "BELÇİKA",
+  "PORTUGAL": "PORTEKİZ", "GREECE": "YUNANİSTAN", "NORWAY": "NORVEÇ",
+  "DENMARK": "DANİMARKA", "WALES": "GALLER", "IRELAND": "İRLANDA", "REPUBLIC OF IRELAND": "İRLANDA",
+  "SWITZERLAND": "İSVİÇRE", "SWEDEN": "İSVEÇ", "CROATIA": "HIRVATİSTAN",
+  "CZECH REPUBLIC": "ÇEKYA", "CZECHIA": "ÇEKYA", "POLAND": "POLONYA", "SCOTLAND": "İSKOÇYA",
+  "HUNGARY": "MACARİSTAN", "AUSTRIA": "AVUSTURYA", "ROMANIA": "ROMANYA", "ALBANIA": "ARNAVUTLUK",
+  "GEORGIA": "GÜRCİSTAN", "ICELAND": "İZLANDA", "SLOVAKIA": "SLOVAKYA", "SLOVENIA": "SLOVENYA",
+  "MONTENEGRO": "KARADAĞ", "NORTH MACEDONIA": "KUZEY MAKEDONYA", "MACEDONIA": "KUZEY MAKEDONYA",
+  "BOSNIA": "BOSNA-HERSEK", "BOSNIA AND HERZEGOVINA": "BOSNA-HERSEK", "CYPRUS": "KIBRIS",
+  "LITHUANIA": "LİTVANYA", "LATVIA": "LETONYA", "ESTONIA": "ESTONYA", "FINLAND": "FİNLANDİYA",
+  "BULGARIA": "BULGARİSTAN", "UKRAINE": "UKRAYNA", "RUSSIA": "RUSYA", "ARMENIA": "ERMENİSTAN",
+  "FAROE ISLANDS": "FAROE ADALARI", "KAZAKHSTAN": "KAZAKİSTAN", "MOLDOVA": "MOLDOVA",
+  "LUXEMBOURG": "LÜKSEMBURG", "LIECHTENSTEIN": "LİHTENŞTAYN", "SAN MARINO": "SAN MARİNO",
+  "MALTA": "MALTA", "ANDORRA": "ANDORRA", "KOSOVO": "KOSOVA", "BELARUS": "BELARUS"
+};
+
+const sanitizeStr = (s: string) => {
+    if (!s) return "";
+    let res = s.toUpperCase().trim();
+    res = engToTr[res] || res; 
+    return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
+};
+
 export default function LiveMatchCard() {
   const [activeWeek, setActiveWeek] = useState(6);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
@@ -324,6 +351,35 @@ export default function LiveMatchCard() {
       const isTffMatch = isTffMatchCheck(match.category);
       const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
 
+      // 🔥 AKILLI TAKIM EŞLEŞTİRME BAŞLIYOR 🔥
+      const hName = sanitizeStr(homeTeamUpper);
+      const aName = sanitizeStr(awayTeamUpper);
+
+      let homeTeamId: number | null = null;
+      let awayTeamId: number | null = null;
+
+      safeEvents.forEach((e: any) => {
+          if (e.team && e.team.id) {
+              const eName = sanitizeStr(e.team.name);
+              if (eName === hName || hName.includes(eName) || eName.includes(hName)) {
+                  homeTeamId = e.team.id;
+              } else if (eName === aName || aName.includes(eName) || eName.includes(aName)) {
+                  awayTeamId = e.team.id;
+              }
+          }
+      });
+
+      if (homeTeamId && !awayTeamId) {
+          const otherEvent = safeEvents.find((e: any) => e.team?.id && e.team.id !== homeTeamId);
+          if (otherEvent) awayTeamId = otherEvent.team.id;
+      } else if (awayTeamId && !homeTeamId) {
+          const otherEvent = safeEvents.find((e: any) => e.team?.id && e.team.id !== awayTeamId);
+          if (otherEvent) homeTeamId = otherEvent.team.id;
+      }
+
+      const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || (homeTeamId && e.team?.id === homeTeamId) || (!homeTeamId && sanitizeStr(e.team?.name) === hName)));
+      const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (awayTeamId && e.team?.id === awayTeamId) || (!awayTeamId && sanitizeStr(e.team?.name) === aName)));
+
       let exactWinners: {id: string, name: string, score: string}[] = [];
       let possibleWinners: {name: string, score: string}[] = [];
       let eliminatedPlayers: {name: string, score: string}[] = [];
@@ -368,9 +424,6 @@ export default function LiveMatchCard() {
           countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
       }
-
-      const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || e?.team?.name === match.homeTeam));
-      const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (e.isHome === undefined && e?.team?.name === match.awayTeam)));
 
       return (
         <div key={match.id} className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
