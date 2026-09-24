@@ -813,7 +813,7 @@ export default function LiveMatchCard() {
               </div>
           </div>
       </div>
-// Yeni Karargah tetikleme atisi
+      
     </div>
   );
 }
