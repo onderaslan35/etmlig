@@ -873,7 +873,7 @@ export default function AdminRadarPortal() {
     setBulletinMatches(updated);
   };
 
-  // 🔥 YENİ: OTOMATİK API HAVUZ GETİRİCİ 🔥
+  // 🔥 GÜNCELLENMİŞ OTOMATİK API HAVUZ GETİRİCİ (DOĞRU ŞİFRE İLE) 🔥
   const fetchApiMatchesForDate = async (dateStr: string) => {
       setIsApiLoading(true);
       try {
@@ -888,27 +888,37 @@ export default function AdminRadarPortal() {
               return;
           }
 
+          // 🔴 SENİN ASIL ÇALIŞAN ŞİFREN BURAYA EKLENDİ 🔴
           const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
               headers: {
-                  'x-apisports-key': 'b19f6602229b82fd8e2d329c102cd1c0',
+                  'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
                   'x-rapidapi-host': 'v3.football.api-sports.io'
               }
           });
           const data = await res.json();
           
+          // API Limit hatası veya başka bir hata verdiyse uyarı basar
+          if (data.errors && Object.keys(data.errors).length > 0) {
+               alert("API Uyarı: " + JSON.stringify(data.errors));
+               setIsApiLoading(false);
+               return;
+          }
+          
           if (data.response && data.response.length > 0) {
               const sortedMatches = data.response.sort((a: any, b: any) => {
                   const timeA = new Date(a.fixture.date).getTime();
                   const timeB = new Date(b.fixture.date).getTime();
-                  return timeA - timeB;
+                  return timeA - timeB; // Maçları saat sırasına göre dizer, bulman kolaylaşır!
               });
               
               setApiMatchesByDate(prev => ({...prev, [formattedDate]: sortedMatches}));
           } else {
               setApiMatchesByDate(prev => ({...prev, [formattedDate]: []}));
+              alert(`${formattedDate} tarihinde uyduda hiç maç bulunamadı.`);
           }
       } catch (error) {
           console.error("API Bağlantı Hatası:", error);
+          alert("Sinyal koptu! Lütfen sayfayı yenileyip tekrar deneyin.");
       } finally {
           setIsApiLoading(false);
       }
