@@ -1,4 +1,4 @@
-// ============================================================================
+ // ============================================================================
 // 🏭 ETM LİGİ MERKEZ LOJİSTİK DEPOSU (THEME & LOGO ENGINE) 🏭
 // ============================================================================
 
@@ -90,7 +90,18 @@ export const LIG_HAVUZU: Record<string, string[]> = {
   "PORTEKİZ PRIMEIRA LIGA": ["BENFICA", "PORTO", "SPORTING CP", "BRAGA"],
   "BELÇİKA PRO LEAGUE": ["CLUB BRUGGE", "ANDERLECHT", "USG", "GENK", "GENT", "ROYAL ANTWERP"],
   "MİLLİ TAKIMLAR": ["ALMANYA", "ARJANTİN", "BELÇİKA", "BREZİLYA", "FRANSA", "HOLLANDA", "İNGİLTERE", "İSPANYA", "İTALYA", "PORTEKİZ", "TÜRKİYE", "URUGUAY", "HIRVATİSTAN"],
-  "ÇEŞİTLİ AVRUPA TAKIMLARI": ["KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG", "OLIMPIYAKOS", "AEK ATHENS", "LASK", "SAO PAULO", "LEVSKI SOFIA", "CSKA SOFIA", "VİKİNG", "ST. MİRREN", "SHAKHTAR DONETSK", "SABAH FK", "BODO", "SLAVIA PRAGUE"]
+  "ÇEŞİTLİ AVRUPA TAKIMLARI": ["KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG", "OLIMPIYAKOS", "AEK ATHENS", "LASK", "SAO PAULO", "LEVSKI SOFIA", "CSKA SOFIA", "VİKİNG", "ST. MİRREN", "SHAKHTAR DONETSK", "SABAH FK", "BODO", "SLAVIA PRAGUE"],
+  // 🔥 YENİ EKLENEN UEFA ULUSLAR LİGİ HAVUZU 🔥
+  "UEFA ULUSLAR LİGİ": [
+    "ALMANYA", "ANDORRA", "ARNAVUTLUK", "BELARUS", "BELÇİKA", "BOSNA-HERSEK",
+    "BULGARİSTAN", "ÇEKYA", "DANİMARKA", "ESTONYA", "FAROE ADALARI", "FİNLANDİYA",
+    "FRANSA", "GALLER", "GÜRCİSTAN", "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA",
+    "İSKOÇYA", "İSPANYA", "İSVEÇ", "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ",
+    "KAZAKİSTAN", "KIBRIS", "KOSOVA", "KUZEY İRLANDA", "KUZEY MAKEDONYA", "LİHTENŞTAYN",
+    "LİTVANYA", "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA",
+    "PORTEKİZ", "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA",
+    "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
+  ]
 };
 
 export const defaultCategoriesList = [
@@ -394,6 +405,11 @@ export const localTeamLogos: Record<string, string> = {
    "PAOK": "/logos/paok.png",  
  
   "OLYMPIC LYON": "/logos/lyon.png",  "OLYMPIQUE LYONNAIS": "/logos/lyon.png", 
+
+
+
+
+  
 };
 
 // 🔴 4. YARDIMCI FONKSİYONLAR 🔴
