@@ -44,11 +44,23 @@ export async function GET(request: Request) {
                             const depSkor = mac.goals.away ?? 0;
                             const durum = mac.fixture.status.short; 
                             
+                            // 🔥 EKSİK OLAN HAYATİ BİLGİLER BURAYA EKLENDİ 🔥
+                            const dakika = mac.fixture.status.elapsed ?? null; 
+                            const olaylar = mac.events ?? []; 
+                            
                             let statu = 'NOT_STARTED';
+                            // Devre arası (HT) durumunu da LIVE olarak değil direkt HT olarak güncelleyelim ki ekranda İLK YARI yazsın
                             if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
-                            else if (['1H','2H','HT','ET','P'].includes(durum)) statu = 'LIVE';
+                            else if (durum === 'HT') statu = 'HT';
+                            else if (['1H','2H','ET','P'].includes(durum)) statu = 'LIVE';
 
-                            await supabase.from('live_matches').update({ home_score: evSkor.toString(), away_score: depSkor.toString(), status: statu }).eq('api_match_id', macId);
+                            await supabase.from('live_matches').update({ 
+                                home_score: evSkor.toString(), 
+                                away_score: depSkor.toString(), 
+                                status: statu,
+                                elapsed: dakika, // Dakika veritabanına işleniyor
+                                events: olaylar  // Gol ve kart olayları veritabanına işleniyor
+                            }).eq('api_match_id', macId);
                         }
                     }
                 } catch (e) { console.log("API Cekim Hatasi", e); }
@@ -145,14 +157,13 @@ export async function GET(request: Request) {
 
                 const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
                 const isLive = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
-                // 🔥 HATA BURADAYDI: Skorlar için TFF/DFO ayrımını yaparken kategoriyi çekememiş
                 const isTff = isTffMatchCheck(catDict[`${weekNum}-${matchIndex}`] || "");
 
                 winnerIds.forEach(wId => {
                     if (st[wId]) {
                         if (isFinished) {
                             st[wId].masterBaseAll += pts;
-                            st[wId].skorAll += 1; // Master Skor (Tam İsabet)
+                            st[wId].skorAll += 1; 
                             
                             if (weekNum < highestWeekFound) { 
                                 st[wId].masterBasePrev += pts; 
@@ -162,7 +173,7 @@ export async function GET(request: Request) {
                             if (isTff) {
                                 st[wId].tffPts += pts;
                                 st[wId].tffBaseAll += pts;
-                                st[wId].tffSkorAll += 1; // 🔥 TFF Skor'a (Tam İsabet) +1 ekleniyor
+                                st[wId].tffSkorAll += 1; 
                                 if (weekNum < highestWeekFound) { 
                                     st[wId].tffBasePrev += pts; 
                                     st[wId].tffSkorPrev += 1; 
@@ -170,7 +181,7 @@ export async function GET(request: Request) {
                             } else {
                                 st[wId].dfoPts += pts;
                                 st[wId].dfoBaseAll += pts;
-                                st[wId].dfoSkorAll += 1; // 🔥 DFO Skor'a (Tam İsabet) +1 ekleniyor
+                                st[wId].dfoSkorAll += 1; 
                                 if (weekNum < highestWeekFound) { 
                                     st[wId].dfoBasePrev += pts; 
                                     st[wId].dfoSkorPrev += 1; 
@@ -199,7 +210,6 @@ export async function GET(request: Request) {
         const sortFunc = (a:any, b:any) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr');
         const makePrevRanks = (list: any[]) => { const r:Record<string,number>={}; list.forEach((p,i)=>r[p.id]=i+1); return r; };
 
-        // Puan Trendleri
         const currList = Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBaseAll + st[id].masterLive + getAdminBonus(id, highestWeekFound) })).sort(sortFunc);
         const prevRanks = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBasePrev + getAdminBonus(id, highestWeekFound - 1) })).sort(sortFunc));
         
@@ -209,7 +219,6 @@ export async function GET(request: Request) {
         const currListTff = Object.keys(st).map(id => ({ id, score: st[id].tffPts + st[id].tffLive })).sort(sortFunc);
         const prevRanksTff = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffPts - st[id].tffBaseAll + st[id].tffBasePrev })).sort(sortFunc));
 
-        // Skor (Tam İsabet) Trendleri (HATA DÜZELTİLDİ, SIFIR ÇEKMEYECEK)
         const currSkor = Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorAll + st[id].skorLive })).sort(sortFunc);
         const prevRanksSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorPrev })).sort(sortFunc));
         
