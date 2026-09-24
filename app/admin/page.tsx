@@ -1447,21 +1447,16 @@ export default function AdminRadarPortal() {
                                     </select>
                                  </td>
 
-                                 {/* 🔥 YENİ: AKILLI AÇILIR LİSTE (KUTUYA TIKLAYINCA OTOMATİK ÇEKER) 🔥 */}
+                                 {/* 🔥 YENİ: AÇILIR LİSTE VE FİZİKSEL RADAR BUTONU 🔥 */}
                                  <td className="p-2 w-[15%]">
-                                    <div className="flex flex-col gap-1 w-full relative">
+                                    <div className="flex items-center gap-1 w-full">
                                        <select
                                          value={m.api_match_id || ''}
                                          onChange={(e) => handleBulletinChange(idx, 'api_match_id', e.target.value)}
-                                         onClick={() => {
-                                            if (apiMatchesList.length === 0 && !isApiLoading) {
-                                                fetchApiMatchesForDate(m.match_date);
-                                            }
-                                         }}
-                                         className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold tracking-widest text-[10px] cursor-pointer"
+                                         className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold tracking-widest text-[10px]"
                                        >
                                          <option value="">
-                                            {isApiLoading ? '⏳ UYDUYA BAĞLANILIYOR...' : (apiMatchesList.length > 0 ? '-- DOĞRU MAÇI SEÇİN --' : '📡 TIKLA VE MAÇLARI ÇEK')}
+                                            {apiMatchesList.length > 0 ? '-- LİSTEDEN SEÇ --' : '-- ÖNCE RADARA BAS --'}
                                          </option>
                                          {apiMatchesList.map(apiM => (
                                              <option key={`api-${m.match_index}-${apiM.fixture.id}`} value={apiM.fixture.id}>
@@ -1469,6 +1464,18 @@ export default function AdminRadarPortal() {
                                              </option>
                                          ))}
                                        </select>
+
+                                       <button
+                                          onClick={(e) => {
+                                             e.preventDefault();
+                                             fetchApiMatchesForDate(m.match_date);
+                                          }}
+                                          disabled={isApiLoading}
+                                          title="Maçları Çek"
+                                          className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 px-3 py-2 rounded shadow transition-colors border border-cyan-700/50 flex items-center justify-center shrink-0"
+                                       >
+                                          {isApiLoading ? '⏳' : '📡'}
+                                       </button>
                                     </div>
                                  </td>
                               </tr>
@@ -1767,7 +1774,7 @@ export default function AdminRadarPortal() {
                   ))}
                </div>
             </div>
-1
+
             <datalist id="leagueOptions">
                {Object.keys(dynamicLigHavuzu).sort((a,b) => a.localeCompare(b, 'tr')).map(lg => <option key={`dl-${lg}`} value={lg} />)}
             </datalist>
