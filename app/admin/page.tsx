@@ -52,7 +52,6 @@ export default function AdminRadarPortal() {
   const previousScoresRef = useRef<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 🔴 YENİ RADAR (HAVUZ) SİSTEMİ STATE'LERİ 🔴
   const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
 
@@ -874,7 +873,7 @@ export default function AdminRadarPortal() {
     setBulletinMatches(updated);
   };
 
-  // 🔴 YENİ: AÇILIR LİSTE ŞEKLİNDE MANUEL RADAR (API) MOTORU 🔴
+  // 🔥 YENİ: OTOMATİK API HAVUZ GETİRİCİ 🔥
   const fetchApiMatchesForDate = async (dateStr: string) => {
       setIsApiLoading(true);
       try {
@@ -1375,7 +1374,7 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI (YENİ RADARLI HALİ) 🚀 */}
+        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI (YENİ AKILLI RADARLI HALİ) 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
@@ -1422,7 +1421,7 @@ export default function AdminRadarPortal() {
                                  <td className="p-2 w-[12%]">
                                     <select value={m.match_date} onChange={e=>{
                                       handleBulletinChange(idx,'match_date',e.target.value);
-                                      handleBulletinChange(idx, 'api_match_id', ''); // Tarih değişirse ID sıfırlansın
+                                      handleBulletinChange(idx, 'api_match_id', ''); 
                                     }} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
                                        {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
                                     </select>
@@ -1448,38 +1447,28 @@ export default function AdminRadarPortal() {
                                     </select>
                                  </td>
 
-                                 {/* 🔥 YENİ: AÇILIR LİSTE (HAVUZ) MANUEL RADAR BÖLÜMÜ 🔥 */}
+                                 {/* 🔥 YENİ: AKILLI AÇILIR LİSTE (KUTUYA TIKLAYINCA OTOMATİK ÇEKER) 🔥 */}
                                  <td className="p-2 w-[15%]">
                                     <div className="flex flex-col gap-1 w-full relative">
-                                       <div className="flex items-center gap-1 w-full">
-                                          <select
-                                            value={m.api_match_id || ''}
-                                            onChange={(e) => handleBulletinChange(idx, 'api_match_id', e.target.value)}
-                                            className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold tracking-widest text-[10px]"
-                                          >
-                                            <option value="">-- API HAVUZUNDAN SEÇ --</option>
-                                            {apiMatchesList.map(apiM => (
-                                                <option key={`api-${m.match_index}-${apiM.fixture.id}`} value={apiM.fixture.id}>
-                                                    {new Date(apiM.fixture.date).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})} | {apiM.teams.home.name} vs {apiM.teams.away.name}
-                                                </option>
-                                            ))}
-                                          </select>
-                                          
-                                          <button
-                                             onClick={(e) => {
-                                                e.preventDefault();
+                                       <select
+                                         value={m.api_match_id || ''}
+                                         onChange={(e) => handleBulletinChange(idx, 'api_match_id', e.target.value)}
+                                         onClick={() => {
+                                            if (apiMatchesList.length === 0 && !isApiLoading) {
                                                 fetchApiMatchesForDate(m.match_date);
-                                             }}
-                                             disabled={isApiLoading}
-                                             title="O Günün API Maçlarını Getir"
-                                             className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 px-3 py-2 rounded shadow transition-colors border border-cyan-700/50 flex items-center justify-center shrink-0"
-                                          >
-                                             {isApiLoading ? '⏳' : '📡'}
-                                          </button>
-                                       </div>
-                                       {!m.api_match_id && apiMatchesList.length > 0 && (
-                                           <span className="text-[8px] text-amber-500 italic mt-0.5 ml-1 animate-pulse">Lütfen yukarıdan maçınızı seçin</span>
-                                       )}
+                                            }
+                                         }}
+                                         className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold tracking-widest text-[10px] cursor-pointer"
+                                       >
+                                         <option value="">
+                                            {isApiLoading ? '⏳ UYDUYA BAĞLANILIYOR...' : (apiMatchesList.length > 0 ? '-- DOĞRU MAÇI SEÇİN --' : '📡 TIKLA VE MAÇLARI ÇEK')}
+                                         </option>
+                                         {apiMatchesList.map(apiM => (
+                                             <option key={`api-${m.match_index}-${apiM.fixture.id}`} value={apiM.fixture.id}>
+                                                 {new Date(apiM.fixture.date).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})} | {apiM.teams.home.name} vs {apiM.teams.away.name}
+                                             </option>
+                                         ))}
+                                       </select>
                                     </div>
                                  </td>
                               </tr>
@@ -1778,7 +1767,7 @@ export default function AdminRadarPortal() {
                   ))}
                </div>
             </div>
-
+1
             <datalist id="leagueOptions">
                {Object.keys(dynamicLigHavuzu).sort((a,b) => a.localeCompare(b, 'tr')).map(lg => <option key={`dl-${lg}`} value={lg} />)}
             </datalist>
