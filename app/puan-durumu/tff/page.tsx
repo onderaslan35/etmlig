@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
+import { isTffMatchCheck } from '@/utils/themeEngine'; // TFF filtresini içeri aldık
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -18,8 +19,9 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      const { data: allMatches } = await supabase.from('live_matches').select('id, status');
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
+      // 1. Maçları ve bülteni çekiyoruz
+      const { data: allMatches } = await supabase.from('live_matches').select('*');
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
       
       let activeWeek = 5, activeDate = '';
       if (dbBulletin && allMatches) {
@@ -41,12 +43,93 @@ export default function TffPuanDurumuPage() {
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
 
-      const { data } = await supabase.from('live_leaderboard').select('id, name, tff_pts, tff_trend_direction, tff_trend_diff');
-      if (data && data.length > 0) {
-        const sorted = data.sort((a, b) => b.tff_pts - a.tff_pts || (a.name || "").localeCompare(b.name || "", 'tr'));
-        setTableRows(sorted.map((r, i) => ({
-            id: r.id, name: r.name, displayScore: r.tff_pts, currentRank: i + 1, 
-            trend: r.tff_trend_direction || 'same', trendDiff: r.tff_trend_diff || 0
+      // 2. ID ve İsim Eşleştirmesi
+      const { data: playersData } = await supabase.from('players').select('username, name');
+      const idToNameMap: Record<string, string> = {};
+      if (playersData) {
+          playersData.forEach(p => idToNameMap[p.username] = p.name);
+      }
+
+      // 3. Tahminleri 1000 limitini aşarak çek (Canlı hesaplama için şart)
+      let predictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+      while (fetchMore) {
+          const { data: pDataChunk, error } = await supabase
+              .from('player_predictions')
+              .select('*')
+              .eq('week_num', activeWeek)
+              .range(from, from + step - 1);
+          if (error) break;
+          if (pDataChunk && pDataChunk.length > 0) {
+              predictions = [...predictions, ...pDataChunk];
+              if (pDataChunk.length < step) fetchMore = false; 
+              else from += step; 
+          } else {
+              fetchMore = false; 
+          }
+      }
+
+      // 4. Sabit (Dağıtılmış) TFF Puanlarını Çek
+      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_pts, tff_trend_direction, tff_trend_diff');
+      
+      if (leaderboardData && leaderboardData.length > 0) {
+        let updatedList = leaderboardData.map(r => ({
+            id: r.id, 
+            name: r.name || "", 
+            baseScore: r.tff_pts || 0, 
+            liveBonus: 0,
+            trend: r.tff_trend_direction || 'same', 
+            trendDiff: r.tff_trend_diff || 0
+        }));
+
+        // 5. CANLI PUAN HESAPLAMA (SADECE TFF MAÇLARI)
+        if (allMatches && predictions && dbBulletin) {
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+            
+            liveM.forEach(match => {
+                const currentScore = `${match.home_score}-${match.away_score}`;
+                if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
+                
+                const mIndex = match.id % 100;
+                const matchWeek = Math.floor(match.id / 100);
+                
+                const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
+                
+                // 🔥 EĞER DFO MAÇIYSA (TFF DEĞİLSE) PUAN EKLENMEZ 🔥
+                if (bulletinMatch && !isTffMatchCheck(bulletinMatch.category)) return;
+
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                
+                let pts = 0;
+                if (winners.length === 1) pts = 12;
+                else if (winners.length === 2) pts = 6;
+                else if (winners.length === 3) pts = 5;
+                else if (winners.length === 4) pts = 4;
+                else if (winners.length === 5) pts = 3;
+                else if (winners.length === 6) pts = 2;
+                else if (winners.length >= 7) pts = 1;
+
+                winners.forEach(w => {
+                    const playerName = idToNameMap[w.user_id] || "";
+                    if (playerName) {
+                        const targetPlayer = updatedList.find(p => p.name === playerName || p.name.includes(playerName) || playerName.includes(p.name.replace(/ 🏆/g, '')));
+                        if (targetPlayer) targetPlayer.liveBonus += pts;
+                    }
+                });
+            });
+        }
+
+        // 6. TOPLAM PUAN VE SIRALAMA
+        const sortedList = updatedList.map(p => ({
+            ...p,
+            displayScore: p.baseScore + p.liveBonus
+        })).sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
+
+        setTableRows(sortedList.map((r, i) => ({
+            ...r,
+            currentRank: i + 1
         })));
       }
     } catch (e) { console.log("Veri çekilirken hata oluştu"); }
@@ -54,8 +137,17 @@ export default function TffPuanDurumuPage() {
 
   useEffect(() => { 
       loadLeaderboard(); 
-      const channel = supabase.channel('tff_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadLeaderboard(); }).subscribe();
-      return () => { supabase.removeChannel(channel); };
+      
+      const channel1 = supabase.channel('tff_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadLeaderboard(); }).subscribe();
+      const channel2 = supabase.channel('tff_matches_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadLeaderboard(); }).subscribe();
+      
+      const backupInterval = setInterval(() => { loadLeaderboard(); }, 30000);
+
+      return () => { 
+          supabase.removeChannel(channel1); 
+          supabase.removeChannel(channel2); 
+          clearInterval(backupInterval);
+      };
   }, []);
 
   return (
@@ -84,7 +176,9 @@ export default function TffPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
+                      
+                      {/* DİKKAT: Sıra Numarası Hizalaması Düzenlendi (align-middle) */}
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                         <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank}</span>
                           <span className="text-[#475569]">-</span>
@@ -95,8 +189,26 @@ export default function TffPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-1 md:px-2 py-3 align-top pt-3.5"><div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold"><span className="whitespace-nowrap">{row.name}</span></div></td>
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-red-500 align-top pt-3.5">{row.displayScore}</td>
+                      
+                      {/* DİKKAT: İsim Sütunu Hizalaması Düzenlendi (align-middle) */}
+                      <td className="px-1 md:px-2 py-3 align-middle">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                          <span className="whitespace-nowrap">{row.name}</span>
+                        </div>
+                      </td>
+                      
+                      {/* 🔥 YENİ STANDART: Puan ve Rozet Yatay Hizalandı (flex-row) 🔥 */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-red-500 align-middle">
+                        <div className="flex flex-row items-center justify-center gap-1.5">
+                          <span>{row.displayScore}</span>
+                          {row.liveBonus > 0 && (
+                            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                              +{row.liveBonus} CANLI
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
                     </tr>
                   ))}
                 </tbody>

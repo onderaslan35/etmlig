@@ -165,14 +165,12 @@ export default function MasterPuanDurumuPage() {
         }
 
         // 4. Mühürlü listeyi kopyala ve hesaplamaya başla
-        // EĞER SİSTEM 13. HAFTAYI GEÇTİYSE (ÖRN: 14. HAFTA BAŞLADIYSA) ESKİ ROZETLERİ SİL
         const isNewWeekStarted = activeWeek > 13;
 
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
-            // Eğer yeni hafta başladıysa (14 ve yukarısı), rozet dizisini boşalt
             badges: isNewWeekStarted ? [] : row.badges 
         }));
 
@@ -208,7 +206,7 @@ export default function MasterPuanDurumuPage() {
                 winners.forEach(w => {
                     const playerName = idToNameMap[w.user_id];
                     if (playerName) {
-                        const targetPlayer = updatedList.find(p => p.name.includes(playerName));
+                        const targetPlayer = updatedList.find(p => p.name === playerName || p.name.includes(playerName) || playerName.includes(p.name.replace(/ 🏆/g, '')));
                         if (targetPlayer) targetPlayer.liveBonus += pts;
                     }
                 });
@@ -269,10 +267,11 @@ export default function MasterPuanDurumuPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]">
-                {/* DİKKAT: Artık mühürlüListe değil, hesaplanmış liveList haritasını basıyoruz */}
                 {liveList.map((row, idx) => (
                   <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
-                    <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
+                    
+                    {/* DİKKAT: Sıra Numarası Hizalaması Düzenlendi (align-middle) */}
+                    <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                       <div className="flex items-center gap-1">
                         <span className="w-4 text-left">{idx + 1}</span>
                         <span className="text-[#475569]">-</span>
@@ -286,7 +285,8 @@ export default function MasterPuanDurumuPage() {
                       </div>
                     </td>
                     
-                    <td className="px-1 md:px-2 py-3 align-top pt-3.5">
+                    {/* DİKKAT: İsim Sütunu Hizalaması Düzenlendi (align-middle) */}
+                    <td className="px-1 md:px-2 py-3 align-middle">
                       <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                         <span className="whitespace-nowrap">{row.name}</span>
                         
@@ -304,10 +304,10 @@ export default function MasterPuanDurumuPage() {
                       </div>
                     </td>
 
-                    <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-amber-500 align-top pt-3.5">
-                      <div className="flex flex-col items-center justify-center gap-1">
+                    {/* 🔥 YENİ STANDART: Puan ve Rozet Yatay Hizalandı (flex-row) 🔥 */}
+                    <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-amber-500 align-middle">
+                      <div className="flex flex-row items-center justify-center gap-1.5">
                           <span>{row.score}</span>
-                          {/* 🔥 İŞTE CANLI PUAN ROZETİ BURADA BELİRECEK 🔥 */}
                           {row.liveBonus > 0 && (
                               <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
                                   +{row.liveBonus} CANLI
@@ -315,6 +315,7 @@ export default function MasterPuanDurumuPage() {
                           )}
                       </div>
                     </td>
+                    
                   </tr>
                 ))}
               </tbody>

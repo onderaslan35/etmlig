@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import { isTffMatchCheck } from '@/utils/themeEngine'; // TFF kontrolünü içeri aldık
+import { isTffMatchCheck } from '@/utils/themeEngine';
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -19,9 +19,7 @@ export default function DfoPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. DİKKAT: Artık sadece id değil, home_score ve away_score da lazım
       const { data: allMatches } = await supabase.from('live_matches').select('*');
-      // 2. DİKKAT: Kategori lazım ki TFF mi DFO mu ayıklayalım
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
       
       let activeWeek = 5, activeDate = '';
@@ -44,14 +42,12 @@ export default function DfoPuanDurumuPage() {
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
 
-      // 3. OYUNCU İSİMLERİNİ AL (ID eşleşmesi için)
       const { data: playersData } = await supabase.from('players').select('username, name');
       const idToNameMap: Record<string, string> = {};
       if (playersData) {
           playersData.forEach(p => idToNameMap[p.username] = p.name);
       }
 
-      // 4. TAHMİNLERİ ÇEK (1000 LİMİTİNİ AŞAN DÖNGÜ İLE)
       let predictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -72,7 +68,6 @@ export default function DfoPuanDurumuPage() {
           }
       }
 
-      // 5. MEVCUT (DAĞITILMIŞ) DFO PUANLARINI ÇEK
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, dfo_pts, dfo_trend_direction, dfo_trend_diff');
       
       if (leaderboardData && leaderboardData.length > 0) {
@@ -85,7 +80,6 @@ export default function DfoPuanDurumuPage() {
             trendDiff: r.dfo_trend_diff || 0
         }));
 
-        // 6. CANLI HESAPLAMA (TFF MAÇLARINI ATLAYARAK)
         if (allMatches && predictions && dbBulletin) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -96,10 +90,7 @@ export default function DfoPuanDurumuPage() {
                 const mIndex = match.id % 100;
                 const matchWeek = Math.floor(match.id / 100);
                 
-                // Maçın kategorisini bul
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
-                
-                // 🔥 EĞER TFF MAÇIYSA DFO KASASINA PUAN EKLENMEZ 🔥
                 if (bulletinMatch && isTffMatchCheck(bulletinMatch.category)) return;
 
                 const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
@@ -123,7 +114,6 @@ export default function DfoPuanDurumuPage() {
             });
         }
 
-        // 7. BİRLEŞTİR VE SIRALA
         const sortedList = updatedList.map(p => ({
             ...p,
             displayScore: p.baseScore + p.liveBonus
@@ -140,11 +130,9 @@ export default function DfoPuanDurumuPage() {
   useEffect(() => { 
       loadLeaderboard(); 
       
-      // HEM KASADAKİ DEĞİŞİKLİKLERİ HEM DE 1. ADIM (CANLI) YANSIMALARI DİNLE
       const channel1 = supabase.channel('dfo_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadLeaderboard(); }).subscribe();
       const channel2 = supabase.channel('dfo_matches_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadLeaderboard(); }).subscribe();
       
-      // GİZLİ SİGORTA: 30 Saniyede bir arka planda otomatik yenileme (Soket çökse bile ekran güncellenir)
       const backupInterval = setInterval(() => { loadLeaderboard(); }, 30000);
 
       return () => { 
@@ -180,7 +168,9 @@ export default function DfoPuanDurumuPage() {
                 <tbody className="divide-y divide-[#1e293b]">
                   {tableRows.map((row, idx) => (
                     <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
+                      
+                      {/* DİKKAT: Sıra Numarası Hizalaması Düzenlendi (align-middle) */}
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                         <div className="flex items-center gap-1">
                           <span className="w-4 text-left">{row.currentRank}</span>
                           <span className="text-[#475569]">-</span>
@@ -191,11 +181,17 @@ export default function DfoPuanDurumuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-1 md:px-2 py-3 align-top pt-3.5"><div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold"><span className="whitespace-nowrap">{row.name}</span></div></td>
                       
-                      {/* 🔥 İŞTE CANLI PUAN ROZETİ BURADA BELİRECEK 🔥 */}
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-400 align-top pt-3.5">
-                        <div className="flex flex-col items-center justify-center gap-1">
+                      {/* DİKKAT: İsim Sütunu Hizalaması Düzenlendi (align-middle) */}
+                      <td className="px-1 md:px-2 py-3 align-middle">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                          <span className="whitespace-nowrap">{row.name}</span>
+                        </div>
+                      </td>
+                      
+                      {/* 🔥 YENİ STANDART: Puan ve Rozet Yatay Hizalandı (flex-row) 🔥 */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-400 align-middle">
+                        <div className="flex flex-row items-center justify-center gap-1.5">
                           <span>{row.displayScore}</span>
                           {row.liveBonus > 0 && (
                             <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
