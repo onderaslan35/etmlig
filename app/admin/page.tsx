@@ -910,7 +910,6 @@ export default function AdminRadarPortal() {
           });
           const data = await res.json();
           
-          // API Limit hatası veya başka bir hata verdiyse uyarı basar
           if (data.errors && Object.keys(data.errors).length > 0) {
                alert("API Uyarı: " + JSON.stringify(data.errors));
                setIsApiLoading(false);
@@ -921,7 +920,7 @@ export default function AdminRadarPortal() {
               const sortedMatches = data.response.sort((a: any, b: any) => {
                   const timeA = new Date(a.fixture.date).getTime();
                   const timeB = new Date(b.fixture.date).getTime();
-                  return timeA - timeB; // Maçları saat sırasına göre dizer, bulman kolaylaşır!
+                  return timeA - timeB; 
               });
               
               setApiMatchesByDate(prev => ({...prev, [formattedDate]: sortedMatches}));
