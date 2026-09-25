@@ -159,12 +159,12 @@ export default function MasterPuanDurumuPage() {
             }
         }
 
-        // 🔥 ROZET SİLİCİ KANSER HÜCRE YOK EDİLDİ 🔥
+        // 🔥 YENİ HAFTA BAŞLADI - ESKİ ROZETLER TARİHE GÖMÜLDÜ 🔥
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
-            badges: row.badges // Artık hafta 13'ü geçti diye rozetleri ACIMASIZCA SİLMEYECEK!
+            badges: [] // Sistem artık her açıldığında rozetleri tertemiz sıfırlayacak
         }));
 
         if (finishedPoints) {
