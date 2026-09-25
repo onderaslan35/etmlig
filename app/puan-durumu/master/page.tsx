@@ -124,23 +124,18 @@ export default function MasterPuanDurumuPage() {
         setDisplayWeekNum(activeWeek);
         setDisplayDate(formatTurkishDate(activeDate));
 
-        // 🔥 YENİ: DİNAMİK PUAN VE CANLI SKOR HESAPLAMASI 🔥
-        
-        // 1. Veritabanındaki oyuncuları çek (ID -> İsim eşleşmesi için)
         const { data: playersData } = await supabase.from('players').select('username, name');
         const idToNameMap: Record<string, string> = {};
         if (playersData) {
             playersData.forEach(p => idToNameMap[p.username] = p.name);
         }
 
-        // 2. Aktif haftanın BİTMİŞ puanlarını çek
         const { data: finishedPoints } = await supabase
             .from('points')
             .select('*')
             .eq('hafta', activeWeek)
             .eq('kategori', 'MASTER');
 
-        // 3. Aktif haftanın oyuncu tahminlerini çek (1000 LİMİTİ ÇÖZÜMÜ)
         let predictions: any[] = [];
         let fetchMore = true;
         let from = 0;
@@ -164,17 +159,14 @@ export default function MasterPuanDurumuPage() {
             }
         }
 
-        // 4. Mühürlü listeyi kopyala ve hesaplamaya başla
-        const isNewWeekStarted = activeWeek > 13;
-
+        // 🔥 ROZET SİLİCİ KANSER HÜCRE YOK EDİLDİ 🔥
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
-            badges: isNewWeekStarted ? [] : row.badges 
+            badges: row.badges // Artık hafta 13'ü geçti diye rozetleri ACIMASIZCA SİLMEYECEK!
         }));
 
-        // A) 2. Adıma basılıp dağıtılmış puanları ekle
         if (finishedPoints) {
             finishedPoints.forEach(pt => {
                 const targetPlayer = updatedList.find(p => p.name.includes(pt.user_name));
@@ -182,7 +174,6 @@ export default function MasterPuanDurumuPage() {
             });
         }
 
-        // B) 1. Adıma basılmış (Canlı) maçların sanal puanlarını hesapla
         if (allMatches && predictions) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -213,7 +204,6 @@ export default function MasterPuanDurumuPage() {
             });
         }
 
-        // C) Toplam puanı birleştir ve listeyi yüksek puana göre sırala
         updatedList = updatedList.map(p => ({
             ...p,
             score: p.score + p.finishedBonus + p.liveBonus
@@ -226,7 +216,6 @@ export default function MasterPuanDurumuPage() {
 
     initDudukKurali();
 
-    // CANLI SOKET BAĞLANTISI: Maç skoru 1. Adımla güncellendiği an listeyi otomatik yenile
     const channel = supabase.channel('public:live_matches_standings')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
             initDudukKurali();
@@ -263,9 +252,7 @@ export default function MasterPuanDurumuPage() {
                 <tr>
                   <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
                   <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                  {/* 3. SÜTUN: Rozet için görünmez başlık alanı */}
                   <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
-                  {/* 4. SÜTUN: "TOPLAM PUAN" silindi, "PUAN" yazıldı ve ortalandı */}
                   <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
                 </tr>
               </thead>
@@ -273,7 +260,6 @@ export default function MasterPuanDurumuPage() {
                 {liveList.map((row, idx) => (
                   <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
                     
-                    {/* 1. SÜTUN: SIRA VE OK */}
                     <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                       <div className="flex items-center">
                         <span className="text-left w-5">{idx + 1}</span>
@@ -282,7 +268,6 @@ export default function MasterPuanDurumuPage() {
                       </div>
                     </td>
                     
-                    {/* 2. SÜTUN: İSİM */}
                     <td className="px-1 md:px-2 py-3 align-middle">
                       <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                         <span className="whitespace-nowrap">{row.name}</span>
@@ -299,7 +284,6 @@ export default function MasterPuanDurumuPage() {
                       </div>
                     </td>
 
-                    {/* 3. SÜTUN: SADECE CANLI ROZETİ (Ayrı sütunda olduğu için asla kayma yapmaz) */}
                     <td className="px-1 py-3 align-middle text-right">
                       {row.liveBonus > 0 && (
                         <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
@@ -308,7 +292,6 @@ export default function MasterPuanDurumuPage() {
                       )}
                     </td>
 
-                    {/* 4. SÜTUN: SADECE PUAN (Başlıktaki PUAN yazısıyla milimetrik aynı hizada) */}
                     <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-amber-500 text-center">
                       {row.score}
                     </td>
