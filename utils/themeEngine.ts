@@ -1,4 +1,4 @@
- // ============================================================================
+// ============================================================================
 // 🏭 ETM LİGİ MERKEZ LOJİSTİK DEPOSU (THEME & LOGO ENGINE) 🏭
 // ============================================================================
 
@@ -75,16 +75,9 @@ export const customWeekNames: Record<number, string> = {
 
 export const getWeekLabel = (weekNum: number | string) => {
   const w = Number(weekNum);
-  
-  // 15. Haftaya özel "27-28-29 Eylül" damgası
   if (w === 15) {
     return "15. HAFTA (27-28-29 EYLÜL)";
   }
-  
-  // İleride başka haftalara özel isim eklemek istersen buraya yeni 'if' yazabilirsin
-  // Örnek: if (w === 16) return "16. HAFTA (ŞAMPİYONLAR LİGİ)";
-
-  // Diğer tüm haftalar için standart görünüm
   return `${w}. HAFTA`;
 };
 
@@ -123,7 +116,7 @@ export const defaultCategoriesList = [
   "UEFA A.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA A.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA A.L. PLAY OFF İLK MAÇ", "UEFA A.L. PLAY OFF RÖVANŞ",
   "UEFA KONFERANS LİGİ GURUP AŞAMASI", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR İLK MAÇ", "UEFA KONFERANS LİGİ ÖN ELEME 2.TUR RÖVANŞ",
   "UEFA K.L. ÖN ELEME 3.TUR İLK MAÇ", "UEFA K.L. ÖN ELEME 3.TUR RÖVANŞ", "UEFA K.L. PLAY OFF İLK MAÇ", "UEFA K.L. PLAY OFF RÖVANŞ",
-  "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ",
+  "UEFA ULUSLAR LİGİ", "UEFA AVRUPA ULUSLAR LİGİ", "UEFA KADINLAR ŞAMPİYONLAR LİGİ",
   "İNGİLTERE SÜPER KUPA", "UEFA SÜPER KUPA",
   "COPA DEL REY", "COPPA ITALIA", "COUPE DE FRANCE", "DFB POKAL", "EREDIVISIE", "FA CUP", "SCOTTISH PREMIER LEAGUE", "PORTEKİZ LİGİ",
   "FIFA DÜNYA KUPASI"
@@ -214,7 +207,57 @@ export const localTeamLogos: Record<string, string> = {
   "SHAKHTAR DONETSK": "https://images.fotmob.com/image_resources/logo/teamlogo/9728_large.png",
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "JAGIELLONIA BIAŁYSTOK": "https://images.fotmob.com/image_resources/logo/teamlogo/1957.png",
-    "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+
+  // 🔥 MİLLİ TAKIMLAR (UEFA ULUSLAR LİGİ HAVUZU) 🔥
+  "TÜRKİYE": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Turkish_Football_Federation_crest.svg",
+  "ALMANYA": "https://upload.wikimedia.org/wikipedia/en/e/e3/DFB_Logo_1995.svg",
+  "İNGİLTERE": "https://upload.wikimedia.org/wikipedia/en/4/4b/England_national_football_team_crest.svg",
+  "FRANSA": "https://upload.wikimedia.org/wikipedia/en/4/43/French_Football_Federation_logo.svg",
+  "İSPANYA": "https://upload.wikimedia.org/wikipedia/en/3/31/Spain_National_Football_Team_badge.svg",
+  "İTALYA": "https://upload.wikimedia.org/wikipedia/en/e/ed/FIGC_logo_2023.svg",
+  "PORTEKİZ": "https://upload.wikimedia.org/wikipedia/en/5/5f/Portuguese_Football_Federation_logo.svg",
+  "HOLLANDA": "https://upload.wikimedia.org/wikipedia/en/7/78/Netherlands_national_football_team_logo.svg",
+  "BELÇİKA": "https://upload.wikimedia.org/wikipedia/en/c/c5/Royal_Belgian_FA_logo_2019.svg",
+  "GÜRCİSTAN": "https://upload.wikimedia.org/wikipedia/en/f/f2/Georgian_Football_Federation_logo.svg",
+  "ANDORRA": "https://upload.wikimedia.org/wikipedia/en/c/c7/Andorran_Football_Federation.svg",
+  "MALTA": "https://upload.wikimedia.org/wikipedia/en/2/23/Malta_FA.svg",
+  "İSKOÇYA": "https://upload.wikimedia.org/wikipedia/en/a/a2/Scottish_Football_Association_logo.svg",
+  "GALLER": "https://upload.wikimedia.org/wikipedia/en/c/c2/FAW_logo_2019.svg",
+  "İRLANDA": "https://upload.wikimedia.org/wikipedia/en/3/36/Football_Association_of_Ireland_logo.svg",
+  "KUZEY İRLANDA": "https://upload.wikimedia.org/wikipedia/en/2/25/Irish_FA_logo.svg",
+  "HIRVATİSTAN": "https://upload.wikimedia.org/wikipedia/en/9/90/Croatian_Football_Federation_logo.svg",
+  "SIRBİSTAN": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Football_Association_of_Serbia_logo.svg",
+  "YUNANİSTAN": "https://upload.wikimedia.org/wikipedia/en/8/87/Hellenic_Football_Federation_logo.svg",
+  "İSVİÇRE": "https://upload.wikimedia.org/wikipedia/en/e/e0/Swiss_Football_Association_logo.svg",
+  "İSVEÇ": "https://upload.wikimedia.org/wikipedia/en/6/6b/Swedish_Football_Association_logo.svg",
+  "DANİMARKA": "https://upload.wikimedia.org/wikipedia/en/e/e0/Danish_Football_Association_logo.svg",
+  "NORVEÇ": "https://upload.wikimedia.org/wikipedia/en/7/7c/Norwegian_Football_Federation_logo.svg",
+  "UKRAYNA": "https://upload.wikimedia.org/wikipedia/en/1/14/Ukrainian_Association_of_Football_logo.svg",
+  "POLONYA": "https://upload.wikimedia.org/wikipedia/en/7/76/Polish_Football_Association_logo.svg",
+  "ÇEKYA": "https://upload.wikimedia.org/wikipedia/en/4/4e/Football_Association_of_the_Czech_Republic_logo.svg",
+  "MACARİSTAN": "https://upload.wikimedia.org/wikipedia/en/b/be/Hungarian_Football_Federation_logo.svg",
+  "ARNAVUTLUK": "https://upload.wikimedia.org/wikipedia/en/1/18/Albanian_Football_Association_logo.svg",
+  "KOSOVA": "https://upload.wikimedia.org/wikipedia/en/0/07/Football_Federation_of_Kosovo_logo.svg",
+  "İZLANDA": "https://upload.wikimedia.org/wikipedia/en/5/52/Football_Association_of_Iceland_logo.svg",
+  "FİNLANDİYA": "https://upload.wikimedia.org/wikipedia/en/d/da/Football_Association_of_Finland_logo.svg",
+  "ROMANYA": "https://upload.wikimedia.org/wikipedia/en/a/a2/Romanian_Football_Federation_logo.svg",
+  "BULGARİSTAN": "https://upload.wikimedia.org/wikipedia/en/c/c5/Bulgarian_Football_Union_logo.svg",
+  "KUZEY MAKEDONYA": "https://upload.wikimedia.org/wikipedia/en/c/c1/Football_Federation_of_Macedonia_logo.svg",
+  "SLOVENYA": "https://upload.wikimedia.org/wikipedia/en/8/82/Football_Association_of_Slovenia_logo.svg",
+  "SLOVAKYA": "https://upload.wikimedia.org/wikipedia/en/6/62/Slovak_Football_Association_logo.svg",
+  "KARADAĞ": "https://upload.wikimedia.org/wikipedia/en/6/6b/Football_Association_of_Montenegro_logo.svg",
+  "BOSNA-HERSEK": "https://upload.wikimedia.org/wikipedia/en/6/63/Football_Association_of_Bosnia_and_Herzegovina_logo.svg",
+  "KAZAKİSTAN": "https://upload.wikimedia.org/wikipedia/en/6/6f/Kazakhstan_Football_Federation_logo.svg",
+  "BELARUS": "https://upload.wikimedia.org/wikipedia/en/7/7a/Football_Federation_of_Belarus_logo.svg",
+  "MOLDOVA": "https://upload.wikimedia.org/wikipedia/en/4/4f/Moldovan_Football_Federation_logo.svg",
+  "ESTONYA": "https://upload.wikimedia.org/wikipedia/en/3/30/Estonian_Football_Association_logo.svg",
+  "LİTVANYA": "https://upload.wikimedia.org/wikipedia/en/3/3f/Lithuanian_Football_Federation_logo.svg",
+  "LÜKSEMBURG": "https://upload.wikimedia.org/wikipedia/en/a/a8/Luxembourg_Football_Federation_logo.svg",
+  "KIBRIS": "https://upload.wikimedia.org/wikipedia/en/f/fa/Cyprus_Football_Association_logo.svg",
+  "LİHTENŞTAYN": "https://upload.wikimedia.org/wikipedia/en/0/07/Liechtenstein_Football_Association_logo.svg",
+  "FAROE ADALARI": "https://upload.wikimedia.org/wikipedia/en/1/1d/Faroe_Islands_Football_Association_logo.svg",
+  "SAN MARİNO": "https://upload.wikimedia.org/wikipedia/en/4/47/San_Marino_Football_Federation_logo.svg",
 
   // İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
@@ -412,15 +455,8 @@ export const localTeamLogos: Record<string, string> = {
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
-   
-   "PAOK": "/logos/paok.png",  
- 
-  "OLYMPIC LYON": "/logos/lyon.png",  "OLYMPIQUE LYONNAIS": "/logos/lyon.png", 
-
-
-
-
-  
+  "PAOK": "/logos/paok.png",  
+  "OLYMPIC LYON": "/logos/lyon.png",  "OLYMPIQUE LYONNAIS": "/logos/lyon.png"
 };
 
 // 🔴 4. YARDIMCI FONKSİYONLAR 🔴
@@ -553,12 +589,16 @@ export const getEliteTheme = (category: string, homeTeam: string, awayTeam: stri
   else if (upCat.includes("HOLLANDA") || upCat.includes("EREDIVISIE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/57.png";
   else if (upCat.includes("BELÇİKA") || upCat.includes("PRO LEAGUE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/40.png";
   else if (upCat.includes("İSKOÇYA") || upCat.includes("PREMIERSHIP")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/46.png";
+  else if (upCat.includes("ULUSLAR LİGİ") || upCat.includes("MİLLİ")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/9826.png"; 
 
   let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
 
   if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) theme = { ...theme, bgImg: "url('/cl-bg.png')", containerBorder: "border-indigo-500/50", containerShadow: "shadow-[0_0_40px_rgba(79,70,229,0.4)]", containerBg: "bg-[#050b14]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-indigo-300", badgeBorder: "border-indigo-400/80 shadow-[0_0_10px_currentColor]", catText: "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]", scoreBorder: "border-white/30", colonText: "text-white/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#050b14]/90 border-blue-900/30" };
   else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) theme = { ...theme, bgImg: "url('/el-bg.png')", containerBorder: "border-orange-500/50", containerShadow: "shadow-[0_0_40px_rgba(249,115,22,0.4)]", containerBg: "bg-[#140805]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-orange-400", badgeBorder: "border-orange-500/80 shadow-[0_0_10px_currentColor]", catText: "text-orange-300 drop-shadow-[0_0_8px_rgba(253,186,116,0.5)]", scoreBorder: "border-orange-600/40", colonText: "text-orange-400/50", tagText: "text-orange-300", tagBg: "bg-orange-950/90", tagBorder: "border-orange-400/80", bottomBar: "bg-[#140805]/90 border-orange-900/30" };
   else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) theme = { ...theme, bgImg: "url('/uecl-bg.png')", containerBorder: "border-emerald-500/50", containerShadow: "shadow-[0_0_40px_rgba(16,185,129,0.4)]", containerBg: "bg-[#05140b]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/80 shadow-[0_0_10px_currentColor]", catText: "text-emerald-300 drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]", scoreBorder: "border-emerald-600/40", colonText: "text-emerald-400/50", tagText: "text-emerald-300", tagBg: "bg-emerald-950/90", tagBorder: "border-emerald-400/80", bottomBar: "bg-[#05140b]/90 border-emerald-900/30" };
+  else if (upCat.includes("ULUSLAR LİGİ") || upCat.includes("MİLLİ")) {
+      theme = { ...theme, bgImg: "url('/unl-bg.png')", containerBorder: "border-sky-500/50", containerShadow: "shadow-[0_0_40px_rgba(14,165,233,0.4)]", containerBg: "bg-[#040f1a]", badgeBg: "bg-sky-950/80 backdrop-blur-sm", badgeText: "text-sky-300", badgeBorder: "border-sky-400/80 shadow-[0_0_10px_currentColor]", catText: "text-sky-200 drop-shadow-[0_0_8px_rgba(125,211,252,0.8)]", scoreBorder: "border-sky-500/30", colonText: "text-sky-400/50", tagText: "text-sky-300", tagBg: "bg-sky-950/90", tagBorder: "border-sky-400/80", bottomBar: "bg-[#040f1a]/90 border-sky-900/30" };
+  }
   else if (isTffMatchCheck(upCat)) theme = { ...theme, bgImg: "url('/tff-bg.png')", containerBorder: "border-red-500/50", containerShadow: "shadow-[0_0_40px_rgba(239,68,68,0.4)]", containerBg: "bg-[#140505]", badgeBg: "bg-transparent backdrop-blur-sm", badgeText: "text-red-400", badgeBorder: "border-red-500/80 shadow-[0_0_10px_currentColor]", catText: "text-red-300 drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]", scoreBorder: "border-red-600/40", colonText: "text-red-400/50", tagText: "text-red-400", tagBg: "bg-red-950/90", tagBorder: "border-red-500/80", bottomBar: "bg-[#140505]/90 border-red-900/30" };
   else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) {
       theme = { ...theme, bgImg: "url('/pl-bg.png')", containerBorder: "border-fuchsia-500/50", containerShadow: "shadow-[0_0_40px_rgba(192,38,211,0.4)]", containerBg: "bg-[#0b0410]", badgeBg: "bg-fuchsia-950/80 backdrop-blur-sm", badgeText: "text-fuchsia-300", badgeBorder: "border-fuchsia-400/80 shadow-[0_0_10px_currentColor]", catText: "text-fuchsia-200 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]", scoreBorder: "border-fuchsia-500/30", colonText: "text-fuchsia-400/50", tagText: "text-cyan-300", tagBg: "bg-cyan-950/90", tagBorder: "border-cyan-400/80", bottomBar: "bg-[#0b0410]/90 border-fuchsia-900/30" };
