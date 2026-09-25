@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
+import { isTffMatchCheck } from '@/utils/themeEngine'; // TFF kontrolünü içeri aldık
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -18,8 +19,10 @@ export default function DfoPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      const { data: allMatches } = await supabase.from('live_matches').select('id, status');
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
+      // 1. DİKKAT: Artık sadece id değil, home_score ve away_score da lazım
+      const { data: allMatches } = await supabase.from('live_matches').select('*');
+      // 2. DİKKAT: Kategori lazım ki TFF mi DFO mu ayıklayalım
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
       
       let activeWeek = 5, activeDate = '';
       if (dbBulletin && allMatches) {
@@ -41,12 +44,94 @@ export default function DfoPuanDurumuPage() {
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
 
-      const { data } = await supabase.from('live_leaderboard').select('id, name, dfo_pts, dfo_trend_direction, dfo_trend_diff');
-      if (data && data.length > 0) {
-        const sorted = data.sort((a, b) => b.dfo_pts - a.dfo_pts || (a.name || "").localeCompare(b.name || "", 'tr'));
-        setTableRows(sorted.map((r, i) => ({
-            id: r.id, name: r.name, displayScore: r.dfo_pts, currentRank: i + 1, 
-            trend: r.dfo_trend_direction || 'same', trendDiff: r.dfo_trend_diff || 0
+      // 3. OYUNCU İSİMLERİNİ AL (ID eşleşmesi için)
+      const { data: playersData } = await supabase.from('players').select('username, name');
+      const idToNameMap: Record<string, string> = {};
+      if (playersData) {
+          playersData.forEach(p => idToNameMap[p.username] = p.name);
+      }
+
+      // 4. TAHMİNLERİ ÇEK (1000 LİMİTİNİ AŞAN DÖNGÜ İLE)
+      let predictions: any[] = [];
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+      while (fetchMore) {
+          const { data: pDataChunk, error } = await supabase
+              .from('player_predictions')
+              .select('*')
+              .eq('week_num', activeWeek)
+              .range(from, from + step - 1);
+          if (error) break;
+          if (pDataChunk && pDataChunk.length > 0) {
+              predictions = [...predictions, ...pDataChunk];
+              if (pDataChunk.length < step) fetchMore = false; 
+              else from += step; 
+          } else {
+              fetchMore = false; 
+          }
+      }
+
+      // 5. MEVCUT (DAĞITILMIŞ) DFO PUANLARINI ÇEK
+      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, dfo_pts, dfo_trend_direction, dfo_trend_diff');
+      
+      if (leaderboardData && leaderboardData.length > 0) {
+        let updatedList = leaderboardData.map(r => ({
+            id: r.id, 
+            name: r.name || "", 
+            baseScore: r.dfo_pts || 0, 
+            liveBonus: 0,
+            trend: r.dfo_trend_direction || 'same', 
+            trendDiff: r.dfo_trend_diff || 0
+        }));
+
+        // 6. CANLI HESAPLAMA (TFF MAÇLARINI ATLAYARAK)
+        if (allMatches && predictions && dbBulletin) {
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+            
+            liveM.forEach(match => {
+                const currentScore = `${match.home_score}-${match.away_score}`;
+                if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
+                
+                const mIndex = match.id % 100;
+                const matchWeek = Math.floor(match.id / 100);
+                
+                // Maçın kategorisini bul
+                const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
+                
+                // 🔥 EĞER TFF MAÇIYSA DFO KASASINA PUAN EKLENMEZ 🔥
+                if (bulletinMatch && isTffMatchCheck(bulletinMatch.category)) return;
+
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                
+                let pts = 0;
+                if (winners.length === 1) pts = 12;
+                else if (winners.length === 2) pts = 6;
+                else if (winners.length === 3) pts = 5;
+                else if (winners.length === 4) pts = 4;
+                else if (winners.length === 5) pts = 3;
+                else if (winners.length === 6) pts = 2;
+                else if (winners.length >= 7) pts = 1;
+
+                winners.forEach(w => {
+                    const playerName = idToNameMap[w.user_id] || "";
+                    if (playerName) {
+                        const targetPlayer = updatedList.find(p => p.name === playerName || p.name.includes(playerName) || playerName.includes(p.name.replace(/ 🏆/g, '')));
+                        if (targetPlayer) targetPlayer.liveBonus += pts;
+                    }
+                });
+            });
+        }
+
+        // 7. BİRLEŞTİR VE SIRALA
+        const sortedList = updatedList.map(p => ({
+            ...p,
+            displayScore: p.baseScore + p.liveBonus
+        })).sort((a, b) => b.displayScore - a.displayScore || a.name.localeCompare(b.name, 'tr'));
+
+        setTableRows(sortedList.map((r, i) => ({
+            ...r,
+            currentRank: i + 1
         })));
       }
     } catch (e) { console.log("Veri çekilirken hata oluştu"); }
@@ -54,8 +139,19 @@ export default function DfoPuanDurumuPage() {
 
   useEffect(() => { 
       loadLeaderboard(); 
-      const channel = supabase.channel('dfo_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadLeaderboard(); }).subscribe();
-      return () => { supabase.removeChannel(channel); };
+      
+      // HEM KASADAKİ DEĞİŞİKLİKLERİ HEM DE 1. ADIM (CANLI) YANSIMALARI DİNLE
+      const channel1 = supabase.channel('dfo_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadLeaderboard(); }).subscribe();
+      const channel2 = supabase.channel('dfo_matches_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadLeaderboard(); }).subscribe();
+      
+      // GİZLİ SİGORTA: 30 Saniyede bir arka planda otomatik yenileme (Soket çökse bile ekran güncellenir)
+      const backupInterval = setInterval(() => { loadLeaderboard(); }, 30000);
+
+      return () => { 
+          supabase.removeChannel(channel1); 
+          supabase.removeChannel(channel2); 
+          clearInterval(backupInterval);
+      };
   }, []);
 
   return (
@@ -96,7 +192,19 @@ export default function DfoPuanDurumuPage() {
                         </div>
                       </td>
                       <td className="px-1 md:px-2 py-3 align-top pt-3.5"><div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold"><span className="whitespace-nowrap">{row.name}</span></div></td>
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-400 align-top pt-3.5">{row.displayScore}</td>
+                      
+                      {/* 🔥 İŞTE CANLI PUAN ROZETİ BURADA BELİRECEK 🔥 */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-400 align-top pt-3.5">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                          <span>{row.displayScore}</span>
+                          {row.liveBonus > 0 && (
+                            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                              +{row.liveBonus} CANLI
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
                     </tr>
                   ))}
                 </tbody>
