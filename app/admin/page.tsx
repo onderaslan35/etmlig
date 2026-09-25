@@ -1800,9 +1800,11 @@ export default function AdminRadarPortal() {
             <datalist id="leagueOptions">
                {Object.keys(dynamicLigHavuzu).sort((a,b) => a.localeCompare(b, 'tr')).map(lg => <option key={`dl-${lg}`} value={lg} />)}
             </datalist>
-// ZIRH TESTI UYANDIRMA
+// ZIRH TESTI UYANDIRMASASA
           </div>
         )}
+
+
 
       </div>
     </div>
