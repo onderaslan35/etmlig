@@ -9,6 +9,25 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// 🔥 UZAY ÜSSÜ ÇEVİRİ MOTORU: Türkçe isimleri API-Sports diline (İngilizceye) çevirir 🔥
+const teamDict: Record<string, string> = {
+    "TÜRKİYE": "Turkey", "ALMANYA": "Germany", "İNGİLTERE": "England", 
+    "FRANSA": "France", "İSPANYA": "Spain", "İTALYA": "Italy",
+    "GÜRCİSTAN": "Georgia", "KUZEY İRLANDA": "Northern Ireland", "HOLLANDA": "Netherlands",
+    "BELÇİKA": "Belgium", "İSVEÇ": "Sweden", "UKRAYNA": "Ukraine", 
+    "POLONYA": "Poland", "MACARİSTAN": "Hungary", "GALLER": "Wales",
+    "İZLANDA": "Iceland", "KARADAĞ": "Montenegro", "ÇEKYA": "Czech Republic",
+    "HIRVATİSTAN": "Croatia", "İSVİÇRE": "Switzerland", "DANİMARKA": "Denmark",
+    "SIRBİSTAN": "Serbia", "PORTEKİZ": "Portugal", "İSKOÇYA": "Scotland",
+    "ANDORRA": "Andorra", "MALTA": "Malta", "NORVEÇ": "Norway", "KOSOVA": "Kosovo",
+    "İRLANDA": "Republic of Ireland", "LİHTENŞTAYN": "Liechtenstein", "LİTVANYA": "Lithuania",
+    "BOSNA-HERSEK": "Bosnia & Herzegovina", "ROMANYA": "Romania", "KIBRIS": "Cyprus",
+    "SLOVENYA": "Slovenia", "SAN MARİNO": "San Marino", "FİNLANDİYA": "Finland",
+    "FAROE ADALARI": "Faroe Islands", "KAZAKİSTAN": "Kazakhstan", "BULGARİSTAN": "Bulgaria",
+    "LÜKSEMBURG": "Luxembourg", "ESTONYA": "Estonia", "KUZEY MAKEDONYA": "North Macedonia",
+    "ARNAVUTLUK": "Albania", "BELARUS": "Belarus", "SLOVAKYA": "Slovakia", "MOLDOVA": "Moldova"
+};
+
 function isTffMatchCheck(category: string) {
     const uppercaseCat = category ? category.toUpperCase() : '';
     return uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG");
@@ -21,65 +40,104 @@ export async function GET(request: Request) {
     const m = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
     const y = todayTurkey.getUTCFullYear();
     const todayStr = `${d}.${m}.${y}`; 
+    const apiDateStr = `${y}-${m}-${d}`; // API Radarı için YYYY-MM-DD
 
-    const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
+    const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, home_team');
     
     if (bulten) {
         const todaysMatches = bulten.filter(match => match.match_date === todayStr);
         if (todaysMatches.length > 0) {
             const matchIds = todaysMatches.map(match => (match.week_num * 100) + match.match_index);
-            const { data: liveData } = await supabase.from('live_matches').select('api_match_id, status').in('id', matchIds).neq('status', 'FINISHED').not('api_match_id', 'is', null);
+            
+            // DİKKAT: .not('api_match_id', 'is', null) SİLİNDİ. Kimliği olmayanları da çekeceğiz!
+            const { data: liveData } = await supabase.from('live_matches').select('id, api_match_id, status').in('id', matchIds).neq('status', 'FINISHED');
 
             if (liveData && liveData.length > 0) {
-                const apiIds = liveData.map(l => l.api_match_id).join('-');
-                const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
-                try {
-                    const res = await fetch(HEDEF, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }, cache: 'no-store' });
-                    if (res.ok) {
-                        const sonuc = await res.json();
-                        const maclar = sonuc.response || [];
-                        for (const mac of maclar) {
-                            const macId = mac.fixture.id; 
-                            const durum = mac.fixture.status.short; 
-                            
-                            const dakika = mac.fixture.status.elapsed ?? null; 
-                            const olaylar = mac.events ?? []; 
-                            
-                            let statu = 'NOT_STARTED';
-                            // 🔥 YENİ: Durum kontrolü genişletildi, dakika verisi varsa anında CANLI tetikleniyor 🔥
-                            if (['FT', 'AET', 'PEN', 'Match Finished'].includes(durum)) statu = 'FINISHED';
-                            else if (['HT', 'Halftime'].includes(durum)) statu = 'HT';
-                            else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || dakika !== null) statu = 'LIVE';
+                
+                // =========================================================================
+                // 🔥 OTOMATİK RADAR DEVREDE 🔥 API ID'si eksik olan maçları kendi bulur!
+                // =========================================================================
+                const missingIdMatches = liveData.filter(l => !l.api_match_id);
+                if (missingIdMatches.length > 0) {
+                    try {
+                        const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${apiDateStr}`, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' } });
+                        const json = await res.json();
+                        const apiFixtures = json.response || [];
 
-                            // 🛡️ ADMİN KORUMA KALKANI 🛡️
-                            const dbMatchInfo = liveData.find(l => l.api_match_id === macId);
-                            if (dbMatchInfo && (dbMatchInfo.status === 'LIVE' || dbMatchInfo.status === 'HT') && statu === 'NOT_STARTED') {
-                                statu = dbMatchInfo.status; // Eğer sen elle başlattıysan, API'nin geç gelip bunu bozmasına izin verme!
+                        for (const missing of missingIdMatches) {
+                            const bultenMatch = todaysMatches.find(tm => (tm.week_num * 100) + tm.match_index === missing.id);
+                            if (bultenMatch && bultenMatch.home_team) {
+                                const homeTr = bultenMatch.home_team.toUpperCase();
+                                const homeEn = teamDict[homeTr] || homeTr; // İngilizce karşılığını bul
+
+                                const foundApiMatch = apiFixtures.find((f: any) => 
+                                    f.teams.home.name.toUpperCase().includes(homeEn.toUpperCase()) ||
+                                    f.teams.home.name.toUpperCase().includes(homeTr)
+                                );
+
+                                if (foundApiMatch) {
+                                    await supabase.from('live_matches').update({ api_match_id: foundApiMatch.fixture.id }).eq('id', missing.id);
+                                    missing.api_match_id = foundApiMatch.fixture.id; // Bellekte güncelle ki aşağıda skoru hemen çeksin
+                                }
                             }
-
-                            // 🔥 GÖRSEL KARMAŞA ÇÖZÜMÜ 🔥
-                            let evSkorStr = '-';
-                            let depSkorStr = '-';
-
-                            if (statu !== 'NOT_STARTED') {
-                                evSkorStr = (mac.goals.home ?? 0).toString();
-                                depSkorStr = (mac.goals.away ?? 0).toString();
-                            }
-
-                            await supabase.from('live_matches').update({ 
-                                home_score: evSkorStr, 
-                                away_score: depSkorStr, 
-                                status: statu,
-                                elapsed: dakika,
-                                events: JSON.stringify(olaylar) 
-                            }).eq('api_match_id', macId);
                         }
-                    }
-                } catch (e) { console.log("API Cekim Hatasi", e); }
+                    } catch (err) { console.log("Otomatik Radar Hatası", err); }
+                }
+
+                // =========================================================================
+                // 🔥 STANDART CANLI SKOR VE OLAY ÇEKME İŞLEMİ 🔥
+                // =========================================================================
+                const validLiveData = liveData.filter(l => l.api_match_id);
+                if (validLiveData.length > 0) {
+                    const apiIds = validLiveData.map(l => l.api_match_id).join('-');
+                    const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
+                    try {
+                        const res = await fetch(HEDEF, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }, cache: 'no-store' });
+                        if (res.ok) {
+                            const sonuc = await res.json();
+                            const maclar = sonuc.response || [];
+                            for (const mac of maclar) {
+                                const macId = mac.fixture.id; 
+                                const durum = mac.fixture.status.short; 
+                                const dakika = mac.fixture.status.elapsed ?? null; 
+                                const olaylar = mac.events ?? []; 
+                                
+                                let statu = 'NOT_STARTED';
+                                if (['FT', 'AET', 'PEN', 'Match Finished'].includes(durum)) statu = 'FINISHED';
+                                else if (['HT', 'Halftime'].includes(durum)) statu = 'HT';
+                                else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || dakika !== null) statu = 'LIVE';
+
+                                const dbMatchInfo = validLiveData.find(l => l.api_match_id === macId);
+                                if (dbMatchInfo && (dbMatchInfo.status === 'LIVE' || dbMatchInfo.status === 'HT') && statu === 'NOT_STARTED') {
+                                    statu = dbMatchInfo.status;
+                                }
+
+                                let evSkorStr = '-';
+                                let depSkorStr = '-';
+
+                                if (statu !== 'NOT_STARTED') {
+                                    evSkorStr = (mac.goals.home ?? 0).toString();
+                                    depSkorStr = (mac.goals.away ?? 0).toString();
+                                }
+
+                                await supabase.from('live_matches').update({ 
+                                    home_score: evSkorStr, 
+                                    away_score: depSkorStr, 
+                                    status: statu,
+                                    elapsed: dakika,
+                                    events: JSON.stringify(olaylar) 
+                                }).eq('api_match_id', macId);
+                            }
+                        }
+                    } catch (e) { console.log("API Cekim Hatasi", e); }
+                }
             }
         }
     }
 
+    // =========================================================================
+    // 🔴 BURADAN AŞAĞISI SENİN ORJİNAL PUANLAMA VE LİDERLİK TABLOSU HESABIN 🔴
+    // =========================================================================
     try {
         const { data: dbPlayers } = await supabase.from('players').select('*');
         const playersList: Record<string, string> = {};
@@ -291,5 +349,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'API BAGLANTISI VE OTOMATIK PUANLAMA BASARIYLA CALISTI!' });
+    return NextResponse.json({ message: 'API BAGLANTISI VE OTOMATIK RADAR BASARIYLA CALISTI!' });
 }
