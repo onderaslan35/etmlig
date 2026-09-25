@@ -40,24 +40,37 @@ export async function GET(request: Request) {
                         const maclar = sonuc.response || [];
                         for (const mac of maclar) {
                             const macId = mac.fixture.id; 
-                            const evSkor = mac.goals.home ?? 0;
-                            const depSkor = mac.goals.away ?? 0;
                             const durum = mac.fixture.status.short; 
                             
                             const dakika = mac.fixture.status.elapsed ?? null; 
                             const olaylar = mac.events ?? []; 
                             
                             let statu = 'NOT_STARTED';
-                            if (durum === 'FT' || durum === 'AET' || durum === 'PEN') statu = 'FINISHED';
-                            else if (durum === 'HT') statu = 'HT';
-                            else if (['1H','2H','ET','P'].includes(durum)) statu = 'LIVE';
+                            // 🔥 YENİ: Durum kontrolü genişletildi, dakika verisi varsa anında CANLI tetikleniyor 🔥
+                            if (['FT', 'AET', 'PEN', 'Match Finished'].includes(durum)) statu = 'FINISHED';
+                            else if (['HT', 'Halftime'].includes(durum)) statu = 'HT';
+                            else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || dakika !== null) statu = 'LIVE';
+
+                            // 🛡️ ADMİN KORUMA KALKANI 🛡️
+                            const dbMatchInfo = liveData.find(l => l.api_match_id === macId);
+                            if (dbMatchInfo && (dbMatchInfo.status === 'LIVE' || dbMatchInfo.status === 'HT') && statu === 'NOT_STARTED') {
+                                statu = dbMatchInfo.status; // Eğer sen elle başlattıysan, API'nin geç gelip bunu bozmasına izin verme!
+                            }
+
+                            // 🔥 GÖRSEL KARMAŞA ÇÖZÜMÜ 🔥
+                            let evSkorStr = '-';
+                            let depSkorStr = '-';
+
+                            if (statu !== 'NOT_STARTED') {
+                                evSkorStr = (mac.goals.home ?? 0).toString();
+                                depSkorStr = (mac.goals.away ?? 0).toString();
+                            }
 
                             await supabase.from('live_matches').update({ 
-                                home_score: evSkor.toString(), 
-                                away_score: depSkor.toString(), 
+                                home_score: evSkorStr, 
+                                away_score: depSkorStr, 
                                 status: statu,
                                 elapsed: dakika,
-                                // 🔥 İŞTE KRİTİK ÇÖZÜM BURASI: JSON.stringify EKLENDİ 🔥
                                 events: JSON.stringify(olaylar) 
                             }).eq('api_match_id', macId);
                         }
@@ -278,5 +291,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'B PLANI AKTİF: DFO ve TFF Skorlari Hesaplanarak Veritabanina Eklendi!' });
+    return NextResponse.json({ message: 'API BAGLANTISI VE OTOMATIK PUANLAMA BASARIYLA CALISTI!' });
 }
