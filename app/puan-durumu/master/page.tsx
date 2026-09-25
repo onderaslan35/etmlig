@@ -165,10 +165,15 @@ export default function MasterPuanDurumuPage() {
         }
 
         // 4. Mühürlü listeyi kopyala ve hesaplamaya başla
+        // EĞER SİSTEM 13. HAFTAYI GEÇTİYSE (ÖRN: 14. HAFTA BAŞLADIYSA) ESKİ ROZETLERİ SİL
+        const isNewWeekStarted = activeWeek > 13;
+
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
-            finishedBonus: 0
+            finishedBonus: 0,
+            // Eğer yeni hafta başladıysa (14 ve yukarısı), rozet dizisini boşalt
+            badges: isNewWeekStarted ? [] : row.badges 
         }));
 
         // A) 2. Adıma basılıp dağıtılmış puanları ekle
