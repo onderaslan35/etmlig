@@ -75,9 +75,7 @@ export const customWeekNames: Record<number, string> = {
 
 export const getWeekLabel = (weekNum: number | string) => {
   const w = Number(weekNum);
-  if (w === 15) {
-    return "15. HAFTA (27-28-29 EYLÜL)";
-  }
+  if (w === 15) return "15. HAFTA (27-28-29 EYLÜL)";
   return `${w}. HAFTA`;
 };
 
@@ -93,9 +91,7 @@ export const LIG_HAVUZU: Record<string, string[]> = {
   "HOLLANDA EREDIVISIE": ["AJAX", "PSV", "FEYENOORD", "AZ ALKMAAR", "TWENTE", "NEC NIJMEGEN"],
   "PORTEKİZ PRIMEIRA LIGA": ["BENFICA", "PORTO", "SPORTING CP", "BRAGA"],
   "BELÇİKA PRO LEAGUE": ["CLUB BRUGGE", "ANDERLECHT", "USG", "GENK", "GENT", "ROYAL ANTWERP"],
-  "MİLLİ TAKIMLAR": ["ALMANYA", "ARJANTİN", "BELÇİKA", "BREZİLYA", "FRANSA", "HOLLANDA", "İNGİLTERE", "İSPANYA", "İTALYA", "PORTEKİZ", "TÜRKİYE", "URUGUAY", "HIRVATİSTAN"],
   "ÇEŞİTLİ AVRUPA TAKIMLARI": ["KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG", "OLIMPIYAKOS", "AEK ATHENS", "LASK", "SAO PAULO", "LEVSKI SOFIA", "CSKA SOFIA", "VİKİNG", "ST. MİRREN", "SHAKHTAR DONETSK", "SABAH FK", "BODO", "SLAVIA PRAGUE"],
-  // 🔥 YENİ EKLENEN UEFA ULUSLAR LİGİ HAVUZU 🔥
   "UEFA ULUSLAR LİGİ": [
     "ALMANYA", "ANDORRA", "ARNAVUTLUK", "BELARUS", "BELÇİKA", "BOSNA-HERSEK",
     "BULGARİSTAN", "ÇEKYA", "DANİMARKA", "ESTONYA", "FAROE ADALARI", "FİNLANDİYA",
@@ -122,9 +118,59 @@ export const defaultCategoriesList = [
   "FIFA DÜNYA KUPASI"
 ];
 
-// 🔴 3. YEREL LOGO BANKASI (TÜM LİNKLER BURADA)
+// 🔴 3. YEREL LOGO BANKASI VE SAF ÜLKE BAYRAKLARI 🔴
 export const localTeamLogos: Record<string, string> = {
-  // TÜRKİYE
+  // 🔥 MİLLİ TAKIMLAR (SAF ÜLKE BAYRAKLARI - SIFIRDAN ENTEGRE) 🔥
+  "TÜRKİYE": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Flag_of_Turkey.svg",
+  "ALMANYA": "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
+  "İNGİLTERE": "https://upload.wikimedia.org/wikipedia/en/b/be/Flag_of_England.svg",
+  "FRANSA": "https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg",
+  "İSPANYA": "https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg",
+  "İTALYA": "https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg",
+  "PORTEKİZ": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Flag_of_Portugal.svg",
+  "HOLLANDA": "https://upload.wikimedia.org/wikipedia/commons/2/20/Flag_of_the_Netherlands.svg",
+  "BELÇİKA": "https://upload.wikimedia.org/wikipedia/commons/9/92/Flag_of_Belgium_%28civil%29.svg",
+  "GÜRCİSTAN": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Flag_of_Georgia.svg",
+  "KUZEY İRLANDA": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Flag_of_Northern_Ireland.svg",
+  "ANDORRA": "https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Andorra.svg",
+  "MALTA": "https://upload.wikimedia.org/wikipedia/commons/7/73/Flag_of_Malta.svg",
+  "İSKOÇYA": "https://upload.wikimedia.org/wikipedia/commons/1/10/Flag_of_Scotland.svg",
+  "GALLER": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Flag_of_Wales.svg",
+  "İRLANDA": "https://upload.wikimedia.org/wikipedia/commons/4/45/Flag_of_Ireland.svg",
+  "HIRVATİSTAN": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Flag_of_Croatia.svg",
+  "SIRBİSTAN": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Flag_of_Serbia.svg",
+  "YUNANİSTAN": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Flag_of_Greece.svg",
+  "İSVİÇRE": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Flag_of_Switzerland.svg",
+  "İSVEÇ": "https://upload.wikimedia.org/wikipedia/en/4/4c/Flag_of_Sweden.svg",
+  "DANİMARKA": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Flag_of_Denmark.svg",
+  "NORVEÇ": "https://upload.wikimedia.org/wikipedia/commons/d/d9/Flag_of_Norway.svg",
+  "UKRAYNA": "https://upload.wikimedia.org/wikipedia/commons/4/49/Flag_of_Ukraine.svg",
+  "POLONYA": "https://upload.wikimedia.org/wikipedia/en/1/12/Flag_of_Poland.svg",
+  "ÇEKYA": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Flag_of_the_Czech_Republic.svg",
+  "MACARİSTAN": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Flag_of_Hungary.svg",
+  "ARNAVUTLUK": "https://upload.wikimedia.org/wikipedia/commons/3/36/Flag_of_Albania.svg",
+  "KOSOVA": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Flag_of_Kosovo.svg",
+  "İZLANDA": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Flag_of_Iceland.svg",
+  "FİNLANDİYA": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Flag_of_Finland.svg",
+  "ROMANYA": "https://upload.wikimedia.org/wikipedia/commons/7/73/Flag_of_Romania.svg",
+  "BULGARİSTAN": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Bulgaria.svg",
+  "KUZEY MAKEDONYA": "https://upload.wikimedia.org/wikipedia/commons/7/79/Flag_of_North_Macedonia.svg",
+  "SLOVENYA": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Flag_of_Slovenia.svg",
+  "SLOVAKYA": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Flag_of_Slovakia.svg",
+  "KARADAĞ": "https://upload.wikimedia.org/wikipedia/commons/6/64/Flag_of_Montenegro.svg",
+  "BOSNA-HERSEK": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Flag_of_Bosnia_and_Herzegovina.svg",
+  "KAZAKİSTAN": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Flag_of_Kazakhstan.svg",
+  "BELARUS": "https://upload.wikimedia.org/wikipedia/commons/8/85/Flag_of_Belarus.svg",
+  "MOLDOVA": "https://upload.wikimedia.org/wikipedia/commons/2/27/Flag_of_Moldova.svg",
+  "ESTONYA": "https://upload.wikimedia.org/wikipedia/commons/8/8f/Flag_of_Estonia.svg",
+  "LİTVANYA": "https://upload.wikimedia.org/wikipedia/commons/1/11/Flag_of_Lithuania.svg",
+  "LÜKSEMBURG": "https://upload.wikimedia.org/wikipedia/commons/d/da/Flag_of_Luxembourg.svg",
+  "KIBRIS": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Flag_of_Cyprus.svg",
+  "LİHTENŞTAYN": "https://upload.wikimedia.org/wikipedia/commons/4/47/Flag_of_Liechtenstein.svg",
+  "FAROE ADALARI": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Flag_of_the_Faroe_Islands.svg",
+  "SAN MARİNO": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Flag_of_San_Marino.svg",
+
+  // TÜRKİYE (KULÜPLER)
   "BEŞİKTAŞ": "https://tr.wikipedia.org/wiki/Special:FilePath/BesiktasJK-Logo.svg",
   "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
   "FENERBAHÇE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Fenerbah%C3%A7e_SK_-_120_Yil_(1907-2027).svg",
@@ -208,56 +254,6 @@ export const localTeamLogos: Record<string, string> = {
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "JAGIELLONIA BIAŁYSTOK": "https://images.fotmob.com/image_resources/logo/teamlogo/1957.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
-
-  // 🔥 MİLLİ TAKIMLAR (UEFA ULUSLAR LİGİ HAVUZU) 🔥
-  "TÜRKİYE": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Turkish_Football_Federation_crest.svg",
-  "ALMANYA": "https://upload.wikimedia.org/wikipedia/en/e/e3/DFB_Logo_1995.svg",
-  "İNGİLTERE": "https://upload.wikimedia.org/wikipedia/en/4/4b/England_national_football_team_crest.svg",
-  "FRANSA": "https://upload.wikimedia.org/wikipedia/en/4/43/French_Football_Federation_logo.svg",
-  "İSPANYA": "https://upload.wikimedia.org/wikipedia/en/3/31/Spain_National_Football_Team_badge.svg",
-  "İTALYA": "https://upload.wikimedia.org/wikipedia/en/e/ed/FIGC_logo_2023.svg",
-  "PORTEKİZ": "https://upload.wikimedia.org/wikipedia/en/5/5f/Portuguese_Football_Federation_logo.svg",
-  "HOLLANDA": "https://upload.wikimedia.org/wikipedia/en/7/78/Netherlands_national_football_team_logo.svg",
-  "BELÇİKA": "https://upload.wikimedia.org/wikipedia/en/c/c5/Royal_Belgian_FA_logo_2019.svg",
-  "GÜRCİSTAN": "https://upload.wikimedia.org/wikipedia/en/f/f2/Georgian_Football_Federation_logo.svg",
-  "ANDORRA": "https://upload.wikimedia.org/wikipedia/en/c/c7/Andorran_Football_Federation.svg",
-  "MALTA": "https://upload.wikimedia.org/wikipedia/en/2/23/Malta_FA.svg",
-  "İSKOÇYA": "https://upload.wikimedia.org/wikipedia/en/a/a2/Scottish_Football_Association_logo.svg",
-  "GALLER": "https://upload.wikimedia.org/wikipedia/en/c/c2/FAW_logo_2019.svg",
-  "İRLANDA": "https://upload.wikimedia.org/wikipedia/en/3/36/Football_Association_of_Ireland_logo.svg",
-  "KUZEY İRLANDA": "https://upload.wikimedia.org/wikipedia/en/2/25/Irish_FA_logo.svg",
-  "HIRVATİSTAN": "https://upload.wikimedia.org/wikipedia/en/9/90/Croatian_Football_Federation_logo.svg",
-  "SIRBİSTAN": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Football_Association_of_Serbia_logo.svg",
-  "YUNANİSTAN": "https://upload.wikimedia.org/wikipedia/en/8/87/Hellenic_Football_Federation_logo.svg",
-  "İSVİÇRE": "https://upload.wikimedia.org/wikipedia/en/e/e0/Swiss_Football_Association_logo.svg",
-  "İSVEÇ": "https://upload.wikimedia.org/wikipedia/en/6/6b/Swedish_Football_Association_logo.svg",
-  "DANİMARKA": "https://upload.wikimedia.org/wikipedia/en/e/e0/Danish_Football_Association_logo.svg",
-  "NORVEÇ": "https://upload.wikimedia.org/wikipedia/en/7/7c/Norwegian_Football_Federation_logo.svg",
-  "UKRAYNA": "https://upload.wikimedia.org/wikipedia/en/1/14/Ukrainian_Association_of_Football_logo.svg",
-  "POLONYA": "https://upload.wikimedia.org/wikipedia/en/7/76/Polish_Football_Association_logo.svg",
-  "ÇEKYA": "https://upload.wikimedia.org/wikipedia/en/4/4e/Football_Association_of_the_Czech_Republic_logo.svg",
-  "MACARİSTAN": "https://upload.wikimedia.org/wikipedia/en/b/be/Hungarian_Football_Federation_logo.svg",
-  "ARNAVUTLUK": "https://upload.wikimedia.org/wikipedia/en/1/18/Albanian_Football_Association_logo.svg",
-  "KOSOVA": "https://upload.wikimedia.org/wikipedia/en/0/07/Football_Federation_of_Kosovo_logo.svg",
-  "İZLANDA": "https://upload.wikimedia.org/wikipedia/en/5/52/Football_Association_of_Iceland_logo.svg",
-  "FİNLANDİYA": "https://upload.wikimedia.org/wikipedia/en/d/da/Football_Association_of_Finland_logo.svg",
-  "ROMANYA": "https://upload.wikimedia.org/wikipedia/en/a/a2/Romanian_Football_Federation_logo.svg",
-  "BULGARİSTAN": "https://upload.wikimedia.org/wikipedia/en/c/c5/Bulgarian_Football_Union_logo.svg",
-  "KUZEY MAKEDONYA": "https://upload.wikimedia.org/wikipedia/en/c/c1/Football_Federation_of_Macedonia_logo.svg",
-  "SLOVENYA": "https://upload.wikimedia.org/wikipedia/en/8/82/Football_Association_of_Slovenia_logo.svg",
-  "SLOVAKYA": "https://upload.wikimedia.org/wikipedia/en/6/62/Slovak_Football_Association_logo.svg",
-  "KARADAĞ": "https://upload.wikimedia.org/wikipedia/en/6/6b/Football_Association_of_Montenegro_logo.svg",
-  "BOSNA-HERSEK": "https://upload.wikimedia.org/wikipedia/en/6/63/Football_Association_of_Bosnia_and_Herzegovina_logo.svg",
-  "KAZAKİSTAN": "https://upload.wikimedia.org/wikipedia/en/6/6f/Kazakhstan_Football_Federation_logo.svg",
-  "BELARUS": "https://upload.wikimedia.org/wikipedia/en/7/7a/Football_Federation_of_Belarus_logo.svg",
-  "MOLDOVA": "https://upload.wikimedia.org/wikipedia/en/4/4f/Moldovan_Football_Federation_logo.svg",
-  "ESTONYA": "https://upload.wikimedia.org/wikipedia/en/3/30/Estonian_Football_Association_logo.svg",
-  "LİTVANYA": "https://upload.wikimedia.org/wikipedia/en/3/3f/Lithuanian_Football_Federation_logo.svg",
-  "LÜKSEMBURG": "https://upload.wikimedia.org/wikipedia/en/a/a8/Luxembourg_Football_Federation_logo.svg",
-  "KIBRIS": "https://upload.wikimedia.org/wikipedia/en/f/fa/Cyprus_Football_Association_logo.svg",
-  "LİHTENŞTAYN": "https://upload.wikimedia.org/wikipedia/en/0/07/Liechtenstein_Football_Association_logo.svg",
-  "FAROE ADALARI": "https://upload.wikimedia.org/wikipedia/en/1/1d/Faroe_Islands_Football_Association_logo.svg",
-  "SAN MARİNO": "https://upload.wikimedia.org/wikipedia/en/4/47/San_Marino_Football_Federation_logo.svg",
 
   // İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
@@ -448,7 +444,7 @@ export const localTeamLogos: Record<string, string> = {
   "SAO PAULO": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
   "SÃO PAULO": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
   
-  // YEREL KLASÖRLER (FALLBACK)
+  // YEREL KLASÖRLER (Sadece Yerli Alt Lig Takımları İçin Korundu)
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR": "/logos/erzurumspor.png",
