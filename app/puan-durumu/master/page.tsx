@@ -140,11 +140,29 @@ export default function MasterPuanDurumuPage() {
             .eq('hafta', activeWeek)
             .eq('kategori', 'MASTER');
 
-        // 3. Aktif haftanın oyuncu tahminlerini çek
-        const { data: predictions } = await supabase
-            .from('player_predictions')
-            .select('*')
-            .eq('week_num', activeWeek);
+        // 3. Aktif haftanın oyuncu tahminlerini çek (1000 LİMİTİ ÇÖZÜMÜ)
+        let predictions: any[] = [];
+        let fetchMore = true;
+        let from = 0;
+        const step = 1000;
+
+        while (fetchMore) {
+            const { data: pDataChunk, error } = await supabase
+                .from('player_predictions')
+                .select('*')
+                .eq('week_num', activeWeek)
+                .range(from, from + step - 1);
+
+            if (error) break;
+
+            if (pDataChunk && pDataChunk.length > 0) {
+                predictions = [...predictions, ...pDataChunk];
+                if (pDataChunk.length < step) fetchMore = false; 
+                else from += step; 
+            } else {
+                fetchMore = false; 
+            }
+        }
 
         // 4. Mühürlü listeyi kopyala ve hesaplamaya başla
         let updatedList = mühürlüListe.map(row => ({
