@@ -220,17 +220,15 @@ export default function SkorDurumuPage() {
                       </td>
                       <td className="px-1 md:px-2 py-3 align-middle"><div className="flex flex-wrap items-center gap-2 text-white font-semibold"><span className="whitespace-nowrap">{row.name}</span></div></td>
                       
-                      {/* 🔥 YENİ STANDART: Skor ve Rozet Yatay Hizalandı (flex-row) 🔥 */}
+                      {/* 🔥 DÜZELTME: Rozet Puanın SOLUNA alındı ve Puan Sabitlendi 🔥 */}
                       <td className={`pr-2 md:pr-4 pl-1 py-3 font-bold text-sm align-middle ${activeTab === 'MASTER' ? 'text-amber-500' : activeTab === 'DFO' ? 'text-blue-400' : 'text-red-500'}`}>
-                        <div className="flex flex-row items-center justify-end gap-2 w-full">
-                          <span>{row.totalScore}</span>
-                          <div className="w-20 flex justify-start">
-                            {row.liveBonus > 0 && (
-                              <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
-                                +{row.liveBonus} MAÇ CANLI
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex flex-row items-center justify-end gap-3 w-full">
+                          {row.liveBonus > 0 && (
+                            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                              +{row.liveBonus} MAÇ CANLI
+                            </span>
+                          )}
+                          <span className="w-8 text-right">{row.totalScore}</span>
                         </div>
                       </td>
 

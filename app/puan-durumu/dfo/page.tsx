@@ -189,15 +189,15 @@ export default function DfoPuanDurumuPage() {
                         </div>
                       </td>
                       
-                      {/* 🔥 YENİ STANDART: Puan ve Rozet Yatay Hizalandı (flex-row) 🔥 */}
-                      <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-blue-400 align-middle">
-                        <div className="flex flex-row items-center justify-center gap-1.5">
-                          <span>{row.displayScore}</span>
+                      {/* 🔥 DÜZELTME: Rozet Puanın SOLUNA alındı ve Puan Sabitlendi 🔥 */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 font-bold text-sm text-blue-400 align-middle">
+                        <div className="flex flex-row items-center justify-end gap-3 w-full">
                           {row.liveBonus > 0 && (
                             <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
                               +{row.liveBonus} CANLI
                             </span>
                           )}
+                          <span className="w-8 text-right">{row.displayScore}</span>
                         </div>
                       </td>
 
