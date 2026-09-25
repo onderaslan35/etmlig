@@ -26,46 +26,11 @@ const tffIlk4Hafta: Record<string, number> = { "262707": 10, "262816": 9, "26273
 
 // 🔴 2. STRATEJİ: 5. HAFTA KARARGAH KASASI (KOD İÇİNE BETONLANDI) 🔴
 const tffHafta5Kasa: Record<string, number> = {
-  "262782": 16, // Yusuf Erbay
-  "262749": 14, // B. Veyseloğlu Erol
-  "262758": 14, // Melih Pınar
-  "262732": 14, // R. İlhan Karaca (Alanya'dan 12 + diğerlerinden 2 = 14)
-  "262726": 12, // Hüdaver Topardıç
-  "262744": 9,  // İlyas Uygun
-  "262730": 9,  // Önder Işık
-  "262736": 7,  // Mehmet Ali Kara
-  "262717": 7,  // Murat Ali
-  "262790": 5,  // Cumali Söker
-  "262735": 4,  // Aygün Akkeçeli
-  "262721": 4,  // Mustafa Gümüşçü
-  "262725": 3,  // İlyas Kazdal
-  "351925": 3,  // Alios Göztepe
-  "262716": 2,  // Birol Demirel
-  "262747": 2,  // Savaş Çağlayan
-  "262715": 2,  // Şemsettin Düğer
-  "262719": 2,  // Uğur Vardar
-  "262771": 2,  // Ulaş Adıgüzel
-  "262707": 2,  // Hakan Ayan
-  "262714": 2,  // İsmail Eker
-  "262731": 2,  // Fatih Ayan
-  "262738": 2,  // Mevlüt Evler
-  "262741": 2,  // Sabahattin Çaylak
-  "262763": 1,  // Mustafa Elmas
-  "262772": 1,  // Cemal Sivrikaya
-  "262703": 1,  // Cemalettin Belli
-  "262756": 1,  // Eyüp Karacaoğlu
-  "262706": 1,  // Gazi Ayan
-  "262750": 1,  // Mahmut CBR
-  "262753": 1,  // Yusuf Kızıltuğ
-  "262702": 1,  // Murat Kara
-  "262754": 1,  // Osman Ali Aydın
-  "262708": 1,  // Bayram Yılmaz
-  "262718": 1,  // Bekir Karadağ
-  "262770": 1,  // Özkaya Mazakalı Bayram
-  "262816": 1,  // Sedat Sedat
-  "262774": 1,  // Şenol Can Çakıcı
-  "262723": 1,  // Ayhan Luşoğlu
-  "262813": 1   // Kemal Ersoy
+  "262782": 16, "262749": 14, "262758": 14, "262732": 14, "262726": 12, "262744": 9, "262730": 9, "262736": 7, "262717": 7, 
+  "262790": 5, "262735": 4, "262721": 4, "262725": 3, "351925": 3, "262716": 2, "262747": 2, "262715": 2, "262719": 2, 
+  "262771": 2, "262707": 2, "262714": 2, "262731": 2, "262738": 2, "262741": 2, "262763": 1, "262772": 1, "262703": 1, 
+  "262756": 1, "262706": 1, "262750": 1, "262753": 1, "262702": 1, "262754": 1, "262708": 1, "262718": 1, "262770": 1, 
+  "262816": 1, "262774": 1, "262723": 1, "262813": 1
 };
 
 const isTffMatchCheck = (category: string) => {
@@ -85,7 +50,7 @@ export default function TffPuanDurumuPage() {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 6);
 
-      // 🔴 3. STRATEJİ: SADECE 6. HAFTA VE SONRASINI HESAPLA (CANLI MOTOR) 🔴
+      // 🔥 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Pagination) 🔥
       let dbPredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -95,7 +60,7 @@ export default function TffPuanDurumuPage() {
         const { data: pDataChunk, error } = await supabase
           .from('player_predictions')
           .select('*')
-          .gte('week_num', 6) // DİKKAT: SADECE 6. HAFTA VE SONRASI OKUNUR!
+          .gte('week_num', 6) // DİKKAT: 6. HAFTA VE SONRASI OKUNUR!
           .order('id', { ascending: true }) 
           .range(from, from + step - 1);
           
@@ -105,6 +70,7 @@ export default function TffPuanDurumuPage() {
         } else { fetchMore = false; }
       }
 
+      // ID Eşleştirmeleri
       const uuidToCode: Record<string, string> = {};
       if (dbPlayers) {
          dbPlayers.forEach(p => {
@@ -113,92 +79,95 @@ export default function TffPuanDurumuPage() {
          });
       }
 
-      let w6Base: Record<string, number> = {}; 
-      let w6Live: Record<string, number> = {}; 
+      let dynamicBase: Record<string, number> = {}; 
+      let liveExtra: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
-      Object.keys(allPlayersList).forEach(code => { w6Base[code] = 0; w6Live[code] = 0; });
+      Object.keys(allPlayersList).forEach(code => { dynamicBase[code] = 0; liveExtra[code] = 0; });
 
-      const predDict: Record<string, string[]> = {};
+      // Tahminleri Match_ID bazlı sözlüğe aktarıyoruz
+      const predDict: Record<string, Record<number, string>> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
           let code = String(pred.user_id).trim();
           if (uuidToCode[code]) code = uuidToCode[code]; 
           
-          if (!predDict[code]) predDict[code] = Array(24).fill('-');
-          predDict[code][pred.match_index - 1] = pred.predicted_score;
+          if (!predDict[code]) predDict[code] = {};
+          const uniqueMatchId = (pred.week_num * 100) + pred.match_index;
+          predDict[code][uniqueMatchId] = pred.predicted_score;
         });
       }
 
-      const tffMatchIndexes: number[] = [];
+      // TFF Maçlarının Benzersiz ID'lerini bul (Hafta_No * 100 + Maç_Index)
+      const tffMatchIds = new Set<number>();
       if (dbBulletin) {
          dbBulletin.forEach(m => {
-            if (isTffMatchCheck(m.category)) tffMatchIndexes.push(m.match_index);
+            if (isTffMatchCheck(m.category)) {
+                tffMatchIds.add((m.week_num * 100) + m.match_index);
+            }
          });
       }
 
-      const uniqueMatches: Record<number, any> = {};
+      // Maçları tara ve Puanları Hesapla (6. Haftadan İtibaren Tüm Haftalar)
       if (dbMatches) {
-        dbMatches.forEach(row => uniqueMatches[row.id] = row);
+        dbMatches.forEach(dbMatch => {
+          // Eğer 600'den küçükse (yani 6. haftadan önceyse) atla, sadece TFF maçlarını al
+          if (dbMatch.id < 600 || !tffMatchIds.has(dbMatch.id)) return;
+          if (dbMatch.home_score === '-' || dbMatch.away_score === '-') return;
 
-        Object.values(uniqueMatches).forEach(dbMatch => {
-          // Sadece 6. Hafta Maçları (601-700 arası ID'ler)
-          if (dbMatch.id > 600 && dbMatch.id < 700 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-            const matchIndex = (dbMatch.id % 100) - 1;
-            
-            if (!tffMatchIndexes.includes(matchIndex + 1)) return;
+          const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
+          
+          const winnerCodes = Object.keys(predDict).filter(code => {
+              const pScore = predDict[code][dbMatch.id];
+              return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
+          });
 
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
-            
-            const winnerCodes = Object.keys(predDict).filter(code => {
-                const pScore = predDict[code] ? predDict[code][matchIndex] : null;
-                return pScore && pScore.trim().replace(/\s+/g, '') === targetScore;
-            });
+          let points = 0;
+          const wCount = winnerCodes.length;
+          if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1;
 
-            let points = 1;
-            const wCount = winnerCodes.length;
-            if(wCount === 1) points = 12; else if(wCount === 2) points = 6; else if(wCount === 3) points = 5; else if(wCount === 4) points = 4; else if(wCount === 5) points = 3; else if(wCount === 6) points = 2; else if(wCount >= 7) points = 1; else points = 0;
-
-            winnerCodes.forEach(wCode => {
-              if (w6Base[wCode] !== undefined) {
-                  if (dbMatch.status === 'FINISHED') w6Base[wCode] += points;
-                  else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL') {
-                    w6Live[wCode] += points;
-                    isAnyMatchLive = true;
-                  }
-              }
-            });
-          }
+          winnerCodes.forEach(wCode => {
+            if (dynamicBase[wCode] !== undefined) {
+                if (dbMatch.status === 'FINISHED') dynamicBase[wCode] += points;
+                else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL' || dbMatch.status === 'HT') {
+                  liveExtra[wCode] += points;
+                  isAnyMatchLive = true;
+                }
+            }
+          });
         });
       }
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 NİHAİ BİRLEŞTİRME (İLK 4 HAFTA + 5. HAFTA KASA + 6. HAFTA CANLI) 🔴
+      // 🔴 NİHAİ BİRLEŞTİRME (İLK 4 HAFTA + 5. HAFTA KASA + DİNAMİK 6+ BİTENLER + CANLI) 🔴
       const baseList = Object.keys(allPlayersList).map(code => {
-        const ilk4 = tffIlk4Hafta[code] || 0; // İlk 4 Hafta (Kodun İçinden)
-        const w5 = tffHafta5Kasa[code] || 0; // 5. Hafta (Kodun İçinden)
-        const liveW6 = (w6Base[code] || 0) + (w6Live[code] || 0); // Canlı 6. Hafta
+        const ilk4 = tffIlk4Hafta[code] || 0; 
+        const w5 = tffHafta5Kasa[code] || 0; 
+        const base = dynamicBase[code] || 0; 
+        const live = liveExtra[code] || 0; 
         
-        const total = ilk4 + w5 + liveW6; // BÜYÜK TOPLAM!
+        // Tab menüsündeki "6. Hafta (Canlı)" sekmesi için, 6 ve sonrasının toplamını gösteriyoruz
+        const w6PlusTotal = base + live; 
+        const total = ilk4 + w5 + base + live; 
 
         return { 
           id: code, 
           name: allPlayersList[code], 
           ilk4, 
           w5, 
-          w6: liveW6, 
+          w6: w6PlusTotal, 
           total, 
-          liveExtra: w6Live[code] || 0 
+          liveExtra: live 
         };
       });
 
-      const prevRefList = [...baseList].sort((a, b) => (b.total - b.w6) - (a.total - a.w6) || a.name.localeCompare(b.name, 'tr'));
+      // Eski listeye göre ok işaretleri için sıralama
+      const prevRefList = [...baseList].sort((a, b) => (b.total - b.liveExtra) - (a.total - a.liveExtra) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
 
       const visibleList = baseList; 
-
       visibleList.sort((a, b) => {
         const scoreA = activeTab === 'total' ? a.total : a[activeTab] as number;
         const scoreB = activeTab === 'total' ? b.total : b[activeTab] as number;
@@ -226,7 +195,21 @@ export default function TffPuanDurumuPage() {
     }
   };
 
-  useEffect(() => { loadLeaderboard(); const interval = setInterval(loadLeaderboard, 5000); return () => clearInterval(interval); }, [activeTab]);
+  useEffect(() => { 
+      loadLeaderboard(); 
+      
+      // 🔥 CANLI SOKET VE OTOMATİK YENİLEYİCİ 🔥
+      const channel = supabase.channel('tff_live_updates')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadLeaderboard(); })
+          .subscribe();
+          
+      const interval = setInterval(loadLeaderboard, 30000); 
+      
+      return () => { 
+          supabase.removeChannel(channel); 
+          clearInterval(interval); 
+      }; 
+  }, [activeTab]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
@@ -249,7 +232,7 @@ export default function TffPuanDurumuPage() {
         </button>
         <div className="w-full relative">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold border transition-all flex items-center justify-between ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>
-            <span>📅 {activeTab === 'total' ? 'TFF TOPLAM PUAN DURUMU' : activeTab === 'ilk4' ? 'TFF İLK 4 HAFTA' : `TFF ${activeTab.replace('w', '')}. HAFTA PUAN DURUMU`}</span>
+            <span>📅 {activeTab === 'total' ? 'TFF TOPLAM PUAN DURUMU' : activeTab === 'ilk4' ? 'TFF İLK 4 HAFTA' : `TFF DİNAMİK PUAN DURUMU (CANLI)`}</span>
             <span>{isMenuOpen ? '▲' : '▼'}</span>
           </button>
           {isMenuOpen && (
@@ -261,7 +244,7 @@ export default function TffPuanDurumuPage() {
                   5. HAFTA (ARŞİV)
                </button>
                <button onClick={() => { setActiveTab('w6'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w6' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
-                  6. HAFTA (CANLI)
+                  GÜNCEL HAFTALAR (CANLI)
                </button>
             </div>
           )}
@@ -300,6 +283,7 @@ export default function TffPuanDurumuPage() {
                           })()}
                       </div>
                       
+                      {/* 🔥 CANLI PUAN ROZETİ 🔥 */}
                       {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse whitespace-nowrap">
                           +{row.liveExtra} CANLI
