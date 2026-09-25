@@ -73,8 +73,19 @@ export const customWeekNames: Record<number, string> = {
   14: "14. HAFTA (24-25-26 EYLÜL)"
 };
 
-export const getWeekLabel = (weekNum: number): string => {
-  return customWeekNames[weekNum] || `${weekNum}. HAFTA`;
+export const getWeekLabel = (weekNum: number | string) => {
+  const w = Number(weekNum);
+  
+  // 15. Haftaya özel "27-28-29 Eylül" damgası
+  if (w === 15) {
+    return "15. HAFTA (27-28-29 EYLÜL)";
+  }
+  
+  // İleride başka haftalara özel isim eklemek istersen buraya yeni 'if' yazabilirsin
+  // Örnek: if (w === 16) return "16. HAFTA (ŞAMPİYONLAR LİGİ)";
+
+  // Diğer tüm haftalar için standart görünüm
+  return `${w}. HAFTA`;
 };
 
 // 🔴 2. LİG HAVUZU VE KATEGORİLER
