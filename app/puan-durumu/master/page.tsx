@@ -304,18 +304,18 @@ export default function MasterPuanDurumuPage() {
                       </div>
                     </td>
 
-                    {/* 🔥 İP GİBİ HİZA: Rakam tam ortada ("TOPLAM PUAN" hizasında), Rozet sonunda 🔥 */}
+                    {/* 🔥 İP GİBİ HİZA: Puan tam ortada çakılı, Rozet onun önüne geçti 🔥 */}
                     <td className="pr-2 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-amber-500">
                       <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full min-w-[80px]">
-                        <div></div> {/* Sol Dengeleyici */}
-                        <div className="text-center">{row.score}</div> {/* Rakam Tam Ortada Çakılı */}
-                        <div className="flex justify-start pl-1.5 md:pl-2"> {/* Rozet Sağda */}
+                        <div className="flex justify-end pr-1.5 md:pr-2"> {/* Rozet Şimdi Önde */}
                           {row.liveBonus > 0 && (
                             <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
                               +{row.liveBonus} CANLI
                             </span>
                           )}
                         </div>
+                        <div className="text-center">{row.score}</div> {/* Rakam Tam Ortada Çakılı */}
+                        <div></div> {/* Sağ Dengeleyici Boş */}
                       </div>
                     </td>
                     
