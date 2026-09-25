@@ -737,6 +737,19 @@ export default function AdminRadarPortal() {
         }, { onConflict: 'id' });
 
         if (currentWinners.length > 0) {
+          // 🔥 KOMUTANIN ZIRHI: BU MAÇA DAHA ÖNCE PUAN VERİLDİ Mİ KONTROLÜ 🔥
+          const { data: existingPointsCheck } = await supabase
+            .from('points')
+            .select('id')
+            .eq('hafta', selectedLiveWeek)
+            .eq('ev_sahibi', matchData.home_team)
+            .eq('deplasman', matchData.away_team);
+
+          if (existingPointsCheck && existingPointsCheck.length > 0) {
+            alert(`⚠️ DUR KOMUTANIM!\nBu maçın (${matchData.home_team} vs ${matchData.away_team}) puanları zaten dağıtılmış!\nÇifte sayım engellendi, puanlar şişirilmedi.`);
+            return;
+          }
+
           const inserts: any[] = [];
           
           currentWinners.forEach(winnerName => {
