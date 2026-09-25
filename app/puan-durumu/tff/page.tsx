@@ -197,15 +197,31 @@ export default function TffPuanDurumuPage() {
                         </div>
                       </td>
                       
-                      {/* 🔥 DÜZELTME: Rozet Puanın SOLUNA alındı ve Puan Sabitlendi 🔥 */}
-                      <td className="pr-2 md:pr-4 pl-1 py-3 font-bold text-sm text-red-500 align-middle">
-                        <div className="flex flex-row items-center justify-end gap-3 w-full">
+                      {/* 1. SÜTUN: SIRA VE OK */}
+                      <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle w-10 md:w-12">
+                        <div className="flex items-center">
+                          <span className="text-left mr-1">{row.currentRank}</span>
+                          {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
+                          {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
+                        </div>
+                      </td>
+                      
+                      {/* 2. SÜTUN: İSİM */}
+                      <td className="px-1 md:px-2 py-3 align-middle">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                          <span className="whitespace-nowrap">{row.name}</span>
+                        </div>
+                      </td>
+                      
+                      {/* 3. SÜTUN: PUAN */}
+                      <td className="pr-2 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-red-500">
+                        <div className="flex flex-row items-center justify-end w-full">
                           {row.liveBonus > 0 && (
-                            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm mr-1.5 md:mr-2">
                               +{row.liveBonus} CANLI
                             </span>
                           )}
-                          <span className="w-8 text-right">{row.displayScore}</span>
+                          <div className="w-7 md:w-8 text-right">{row.displayScore}</div>
                         </div>
                       </td>
 
