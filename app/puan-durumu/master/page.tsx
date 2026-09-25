@@ -19,7 +19,6 @@ const formatTurkishDate = (dateStr: string) => {
 };
 
 // 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ 13. HAFTA LİSTESİ 🔥
-// Dışarıdan gelecek hiçbir hata bu listeyi bozamaz. Rozetler ve +3 Puanlar işlenmiştir.
 const mühürlüListe = [
   { id: '1', name: 'DOĞAÇ ALKAN', score: 112, trend: 'same', trendDiff: 0, badges: [] },
   { id: '2', name: 'YUSUF ERBAY', score: 110, trend: 'up', trendDiff: 1, badges: ['points'] },
@@ -83,11 +82,12 @@ const mühürlüListe = [
 export default function MasterPuanDurumuPage() {
   const [displayWeekNum, setDisplayWeekNum] = useState<number>(0);
   const [displayDate, setDisplayDate] = useState<string>('');
+  const [liveList, setLiveList] = useState<any[]>(mühürlüListe);
 
   useEffect(() => { 
     const initDudukKurali = async () => {
       try {
-        const { data: allMatches } = await supabase.from('live_matches').select('id, status');
+        const { data: allMatches } = await supabase.from('live_matches').select('*');
         const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
         
         let activeWeek = 5; 
@@ -123,9 +123,96 @@ export default function MasterPuanDurumuPage() {
 
         setDisplayWeekNum(activeWeek);
         setDisplayDate(formatTurkishDate(activeDate));
-      } catch(e) { console.log("Hafta bilgisi çekilemedi."); }
+
+        // 🔥 YENİ: DİNAMİK PUAN VE CANLI SKOR HESAPLAMASI 🔥
+        
+        // 1. Veritabanındaki oyuncuları çek (ID -> İsim eşleşmesi için)
+        const { data: playersData } = await supabase.from('players').select('username, name');
+        const idToNameMap: Record<string, string> = {};
+        if (playersData) {
+            playersData.forEach(p => idToNameMap[p.username] = p.name);
+        }
+
+        // 2. Aktif haftanın BİTMİŞ puanlarını çek
+        const { data: finishedPoints } = await supabase
+            .from('points')
+            .select('*')
+            .eq('hafta', activeWeek)
+            .eq('kategori', 'MASTER');
+
+        // 3. Aktif haftanın oyuncu tahminlerini çek
+        const { data: predictions } = await supabase
+            .from('player_predictions')
+            .select('*')
+            .eq('week_num', activeWeek);
+
+        // 4. Mühürlü listeyi kopyala ve hesaplamaya başla
+        let updatedList = mühürlüListe.map(row => ({
+            ...row,
+            liveBonus: 0,
+            finishedBonus: 0
+        }));
+
+        // A) 2. Adıma basılıp dağıtılmış puanları ekle
+        if (finishedPoints) {
+            finishedPoints.forEach(pt => {
+                const targetPlayer = updatedList.find(p => p.name.includes(pt.user_name));
+                if (targetPlayer) targetPlayer.finishedBonus += pt.puan;
+            });
+        }
+
+        // B) 1. Adıma basılmış (Canlı) maçların sanal puanlarını hesapla
+        if (allMatches && predictions) {
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+            
+            liveM.forEach(match => {
+                const currentScore = `${match.home_score}-${match.away_score}`;
+                if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
+                
+                const mIndex = match.id % 100;
+                
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                
+                let pts = 0;
+                if (winners.length === 1) pts = 12;
+                else if (winners.length === 2) pts = 6;
+                else if (winners.length === 3) pts = 5;
+                else if (winners.length === 4) pts = 4;
+                else if (winners.length === 5) pts = 3;
+                else if (winners.length === 6) pts = 2;
+                else if (winners.length >= 7) pts = 1;
+
+                winners.forEach(w => {
+                    const playerName = idToNameMap[w.user_id];
+                    if (playerName) {
+                        const targetPlayer = updatedList.find(p => p.name.includes(playerName));
+                        if (targetPlayer) targetPlayer.liveBonus += pts;
+                    }
+                });
+            });
+        }
+
+        // C) Toplam puanı birleştir ve listeyi yüksek puana göre sırala
+        updatedList = updatedList.map(p => ({
+            ...p,
+            score: p.score + p.finishedBonus + p.liveBonus
+        })).sort((a, b) => b.score - a.score);
+
+        setLiveList(updatedList);
+
+      } catch(e) { console.log("Veri çekilirken hata:", e); }
     };
+
     initDudukKurali();
+
+    // CANLI SOKET BAĞLANTISI: Maç skoru 1. Adımla güncellendiği an listeyi otomatik yenile
+    const channel = supabase.channel('public:live_matches_standings')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
+            initDudukKurali();
+        })
+        .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (
@@ -137,7 +224,6 @@ export default function MasterPuanDurumuPage() {
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-4">
-        {/* DİNAMİK SARI BAR - Düdük Kuralı Tıkır Tıkır İşliyor */}
         <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
           {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
         </div>
@@ -160,7 +246,8 @@ export default function MasterPuanDurumuPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]">
-                {mühürlüListe.map((row, idx) => (
+                {/* DİKKAT: Artık mühürlüListe değil, hesaplanmış liveList haritasını basıyoruz */}
+                {liveList.map((row, idx) => (
                   <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
                     <td className="pl-2 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-top pt-4">
                       <div className="flex items-center gap-1">
@@ -180,7 +267,6 @@ export default function MasterPuanDurumuPage() {
                       <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                         <span className="whitespace-nowrap">{row.name}</span>
                         
-                        {/* ROZETLER BURADA TAKILIYOR */}
                         {row.badges.includes('points') && (
                           <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
                             +3 PUAN HAFTANIN LİDERİ
@@ -196,7 +282,15 @@ export default function MasterPuanDurumuPage() {
                     </td>
 
                     <td className="pr-2 md:pr-4 pl-1 py-3 text-center font-bold text-sm text-amber-500 align-top pt-3.5">
-                      {row.score}
+                      <div className="flex flex-col items-center justify-center gap-1">
+                          <span>{row.score}</span>
+                          {/* 🔥 İŞTE CANLI PUAN ROZETİ BURADA BELİRECEK 🔥 */}
+                          {row.liveBonus > 0 && (
+                              <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                                  +{row.liveBonus} CANLI
+                              </span>
+                          )}
+                      </div>
                     </td>
                   </tr>
                 ))}
