@@ -1,7 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
+import html2canvas from 'html2canvas';
 
 // 🔴 54 KİŞİLİK SABİT SÖZLÜK (Misafir Askerler Dahil)
 const allPlayersList: Record<string, string> = {
@@ -44,11 +45,34 @@ export default function TffPuanDurumuPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
+  // YENİ EKLENEN: Otomatik Kilit State'i ve Fotoğraf Referansı
+  const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
+  const tabloRef = useRef<HTMLDivElement>(null);
+
   const loadLeaderboard = async () => {
     try {
       const { data: dbPlayers } = await supabase.from('players').select('*');
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('*').gte('week_num', 6);
+
+      // YENİ EKLENEN: TFF için 24 maç kontrolü (Aktif haftadaki maçları bulup MS olanları sayıyoruz)
+      if (dbBulletin && dbMatches) {
+        const weeksData: Record<number, { hasStartedMatch: boolean }> = {};
+        dbBulletin.forEach(b => {
+            if (!weeksData[b.week_num]) weeksData[b.week_num] = { hasStartedMatch: false };
+            const matchStatus = dbMatches.find(m => m.id === (b.week_num * 100) + b.match_index)?.status;
+            if (matchStatus && matchStatus !== 'NOT_STARTED') weeksData[b.week_num].hasStartedMatch = true;
+        });
+
+        const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
+        let activeWeek = 6;
+        if (startedWeeks.length > 0) activeWeek = Math.max(...startedWeeks);
+        else if (Object.keys(weeksData).length > 0) activeWeek = Math.max(...Object.keys(weeksData).map(Number));
+
+        const activeWeekMatches = dbMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
+        const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
+        setHaftaBittiMi(finishedCount === 24);
+      }
 
       // 🔥 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Pagination) 🔥
       let dbPredictions: any[] = [];
@@ -60,7 +84,7 @@ export default function TffPuanDurumuPage() {
         const { data: pDataChunk, error } = await supabase
           .from('player_predictions')
           .select('*')
-          .gte('week_num', 6) // DİKKAT: 6. HAFTA VE SONRASI OKUNUR!
+          .gte('week_num', 6) 
           .order('id', { ascending: true }) 
           .range(from, from + step - 1);
           
@@ -85,7 +109,6 @@ export default function TffPuanDurumuPage() {
 
       Object.keys(allPlayersList).forEach(code => { dynamicBase[code] = 0; liveExtra[code] = 0; });
 
-      // Tahminleri Match_ID bazlı sözlüğe aktarıyoruz
       const predDict: Record<string, Record<number, string>> = {};
       if (dbPredictions && dbPredictions.length > 0) {
         dbPredictions.forEach(pred => {
@@ -98,7 +121,6 @@ export default function TffPuanDurumuPage() {
         });
       }
 
-      // TFF Maçlarının Benzersiz ID'lerini bul (Hafta_No * 100 + Maç_Index)
       const tffMatchIds = new Set<number>();
       if (dbBulletin) {
          dbBulletin.forEach(m => {
@@ -108,10 +130,8 @@ export default function TffPuanDurumuPage() {
          });
       }
 
-      // Maçları tara ve Puanları Hesapla (6. Haftadan İtibaren Tüm Haftalar)
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
-          // Eğer 600'den küçükse (yani 6. haftadan önceyse) atla, sadece TFF maçlarını al
           if (dbMatch.id < 600 || !tffMatchIds.has(dbMatch.id)) return;
           if (dbMatch.home_score === '-' || dbMatch.away_score === '-') return;
 
@@ -128,7 +148,7 @@ export default function TffPuanDurumuPage() {
 
           winnerCodes.forEach(wCode => {
             if (dynamicBase[wCode] !== undefined) {
-                if (dbMatch.status === 'FINISHED') dynamicBase[wCode] += points;
+                if (dbMatch.status === 'FINISHED' || dbMatch.status === 'MS') dynamicBase[wCode] += points;
                 else if (dbMatch.status === 'LIVE' || dbMatch.status === 'WAITING_APPROVAL' || dbMatch.status === 'HT') {
                   liveExtra[wCode] += points;
                   isAnyMatchLive = true;
@@ -140,14 +160,13 @@ export default function TffPuanDurumuPage() {
 
       setAdminStatus(isAnyMatchLive ? 'LIVE' : 'NOT_STARTED');
 
-      // 🔴 NİHAİ BİRLEŞTİRME (İLK 4 HAFTA + 5. HAFTA KASA + DİNAMİK 6+ BİTENLER + CANLI) 🔴
+      // 🔴 NİHAİ BİRLEŞTİRME 🔴
       const baseList = Object.keys(allPlayersList).map(code => {
         const ilk4 = tffIlk4Hafta[code] || 0; 
         const w5 = tffHafta5Kasa[code] || 0; 
         const base = dynamicBase[code] || 0; 
         const live = liveExtra[code] || 0; 
         
-        // Tab menüsündeki "6. Hafta (Canlı)" sekmesi için, 6 ve sonrasının toplamını gösteriyoruz
         const w6PlusTotal = base + live; 
         const total = ilk4 + w5 + base + live; 
 
@@ -162,7 +181,6 @@ export default function TffPuanDurumuPage() {
         };
       });
 
-      // Eski listeye göre ok işaretleri için sıralama
       const prevRefList = [...baseList].sort((a, b) => (b.total - b.liveExtra) - (a.total - a.liveExtra) || a.name.localeCompare(b.name, 'tr'));
       const prevRanks: Record<string, number> = {};
       prevRefList.forEach((player, index) => { prevRanks[player.id] = index + 1; });
@@ -198,7 +216,6 @@ export default function TffPuanDurumuPage() {
   useEffect(() => { 
       loadLeaderboard(); 
       
-      // 🔥 CANLI SOKET VE OTOMATİK YENİLEYİCİ 🔥
       const channel = supabase.channel('tff_live_updates')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadLeaderboard(); })
           .subscribe();
@@ -210,6 +227,16 @@ export default function TffPuanDurumuPage() {
           clearInterval(interval); 
       }; 
   }, [activeTab]);
+
+  // YENİ EKLENEN: Fotoğraf İndirme Fonksiyonu
+  const resmiBildiriyiIndir = async () => {
+    if (!haftaBittiMi || !tabloRef.current) return;
+    const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "TFF_Ligi_Resmi_Bildiri.png";
+    link.click();
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
@@ -227,6 +254,26 @@ export default function TffPuanDurumuPage() {
       <div className="w-full mb-6"><LiveMatchCard /></div>
 
       <div className="max-w-xl flex flex-col items-center mb-6 space-y-3 w-full">
+        
+        {/* YENİ EKLENEN: Akıllı İndirme Butonu */}
+        <div className="w-full flex justify-end mb-2">
+          {haftaBittiMi ? (
+            <button 
+              onClick={resmiBildiriyiIndir} 
+              className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition-all shadow-lg"
+            >
+              📸 Resmi Deklarasyonu İndir
+            </button>
+          ) : (
+            <button 
+              disabled 
+              className="bg-[#1e293b] text-slate-500 font-bold py-2 px-4 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-700 text-sm shadow-md"
+            >
+              🔒 24. Maç Bekleniyor (İndirme Kapalı)
+            </button>
+          )}
+        </div>
+
         <button onClick={() => { setActiveTab('total'); setIsMenuOpen(false); }} className={`px-8 py-2.5 rounded-xl font-black transition-all border w-full text-center shadow-md ${activeTab === 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>
           TFF TOPLAM PUAN DURUMU
         </button>
@@ -237,7 +284,7 @@ export default function TffPuanDurumuPage() {
           </button>
           {isMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900 p-3 rounded-2xl shadow-2xl flex flex-wrap justify-center gap-2">
-               <button onClick={() => { setActiveTab('ilk4'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'ilk4' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
+               <button onClick={() => { setActiveTab('ilk4'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'ilk4' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-955 text-slate-300 border-slate-800'}`}>
                   İLK 4 HAFTA (SABİT)
                </button>
                <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w5' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
@@ -251,7 +298,9 @@ export default function TffPuanDurumuPage() {
         </div>
       </div>
 
-      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      {/* YENİ EKLENEN: Fotoğrafı çekilecek alanın (Tablo) tamamı ref içine alındı */}
+      <div ref={tabloRef} className="w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <h2 className="text-xl text-center text-white mt-4 mb-2">🔴 TFF LİGİ GÜNCEL PUAN DURUMU</h2>
         {tableRows.length > 0 ? (
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs border-b border-slate-800">
@@ -283,7 +332,6 @@ export default function TffPuanDurumuPage() {
                           })()}
                       </div>
                       
-                      {/* 🔥 CANLI PUAN ROZETİ 🔥 */}
                       {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse whitespace-nowrap">
                           +{row.liveExtra} CANLI

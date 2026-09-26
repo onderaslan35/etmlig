@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
+import html2canvas from 'html2canvas';
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -82,7 +83,11 @@ const mühürlüListe = [
 export default function MasterPuanDurumuPage() {
   const [displayWeekNum, setDisplayWeekNum] = useState<number>(0);
   const [displayDate, setDisplayDate] = useState<string>('');
-  const [liveList, setLiveList] = useState<any[]>([]); // İçi tamamen boş! Yüklenene kadar hiçbir şey göstermeyecek.
+  const [liveList, setLiveList] = useState<any[]>([]);
+  
+  // YENİ EKLENEN: Otomatik Kilit State'i ve Fotoğraf Referansı
+  const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
+  const tabloRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { 
     const initDudukKurali = async () => {
@@ -119,6 +124,11 @@ export default function MasterPuanDurumuPage() {
                 activeWeek = Math.max(...Object.keys(weeksData).map(Number)); 
             }
             activeDate = weeksData[activeWeek]?.date || '';
+
+            // YENİ EKLENEN: O haftanın tam 24 maçı da "MS" oldu mu kontrolü
+            const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
+            const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
+            setHaftaBittiMi(finishedCount === 24);
         }
 
         setDisplayWeekNum(activeWeek);
@@ -159,12 +169,11 @@ export default function MasterPuanDurumuPage() {
             }
         }
 
-        // 🔥 YENİ HAFTA BAŞLADI - ESKİ ROZETLER TARİHE GÖMÜLDÜ 🔥
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
-            badges: [] // Sistem artık her açıldığında rozetleri tertemiz sıfırlayacak
+            badges: []
         }));
 
         if (finishedPoints) {
@@ -218,15 +227,25 @@ export default function MasterPuanDurumuPage() {
 
     const channel = supabase.channel('public:master_standings_realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
-            setTimeout(initDudukKurali, 300); // API'ye nefes alma payı bırakıyoruz
+            setTimeout(initDudukKurali, 300);
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'points' }, payload => {
-            setTimeout(initDudukKurali, 300); // Kasaya para girince veya iptal edilince anında tetikle!
+            setTimeout(initDudukKurali, 300);
         })
         .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  // YENİ EKLENEN: Fotoğraf İndirme Fonksiyonu
+  const resmiBildiriyiIndir = async () => {
+    if (!haftaBittiMi || !tabloRef.current) return;
+    const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "Master_Ligi_Resmi_Bildiri.png";
+    link.click();
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
@@ -236,75 +255,99 @@ export default function MasterPuanDurumuPage() {
         </h1>
       </div>
       
-      <div className="w-full max-w-3xl mx-auto mt-4">
-        <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
-          {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
+      <div className="w-full max-w-3xl mx-auto mt-2">
+        
+        {/* YENİ EKLENEN: Akıllı İndirme Butonu */}
+        <div className="flex justify-end mb-4">
+          {haftaBittiMi ? (
+            <button 
+              onClick={resmiBildiriyiIndir} 
+              className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition-all shadow-lg"
+            >
+              📸 Resmi Deklarasyonu İndir
+            </button>
+          ) : (
+            <button 
+              disabled 
+              className="bg-[#1e293b] text-slate-500 font-bold py-2 px-4 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-700 text-sm shadow-md"
+            >
+              🔒 24. Maç Bekleniyor (İndirme Kapalı)
+            </button>
+          )}
         </div>
 
-        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
-          <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
-            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
-              <span>📅</span>
-              <span>GÜNCEL PUAN DURUMU</span>
+        {/* YENİ EKLENEN: Fotoğrafı çekilecek alanın tamamı ref içine alındı */}
+        <div ref={tabloRef} className="w-full p-2 bg-[#0f172a] rounded-xl">
+          <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-4 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
+            {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
+          </div>
+
+          <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-2 border border-[#1e293b]">
+            <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
+              <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
+                <span>📅</span>
+                <span>GÜNCEL PUAN DURUMU</span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs md:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                  <tr>
+                    <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
+                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                    <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
+                    <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e293b]">
+                  {liveList.map((row, idx) => (
+                    <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
+                      
+                      <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
+                        <div className="flex items-center">
+                          <span className="text-left w-5">{idx + 1}</span>
+                          {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
+                          {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
+                        </div>
+                      </td>
+                      
+                      <td className="px-1 md:px-2 py-3 align-middle">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                          <span className="whitespace-nowrap">{row.name}</span>
+                          {row.badges.includes('points') && (
+                            <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
+                              +3 PUAN HAFTANIN LİDERİ
+                            </span>
+                          )}
+                          {row.badges.includes('score') && (
+                            <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
+                              +3 PUAN SKOR LİDERİ
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="px-1 py-3 align-middle text-right">
+                        {row.liveBonus > 0 && (
+                          <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
+                            +{row.liveBonus} CANLI
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-amber-500 text-center">
+                        {row.score}
+                      </td>
+
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs md:text-sm">
-              <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
-                <tr>
-                  <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
-                  <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                  <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
-                  <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1e293b]">
-                {liveList.map((row, idx) => (
-                  <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
-                    
-                    <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
-                      <div className="flex items-center">
-                        <span className="text-left w-5">{idx + 1}</span>
-                        {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
-                        {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
-                      </div>
-                    </td>
-                    
-                    <td className="px-1 md:px-2 py-3 align-middle">
-                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
-                        <span className="whitespace-nowrap">{row.name}</span>
-                        {row.badges.includes('points') && (
-                          <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
-                            +3 PUAN HAFTANIN LİDERİ
-                          </span>
-                        )}
-                        {row.badges.includes('score') && (
-                          <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
-                            +3 PUAN SKOR LİDERİ
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-1 py-3 align-middle text-right">
-                      {row.liveBonus > 0 && (
-                        <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                          +{row.liveBonus} CANLI
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-amber-500 text-center">
-                      {row.score}
-                    </td>
-
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
+
       </div>
     </div>
   );

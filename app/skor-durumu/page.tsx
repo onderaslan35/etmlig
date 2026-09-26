@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
+import html2canvas from 'html2canvas';
 
 // TFF kuralını buraya da dahil ediyoruz
 const isTffMatchCheck = (category: string) => {
@@ -12,6 +13,10 @@ export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [allData, setAllData] = useState<any[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
+
+  // YENİ EKLENEN: Otomatik Kilit State'i ve Fotoğraf Referansı
+  const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
+  const tabloRef = useRef<HTMLDivElement>(null);
 
   const loadSkorData = async () => {
     try {
@@ -37,6 +42,11 @@ export default function SkorDurumuPage() {
 
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
+          
+          // YENİ EKLENEN: O haftanın tam 24 maçı da "MS" oldu mu kontrolü
+          const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
+          const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
+          setHaftaBittiMi(finishedCount === 24);
       }
 
       // 4. 🔥 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ 🔥
@@ -138,6 +148,16 @@ export default function SkorDurumuPage() {
     };
   }, []);
 
+  // YENİ EKLENEN: Fotoğraf İndirme Fonksiyonu
+  const resmiBildiriyiIndir = async () => {
+    if (!haftaBittiMi || !tabloRef.current) return;
+    const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `Tam_Isabet_Kralligi_${activeTab}.png`; // Hangi sekmedeyse o adla iner
+    link.click();
+  };
+
   // Hangi sekmedeysek o sekmeye ait puan, canlı bonus ve ok yönünü alıp sıralıyoruz
   const currentList = allData.map(r => {
     let baseScore = 0, liveBonus = 0, trend = 'same', diff = 0;
@@ -184,7 +204,27 @@ export default function SkorDurumuPage() {
           <button onClick={() => setActiveTab('TFF')} className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${activeTab === 'TFF' ? 'bg-red-600 text-white border-red-400 scale-105 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}>🇹🇷 TFF</button>
         </div>
 
-        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b] shadow-xl">
+        {/* YENİ EKLENEN: Akıllı İndirme Butonu */}
+        <div className="flex justify-end mb-4">
+          {haftaBittiMi ? (
+            <button 
+              onClick={resmiBildiriyiIndir} 
+              className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition-all shadow-lg"
+            >
+              📸 Resmi Deklarasyonu İndir
+            </button>
+          ) : (
+            <button 
+              disabled 
+              className="bg-[#1e293b] text-slate-500 font-bold py-2 px-4 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-700 text-sm shadow-md"
+            >
+              🔒 24. Maç Bekleniyor (İndirme Kapalı)
+            </button>
+          )}
+        </div>
+
+        {/* YENİ EKLENEN: Fotoğrafı çekilecek alanın tamamı ref içine alındı */}
+        <div ref={tabloRef} className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b] shadow-xl">
           <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
             <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
               <span>🎯</span>
@@ -198,9 +238,7 @@ export default function SkorDurumuPage() {
                 <tr>
                   <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
                   <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                  {/* 3. SÜTUN: Rozet alanı (Biraz daha geniş) */}
                   <th className="px-1 py-3 w-20 md:w-28 text-right"></th>
-                  {/* 4. SÜTUN: TAM İSABET Başlığı */}
                   <th className="pr-3 md:pr-4 pl-1 py-3 w-16 md:w-20 text-center">TAM İSABET</th>
                 </tr>
               </thead>
