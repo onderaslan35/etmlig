@@ -79,7 +79,7 @@ export default function SkorDurumuPage() {
       const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
 
       if (allMatches && predictions && dbBulletin) {
-          const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+          const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL');
           
           liveM.forEach(match => {
               const currentScore = `${match.home_score}-${match.away_score}`;

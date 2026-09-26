@@ -1,7 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { isTffMatchCheck } from '@/utils/themeEngine';
+import html2canvas from 'html2canvas';
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -16,6 +17,10 @@ export default function DfoPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
   const [displayWeekNum, setDisplayWeekNum] = useState<number>(0);
   const [displayDate, setDisplayDate] = useState<string>('');
+  
+  // YENİ EKLENEN: Otomatik Kilit State'i ve Fotoğraf Referansı
+  const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
+  const tabloRef = useRef<HTMLDivElement>(null);
 
   const loadLeaderboard = async () => {
     try {
@@ -38,7 +43,13 @@ export default function DfoPuanDurumuPage() {
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           activeDate = weeksData[activeWeek]?.date || '';
+
+          // YENİ EKLENEN: O haftanın tam 24 maçı da "MS" oldu mu kontrolü
+          const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
+          const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
+          setHaftaBittiMi(finishedCount === 24);
       }
+      
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
 
@@ -81,7 +92,7 @@ export default function DfoPuanDurumuPage() {
         }));
 
         if (allMatches && predictions && dbBulletin) {
-            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL');
             
             liveM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
@@ -142,62 +153,98 @@ export default function DfoPuanDurumuPage() {
       };
   }, []);
 
+  // YENİ EKLENEN: Fotoğraf İndirme Fonksiyonu
+  const resmiBildiriyiIndir = async () => {
+    if (!haftaBittiMi || !tabloRef.current) return;
+    const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "DFO_Ligi_Resmi_Bildiri.png";
+    link.click();
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-blue-500 tracking-wider uppercase drop-shadow-md">ELİT TAHMİN DFO LİGİ</h1>
       </div>
-      <div className="w-full max-w-3xl mx-auto mt-4">
-        <div className="w-full bg-[#3b82f6] text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-6 text-center uppercase tracking-wide shadow-md border border-blue-400/50">
-          {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA DFO PUAN DURUMU (${displayDate})` : 'DFO PUAN DURUMU YÜKLENİYOR...'}
+      
+      <div className="w-full max-w-3xl mx-auto mt-2">
+        
+        {/* YENİ EKLENEN: Akıllı İndirme Butonu */}
+        <div className="flex justify-end mb-4">
+          {haftaBittiMi ? (
+            <button 
+              onClick={resmiBildiriyiIndir} 
+              className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition-all shadow-lg"
+            >
+              📸 Resmi Deklarasyonu İndir
+            </button>
+          ) : (
+            <button 
+              disabled 
+              className="bg-[#1e293b] text-slate-500 font-bold py-2 px-4 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-700 text-sm shadow-md"
+            >
+              🔒 24. Maç Bekleniyor (İndirme Kapalı)
+            </button>
+          )}
         </div>
-        <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b]">
-          <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
-            <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider"><span>📅</span><span>GÜNCEL PUAN DURUMU</span></div>
+
+        {/* YENİ EKLENEN: Fotoğrafı çekilecek alanın tamamını (Başlık + Tablo) ref içine aldık */}
+        <div ref={tabloRef} className="w-full p-2 bg-[#0f172a] rounded-xl">
+          <div className="w-full bg-[#3b82f6] text-white font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-4 text-center uppercase tracking-wide shadow-md border border-blue-400/50">
+            {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA DFO PUAN DURUMU (${displayDate})` : 'DFO PUAN DURUMU YÜKLENİYOR...'}
           </div>
-          {tableRows.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs md:text-sm">
-                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
-                  <tr>
-                    <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
-                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                    <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
-                    <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e293b]">
-                  {tableRows.map((row, idx) => (
-                    <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
-                        <div className="flex items-center">
-                          <span className="text-left w-5">{row.currentRank}</span>
-                          {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
-                          {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
-                        </div>
-                      </td>
-                      <td className="px-1 md:px-2 py-3 align-middle">
-                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
-                          <span className="whitespace-nowrap">{row.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-1 py-3 align-middle text-right">
-                        {row.liveBonus > 0 && (
-                          <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                            +{row.liveBonus} CANLI
-                          </span>
-                        )}
-                      </td>
-                      <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-blue-400 text-center">
-                        {row.displayScore}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          
+          <div className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-2 border border-[#1e293b]">
+            <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
+              <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider"><span>📅</span><span>GÜNCEL PUAN DURUMU</span></div>
             </div>
-          ) : (<div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>)}
+            {tableRows.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs md:text-sm">
+                  <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                    <tr>
+                      <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
+                      <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                      <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
+                      <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b]">
+                    {tableRows.map((row, idx) => (
+                      <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
+                        <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
+                          <div className="flex items-center">
+                            <span className="text-left w-5">{row.currentRank}</span>
+                            {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
+                            {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
+                          </div>
+                        </td>
+                        <td className="px-1 md:px-2 py-3 align-middle">
+                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                            <span className="whitespace-nowrap">{row.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-1 py-3 align-middle text-right">
+                          {row.liveBonus > 0 && (
+                            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
+                              +{row.liveBonus} CANLI
+                            </span>
+                          )}
+                        </td>
+                        <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-blue-400 text-center">
+                          {row.displayScore}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (<div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>)}
+          </div>
         </div>
+        
       </div>
     </div>
   );

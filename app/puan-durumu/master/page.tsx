@@ -184,7 +184,7 @@ export default function MasterPuanDurumuPage() {
         }
 
         if (allMatches && predictions) {
-            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL');
             
             liveM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
