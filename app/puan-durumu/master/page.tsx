@@ -184,9 +184,9 @@ export default function MasterPuanDurumuPage() {
         }
 
         if (allMatches && predictions) {
-            const activeM = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL'));
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
-            activeM.forEach(match => {
+            liveM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
                 if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
                 
@@ -207,13 +207,7 @@ export default function MasterPuanDurumuPage() {
                     const playerName = idToNameMap[w.user_id];
                     if (playerName) {
                         const targetPlayer = updatedList.find(p => p.name === playerName || p.name.includes(playerName) || playerName.includes(p.name.replace(/ 🏆/g, '')));
-                        if (targetPlayer) {
-                            if (match.status === 'MS' || match.status === 'FINISHED' || match.status === 'WAITING_APPROVAL') {
-                                targetPlayer.finishedBonus += pts; // MAÇ BİTTİ: Rozet yok, ana puana eklenir.
-                            } else {
-                                targetPlayer.liveBonus += pts; // MAÇ CANLI: Yeşil rozet yanar.
-                            }
-                        }
+                        if (targetPlayer) targetPlayer.liveBonus += pts;
                     }
                 });
             });

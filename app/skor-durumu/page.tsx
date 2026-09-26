@@ -75,65 +75,52 @@ export default function SkorDurumuPage() {
           playersData.forEach(p => idToNameMap[p.username] = p.name);
       }
 
-      // 6. ⚡ CANLI VE BİTEN TAM İSABET HESAPLAMASI ⚡
+      // 6. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI ⚡
       const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
-      const msBonuses: Record<string, { master: number, dfo: number, tff: number }> = {}; // BİTEN MAÇLARIN KAYIT KASASI
 
       if (allMatches && predictions && dbBulletin) {
-          const activeM = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL'));
+          const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
           
-          activeM.forEach(match => {
+          liveM.forEach(match => {
               const currentScore = `${match.home_score}-${match.away_score}`;
               if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
               
               const mIndex = match.id % 100;
               const matchWeek = Math.floor(match.id / 100);
               
+              // Kategori Tespiti (TFF mi DFO mu?)
               const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
               const isTff = bulletinMatch ? isTffMatchCheck(bulletinMatch.category) : false;
 
+              // Sadece TAM isabet (Skoru tam bilenleri) ayıkla
               const exactWinners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
 
               exactWinners.forEach(w => {
                   const playerName = idToNameMap[w.user_id] || "";
                   if (playerName) {
-                      if (match.status === 'MS' || match.status === 'FINISHED' || match.status === 'WAITING_APPROVAL') {
-                          // Biten maçlar (Rozet yok, direkt skorlara yazılacak)
-                          if (!msBonuses[playerName]) msBonuses[playerName] = { master: 0, dfo: 0, tff: 0 };
-                          msBonuses[playerName].master += 1;
-                          if (isTff) msBonuses[playerName].tff += 1;
-                          else msBonuses[playerName].dfo += 1;
-                      } else {
-                          // Canlı maçlar (Yeşil rozet)
-                          if (!liveBonuses[playerName]) liveBonuses[playerName] = { master: 0, dfo: 0, tff: 0 };
-                          liveBonuses[playerName].master += 1;
-                          if (isTff) liveBonuses[playerName].tff += 1;
-                          else liveBonuses[playerName].dfo += 1;
-                      }
+                      if (!liveBonuses[playerName]) liveBonuses[playerName] = { master: 0, dfo: 0, tff: 0 };
+                      
+                      liveBonuses[playerName].master += 1; // Master'a her türlü yazar
+                      if (isTff) liveBonuses[playerName].tff += 1; // Sadece TFF ise
+                      else liveBonuses[playerName].dfo += 1; // Sadece DFO ise
                   }
               });
           });
       }
 
-      // 7. Kesinleşmiş Tablo İle Canlı ve Bitenleri Birleştir
+      // 7. Kesinleşmiş Tablo İle Canlı Bonusları Birleştir
       if (leaderboardData) {
         const enrichedData = leaderboardData.map(r => {
             const rName = r.name || "";
-            const matchedLive = Object.keys(liveBonuses).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
-            const matchedMs = Object.keys(msBonuses).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
-            
-            const liveBonus = matchedLive ? liveBonuses[matchedLive] : { master: 0, dfo: 0, tff: 0 };
-            const msBonus = matchedMs ? msBonuses[matchedMs] : { master: 0, dfo: 0, tff: 0 };
+            // İsmi en yakın eşleşmeyle bul
+            const matchedKey = Object.keys(liveBonuses).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
+            const bonus = matchedKey ? liveBonuses[matchedKey] : { master: 0, dfo: 0, tff: 0 };
 
             return {
                 ...r,
-                masterLiveMatch: liveBonus.master,
-                dfoLiveMatch: liveBonus.dfo,
-                tffLiveMatch: liveBonus.tff,
-                // Biten MS maçların sayısı mevcut skor puanına kalıcı gömülüyor (rozet olmaz)
-                skor_pts: (r.skor_pts || 0) + msBonus.master,
-                dfo_skor_pts: (r.dfo_skor_pts || 0) + msBonus.dfo,
-                tff_skor_pts: (r.tff_skor_pts || 0) + msBonus.tff
+                masterLiveMatch: bonus.master,
+                dfoLiveMatch: bonus.dfo,
+                tffLiveMatch: bonus.tff
             };
         });
         setAllData(enrichedData);
