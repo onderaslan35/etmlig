@@ -216,9 +216,12 @@ export default function MasterPuanDurumuPage() {
 
     initDudukKurali();
 
-    const channel = supabase.channel('public:live_matches_standings')
+    const channel = supabase.channel('public:master_standings_realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
-            initDudukKurali();
+            setTimeout(initDudukKurali, 300); // API'ye nefes alma payı bırakıyoruz
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'points' }, payload => {
+            setTimeout(initDudukKurali, 300); // Kasaya para girince veya iptal edilince anında tetikle!
         })
         .subscribe();
 
