@@ -349,11 +349,11 @@ export default function MasterPuanDurumuPage() {
             </div>
 
             <div className="overflow-x-auto overflow-y-hidden">
-              <table className="w-full text-left text-[11px] sm:text-sm">
-                <thead className="text-[#64748b] uppercase text-[9px] sm:text-[10px] bg-[#0f172a]">
+              <table className="w-full text-left text-[12px] sm:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] sm:text-[11px] bg-[#0f172a]">
                   <tr>
                     <th className="pl-3 sm:pl-4 py-2 sm:py-3 text-left">YARIŞMACI</th>
-                    <th className="pr-3 sm:pr-4 py-2 sm:py-3 w-12 sm:w-16 text-right">PUAN</th>
+                    <th className="px-2 py-2 sm:py-3 w-20 sm:w-28 text-center">PUAN</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1e293b]">
@@ -362,7 +362,6 @@ export default function MasterPuanDurumuPage() {
                       
                       <td className="pl-3 sm:pl-4 py-2 sm:py-3 align-middle">
                         <div className="flex flex-col gap-1">
-                          {/* SIRA NUMARASI, İSİM VE CANLI ROZETİ (YANYANA, SIFIR BOŞLUKLA) */}
                           <div className="flex flex-wrap items-center gap-1.5 text-white font-bold">
                             <span className="text-[12px] sm:text-sm whitespace-nowrap">{idx + 1}. {row.name}</span>
                             {row.liveBonus > 0 && (
@@ -372,7 +371,6 @@ export default function MasterPuanDurumuPage() {
                             )}
                           </div>
                           
-                          {/* HAFTANIN LİDERİ / SKOR LİDERİ ROZETLERİ (ALT SATIRDA) */}
                           {(row.badges.includes('points') || row.badges.includes('score')) && (
                             <div className="flex flex-wrap gap-1 mt-0.5">
                               {row.badges.includes('points') && (
@@ -390,8 +388,8 @@ export default function MasterPuanDurumuPage() {
                         </div>
                       </td>
 
-                      {/* PUAN EN SAĞA YASLI */}
-                      <td className="pr-3 sm:pr-4 py-2 sm:py-3 align-middle font-black text-xs sm:text-sm text-amber-500 text-right">
+                      {/* PUAN SÜTUNU: ORTALANDI VE İSİMLERE YAKLAŞTIRILDI */}
+                      <td className="px-2 py-2 sm:py-3 align-middle font-bold text-[12px] sm:text-sm text-amber-500 text-center">
                         {row.score}
                       </td>
 
