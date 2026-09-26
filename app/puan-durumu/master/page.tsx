@@ -82,7 +82,7 @@ const mühürlüListe = [
 export default function MasterPuanDurumuPage() {
   const [displayWeekNum, setDisplayWeekNum] = useState<number>(0);
   const [displayDate, setDisplayDate] = useState<string>('');
-  const [liveList, setLiveList] = useState<any[]>(mühürlüListe);
+  const [liveList, setLiveList] = useState<any[]>([]); // İçi tamamen boş! Yüklenene kadar hiçbir şey göstermeyecek.
 
   useEffect(() => { 
     const initDudukKurali = async () => {
