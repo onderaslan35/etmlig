@@ -80,7 +80,7 @@ export default function SkorDurumuPage() {
       const msBonuses: Record<string, { master: number, dfo: number, tff: number }> = {}; // BİTEN MAÇLARIN KAYIT KASASI
 
       if (allMatches && predictions && dbBulletin) {
-          const activeM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL');
+          const activeM = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL'));
           
           activeM.forEach(match => {
               const currentScore = `${match.home_score}-${match.away_score}`;

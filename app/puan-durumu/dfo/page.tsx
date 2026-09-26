@@ -93,7 +93,7 @@ export default function DfoPuanDurumuPage() {
 
         if (allMatches && predictions && dbBulletin) {
             // Hem canlıları hem de bitmiş (MS) maçları alıyoruz
-            const activeM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL');
+            const activeM = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT' || m.status === 'MS' || m.status === 'FINISHED' || m.status === 'WAITING_APPROVAL'));
             
             activeM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
