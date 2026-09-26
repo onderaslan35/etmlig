@@ -21,8 +21,8 @@ const formatTurkishDate = (dateStr: string) => {
 
 // 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ 13. HAFTA LİSTESİ 🔥
 const mühürlüListe = [
-  { id: '1', name: 'DOĞAÇ ALKAN', score: 112, trend: 'same', trendDiff: 0, badges: [] },
-  { id: '2', name: 'YUSUF ERBAY', score: 110, trend: 'up', trendDiff: 1, badges: ['points'] },
+  { id: '1', name: 'DOĞAÇ ALKAN', score: 112, trend: 'same', trendDiff: 0, badges: [] as string[] },
+  { id: '2', name: 'YUSUF ERBAY', score: 110, trend: 'up', trendDiff: 1, badges: [] },
   { id: '3', name: 'ÖNDER ASLAN', score: 107, trend: 'down', trendDiff: 1, badges: [] },
   { id: '4', name: 'SALİH KARACAOĞLU', score: 104, trend: 'same', trendDiff: 0, badges: [] },
   { id: '5', name: 'HAKAN AYAN', score: 103, trend: 'same', trendDiff: 0, badges: [] },
@@ -43,7 +43,7 @@ const mühürlüListe = [
   { id: '20', name: 'MUHSİN ASİLKAN', score: 64, trend: 'same', trendDiff: 0, badges: [] },
   { id: '21', name: 'MURAT KARA', score: 63, trend: 'up', trendDiff: 1, badges: [] },
   { id: '22', name: 'ULAŞ ADIGÜZEL', score: 63, trend: 'down', trendDiff: 1, badges: [] },
-  { id: '23', name: 'B.VEYSELOĞLU EROL', score: 61, trend: 'up', trendDiff: 1, badges: ['score'] },
+  { id: '23', name: 'B.VEYSELOĞLU EROL', score: 61, trend: 'up', trendDiff: 1, badges: [] },
   { id: '24', name: 'FATİH AYAN', score: 60, trend: 'down', trendDiff: 1, badges: [] },
   { id: '25', name: 'AHMET BİRCAN 🏆', score: 56, trend: 'same', trendDiff: 0, badges: [] },
   { id: '26', name: 'UĞUR GÜRBÜZ', score: 55, trend: 'same', trendDiff: 0, badges: [] },
@@ -85,7 +85,6 @@ export default function MasterPuanDurumuPage() {
   const [displayDate, setDisplayDate] = useState<string>('');
   const [liveList, setLiveList] = useState<any[]>([]);
   
-  // YENİ EKLENEN: Otomatik Kilit State'i ve Fotoğraf Referansı
   const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
   const tabloRef = useRef<HTMLDivElement>(null);
 
@@ -125,7 +124,6 @@ export default function MasterPuanDurumuPage() {
             }
             activeDate = weeksData[activeWeek]?.date || '';
 
-            // YENİ EKLENEN: O haftanın tam 24 maçı da "MS" oldu mu kontrolü
             const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
             const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
             setHaftaBittiMi(finishedCount === 24);
@@ -173,7 +171,7 @@ export default function MasterPuanDurumuPage() {
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
-            badges: []
+            badges: [] as string[]
         }));
 
         if (finishedPoints) {
@@ -183,6 +181,9 @@ export default function MasterPuanDurumuPage() {
             });
         }
 
+        // =========================================================================
+        // 1. ADIM: ROLLBACK EDİLMİŞ GÜVENLİ CANLI MAÇ HESAPLAMASI (Sadece LIVE ve HT)
+        // =========================================================================
         if (allMatches && predictions) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -213,6 +214,77 @@ export default function MasterPuanDurumuPage() {
             });
         }
 
+        // =========================================================================
+        // 2. ADIM: OTONOM LİDERLİK VE ROZET HESAPLAYICISI (Haftanın Zirvesini Bulur)
+        // =========================================================================
+        if (allMatches && predictions) {
+            const weeklyStats: Record<string, { pts: number, exacts: number }> = {};
+            updatedList.forEach(p => { weeklyStats[p.name] = { pts: 0, exacts: 0 }; });
+
+            // Tüm aktif hafta maçlarını tarar (Bitmiş olanlar dahil)
+            const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && m.status !== 'NOT_STARTED');
+            
+            activeWeekMatches.forEach(match => {
+                const currentScore = `${match.home_score}-${match.away_score}`;
+                if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
+                
+                const mIndex = match.id % 100;
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                
+                let pts = 0;
+                if (winners.length === 1) pts = 12;
+                else if (winners.length === 2) pts = 6;
+                else if (winners.length === 3) pts = 5;
+                else if (winners.length === 4) pts = 4;
+                else if (winners.length === 5) pts = 3;
+                else if (winners.length === 6) pts = 2;
+                else if (winners.length >= 7) pts = 1;
+
+                winners.forEach(w => {
+                    const playerName = idToNameMap[w.user_id];
+                    if (playerName) {
+                        const targetPlayer = updatedList.find(p => p.name === playerName || p.name.includes(playerName) || playerName.includes(p.name.replace(/ 🏆/g, '')));
+                        if (targetPlayer) {
+                            weeklyStats[targetPlayer.name].pts += pts;
+                            weeklyStats[targetPlayer.name].exacts += 1;
+                        }
+                    }
+                });
+            });
+
+            // Liderlerin skorlarını bulalım
+            let maxPts = 0, maxExacts = 0;
+            Object.values(weeklyStats).forEach(s => {
+                if (s.pts > maxPts) maxPts = s.pts;
+                if (s.exacts > maxExacts) maxExacts = s.exacts;
+            });
+
+            // Lider sayısını bulalım (BERABERLİK KONTROLÜ İÇİN)
+            let ptsLeadersCount = 0, exactsLeadersCount = 0;
+            let ptsLeaderName = "", exactsLeaderName = "";
+
+            Object.entries(weeklyStats).forEach(([name, s]) => {
+                if (maxPts > 0 && s.pts === maxPts) { ptsLeadersCount++; ptsLeaderName = name; }
+                if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
+            });
+
+            // TEK LİDERSE ROZET VE +3 PUAN VERİLİR!
+            if (ptsLeadersCount === 1) {
+                const p = updatedList.find(player => player.name === ptsLeaderName);
+                if (p) { 
+                    p.badges.push('points'); 
+                    p.liveBonus += 3; // Otonom +3 burada yükleniyor!
+                }
+            }
+            if (exactsLeadersCount === 1) {
+                const p = updatedList.find(player => player.name === exactsLeaderName);
+                if (p) { 
+                    p.badges.push('score'); 
+                    p.liveBonus += 3; // Otonom +3 burada yükleniyor!
+                }
+            }
+        }
+
         updatedList = updatedList.map(p => ({
             ...p,
             score: p.score + p.finishedBonus + p.liveBonus
@@ -237,7 +309,6 @@ export default function MasterPuanDurumuPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // YENİ EKLENEN: Fotoğraf İndirme Fonksiyonu
   const resmiBildiriyiIndir = async () => {
     if (!haftaBittiMi || !tabloRef.current) return;
     const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
@@ -256,8 +327,6 @@ export default function MasterPuanDurumuPage() {
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-2">
-        
-        {/* YENİ EKLENEN: Akıllı İndirme Butonu */}
         <div className="flex justify-end mb-4">
           {haftaBittiMi ? (
             <button 
@@ -276,7 +345,6 @@ export default function MasterPuanDurumuPage() {
           )}
         </div>
 
-        {/* YENİ EKLENEN: Fotoğrafı çekilecek alanın tamamı ref içine alındı */}
         <div ref={tabloRef} className="w-full p-2 bg-[#0f172a] rounded-xl">
           <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[13px] md:text-sm py-3 px-4 rounded-xl mb-4 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
             {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
