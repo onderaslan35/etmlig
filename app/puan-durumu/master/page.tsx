@@ -362,8 +362,11 @@ export default function MasterPuanDurumuPage() {
                       
                       <td className="pl-3 sm:pl-4 py-2 sm:py-3 align-middle">
                         <div className="flex flex-col gap-1">
-                          <div className="flex flex-wrap items-center gap-1.5 text-white font-bold">
-                            <span className="text-[12px] sm:text-sm whitespace-nowrap">{idx + 1}. {row.name}</span>
+                          
+                          {/* SIRA NUMARASI VE İSİM AYRILDI (Silik numara, 3 boşlukluk sabit genislik, parlak isim) */}
+                          <div className="flex flex-wrap items-center gap-1.5 font-bold">
+                            <span className="text-slate-400 w-6 sm:w-7 text-[12px] sm:text-sm">{idx + 1}.</span>
+                            <span className="text-white text-[12px] sm:text-sm whitespace-nowrap">{row.name}</span>
                             {row.liveBonus > 0 && (
                               <span className="text-[8px] sm:text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
                                 +{row.liveBonus} CANLI
@@ -372,7 +375,7 @@ export default function MasterPuanDurumuPage() {
                           </div>
                           
                           {(row.badges.includes('points') || row.badges.includes('score')) && (
-                            <div className="flex flex-wrap gap-1 mt-0.5">
+                            <div className="flex flex-wrap gap-1 mt-0.5 ml-7 sm:ml-8">
                               {row.badges.includes('points') && (
                                 <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
                                   +3 PUAN HAFTANIN LİDERİ
@@ -388,7 +391,6 @@ export default function MasterPuanDurumuPage() {
                         </div>
                       </td>
 
-                      {/* PUAN SÜTUNU: ORTALANDI VE İSİMLERE YAKLAŞTIRILDI */}
                       <td className="px-2 py-2 sm:py-3 align-middle font-bold text-[12px] sm:text-sm text-amber-500 text-center">
                         {row.score}
                       </td>
