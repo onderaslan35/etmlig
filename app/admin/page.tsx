@@ -810,8 +810,12 @@ export default function AdminRadarPortal() {
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
 
-      let confirmMsg = "";
-      
+      let confirmMsg = matchId === 24 
+          ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
+          : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?`;
+
+      if (!window.confirm(confirmMsg)) return;
+
       if (matchId === 24) {
             let bonusInserts: any[] = [];
             let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
@@ -849,21 +853,16 @@ export default function AdminRadarPortal() {
                     for (const insert of bonusInserts) {
                         const { data: stData } = await supabase.from('standings').select('*').eq('user_id', insert.username);
                         if (stData) {
-                            const mRow = stData.find(r => r.league_type === 'MASTER');
+                            const mRow = stData.find((r: any) => r.league_type === 'MASTER');
                             if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
                         }
                     }
-                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Tek Tabanca liderlere kalıcı fiş kesildi ve sadece MASTER kasasına işlendi!)`);
+                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Haftanın liderlerine +3 puan MASTER kasasına kalıcı eklendi!)`);
                 }
             } else {
                alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
             }
-        } else {
-           if (currentWinners.length > 0) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
-           else alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
-        }
-
-      if (!window.confirm(confirmMsg)) return;
+      }
 
       try {
         await supabase.from('live_matches').upsert({ 
@@ -885,14 +884,12 @@ export default function AdminRadarPortal() {
           }
 
           const inserts: any[] = [];
-          
           currentWinners.forEach(winnerName => {
             const userId = getPlayerIdByName(winnerName);
             const baseData = {
               hafta: selectedLiveWeek, user_name: winnerName, username: userId, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
               gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
             };
-            
             inserts.push({ ...baseData, kategori: leagueName });
             inserts.push({ ...baseData, kategori: 'MASTER' });
           });
@@ -905,19 +902,21 @@ export default function AdminRadarPortal() {
             if (!userId) continue;
             const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
             if (stData) {
-              const lRow = stData.find(r => r.league_type === leagueName);
+              const lRow = stData.find((r: any) => r.league_type === leagueName);
               if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
               else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
 
-              const mRow = stData.find(r => r.league_type === 'MASTER');
+              const mRow = stData.find((r: any) => r.league_type === 'MASTER');
               if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
               else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
             }
           }
+          if (matchId !== 24) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
+        } else {
+          if (matchId !== 24) alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
         }
 
         setDistributedMatches(prev => ({...prev, [matchId]: true})); 
-
       } catch (error: any) { alert("❌ BEKLENMEYEN HATA: " + error.message); }
       return;
     }

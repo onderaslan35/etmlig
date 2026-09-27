@@ -125,7 +125,7 @@ export default function MasterPuanDurumuPage() {
             activeDate = weeksData[activeWeek]?.date || '';
 
             const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
-            const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
+            const finishedCount = activeWeekMatches.filter(m => m.status === 'MS' || m.status === 'FINISHED').length;
             setHaftaBittiMi(finishedCount === 24);
         }
 
@@ -138,12 +138,28 @@ export default function MasterPuanDurumuPage() {
             playersData.forEach(p => idToNameMap[p.username] = p.name);
         }
 
-        // 🔥 HAYATİ DOKUNUŞ: 13'ten BÜYÜK (14 ve 15 dahil) TÜM HAFTALARIN PUANLARINI GETİR 🔥
-        const { data: pastAndActivePoints } = await supabase
-            .from('points')
-            .select('*')
-            .gt('hafta', 13) 
-            .eq('kategori', 'MASTER');
+        // 🔥 HAYATİ DOKUNUŞ: SUPABASE YAZI HATASINI VE 1000 LİMİTİNİ YIRTAN ZIRH 🔥
+        let pastAndActivePoints: any[] = [];
+        let fetchMorePts = true;
+        let fromPts = 0;
+        const stepPts = 1000;
+
+        while (fetchMorePts) {
+            const { data: ptsChunk, error } = await supabase
+                .from('points')
+                .select('*')
+                .eq('kategori', 'MASTER')
+                .order('id', { ascending: true }) 
+                .range(fromPts, fromPts + stepPts - 1);
+                
+            if (!error && ptsChunk && ptsChunk.length > 0) {
+                pastAndActivePoints = [...pastAndActivePoints, ...ptsChunk];
+                if (ptsChunk.length < stepPts) fetchMorePts = false;
+                else fromPts += stepPts;
+            } else {
+                fetchMorePts = false;
+            }
+        }
 
         let predictions: any[] = [];
         let fetchMore = true;
@@ -175,11 +191,15 @@ export default function MasterPuanDurumuPage() {
             badges: [] as string[]
         }));
 
-        // 🔥 14. ve 15. Hafta Puanlarını Aslanların Hanesine Ekle 🔥
-        if (pastAndActivePoints) {
+        // 🔥 14. ve 15. Hafta Puanlarını Aslanların Hanesine Ekle (JavaScript Zırhı ile) 🔥
+        if (pastAndActivePoints.length > 0) {
             pastAndActivePoints.forEach(pt => {
-                const targetPlayer = updatedList.find(p => p.name.includes(pt.user_name) || pt.user_name.includes(p.name));
-                if (targetPlayer) targetPlayer.finishedBonus += pt.puan;
+                const haftaNum = Number(pt.hafta || 0); // "14" metni gerçek 14 sayısına dönüştü!
+                if (haftaNum > 13) { // Supabase'i ezerek sadece 13'ten büyükleri filtreledik
+                    const userNameStr = String(pt.user_name || "");
+                    const targetPlayer = updatedList.find(p => p.name.includes(userNameStr) || userNameStr.includes(p.name));
+                    if (targetPlayer) targetPlayer.finishedBonus += Number(pt.puan || 0);
+                }
             });
         }
 
@@ -261,18 +281,25 @@ export default function MasterPuanDurumuPage() {
                 if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
             });
 
+            // GÜNCELLEME: Yalnızca canlı/aktif hesaplama aşamasında (puanlar henüz veritabanına kalıcı bonus yazılmamışken) bu rozetleri göster.
+            // 24. maç bittiğinde (haftaBittiMi === true) rozetleri göstermeye devam eder ama +3'ü canlı bonus olarak iki kere eklemez (çünkü DB'de artık var).
+            
+            // Hafta bitmişse (24 maç onaylandıysa), bonuslar "finishedBonus" içinden zaten gelecektir.
+            // O yüzden hafta bittiğinde LiveBonus'a +3 eklemeyi kesiyoruz ki puan ŞİŞMESİN.
+            const isWeekFinishedLocally = activeWeekMatches.filter(m => m.status === 'MS' || m.status === 'FINISHED').length === 24;
+
             if (ptsLeadersCount === 1) {
                 const p = updatedList.find(player => player.name === ptsLeaderName);
                 if (p) { 
                     p.badges.push('points'); 
-                    p.liveBonus += 3; 
+                    if (!isWeekFinishedLocally) p.liveBonus += 3; 
                 }
             }
             if (exactsLeadersCount === 1) {
                 const p = updatedList.find(player => player.name === exactsLeaderName);
                 if (p) { 
                     p.badges.push('score'); 
-                    p.liveBonus += 3; 
+                    if (!isWeekFinishedLocally) p.liveBonus += 3; 
                 }
             }
         }
