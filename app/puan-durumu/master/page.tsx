@@ -19,7 +19,7 @@ const formatTurkishDate = (dateStr: string) => {
   return dateStr;
 };
 
-// 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ 13. HAFTA LİSTESİ 🔥
+// 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ 13. HAFTA LİSTESİ (TEMEL KAYA) 🔥
 const mühürlüListe = [
   { id: '1', name: 'DOĞAÇ ALKAN', score: 112, badges: [] as string[] },
   { id: '2', name: 'YUSUF ERBAY', score: 110, badges: [] },
@@ -138,10 +138,11 @@ export default function MasterPuanDurumuPage() {
             playersData.forEach(p => idToNameMap[p.username] = p.name);
         }
 
-        const { data: finishedPoints } = await supabase
+        // 🔥 HAYATİ DOKUNUŞ: 13'ten BÜYÜK (14 ve 15 dahil) TÜM HAFTALARIN PUANLARINI GETİR 🔥
+        const { data: pastAndActivePoints } = await supabase
             .from('points')
             .select('*')
-            .eq('hafta', activeWeek)
+            .gt('hafta', 13) 
             .eq('kategori', 'MASTER');
 
         let predictions: any[] = [];
@@ -174,9 +175,10 @@ export default function MasterPuanDurumuPage() {
             badges: [] as string[]
         }));
 
-        if (finishedPoints) {
-            finishedPoints.forEach(pt => {
-                const targetPlayer = updatedList.find(p => p.name.includes(pt.user_name));
+        // 🔥 14. ve 15. Hafta Puanlarını Aslanların Hanesine Ekle 🔥
+        if (pastAndActivePoints) {
+            pastAndActivePoints.forEach(pt => {
+                const targetPlayer = updatedList.find(p => p.name.includes(pt.user_name) || pt.user_name.includes(p.name));
                 if (targetPlayer) targetPlayer.finishedBonus += pt.puan;
             });
         }
@@ -363,7 +365,6 @@ export default function MasterPuanDurumuPage() {
                       <td className="pl-3 sm:pl-4 py-2 sm:py-3 align-middle">
                         <div className="flex flex-col gap-1">
                           
-                          {/* SIRA NUMARASI VE İSİM AYRILDI (Silik numara, 3 boşlukluk sabit genislik, parlak isim) */}
                           <div className="flex flex-wrap items-center gap-1.5 font-bold">
                             <span className="text-slate-400 w-6 sm:w-7 text-[12px] sm:text-sm">{idx + 1}.</span>
                             <span className="text-white text-[12px] sm:text-sm whitespace-nowrap">{row.name}</span>
