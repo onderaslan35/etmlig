@@ -585,7 +585,7 @@ export const getEliteTheme = (category: string, homeTeam: string, awayTeam: stri
   else if (upCat.includes("HOLLANDA") || upCat.includes("EREDIVISIE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/57.png";
   else if (upCat.includes("BELÇİKA") || upCat.includes("PRO LEAGUE")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/40.png";
   else if (upCat.includes("İSKOÇYA") || upCat.includes("PREMIERSHIP")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/46.png";
-  else if (upCat.includes("ULUSLAR LİGİ") || upCat.includes("MİLLİ")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/9826.png"; 
+  else if (upCat.includes("UEFA ULUSLAR LİGİ") || upCat.includes("MİLLİ")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/9826.png"; 
 
   let theme = { bgImg: null as string | null, containerBorder: "border-slate-500", containerShadow: "shadow-none", containerBg: "bg-slate-900", badgeBg: "", badgeText: "text-slate-300", badgeBorder: "", catText: "text-slate-400", scoreBorder: "border-slate-700", colonText: "text-slate-500", tagText: "text-slate-400", tagBg: "bg-slate-800", tagBorder: "border-slate-600", bottomBar: "bg-slate-900", homeLogo: homeLogoUrl, awayLogo: awayLogoUrl, leagueLogo: leagueLogoUrl };
 
