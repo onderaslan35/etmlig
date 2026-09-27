@@ -20,6 +20,18 @@ import {
 
 const timeOptionsArr = generateTimeOptions();
 
+// 🔥 ÖZEL İZOLASYON: İSRAİL HARİÇ UEFA ULUSLAR LİGİ MİLLİ TAKIM HAVUZU 🔥
+const UEFA_ULUSLAR_LIGI_HAVUZU = [
+  "ALMANYA", "ANDORRA", "ARNAVUTLUK", "AVUSTURYA", "AZERBAYCAN", "BELARUS", "BELÇİKA", 
+  "BOSNA-HERSEK", "BULGARİSTAN", "CEBELİTARIK", "ÇEKYA", "DANİMARKA", "ERMENİSTAN", 
+  "ESTONYA", "FAROE ADALARI", "FİNLANDİYA", "FRANSA", "GALLER", "GÜRCİSTAN", 
+  "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA", "İSKOÇYA", "İSPANYA", "İSVEÇ", 
+  "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS RUM KESİMİ", 
+  "KOSOVA", "KUZEY İRLANDA", "KUZEY MAKEDONYA", "LETONYA", "LİHTENŞTAYN", "LİTVANYA", 
+  "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA", "PORTEKİZ", 
+  "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
+].sort((a, b) => a.localeCompare(b, 'tr'));
+
 export default function AdminRadarPortal() {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -83,9 +95,10 @@ export default function AdminRadarPortal() {
 
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
-  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(6); 
-  const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([6]);
-  const [systemActiveWeek, setSystemActiveWeek] = useState<number>(6);
+  // BAŞLANGIÇTA 0 OLARAK AYARLANDI Kİ FETCH İLE DOLDURULSUN
+  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(0); 
+  const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([]);
+  const [systemActiveWeek, setSystemActiveWeek] = useState<number>(0);
 
   useEffect(() => {
   setAdminScores({});
@@ -100,11 +113,11 @@ export default function AdminRadarPortal() {
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
 
-  const [bulletinWeek, setBulletinWeek] = useState<number>(6); 
+  const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(6);
+  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(0);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
@@ -147,7 +160,8 @@ export default function AdminRadarPortal() {
 
   const getDynamicCategories = () => {
     const base = Object.keys(dynamicLigHavuzu);
-    return Array.from(new Set([...base, ...defaultCategoriesList])).sort((a,b) => a.localeCompare(b, 'tr'));
+    // YENİ EKLENEN UEFA KATEGORİSİNİ LİSTEYE DAHİL ET
+    return Array.from(new Set([...base, ...defaultCategoriesList, "UEFA ULUSLAR LİGİ"])).sort((a,b) => a.localeCompare(b, 'tr'));
   };
 
   const getAllTeamsFlatList = () => {
@@ -187,6 +201,7 @@ export default function AdminRadarPortal() {
     }
   };
 
+  // 🔥 GÜVENLİ KOD: Eski haftalar SİLİNMEYECEK, sadece en yüksek hafta seçili gelecek 🔥
   useEffect(() => {
     if (isAuthenticated) {
         fetchAllSystemPlayers();
@@ -211,7 +226,10 @@ export default function AdminRadarPortal() {
                 setSystemActiveWeek(targetWeek);
 
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
-                setSelectedLiveWeek(targetWeek);
+                
+                if (selectedLiveWeek === 0) setSelectedLiveWeek(targetWeek);
+                if (bulletinWeek === 0) setBulletinWeek(targetWeek);
+                if (selectedPredictionWeek === 0) setSelectedPredictionWeek(targetWeek);
             }
         };
         fetchAvailableWeeks();
@@ -281,7 +299,7 @@ export default function AdminRadarPortal() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || selectedLiveWeek === 0) return;
 
     const fetchLiveAdminData = async () => {
       if (userRole && userRole.startsWith('skorcum')) {
@@ -392,7 +410,7 @@ export default function AdminRadarPortal() {
   }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
   useEffect(() => {
-    if (!isAuthenticated || userRole !== 'master') return;
+    if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
     const loadBulletinData = async () => {
       const newDates = generateWeekDates(bulletinWeek);
       setCurrentWeekDates(newDates);
@@ -421,7 +439,7 @@ export default function AdminRadarPortal() {
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
   useEffect(() => {
-    if (!isAuthenticated || userRole !== 'master') return;
+    if (!isAuthenticated || userRole !== 'master' || selectedPredictionWeek === 0) return;
     if (activeTab !== 'predictions') return;
 
     const fetchPredictionData = async () => {
@@ -737,7 +755,6 @@ export default function AdminRadarPortal() {
         }, { onConflict: 'id' });
 
         if (currentWinners.length > 0) {
-          // 🔥 KOMUTANIN ZIRHI: BU MAÇA DAHA ÖNCE PUAN VERİLDİ Mİ KONTROLÜ 🔥
           const { data: existingPointsCheck } = await supabase
             .from('points')
             .select('id')
@@ -839,6 +856,7 @@ export default function AdminRadarPortal() {
     }
   };
 
+  // 🔥 DEMİR DİSİPLİN KODU: İZOLASYON VE AZALAN HAVUZ 🔥
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
     const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
@@ -846,26 +864,33 @@ export default function AdminRadarPortal() {
 
     if (!currentCat) return [];
 
-    let havuz = dynamicLigHavuzu[currentCat];
+    let havuz: string[] = [];
 
-    if (!havuz || currentCat.includes("UEFA") || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
-       havuz = Object.values(dynamicLigHavuzu).flat();
+    // Kategori "UEFA ULUSLAR LİGİ" seçildiyse DİĞER TÜM TAKIMLARI YASAKLA! Sadece 53 Milli Takım...
+    if (currentCat === "UEFA ULUSLAR LİGİ") {
+       havuz = [...UEFA_ULUSLAR_LIGI_HAVUZU];
+    } else {
+       // Değilse normal lig havuzunu kullan
+       havuz = dynamicLigHavuzu[currentCat] || [];
+       if (!havuz || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
+          havuz = Object.values(dynamicLigHavuzu).flat();
+       }
     }
 
     const fullHavuz = Array.from(new Set([...havuz]));
     const usedTeams = new Set<string>();
 
+    // Bültende şu ana kadar SEÇİLMİŞ olan takımları topla (Aynı kategorideki)
     bulletinMatches.forEach((m, idx) => {
        if (idx === currentIndex) return; 
-
        const mCat = m.category ? m.category.toUpperCase() : '';
-
        if (currentCat === mCat) {
-           if (m.home_team) usedTeams.add(m.home_team);
-           if (m.away_team) usedTeams.add(m.away_team);
+           if (m.home_team) usedTeams.add(m.home_team.toUpperCase());
+           if (m.away_team) usedTeams.add(m.away_team.toUpperCase());
        }
     });
 
+    // Hem rakibi çıkart (kendisiyle oynayamaz) hem de diğer maçlarda kullanılmış (usedTeams) takımları çıkart = Azalan Havuz
     return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
   };
 
@@ -886,7 +911,6 @@ export default function AdminRadarPortal() {
     setBulletinMatches(updated);
   };
 
-  // 🔥 GÜNCELLENMİŞ OTOMATİK API HAVUZ GETİRİCİ (DOĞRU ŞİFRE İLE) 🔥
   const fetchApiMatchesForDate = async (dateStr: string) => {
       setIsApiLoading(true);
       try {
@@ -901,7 +925,6 @@ export default function AdminRadarPortal() {
               return;
           }
 
-          // 🔴 SENİN ASIL ÇALIŞAN ŞİFREN BURAYA EKLENDİ 🔴
           const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
               headers: {
                   'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
@@ -1396,7 +1419,7 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI (YENİ AKILLI RADARLI HALİ) 🚀 */}
+        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
@@ -1469,7 +1492,6 @@ export default function AdminRadarPortal() {
                                     </select>
                                  </td>
 
-                                 {/* 🔥 YENİ: AÇILIR LİSTE VE FİZİKSEL RADAR BUTONU 🔥 */}
                                  <td className="p-2 w-[15%]">
                                     <div className="flex items-center gap-1 w-full">
                                        <select
@@ -1800,11 +1822,9 @@ export default function AdminRadarPortal() {
             <datalist id="leagueOptions">
                {Object.keys(dynamicLigHavuzu).sort((a,b) => a.localeCompare(b, 'tr')).map(lg => <option key={`dl-${lg}`} value={lg} />)}
             </datalist>
-// ZIRH TESTI UYANDIRMASASAsdfsf
+
           </div>
         )}
-
-// vercel uyan
 
       </div>
     </div>
