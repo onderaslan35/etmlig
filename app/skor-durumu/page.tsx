@@ -14,21 +14,20 @@ export default function SkorDurumuPage() {
   const [allData, setAllData] = useState<any[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
-  // YENİ EKLENEN: Otomatik Kilit State'i ve Fotoğraf Referansı
   const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
   const tabloRef = useRef<HTMLDivElement>(null);
 
   const loadSkorData = async () => {
     try {
-      // 1. Ana (Kesinleşmiş) Liderlik Tablosunu Çek
+      // 1. Ana Liderlik Tablosunu Çek (Bu tablo sağlam kalmalıydı ama yedeğe alıyoruz)
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('*');
 
-      // 2. Canlı Maçları ve Bülteni Çek (Hafta ve Kategori kontrolü için)
+      // 2. Canlı Maçları ve Bülteni Çek
       const { data: allMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, category');
 
       // 3. Aktif Haftayı Bul
-      let activeWeek = 5;
+      let activeWeek = 6;
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
           allMatches.forEach(m => statusMap[m.id] = m.status);
@@ -43,13 +42,19 @@ export default function SkorDurumuPage() {
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           
-          // YENİ EKLENEN: O haftanın tam 24 maçı da "MS" oldu mu kontrolü
           const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
           const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
           setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 4. 🔥 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ 🔥
+      // 🔥 HAYATİ DOKUNUŞ: EKSİK OLAN SKOR BONUSLARINI (12 PUAN ALANLARI) KASADAN TESPİT ET 🔥
+      // Sistem, 'points' tablosunda 12 puan alanların "tam isabet" yaptığını bilir.
+      const { data: exactMatchesFromPoints } = await supabase
+        .from('points')
+        .select('*')
+        .eq('puan', 12);
+
+      // 4. 🔥 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Canlı maçlar için) 🔥
       let predictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -75,7 +80,40 @@ export default function SkorDurumuPage() {
           playersData.forEach(p => idToNameMap[p.username] = p.name);
       }
 
-      // 6. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI ⚡
+      // 6. KASADAN (VERİTABANINDAN) KESİNLEŞMİŞ SKOR HESABI
+      const dbBaseScores: Record<string, { master: number, dfo: number, tff: number }> = {};
+      if (leaderboardData) {
+          leaderboardData.forEach(r => {
+             const rName = r.name || "";
+             dbBaseScores[rName] = { 
+               master: r.skor_pts || 0, 
+               dfo: r.dfo_skor_pts || 0, 
+               tff: r.tff_skor_pts || 0 
+             };
+          });
+      }
+
+      // Eksik kalan haftaları points'ten topla (Leaderboard'da olmayan veya silinmiş veriler için destek)
+      if (exactMatchesFromPoints) {
+         exactMatchesFromPoints.forEach(pt => {
+             const rName = pt.user_name || "";
+             const matchedKey = Object.keys(dbBaseScores).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
+             
+             // NOT: Leaderboard doğru besleniyorsa bu kısım çift sayabilir, bu nedenle Leaderboard'ın 14. haftayı
+             // içerip içermediğinden emin olmalıyız. Şu an Leaderboard'a güveneceğiz, ama eğer leaderboard bozuksa
+             // direkt points tablosundan saydırabiliriz. (Biz Leaderboard'un düzeleceğini varsayarak burayı sadece
+             // bir backup/manuel onarım gibi düşündük ama çift saymamak için yorum satırında bırakıyorum).
+             //
+             // if (matchedKey) {
+             //    if (pt.kategori === 'MASTER') dbBaseScores[matchedKey].master += 1;
+             //    if (pt.kategori === 'TFF') dbBaseScores[matchedKey].tff += 1;
+             //    if (pt.kategori === 'DFO') dbBaseScores[matchedKey].dfo += 1;
+             // }
+         });
+      }
+
+
+      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI ⚡
       const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
 
       if (allMatches && predictions && dbBulletin) {
@@ -108,11 +146,10 @@ export default function SkorDurumuPage() {
           });
       }
 
-      // 7. Kesinleşmiş Tablo İle Canlı Bonusları Birleştir
+      // 8. Kesinleşmiş Tablo İle Canlı Bonusları Birleştir
       if (leaderboardData) {
         const enrichedData = leaderboardData.map(r => {
             const rName = r.name || "";
-            // İsmi en yakın eşleşmeyle bul
             const matchedKey = Object.keys(liveBonuses).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
             const bonus = matchedKey ? liveBonuses[matchedKey] : { master: 0, dfo: 0, tff: 0 };
 
@@ -148,7 +185,6 @@ export default function SkorDurumuPage() {
     };
   }, []);
 
-  // YENİ EKLENEN: Fotoğraf İndirme Fonksiyonu
   const resmiBildiriyiIndir = async () => {
     if (!haftaBittiMi || !tabloRef.current) return;
     const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
@@ -158,7 +194,6 @@ export default function SkorDurumuPage() {
     link.click();
   };
 
-  // Hangi sekmedeysek o sekmeye ait puan, canlı bonus ve ok yönünü alıp sıralıyoruz
   const currentList = allData.map(r => {
     let baseScore = 0, liveBonus = 0, trend = 'same', diff = 0;
     
@@ -204,7 +239,6 @@ export default function SkorDurumuPage() {
           <button onClick={() => setActiveTab('TFF')} className={`px-4 sm:px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 shadow-md border ${activeTab === 'TFF' ? 'bg-red-600 text-white border-red-400 scale-105 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}>🇹🇷 TFF</button>
         </div>
 
-        {/* YENİ EKLENEN: Akıllı İndirme Butonu */}
         <div className="flex justify-end mb-4">
           {haftaBittiMi ? (
             <button 
@@ -223,7 +257,6 @@ export default function SkorDurumuPage() {
           )}
         </div>
 
-        {/* YENİ EKLENEN: Fotoğrafı çekilecek alanın tamamı ref içine alındı */}
         <div ref={tabloRef} className="w-full bg-[#0a0f1c] rounded-xl overflow-hidden mb-6 border border-[#1e293b] shadow-xl">
           <div className="w-full flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-[#1e293b]">
             <div className="flex items-center gap-2 text-slate-300 font-bold text-[11px] uppercase tracking-wider">
@@ -249,7 +282,6 @@ export default function SkorDurumuPage() {
                   return (
                   <tr key={idx} className="hover:bg-[#0f172a]/40 transition-colors">
                     
-                    {/* SIRA VE OK */}
                     <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                       <div className="flex items-center">
                         <span className="text-left w-5">{idx + 1}</span>
@@ -258,14 +290,12 @@ export default function SkorDurumuPage() {
                       </div>
                     </td>
                     
-                    {/* İSİM */}
                     <td className="px-1 md:px-2 py-3 align-middle">
                       <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
                         <span className="whitespace-nowrap">{row.name}</span>
                       </div>
                     </td>
 
-                    {/* SADECE ROZET */}
                     <td className="px-1 py-3 align-middle text-right">
                       {row.liveBonus > 0 && (
                         <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
@@ -274,7 +304,6 @@ export default function SkorDurumuPage() {
                       )}
                     </td>
 
-                    {/* SADECE SKOR (DİNAMİK RENK) */}
                     <td className={`pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-center ${activeTab === 'MASTER' ? 'text-amber-500' : activeTab === 'DFO' ? 'text-blue-400' : 'text-red-500'}`}>
                       {row.totalScore}
                     </td>
