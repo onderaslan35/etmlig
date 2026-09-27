@@ -138,13 +138,11 @@ export default function MasterPuanDurumuPage() {
             playersData.forEach(p => idToNameMap[p.username] = p.name);
         }
 
-        // 🔥 HAYATİ DOKUNUŞ: SUPABASE YAZI HATASINI VE 1000 LİMİTİNİ YIRTAN ZIRH 🔥
         let pastAndActivePoints: any[] = [];
         let fetchMorePts = true;
         let fromPts = 0;
         const stepPts = 1000;
 
-        // Bütün MASTER fişlerini limiti yırtarak çekiyoruz!
         while (fetchMorePts) {
             const { data: ptsChunk, error } = await supabase
                 .from('points')
@@ -184,7 +182,6 @@ export default function MasterPuanDurumuPage() {
             }
         }
 
-        // 🔥 KİLİT KONTROLÜ: O haftanın Bonus puanları "Puan Dağıt" tuşuyla veritabanına işlenmiş mi?
         const isBonusDistributedInDB = pastAndActivePoints.some(pt => Number(pt.hafta) === activeWeek && (pt.ev_sahibi === 'HAFTANIN' || pt.ev_sahibi === 'SKOR'));
 
         let updatedList = mühürlüListe.map(row => ({
@@ -194,10 +191,9 @@ export default function MasterPuanDurumuPage() {
             badges: [] as string[]
         }));
 
-        // 🔥 14. ve 15. Hafta Puanlarını Aslanların Hanesine Ekle (JavaScript ile filtreleyerek) 🔥
         if (pastAndActivePoints.length > 0) {
             pastAndActivePoints.forEach(pt => {
-                const haftaNum = Number(pt.hafta || 0); // "14" metni gerçek sayı oldu!
+                const haftaNum = Number(pt.hafta || 0);
                 if (haftaNum > 13) { 
                     const userNameStr = String(pt.user_name || "");
                     const targetPlayer = updatedList.find(p => p.name.includes(userNameStr) || userNameStr.includes(p.name));
@@ -283,10 +279,6 @@ export default function MasterPuanDurumuPage() {
                 if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
             });
 
-            // GÜNCELLEME: Puan geri çekme sorununu kökünden bitiren mantık!
-            // Eğer sen henüz "Puan Dağıt" tuşuna basmadıysan, +3 bonusu canlı olarak anlık ekler.
-            // "Puan Dağıt" dediğin an bu bonus CANLI'dan silinir, KALICI (finishedBonus) kasasına geçer.
-            // Toplam puan ASLA eksilmez!
             if (ptsLeadersCount === 1) {
                 const p = updatedList.find(player => player.name === ptsLeaderName);
                 if (p) { 
@@ -327,24 +319,8 @@ export default function MasterPuanDurumuPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const resmiBildiriyiIndir = async () => {
-    if (!haftaBittiMi || !tabloRef.current) return;
-    const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
-    const image = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.download = "Master_Ligi_Resmi_Bildiri.png";
-    link.click();
-  };
-
   return (
     <div className="w-full px-1 sm:px-4 py-4 text-slate-100 flex flex-col items-center">
-      <div className="w-full bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
-        <span className="text-emerald-500 text-xl animate-pulse">⚡</span>
-        <p className="text-emerald-200 text-[11px] sm:text-xs font-semibold leading-tight">
-          <strong className="text-emerald-400">KARARGAH ZIRHI AKTİF:</strong> Puan düşme sorunu giderildi! "Puan Dağıt" onayından sonra Bonuslar silinmez, kalıcı kasaya şak diye oturur.
-        </p>
-      </div>
-
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">
           ELİT TAHMİN MASTER LİGİ
@@ -352,24 +328,6 @@ export default function MasterPuanDurumuPage() {
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-2">
-        <div className="flex justify-end mb-4 pr-1">
-          {haftaBittiMi ? (
-            <button 
-              onClick={resmiBildiriyiIndir} 
-              className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-3 sm:px-4 rounded-lg flex items-center gap-2 text-xs sm:text-sm transition-all shadow-lg"
-            >
-              📸 İndir
-            </button>
-          ) : (
-            <button 
-              disabled 
-              className="bg-[#1e293b] text-slate-500 font-bold py-2 px-3 sm:px-4 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-700 text-[10px] sm:text-sm shadow-md"
-            >
-              🔒 24. Maç Bekleniyor
-            </button>
-          )}
-        </div>
-
         <div ref={tabloRef} className="w-full p-1 sm:p-2 bg-[#0f172a] rounded-xl">
           <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[11px] md:text-sm py-2 sm:py-3 px-2 sm:px-4 rounded-xl mb-4 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
             {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
