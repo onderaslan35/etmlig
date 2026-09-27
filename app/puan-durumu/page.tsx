@@ -22,6 +22,17 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU", "262735": "AYGÜN AKKEÇELİ", "262741": "SABAHATTİN ÇAYLAK"
 };
 
+// 🔥 İLK 5 HAFTANIN "KIRILMAZ BETON" PUANLARI (ESKİ ARŞİV KASASI) 🔥
+const tffIlk4Hafta: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
+
+const tffHafta5Kasa: Record<string, number> = {
+  "262782": 16, "262749": 14, "262758": 14, "262732": 14, "262726": 12, "262744": 9, "262730": 9, "262736": 7, "262717": 7, 
+  "262790": 5, "262735": 4, "262721": 4, "262725": 3, "351925": 3, "262716": 2, "262747": 2, "262715": 2, "262719": 2, 
+  "262771": 2, "262707": 2, "262714": 2, "262731": 2, "262738": 2, "262741": 2, "262763": 1, "262772": 1, "262703": 1, 
+  "262756": 1, "262706": 1, "262750": 1, "262753": 1, "262702": 1, "262754": 1, "262708": 1, "262718": 1, "262770": 1, 
+  "262816": 1, "262774": 1, "262723": 1, "262813": 1
+};
+
 const isTffMatchCheck = (category: string) => {
   const uppercaseCat = category ? category.toUpperCase() : '';
   return uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG");
@@ -29,7 +40,7 @@ const isTffMatchCheck = (category: string) => {
 
 export default function TffPuanDurumuPage() {
   const [tableRows, setTableRows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'arsiv'|'guncel'|'total'>('total');
+  const [activeTab, setActiveTab] = useState<'ilk4'|'w5'|'w6'|'total'>('total');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string>('NOT_STARTED');
 
@@ -59,10 +70,7 @@ export default function TffPuanDurumuPage() {
         setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 🔥 1. SÜPER GÜÇ: İLK 5 HAFTANIN ARŞİV PUANLARINI ÇEK (tff_arsiv_kasa tablosu) 🔥
-      const { data: archivePoints } = await supabase.from('tff_arsiv_kasa').select('*');
-
-      // 🔥 2. SÜPER GÜÇ: 6. HAFTA VE SONRASINI 'points' KASASINDAN ÇEK (1000 LİMİTİNİ YIRTARAK) 🔥
+      // 🔥 6. HAFTA VE SONRASINI 'points' KASASINDAN ÇEK (1000 LİMİTİNİ YIRTARAK) 🔥
       let finalizedPoints: any[] = [];
       let fetchMorePts = true;
       let fromPts = 0;
@@ -112,29 +120,16 @@ export default function TffPuanDurumuPage() {
          });
       }
 
-      let archiveBase: Record<string, number> = {}; 
       let currentBase: Record<string, number> = {}; 
       let liveExtra: Record<string, number> = {}; 
       let isAnyMatchLive = false;
 
       Object.keys(allPlayersList).forEach(code => { 
-          archiveBase[code] = 0; 
           currentBase[code] = 0;
           liveExtra[code] = 0; 
       });
 
-      // 1. ARŞİV KASASINDAKİ (40 Kayıt) PUANLARI HANEYE YAZ
-      if (archivePoints) {
-          archivePoints.forEach(pt => {
-              const code = String(pt.username || pt.user_id).trim();
-              const puan = Number(pt.puan || pt.total_puan || pt.toplam_puan || pt.points || pt.TFF_PUAN || 0);
-              if (code && archiveBase[code] !== undefined) {
-                  archiveBase[code] += puan;
-              }
-          });
-      }
-
-      // 2. GÜNCEL KASADAKİ PUANLARI HANEYE YAZ
+      // 1. KASADAKİ KESİNLEŞMİŞ PUANLARI HANEYE YAZ (TÜM VERİYİ OKUR)
       if (finalizedPoints.length > 0) {
           finalizedPoints.forEach(pt => {
               const code = String(pt.username).trim();
@@ -144,7 +139,7 @@ export default function TffPuanDurumuPage() {
           });
       }
 
-      // 3. O GÜNKÜ CANLI MAÇLARIN EKRAN BONUSU (LiveExtra)
+      // 2. O GÜNKÜ CANLI MAÇLARIN EKRAN BONUSU (LiveExtra)
       const predDict: Record<string, Record<number, string>> = {};
       if (activePredictions && activePredictions.length > 0) {
         activePredictions.forEach(pred => {
@@ -186,18 +181,20 @@ export default function TffPuanDurumuPage() {
 
       // 🔴 NİHAİ BİRLEŞTİRME 🔴
       const baseList = Object.keys(allPlayersList).map(code => {
-        const arsiv = archiveBase[code] || 0; 
+        const ilk4 = tffIlk4Hafta[code] || 0; 
+        const w5 = tffHafta5Kasa[code] || 0; 
         const guncel = currentBase[code] || 0; 
         const live = liveExtra[code] || 0; 
         
-        const guncelTotal = guncel + live; 
-        const total = arsiv + guncel + live; 
+        const w6PlusTotal = guncel + live; 
+        const total = ilk4 + w5 + guncel + live; 
 
         return { 
           id: code, 
           name: allPlayersList[code], 
-          arsiv, 
-          guncel: guncelTotal, 
+          ilk4, 
+          w5, 
+          w6: w6PlusTotal, 
           total, 
           liveExtra: live 
         };
@@ -262,6 +259,13 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
+      <div className="w-full bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <span className="text-emerald-500 text-xl animate-pulse">⚡</span>
+        <p className="text-emerald-200 text-[11px] sm:text-xs font-semibold leading-tight">
+          <strong className="text-emerald-400">KARARGAH ZIRHI AKTİF:</strong> İlk 5 haftanın puanları SQL olmadan %100 kodun içinden çekilmektedir.
+        </p>
+      </div>
+
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
@@ -293,16 +297,19 @@ export default function TffPuanDurumuPage() {
         </button>
         <div className="w-full relative">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-full py-2.5 px-4 rounded-xl font-extrabold border transition-all flex items-center justify-between ${activeTab !== 'total' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-800'}`}>
-            <span>📅 {activeTab === 'total' ? 'TFF TOPLAM PUAN DURUMU' : activeTab === 'arsiv' ? 'TFF İLK 5 HAFTA (ARŞİV)' : `TFF GÜNCEL (6. HAFTA VE SONRASI)`}</span>
+            <span>📅 {activeTab === 'total' ? 'TFF TOPLAM PUAN DURUMU' : activeTab === 'ilk4' ? 'TFF İLK 4 HAFTA' : activeTab === 'w5' ? 'TFF 5. HAFTA' : `TFF GÜNCEL (6. HAFTA VE SONRASI)`}</span>
             <span>{isMenuOpen ? '▲' : '▼'}</span>
           </button>
           {isMenuOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900 p-3 rounded-2xl shadow-2xl flex flex-wrap justify-center gap-2">
-               <button onClick={() => { setActiveTab('arsiv'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'arsiv' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-955 text-slate-300 border-slate-800'}`}>
-                  İLK 5 HAFTA (ARŞİV)
+               <button onClick={() => { setActiveTab('ilk4'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'ilk4' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-955 text-slate-300 border-slate-800'}`}>
+                  İLK 4 HAFTA
                </button>
-               <button onClick={() => { setActiveTab('guncel'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'guncel' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
-                  GÜNCEL HAFTALAR (CANLI)
+               <button onClick={() => { setActiveTab('w5'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w5' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
+                  5. HAFTA
+               </button>
+               <button onClick={() => { setActiveTab('w6'); setIsMenuOpen(false); }} className={`py-1.5 px-4 text-xs font-bold rounded-lg border transition-all text-center ${activeTab === 'w6' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'}`}>
+                  GÜNCEL HAFTALAR
                </button>
             </div>
           )}
@@ -342,14 +349,14 @@ export default function TffPuanDurumuPage() {
                           })()}
                       </div>
                       
-                      {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'guncel') && (
+                      {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') && (
                         <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse whitespace-nowrap">
                           +{row.liveExtra} CANLI
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'guncel') ? "text-emerald-400" : "text-amber-400"}`}>
+                  <td className={`px-6 py-3.5 text-right font-bold text-base ${row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') ? "text-emerald-400" : "text-amber-400"}`}>
                     {row.displayScore}
                   </td>
                 </tr>
