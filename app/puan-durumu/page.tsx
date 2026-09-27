@@ -4,7 +4,7 @@ import LiveMatchCard from '@/components/LiveMatchCard';
 import { supabase } from '@/utils/supabase';
 import html2canvas from 'html2canvas';
 
-// 🔴 54 KİŞİLİK SABİT SÖZLÜK (Misafir Askerler Dahil)
+// 🔴 54 KİŞİLİK SABİT SÖZLÜK
 const allPlayersList: Record<string, string> = {
   "262756": "EYÜP KARACAOĞLU", "262755": "DOĞAÇ ALKAN", "262816": "SEDAT SEDAT", "262736": "MEHMET ALİ KARA",
   "262786": "SEDAT DİŞLİ", "262733": "MUHSİN ASİLKAN", "262728": "ÖNDER ASLAN", "262726": "HUDAVER TOPARDIC",
@@ -22,10 +22,8 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU", "262735": "AYGÜN AKKEÇELİ", "262741": "SABAHATTİN ÇAYLAK"
 };
 
-// 🔴 1. STRATEJİ: İLK 4 HAFTANIN SABİT KODLARI (ESKİ SİSTEM) 🔴
 const tffIlk4Hafta: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
 
-// 🔴 2. STRATEJİ: 5. HAFTA KARARGAH KASASI (KOD İÇİNE BETONLANDI) 🔴
 const tffHafta5Kasa: Record<string, number> = {
   "262782": 16, "262749": 14, "262758": 14, "262732": 14, "262726": 12, "262744": 9, "262730": 9, "262736": 7, "262717": 7, 
   "262790": 5, "262735": 4, "262721": 4, "262725": 3, "351925": 3, "262716": 2, "262747": 2, "262715": 2, "262719": 2, 
@@ -51,7 +49,7 @@ export default function TffPuanDurumuPage() {
   const loadLeaderboard = async () => {
     try {
       const { data: dbMatches } = await supabase.from('live_matches').select('*');
-      const { data: allBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date');
+      const { data: allBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
 
       let activeWeek = 6;
       if (allBulletin && dbMatches) {
@@ -71,14 +69,14 @@ export default function TffPuanDurumuPage() {
         setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 🔥 HAYATİ DOKUNUŞ: TFF Puanlarını Arşivden Değil, Kalıcı 'points' Kancasından Çek 🔥
+      // 🔥 HAYATİ DOKUNUŞ: TFF PUANLARI ARŞİVDEN DEĞİL, DOĞRUDAN 'points' KASASINDAN ÇEKİLİYOR 🔥
       const { data: finalizedPoints } = await supabase
           .from('points')
           .select('*')
           .gte('hafta', 6)
           .eq('kategori', 'TFF');
 
-      // Aktif hafta canlı skorları için tahminleri çek (Sadece aktif hafta)
+      // SADECE aktif hafta için canlı tahminleri çek
       let activePredictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -98,11 +96,9 @@ export default function TffPuanDurumuPage() {
         } else { fetchMore = false; }
       }
 
-      // Aktif haftanın TFF maçlarını belirle
       const activeTffIds = new Set<number>();
-      const { data: activeBulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek);
-      if (activeBulletin) {
-         activeBulletin.forEach(m => {
+      if (allBulletin) {
+         allBulletin.filter(b => b.week_num === activeWeek).forEach(m => {
             if (isTffMatchCheck(m.category)) activeTffIds.add((activeWeek * 100) + m.match_index);
          });
       }
@@ -113,7 +109,7 @@ export default function TffPuanDurumuPage() {
 
       Object.keys(allPlayersList).forEach(code => { dynamicBase[code] = 0; liveExtra[code] = 0; });
 
-      // 1. KESİNLEŞMİŞ PUANLARI EKLE
+      // 1. KASADAKİ KESİNLEŞMİŞ PUANLARI HANEYE YAZ (Arşive gerek yok)
       if (finalizedPoints) {
           finalizedPoints.forEach(pt => {
               const code = pt.username;
@@ -123,7 +119,7 @@ export default function TffPuanDurumuPage() {
           });
       }
 
-      // 2. SADECE CANLI MAÇLARIN PUANINI HESAPLA (LiveExtra)
+      // 2. SADECE O GÜNKÜ CANLI MAÇLARIN EKRAN BONUSU (LiveExtra)
       const predDict: Record<string, Record<number, string>> = {};
       if (activePredictions && activePredictions.length > 0) {
         activePredictions.forEach(pred => {
@@ -136,9 +132,9 @@ export default function TffPuanDurumuPage() {
 
       if (dbMatches) {
         dbMatches.forEach(dbMatch => {
-          if (Math.floor(dbMatch.id / 100) !== activeWeek) return; // Sadece aktif hafta
-          if (!activeTffIds.has(dbMatch.id)) return; // Sadece TFF maçları
-          if (dbMatch.status === 'FINISHED' || dbMatch.status === 'MS' || dbMatch.status === 'NOT_STARTED') return; // Canlı değilse atla
+          if (Math.floor(dbMatch.id / 100) !== activeWeek) return; 
+          if (!activeTffIds.has(dbMatch.id)) return; 
+          if (dbMatch.status === 'FINISHED' || dbMatch.status === 'MS' || dbMatch.status === 'NOT_STARTED') return; 
           if (dbMatch.home_score === '-' || dbMatch.away_score === '-') return;
 
           const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.trim().replace(/\s+/g, '');
@@ -243,13 +239,6 @@ export default function TffPuanDurumuPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center">
-      <div className="w-full bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
-        <span className="text-emerald-500 text-xl animate-pulse">⚡</span>
-        <p className="text-emerald-200 text-[11px] sm:text-xs font-semibold leading-tight">
-          <strong className="text-emerald-400">KARARGAH ZIRHI AKTİF:</strong> İlk 5 haftanın puanları SQL olmadan %100 kodun içinden çekilmektedir.
-        </p>
-      </div>
-
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-amber-400 uppercase drop-shadow-md">TFF PUAN DURUMU</h1>
       </div>
