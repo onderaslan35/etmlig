@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/canli-skor",
-      "schedule": "* * * * *"
+      "path": "/api/oto-dagit",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
