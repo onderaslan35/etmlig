@@ -22,7 +22,7 @@ const allPlayersList: Record<string, string> = {
   "262723": "AYHAN LUŞOĞLU", "262735": "AYGÜN AKKEÇELİ", "262741": "SABAHATTİN ÇAYLAK"
 };
 
-// 🔥 İLK 5 HAFTANIN "KIRILMAZ BETON" PUANLARI (ESKİ ARŞİV KASASI) 🔥
+// 🔥 İLK 5 HAFTANIN "KIRILMAZ BETON" PUANLARI 🔥
 const tffIlk4Hafta: Record<string, number> = { "262707": 10, "262816": 9, "262733": 7, "262754": 6, "262728": 6, "262706": 6, "262771": 5, "262734": 5, "262705": 4, "262714": 4, "262763": 4, "262756": 4, "262774": 4, "262740": 4, "262702": 3, "262782": 3, "262813": 3, "262723": 2, "262749": 2, "262721": 1, "351925": 1, "262730": 1, "262772": 1, "262739": 1, "262770": 1, "262736": 6, "262755": 6 };
 
 const tffHafta5Kasa: Record<string, number> = {
@@ -70,18 +70,19 @@ export default function TffPuanDurumuPage() {
         setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 🔥 6. HAFTA VE SONRASINI 'points' KASASINDAN ÇEK (1000 LİMİTİNİ YIRTARAK) 🔥
+      // 🔥 HAYAT KURTARAN DOKUNUŞ: SUPABASE YAZI HATASINI VE 1000 LİMİTİNİ YIRTAN ZIRH 🔥
       let finalizedPoints: any[] = [];
       let fetchMorePts = true;
       let fromPts = 0;
       const stepPts = 1000;
 
+      // HİÇBİR HAFTA FİLTRESİ YAPMADAN TÜM TFF PUANLARINI ÇEKİYORUZ!
       while (fetchMorePts) {
         const { data: ptsChunk, error } = await supabase
             .from('points')
             .select('*')
-            .gte('hafta', 6)
             .eq('kategori', 'TFF')
+            .order('id', { ascending: true }) // DİKKAT: Veri kaybını önlemek için sıralama ZORUNLU!
             .range(fromPts, fromPts + stepPts - 1);
             
         if (!error && ptsChunk && ptsChunk.length > 0) {
@@ -129,11 +130,14 @@ export default function TffPuanDurumuPage() {
           liveExtra[code] = 0; 
       });
 
-      // 1. KASADAKİ KESİNLEŞMİŞ PUANLARI HANEYE YAZ (TÜM VERİYİ OKUR)
+      // 1. KASADAKİ KESİNLEŞMİŞ PUANLARI HANEYE YAZ (10, 11, 12, 13, 14, 15. HAFTALAR ARTIK EKLENİYOR)
       if (finalizedPoints.length > 0) {
           finalizedPoints.forEach(pt => {
               const code = String(pt.username).trim();
-              if (currentBase[code] !== undefined) {
+              const haftaNum = Number(pt.hafta || 0); // "10" metnini gerçek 10 sayısına çeviriyoruz!
+              
+              // SADECE 6 ve sonrasını JavaScript ile filtrelereyerek ekliyoruz
+              if (haftaNum >= 6 && currentBase[code] !== undefined) {
                   currentBase[code] += Number(pt.puan || 0);
               }
           });
