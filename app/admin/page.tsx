@@ -68,6 +68,24 @@ export default function AdminRadarPortal() {
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
   const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); // YENİ: Otomatik eşleştirme durumu
 
+
+  // 🔥 KOMUTANIN 30 SANİYELİK OTOMATİK API RADARI 🔥
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'live') {
+      const apiRadar = setInterval(async () => {
+        try {
+          // Arka planda senin o linki tetikler
+          await fetch('/api/canli-skor'); 
+          console.log("30 saniyelik uydu taraması yapıldı.");
+        } catch (e) {
+          console.log("Radar hatası:", e);
+        }
+      }, 30000); // 30 Saniye
+
+      return () => clearInterval(apiRadar);
+    }
+  }, [isAuthenticated, activeTab]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
        audioRef.current = new Audio('/sounds/goal.mp3');
