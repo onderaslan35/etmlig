@@ -1392,7 +1392,8 @@ export default function AdminRadarPortal() {
                 
                 const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
                 const isTimeAllowed = now >= matchTimeMs - 60000;
-                const isPastWeek = selectedLiveWeek < systemActiveWeek; 
+                // GEÇİCİ GOD MODE: Başkomutanın eski maçları girmesi için geçmiş hafta kilitleri KALDIRILDI!
+const isPastWeek = false; 
 
                 return (
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
