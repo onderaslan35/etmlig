@@ -271,11 +271,10 @@ export default function MasterPuanDurumuPage() {
                 if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
             });
 
-            // 🔥 KOMUTANIN EMRİ: SADECE 24. MAÇ BAŞLADIYSA BONUSLAR DEVREYE GİRER 🔥
-            const match24 = allMatches.find(m => Math.floor(m.id / 100) === activeWeek && (m.id % 100 === 24));
-            const isMatch24Started = match24 && match24.status !== 'NOT_STARTED';
+            // 🔥 KOMUTANIN KESİN EMRİ: 24 MAÇIN TAMAMI "FINISHED" OLMADAN HİÇBİR ROZET EKRANA ÇIKMAZ! 🔥
+            const all24Finished = activeWeekMatches.length >= 24 && activeWeekMatches.every(m => m.status === 'FINISHED' || m.status === 'FT');
 
-            if (isMatch24Started) {
+            if (all24Finished) {
                 if (ptsLeadersCount === 1) {
                     const p = updatedList.find(player => player.name === ptsLeaderName);
                     if (p) { 
