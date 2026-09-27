@@ -144,6 +144,7 @@ export default function MasterPuanDurumuPage() {
         let fromPts = 0;
         const stepPts = 1000;
 
+        // Bütün MASTER fişlerini limiti yırtarak çekiyoruz!
         while (fetchMorePts) {
             const { data: ptsChunk, error } = await supabase
                 .from('points')
@@ -164,25 +165,27 @@ export default function MasterPuanDurumuPage() {
         let predictions: any[] = [];
         let fetchMore = true;
         let from = 0;
-        const step = 1000;
 
         while (fetchMore) {
             const { data: pDataChunk, error } = await supabase
                 .from('player_predictions')
                 .select('*')
                 .eq('week_num', activeWeek)
-                .range(from, from + step - 1);
+                .range(from, from + stepPts - 1);
 
             if (error) break;
 
             if (pDataChunk && pDataChunk.length > 0) {
                 predictions = [...predictions, ...pDataChunk];
-                if (pDataChunk.length < step) fetchMore = false; 
-                else from += step; 
+                if (pDataChunk.length < stepPts) fetchMore = false; 
+                else from += stepPts; 
             } else {
                 fetchMore = false; 
             }
         }
+
+        // 🔥 KİLİT KONTROLÜ: O haftanın Bonus puanları "Puan Dağıt" tuşuyla veritabanına işlenmiş mi?
+        const isBonusDistributedInDB = pastAndActivePoints.some(pt => Number(pt.hafta) === activeWeek && (pt.ev_sahibi === 'HAFTANIN' || pt.ev_sahibi === 'SKOR'));
 
         let updatedList = mühürlüListe.map(row => ({
             ...row,
@@ -191,11 +194,11 @@ export default function MasterPuanDurumuPage() {
             badges: [] as string[]
         }));
 
-        // 🔥 14. ve 15. Hafta Puanlarını Aslanların Hanesine Ekle (JavaScript Zırhı ile) 🔥
+        // 🔥 14. ve 15. Hafta Puanlarını Aslanların Hanesine Ekle (JavaScript ile filtreleyerek) 🔥
         if (pastAndActivePoints.length > 0) {
             pastAndActivePoints.forEach(pt => {
-                const haftaNum = Number(pt.hafta || 0); // "14" metni gerçek 14 sayısına dönüştü!
-                if (haftaNum > 13) { // Supabase'i ezerek sadece 13'ten büyükleri filtreledik
+                const haftaNum = Number(pt.hafta || 0); // "14" metni gerçek sayı oldu!
+                if (haftaNum > 13) { 
                     const userNameStr = String(pt.user_name || "");
                     const targetPlayer = updatedList.find(p => p.name.includes(userNameStr) || userNameStr.includes(p.name));
                     if (targetPlayer) targetPlayer.finishedBonus += Number(pt.puan || 0);
@@ -211,7 +214,6 @@ export default function MasterPuanDurumuPage() {
                 if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
                 
                 const mIndex = match.id % 100;
-                
                 const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
                 
                 let pts = 0;
@@ -281,25 +283,22 @@ export default function MasterPuanDurumuPage() {
                 if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
             });
 
-            // GÜNCELLEME: Yalnızca canlı/aktif hesaplama aşamasında (puanlar henüz veritabanına kalıcı bonus yazılmamışken) bu rozetleri göster.
-            // 24. maç bittiğinde (haftaBittiMi === true) rozetleri göstermeye devam eder ama +3'ü canlı bonus olarak iki kere eklemez (çünkü DB'de artık var).
-            
-            // Hafta bitmişse (24 maç onaylandıysa), bonuslar "finishedBonus" içinden zaten gelecektir.
-            // O yüzden hafta bittiğinde LiveBonus'a +3 eklemeyi kesiyoruz ki puan ŞİŞMESİN.
-            const isWeekFinishedLocally = activeWeekMatches.filter(m => m.status === 'MS' || m.status === 'FINISHED').length === 24;
-
+            // GÜNCELLEME: Puan geri çekme sorununu kökünden bitiren mantık!
+            // Eğer sen henüz "Puan Dağıt" tuşuna basmadıysan, +3 bonusu canlı olarak anlık ekler.
+            // "Puan Dağıt" dediğin an bu bonus CANLI'dan silinir, KALICI (finishedBonus) kasasına geçer.
+            // Toplam puan ASLA eksilmez!
             if (ptsLeadersCount === 1) {
                 const p = updatedList.find(player => player.name === ptsLeaderName);
                 if (p) { 
                     p.badges.push('points'); 
-                    if (!isWeekFinishedLocally) p.liveBonus += 3; 
+                    if (!isBonusDistributedInDB) p.liveBonus += 3; 
                 }
             }
             if (exactsLeadersCount === 1) {
                 const p = updatedList.find(player => player.name === exactsLeaderName);
                 if (p) { 
                     p.badges.push('score'); 
-                    if (!isWeekFinishedLocally) p.liveBonus += 3; 
+                    if (!isBonusDistributedInDB) p.liveBonus += 3; 
                 }
             }
         }
@@ -339,6 +338,13 @@ export default function MasterPuanDurumuPage() {
 
   return (
     <div className="w-full px-1 sm:px-4 py-4 text-slate-100 flex flex-col items-center">
+      <div className="w-full bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <span className="text-emerald-500 text-xl animate-pulse">⚡</span>
+        <p className="text-emerald-200 text-[11px] sm:text-xs font-semibold leading-tight">
+          <strong className="text-emerald-400">KARARGAH ZIRHI AKTİF:</strong> Puan düşme sorunu giderildi! "Puan Dağıt" onayından sonra Bonuslar silinmez, kalıcı kasaya şak diye oturur.
+        </p>
+      </div>
+
       <div className="flex flex-col items-center text-center mb-5 mt-1">
         <h1 className="text-xl md:text-2xl font-extrabold text-center text-amber-500 tracking-wider uppercase drop-shadow-md">
           ELİT TAHMİN MASTER LİGİ
