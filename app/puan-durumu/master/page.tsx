@@ -1,7 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import html2canvas from 'html2canvas';
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -84,9 +83,6 @@ export default function MasterPuanDurumuPage() {
   const [displayWeekNum, setDisplayWeekNum] = useState<number>(0);
   const [displayDate, setDisplayDate] = useState<string>('');
   const [liveList, setLiveList] = useState<any[]>([]);
-  
-  const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
-  const tabloRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { 
     const initDudukKurali = async () => {
@@ -123,10 +119,6 @@ export default function MasterPuanDurumuPage() {
                 activeWeek = Math.max(...Object.keys(weeksData).map(Number)); 
             }
             activeDate = weeksData[activeWeek]?.date || '';
-
-            const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
-            const finishedCount = activeWeekMatches.filter(m => m.status === 'MS' || m.status === 'FINISHED').length;
-            setHaftaBittiMi(finishedCount === 24);
         }
 
         setDisplayWeekNum(activeWeek);
@@ -279,18 +271,24 @@ export default function MasterPuanDurumuPage() {
                 if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
             });
 
-            if (ptsLeadersCount === 1) {
-                const p = updatedList.find(player => player.name === ptsLeaderName);
-                if (p) { 
-                    p.badges.push('points'); 
-                    if (!isBonusDistributedInDB) p.liveBonus += 3; 
+            // 🔥 KOMUTANIN EMRİ: SADECE 24. MAÇ BAŞLADIYSA BONUSLAR DEVREYE GİRER 🔥
+            const match24 = allMatches.find(m => Math.floor(m.id / 100) === activeWeek && (m.id % 100 === 24));
+            const isMatch24Started = match24 && match24.status !== 'NOT_STARTED';
+
+            if (isMatch24Started) {
+                if (ptsLeadersCount === 1) {
+                    const p = updatedList.find(player => player.name === ptsLeaderName);
+                    if (p) { 
+                        p.badges.push('points'); 
+                        if (!isBonusDistributedInDB) p.liveBonus += 3; 
+                    }
                 }
-            }
-            if (exactsLeadersCount === 1) {
-                const p = updatedList.find(player => player.name === exactsLeaderName);
-                if (p) { 
-                    p.badges.push('score'); 
-                    if (!isBonusDistributedInDB) p.liveBonus += 3; 
+                if (exactsLeadersCount === 1) {
+                    const p = updatedList.find(player => player.name === exactsLeaderName);
+                    if (p) { 
+                        p.badges.push('score'); 
+                        if (!isBonusDistributedInDB) p.liveBonus += 3; 
+                    }
                 }
             }
         }
@@ -328,7 +326,7 @@ export default function MasterPuanDurumuPage() {
       </div>
       
       <div className="w-full max-w-3xl mx-auto mt-2">
-        <div ref={tabloRef} className="w-full p-1 sm:p-2 bg-[#0f172a] rounded-xl">
+        <div className="w-full p-1 sm:p-2 bg-[#0f172a] rounded-xl">
           <div className="w-full bg-[#f59e0b] text-black font-extrabold text-[11px] md:text-sm py-2 sm:py-3 px-2 sm:px-4 rounded-xl mb-4 text-center uppercase tracking-wide shadow-md border border-amber-500/50">
             {displayWeekNum > 0 ? `${displayWeekNum}. HAFTA MASTER PUAN DURUMU (${displayDate})` : 'MASTER PUAN DURUMU YÜKLENİYOR...'}
           </div>
