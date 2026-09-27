@@ -26,8 +26,8 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "BOSNA-HERSEK", "BULGARİSTAN", "CEBELİTARIK", "ÇEKYA", "DANİMARKA", "ERMENİSTAN", 
   "ESTONYA", "FAROE ADALARI", "FİNLANDİYA", "FRANSA", "GALLER", "GÜRCİSTAN", 
   "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA", "İSKOÇYA", "İSPANYA", "İSVEÇ", 
-  "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS RUM KESİMİ", 
-  "KOSOVA", "KUZEY İRLANDA", "KUZEY MAKEDONYA", "LETONYA", "LİHTENŞTAYN", "LİTVANYA", 
+  "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS", 
+  "KOSOVA", "K. İRLANDA", "KUZEY MAKEDONYA", "LETONYA", "LİHTENŞTAYN", "LİTVANYA", 
   "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA", "PORTEKİZ", 
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
@@ -66,6 +66,7 @@ export default function AdminRadarPortal() {
 
   const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
+  const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); // YENİ: Otomatik eşleştirme durumu
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -95,7 +96,6 @@ export default function AdminRadarPortal() {
 
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
-  // BAŞLANGIÇTA 0 OLARAK AYARLANDI Kİ FETCH İLE DOLDURULSUN
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(0); 
   const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([]);
   const [systemActiveWeek, setSystemActiveWeek] = useState<number>(0);
@@ -160,7 +160,6 @@ export default function AdminRadarPortal() {
 
   const getDynamicCategories = () => {
     const base = Object.keys(dynamicLigHavuzu);
-    // YENİ EKLENEN UEFA KATEGORİSİNİ LİSTEYE DAHİL ET
     return Array.from(new Set([...base, ...defaultCategoriesList, "UEFA ULUSLAR LİGİ"])).sort((a,b) => a.localeCompare(b, 'tr'));
   };
 
@@ -201,7 +200,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 GÜVENLİ KOD: Eski haftalar SİLİNMEYECEK, sadece en yüksek hafta seçili gelecek 🔥
   useEffect(() => {
     if (isAuthenticated) {
         fetchAllSystemPlayers();
@@ -495,6 +493,125 @@ export default function AdminRadarPortal() {
 
     fetchPredictionData();
   }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
+
+  // 🔥 YENİ: SİHİRLİ EŞLEŞTİRİCİ ZEKASI (FUZZY MATCH) 🔥
+  const normalizeTeamName = (name: string) => {
+    if (!name) return "";
+    let normalized = name.toLocaleLowerCase('tr-TR')
+      .replace(/fc|sk|club|united|city|as|spor|aş|a\.ş\.|k\.|\./g, '')
+      .replace(/[çc]/g, 'c')
+      .replace(/[ğg]/g, 'g')
+      .replace(/[şs]/g, 's')
+      .replace(/[öo]/g, 'o')
+      .replace(/[üu]/g, 'u')
+      .replace(/[ıiî]/g, 'i')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+
+    // Özel Çeviri Sözlüğü
+    const dictionary: Record<string, string> = {
+      "kibris": "cyprus", "kibrisrumkesimi": "cyprus", "kuzeyirlanda": "northernireland", "kirlanda": "northernireland",
+      "turkiye": "turkey", "almanya": "germany", "ispanya": "spain", "fransa": "france", "ingiltere": "england",
+      "italya": "italy", "hollanda": "netherlands", "belcika": "belgium", "portekiz": "portugal", "iskocya": "scotland",
+      "galler": "wales", "hirvatistan": "croatia", "isvicre": "switzerland", "isvec": "sweden", "yunanistan": "greece",
+      "cekya": "czechrepublic", "cekhumhuriyeti": "czechrepublic", "macaristan": "hungary", "polonya": "poland",
+      "avusturya": "austria", "danimarka": "denmark", "sirbistan": "serbia", "romanya": "romania", "norvec": "norway",
+      "ukrayna": "ukraine", "bulgaristan": "bulgaria", "gurcistan": "georgia", "kuzeymakedonya": "northmacedonia",
+      "arnavutluk": "albania", "karadag": "montenegro", "izlanda": "iceland", "irlanda": "ireland", "republicofireland": "ireland",
+      "finlandiya": "finland", "bosnahersek": "bosnia", "ermenistan": "armenia", "azerbaycan": "azerbaijan",
+      "litvanya": "lithuania", "letonya": "latvia", "estonya": "estonia", "moldova": "moldova", "kazakistan": "kazakhstan",
+      "faroeadalari": "faroeislands", "luksemburg": "luxembourg", "cebelitarik": "gibraltar", "sanmarino": "sanmarino",
+      "andorra": "andorra", "lihtenstayn": "liechtenstein", "slovakya": "slovakia", "slovenya": "slovenia", "belarus": "belarus",
+      "kizilyildiz": "crvenazvezda", "redstar": "crvenazvezda"
+    };
+
+    return dictionary[normalized] || normalized;
+  };
+
+  const handleAutoMatch = async () => {
+    setIsAutoMatching(true);
+    let updatedMatches = [...bulletinMatches];
+    let matchedCount = 0;
+    
+    // Bültendeki benzersiz tarihleri bul
+    const uniqueDates = Array.from(new Set(updatedMatches.map(m => m.match_date).filter(d => d)));
+    let newApiData = { ...apiMatchesByDate };
+    
+    // Her tarih için API'den o günün tüm maçlarını topluca çek
+    for (const dateStr of uniqueDates) {
+      let formattedDate = dateStr;
+      if (formattedDate.includes('.')) {
+          const parts = formattedDate.split('.');
+          formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      
+      if (!newApiData[formattedDate]) {
+        try {
+            const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
+                headers: {
+                    'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+                    'x-rapidapi-host': 'v3.football.api-sports.io'
+                }
+            });
+            const data = await res.json();
+            if (data.response && data.response.length > 0) {
+               newApiData[formattedDate] = data.response;
+            } else {
+               newApiData[formattedDate] = [];
+            }
+        } catch (e) { console.log("Auto-match fetch error", e); }
+      }
+    }
+    
+    setApiMatchesByDate(newApiData);
+    
+    // Bültendeki maçları uydudan gelen devasa havuzla karşılaştır
+    updatedMatches = updatedMatches.map(m => {
+       if (m.api_match_id || !m.home_team || !m.match_date) return m; // ID zaten varsa veya maç boşsa atla
+       
+       let formattedDate = m.match_date;
+       if (formattedDate.includes('.')) {
+           const parts = formattedDate.split('.');
+           formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+       }
+       
+       const dailyFixtures = newApiData[formattedDate] || [];
+       if (dailyFixtures.length === 0) return m;
+
+       const normHome = normalizeTeamName(m.home_team);
+       const normAway = normalizeTeamName(m.away_team);
+
+       let bestMatch = null;
+       
+       // Günün maçlarında ev sahibi veya deplasman uyuyor mu bak
+       for (const fix of dailyFixtures) {
+          const apiHome = normalizeTeamName(fix.teams.home.name);
+          const apiAway = normalizeTeamName(fix.teams.away.name);
+          
+          if ((apiHome.includes(normHome) || normHome.includes(apiHome)) || 
+              (apiAway.includes(normAway) || normAway.includes(apiAway))) {
+              bestMatch = fix;
+              break;
+          }
+       }
+       
+       if (bestMatch) {
+          matchedCount++;
+          return { ...m, api_match_id: String(bestMatch.fixture.id) };
+       }
+       
+       return m;
+    });
+
+    setBulletinMatches(updatedMatches);
+    setIsAutoMatching(false);
+    
+    if (matchedCount > 0) {
+        alert(`✅ RADAR TARAMASI TAMAMLANDI!\n${matchedCount} maç uydudaki muadiliyle otomatik eşleştirildi.\nEşleşmeyen kaldıysa lütfen listeden manuel seçin.`);
+    } else {
+        alert(`⚠️ EŞLEŞME BULUNAMADI.\nSistem sizin isimlerinizle uydu isimleri arasında benzerlik yakalayamadı.`);
+    }
+  };
 
   const handleAddNewPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -856,7 +973,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 DEMİR DİSİPLİN KODU: İZOLASYON VE AZALAN HAVUZ 🔥
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
     const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
@@ -866,11 +982,9 @@ export default function AdminRadarPortal() {
 
     let havuz: string[] = [];
 
-    // Kategori "UEFA ULUSLAR LİGİ" seçildiyse DİĞER TÜM TAKIMLARI YASAKLA! Sadece 53 Milli Takım...
     if (currentCat === "UEFA ULUSLAR LİGİ") {
        havuz = [...UEFA_ULUSLAR_LIGI_HAVUZU];
     } else {
-       // Değilse normal lig havuzunu kullan
        havuz = dynamicLigHavuzu[currentCat] || [];
        if (!havuz || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
           havuz = Object.values(dynamicLigHavuzu).flat();
@@ -880,7 +994,6 @@ export default function AdminRadarPortal() {
     const fullHavuz = Array.from(new Set([...havuz]));
     const usedTeams = new Set<string>();
 
-    // Bültende şu ana kadar SEÇİLMİŞ olan takımları topla (Aynı kategorideki)
     bulletinMatches.forEach((m, idx) => {
        if (idx === currentIndex) return; 
        const mCat = m.category ? m.category.toUpperCase() : '';
@@ -890,7 +1003,6 @@ export default function AdminRadarPortal() {
        }
     });
 
-    // Hem rakibi çıkart (kendisiyle oynayamaz) hem de diğer maçlarda kullanılmış (usedTeams) takımları çıkart = Azalan Havuz
     return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
   };
 
@@ -1432,9 +1544,21 @@ export default function AdminRadarPortal() {
              </div>
 
              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl">
-                <button onClick={copyDateTimeToAll} className="mb-4 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors shadow-sm">
-                    📅 1. Maçın Tarihini Alta Kopyala
-                </button>
+                
+                {/* YENİ: SİHİRLİ EŞLEŞTİRİCİ TUŞU */}
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <button onClick={copyDateTimeToAll} className="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded transition-colors shadow-sm w-full sm:w-auto text-center border border-slate-700/50">
+                        📅 1. Maçın Tarih/Saatini Alta Kopyala
+                    </button>
+
+                    <button 
+                        onClick={handleAutoMatch} 
+                        disabled={isAutoMatching}
+                        className="text-[10px] sm:text-xs font-black bg-cyan-700 hover:bg-cyan-600 text-white px-5 py-2.5 rounded shadow-[0_0_15px_rgba(8,145,178,0.6)] flex items-center justify-center gap-2 w-full sm:w-auto transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-500/50 tracking-widest"
+                    >
+                        {isAutoMatching ? '📡 UYDU TARANIYOR...' : '🪄 TÜM BÜLTENİ UYDUYLA EŞLEŞTİR (OTOMATİK RADAR)'}
+                    </button>
+                </div>
 
                 <div className="overflow-x-auto custom-scrollbar pb-4">
                    <table className="w-full text-left text-xs min-w-[950px]">
@@ -1515,7 +1639,7 @@ export default function AdminRadarPortal() {
                                              fetchApiMatchesForDate(m.match_date);
                                           }}
                                           disabled={isApiLoading}
-                                          title="Maçları Çek"
+                                          title="Sadece Bu Maçı Çek"
                                           className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 px-3 py-2 rounded shadow transition-colors border border-cyan-700/50 flex items-center justify-center shrink-0"
                                        >
                                           {isApiLoading ? '⏳' : '📡'}
