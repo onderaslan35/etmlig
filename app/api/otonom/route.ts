@@ -8,17 +8,9 @@ export async function GET(request: Request) {
   try {
     console.log("🚀 OPERASYON: 3 GÜN TATİL MODU BAŞLADI");
 
-    // 1. Bitmiş olan tüm canlı maçları çek
-    const { data: allMatches } = await supabase
-      .from('live_matches')
-      .select('*')
-      .in('status', ['FINISHED', 'FT']);
+    const { data: allMatches } = await supabase.from('live_matches').select('*').in('status', ['FINISHED', 'FT']);
+    if (!allMatches || allMatches.length === 0) return NextResponse.json({ message: "Dağıtılacak bitmiş maç yok." });
 
-    if (!allMatches || allMatches.length === 0) {
-        return NextResponse.json({ message: "Dağıtılacak bitmiş maç yok." });
-    }
-
-    // 2. Bülteni ve Oyuncuları Çek
     const { data: bulletinData } = await supabase.from('matches_bulletin').select('*');
     const { data: playersData } = await supabase.from('players').select('username, name');
     
@@ -42,7 +34,6 @@ export async function GET(request: Request) {
         const awayTeam = bMatch.away_team;
         const category = bMatch.category;
 
-        // Bu maç daha önce dağıtıldı mı?
         const { data: existingPoints } = await supabase
             .from('points')
             .select('id')
@@ -50,28 +41,39 @@ export async function GET(request: Request) {
             .eq('ev_sahibi', homeTeam)
             .eq('deplasman', awayTeam);
 
-        if (existingPoints && existingPoints.length > 0) continue; // Zaten dağıtılmış, GEÇ!
+        if (existingPoints && existingPoints.length > 0) continue; 
 
-        // 🔥 OTONOM DAĞITIM BAŞLIYOR 🔥
         const homeScore = match.home_score;
         const awayScore = match.away_score;
         if (homeScore === "-" || awayScore === "-") continue;
 
         const targetScore = `${homeScore}-${awayScore}`;
 
-        // Tahminleri Çek
-        const { data: predictions } = await supabase
+        const { data: rawPredictions } = await supabase
             .from('player_predictions')
             .select('*')
             .eq('week_num', weekNum)
             .eq('match_index', matchIndex)
             .eq('predicted_score', targetScore);
 
+        // 🔥 KOMUTANIN ANTİ-ŞİŞME ZIRHI: Mükerrer tahminleri filtrele! 🔥
+        const uniqueUsers = new Set();
+        const predictions: any[] = [];
+        if (rawPredictions) {
+            for (const p of rawPredictions) {
+                const uid = String(p.user_id);
+                if (!uniqueUsers.has(uid)) {
+                    uniqueUsers.add(uid);
+                    predictions.push(p);
+                }
+            }
+        }
+
         const isTff = isTffMatchCheck(category);
         const leagueName = isTff ? 'TFF' : 'DFO';
 
         let pts = 0;
-        const wCount = predictions ? predictions.length : 0;
+        const wCount = predictions.length; // Artık gerçek kişi sayısını sayar!
         if (wCount === 1) pts = 12;
         else if (wCount === 2) pts = 6;
         else if (wCount === 3) pts = 5;
@@ -80,7 +82,7 @@ export async function GET(request: Request) {
         else if (wCount === 6) pts = 2;
         else if (wCount >= 7) pts = 1;
 
-        if (wCount > 0 && predictions) {
+        if (wCount > 0) {
             const inserts: any[] = [];
             for (const pred of predictions) {
                 const userId = String(pred.user_id);
@@ -96,7 +98,7 @@ export async function GET(request: Request) {
 
             await supabase.from('points').insert(inserts);
 
-            // Standings (Kasa) güncellemesi
+            // Kasa güncellemeleri
             for (const pred of predictions) {
                 const userId = String(pred.user_id);
                 const userName = mergedPlayers[userId] || "Bilinmeyen";
@@ -113,7 +115,6 @@ export async function GET(request: Request) {
                 }
             }
         } else {
-            // Skoru bilen yoksa SİSTEM adına boş kayıt atılır ki otonom bot sonsuz döngüde bu maçı tekrar tekrar taramasın!
             await supabase.from('points').insert([{
                  hafta: weekNum, user_name: 'SİSTEM', username: '000000', kategori: 'SİSTEM', 
                  ev_sahibi: homeTeam, deplasman: awayTeam, gercek_ev: parseInt(homeScore), gercek_dep: parseInt(awayScore), tahmin_ev: '-', tahmin_dep: '-', puan: 0
@@ -122,14 +123,12 @@ export async function GET(request: Request) {
         distributedCount++;
     }
 
-    // 🚀 BONUS KONTROLÜ (İşlem Gören Haftalar İçin 24. Maç Bitti mi?) 🚀
+    // 🔥 BONUS KONTROLÜ 🔥
     for (const w of Array.from(processedWeeks)) {
         const { data: weekMatches } = await supabase.from('live_matches').select('status').gte('id', w * 100).lt('id', (w + 1) * 100);
         const finished24 = weekMatches?.filter(m => m.status === 'FINISHED' || m.status === 'FT');
         
-        // Eğer o haftanın 24 maçı da BİTTİYSE:
         if (finished24 && finished24.length >= 24) {
-            // Bonuslar verilmiş mi kontrol et
             const { data: bonusPoints } = await supabase.from('points').select('id').eq('hafta', w).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
             
             if (!bonusPoints || bonusPoints.length === 0) {
@@ -156,42 +155,22 @@ export async function GET(request: Request) {
 
                 let bonusInserts = [];
                 if (pLeaders.length === 1) {
-                     bonusInserts.push({
-                        hafta: w, user_name: mergedPlayers[pLeaders[0]], username: pLeaders[0], 
-                        kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                    });
+                     bonusInserts.push({ hafta: w, user_name: mergedPlayers[pLeaders[0]], username: pLeaders[0], kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
                 }
                 if (sLeaders.length === 1) {
-                     bonusInserts.push({
-                        hafta: w, user_name: mergedPlayers[sLeaders[0]], username: sLeaders[0], 
-                        kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                    });
+                     bonusInserts.push({ hafta: w, user_name: mergedPlayers[sLeaders[0]], username: sLeaders[0], kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
                 }
 
                 if (bonusInserts.length > 0) {
                     await supabase.from('points').insert(bonusInserts);
-                    for (const ins of bonusInserts) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', ins.username);
-                        if (stData) {
-                            const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
                 } else {
-                    // Kimse bonus alamadıysa (veya beraberlik varsa) boş kayıt at ki döngü bir daha taranmasın
-                    await supabase.from('points').insert([{
-                         hafta: w, user_name: 'BERABERLİK', username: '000000', kategori: 'MASTER', 
-                         ev_sahibi: 'HAFTANIN', deplasman: 'BERABERLİĞİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 0
-                    }]);
+                    await supabase.from('points').insert([{ hafta: w, user_name: 'BERABERLİK', username: '000000', kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'BERABERLİĞİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', puan: 0 }]);
                 }
             }
         }
     }
 
-    return NextResponse.json({ 
-        success: true, 
-        message: `🤖 TATİL MODU AKTİF: ${distributedCount} maç otonom olarak dağıtıldı.` 
-    });
+    return NextResponse.json({ success: true, message: `🤖 ZIRHLI TATİL MODU AKTİF: ${distributedCount} maç otonom dağıtıldı.` });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
