@@ -69,12 +69,28 @@ export default function TffPuanDurumuPage() {
         setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 🔥 HAYATİ DOKUNUŞ: TFF PUANLARI ARŞİVDEN DEĞİL, DOĞRUDAN 'points' KASASINDAN ÇEKİLİYOR 🔥
-      const { data: finalizedPoints } = await supabase
-          .from('points')
-          .select('*')
-          .gte('hafta', 6)
-          .eq('kategori', 'TFF');
+      // 🔥 HAYAT KURTARAN DOKUNUŞ: 1000 LİMİTİNİ YIRTAN DÖNGÜ 🔥
+      let finalizedPoints: any[] = [];
+      let fetchMorePts = true;
+      let fromPts = 0;
+      const stepPts = 1000;
+
+      while (fetchMorePts) {
+        const { data: ptsChunk, error } = await supabase
+            .from('points')
+            .select('*')
+            .gte('hafta', 6)
+            .eq('kategori', 'TFF')
+            .range(fromPts, fromPts + stepPts - 1);
+            
+        if (!error && ptsChunk && ptsChunk.length > 0) {
+            finalizedPoints = [...finalizedPoints, ...ptsChunk];
+            if (ptsChunk.length < stepPts) fetchMorePts = false;
+            else fromPts += stepPts;
+        } else {
+            fetchMorePts = false;
+        }
+      }
 
       // SADECE aktif hafta için canlı tahminleri çek
       let activePredictions: any[] = [];
@@ -109,8 +125,8 @@ export default function TffPuanDurumuPage() {
 
       Object.keys(allPlayersList).forEach(code => { dynamicBase[code] = 0; liveExtra[code] = 0; });
 
-      // 1. KASADAKİ KESİNLEŞMİŞ PUANLARI HANEYE YAZ (Arşive gerek yok)
-      if (finalizedPoints) {
+      // 1. KASADAKİ KESİNLEŞMİŞ PUANLARI HANEYE YAZ (TÜM 1570 KAYDI OKUR)
+      if (finalizedPoints.length > 0) {
           finalizedPoints.forEach(pt => {
               const code = pt.username;
               if (dynamicBase[code] !== undefined) {
