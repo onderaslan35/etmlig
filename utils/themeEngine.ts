@@ -97,7 +97,7 @@ export const LIG_HAVUZU: Record<string, string[]> = {
     "BULGARİSTAN", "ÇEKYA", "DANİMARKA", "ESTONYA", "FAROE ADALARI", "FİNLANDİYA",
     "FRANSA", "GALLER", "GÜRCİSTAN", "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA",
     "İSKOÇYA", "İSPANYA", "İSVEÇ", "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ",
-    "KAZAKİSTAN", "KIBRIS RUM KESİMİ", "KOSOVA", "KUZEY İRLANDA", "KUZEY MAKEDONYA", "LİHTENŞTAYN",
+    "KAZAKİSTAN", "KIBRIS RUM KESİMİ", "KOSOVA", "K.İRLANDA", "KUZEY MAKEDONYA", "LİHTENŞTAYN",
     "LİTVANYA", "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA",
     "PORTEKİZ", "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA",
     "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
@@ -131,7 +131,7 @@ export const localTeamLogos: Record<string, string> = {
   "HOLLANDA": "https://upload.wikimedia.org/wikipedia/commons/2/20/Flag_of_the_Netherlands.svg",
   "BELÇİKA": "https://upload.wikimedia.org/wikipedia/commons/9/92/Flag_of_Belgium_%28civil%29.svg",
   "GÜRCİSTAN": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Flag_of_Georgia.svg",
-  "KUZEY İRLANDA": "https://images.fotmob.com/image_resources/logo/teamlogo/10259_large.png",
+  "K.İRLANDA": "https://images.fotmob.com/image_resources/logo/teamlogo/10259_large.png",
   "ANDORRA": "https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Andorra.svg",
   "MALTA": "https://upload.wikimedia.org/wikipedia/commons/7/73/Flag_of_Malta.svg",
   "İSKOÇYA": "https://upload.wikimedia.org/wikipedia/commons/1/10/Flag_of_Scotland.svg",
