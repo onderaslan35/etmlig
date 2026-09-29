@@ -5,7 +5,7 @@ export const revalidate = 0;
 export const maxDuration = 60; 
 export const dynamic = 'force-dynamic';
 
-const API_KEY = "933e5ccc09194d0db30171e2bca20ca9";
+const API_KEY = "933e5ccc09194d0db30171e2bca20ca9"; // ⚠️ ABİ LÜTFEN PROFESYONEL ANAHTARININ BU OLDUĞUNDAN EMİN OL!
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -44,7 +44,8 @@ export async function GET(request: Request) {
     const todayStr = `${d}.${m}.${y}`; 
     const apiDateStr = `${y}-${m}-${d}`; 
 
-    // OYUNCULARI VE BÜLTENİ EN BAŞTA ÇEKİYORUZ
+    let hataAvcisiMesaji = null;
+
     const { data: dbPlayers } = await supabase.from('players').select('*');
     const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, home_team, away_team');
     
@@ -55,14 +56,18 @@ export async function GET(request: Request) {
             const { data: liveData } = await supabase.from('live_matches').select('id, api_match_id, status').in('id', matchIds).neq('status', 'FINISHED');
 
             if (liveData && liveData.length > 0) {
-                // 🔥 OTOMATİK RADAR DEVREDE 🔥
+                // 🔥 EKSİK ID EŞLEŞTİRME 🔥
                 const missingIdMatches = liveData.filter(l => !l.api_match_id);
                 if (missingIdMatches.length > 0) {
                     try {
-                        const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${apiDateStr}`, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' } });
+                        const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${apiDateStr}`, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }, cache: 'no-store' });
                         const json = await res.json();
-                        const apiFixtures = json.response || [];
+                        
+                        if (json.errors && Object.keys(json.errors).length > 0) {
+                            return NextResponse.json({ message: 'RADAR HATASI (EŞLEŞTİRME): API BAĞLANTISINDA SORUN VAR!', api_hatasi: json.errors });
+                        }
 
+                        const apiFixtures = json.response || [];
                         for (const missing of missingIdMatches) {
                             const bultenMatch = todaysMatches.find(tm => (tm.week_num * 100) + tm.match_index === missing.id);
                             if (bultenMatch && bultenMatch.home_team) {
@@ -92,7 +97,20 @@ export async function GET(request: Request) {
                         const res = await fetch(HEDEF, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }, cache: 'no-store' });
                         if (res.ok) {
                             const sonuc = await res.json();
+                            
+                            // 🚀 HATA AVCISI DEVREDE: Eğer API gizlice hata yolluyorsa (Limit, Geçersiz Şifre vs.) hemen ekrana bas!
+                            if (sonuc.errors && Object.keys(sonuc.errors).length > 0) {
+                                return NextResponse.json({ 
+                                    message: 'API İTİRAFI: KOTA VEYA ANAHTAR HATASI! VERİ KESİLDİ.', 
+                                    api_hatasi: sonuc.errors 
+                                });
+                            }
+
                             const maclar = sonuc.response || [];
+                            if (maclar.length === 0) {
+                                hataAvcisiMesaji = "API BAĞLANDI AMA GÜNCEL MAÇ VERİSİ (DAKİKA/SKOR) BOŞ GELDİ!";
+                            }
+
                             for (const mac of maclar) {
                                 const macId = mac.fixture.id; 
                                 const durum = mac.fixture.status.short; 
@@ -100,7 +118,7 @@ export async function GET(request: Request) {
                                 const olaylar = mac.events ?? []; 
                                 
                                 let statu = 'NOT_STARTED';
-                                // 🛠️ DÜZELTME: Tüm bitiş senaryoları eklendi! (90 dk ve üzeri)
+                                // 🛠️ DÜZELTME: Tüm maç bitiş senaryoları eklendi! (Bitti kelimeleri ve 90 dk üzeri)
                                 if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) statu = 'FINISHED';
                                 else if (['HT', 'Halftime'].includes(durum)) statu = 'HT';
                                 else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || (dakika !== null && dakika < 90)) statu = 'LIVE';
@@ -117,9 +135,7 @@ export async function GET(request: Request) {
                                     depSkorStr = (mac.goals.away ?? 0).toString();
                                 }
 
-                                // =========================================================================
-                                // 🚀 OTONOM KASA YAZICI (ANTİ-ŞİŞME ZIRHLI) 🚀
-                                // =========================================================================
+                                // 🚀 OTONOM KASA YAZICI 🚀
                                 if (statu === 'FINISHED' && dbMatchInfo && dbMatchInfo.status !== 'FINISHED') {
                                     const combinedId = dbMatchInfo.id;
                                     const wNum = Math.floor(combinedId / 100);
@@ -141,10 +157,8 @@ export async function GET(request: Request) {
                                                 else if(winList.length === 5) pts = 3; else if(winList.length === 6) pts = 2;
                                                 else if(winList.length >= 7) pts = 1;
                                                 
-                                                // Zırh: Şişkinliği önlemek için o maça ait eski kopyaları çöpe atar
                                                 await supabase.from('points').delete().eq('hafta', wNum).eq('ev_sahibi', bMatch.home_team);
                                                 
-                                                // Doğru bilenlerin makbuzlarını kalıcı olarak yazar
                                                 const insertData = winList.map(w => {
                                                     const pInfo = dbPlayers?.find(p => p.username === w.user_id || String(p.id) === String(w.user_id));
                                                     const pName = pInfo ? (pInfo.name || pInfo.full_name) : w.user_id;
@@ -169,7 +183,6 @@ export async function GET(request: Request) {
                                     }
                                 }
 
-                                // Standart Canlı Güncelleme
                                 await supabase.from('live_matches').update({ 
                                     home_score: evSkorStr, 
                                     away_score: depSkorStr, 
@@ -394,6 +407,10 @@ export async function GET(request: Request) {
 
     } catch (e) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
+    }
+
+    if (hataAvcisiMesaji) {
+        return NextResponse.json({ message: hataAvcisiMesaji });
     }
 
     return NextResponse.json({ message: 'API BAGLANTISI VE OTOMATIK RADAR BASARIYLA CALISTI!' });
