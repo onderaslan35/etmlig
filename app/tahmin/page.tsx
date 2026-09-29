@@ -35,6 +35,12 @@ export default function TahminlerPortal() {
   
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
+  // 🚀 VİTRİN MAKYAJ MOTORU: Arka planda 16 çalışır, ekranda Özel Bülten yazar!
+  const getDisplayWeek = (week: number) => {
+      if (week === 16) return "1, 2 VE 3 EKİM ÖZEL BÜLTENİ";
+      return getWeekLabel(week);
+  };
+
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
       const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -73,7 +79,7 @@ export default function TahminlerPortal() {
             if(!newMap[row.week_num]) newMap[row.week_num] = [];
             newMap[row.week_num].push({
                id: row.match_index,
-               weekLabel: `${getWeekLabel(row.week_num)} - ${row.match_index}. MAÇ`,
+               weekLabel: `${getDisplayWeek(row.week_num)} - ${row.match_index}. MAÇ`,
                category: row.category,
                date: row.match_date,
                time: row.match_time,
@@ -106,7 +112,7 @@ export default function TahminlerPortal() {
     
     if (username.trim().toLowerCase() !== 'mankoman') {
         if (gateStatus === 'CLOSED') {
-            setLoginError(`${getWeekLabel(activeBulletinWeek)} bültenindeki tüm maçlar başladığı veya henüz bülten olmadığı için tahminler kapanmıştır.`);
+            setLoginError(`${getDisplayWeek(activeBulletinWeek)} bültenindeki tüm maçlar başladığı veya henüz bülten olmadığı için tahminler kapanmıştır.`);
             return;
         }
     }
@@ -321,7 +327,7 @@ export default function TahminlerPortal() {
                        className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-sm sm:text-base px-2 py-3 rounded-xl text-center shadow-inner cursor-pointer outline-none focus:border-amber-500"
                      >
                        {availableWeeks.map(w => (
-                         <option key={w} value={w}>{getWeekLabel(w)}</option>
+                         <option key={w} value={w}>{getDisplayWeek(w)}</option>
                        ))}
                      </select>
                    ) : (
@@ -371,7 +377,7 @@ export default function TahminlerPortal() {
               <div>
                   {availableWeeks.length > 0 ? (
                       <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 sm:px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm max-w-[150px] sm:max-w-none">
-                          {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{getWeekLabel(week)}</option> ))}
+                          {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{getDisplayWeek(week)}</option> ))}
                       </select>
                   ) : (
                       <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Açık Hafta Yok</div>
@@ -457,7 +463,7 @@ export default function TahminlerPortal() {
                     </div>
                   </div>
                 );
-              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{availableWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${getWeekLabel(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
+              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{availableWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
             </div>
           </div>
         )}
@@ -477,7 +483,7 @@ export default function TahminlerPortal() {
                 
                 {availableWeeks.length > 0 ? (
                     <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-2 sm:px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md text-xs sm:text-sm max-w-[150px] sm:max-w-none">
-                        {availableWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{getWeekLabel(week)}</option> ))}
+                        {availableWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{getDisplayWeek(week)}</option> ))}
                     </select>
                 ) : (
                     <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Deklare Yok</div>
@@ -488,14 +494,14 @@ export default function TahminlerPortal() {
             {bulletinMap[selectedTahminWeek] ? (
               <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
                 <div className="mb-4 text-center bg-indigo-950/30 border border-indigo-500/30 p-2 rounded-lg text-indigo-300 text-xs font-bold tracking-widest shadow-inner">
-                    BAŞLAMAMIŞ MAÇLARIN TAHMİNLERİ "🔒" İLE GİZLENMİŞTİR. (MAÇA 1 DK KALA AÇILIR)
+                   BAŞLAMAMIŞ MAÇLARIN TAHMİNLERİ "🔒" İLE GİZLENMİŞTİR. (MAÇA 1 DK KALA AÇILIR)
                 </div>
 
                 <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
                     <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
                       <tr>
-                        <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left"><span className="text-amber-500 font-black tracking-widest uppercase">{getWeekLabel(selectedTahminWeek)}</span></th>
+                        <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left"><span className="text-amber-500 font-black tracking-widest uppercase">{getDisplayWeek(selectedTahminWeek)}</span></th>
                         {bulletinMap[selectedTahminWeek].map((m: any) => ( <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th> ))}
                         {ghostColumns.map((_, i) => ( <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
                       </tr>
@@ -551,14 +557,14 @@ export default function TahminlerPortal() {
                <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
                   <span className="text-5xl mb-4 block opacity-50">⏳</span>
                   <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
-                     {availableWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${getWeekLabel(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
+                     {availableWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
                   </h2>
                </div> 
             )}
 
             <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, opacity: 0, pointerEvents: 'none' }}>
               <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
-                <div className="text-center mb-6 border-b border-slate-800 pb-4"><h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - {getWeekLabel(selectedTahminWeek)} TAHMİNLERİ</h2></div>
+                <div className="text-center mb-6 border-b border-slate-800 pb-4"><h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - {getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ</h2></div>
                 {bulletinMap[selectedTahminWeek] && (
                   <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
                     <thead className="bg-slate-950">
@@ -598,7 +604,7 @@ export default function TahminlerPortal() {
         {view === 'entry' && (
           <div className="w-full animate-fade-in-up">
             <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-              <div><h2 className="text-2xl font-black text-amber-500 tracking-widest uppercase">{getWeekLabel(activeBulletinWeek)} GÖREV KAĞIDI</h2><p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p></div>
+              <div><h2 className="text-2xl font-black text-amber-500 tracking-widest uppercase">{getDisplayWeek(activeBulletinWeek)} GÖREV KAĞIDI</h2><p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p></div>
               <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">Oturumu Kapat</button>
             </div>
 
@@ -611,7 +617,7 @@ export default function TahminlerPortal() {
             </div>
 
             {(!bulletinMap[activeBulletinWeek] || bulletinMap[activeBulletinWeek].length === 0) ? (
-               <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{getWeekLabel(activeBulletinWeek)} BÜLTENİ BEKLENİYOR</h2></div>
+               <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{getDisplayWeek(activeBulletinWeek)} BÜLTENİ BEKLENİYOR</h2></div>
             ) : (
               <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
                 {bulletinMap[activeBulletinWeek].map((match) => {
