@@ -107,9 +107,7 @@ export default function AdminRadarPortal() {
   };
 
   const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({
-     'skorcum01': true,
-     'skorcum06': true,
-     'skorcum34': true
+  
   });
 
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
