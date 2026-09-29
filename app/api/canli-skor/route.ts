@@ -3,11 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 0; 
 export const maxDuration = 60; 
+export const dynamic = 'force-dynamic';
 
 const API_KEY = "933e5ccc09194d0db30171e2bca20ca9";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 // 🔥 UZAY ÜSSÜ ÇEVİRİ MOTORU 🔥
 const teamDict: Record<string, string> = {
