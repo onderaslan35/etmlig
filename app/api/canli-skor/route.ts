@@ -24,6 +24,7 @@ const teamDict: Record<string, string> = {
     "BOSNA-HERSEK": "Bosnia & Herzegovina", "ROMANYA": "Romania", "KIBRIS": "Cyprus",
     "SLOVENYA": "Slovenia", "SAN MARİNO": "San Marino", "FİNLANDİYA": "Finland",
     "FAROE ADALARI": "Faroe Islands", "KAZAKİSTAN": "Kazakhstan", "BULGARİSTAN": "Bulgaria",
+    "AVUSTURYA": "Austria", "LETONYA": "Latvia", "CEBELİTARIK": "Gibraltar",
     "LÜKSEMBURG": "Luxembourg", "ESTONYA": "Estonia", "KUZEY MAKEDONYA": "North Macedonia",
     "ARNAVUTLUK": "Albania", "BELARUS": "Belarus", "SLOVAKYA": "Slovakia", "MOLDOVA": "Moldova"
 };
