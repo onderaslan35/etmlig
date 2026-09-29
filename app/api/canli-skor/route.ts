@@ -5,12 +5,11 @@ export const revalidate = 0;
 export const maxDuration = 60; 
 export const dynamic = 'force-dynamic';
 
-const API_KEY = "933e5ccc09194d0db30171e2bca20ca9"; 
+const API_KEY = "933e5ccc09194d0db30171e2bca20ca9"; // Ücretsiz hesabının anahtarını buraya girebilirsin
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 🔥 UZAY ÜSSÜ ÇEVİRİ MOTORU 🔥
 const teamDict: Record<string, string> = {
     "TÜRKİYE": "Turkey", "ALMANYA": "Germany", "İNGİLTERE": "England", 
     "FRANSA": "France", "İSPANYA": "Spain", "İTALYA": "Italy",
@@ -111,7 +110,9 @@ export async function GET(request: Request) {
                                     depSkorStr = (mac.goals.away ?? 0).toString();
                                 }
 
-                                // 🚀 ZIRH 1: Önce maçı veritabanında güncelliyoruz. Puanlama çökse bile maç asla geri sarmayacak!
+                                // 🔴 OTONOM PUAN DAĞITIMI İPTAL EDİLDİ 🔴
+                                // Başkomutan onay vermeden puanlar kasaya yazılmayacak. Sadece skor ekranda görünecek.
+
                                 await supabase.from('live_matches').update({ 
                                     home_score: evSkorStr, 
                                     away_score: depSkorStr, 
@@ -119,58 +120,6 @@ export async function GET(request: Request) {
                                     elapsed: dakika,
                                     events: JSON.stringify(olaylar) 
                                 }).eq('api_match_id', macId);
-
-                                // 🚀 ZIRH 2: Kasa yazıcısı kendi özel koruma kalkanına (try-catch) alındı.
-                                // Ayrıca veritabanını çökertebilecek bilinmeyen sütun (isabet_sayisi) tamamen SİLİNDİ!
-                                if (statu === 'FINISHED' && dbMatchInfo && dbMatchInfo.status !== 'FINISHED') {
-                                    try {
-                                        const combinedId = dbMatchInfo.id;
-                                        const wNum = Math.floor(combinedId / 100);
-                                        const mIdx = combinedId % 100;
-                                        const bMatch = bulten?.find(b => b.week_num === wNum && b.match_index === mIdx);
-                                        
-                                        if (bMatch) {
-                                            const { data: preds } = await supabase.from('player_predictions')
-                                                .select('*').eq('week_num', wNum).eq('match_index', mIdx);
-                                                
-                                            if (preds && preds.length > 0) {
-                                                const tScore = `${evSkorStr}-${depSkorStr}`.replace(/\s+/g, '');
-                                                const winList = preds.filter(p => p.predicted_score.replace(/\s+/g, '') === tScore);
-                                                
-                                                if (winList.length > 0) {
-                                                    let pts = 1;
-                                                    if(winList.length === 1) pts = 12; else if(winList.length === 2) pts = 6;
-                                                    else if(winList.length === 3) pts = 5; else if(winList.length === 4) pts = 4;
-                                                    else if(winList.length === 5) pts = 3; else if(winList.length === 6) pts = 2;
-                                                    else if(winList.length >= 7) pts = 1;
-                                                    
-                                                    await supabase.from('points').delete().eq('hafta', wNum).eq('ev_sahibi', bMatch.home_team);
-                                                    
-                                                    const insertData = winList.map(w => {
-                                                        const pInfo = dbPlayers?.find(p => p.username === w.user_id || String(p.id) === String(w.user_id));
-                                                        const pName = pInfo ? (pInfo.name || pInfo.full_name) : w.user_id;
-                                                        return {
-                                                            hafta: wNum,
-                                                            user_name: pName,
-                                                            ev_sahibi: bMatch.home_team,
-                                                            deplasman: bMatch.away_team || "-",
-                                                            tahmin_ev: w.predicted_score.split('-')[0],
-                                                            tahmin_dep: w.predicted_score.split('-')[1],
-                                                            gercek_ev: evSkorStr,
-                                                            gercek_dep: depSkorStr,
-                                                            puan: pts,
-                                                            username: w.user_id,
-                                                            kategori: bMatch.category
-                                                        };
-                                                    });
-                                                    await supabase.from('points').insert(insertData);
-                                                }
-                                            }
-                                        }
-                                    } catch (kasaHatasi) {
-                                        console.log("Kasa Hatası Oluştu (Maç kapanması engellenmedi):", kasaHatasi);
-                                    }
-                                }
                             }
                         }
                     } catch (e) {}
@@ -179,7 +128,7 @@ export async function GET(request: Request) {
         }
     }
 
-    // 🔴 BURADAN AŞAĞISI LİDERLİK TABLOSU DİNAMİK HESABI 🔴
+    // 🔴 LİDERLİK TABLOSU DİNAMİK HESABI (SADECE ONAYLANMIŞ PUANLARI OKUR) 🔴
     try {
         const playersList: Record<string, string> = {};
         if (dbPlayers) dbPlayers.forEach(p => { const pid = p.username || String(p.id); if (pid !== 'mankoman') playersList[pid] = p.name || p.full_name; });
@@ -275,39 +224,23 @@ export async function GET(request: Request) {
                         if (isFinished) {
                             st[wId].masterBaseAll += pts;
                             st[wId].skorAll += 1; 
-                            
-                            if (weekNum < highestWeekFound) { 
-                                st[wId].masterBasePrev += pts; 
-                                st[wId].skorPrev += 1; 
-                            } 
-                            
+                            if (weekNum < highestWeekFound) { st[wId].masterBasePrev += pts; st[wId].skorPrev += 1; } 
                             if (isTff) {
                                 st[wId].tffPts += pts;
                                 st[wId].tffBaseAll += pts;
                                 st[wId].tffSkorAll += 1; 
-                                if (weekNum < highestWeekFound) { 
-                                    st[wId].tffBasePrev += pts; 
-                                    st[wId].tffSkorPrev += 1; 
-                                } 
+                                if (weekNum < highestWeekFound) { st[wId].tffBasePrev += pts; st[wId].tffSkorPrev += 1; } 
                             } else {
                                 st[wId].dfoPts += pts;
                                 st[wId].dfoBaseAll += pts;
                                 st[wId].dfoSkorAll += 1; 
-                                if (weekNum < highestWeekFound) { 
-                                    st[wId].dfoBasePrev += pts; 
-                                    st[wId].dfoSkorPrev += 1; 
-                                }
+                                if (weekNum < highestWeekFound) { st[wId].dfoBasePrev += pts; st[wId].dfoSkorPrev += 1; }
                             }
                         } else if (isLive) {
                             st[wId].masterLive += pts;
                             st[wId].skorLive += 1;
-                            if (isTff) {
-                                st[wId].tffLive += pts;
-                                st[wId].tffSkorLive += 1;
-                            } else {
-                                st[wId].dfoLive += pts;
-                                st[wId].dfoSkorLive += 1;
-                            }
+                            if (isTff) { st[wId].tffLive += pts; st[wId].tffSkorLive += 1; } 
+                            else { st[wId].dfoLive += pts; st[wId].dfoSkorLive += 1; }
                         }
                     }
                 });
@@ -390,5 +323,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'API BAGLANTISI VE OTOMATIK RADAR BASARIYLA CALISTI!' });
+    return NextResponse.json({ message: 'API BAGLANTISI VE RADAR BASARIYLA CALISTI. ONAY MANUEL!' });
 }
