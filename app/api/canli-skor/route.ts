@@ -10,7 +10,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-
 // 🔥 UZAY ÜSSÜ ÇEVİRİ MOTORU 🔥
 const teamDict: Record<string, string> = {
     "TÜRKİYE": "Turkey", "ALMANYA": "Germany", "İNGİLTERE": "England", 
@@ -45,7 +44,7 @@ export async function GET(request: Request) {
     const todayStr = `${d}.${m}.${y}`; 
     const apiDateStr = `${y}-${m}-${d}`; 
 
-    // OYUNCULARI VE BÜLTENİ EN BAŞTA ÇEKİYORUZ (Otonom kayıt için isimler ve deplasman gerekli)
+    // OYUNCULARI VE BÜLTENİ EN BAŞTA ÇEKİYORUZ
     const { data: dbPlayers } = await supabase.from('players').select('*');
     const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, home_team, away_team');
     
@@ -101,9 +100,10 @@ export async function GET(request: Request) {
                                 const olaylar = mac.events ?? []; 
                                 
                                 let statu = 'NOT_STARTED';
-                                if (['FT', 'AET', 'PEN', 'Match Finished'].includes(durum)) statu = 'FINISHED';
+                                // 🛠️ DÜZELTME: Tüm bitiş senaryoları eklendi! (90 dk ve üzeri)
+                                if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) statu = 'FINISHED';
                                 else if (['HT', 'Halftime'].includes(durum)) statu = 'HT';
-                                else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || dakika !== null) statu = 'LIVE';
+                                else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || (dakika !== null && dakika < 90)) statu = 'LIVE';
 
                                 const dbMatchInfo = validLiveData.find(l => l.api_match_id === macId);
                                 if (dbMatchInfo && (dbMatchInfo.status === 'LIVE' || dbMatchInfo.status === 'HT') && statu === 'NOT_STARTED') {
@@ -119,7 +119,6 @@ export async function GET(request: Request) {
 
                                 // =========================================================================
                                 // 🚀 OTONOM KASA YAZICI (ANTİ-ŞİŞME ZIRHLI) 🚀
-                                // Maç yeni bitmişse puanları hesaplar ve onay beklemeden kalıcı Points tablosuna yazar!
                                 // =========================================================================
                                 if (statu === 'FINISHED' && dbMatchInfo && dbMatchInfo.status !== 'FINISHED') {
                                     const combinedId = dbMatchInfo.id;
