@@ -34,8 +34,10 @@ export default function TahminlerPortal() {
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
   
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
+  
+  // 🔴 YENİ: Gerçek maç skorlarını hafızada tutacak radar devresi
+  const [liveMatchStatus, setLiveMatchStatus] = useState<Record<number, { status: string, score: string }>>({});
 
-  // 🚀 VİTRİN MAKYAJ MOTORU: Arka planda 16 çalışır, ekranda Özel Bülten yazar!
   const getDisplayWeek = (week: number) => {
       if (week === 16) return "1, 2 VE 3 EKİM ÖZEL BÜLTENİ";
       return getWeekLabel(week);
@@ -99,6 +101,34 @@ export default function TahminlerPortal() {
     };
     fetchInitialData();
   }, []);
+
+  // 🔴 YENİ RADAR: Seçili haftanın gerçek canlı/bitmiş skorlarını çeker
+  useEffect(() => {
+    const fetchLiveMatchStatuses = async () => {
+      if (!selectedTahminWeek) return;
+      const { data } = await supabase
+        .from('live_matches')
+        .select('id, status, home_score, away_score')
+        .gte('id', selectedTahminWeek * 100)
+        .lt('id', (selectedTahminWeek + 1) * 100);
+      
+      if (data) {
+        const statusMap: Record<number, { status: string, score: string }> = {};
+        data.forEach(m => {
+          const matchIndex = m.id % 100;
+          statusMap[matchIndex] = {
+            status: m.status,
+            score: `${m.home_score}-${m.away_score}`.replace(/\s+/g, '')
+          };
+        });
+        setLiveMatchStatus(statusMap);
+      }
+    };
+    
+    if (view === 'declaration' || view === 'tahminmatik') {
+      fetchLiveMatchStatuses();
+    }
+  }, [selectedTahminWeek, view]);
 
   const gateStatus = useMemo(() => {
       if (!activeBulletinWeek || !bulletinMap[activeBulletinWeek]) return 'CLOSED';
@@ -448,7 +478,6 @@ export default function TahminlerPortal() {
                       </div>
                     </div>
                     
-                    {/* 🔴 YENİ EKLENEN NEON SİNYAL BÖLÜMÜ 🔴 */}
                     <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
                        <div className="flex items-center gap-2 mb-3">
                           <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
@@ -475,8 +504,6 @@ export default function TahminlerPortal() {
                            )}
                        </div>
                     </div>
-                    {/* 🔴 BİTİŞ 🔴 */}
-                    
                   </div>
                 );
               }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{availableWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
@@ -545,19 +572,39 @@ export default function TahminlerPortal() {
                         const playerName = mergedAccounts[id]?.name || "Bilinmeyen Oyuncu";
                         const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
                         const preds = selectedWeekData[id] || Array(24).fill('PAS');
+                        
                         return ( 
                           <tr key={id} className="hover:bg-slate-800/50 transition-colors group">
                               <td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900"><span className="text-slate-300">{playerName}</span></td>
                               {preds.map((score: string, idx: number) => {
-                                  const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === idx + 1);
+                                  const matchIndex = idx + 1;
+                                  const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === matchIndex);
+                                  
                                   let isRevealed = true;
                                   if (matchObj) {
                                       const matchTimeMs = getMatchTimeMs(matchObj.date, matchObj.time);
                                       if (now < matchTimeMs - 60000) isRevealed = false;
                                   }
+                                  
+                                  // 🔴 NEON RADAR KONTROLÜ
+                                  const liveInfo = liveMatchStatus[matchIndex];
+                                  const isMatchFinished = liveInfo && (liveInfo.status === 'FINISHED' || liveInfo.status === 'WAITING_APPROVAL' || liveInfo.status === 'FT');
+                                  const isExactMatch = isMatchFinished && score === liveInfo.score && score !== 'PAS' && score !== '-';
+                                  
                                   const displayScore = isRevealed ? score : '🔒';
+                                  
+                                  let cellStyle = "border-b border-r border-slate-800 p-2 font-black ";
+                                  if (!isRevealed) {
+                                      cellStyle += "bg-[#0a1120] text-slate-600 text-lg";
+                                  } else if (isExactMatch) {
+                                      // Tam isabet yapanların neon ışığı burada yanar!
+                                      cellStyle += "bg-emerald-950/20 text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,1)] animate-pulse"; 
+                                  } else {
+                                      cellStyle += "bg-[#0a1120] text-amber-500";
+                                  }
+
                                   return (
-                                    <td key={idx} className={`border-b border-r border-slate-800 p-2 font-black bg-[#0a1120] ${isRevealed ? 'text-amber-500' : 'text-slate-600 text-lg'}`}>{displayScore}</td>
+                                    <td key={idx} className={cellStyle}>{displayScore}</td>
                                   )
                               })}
                               {ghostColumns.map((_, i) => ( <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td> ))}
@@ -595,14 +642,31 @@ export default function TahminlerPortal() {
                             <tr key={`exp-${id}`}>
                                 <td className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold text-slate-300 tracking-wide">{playerName}</td>
                                 {preds.map((score: string, idx: number) => {
-                                    const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === idx + 1);
+                                    const matchIndex = idx + 1;
+                                    const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === matchIndex);
                                     let isRevealed = true;
                                     if (matchObj) {
                                         const matchTimeMs = getMatchTimeMs(matchObj.date, matchObj.time);
                                         if (now < matchTimeMs - 60000) isRevealed = false;
                                     }
+                                    
+                                    // 🔴 FOTOĞRAF ÇIKTISI İÇİN DE NEON IŞIKLARI EKLENDİ
+                                    const liveInfo = liveMatchStatus[matchIndex];
+                                    const isMatchFinished = liveInfo && (liveInfo.status === 'FINISHED' || liveInfo.status === 'WAITING_APPROVAL' || liveInfo.status === 'FT');
+                                    const isExactMatch = isMatchFinished && score === liveInfo.score && score !== 'PAS' && score !== '-';
+
+                                    let expStyle = "border-b border-r border-slate-800 p-2 font-black text-base ";
+                                    if (!isRevealed) {
+                                        expStyle += "bg-[#0a1120] text-slate-600 text-lg";
+                                    } else if (isExactMatch) {
+                                        // Fotoğrafta pulse (yanıp sönme) olmaz ama parlama ve renk durur!
+                                        expStyle += "bg-emerald-950/40 text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,1)]"; 
+                                    } else {
+                                        expStyle += "bg-[#0a1120] text-amber-500";
+                                    }
+
                                     const displayScore = isRevealed ? score : '🔒';
-                                    return ( <td key={`exp-sc-${idx}`} className={`border-b border-r border-slate-800 p-2 font-black ${isRevealed ? 'text-amber-500' : 'text-slate-600 text-lg'} bg-[#0a1120] text-base`}>{displayScore}</td> )
+                                    return ( <td key={`exp-sc-${idx}`} className={expStyle}>{displayScore}</td> )
                                 })}
                             </tr> 
                         );
