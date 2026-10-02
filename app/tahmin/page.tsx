@@ -447,8 +447,16 @@ export default function TahminlerPortal() {
                         </div>
                       </div>
                     </div>
+                    
+                    {/* 🔴 YENİ EKLENEN NEON SİNYAL BÖLÜMÜ 🔴 */}
                     <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
-                       <div className="flex items-center gap-2 mb-3"><span className="text-red-500 text-sm drop-shadow-md">🎯</span> <span className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest">SKORU BİLENLER [{isRevealed ? predictors.length : '?'} KİŞİ]</span></div>
+                       <div className="flex items-center gap-2 mb-3">
+                          <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
+                          <span className={`font-black text-[10px] sm:text-xs tracking-widest ${isRevealed && predictors.length > 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse' : 'text-amber-500'}`}>
+                             SKORU BİLENLER [{isRevealed ? predictors.length : '?'} KİŞİ]
+                          </span>
+                       </div>
+                       
                        <div className="flex items-center justify-center border-t border-slate-700/50 pt-3">
                            {!isRevealed ? (
                                <span className="text-slate-500 text-[10px] sm:text-xs italic tracking-wide font-bold">Mühür kırılmadığı için liste kapalıdır...</span>
@@ -457,10 +465,18 @@ export default function TahminlerPortal() {
                            ) : predictors.length === 0 ? ( 
                                <span className="text-slate-400 text-[10px] sm:text-xs font-medium tracking-wide">Bu skoru tahmin eden yarışmacı bulunamadı.</span> 
                            ) : ( 
-                               <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2"> {predictors.map((p, i) => ( <span key={i} className="bg-slate-950/80 border px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm uppercase border-slate-600/50">{p}</span> ))} </div> 
+                               <div className="flex flex-wrap justify-center gap-2 sm:gap-3"> 
+                                  {predictors.map((p, i) => ( 
+                                     <span key={i} className="bg-emerald-950/80 border-2 border-emerald-400/80 px-3 py-1.5 rounded-md text-[10px] sm:text-[11px] font-black text-emerald-300 uppercase tracking-widest shadow-[0_0_15px_rgba(52,211,153,0.6)] animate-pulse drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]">
+                                        {p}
+                                     </span> 
+                                  ))} 
+                               </div> 
                            )}
                        </div>
                     </div>
+                    {/* 🔴 BİTİŞ 🔴 */}
+                    
                   </div>
                 );
               }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{availableWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
