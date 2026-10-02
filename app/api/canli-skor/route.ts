@@ -5,7 +5,7 @@ export const revalidate = 0;
 export const maxDuration = 60; 
 export const dynamic = 'force-dynamic';
 
-const API_KEY = "933e5ccc09194d0db30171e2bca20ca9"; // Ücretsiz hesabının anahtarını buraya girebilirsin
+const API_KEY = "933e5ccc09194d0db30171e2bca20ca9"; 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -94,9 +94,18 @@ export async function GET(request: Request) {
                                 const olaylar = mac.events ?? []; 
                                 
                                 let statu = 'NOT_STARTED';
-                                if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) statu = 'FINISHED';
-                                else if (['HT', 'Halftime'].includes(durum)) statu = 'HT';
-                                else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || (dakika !== null && dakika < 90)) statu = 'LIVE';
+                                
+                                // 🔴 KRİTİK DÜZELTME: Maç bitse bile otomatik olarak 'FINISHED' YAPILMAYACAK!
+                                // Bunun yerine 'WAITING_APPROVAL' (Onay Bekliyor) yapılacak ki canlı puanlar silinmesin!
+                                if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) {
+                                    statu = 'WAITING_APPROVAL'; 
+                                }
+                                else if (['HT', 'Halftime'].includes(durum)) {
+                                    statu = 'HT';
+                                }
+                                else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || (dakika !== null && dakika < 90)) {
+                                    statu = 'LIVE';
+                                }
 
                                 const dbMatchInfo = validLiveData.find(l => l.api_match_id === macId);
                                 if (dbMatchInfo && (dbMatchInfo.status === 'LIVE' || dbMatchInfo.status === 'HT') && statu === 'NOT_STARTED') {
@@ -109,9 +118,6 @@ export async function GET(request: Request) {
                                     evSkorStr = (mac.goals.home ?? 0).toString();
                                     depSkorStr = (mac.goals.away ?? 0).toString();
                                 }
-
-                                // 🔴 OTONOM PUAN DAĞITIMI İPTAL EDİLDİ 🔴
-                                // Başkomutan onay vermeden puanlar kasaya yazılmayacak. Sadece skor ekranda görünecek.
 
                                 await supabase.from('live_matches').update({ 
                                     home_score: evSkorStr, 
@@ -128,7 +134,7 @@ export async function GET(request: Request) {
         }
     }
 
-    // 🔴 LİDERLİK TABLOSU DİNAMİK HESABI (SADECE ONAYLANMIŞ PUANLARI OKUR) 🔴
+    // 🔴 LİDERLİK TABLOSU DİNAMİK HESABI 🔴
     try {
         const playersList: Record<string, string> = {};
         if (dbPlayers) dbPlayers.forEach(p => { const pid = p.username || String(p.id); if (pid !== 'mankoman') playersList[pid] = p.name || p.full_name; });
@@ -216,6 +222,8 @@ export async function GET(request: Request) {
                 else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
                 const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
+                
+                // NOT: 'WAITING_APPROVAL' olan maçlar bu 'isLive' dizisinin içinde olduğu için puan hesaplamaya devam eder!
                 const isLive = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
                 const isTff = isTffMatchCheck(catDict[`${weekNum}-${matchIndex}`] || "");
 
