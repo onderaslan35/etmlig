@@ -81,9 +81,11 @@ export default function DfoPuanDurumuPage() {
         }));
 
         if (allMatches && predictions && dbBulletin) {
-            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
-            liveM.forEach(match => {
+            // 🔥 KOMUTANIN ZIRHI: Sadece "LIVE" olanları değil, o haftanın BAŞLAMIŞ VE BİTMİŞ tüm maçlarını hesapla!
+            const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && m.status !== 'NOT_STARTED');
+            
+            activeWeekMatches.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
                 if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
                 
@@ -184,7 +186,7 @@ export default function DfoPuanDurumuPage() {
                       <td className="px-1 py-3 align-middle text-right">
                         {row.liveBonus > 0 && (
                           <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                            +{row.liveBonus} CANLI
+                            +{row.liveBonus} BU HAFTA
                           </span>
                         )}
                       </td>

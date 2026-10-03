@@ -48,7 +48,6 @@ export default function SkorDurumuPage() {
       }
 
       // 🔥 HAYATİ DOKUNUŞ: EKSİK OLAN SKOR BONUSLARINI (12 PUAN ALANLARI) KASADAN TESPİT ET 🔥
-      // Sistem, 'points' tablosunda 12 puan alanların "tam isabet" yaptığını bilir.
       const { data: exactMatchesFromPoints } = await supabase
         .from('points')
         .select('*')
@@ -93,33 +92,22 @@ export default function SkorDurumuPage() {
           });
       }
 
-      // Eksik kalan haftaları points'ten topla (Leaderboard'da olmayan veya silinmiş veriler için destek)
+      // Eksik kalan haftaları points'ten topla
       if (exactMatchesFromPoints) {
          exactMatchesFromPoints.forEach(pt => {
              const rName = pt.user_name || "";
              const matchedKey = Object.keys(dbBaseScores).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
-             
-             // NOT: Leaderboard doğru besleniyorsa bu kısım çift sayabilir, bu nedenle Leaderboard'ın 14. haftayı
-             // içerip içermediğinden emin olmalıyız. Şu an Leaderboard'a güveneceğiz, ama eğer leaderboard bozuksa
-             // direkt points tablosundan saydırabiliriz. (Biz Leaderboard'un düzeleceğini varsayarak burayı sadece
-             // bir backup/manuel onarım gibi düşündük ama çift saymamak için yorum satırında bırakıyorum).
-             //
-             // if (matchedKey) {
-             //    if (pt.kategori === 'MASTER') dbBaseScores[matchedKey].master += 1;
-             //    if (pt.kategori === 'TFF') dbBaseScores[matchedKey].tff += 1;
-             //    if (pt.kategori === 'DFO') dbBaseScores[matchedKey].dfo += 1;
-             // }
          });
       }
 
-
-      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI ⚡
+      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI (MASTER ZIRHI EKLENDİ) ⚡
       const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
 
       if (allMatches && predictions && dbBulletin) {
-          const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+          // 🔥 KOMUTANIN ZIRHI: Sadece LIVE olanları değil, bu haftanın başlamış ve bitmiş (NOT_STARTED olmayan) tüm maçlarını say!
+          const matchesToCalculate = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && m.status !== 'NOT_STARTED');
           
-          liveM.forEach(match => {
+          matchesToCalculate.forEach(match => {
               const currentScore = `${match.home_score}-${match.away_score}`;
               if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
               
@@ -172,7 +160,6 @@ export default function SkorDurumuPage() {
   useEffect(() => {
     loadSkorData();
     
-    // Hem Leaderboard hem de Canlı Maçlar değiştiğinde tetikle
     const channel1 = supabase.channel('skor_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadSkorData(); }).subscribe();
     const channel2 = supabase.channel('skor_matches_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadSkorData(); }).subscribe();
     
@@ -299,7 +286,7 @@ export default function SkorDurumuPage() {
                     <td className="px-1 py-3 align-middle text-right">
                       {row.liveBonus > 0 && (
                         <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                          +{row.liveBonus} MAÇ CANLI
+                          +{row.liveBonus} BU HAFTA
                         </span>
                       )}
                     </td>
