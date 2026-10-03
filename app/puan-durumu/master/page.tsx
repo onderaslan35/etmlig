@@ -195,8 +195,7 @@ export default function MasterPuanDurumuPage() {
         }
 
         if (allMatches && predictions) {
-            // 🔥 İŞTE ZIRHI BURAYA ÇEKTİM: WAITING_APPROVAL ARTIK CANLI SAYILACAK 🔥
-            const liveM = allMatches.filter(m => ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(m.status));
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
             liveM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
@@ -265,7 +264,7 @@ export default function MasterPuanDurumuPage() {
             });
 
             let ptsLeadersCount = 0, exactsLeadersCount = 0;
-            let ptsLeaderName = ""; let exactsLeaderName = "";
+            let ptsLeaderName = "", exactsLeaderName = "";
 
             Object.entries(weeklyStats).forEach(([name, s]) => {
                 if (maxPts > 0 && s.pts === maxPts) { ptsLeadersCount++; ptsLeaderName = name; }
@@ -273,7 +272,7 @@ export default function MasterPuanDurumuPage() {
             });
 
             // 🔥 KOMUTANIN KESİN EMRİ: 24 MAÇIN TAMAMI "FINISHED" OLMADAN HİÇBİR ROZET EKRANA ÇIKMAZ! 🔥
-            const all24Finished = activeWeekMatches.length >= 24 && activeWeekMatches.every(m => ['FINISHED', 'FT', 'WAITING_APPROVAL'].includes(m.status));
+            const all24Finished = activeWeekMatches.length >= 24 && activeWeekMatches.every(m => m.status === 'FINISHED' || m.status === 'FT');
 
             if (all24Finished) {
                 if (ptsLeadersCount === 1) {
