@@ -273,7 +273,7 @@ export default function MasterPuanDurumuPage() {
             });
 
             // 🔥 KOMUTANIN KESİN EMRİ: 24 MAÇIN TAMAMI "FINISHED" OLMADAN HİÇBİR ROZET EKRANA ÇIKMAZ! 🔥
-            const all24Finished = activeWeekMatches.length >= 24 && activeWeekMatches.every(m => m.status === 'FINISHED' || m.status === 'FT');
+            const all24Finished = activeWeekMatches.length >= 24 && activeWeekMatches.every(m => ['FINISHED', 'FT', 'WAITING_APPROVAL'].includes(m.status));
 
             if (all24Finished) {
                 if (ptsLeadersCount === 1) {
