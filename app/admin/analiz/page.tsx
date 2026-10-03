@@ -20,13 +20,38 @@ export default function ScoutRadarPage() {
     const fetchAnaliz = async () => {
       try {
         setLoading(true);
-        // 1. Tüm oyuncuları ve tahminleri çek
+        
+        // 1. Oyuncuları Çek
         const { data: playersData } = await supabase.from('players').select('username, name');
-        const { data: predsData } = await supabase.from('player_predictions').select('user_id, predicted_score');
+        
+        // 2. TAHMİNLERİ KAZIYAN SÜPÜRGE DÖNGÜSÜ (6. Haftadan İtibaren Sınır Tanımadan Çeker)
+        let allPreds: any[] = [];
+        let fetchMore = true;
+        let from = 0;
+        const step = 1000;
 
-        if (playersData && predsData) {
+        while (fetchMore) {
+            const { data: pDataChunk, error } = await supabase
+                .from('player_predictions')
+                .select('user_id, predicted_score, week_num')
+                .gte('week_num', 6) // 🔴 KOMUTANIN EMRİ: Sadece 6. hafta ve sonrasını al!
+                .order('id', { ascending: true })
+                .range(from, from + step - 1);
+
+            if (error) break;
+
+            if (pDataChunk && pDataChunk.length > 0) {
+                allPreds = [...allPreds, ...pDataChunk];
+                if (pDataChunk.length < step) fetchMore = false;
+                else from += step;
+            } else {
+                fetchMore = false;
+            }
+        }
+
+        if (playersData && allPreds) {
           const rawStats: PlayerStat[] = playersData.map(player => {
-            const userPreds = predsData.filter(p => String(p.user_id) === String(player.username));
+            const userPreds = allPreds.filter(p => String(p.user_id) === String(player.username));
             const totalPreds = userPreds.length;
 
             // Skorları say
@@ -42,7 +67,7 @@ export default function ScoutRadarPage() {
             const sortedScores = Object.entries(scoreCounts).sort((a, b) => b[1] - a[1]);
             const top3 = sortedScores.slice(0, 3);
 
-            // Oyuncu Karakteri Analizi (En çok oynadığı skora göre)
+            // Oyuncu Karakteri Analizi
             let style = "Bilinmiyor / Karışık";
             let styleColor = "text-slate-400";
 
@@ -100,7 +125,7 @@ export default function ScoutRadarPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-amber-500 uppercase tracking-wider">
               🕵️‍♂️ KOZMİK ODA: SCOUT RADARI
             </h1>
-            <p className="text-sm text-slate-400 mt-1">Sadece Başkomutana Özel Yarışmacı Zihin Haritası</p>
+            <p className="text-sm text-slate-400 mt-1">Sadece Başkomutana Özel Yarışmacı Zihin Haritası (6. Hafta ve Sonrası)</p>
           </div>
           <input
             type="text"
@@ -112,7 +137,7 @@ export default function ScoutRadarPage() {
         </div>
 
         {loading ? (
-          <div className="text-center text-amber-500 animate-pulse font-bold mt-20">📡 Arşiv Taranıyor, Veriler Çekiliyor...</div>
+          <div className="text-center text-amber-500 animate-pulse font-bold mt-20">📡 Tüm Arşiv Taranıyor, On Binlerce Veri Çekiliyor...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredStats.map((player, idx) => (
