@@ -40,6 +40,7 @@ export default function TahminlerPortal() {
 
   const getDisplayWeek = (week: number) => {
       if (week === 16) return "1, 2 VE 3 EKİM ÖZEL BÜLTENİ";
+      if (week === 17) return "4, 5 VE 6 EKİM ÖZEL BÜLTENİ";
       return getWeekLabel(week);
   };
 
