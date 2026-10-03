@@ -50,6 +50,25 @@ export async function GET(request: Request) {
         const todaysMatches = bulten.filter(match => match.match_date === todayStr);
         if (todaysMatches.length > 0) {
             const matchIds = todaysMatches.map(match => (match.week_num * 100) + match.match_index);
+            
+            // 🔴 1. MUCİZE: SENİN "CANLIYA YANSIT" DEMENE GEREK KALMADAN ROBOT EKSİK MAÇLARI KENDİ BULUP EKLER!
+            const { data: existingLive } = await supabase.from('live_matches').select('id').in('id', matchIds);
+            const existingIds = existingLive?.map(l => l.id) || [];
+            const missingIds = matchIds.filter(id => !existingIds.includes(id));
+            
+            if (missingIds.length > 0) {
+                const inserts = missingIds.map(id => ({ 
+                    id, 
+                    api_match_id: null, 
+                    status: 'NOT_STARTED', 
+                    home_score: '-', 
+                    away_score: '-',
+                    elapsed: 0
+                }));
+                await supabase.from('live_matches').insert(inserts);
+            }
+
+            // Artık otomatik eklenmiş halleriyle beraber canlı maçları çekiyoruz
             const { data: liveData } = await supabase.from('live_matches').select('id, api_match_id, status').in('id', matchIds).neq('status', 'FINISHED');
 
             if (liveData && liveData.length > 0) {
@@ -95,8 +114,8 @@ export async function GET(request: Request) {
                                 
                                 let statu = 'NOT_STARTED';
                                 
-                                // 🔴 KRİTİK DÜZELTME: Maç bitse bile otomatik olarak 'FINISHED' YAPILMAYACAK!
-                                // Bunun yerine 'WAITING_APPROVAL' (Onay Bekliyor) yapılacak ki canlı puanlar silinmesin!
+                                // 🔴 2. MUCİZE: Maç bitse bile robot bunu asla FINISHED yapmaz.
+                                // WAITING_APPROVAL yapar, ki puanlar Liderlik Tablosunda canlı kalmaya devam etsin!
                                 if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) {
                                     statu = 'WAITING_APPROVAL'; 
                                 }
@@ -223,7 +242,8 @@ export async function GET(request: Request) {
 
                 const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
                 
-                // NOT: 'WAITING_APPROVAL' olan maçlar bu 'isLive' dizisinin içinde olduğu için puan hesaplamaya devam eder!
+                // 🔴 BURASI ÇOK KRİTİK: WAITING_APPROVAL, Liderlik tablosuna CANLI gibi davranır. 
+                // Yani sen gece 3'te onayla tuşuna basana kadar puanlar oyuncunun hanesinde aslanlar gibi durur.
                 const isLive = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
                 const isTff = isTffMatchCheck(catDict[`${weekNum}-${matchIndex}`] || "");
 
@@ -326,10 +346,12 @@ export async function GET(request: Request) {
         if (upsertData.length > 0) {
             await supabase.from('live_leaderboard').upsert(upsertData, { onConflict: 'id' });
         }
+    
 
     } catch (e) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'API BAGLANTISI VE RADAR BASARIYLA CALISTI. ONAY MANUEL!' });
+    return NextResponse.json({ message: 'API BAGLANTISI VE OTONOM RADAR BASARIYLA CALISTI. ONAY MANUEL!' });
+    
 }
