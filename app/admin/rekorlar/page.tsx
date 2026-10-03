@@ -26,10 +26,8 @@ export default function RekortmenlerPage() {
       try {
         setLoading(true);
         
-        // 1. Oyuncuları Çek
         const { data: playersData } = await supabase.from('players').select('username, name');
         
-        // 2. Tahminleri Süpür
         let allPreds: any[] = [];
         let fetchMore = true;
         let from = 0;
@@ -50,7 +48,6 @@ export default function RekortmenlerPage() {
             } else { fetchMore = false; }
         }
 
-        // 3. Gerçek Maçları Süpür
         let allMatches: any[] = [];
         let fetchMoreMatches = true;
         let fromMatch = 0;
@@ -79,7 +76,6 @@ export default function RekortmenlerPage() {
             }
         });
 
-        // 4. Verileri Harmanla
         if (playersData && allPreds) {
           const playersMap: Record<string, PlayerStats> = {};
           playersData.forEach(p => {
@@ -96,7 +92,6 @@ export default function RekortmenlerPage() {
                 const player = playersMap[userId];
                 player.totalPlayed += 1;
                 
-                // 🔥 BURASI ZIRHLANDI: Eğer skor objede yoksa, önce oluşturuyoruz!
                 if (!player.scores[predicted]) {
                     player.scores[predicted] = { played: 0, hit: 0 };
                 }
@@ -169,7 +164,6 @@ export default function RekortmenlerPage() {
                   }
               });
 
-              // 🔥 BURASI ZIRHLANDI: mostAccurateUser null (boş) gelme ihtimaline karşı '?.' ve '||' kullanıldı.
               sLeaders.push({
                   score: scoreLabel,
                   addict: { name: mostPlayedUser?.name || '-', count: mostPlayedCount },
@@ -200,20 +194,20 @@ export default function RekortmenlerPage() {
         
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-black text-emerald-500 uppercase tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">
-            🎖️ KARARGAH REKORTMENLERİ
+            🏆 ELİT TAHMİN MASTER LİGİ REKORTMENLERİ
           </h1>
-          <p className="text-slate-400 mt-2 font-bold tracking-wide">Bordo Bereliler ve Özel Kuvvetler İstatistikleri</p>
+          <p className="text-slate-400 mt-2 font-bold tracking-wide">Usta Kahinler ve Zirve İstatistikleri</p>
         </div>
 
         {loading ? (
-          <div className="text-center text-emerald-500 animate-pulse font-bold mt-20 text-xl">📡 Bütün Ordu Taranıyor, Keskin Nişancılar Tespit Ediliyor...</div>
+          <div className="text-center text-emerald-500 animate-pulse font-bold mt-20 text-xl">📡 Tüm Arşiv Taranıyor, Usta Tahminciler Tespit Ediliyor...</div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 
                 <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border border-emerald-500/30 rounded-2xl p-6 shadow-[0_0_20px_rgba(16,185,129,0.1)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🎯</div>
-                    <div className="text-emerald-500 text-xs font-black uppercase tracking-widest mb-1">Karargahın En Keskin Nişancısı</div>
+                    <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🔮</div>
+                    <div className="text-emerald-500 text-xs font-black uppercase tracking-widest mb-1">ETML'nin Altın Kahini</div>
                     <div className="text-slate-400 text-[10px] mb-4">Genel isabet oranı en yüksek yarışmacı (Min. 50 Tahmin)</div>
                     
                     <div className="text-2xl sm:text-3xl font-black text-white mb-2">{overallBest?.name || 'Hesaplanıyor...'}</div>
@@ -223,24 +217,24 @@ export default function RekortmenlerPage() {
                             <div className="text-slate-500 text-[9px] uppercase font-bold">İsabet Oranı</div>
                         </div>
                         <div className="text-slate-400 text-xs font-semibold">
-                            {overallBest?.totalPlayed || 0} atışın <span className="text-white font-bold">{overallBest?.totalHits || 0}</span> tanesini tam 12'den vurdu!
+                            {overallBest?.totalPlayed || 0} tahminin <span className="text-white font-bold">{overallBest?.totalHits || 0}</span> tanesini tam isabetle bildi!
                         </div>
                     </div>
                 </div>
 
                 <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border border-amber-500/30 rounded-2xl p-6 shadow-[0_0_20px_rgba(245,158,11,0.1)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🔥</div>
-                    <div className="text-amber-500 text-xs font-black uppercase tracking-widest mb-1">Karargahın Makineli Tüfeği</div>
-                    <div className="text-slate-400 text-[10px] mb-4">Sisteme en çok tahmin giren sadık savaşçı</div>
+                    <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">⚙️</div>
+                    <div className="text-amber-500 text-xs font-black uppercase tracking-widest mb-1">ETML'nin Tahmin Makinesi</div>
+                    <div className="text-slate-400 text-[10px] mb-4">Sisteme en çok tahmin giren istikrarlı yarışmacı</div>
                     
                     <div className="text-2xl sm:text-3xl font-black text-white mb-2">{mostActive?.name || 'Hesaplanıyor...'}</div>
                     <div className="flex items-center gap-4 mt-4">
                         <div className="bg-[#0a0f1c] px-4 py-2 rounded-lg border border-amber-500/50">
                             <div className="text-amber-400 font-black text-xl">{mostActive?.totalPlayed || 0}</div>
-                            <div className="text-slate-500 text-[9px] uppercase font-bold">Toplam Atış</div>
+                            <div className="text-slate-500 text-[9px] uppercase font-bold">Toplam Tahmin</div>
                         </div>
                         <div className="text-slate-400 text-xs font-semibold">
-                            Oynadığı maçlardan <span className="text-white font-bold">{mostActive?.totalHits || 0}</span> tanesinde isabet sağladı.
+                            Yaptığı tahminlerden <span className="text-white font-bold">{mostActive?.totalHits || 0}</span> tanesinde isabet sağladı.
                         </div>
                     </div>
                 </div>
@@ -260,7 +254,7 @@ export default function RekortmenlerPage() {
                         </div>
 
                         <div className="mt-2 mb-5">
-                            <div className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Bu Skorun Bağımlısı (En Çok Oynayan)</div>
+                            <div className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Bu Skorun Müdavimi (En Çok Oynayan)</div>
                             <div className="text-white font-bold text-sm bg-slate-800/50 px-3 py-2 rounded border border-slate-700/50 flex justify-between items-center">
                                 <span className="truncate pr-2">{leader.addict.name}</span>
                                 <span className="text-amber-500 font-black text-xs shrink-0">{leader.addict.count} Kere</span>
@@ -268,11 +262,11 @@ export default function RekortmenlerPage() {
                         </div>
 
                         <div>
-                            <div className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Bu Skorun Ustası (En İyi Bilen)</div>
+                            <div className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Bu Skorun Kahini (En İyi Bilen)</div>
                             <div className="text-white font-bold text-sm bg-emerald-900/20 px-3 py-2 rounded border border-emerald-800/50">
                                 <div className="truncate mb-1">{leader.master.name}</div>
                                 <div className="flex justify-between items-end">
-                                    <span className="text-slate-400 text-[10px] font-semibold">{leader.master.played} atışta {leader.master.hit} isabet</span>
+                                    <span className="text-slate-400 text-[10px] font-semibold">{leader.master.played} tahminde {leader.master.hit} isabet</span>
                                     <span className="text-emerald-400 font-black text-lg">% {leader.master.rate}</span>
                                 </div>
                             </div>
