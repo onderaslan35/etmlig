@@ -2,11 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+interface ScoreStats {
+  played: number;
+  hit: number;
+}
+
 interface PlayerStat {
   username: string;
   name: string;
   totalPreds: number;
-  topScores: [string, number][]; // [Skor, Kaç Kere Oynadı]
+  allScores: [string, ScoreStats][]; 
   style: string;
   styleColor: string;
 }
@@ -24,7 +29,7 @@ export default function ScoutRadarPage() {
         // 1. Oyuncuları Çek
         const { data: playersData } = await supabase.from('players').select('username, name');
         
-        // 2. TAHMİNLERİ KAZIYAN SÜPÜRGE DÖNGÜSÜ (6. Haftadan İtibaren Sınır Tanımadan Çeker)
+        // 2. Tahminleri Süpürge ile Çek (6. Hafta ve Sonrası)
         let allPreds: any[] = [];
         let fetchMore = true;
         let from = 0;
@@ -33,8 +38,8 @@ export default function ScoutRadarPage() {
         while (fetchMore) {
             const { data: pDataChunk, error } = await supabase
                 .from('player_predictions')
-                .select('user_id, predicted_score, week_num')
-                .gte('week_num', 6) // 🔴 KOMUTANIN EMRİ: Sadece 6. hafta ve sonrasını al!
+                .select('user_id, predicted_score, week_num, match_index')
+                .gte('week_num', 6)
                 .order('id', { ascending: true })
                 .range(from, from + step - 1);
 
@@ -49,31 +54,73 @@ export default function ScoutRadarPage() {
             }
         }
 
+        // 3. GERÇEK Maç Skorlarını Çek (İsabet Oranı İçin)
+        let allMatches: any[] = [];
+        let fetchMoreMatches = true;
+        let fromMatch = 0;
+        
+        while (fetchMoreMatches) {
+            const { data: mDataChunk, error } = await supabase
+                .from('live_matches')
+                .select('id, home_score, away_score, status')
+                .gte('id', 600) // Sadece 6. hafta ve sonrası maçlar (ID 600+)
+                .order('id', { ascending: true })
+                .range(fromMatch, fromMatch + step - 1);
+            
+            if (error) break;
+            
+            if (mDataChunk && mDataChunk.length > 0) {
+                allMatches = [...allMatches, ...mDataChunk];
+                if (mDataChunk.length < step) fetchMoreMatches = false;
+                else fromMatch += step;
+            } else {
+                fetchMoreMatches = false;
+            }
+        }
+
+        // Maçları ID'sine göre hızlı aramak için sözlüğe çevir
+        const actualScoresMap: Record<number, string> = {};
+        allMatches.forEach(m => {
+            if (m.home_score && m.home_score !== '-' && m.away_score && m.away_score !== '-') {
+                if (m.status === 'FINISHED' || m.status === 'FT' || m.status === 'WAITING_APPROVAL') {
+                    actualScoresMap[m.id] = `${m.home_score}-${m.away_score}`.replace(/\s+/g, '');
+                }
+            }
+        });
+
         if (playersData && allPreds) {
           const rawStats: PlayerStat[] = playersData.map(player => {
             const userPreds = allPreds.filter(p => String(p.user_id) === String(player.username));
             const totalPreds = userPreds.length;
 
-            // Skorları say
-            const scoreCounts: Record<string, number> = {};
+            // Skorları ve isabetleri say
+            const scoreCounts: Record<string, ScoreStats> = {};
             userPreds.forEach(p => {
-              const s = p.predicted_score.replace(/\s+/g, '');
-              if (s && s !== '-' && s !== '') {
-                scoreCounts[s] = (scoreCounts[s] || 0) + 1;
+              const predicted = p.predicted_score.replace(/\s+/g, '');
+              if (predicted && predicted !== '-') {
+                if (!scoreCounts[predicted]) scoreCounts[predicted] = { played: 0, hit: 0 };
+                
+                scoreCounts[predicted].played += 1;
+
+                // İsabet Kontrolü: Gerçek maç skoruyla aynı mı?
+                const matchId = (p.week_num * 100) + p.match_index;
+                const actualScore = actualScoresMap[matchId];
+                if (actualScore && actualScore === predicted) {
+                    scoreCounts[predicted].hit += 1;
+                }
               }
             });
 
-            // En çok oynanan skorları sırala
-            const sortedScores = Object.entries(scoreCounts).sort((a, b) => b[1] - a[1]);
-            const top3 = sortedScores.slice(0, 3);
+            // En çok oynanandan aza doğru SIRALA
+            const sortedScores = Object.entries(scoreCounts).sort((a, b) => b[1].played - a[1].played);
 
             // Oyuncu Karakteri Analizi
             let style = "Bilinmiyor / Karışık";
             let styleColor = "text-slate-400";
 
-            if (top3.length > 0) {
-              const favScore = top3[0][0];
-              const favCount = top3[0][1];
+            if (sortedScores.length > 0) {
+              const favScore = sortedScores[0][0];
+              const favCount = sortedScores[0][1].played;
               const percent = (favCount / totalPreds) * 100;
 
               if (percent > 40) {
@@ -95,13 +142,12 @@ export default function ScoutRadarPage() {
               username: player.username,
               name: player.name,
               totalPreds,
-              topScores: top3,
+              allScores: sortedScores, // Artık 3 satır sınırı yok!
               style,
               styleColor
             };
           });
 
-          // Hiç tahmini olmayanları filtrele ve en çok tahmin yapandan aza doğru sırala
           const filtered = rawStats.filter(p => p.totalPreds > 0).sort((a, b) => b.totalPreds - a.totalPreds);
           setStats(filtered);
         }
@@ -125,7 +171,7 @@ export default function ScoutRadarPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-amber-500 uppercase tracking-wider">
               🕵️‍♂️ KOZMİK ODA: SCOUT RADARI
             </h1>
-            <p className="text-sm text-slate-400 mt-1">Sadece Başkomutana Özel Yarışmacı Zihin Haritası (6. Hafta ve Sonrası)</p>
+            <p className="text-sm text-slate-400 mt-1">Sadece Başkomutana Özel Zihin Haritası ve İsabet Oranları</p>
           </div>
           <input
             type="text"
@@ -137,44 +183,67 @@ export default function ScoutRadarPage() {
         </div>
 
         {loading ? (
-          <div className="text-center text-amber-500 animate-pulse font-bold mt-20">📡 Tüm Arşiv Taranıyor, On Binlerce Veri Çekiliyor...</div>
+          <div className="text-center text-amber-500 animate-pulse font-bold mt-20">📡 Arşiv Okunuyor ve İsabet Oranları Hesaplanıyor...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredStats.map((player, idx) => (
-              <div key={idx} className="bg-[#0f172a] border border-slate-800 rounded-xl p-5 hover:border-amber-500/50 transition-colors shadow-lg">
-                <div className="flex justify-between items-start mb-3 border-b border-slate-700/50 pb-3">
+              <div key={idx} className="bg-[#0f172a] border border-slate-800 rounded-xl p-4 hover:border-amber-500/50 transition-colors shadow-lg flex flex-col max-h-[400px]">
+                
+                <div className="flex justify-between items-start mb-3 border-b border-slate-700/50 pb-3 shrink-0">
                   <h2 className="font-bold text-lg text-white truncate pr-2">{player.name}</h2>
                   <div className="bg-slate-800 text-slate-300 text-[10px] px-2 py-1 rounded font-bold whitespace-nowrap">
                     {player.totalPreds} TAHMİN
                   </div>
                 </div>
                 
-                <div className="mb-4">
-                  <div className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-semibold">Oyun Karakteri</div>
+                <div className="mb-3 shrink-0">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">Oyun Karakteri</div>
                   <div className={`font-black uppercase text-sm ${player.styleColor}`}>
                     {player.style}
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-semibold">Favori Skor Kombinasyonları</div>
-                  <div className="space-y-2">
-                    {player.topScores.map((scoreInfo, i) => {
-                      const percentage = Math.round((scoreInfo[1] / player.totalPreds) * 100);
+                <div className="flex-1 overflow-hidden flex flex-col">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-semibold">Skor Analizi ve İsabet Oranı</div>
+                  
+                  {/* Burası kaydırılabilir liste alanı! Sınır yok! */}
+                  <div className="overflow-y-auto space-y-1.5 pr-1 pb-2 custom-scrollbar">
+                    {player.allScores.map((scoreInfo, i) => {
+                      const scoreLabel = scoreInfo[0];
+                      const playedCount = scoreInfo[1].played;
+                      const hitCount = scoreInfo[1].hit;
+                      const hitRate = Math.round((hitCount / playedCount) * 100);
+
                       return (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="bg-slate-800 text-amber-400 font-bold px-2 py-0.5 rounded text-xs w-10 text-center">
-                              {scoreInfo[0]}
+                        <div key={i} className="flex items-center justify-between text-[11px] sm:text-xs bg-slate-800/40 p-2 rounded border border-slate-700/30">
+                          
+                          {/* Skor */}
+                          <div className="flex items-center w-1/4">
+                            <span className="bg-[#0a0f1c] text-amber-400 border border-amber-900/50 font-black px-2 py-0.5 rounded text-center w-full shadow-sm">
+                              {scoreLabel}
                             </span>
-                            <span className="text-slate-300 text-xs">({scoreInfo[1]} kez)</span>
                           </div>
-                          <div className="text-emerald-400 font-bold text-xs">% {percentage}</div>
+                          
+                          {/* Oynanan ve İsabet */}
+                          <div className="w-2/4 text-center text-slate-400 text-[10px]">
+                            Oynadı: <span className="font-bold text-white text-[11px]">{playedCount}</span> 
+                            <span className="mx-1">|</span>
+                            Bildikleri: <span className="font-bold text-emerald-400 text-[11px]">{hitCount}</span>
+                          </div>
+                          
+                          {/* Yüzde */}
+                          <div className="w-1/4 text-right">
+                            <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${hitRate > 0 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'text-slate-500'}`}>
+                              % {hitRate}
+                            </span>
+                          </div>
+
                         </div>
                       );
                     })}
                   </div>
                 </div>
+
               </div>
             ))}
           </div>
