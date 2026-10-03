@@ -195,7 +195,8 @@ export default function MasterPuanDurumuPage() {
         }
 
         if (allMatches && predictions) {
-            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
+            // 🔥 İŞTE ZIRHI BURAYA ÇEKTİM: WAITING_APPROVAL ARTIK CANLI SAYILACAK 🔥
+            const liveM = allMatches.filter(m => ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(m.status));
             
             liveM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
@@ -264,7 +265,7 @@ export default function MasterPuanDurumuPage() {
             });
 
             let ptsLeadersCount = 0, exactsLeadersCount = 0;
-            let ptsLeaderName = "", exactsLeaderName = "";
+            let ptsLeaderName = ""; let exactsLeaderName = "";
 
             Object.entries(weeklyStats).forEach(([name, s]) => {
                 if (maxPts > 0 && s.pts === maxPts) { ptsLeadersCount++; ptsLeaderName = name; }
