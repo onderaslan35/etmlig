@@ -51,7 +51,6 @@ export async function GET(request: Request) {
         if (todaysMatches.length > 0) {
             const matchIds = todaysMatches.map(match => (match.week_num * 100) + match.match_index);
             
-            // 🔴 1. MUCİZE: SENİN "CANLIYA YANSIT" DEMENE GEREK KALMADAN ROBOT EKSİK MAÇLARI KENDİ BULUP EKLER!
             const { data: existingLive } = await supabase.from('live_matches').select('id').in('id', matchIds);
             const existingIds = existingLive?.map(l => l.id) || [];
             const missingIds = matchIds.filter(id => !existingIds.includes(id));
@@ -68,7 +67,6 @@ export async function GET(request: Request) {
                 await supabase.from('live_matches').insert(inserts);
             }
 
-            // Artık otomatik eklenmiş halleriyle beraber canlı maçları çekiyoruz
             const { data: liveData } = await supabase.from('live_matches').select('id, api_match_id, status').in('id', matchIds).neq('status', 'FINISHED');
 
             if (liveData && liveData.length > 0) {
@@ -114,8 +112,6 @@ export async function GET(request: Request) {
                                 
                                 let statu = 'NOT_STARTED';
                                 
-                                // 🔴 2. MUCİZE: Maç bitse bile robot bunu asla FINISHED yapmaz.
-                                // WAITING_APPROVAL yapar, ki puanlar Liderlik Tablosunda canlı kalmaya devam etsin!
                                 if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) {
                                     statu = 'WAITING_APPROVAL'; 
                                 }
@@ -153,7 +149,6 @@ export async function GET(request: Request) {
         }
     }
 
-    // 🔴 LİDERLİK TABLOSU DİNAMİK HESABI 🔴
     try {
         const playersList: Record<string, string> = {};
         if (dbPlayers) dbPlayers.forEach(p => { const pid = p.username || String(p.id); if (pid !== 'mankoman') playersList[pid] = p.name || p.full_name; });
@@ -241,10 +236,6 @@ export async function GET(request: Request) {
                 else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
                 const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
-                
-                // 🔴 BURASI ÇOK KRİTİK: WAITING_APPROVAL, Liderlik tablosuna CANLI gibi davranır. 
-                // Yani sen gece 3'te onayla tuşuna basana kadar puanlar oyuncunun hanesinde aslanlar gibi durur.
-                const isLive = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
                 const isTff = isTffMatchCheck(catDict[`${weekNum}-${matchIndex}`] || "");
 
                 winnerIds.forEach(wId => {
@@ -264,12 +255,7 @@ export async function GET(request: Request) {
                                 st[wId].dfoSkorAll += 1; 
                                 if (weekNum < highestWeekFound) { st[wId].dfoBasePrev += pts; st[wId].dfoSkorPrev += 1; }
                             }
-                        } else if (isLive) {
-                            st[wId].masterLive += pts;
-                            st[wId].skorLive += 1;
-                            if (isTff) { st[wId].tffLive += pts; st[wId].tffSkorLive += 1; } 
-                            else { st[wId].dfoLive += pts; st[wId].dfoSkorLive += 1; }
-                        }
+                        } 
                     }
                 });
             }
@@ -282,22 +268,22 @@ export async function GET(request: Request) {
         const sortFunc = (a:any, b:any) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr');
         const makePrevRanks = (list: any[]) => { const r:Record<string,number>={}; list.forEach((p,i)=>r[p.id]=i+1); return r; };
 
-        const currList = Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBaseAll + st[id].masterLive + getAdminBonus(id, highestWeekFound) })).sort(sortFunc);
+        const currList = Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBaseAll + getAdminBonus(id, highestWeekFound) })).sort(sortFunc);
         const prevRanks = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBasePrev + getAdminBonus(id, highestWeekFound - 1) })).sort(sortFunc));
         
-        const currListDfo = Object.keys(st).map(id => ({ id, score: st[id].dfoPts + st[id].dfoLive })).sort(sortFunc);
+        const currListDfo = Object.keys(st).map(id => ({ id, score: st[id].dfoPts })).sort(sortFunc);
         const prevRanksDfo = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].dfoPts - st[id].dfoBaseAll + st[id].dfoBasePrev })).sort(sortFunc));
         
-        const currListTff = Object.keys(st).map(id => ({ id, score: st[id].tffPts + st[id].tffLive })).sort(sortFunc);
+        const currListTff = Object.keys(st).map(id => ({ id, score: st[id].tffPts })).sort(sortFunc);
         const prevRanksTff = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffPts - st[id].tffBaseAll + st[id].tffBasePrev })).sort(sortFunc));
 
-        const currSkor = Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorAll + st[id].skorLive })).sort(sortFunc);
+        const currSkor = Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorAll })).sort(sortFunc);
         const prevRanksSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorPrev })).sort(sortFunc));
         
-        const currDfoSkor = Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorAll + st[id].dfoSkorLive })).sort(sortFunc);
+        const currDfoSkor = Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorAll })).sort(sortFunc);
         const prevRanksDfoSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorPrev })).sort(sortFunc));
         
-        const currTffSkor = Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorAll + st[id].tffSkorLive })).sort(sortFunc);
+        const currTffSkor = Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorAll })).sort(sortFunc);
         const prevRanksTffSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorPrev })).sort(sortFunc));
 
         const getTrend = (currListArr:any[], prevRanksObj:Record<string,number>, pId:string) => {
@@ -347,11 +333,9 @@ export async function GET(request: Request) {
             await supabase.from('live_leaderboard').upsert(upsertData, { onConflict: 'id' });
         }
     
-
     } catch (e) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'API BAGLANTISI VE OTONOM RADAR BASARIYLA CALISTI. ONAY MANUEL!' });
-    
+    return NextResponse.json({ message: 'API BAGLANTISI VE OTONOM RADAR BASARIYLA CALISTI. CİFTE KAVRULMA HATASI GİDERİLDİ!' });
 }
