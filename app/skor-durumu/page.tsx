@@ -19,7 +19,7 @@ export default function SkorDurumuPage() {
 
   const loadSkorData = async () => {
     try {
-      // 1. Ana Liderlik Tablosunu Çek (Bu tablo sağlam kalmalıydı ama yedeğe alıyoruz)
+      // 1. Ana Liderlik Tablosunu Çek 
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('*');
 
       // 2. Canlı Maçları ve Bülteni Çek
@@ -47,13 +47,13 @@ export default function SkorDurumuPage() {
           setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 🔥 HAYATİ DOKUNUŞ: EKSİK OLAN SKOR BONUSLARINI (12 PUAN ALANLARI) KASADAN TESPİT ET 🔥
+      // 🔥 KASADAN (VERİTABANINDAN) KESİNLEŞMİŞ 12 PUANLARI ÇEK
       const { data: exactMatchesFromPoints } = await supabase
         .from('points')
         .select('*')
         .eq('puan', 12);
 
-      // 4. 🔥 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Canlı maçlar için) 🔥
+      // 4. 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Sadece aktif hafta)
       let predictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -92,20 +92,12 @@ export default function SkorDurumuPage() {
           });
       }
 
-      // Eksik kalan haftaları points'ten topla
-      if (exactMatchesFromPoints) {
-         exactMatchesFromPoints.forEach(pt => {
-             const rName = pt.user_name || "";
-             const matchedKey = Object.keys(dbBaseScores).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
-         });
-      }
-
-      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI (MASTER ZIRHI EKLENDİ) ⚡
+      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI (ÇİFT SAYMA DÜZELTİLDİ) ⚡
       const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
 
       if (allMatches && predictions && dbBulletin) {
-          // 🔥 KOMUTANIN ZIRHI: Sadece LIVE olanları değil, bu haftanın başlamış ve bitmiş (NOT_STARTED olmayan) tüm maçlarını say!
-          const matchesToCalculate = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && m.status !== 'NOT_STARTED');
+          // 🔥 KOMUTANIN EMRİ: Çift saymayı önlemek için SADECE anlık oynanan (LIVE/HT) maçları hesapla!
+          const matchesToCalculate = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT'));
           
           matchesToCalculate.forEach(match => {
               const currentScore = `${match.home_score}-${match.away_score}`;
@@ -126,9 +118,9 @@ export default function SkorDurumuPage() {
                   if (playerName) {
                       if (!liveBonuses[playerName]) liveBonuses[playerName] = { master: 0, dfo: 0, tff: 0 };
                       
-                      liveBonuses[playerName].master += 1; // Master'a her türlü yazar
-                      if (isTff) liveBonuses[playerName].tff += 1; // Sadece TFF ise
-                      else liveBonuses[playerName].dfo += 1; // Sadece DFO ise
+                      liveBonuses[playerName].master += 1; 
+                      if (isTff) liveBonuses[playerName].tff += 1; 
+                      else liveBonuses[playerName].dfo += 1; 
                   }
               });
           });
@@ -286,7 +278,7 @@ export default function SkorDurumuPage() {
                     <td className="px-1 py-3 align-middle text-right">
                       {row.liveBonus > 0 && (
                         <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                          +{row.liveBonus} BU HAFTA
+                          +{row.liveBonus} MAÇ CANLI
                         </span>
                       )}
                     </td>
