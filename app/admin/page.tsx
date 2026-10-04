@@ -66,21 +66,18 @@ export default function AdminRadarPortal() {
 
   const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
-  const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); // YENİ: Otomatik eşleştirme durumu
+  const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); 
 
-
-  // 🔥 KOMUTANIN 30 SANİYELİK OTOMATİK API RADARI 🔥
   useEffect(() => {
     if (isAuthenticated && activeTab === 'live') {
       const apiRadar = setInterval(async () => {
         try {
-          // Arka planda senin o linki tetikler
           await fetch('/api/canli-skor'); 
           console.log("30 saniyelik uydu taraması yapıldı.");
         } catch (e) {
           console.log("Radar hatası:", e);
         }
-      }, 30000); // 30 Saniye
+      }, 30000); 
 
       return () => clearInterval(apiRadar);
     }
@@ -106,9 +103,7 @@ export default function AdminRadarPortal() {
      }
   };
 
-  const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({
-  
-  });
+  const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({});
 
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
@@ -510,7 +505,6 @@ export default function AdminRadarPortal() {
     fetchPredictionData();
   }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
 
-  // 🔥 YENİ: SİHİRLİ EŞLEŞTİRİCİ ZEKASI (FUZZY MATCH) 🔥
   const normalizeTeamName = (name: string) => {
     if (!name) return "";
     let normalized = name.toLocaleLowerCase('tr-TR')
@@ -524,7 +518,6 @@ export default function AdminRadarPortal() {
       .replace(/[^a-z0-9]/g, '')
       .trim();
 
-    // Özel Çeviri Sözlüğü
     const dictionary: Record<string, string> = {
       "kibris": "cyprus", "kibrisrumkesimi": "cyprus", "kuzeyirlanda": "northernireland", "kirlanda": "northernireland",
       "turkiye": "turkey", "almanya": "germany", "ispanya": "spain", "fransa": "france", "ingiltere": "england",
@@ -549,11 +542,9 @@ export default function AdminRadarPortal() {
     let updatedMatches = [...bulletinMatches];
     let matchedCount = 0;
     
-    // Bültendeki benzersiz tarihleri bul
     const uniqueDates = Array.from(new Set(updatedMatches.map(m => m.match_date).filter(d => d)));
     let newApiData = { ...apiMatchesByDate };
     
-    // Her tarih için API'den o günün tüm maçlarını topluca çek
     for (const dateStr of uniqueDates) {
       let formattedDate = dateStr;
       if (formattedDate.includes('.')) {
@@ -581,9 +572,8 @@ export default function AdminRadarPortal() {
     
     setApiMatchesByDate(newApiData);
     
-    // Bültendeki maçları uydudan gelen devasa havuzla karşılaştır
     updatedMatches = updatedMatches.map(m => {
-       if (m.api_match_id || !m.home_team || !m.match_date) return m; // ID zaten varsa veya maç boşsa atla
+       if (m.api_match_id || !m.home_team || !m.match_date) return m; 
        
        let formattedDate = m.match_date;
        if (formattedDate.includes('.')) {
@@ -599,7 +589,6 @@ export default function AdminRadarPortal() {
 
        let bestMatch = null;
        
-       // Günün maçlarında ev sahibi veya deplasman uyuyor mu bak
        for (const fix of dailyFixtures) {
           const apiHome = normalizeTeamName(fix.teams.home.name);
           const apiAway = normalizeTeamName(fix.teams.away.name);
@@ -988,6 +977,47 @@ export default function AdminRadarPortal() {
     }
   };
 
+  // 🔥 KOMUTANIN ÖZEL OPERASYONU: SESSİZ VE TOPLU CANLIYA ALMA 🔥
+  const handleBulkSilentLive = async () => {
+    const todayMatches = displayedMatches.filter(m => m.match_date === getTodayDateString());
+    
+    if (todayMatches.length === 0) {
+        alert("⚠️ Bugün oynanacak herhangi bir maç bulunamadı!");
+        return;
+    }
+
+    const confirmBulk = window.confirm(`DİKKAT: Bugün oynanacak olan tam ${todayMatches.length} maç, otomatik radar (API) tarafından çekilebilsin diye arka planda SESSİZCE canlı sistemine kilitlenecek.\n\nSkorlar "0-0" YERİNE "-" (tire) olarak girecek, böylece kimseye SAHTE PUAN (spoiler) dağıtılmayacak.\n\nOnaylıyor musun Komutanım?`);
+    
+    if (!confirmBulk) return;
+
+    try {
+        const nowTime = new Date();
+        const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
+        
+        const bulkPayload = todayMatches.map(m => {
+            const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
+            // SADECE DAHA ÖNCE BİTMEMİŞ MAÇLARI GÜNCELLE
+            return {
+                id: uniqueId,
+                home_score: '-', // 0-0 spoiler'ını önleyen TİRE kalkanı
+                away_score: '-',
+                status: 'NOT_STARTED', // Radar uyuduğunda uyanana kadar beklesin
+                updated_by: 'MASTER_OTO',
+                updated_at: timeString
+            };
+        });
+
+        const { error } = await supabase.from('live_matches').upsert(bulkPayload, { onConflict: 'id' });
+        
+        if (error) throw error;
+        
+        alert(`✅ MÜKEMMEL OPERASYON!\nBugünün ${todayMatches.length} maçı Karargah sistemine SESSİZCE kilitlendi.\nArtık tek yapman gereken API radarının saatleri geldiğinde maçları otomatik güncellemesini izlemek.`);
+        
+    } catch (e: any) {
+        alert("❌ Toplu aktarım sırasında hata: " + e.message);
+    }
+  };
+
   const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
     const currentMatch = bulletinMatches[currentIndex];
     const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
@@ -1143,7 +1173,7 @@ export default function AdminRadarPortal() {
 
       if (showOnlyToday) {
           if (isFinished) return false; 
-          if (isLive || isWithinLast5Hours) return true;      
+          if (isLive || isWithinLast5Hours) return true;     
           return isToday;                
       }
       return true; 
@@ -1297,6 +1327,19 @@ export default function AdminRadarPortal() {
             </div>
             )}
 
+            {/* 🔥 KOMUTANIN DEV TOPLU İŞLEM BUTONU 🔥 */}
+            {userRole === 'master' && (
+              <div className="w-full flex justify-center mb-8">
+                  <button 
+                      onClick={handleBulkSilentLive}
+                      className="bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1 w-full max-w-3xl"
+                  >
+                      <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BUGÜNÜN BÜTÜN MAÇLARINI TOPLU OLARAK CANLIYA AL</span>
+                      <span className="text-[10px] sm:text-xs text-amber-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Sessiz Mod: Puanlar gizlenir, spoiler engellenir, API saatinde otomatik çeker.</span>
+                  </button>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
               <div className="text-center sm:text-left">
                 <h1 className="text-xl sm:text-2xl font-bold text-amber-400 tracking-tight flex items-center justify-center sm:justify-start gap-2">
@@ -1402,7 +1445,6 @@ export default function AdminRadarPortal() {
                   else displayPoints = 0;
                 }
 
-                // SADECE "PUAN DAĞITILDI" KİLİDİ KALDI. SÜRE VE GEÇMİŞ KİLİTLERİ İMHA EDİLDİ!
                 const isLocked = distributedMatches[match.match_index];
                 const logInfo = liveInfoStateMap[match.match_index];
 
