@@ -177,7 +177,7 @@ export const localTeamLogos: Record<string, string> = {
   "TRABZONSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Trabzonspor_2022.svg",
   "KASIMPAŞA": "https://de.wikipedia.org/wiki/Special:FilePath/Kasimpasa_Logo.svg",
   "KONYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Konyaspor_(logo).svg",
-  "ÇAYKUR RİZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Caykur_Rizespor_(logo).svg",
+  "ÇAYKUR RİZE": "https://images.fotmob.com/image_resources/logo/teamlogo/2166_large.png",
   "FATİH KARAGÜMRÜK": "https://fr.wikipedia.org/wiki/Special:FilePath/Fatih_Karag%C3%BCmr%C3%BCk_SK_(logo).svg",
   "ÜMRANİYESPOR": "https://el.wikipedia.org/wiki/Special:FilePath/%C3%9Cmraniyespor_(logo).svg",
   "GAZİANTEP FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gaziantep_FK.svg",
@@ -277,6 +277,8 @@ export const localTeamLogos: Record<string, string> = {
   "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
   "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "MIDDLESBROUGH": "https://images.fotmob.com/image_resources/logo/teamlogo/8549_large.png",
+  "WEST HAM": "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg",
+  "QPR": "https://upload.wikimedia.org/wikipedia/en/3/31/Queens_Park_Rangers_crest.svg",
 
   // İTALYA
   "INTER": "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png",
@@ -305,6 +307,10 @@ export const localTeamLogos: Record<string, string> = {
   "FROSINONE": "https://images.fotmob.com/image_resources/logo/teamlogo/9891_large.png",
   "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
+  "DEPORTIVO ALAVÉS": "https://upload.wikimedia.org/wikipedia/tr/c/ce/Deportivo_Alaves_logo.svg",
+  "LEEDS": "https://upload.wikimedia.org/wikipedia/fr/5/54/Logo_Leeds_United_FC.svg",
+  "SC HEERENVEEN": "https://upload.wikimedia.org/wikipedia/en/1/13/SC_Heerenveen_logo.svg",
+  "NOTTM FOREST": "https://upload.wikimedia.org/wikipedia/it/9/91/Nottingham_Forest_FC_Logo.svg",
 
   // ALMANYA
   "BAYERN MÜNİH": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
