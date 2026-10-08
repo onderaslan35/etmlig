@@ -254,6 +254,7 @@ export const localTeamLogos: Record<string, string> = {
   "SLAVIA PRAGUE": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
   "JAGIELLONIA BIAŁYSTOK": "https://images.fotmob.com/image_resources/logo/teamlogo/1957.png",
   "SLAVIA PRAG": "https://images.fotmob.com/image_resources/logo/teamlogo/7787_large.png",
+  "BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10264_large.png",
 
   // İNGİLTERE
   "ARSENAL": "https://en.wikipedia.org/wiki/Special:FilePath/Arsenal_FC.svg",
@@ -309,7 +310,7 @@ export const localTeamLogos: Record<string, string> = {
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
   "DEPORTIVO ALAVÉS": "https://upload.wikimedia.org/wikipedia/tr/c/ce/Deportivo_Alaves_logo.svg",
   "LEEDS": "https://upload.wikimedia.org/wikipedia/fr/5/54/Logo_Leeds_United_FC.svg",
-  "SC HEERENVEEN": "https://upload.wikimedia.org/wikipedia/en/1/13/SC_Heerenveen_logo.svg",
+  "SC HEERENVEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/10228_large.png",
   "NOTTM FOREST": "https://upload.wikimedia.org/wikipedia/it/9/91/Nottingham_Forest_FC_Logo.svg",
 
   // ALMANYA
