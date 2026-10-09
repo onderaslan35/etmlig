@@ -15,7 +15,6 @@ export default function Navbar() {
     { name: 'MASTER PUAN DURUMU', path: '/puan-durumu/master', isMaster: true },
     { name: 'SKOR DURUMU', path: '/skor-durumu' },
     { name: 'TAHMİNLER', path: '/tahmin' }, 
-    { name: 'SKOR ANALİZ', path: '/istatistikler' }, 
     { name: '🔴 CANLI', path: '/canli', isCanli: true }, 
   ];
 
