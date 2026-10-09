@@ -16,6 +16,7 @@ export default function Navbar() {
     { name: 'MASTER PUAN DURUMU', path: '/puan-durumu/master', isMaster: true }, // MERKEZ
     { name: 'SKOR DURUMU', path: '/skor-durumu' },
     { name: 'TAHMİNLER', path: '/tahmin' }, 
+    { name: 'SKOR ANALİZ', path: '/istatistikler' }, // 📌 YENİ İSTİHBARAT BUTONU BURAYA EKLENDİ
     { name: '🔴 CANLI', path: '/canli', isCanli: true }, // YENİ CANLI BUTONU
   ];
 
@@ -98,7 +99,7 @@ export default function Navbar() {
 
           {/* 🔴 MOBİL MENÜ BUTONU 🔴 */}
           <div className="lg:hidden flex items-center justify-between w-full px-2">
-            <span className="text-white font-black tracking-widest text-xl">MENÜ          ➡️ <span className="text-slate-500 text-sm"></span></span>
+            <span className="text-white font-black tracking-widest text-xl">MENÜ         ➡️ <span className="text-slate-500 text-sm"></span></span>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-slate-400 hover:text-white focus:outline-none p-2 rounded-lg bg-slate-800/50"
@@ -137,9 +138,7 @@ export default function Navbar() {
                 </Link>
               );
             }
-<Link href="/istatistikler" className="text-white hover:text-[#ff2a2a] transition font-bold px-3 py-2 rounded-md">
-  TAKTİK ODASI
-</Link>
+
             return (
               <Link
                 key={link.path}
