@@ -237,6 +237,7 @@ export const localTeamLogos: Record<string, string> = {
   "MIDTJYLLAND": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Midtjylland.png",
   "HAJDUK SPLIT": "https://tr.wikipedia.org/wiki/Special:FilePath/Hajduk_Split.png",
   "PATOS": "https://en.wikipedia.org/wiki/Special:FilePath/Pafos_FC_crest.svg",
+  "SHELBOURNE": "https://images.fotmob.com/image_resources/logo/teamlogo/5751.png",
   "CSKA SOFYA": "https://tr.wikipedia.org/wiki/Special:FilePath/CSKA_Sofia_logo.svg",
   "CSKA SOFİA": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
   "CSKA SOFIA": "https://images.fotmob.com/image_resources/logo/teamlogo/10144_large.png",
