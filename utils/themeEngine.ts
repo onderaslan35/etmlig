@@ -247,6 +247,7 @@ export const localTeamLogos: Record<string, string> = {
   "INTER TURKU": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Inter_Turku_logo.svg",
   "UNIVERSITATEA CLUJ": "https://ro.wikipedia.org/wiki/Special:FilePath/U_Cluj.svg",
   "DINAMO MINSK": "https://tr.wikipedia.org/wiki/Special:FilePath/Dinamo-Minsk.png",
+  "PAIDE LINNAMEESKOND": "https://images.fotmob.com/image_resources/logo/teamlogo/163540.png",
   "AEK ATHENS": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
   "LASK": "https://images.fotmob.com/image_resources/logo/teamlogo/9977_large.png",
   "VİKİNG": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
