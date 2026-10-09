@@ -137,7 +137,9 @@ export default function Navbar() {
                 </Link>
               );
             }
-
+<Link href="/istatistikler" className="text-white hover:text-[#ff2a2a] transition font-bold px-3 py-2 rounded-md">
+  TAKTİK ODASI
+</Link>
             return (
               <Link
                 key={link.path}
