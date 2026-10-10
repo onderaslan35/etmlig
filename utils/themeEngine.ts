@@ -457,7 +457,7 @@ export const localTeamLogos: Record<string, string> = {
   // YEREL KLASÖRLER (Sadece Yerli Alt Lig Takımları İçin Korundu)
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
-  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUMSPOR": "/logos/bodrumspor.png", "ERZURUMSPOR FK": "/logos/erzurumspor.png",
+  "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUM FK": "/logos/bodrumspor.png", "ERZURUMSPOR FK": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
   "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
