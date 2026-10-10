@@ -189,7 +189,7 @@ export const localTeamLogos: Record<string, string> = {
   "AMED SPOR": "https://tr.wikipedia.org/wiki/Special:FilePath/Amed_SK.png",
   "MARDİN 1969": "https://tr.wikipedia.org/wiki/Special:FilePath/Mardin_1969_SK.png",
   "ANTALYASPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Antalyaspor.svg",
-  "BATMAN PETROLSPOR: "https://tr.wikipedia.org/wiki/Special:FilePath/Batman_Petrolspor.png",
+  "BATMAN PETROLSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/163008_large.png",
   "KEÇİÖRENGÜCÜ": "https://tr.wikipedia.org/wiki/Special:FilePath/Ankara_Ke%C3%A7i%C3%B6reng%C3%BCc%C3%BC_SK.png",
   "BURSASPOR": "https://de.wikipedia.org/wiki/Special:FilePath/Bursaspor_Logo.svg",
   "SAMSUNSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Samsunspor_2020.svg",
