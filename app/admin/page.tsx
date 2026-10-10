@@ -73,6 +73,12 @@ export default function AdminRadarPortal() {
   const [secilenMaclar, setSecilenMaclar] = useState<any[]>([]);
   const [isHavuzLoading, setIsHavuzLoading] = useState(false);
 
+  // 🎯 YENİ SİSTEM: TARİH VE SAAT FİLTRELERİ 🎯
+  const [havuzBaslangicTarihi, setHavuzBaslangicTarihi] = useState('');
+  const [havuzBitisTarihi, setHavuzBitisTarihi] = useState('');
+  const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState('15:00'); // Gündüz çöplerini ayıklar
+  const [havuzBitisSaati, setHavuzBitisSaati] = useState('23:59');
+
   useEffect(() => {
     if (isAuthenticated && activeTab === 'live') {
       const apiRadar = setInterval(async () => {
@@ -428,6 +434,12 @@ export default function AdminRadarPortal() {
       const newDates = generateWeekDates(bulletinWeek);
       setCurrentWeekDates(newDates);
 
+      // 🎯 YENİ SİSTEM: TARİHLER YÜKLENİNCE FİLTRELERİ OTOMATİK DOLDUR
+      if (newDates && newDates.length > 0) {
+         setHavuzBaslangicTarihi(newDates[0]); // Örn: Cuma
+         setHavuzBitisTarihi(newDates[newDates.length > 2 ? 2 : newDates.length - 1]); // Örn: Pazar
+      }
+
       if (activeTab === 'bulletin') {
         const { data } = await supabase.from('matches_bulletin').select('*').eq('week_num', bulletinWeek).order('match_index', { ascending: true });
 
@@ -442,7 +454,7 @@ export default function AdminRadarPortal() {
           });
           setBulletinMatches(mapped as any);
 
-          // 🔥 YENİ SİSTEM İÇİN ÖNCEDEN YAZILMIŞ BÜLTENİ SEÇİLENLERE DOLDUR 🔥
+          // ÖNCEDEN YAZILMIŞ BÜLTENİ SEÇİLENLERE DOLDUR
           const loadedSecilen = data.map(m => ({
               fixture_id: m.api_match_id || `temp-${m.match_index}`,
               home_team: m.home_team,
@@ -556,7 +568,6 @@ export default function AdminRadarPortal() {
     return dictionary[normalized] || normalized;
   };
 
-  // Eski sistem Auto Match (Korundu, ancak yeni UI'da kullanılmıyor)
   const handleAutoMatch = async () => {
     setIsAutoMatching(true);
     let updatedMatches = [...bulletinMatches];
@@ -1133,12 +1144,24 @@ export default function AdminRadarPortal() {
       }
   };
 
-  // 🔥 YENİ SİSTEM: HAFTANIN TÜM MAÇLARINI UYDUDAN HAVUZA ÇEK 🔥
+  // 🎯 YENİ SİSTEM: TARİH VE SAAT FİLTRELİ UYDU ÇEKİMİ 🎯
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
     try {
-        for (const dateStr of currentWeekDates) {
+        const startIndex = currentWeekDates.indexOf(havuzBaslangicTarihi);
+        const endIndex = currentWeekDates.indexOf(havuzBitisTarihi);
+        
+        let datesToFetch = currentWeekDates;
+        if (startIndex !== -1 && endIndex !== -1 && startIndex <= endIndex) {
+            datesToFetch = currentWeekDates.slice(startIndex, endIndex + 1);
+        } else if (startIndex !== -1 && endIndex !== -1 && startIndex > endIndex) {
+            alert("❌ HATA: Bitiş tarihi, başlangıç tarihinden önce olamaz komutanım!");
+            setIsHavuzLoading(false);
+            return;
+        }
+
+        for (const dateStr of datesToFetch) {
             let formattedDate = dateStr;
             if (formattedDate.includes('.')) {
                 const parts = formattedDate.split('.');
@@ -1168,11 +1191,25 @@ export default function AdminRadarPortal() {
             }
         }
         
-        havuzTemp.sort((a,b) => a.time.localeCompare(b.time));
+        // SADECE SEÇİLEN SAAT ARALIĞINDAKİ MAÇLARI TUT
+        havuzTemp = havuzTemp.filter(mac => {
+            return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
+        });
+
+        // SIRALAMA: Önce Tarih, Sonra Saat
+        havuzTemp.sort((a,b) => {
+            if (a.date !== b.date) {
+                const dA = parseDateLocal(a.date).getTime();
+                const dB = parseDateLocal(b.date).getTime();
+                return dA - dB;
+            }
+            return a.time.localeCompare(b.time);
+        });
+
         setApiHavuz(havuzTemp);
         
-        if(havuzTemp.length > 0) alert(`✅ Havuza ${havuzTemp.length} maç çekildi! Lütfen sol taraftan 24 adet maç seçin.`);
-        else alert("⚠️ Bu haftanın tarihlerinde maç bulunamadı.");
+        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan sadece kriterlerinize uyan ${havuzTemp.length} adet maç çekildi.`);
+        else alert("⚠️ Belirttiğin tarih ve saat aralığında uyduda maç bulunamadı.");
     } catch (error: any) {
         console.error(error);
         alert("API Hatası: " + error.message);
@@ -1181,7 +1218,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 YENİ SİSTEM: HAVUZDAN BÜLTENE MAÇ EKLE/ÇIKAR 🔥
   const toggleHavuzMac = (mac: any) => {
     const alreadySelected = secilenMaclar.find(m => m.fixture_id === mac.fixture_id);
     if (alreadySelected) {
@@ -1195,7 +1231,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 YENİ SİSTEM: BÜLTENİ ONAYLA VE KAYDET 🔥
   const bulteniPatlat = async () => {
     if (secilenMaclar.length !== 24) {
       if(!window.confirm("Bülten henüz 24 maça ulaşmadı! Yinede MÜHÜRLEMEK istiyor musun?")) return;
@@ -1657,12 +1692,12 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 YENİ NESİL BÜLTEN ÜRETİM FABRİKASI (MANUEL HEDEFLEME) 🚀 */}
+        {/* 🚀 YENİ NESİL BÜLTEN ÜRETİM FABRİKASI (MANUEL HEDEFLEME + FİLTRELİ) 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-black text-indigo-400 flex items-center gap-2">
-                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(Sistemi Yormayan Manuel Mod)</span>
+                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(Manuel Mod)</span>
                 </h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
@@ -1672,27 +1707,58 @@ export default function AdminRadarPortal() {
              </div>
 
              <div className="flex flex-col xl:flex-row gap-6">
-                {/* SOL PANEL: API HAVUZU */}
-                <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[75vh]">
-                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                {/* SOL PANEL: API HAVUZU VE FİLTRELER */}
+                <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
                         <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
-                        <button
-                            onClick={fetchHaftalikHavuz}
-                            disabled={isHavuzLoading}
-                            className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white font-black tracking-widest text-xs px-5 py-3 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
-                        >
-                            {isHavuzLoading ? (
-                                <>⏳ UYDU TARANIYOR...</>
-                            ) : (
-                                <>🛰️ BU HAFTANIN MAÇLARINI ÇEK</>
-                            )}
-                        </button>
                     </div>
+
+                    {/* 🎯 RADAR FİLTRELERİ 🎯 */}
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3 flex flex-col gap-2 shadow-inner">
+                       <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
+                          <span>⚙️</span> API RADAR FİLTRELERİ (Binlerce çöp maçı engeller)
+                       </div>
+                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="flex flex-col gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">İlk Gün</label>
+                             <select value={havuzBaslangicTarihi} onChange={e=>setHavuzBaslangicTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
+                                {currentWeekDates.map(d=><option key={`start-${d}`} value={d}>{d}</option>)}
+                             </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Son Gün</label>
+                             <select value={havuzBitisTarihi} onChange={e=>setHavuzBitisTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
+                                {currentWeekDates.map(d=><option key={`end-${d}`} value={d}>{d}</option>)}
+                             </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saatten Sonra?</label>
+                             <input type="time" value={havuzBaslangicSaati} onChange={e=>setHavuzBaslangicSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saate Kadar?</label>
+                             <input type="time" value={havuzBitisSaati} onChange={e=>setHavuzBitisSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
+                          </div>
+                       </div>
+                    </div>
+
+                    <button
+                        onClick={fetchHaftalikHavuz}
+                        disabled={isHavuzLoading}
+                        className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white font-black tracking-widest text-xs px-5 py-3 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all flex items-center gap-2 w-full justify-center mb-3"
+                    >
+                        {isHavuzLoading ? (
+                            <>⏳ UYDU TARANIYOR...</>
+                        ) : (
+                            <>🛰️ FİLTREYE UYGUN MAÇLARI ÇEK</>
+                        )}
+                    </button>
+
                     <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
                         {apiHavuz.length === 0 && !isHavuzLoading && (
                             <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
                                 <span className="text-6xl mb-4">📡</span>
-                                <span className="text-sm font-bold tracking-widest text-center">HAVUZ BOŞ.<br/>YUKARIDAKİ BUTONA BASARAK MAÇLARI ÇEKİN.</span>
+                                <span className="text-sm font-bold tracking-widest text-center">HAVUZ BOŞ.<br/>YUKARIDAKİ FİLTRELERİ AYARLAYIP "ÇEK" BUTONUNA BASIN.</span>
                             </div>
                         )}
                         {apiHavuz.map(mac => {
@@ -1728,7 +1794,7 @@ export default function AdminRadarPortal() {
                 </div>
 
                 {/* SAĞ PANEL: SEÇİLENLER (BÜLTEN) */}
-                <div className="w-full xl:w-[500px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[75vh]">
+                <div className="w-full xl:w-[500px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-black text-indigo-400 flex items-center gap-2"><span className="text-lg">📝</span> HEDEF BÜLTEN</h3>
                         <div className="text-2xl font-black bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
