@@ -29,9 +29,28 @@ const teamDict: Record<string, string> = {
     "ARNAVUTLUK": "Albania", "BELARUS": "Belarus", "SLOVAKYA": "Slovakia", "MOLDOVA": "Moldova"
 };
 
+// 🔥 İŞTE SAATLİ BOMBA BURADAYDI! BURASI SÜPER LİG VE 1. LİG İÇİN GÜNCELLENDİ 🔥
 function isTffMatchCheck(category: string) {
-    const uppercaseCat = category ? category.toUpperCase() : '';
-    return uppercaseCat.includes("TÜRKİYE") || uppercaseCat.includes("TFF") || uppercaseCat.includes("AMATÖR") || uppercaseCat.includes("PTT") || uppercaseCat.includes("2.LİG") || uppercaseCat.includes("3.LİG");
+    if(!category) return false;
+    const uppercaseCat = category.toUpperCase();
+    return ( 
+      uppercaseCat.includes("TÜRKİYE") || 
+      uppercaseCat.includes("TURKİYE") || 
+      uppercaseCat.includes("TURKIYE") || 
+      uppercaseCat.includes("TFF") || 
+      uppercaseCat.includes("SÜPER LİG") || 
+      uppercaseCat.includes("SÜPER LIG") || 
+      uppercaseCat.includes("SUPER LİG") || 
+      uppercaseCat.includes("SUPER LIG") || 
+      uppercaseCat.includes("1. LİG") || 
+      uppercaseCat.includes("1. LIG") || 
+      uppercaseCat.includes("1.LİG") || 
+      uppercaseCat.includes("1.LIG") || 
+      uppercaseCat.includes("AMATÖR") || 
+      uppercaseCat.includes("PTT") || 
+      uppercaseCat.includes("2.LİG") || 
+      uppercaseCat.includes("3.LİG") 
+    );
 }
 
 export async function GET(request: Request) {
