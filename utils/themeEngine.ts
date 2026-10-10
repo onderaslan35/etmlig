@@ -83,7 +83,7 @@ export const getWeekLabel = (weekNum: number | string) => {
 export const LIG_HAVUZU: Record<string, string[]> = {
   "TÜRKİYE SÜPER LİG": ["ALANYASPOR", "AMED", "BAŞAKŞEHİR", "BEŞİKTAŞ", "RİZESPOR", "ÇORUM FK", "ERZURUMSPOR FK", "EYÜPSPOR", "FENERBAHÇE", "GALATASARAY", "GAZİANTEP FK", "GENÇLERBİRLİĞİ", "GÖZTEPE", "KASIMPAŞA", "KOCAELİSPOR", "KONYASPOR", "SAMSUNSPOR", "TRABZONSPOR"],
   "TÜRKİYE 1. LİG": ["ANTALYASPOR", "BANDIRMASPOR", "BATMAN PETROLSPOR", "BODRUMSPOR", "BOLUSPOR", "BURSASPOR", "EROKSPOR", "FATİH KARAGÜMRÜK", "IĞDIR FK", "İSTANBULSPOR", "KAYSERİSPOR", "KEÇİÖRENGÜCÜ", "MANİSA FK", "MARDİN 1969", "MUĞLASPOR", "PENDİKSPOR", "SARIYER", "SİVASSPOR", "ÜMRANIYESPOR", "VANSPOR FK"],
-  "İNGİLTERE PREMIER LİG": ["ARSENAL", "ASTON VILLA", "BOURNEMOUTH", "BRENTFORD", "BRIGHTON", "CHELSEA", "COVENTRY CITY", "CRYSTAL PALACE", "EVERTON", "FULHAM", "HULL CITY", "IPSWICH TOWN", "LEEDS UNITED", "LIVERPOOL", "MANCHESTER CITY", "MANCHESTER UNITED", "NEWCASTLE UNITED", "NOTTINGHAM FOREST", "SUNDERLAND", "TOTTENHAM HOTSPUR", "MIDDLESBROUGH"],
+  "İNGİLTERE PREMIER LİG": ["ARSENAL", "ASTON VILLA", "BOURNEMOUTH", "BRENTFORD", "BRIGHTON", "CHELSEA", "COVENTRY CITY", "CRYSTAL PALACE", "EVERTON", "FULHAM", "HULL CITY", "IPSWICH TOWN", "LEEDS UNITED", "LIVERPOOL", "MANCHESTER CITY", "MANCHESTER UNITED", "NEWCASTLE UNITED", "NOTTINGHAM FOREST", "SUNDERLAND", "TOTTENHAM", "MIDDLESBROUGH"],
   "ALMANYA BUNDESLIGA": ["FC AUGSBURG", "BAYER LEVERKUSEN", "BAYERN MÜNİH", "BORUSSIA DORTMUND", "MÖNCHENGLADBACH", "EINTRACHT FRANKFURT", "ELVERSBERG", "FREIBURG", "HAMBURG", "HOFFENHEIM", "KÖLN", "FSV MAINZ 05", "RB LEIPZIG", "SCHALKE 04", "STUTTGART", "UNION BERLIN", "WERDER BREMEN", "WOLFSBURG", "BOCHUM", "ST. PAULI", "HEIDENHEIM", "HOLSTEIN KIEL"],
   "FRANSA LIGUE 1": ["ANGERS", "BREST", "LE MANS", "LENS", "LILLE", "LORIENT", "LYON", "MARSİLYA", "MONACO", "PARIS FC", "PARIS SAINT-GERMAIN", "RENNES", "STRASBOURG", "TOULOUSE", "TROYES", "NICE", "LE HAVRE", "AUXERRE", "NANTES", "REIMS"],
   "İTALYA SERIE A": ["ATALANTA", "BOLOGNA", "CAGLIARI", "COMO",("FIORENTINA"), ("FROSINONE"), ("GENOA"), ("INTER"), ("JUVENTUS"), ("LAZIO"), ("LECCE"), ("MILAN"), ("NAPOLI"), ("PARMA"), ("ROMA"), ("SASSUOLO"), ("TORINO"), ("UDINESE"), ("VENEZIA"), ("MONZA"), ("HELLAS VERONA"), ("EMPOLI")],
@@ -280,7 +280,7 @@ export const localTeamLogos: Record<string, string> = {
   "NEWCASTLE UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Newcastle_United_Logo.svg",
   "NOTTINGHAM FOREST": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
   "SUNDERLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
-  "TOTTENHAM HOTSPUR": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+  "TOTTENHAM": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
   "ASTON VILLA": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Aston_Villa_FC_2024.svg",
   "MIDDLESBROUGH": "https://images.fotmob.com/image_resources/logo/teamlogo/8549_large.png",
   "WEST HAM": "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg",
