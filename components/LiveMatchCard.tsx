@@ -240,7 +240,6 @@ export default function LiveMatchCard() {
            const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
            const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(status);
            
-           // Eski sistem UTC farklılıklarından dolayı patlıyordu. Direkt String kontrolü yapıyoruz.
            const isToday = m.date === todayDateStr; 
            
            if (isLiveOrFinished4) return true;
@@ -318,16 +317,19 @@ export default function LiveMatchCard() {
       let homeScore = dbMatch.home_score || '-';
       let awayScore = dbMatch.away_score || '-';
 
-      // 🔴 SİNSİ ONAY BEKLİYOR DURUMUNU EZİYORUZ - SONSUZA DEK CANLI 🔴
+      // 🔥 KOMUTANIN EMRİ: API ONAY BEKLİYOR (WAITING_APPROVAL) BİLE DESE UI BUNU CANLI KABUL EDECEK 🔥
       if (matchStatus === 'WAITING_APPROVAL') {
           matchStatus = 'LIVE';
       }
 
       const matchTimeMs = getMatchTimeMs(match.date, match.time);
+      // 🔥 KOMUTANIN EMRİ: Maçlar kendi kendine "Onaya" düşmesin diye bekleme süresini 8 saate çıkardık.
+      const liveDurationMs = 8 * 60 * 60 * 1000; 
       
       if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
         if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
-            if (now >= matchTimeMs) { matchStatus = 'LIVE'; } // Sonsuza kadar LIVE
+            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { matchStatus = 'LIVE'; } 
+            else if (now >= matchTimeMs + liveDurationMs) { matchStatus = 'WAITING_APPROVAL'; }
         }
       }
 
@@ -348,17 +350,18 @@ export default function LiveMatchCard() {
 
       let displayMinute = '';
       if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
+         // 🔥 API'DEN GELEN DAKİKA NEYSE BİREBİR YANSIYACAK (91, 92, 90+2 vs.) EZECEK KİLİT YOK! 🔥
          if (safeExtra) { 
              displayMinute = `${safeElapsed}+${safeExtra}'`; 
          } else { 
-             if (Number(safeElapsed) >= 90) displayMinute = `90+'`;
-             else displayMinute = `${safeElapsed}'`; 
+             displayMinute = `${safeElapsed}'`; 
          }
       } else if (isLiveStatus) {
-         // Eğer API'den dakika gelmiyorsa, Karargah kendi dakikasını hesaplar!
+         // Sadece TFF maçları (API verisi olmayanlar) için kendi sayacımız
          const diffMins = Math.floor((now - matchTimeMs) / 60000);
-         if (diffMins >= 90) displayMinute = `90+'`; // Maç 90'a dayandıysa sonsuza kadar 90+ yazar
-         else if (diffMins >= 45) displayMinute = `HT`; // Devre Arası
+         if (diffMins >= 120) displayMinute = `90+'`; // TFF maçlarında otomatik onaya düşmesin diye 90+ da kalır
+         else if (diffMins >= 60) displayMinute = `${diffMins - 15}'`; 
+         else if (diffMins >= 45) displayMinute = `HT`;
          else if (diffMins > 0) displayMinute = `${diffMins}'`;
          else displayMinute = `1'`;
       }
