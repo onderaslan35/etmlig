@@ -316,7 +316,7 @@ export const localTeamLogos: Record<string, string> = {
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
   "ALAVÉS": "https://images.fotmob.com/image_resources/logo/teamlogo/9866_large.png",
   "LEEDS": "https://upload.wikimedia.org/wikipedia/fr/5/54/Logo_Leeds_United_FC.svg",
-  "SC HEERENVEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/10228_large.png",
+  "HEERENVEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/10228_large.png",
   "NOTTM FOREST": "https://upload.wikimedia.org/wikipedia/it/9/91/Nottingham_Forest_FC_Logo.svg",
 
   // ALMANYA
