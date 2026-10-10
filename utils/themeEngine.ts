@@ -84,12 +84,12 @@ export const LIG_HAVUZU: Record<string, string[]> = {
   "TÜRKİYE SÜPER LİG": ["ALANYASPOR", "AMED", "BAŞAKŞEHİR", "BEŞIKTAŞ", "RIZESPOR", "ÇORUM FK", "ERZURUMSPOR FK", "EYÜPSPOR", "FENERBAHÇE", "GALATASARAY", "GAZIANTEP FK", "GENÇLERBİRLİĞİ", "GÖZTEPE", "KASIMPAŞA", "KOCAELISPOR", "KONYASPOR", "SAMSUNSPOR", "TRABZONSPOR"],
   "TÜRKİYE 1. LİG": ["ANTALYASPOR", "BANDIRMASPOR", "BATMAN PETROLSPOR", "BODRUMSPOR", "BOLUSPOR", "BURSASPOR", "EROKSPOR", "FATIH KARAGÜMRÜK", "IĞDIR FK", "İSTANBULSPOR", "KAYSERISPOR", "KEÇİÖRENGÜCÜ", "MANİSA FK", "MARDİN 1969", "MUĞLASPOR", "PENDİKSPOR", "SARIYER", "SİVASSPOR", "ÜMRANIYESPOR", "VANSPOR FK"],
   "İNGİLTERE PREMIER LİG": ["ARSENAL", "ASTON VILLA", "BOURNEMOUTH", "BRENTFORD", "BRIGHTON", "CHELSEA", "COVENTRY CITY", "CRYSTAL PALACE", "EVERTON", "FULHAM", "HULL CITY", "IPSWICH TOWN", "LEEDS", "LIVERPOOL", "MANCHESTER CITY", "MANCHESTER UNITED", "NEWCASTLE UNITED", "NOTTINGHAM FOREST", "SUNDERLAND", "TOTTENHAM", "MIDDLESBROUGH"],
-  "ALMANYA BUNDESLIGA": ["FC AUGSBURG", "BAYER LEVERKUSEN", "BAYERN MÜNİH", "BORUSSIA DORTMUND", "MÖNCHENGLADBACH", "EINTRACHT FRANKFURT", "ELVERSBERG", "FREIBURG", "HAMBURG", "HOFFENHEIM", "KÖLN", "FSV MAINZ 05", "RB LEIPZIG", "SCHALKE 04", "STUTTGART", "UNION BERLIN", "WERDER BREMEN", "WOLFSBURG", "BOCHUM", "ST. PAULI", "HEIDENHEIM", "HOLSTEIN KIEL"],
+  "ALMANYA BUNDESLIGA": ["FC AUGSBURG", "BAYER LEVERKUSEN", "BAYERN MÜNİH", "BORUSSIA DORTMUND", "MÖNCHENGLADBACH", "EINTRACHT FRANKFURT", "ELVERSBERG", "FREIBURG", "HAMBURG", "1899 HOFFENHEIM", "KÖLN", "FSV MAINZ 05", "RB LEIPZIG", "SCHALKE 04", "VFB STUTTGART", "UNION BERLIN", "WERDER BREMEN", "WOLFSBURG", "BOCHUM", "ST. PAULI", "HEIDENHEIM", "HOLSTEIN KIEL"],
   "FRANSA LIGUE 1": ["ANGERS", "BREST", "LE MANS", "LENS", "LILLE", "LORIENT", "LYON", "MARSİLYA", "MONACO", "PARIS FC", "PARIS SAINT-GERMAIN", "RENNES", "STRASBOURG", "TOULOUSE", "TROYES", "NICE", "LE HAVRE", "AUXERRE", "NANTES", "REIMS"],
   "İTALYA SERIE A": ["ATALANTA", "BOLOGNA", "CAGLIARI", "COMO",("FIORENTINA"), ("FROSINONE"), ("GENOA"), ("INTER"), ("JUVENTUS"), ("LAZIO"), ("LECCE"), ("MILAN"), ("NAPOLI"), ("PARMA"), ("ROMA"), ("SASSUOLO"), ("TORINO"), ("UDINESE"), ("VENEZIA"), ("MONZA"), ("HELLAS VERONA"), ("EMPOLI")],
   "İSPANYA LA LIGA": [ "ATLETICO MADRID", "ATHLETIC BILBAO",("BARCELONA"), ("ALAVÉS"), ("CELTA VIGO"), ("DEPORTIVO LA CORUÑA"), ("ELCHE"), ("ESPANYOL"), ("GETAFE"), ("LEVANTE"), ("OSASUNA"), ("RACING SANTANDER"), ("RAYO VALLECANO"), ("REAL BETIS"), ("REAL MADRID"), ("REAL SOCIEDAD"), ("SEVILLA"), ("VALENCIA"), ("VILLARREAL"), ("MALAGA"), ("GIRONA"), ("MALLORCA"), ("LAS PALMAS"), ("LEGANES")],
  
-  "ÇEŞİTLİ AVRUPA TAKIMLARI": ["KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG]", "OLIMPIYAKOS", "AEK ATHENS", "LASK LINZ",
+  "ÇEŞİTLİ AVRUPA TAKIMLARI": ["KARABAĞ FK", "DINAMO KIEV", "SLOVAN BRATISLAVA", "KIZILYILDIZ", "FCSB", "RAPID WIEN", "PANATHINAIKOS", "HAJDUK SPLIT", "SPARTA PRAG]", "OLYMPIAKOS PIRAEUS", "AEK ATHENS FC", "LASK LINZ",
     "ALMANYA", "ANDORRA", "ARNAVUTLUK", "BELARUS", "BELÇİKA", "BOSNA-HERSEK",
     "BULGARİSTAN", "ÇEKYA", "DANİMARKA", "ESTONYA", "FAROE ADALARI", "FİNLANDİYA",
     "FRANSA", "GALLER", "GÜRCİSTAN", "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA",
@@ -200,7 +200,7 @@ export const localTeamLogos: Record<string, string> = {
   // AVRUPA GENEL
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
   "SPARTA PRAG": "https://tr.wikipedia.org/wiki/Special:FilePath/AC-Sparta-LOGO2021.svg",
-  "OLIMPIYAKOS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
+  "OLYMPIAKOS PIRAEUS": "https://tr.wikipedia.org/wiki/Special:FilePath/Olympiacos_F.C_Emblem.svg",
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
@@ -247,7 +247,7 @@ export const localTeamLogos: Record<string, string> = {
   "PAIDE LINNAMEESKOND": "https://images.fotmob.com/image_resources/logo/teamlogo/163540.png",
   "LECH POZNAN": "https://images.fotmob.com/image_resources/logo/teamlogo/2182_large.png",
   "AFC BOURNEMOUTH": "https://images.fotmob.com/image_resources/logo/teamlogo/8678_large.png",
-  "AEK ATHENS": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
+  "AEK ATHENS FC": "https://images.fotmob.com/image_resources/logo/teamlogo/8563.png",
   "LASK LINZ": "https://images.fotmob.com/image_resources/logo/teamlogo/9977_large.png",
   "VİKİNG": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
   "VIKING": "https://images.fotmob.com/image_resources/logo/teamlogo/8478_large.png",
@@ -268,7 +268,7 @@ export const localTeamLogos: Record<string, string> = {
   "FULHAM": "https://en.wikipedia.org/wiki/Special:FilePath/Fulham_FC_(shield).svg",
   "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
   "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
-  "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png"
+  "RED BULL SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png"
 ,  "LEEDS": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
   "LIVERPOOL": "https://images.fotmob.com/image_resources/logo/teamlogo/8650_large.png",
   "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
@@ -312,7 +312,7 @@ export const localTeamLogos: Record<string, string> = {
   "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
   "ALAVÉS": "https://images.fotmob.com/image_resources/logo/teamlogo/9866_large.png",
-  "LEEDS": "https://upload.wikimedia.org/wikipedia/fr/5/54/Logo_Leeds_United_FC.svg",
+  
   "HEERENVEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/10228_large.png",
   "NOTTM FOREST": "https://upload.wikimedia.org/wikipedia/it/9/91/Nottingham_Forest_FC_Logo.svg",
 
@@ -325,7 +325,7 @@ export const localTeamLogos: Record<string, string> = {
   "LEVERKUSEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9788.png",
   "RB LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
   "LEIPZIG": "https://images.fotmob.com/image_resources/logo/teamlogo/178475.png",
-  "STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
+  "VFB STUTTGART": "https://images.fotmob.com/image_resources/logo/teamlogo/10269.png",
   "EINTRACHT FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
   "FRANKFURT": "https://images.fotmob.com/image_resources/logo/teamlogo/9810.png",
   "FREIBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9784.png",
@@ -335,7 +335,7 @@ export const localTeamLogos: Record<string, string> = {
   "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
   "FSV MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9905_large.png",
 
-  "HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
+  "1899 HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
   "FC AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
   "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
   "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/9911.png",
