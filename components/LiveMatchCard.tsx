@@ -239,9 +239,10 @@ export default function LiveMatchCard() {
            const dbMatch = liveMap[uniqueId];
            const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
            const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(status);
-           const mDate = parseDateLocal(m.date);
-           const todayMidnight = new Date(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate());
-           const isToday = mDate.getTime() === todayMidnight.getTime();
+           
+           // Eski sistem UTC farklılıklarından dolayı patlıyordu. Direkt String kontrolü yapıyoruz.
+           const isToday = m.date === todayDateStr; 
+           
            if (isLiveOrFinished4) return true;
            return isToday;
       });
@@ -258,7 +259,7 @@ export default function LiveMatchCard() {
     fetchMatchesAndPredictions(); 
     const interval = setInterval(fetchMatchesAndPredictions, 5000); 
     return () => clearInterval(interval);
-  }, [mergedAccounts]);
+  }, [mergedAccounts, now]);
 
   const toggleEvents = (uniqueId: string) => setOpenEventsMap((prev) => ({ ...prev, [uniqueId]: prev[uniqueId] === false ? true : false })); 
   const toggleWinners = (uniqueId: string) => setOpenWinnersMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] })); 
@@ -660,6 +661,8 @@ export default function LiveMatchCard() {
       );
   };
 
+  const sortedWeeks = [...activeWeeks].sort((a, b) => b - a);
+
   return (
     <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
       
@@ -674,6 +677,7 @@ export default function LiveMatchCard() {
           </button>
       </div>
 
+      {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
       {todaysMatchesList.length === 0 ? (
         <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl mt-2">
           <span className="text-3xl mb-2 block opacity-50">🗓️</span>
@@ -714,14 +718,14 @@ export default function LiveMatchCard() {
       )}
 
       {/* 🔥 ÇOKLU LİDERLİK RADARLARI (19 ÜSTTE, 18 ALTTA) 🔥 */}
-      {activeWeeks.map((week, index) => {
+      {sortedWeeks.map((week, index) => {
           const wStats = weeklySortedStats[week] || [];
           const maxPts = wStats.length > 0 ? wStats[0].points : 0;
           const maxScores = wStats.length > 0 ? Math.max(...wStats.map((s:any) => s.exactScores)) : 0;
           const ptsLeaders = wStats.filter((s:any) => s.points === maxPts && maxPts > 0);
           const scoreLeaders = wStats.filter((s:any) => s.exactScores === maxScores && maxScores > 0);
           const is24Finished = is24thMatchFinishedMap[week];
-          const isOldestWeek = index === activeWeeks.length - 1 && activeWeeks.length > 1;
+          const isOldestWeek = index === sortedWeeks.length - 1 && sortedWeeks.length > 1;
 
           const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
               if (!is24Finished) return null; 
@@ -803,6 +807,7 @@ export default function LiveMatchCard() {
                     </div>
                 </div>
 
+                {/* 🔴 KOMUTANIN İSTEDİĞİ: 18. HAFTA EN ALTTA VE BONUS KAZANAN YARIŞMACILAR YAZISI 🔴 */}
                 {isOldestWeek && ptsLeaders.length > 0 && (
                     <div className="mt-4 bg-amber-950/50 p-3 rounded-xl border border-amber-500/30 text-center shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                         <span className="text-amber-500 font-black text-[11px] tracking-widest">
@@ -813,7 +818,6 @@ export default function LiveMatchCard() {
             </div>
           );
       })}
-      // Son baglanti testi
     </div>
   );
 }
