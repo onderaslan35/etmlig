@@ -68,6 +68,11 @@ export default function AdminRadarPortal() {
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
   const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); 
 
+  // 🔥 YENİ SİSTEM BÜLTEN DEĞİŞKENLERİ 🔥
+  const [apiHavuz, setApiHavuz] = useState<any[]>([]);
+  const [secilenMaclar, setSecilenMaclar] = useState<any[]>([]);
+  const [isHavuzLoading, setIsHavuzLoading] = useState(false);
+
   useEffect(() => {
     if (isAuthenticated && activeTab === 'live') {
       const apiRadar = setInterval(async () => {
@@ -104,7 +109,6 @@ export default function AdminRadarPortal() {
   };
 
   const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({});
-
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
 
   const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(0); 
@@ -437,11 +441,26 @@ export default function AdminRadarPortal() {
             };
           });
           setBulletinMatches(mapped as any);
+
+          // 🔥 YENİ SİSTEM İÇİN ÖNCEDEN YAZILMIŞ BÜLTENİ SEÇİLENLERE DOLDUR 🔥
+          const loadedSecilen = data.map(m => ({
+              fixture_id: m.api_match_id || `temp-${m.match_index}`,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              date: m.match_date,
+              time: m.match_time,
+              category: m.category,
+              league_name: m.category
+          }));
+          setSecilenMaclar(loadedSecilen);
+
         } else {
           setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
             match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: '', api_match_id: ''
           })));
+          setSecilenMaclar([]); // Yeni hafta boş gelsin
         }
+        setApiHavuz([]); // Hafta değişince havuzu temizle
       }
     };
     loadBulletinData();
@@ -537,6 +556,7 @@ export default function AdminRadarPortal() {
     return dictionary[normalized] || normalized;
   };
 
+  // Eski sistem Auto Match (Korundu, ancak yeni UI'da kullanılmıyor)
   const handleAutoMatch = async () => {
     setIsAutoMatching(true);
     let updatedMatches = [...bulletinMatches];
@@ -781,7 +801,6 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
 
-
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     const homeScore = adminScores[matchId]?.home || "-";
     const awayScore = adminScores[matchId]?.away || "-";
@@ -977,7 +996,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 KOMUTANIN ÖZEL OPERASYONU: SESSİZ VE TOPLU CANLIYA ALMA 🔥
   const handleBulkSilentLive = async () => {
     const todayMatches = displayedMatches.filter(m => m.match_date === getTodayDateString());
     
@@ -996,12 +1014,11 @@ export default function AdminRadarPortal() {
         
         const bulkPayload = todayMatches.map(m => {
             const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
-            // SADECE DAHA ÖNCE BİTMEMİŞ MAÇLARI GÜNCELLE
             return {
                 id: uniqueId,
-                home_score: '-', // 0-0 spoiler'ını önleyen TİRE kalkanı
+                home_score: '-',
                 away_score: '-',
-                status: 'NOT_STARTED', // Radar uyuduğunda uyanana kadar beklesin
+                status: 'NOT_STARTED',
                 updated_by: 'MASTER_OTO',
                 updated_at: timeString
             };
@@ -1116,34 +1133,101 @@ export default function AdminRadarPortal() {
       }
   };
 
-  const saveBulletinToDB = async () => {
-    const hasEmpty = bulletinMatches.some(m => !m.home_team.trim() || !m.away_team.trim() || !m.category.trim());
-    if (hasEmpty) {
-       if(!window.confirm("Bazı takımlar veya kategoriler seçilmemiş. Bülteni yinede MÜHÜRLEMEK istiyor musun?")) return;
+  // 🔥 YENİ SİSTEM: HAFTANIN TÜM MAÇLARINI UYDUDAN HAVUZA ÇEK 🔥
+  const fetchHaftalikHavuz = async () => {
+    setIsHavuzLoading(true);
+    let havuzTemp: any[] = [];
+    try {
+        for (const dateStr of currentWeekDates) {
+            let formattedDate = dateStr;
+            if (formattedDate.includes('.')) {
+                const parts = formattedDate.split('.');
+                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
+                headers: {
+                    'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+                    'x-rapidapi-host': 'v3.football.api-sports.io'
+                }
+            });
+            const data = await res.json();
+            if (data.response && data.response.length > 0) {
+                const mapped = data.response.map((fix: any) => {
+                    const d = new Date(fix.fixture.date);
+                    return {
+                        fixture_id: fix.fixture.id,
+                        home_team: fix.teams.home.name,
+                        away_team: fix.teams.away.name,
+                        date: dateStr,
+                        time: d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}),
+                        league_name: fix.league.name,
+                        category: fix.league.name
+                    };
+                });
+                havuzTemp = [...havuzTemp, ...mapped];
+            }
+        }
+        
+        havuzTemp.sort((a,b) => a.time.localeCompare(b.time));
+        setApiHavuz(havuzTemp);
+        
+        if(havuzTemp.length > 0) alert(`✅ Havuza ${havuzTemp.length} maç çekildi! Lütfen sol taraftan 24 adet maç seçin.`);
+        else alert("⚠️ Bu haftanın tarihlerinde maç bulunamadı.");
+    } catch (error: any) {
+        console.error(error);
+        alert("API Hatası: " + error.message);
+    } finally {
+        setIsHavuzLoading(false);
     }
+  };
 
+  // 🔥 YENİ SİSTEM: HAVUZDAN BÜLTENE MAÇ EKLE/ÇIKAR 🔥
+  const toggleHavuzMac = (mac: any) => {
+    const alreadySelected = secilenMaclar.find(m => m.fixture_id === mac.fixture_id);
+    if (alreadySelected) {
+        setSecilenMaclar(secilenMaclar.filter(m => m.fixture_id !== mac.fixture_id));
+    } else {
+        if (secilenMaclar.length < 24) {
+            setSecilenMaclar([...secilenMaclar, { ...mac }]);
+        } else {
+            alert("⚠️ Başkomutanım, 24 maçlık kapasite doldu!");
+        }
+    }
+  };
+
+  // 🔥 YENİ SİSTEM: BÜLTENİ ONAYLA VE KAYDET 🔥
+  const bulteniPatlat = async () => {
+    if (secilenMaclar.length !== 24) {
+      if(!window.confirm("Bülten henüz 24 maça ulaşmadı! Yinede MÜHÜRLEMEK istiyor musun?")) return;
+    }
     setIsPublishing(true);
     try {
-      const payload = bulletinMatches.map(m => ({
-         week_num: bulletinWeek, match_index: m.match_index, category: m.category,
-         match_date: m.match_date, match_time: m.match_time,
-         home_team: m.home_team.trim().toUpperCase(), away_team: m.away_team.trim().toUpperCase(),
-         api_match_id: m.api_match_id ? parseInt(String(m.api_match_id)) : null 
+      const payload = secilenMaclar.map((m, idx) => ({
+         week_num: bulletinWeek, 
+         match_index: idx + 1, 
+         category: m.category || m.league_name || '', 
+         match_date: m.date, 
+         match_time: m.time,
+         home_team: String(m.home_team).trim().toUpperCase(), 
+         away_team: String(m.away_team).trim().toUpperCase(),
+         api_match_id: m.fixture_id && !String(m.fixture_id).startsWith('temp-') ? parseInt(String(m.fixture_id)) : null 
       }));
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
       
-      const liveMatchesPayload = bulletinMatches.filter(m => m.api_match_id).map(m => ({
-          id: getUniqueMatchId(bulletinWeek, m.match_index), 
-          api_match_id: parseInt(String(m.api_match_id)) 
-      }));
+      const liveMatchesPayload = secilenMaclar
+         .filter(m => m.fixture_id && !String(m.fixture_id).startsWith('temp-'))
+         .map((m, idx) => ({
+             id: getUniqueMatchId(bulletinWeek, idx + 1), 
+             api_match_id: parseInt(String(m.fixture_id)) 
+         }));
 
       if (liveMatchesPayload.length > 0) {
           await supabase.from('live_matches').upsert(liveMatchesPayload, { onConflict: 'id' });
       }
 
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nAPI Radarı ile seçilen maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
+      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nSeçilen maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
     setIsPublishing(false);
   };
@@ -1573,11 +1657,13 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 BÜLTEN ÜRETİM FABRİKASI 🚀 */}
+        {/* 🚀 YENİ NESİL BÜLTEN ÜRETİM FABRİKASI (MANUEL HEDEFLEME) 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
-                <h2 className="text-xl font-black text-indigo-400">🏭 BÜLTEN FABRİKASI</h2>
+                <h2 className="text-xl font-black text-indigo-400 flex items-center gap-2">
+                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(Sistemi Yormayan Manuel Mod)</span>
+                </h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
                       {[...Array(34)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
@@ -1585,123 +1671,125 @@ export default function AdminRadarPortal() {
                 </div>
              </div>
 
-             <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl">
-                
-                {/* YENİ: SİHİRLİ EŞLEŞTİRİCİ TUŞU */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <button onClick={copyDateTimeToAll} className="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded transition-colors shadow-sm w-full sm:w-auto text-center border border-slate-700/50">
-                        📅 1. Maçın Tarih/Saatini Alta Kopyala
-                    </button>
-
-                    <button 
-                        onClick={handleAutoMatch} 
-                        disabled={isAutoMatching}
-                        className="text-[10px] sm:text-xs font-black bg-cyan-700 hover:bg-cyan-600 text-white px-5 py-2.5 rounded shadow-[0_0_15px_rgba(8,145,178,0.6)] flex items-center justify-center gap-2 w-full sm:w-auto transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-500/50 tracking-widest"
-                    >
-                        {isAutoMatching ? '📡 UYDU TARANIYOR...' : '🪄 TÜM BÜLTENİ UYDUYLA EŞLEŞTİR (OTOMATİK RADAR)'}
-                    </button>
-                </div>
-
-                <div className="overflow-x-auto custom-scrollbar pb-4">
-                   <table className="w-full text-left text-xs min-w-[950px]">
-                      <tbody>
-                         {bulletinMatches.map((m, idx) => {
-                            const isReady = m.category && m.match_date && m.match_time && m.home_team && m.away_team;
-                            let formattedDate = m.match_date;
-                            if (formattedDate.includes('.')) {
-                                const parts = formattedDate.split('.');
-                                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                            }
-                            const apiMatchesList = apiMatchesByDate[formattedDate] || [];
-
+             <div className="flex flex-col xl:flex-row gap-6">
+                {/* SOL PANEL: API HAVUZU */}
+                <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[75vh]">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                        <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
+                        <button
+                            onClick={fetchHaftalikHavuz}
+                            disabled={isHavuzLoading}
+                            className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white font-black tracking-widest text-xs px-5 py-3 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                        >
+                            {isHavuzLoading ? (
+                                <>⏳ UYDU TARANIYOR...</>
+                            ) : (
+                                <>🛰️ BU HAFTANIN MAÇLARINI ÇEK</>
+                            )}
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                        {apiHavuz.length === 0 && !isHavuzLoading && (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
+                                <span className="text-6xl mb-4">📡</span>
+                                <span className="text-sm font-bold tracking-widest text-center">HAVUZ BOŞ.<br/>YUKARIDAKİ BUTONA BASARAK MAÇLARI ÇEKİN.</span>
+                            </div>
+                        )}
+                        {apiHavuz.map(mac => {
+                            const isSelected = secilenMaclar.some(m => m.fixture_id === mac.fixture_id);
+                            const secimSirasi = secilenMaclar.findIndex(m => m.fixture_id === mac.fixture_id) + 1;
                             return (
-                              <tr key={m.match_index} className={`border-b border-slate-800 transition-colors ${isReady ? 'bg-emerald-950/20' : 'hover:bg-slate-800/30'}`}>
-                                 <td className="p-2 w-10 text-center">
-                                    <div className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full font-black text-[13px] transition-all duration-500 ${isReady ? 'bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.8)] scale-110' : 'bg-slate-800 text-slate-500'}`}>
-                                       {isReady ? '✓' : m.match_index}
+                                <div
+                                    key={`havuz-${mac.fixture_id}`}
+                                    onClick={() => toggleHavuzMac(mac)}
+                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex justify-between items-center ${
+                                        isSelected
+                                            ? 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                                            : 'bg-slate-950 border-slate-700 hover:border-cyan-500 hover:bg-slate-800'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-md flex items-center justify-center font-black text-sm shadow-inner transition-colors ${isSelected ? 'bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-slate-800 text-slate-400'}`}>
+                                            {isSelected ? secimSirasi : '+'}
+                                        </div>
+                                        <div>
+                                            <div className={`font-black text-sm uppercase ${isSelected ? 'text-emerald-400' : 'text-slate-200'}`}>
+                                                {mac.home_team} - {mac.away_team}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5">
+                                                <span className="text-cyan-500">{mac.date}</span> | <span className="text-amber-500">{mac.time}</span> | {mac.league_name}
+                                            </div>
+                                        </div>
                                     </div>
-                                 </td>
-
-                                 <td className="p-2 w-[18%]">
-                                    <select value={m.category} onChange={e=>handleBulletinChange(idx,'category',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold`}>
-                                       <option value="">-- KATEGORİ SEÇİN --</option>
-                                       {getDynamicCategories().map(c => <option key={`cat-${m.match_index}-${c}`} value={c}>{c}</option>)}
-                                    </select>
-                                 </td>
-
-                                 <td className="p-2 w-[12%]">
-                                    <select value={m.match_date} onChange={e=>{
-                                      handleBulletinChange(idx,'match_date',e.target.value);
-                                      handleBulletinChange(idx, 'api_match_id', ''); 
-                                    }} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold">
-                                       {currentWeekDates.map(d => <option key={`date-${m.match_index}-${d}`} value={d}>{d}</option>)}
-                                    </select>
-                                 </td>
-
-                                 <td className="p-2 w-[10%]">
-                                    <select value={m.match_time} onChange={e=>handleBulletinChange(idx,'match_time',e.target.value)} className="w-full bg-slate-950 border border-slate-700/50 text-slate-300 px-2 py-2 rounded outline-none focus:border-indigo-500 cursor-pointer font-bold text-center">
-                                       {timeOptionsArr.map(t => <option key={`time-${m.match_index}-${t}`} value={t}>{t}</option>)}
-                                    </select>
-                                 </td>
-
-                                 <td className="p-2 w-[20%]">
-                                    <select value={m.home_team} onChange={e=>handleBulletinChange(idx,'home_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
-                                       <option value="">-- EV SAHİBİ SEÇ --</option>
-                                       {getAvailableTeams(idx, true).map(t => <option key={`home-${m.match_index}-${t}`} value={t}>{t}</option>)}
-                                    </select>
-                                 </td>
-
-                                 <td className="p-2 w-[20%]">
-                                    <select value={m.away_team} onChange={e=>handleBulletinChange(idx,'away_team',e.target.value)} className={`w-full bg-slate-950 border ${isReady ? 'border-emerald-500/50 text-emerald-400' : 'border-slate-700/50 text-slate-300'} px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold uppercase cursor-pointer`}>
-                                       <option value="">-- DEPLASMAN SEÇ --</option>
-                                       {getAvailableTeams(idx, false).map(t => <option key={`away-${m.match_index}-${t}`} value={t}>{t}</option>)}
-                                    </select>
-                                 </td>
-
-                                 <td className="p-2 w-[15%]">
-                                    <div className="flex items-center gap-1 w-full">
-                                       <select
-                                         value={m.api_match_id || ''}
-                                         onChange={(e) => handleBulletinChange(idx, 'api_match_id', e.target.value)}
-                                         className="w-full bg-slate-950 border border-slate-700/50 text-cyan-400 px-2 py-2 rounded outline-none focus:border-indigo-500 font-bold tracking-widest text-[10px]"
-                                       >
-                                         <option value="">
-                                            {apiMatchesList.length > 0 ? '-- LİSTEDEN SEÇ --' : '-- ÖNCE RADARA BAS --'}
-                                         </option>
-                                         {apiMatchesList.map(apiM => (
-                                             <option key={`api-${m.match_index}-${apiM.fixture.id}`} value={apiM.fixture.id}>
-                                                 {new Date(apiM.fixture.date).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})} | {apiM.teams.home.name} vs {apiM.teams.away.name}
-                                             </option>
-                                         ))}
-                                       </select>
-
-                                       <button
-                                          onClick={(e) => {
-                                             e.preventDefault();
-                                             fetchApiMatchesForDate(m.match_date);
-                                          }}
-                                          disabled={isApiLoading}
-                                          title="Sadece Bu Maçı Çek"
-                                          className="bg-cyan-950 hover:bg-cyan-800 text-cyan-400 px-3 py-2 rounded shadow transition-colors border border-cyan-700/50 flex items-center justify-center shrink-0"
-                                       >
-                                          {isApiLoading ? '⏳' : '📡'}
-                                       </button>
-                                    </div>
-                                 </td>
-                              </tr>
-                            );
-                         })}
-                      </tbody>
-                   </table>
+                                </div>
+                            )
+                        })}
+                    </div>
                 </div>
 
-                <button 
-                  onClick={saveBulletinToDB} 
-                  disabled={isPublishing} 
-                  className="mt-6 w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.5)] flex justify-center items-center gap-2 text-lg"
-                >
-                   {isPublishing ? 'MÜHÜRLENİYOR...' : '🚀 BÜLTENİ ONAYLA VE YAYINLA'}
-                </button>
+                {/* SAĞ PANEL: SEÇİLENLER (BÜLTEN) */}
+                <div className="w-full xl:w-[500px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[75vh]">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-black text-indigo-400 flex items-center gap-2"><span className="text-lg">📝</span> HEDEF BÜLTEN</h3>
+                        <div className="text-2xl font-black bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
+                            <span className={secilenMaclar.length === 24 ? "text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "text-amber-500"}>
+                                {secilenMaclar.length}
+                            </span>
+                            <span className="text-slate-600"> / 24</span>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 mb-4">
+                        {secilenMaclar.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
+                                <span className="text-5xl mb-4">🎯</span>
+                                <span className="text-sm font-bold tracking-widest text-center">HENÜZ MAÇ SEÇİLMEDİ.<br/>SOLDAN TIKLAYARAK 24 MAÇLIK LİSTEYİ OLUŞTURUN.</span>
+                            </div>
+                        )}
+                        {secilenMaclar.map((mac, idx) => (
+                            <div key={`secilen-${idx}`} className="bg-slate-950 p-2.5 rounded-lg border border-indigo-900/50 flex flex-col gap-2 relative group hover:border-indigo-500 transition-colors">
+                                <button
+                                    onClick={() => toggleHavuzMac(mac)}
+                                    className="absolute top-2 right-2 text-rose-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity bg-rose-950/50 rounded-full w-6 h-6 flex items-center justify-center font-bold"
+                                    title="Listeden Çıkar"
+                                >
+                                    ✖
+                                </button>
+                                <div className="flex items-center gap-2 pr-8">
+                                    <span className="bg-indigo-950 text-indigo-400 border border-indigo-500/50 font-black text-xs w-6 h-6 flex items-center justify-center rounded">{idx + 1}</span>
+                                    <span className="text-white font-bold text-xs uppercase truncate">{mac.home_team} - {mac.away_team}</span>
+                                </div>
+                                <div className="flex items-center gap-2 pl-8">
+                                    <select
+                                        value={mac.category}
+                                        onChange={(e) => {
+                                            const newSecilen = [...secilenMaclar];
+                                            newSecilen[idx].category = e.target.value;
+                                            setSecilenMaclar(newSecilen);
+                                        }}
+                                        className={`bg-slate-900 border text-[10px] px-2 py-1.5 rounded outline-none font-bold flex-1 ${mac.category ? 'border-emerald-500/50 text-emerald-400' : 'border-rose-500/50 text-rose-400'}`}
+                                    >
+                                        <option value="">-- KATEGORİSİNİ SEÇİN (ZORUNLU) --</option>
+                                        {getDynamicCategories().map(c => <option key={c} value={c}>{c}</option>)}
+                                        <option value={mac.league_name}>{mac.league_name} (UYDU ORİJİNAL)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={bulteniPatlat}
+                        disabled={secilenMaclar.length !== 24 || isPublishing}
+                        className={`w-full py-4 rounded-xl font-black text-lg tracking-widest uppercase transition-all flex justify-center items-center gap-2 ${
+                            secilenMaclar.length === 24 && !isPublishing
+                                ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-[0_0_20px_rgba(225,29,72,0.6)] hover:scale-[1.02] active:scale-95 cursor-pointer'
+                                : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                        }`}
+                    >
+                        {isPublishing ? 'MÜHÜRLENİYOR...' : '🚀 BÜLTENİ PATLAT VE KAYDET'}
+                    </button>
+                </div>
              </div>
           </div>
         )}
