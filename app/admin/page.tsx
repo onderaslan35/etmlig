@@ -32,6 +32,21 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
+// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ 🏆
+const POPULER_LIG_SECENEKLERI = [
+  { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig' },
+  { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig' },
+  { id: 'premier', ad: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier Lig', apiAd: 'Premier League' },
+  { id: 'laliga', ad: '🇪🇸 La Liga', apiAd: 'La Liga' },
+  { id: 'seriea', ad: '🇮🇹 Serie A', apiAd: 'Serie A' },
+  { id: 'bundesliga', ad: '🇩🇪 Bundesliga', apiAd: 'Bundesliga' },
+  { id: 'ligue1', ad: '🇫🇷 Ligue 1', apiAd: 'Ligue 1' },
+  { id: 'eredivisie', ad: '🇳🇱 Eredivisie', apiAd: 'Eredivisie' },
+  { id: 'ucl', ad: '⭐ Şampiyonlar L.', apiAd: 'UEFA Champions League' },
+  { id: 'uel', ad: '🟠 Avrupa L.', apiAd: 'UEFA Europa League' },
+  { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League' }
+];
+
 export default function AdminRadarPortal() {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -76,8 +91,20 @@ export default function AdminRadarPortal() {
   // 🎯 YENİ SİSTEM: TARİH VE SAAT FİLTRELERİ 🎯
   const [havuzBaslangicTarihi, setHavuzBaslangicTarihi] = useState('');
   const [havuzBitisTarihi, setHavuzBitisTarihi] = useState('');
-  const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState('15:00'); // Gündüz çöplerini ayıklar
+  const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState('15:00'); 
   const [havuzBitisSaati, setHavuzBitisSaati] = useState('23:59');
+
+  // 🏆 YENİ SİSTEM: LİG FİLTRELERİ 🏆
+  const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
+  const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
+
+  const toggleLigFiltresi = (apiAd: string) => {
+     if (seciliLigFiltreleri.includes(apiAd)) {
+         setSeciliLigFiltreleri(prev => prev.filter(l => l !== apiAd));
+     } else {
+         setSeciliLigFiltreleri(prev => [...prev, apiAd]);
+     }
+  };
 
   useEffect(() => {
     if (isAuthenticated && activeTab === 'live') {
@@ -434,10 +461,9 @@ export default function AdminRadarPortal() {
       const newDates = generateWeekDates(bulletinWeek);
       setCurrentWeekDates(newDates);
 
-      // 🎯 YENİ SİSTEM: TARİHLER YÜKLENİNCE FİLTRELERİ OTOMATİK DOLDUR
       if (newDates && newDates.length > 0) {
-         setHavuzBaslangicTarihi(newDates[0]); // Örn: Cuma
-         setHavuzBitisTarihi(newDates[newDates.length > 2 ? 2 : newDates.length - 1]); // Örn: Pazar
+         setHavuzBaslangicTarihi(newDates[0]); 
+         setHavuzBitisTarihi(newDates[newDates.length > 2 ? 2 : newDates.length - 1]); 
       }
 
       if (activeTab === 'bulletin') {
@@ -454,7 +480,6 @@ export default function AdminRadarPortal() {
           });
           setBulletinMatches(mapped as any);
 
-          // ÖNCEDEN YAZILMIŞ BÜLTENİ SEÇİLENLERE DOLDUR
           const loadedSecilen = data.map(m => ({
               fixture_id: m.api_match_id || `temp-${m.match_index}`,
               home_team: m.home_team,
@@ -470,9 +495,9 @@ export default function AdminRadarPortal() {
           setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
             match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: '', api_match_id: ''
           })));
-          setSecilenMaclar([]); // Yeni hafta boş gelsin
+          setSecilenMaclar([]); 
         }
-        setApiHavuz([]); // Hafta değişince havuzu temizle
+        setApiHavuz([]); 
       }
     };
     loadBulletinData();
@@ -1144,7 +1169,7 @@ export default function AdminRadarPortal() {
       }
   };
 
-  // 🎯 YENİ SİSTEM: TARİH VE SAAT FİLTRELİ UYDU ÇEKİMİ 🎯
+  // 🎯 YENİ SİSTEM: TARİH, SAAT VE LİG FİLTRELİ UYDU ÇEKİMİ 🎯
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
@@ -1191,10 +1216,29 @@ export default function AdminRadarPortal() {
             }
         }
         
-        // SADECE SEÇİLEN SAAT ARALIĞINDAKİ MAÇLARI TUT
+        // 1. SAAT FİLTRESİ UYGULA
         havuzTemp = havuzTemp.filter(mac => {
             return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
         });
+
+        // 2. LİG FİLTRESİ UYGULA
+        if (seciliLigFiltreleri.length > 0 || ozelLigFiltresi.trim() !== '') {
+            havuzTemp = havuzTemp.filter(mac => {
+                const matchLeague = mac.league_name.toLowerCase();
+                
+                // Popüler liglerden biri seçiliyse kontrol et
+                const matchesPopuler = seciliLigFiltreleri.length > 0 
+                    ? seciliLigFiltreleri.some(l => matchLeague.includes(l.toLowerCase()))
+                    : false;
+                
+                // Özel kutuya bir şey yazıldıysa kontrol et
+                const matchesOzel = ozelLigFiltresi.trim() !== '' 
+                    ? matchLeague.includes(ozelLigFiltresi.toLowerCase())
+                    : false;
+                
+                return matchesPopuler || matchesOzel;
+            });
+        }
 
         // SIRALAMA: Önce Tarih, Sonra Saat
         havuzTemp.sort((a,b) => {
@@ -1208,8 +1252,8 @@ export default function AdminRadarPortal() {
 
         setApiHavuz(havuzTemp);
         
-        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan sadece kriterlerinize uyan ${havuzTemp.length} adet maç çekildi.`);
-        else alert("⚠️ Belirttiğin tarih ve saat aralığında uyduda maç bulunamadı.");
+        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan sadece kriterlerine uyan ${havuzTemp.length} adet maç çekildi.`);
+        else alert("⚠️ Belirttiğin tarih, saat ve lig kalkanından hiçbir maç geçemedi. Kriterleri biraz gevşetebilirsin.");
     } catch (error: any) {
         console.error(error);
         alert("API Hatası: " + error.message);
@@ -1697,7 +1741,7 @@ export default function AdminRadarPortal() {
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-black text-indigo-400 flex items-center gap-2">
-                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(Manuel Mod)</span>
+                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(Manuel Seçim)</span>
                 </h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
@@ -1718,6 +1762,7 @@ export default function AdminRadarPortal() {
                        <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
                           <span>⚙️</span> API RADAR FİLTRELERİ (Binlerce çöp maçı engeller)
                        </div>
+                       
                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           <div className="flex flex-col gap-1">
                              <label className="text-[10px] font-bold text-slate-400 uppercase">İlk Gün</label>
@@ -1732,12 +1777,46 @@ export default function AdminRadarPortal() {
                              </select>
                           </div>
                           <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saatten Sonra?</label>
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saatten İtibaren?</label>
                              <input type="time" value={havuzBaslangicSaati} onChange={e=>setHavuzBaslangicSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
                           </div>
                           <div className="flex flex-col gap-1">
                              <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saate Kadar?</label>
                              <input type="time" value={havuzBitisSaati} onChange={e=>setHavuzBitisSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
+                          </div>
+                       </div>
+
+                       {/* 🏆 KOMUTANIN LİG SEÇİM KALKANI 🏆 */}
+                       <div className="mt-3 border-t border-slate-800 pt-3">
+                          <label className="text-[10px] font-bold text-emerald-400 uppercase mb-2 block tracking-widest">🏆 HIZLI LİG FİLTRELERİ <span className="text-slate-500 font-normal">(Boş bırakırsanız tüm dünyayı çeker)</span></label>
+                          <div className="flex flex-wrap gap-2">
+                             {POPULER_LIG_SECENEKLERI.map(lig => {
+                                const isActive = seciliLigFiltreleri.includes(lig.apiAd);
+                                return (
+                                   <button
+                                      key={lig.id}
+                                      onClick={() => toggleLigFiltresi(lig.apiAd)}
+                                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider transition-all border ${
+                                         isActive 
+                                         ? 'bg-emerald-900/80 text-emerald-300 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
+                                         : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-500 hover:text-slate-300'
+                                      }`}
+                                   >
+                                      {lig.ad}
+                                   </button>
+                                )
+                             })}
+                          </div>
+                          
+                          <div className="flex flex-col gap-1 mt-3">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Veya Menüde Olmayan Özel Lig Yazın (Örn: Eredivisie, Saudi Pro League)</label>
+                             <input 
+                                type="text" 
+                                value={ozelLigFiltresi} 
+                                onChange={e => setOzelLigFiltresi(e.target.value)} 
+                                placeholder="Lig adını buraya yazarak filtrele..."
+                                className="w-full sm:w-1/2 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
+                             />
                           </div>
                        </div>
                     </div>
@@ -1748,7 +1827,7 @@ export default function AdminRadarPortal() {
                         className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white font-black tracking-widest text-xs px-5 py-3 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all flex items-center gap-2 w-full justify-center mb-3"
                     >
                         {isHavuzLoading ? (
-                            <>⏳ UYDU TARANIYOR...</>
+                            <>⏳ UYDU TARANIYOR VE FİLTRELENİYOR...</>
                         ) : (
                             <>🛰️ FİLTREYE UYGUN MAÇLARI ÇEK</>
                         )}
@@ -1783,7 +1862,7 @@ export default function AdminRadarPortal() {
                                                 {mac.home_team} - {mac.away_team}
                                             </div>
                                             <div className="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5">
-                                                <span className="text-cyan-500">{mac.date}</span> | <span className="text-amber-500">{mac.time}</span> | {mac.league_name}
+                                                <span className="text-cyan-500">{mac.date}</span> | <span className="text-amber-500">{mac.time}</span> | <span className="text-fuchsia-400">{mac.league_name}</span>
                                             </div>
                                         </div>
                                     </div>
