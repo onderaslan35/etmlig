@@ -30,7 +30,7 @@ const sanitizeStr = (s: string) => {
     return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
 };
 
-export default function CanliYayinMerkezi() {
+export default function LiveMatchCard() {
   const [activeWeeks, setActiveWeeks] = useState<number[]>([]);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -674,7 +674,6 @@ export default function CanliYayinMerkezi() {
           </button>
       </div>
 
-      {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
       {todaysMatchesList.length === 0 ? (
         <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl mt-2">
           <span className="text-3xl mb-2 block opacity-50">🗓️</span>
@@ -814,6 +813,7 @@ export default function CanliYayinMerkezi() {
             </div>
           );
       })}
+      // Son baglanti testi
     </div>
   );
 }
