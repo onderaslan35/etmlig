@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
-import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck } from '@/utils/themeEngine';
+import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck, getTodayDateString } from '@/utils/themeEngine';
 
 const engToTr: Record<string, string> = {
   "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
@@ -30,31 +30,31 @@ const sanitizeStr = (s: string) => {
     return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
 };
 
-export default function LiveMatchCard() {
-  const [activeWeek, setActiveWeek] = useState(6);
+export default function CanliYayinMerkezi() {
+  const [activeWeeks, setActiveWeeks] = useState<number[]>([]);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
-  const [goalFlashes, setGoalFlashes] = useState<Record<number, boolean>>({});
+  const [goalFlashes, setGoalFlashes] = useState<Record<string, boolean>>({});
   const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
-  const [liveMatchesData, setLiveMatchesData] = useState<Record<number, any>>({});
+  const [liveMatchesData, setLiveMatchesData] = useState<Record<string, any>>({});
   const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
   const [globalLiveRanks, setGlobalLiveRanks] = useState<{ TFF: any[], DFO: any[], MASTER: any[], SKOR: any[] }>({ TFF: [], DFO: [], MASTER: [], SKOR: [] });
   const [now, setNow] = useState<number>(new Date().getTime());
   
-  const [weeklySortedStats, setWeeklySortedStats] = useState<{ id: string, points: number, exactScores: number }[]>([]);
-  const [is24thMatchFinished, setIs24thMatchFinished] = useState(false);
+  const [weeklySortedStats, setWeeklySortedStats] = useState<Record<number, { id: string, points: number, exactScores: number }[]>>({});
+  const [is24thMatchFinishedMap, setIs24thMatchFinishedMap] = useState<Record<number, boolean>>({});
 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   
-  const [openEventsMap, setOpenEventsMap] = useState<{ [key: number]: boolean }>({});
-  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
-  const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: number]: boolean }>({});
-  const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: number]: boolean }>({});
+  const [openEventsMap, setOpenEventsMap] = useState<{ [key: string]: boolean }>({});
+  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: string]: boolean }>({});
+  const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: string]: boolean }>({});
+  const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: string]: boolean }>({});
   const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
-  const [expandedMatches, setExpandedMatches] = useState<Record<number, boolean>>({});
+  const [expandedMatches, setExpandedMatches] = useState<Record<string, boolean>>({});
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
   const toggleSound = () => {
@@ -84,63 +84,56 @@ export default function LiveMatchCard() {
   }, []);
 
   useEffect(() => {
-      const initWeek = async () => {
-          const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
-          if (data) {
-              const nowUTC = new Date();
-              const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
-              const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
-
-              const upcomingMatches = data
-                  .filter(d => parseDateLocal(d.match_date) >= todayMidnight)
-                  .sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
-              
-              if (upcomingMatches.length > 0) setActiveWeek(upcomingMatches[0].week_num);
-              else {
-                  const weeks = Array.from(new Set(data.map(d => d.week_num)));
-                  if (weeks.length > 0) setActiveWeek(Math.max(...weeks));
-              }
-          }
-          setIsWeekLoaded(true);
-      };
-      initWeek();
-  }, []);
-
-  useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    if (!isWeekLoaded) return;
-    
     const fetchMatchesAndPredictions = async () => {
-      // 1000 satır limitine takılmayan diğer verileri çekiyoruz
-      const [leaderboardRes, dbBulletinMatchesRes, dbLiveMatchesRes] = await Promise.all([
+      const todayDateStr = getTodayDateString();
+      const todayDate = parseDateLocal(todayDateStr);
+      todayDate.setHours(0,0,0,0);
+
+      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
           supabase.from('live_leaderboard').select('*'),
-          supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true }),
+          supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
           supabase.from('live_matches').select('*')
       ]);
 
-      // 🔥 İŞTE ÖLÜMCÜL HATANIN ÇÖZÜMÜ: 1000 SATIR LİMİTİNİ AŞAN DÖNGÜ (PAGINATION) 🔥
+      const allBulten = allBulletinRes.data || [];
+      
+      const relevantMatches = allBulten.filter(m => {
+          const matchTimeMs = getMatchTimeMs(m.match_date, m.match_time);
+          const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+          return m.match_date === todayDateStr || isWithinLast5Hours;
+      });
+
+      const relevantWeeksSet = new Set<number>(relevantMatches.map(m => m.week_num));
+      const relevantWeeksArray = Array.from(relevantWeeksSet);
+      
+      if (relevantWeeksArray.length === 0) {
+          const upcomingMatches = allBulten.filter(d => parseDateLocal(d.match_date) >= todayDate).sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
+          if (upcomingMatches.length > 0) relevantWeeksArray.push(upcomingMatches[0].week_num);
+          else if (allBulten.length > 0) relevantWeeksArray.push(Math.max(...allBulten.map(m => m.week_num)));
+      }
+      
+      setActiveWeeks(relevantWeeksArray.sort((a,b) => b - a)); 
+      setIsWeekLoaded(true);
+
+      const targetBulten = allBulten.filter(m => relevantWeeksArray.includes(m.week_num));
+      
       let allPredictions: any[] = [];
-      let from = 0; 
-      const step = 1000; 
-      let keepFetching = true;
-      while(keepFetching) {
-          const { data } = await supabase.from('player_predictions').select('*').eq('week_num', activeWeek).range(from, from + step - 1);
-          if (data && data.length > 0) { 
-              allPredictions = [...allPredictions, ...data]; 
-              if (data.length < step) keepFetching = false; else from += step; 
-          } else { 
-              keepFetching = false; 
+      for (const week of relevantWeeksArray) {
+          let from = 0; const step = 1000; let keepFetching = true;
+          while(keepFetching) {
+              const { data } = await supabase.from('player_predictions').select('*').eq('week_num', week).range(from, from + step - 1);
+              if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length < step) keepFetching = false; else from += step; } 
+              else keepFetching = false;
           }
       }
 
       const leaderboardData = leaderboardRes.data || [];
-      const dbBulletinMatches = dbBulletinMatchesRes.data || [];
       const dbLiveMatches = dbLiveMatchesRes.data || [];
-      const currentPredictions = allPredictions; // Artık eksiksiz 1296 tahminin hepsi burada!
 
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
       leaderboardData.forEach(row => {
@@ -149,30 +142,26 @@ export default function LiveMatchCard() {
           arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
           arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
       });
-      
       const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
       arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
       const pDict: Record<string, string> = {};
-      currentPredictions.forEach(pred => {
+      allPredictions.forEach(pred => {
           const uid = String(pred.user_id);
           if (uid === 'mankoman') return;
           pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
       });
       setPredictionsData(pDict);
 
-      const liveMap: Record<number, any> = {};
-      dbLiveMatches.forEach(row => liveMap[row.id] = row); 
+      const liveMap: Record<string, any> = {};
+      dbLiveMatches.forEach(row => liveMap[String(row.id)] = row); 
       setLiveMatchesData(liveMap);
 
-      const nowUTC = new Date();
-      const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
-      const todayMidnight = new Date(todayTurkey.getUTCFullYear(), todayTurkey.getUTCMonth(), todayTurkey.getUTCDate());
-
-      const currentWeekMatches = dbBulletinMatches.map((m) => ({
+      const currentWeekMatches = targetBulten.map((m) => ({
         id: m.match_index,
-        weekLabel: `${activeWeek}. HAFTA ${m.match_index}. MAÇ`,
+        week_num: m.week_num,
+        weekLabel: `${m.week_num}. HAFTA ${m.match_index}. MAÇ`,
         category: m.category,
         date: m.match_date,
         time: m.match_time,
@@ -180,28 +169,24 @@ export default function LiveMatchCard() {
         awayTeam: m.away_team
       }));
 
-      const match24Id = getUniqueMatchId(activeWeek, 24);
-      const dbMatch24 = liveMap[match24Id];
-      let is24Finished = false;
-      if (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status)) {
-          is24Finished = true;
-          setIs24thMatchFinished(true);
-      } else {
-          setIs24thMatchFinished(false);
-      }
+      const new24FinishedMap: Record<number, boolean> = {};
+      relevantWeeksArray.forEach(w => {
+         const m24Id = getUniqueMatchId(w, 24);
+         const dbMatch24 = liveMap[String(m24Id)];
+         new24FinishedMap[w] = (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status));
+      });
+      setIs24thMatchFinishedMap(new24FinishedMap);
 
       let goalHappened = false;
-      let newGoalIds: number[] = [];
+      let newGoalIds: string[] = [];
       Object.keys(liveMap).forEach(key => {
-          const dbMatch = liveMap[Number(key)];
+          const dbMatch = liveMap[key];
           const isLiveOrFinished3 = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
-          if (isLiveOrFinished3) {
-              if (dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
-                  const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
-                  const prevScore = prevScoresRef.current[key];
-                  if (prevScore && prevScore !== currentScore) { goalHappened = true; newGoalIds.push(Number(key)); }
-                  prevScoresRef.current[key] = currentScore;
-              }
+          if (isLiveOrFinished3 && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+              const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+              const prevScore = prevScoresRef.current[key];
+              if (prevScore && prevScore !== currentScore) { goalHappened = true; newGoalIds.push(String(key)); }
+              prevScoresRef.current[key] = currentScore;
           }
       });
 
@@ -216,68 +201,70 @@ export default function LiveMatchCard() {
           }
       }
 
-      let stats: Record<string, { points: number, exactScores: number }> = {};
-      Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
+      let allWeeklyStats: Record<number, any> = {};
+      relevantWeeksArray.forEach(week => {
+          let stats: Record<string, { points: number, exactScores: number }> = {};
+          Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
-      currentWeekMatches.forEach(m => {
-          const uniqueId = getUniqueMatchId(activeWeek, m.id);
-          const dbMatch = liveMap[uniqueId];
-          if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-              const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-              const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${activeWeek}-${m.id}`] === targetScore);
-              
-              let pts = 1;
-              if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
-              else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
-              else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
-              else if(winnerIds.length >= 7) pts = 1; else pts = 0;
+          currentWeekMatches.filter(m => m.week_num === week).forEach(m => {
+              const uniqueId = String(getUniqueMatchId(week, m.id));
+              const dbMatch = liveMap[uniqueId];
+              if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+                  const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+                  const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${week}-${m.id}`] === targetScore);
+                  
+                  let pts = 1;
+                  if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
+                  else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
+                  else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
+                  else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
-              winnerIds.forEach(wId => {
-                  if(!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
-                  stats[wId].points += pts;
-                  stats[wId].exactScores += 1;
-              });
-          }
+                  winnerIds.forEach(wId => {
+                      if(!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
+                      stats[wId].points += pts;
+                      stats[wId].exactScores += 1;
+                  });
+              }
+          });
+
+          allWeeklyStats[week] = Object.keys(stats)
+              .map(uid => ({ id: uid, points: stats[uid].points, exactScores: stats[uid].exactScores }))
+              .filter(s => s.points > 0 || s.exactScores > 0)
+              .sort((a, b) => b.points - a.points || b.exactScores - a.exactScores || mergedAccounts[a.id]?.name.localeCompare(mergedAccounts[b.id]?.name, 'tr'));
       });
-
-      const sortedStats = Object.keys(stats)
-          .map(uid => ({ id: uid, points: stats[uid].points, exactScores: stats[uid].exactScores }))
-          .filter(s => s.points > 0 || s.exactScores > 0)
-          .sort((a, b) => b.points - a.points || b.exactScores - a.exactScores || mergedAccounts[a.id]?.name.localeCompare(mergedAccounts[b.id]?.name, 'tr'));
-      
-      setWeeklySortedStats(sortedStats);
+      setWeeklySortedStats(allWeeklyStats);
 
       const todaysMatches = currentWeekMatches.filter(m => {
-           const uniqueId = getUniqueMatchId(activeWeek, m.id);
+           const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
            const dbMatch = liveMap[uniqueId];
            const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
            const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(status);
            const mDate = parseDateLocal(m.date);
+           const todayMidnight = new Date(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate());
            const isToday = mDate.getTime() === todayMidnight.getTime();
            if (isLiveOrFinished4) return true;
            return isToday;
       });
+
+      todaysMatches.sort((a, b) => {
+         const timeA = getMatchTimeMs(a.date, a.time);
+         const timeB = getMatchTimeMs(b.date, b.time);
+         return timeA - timeB;
+      });
+
       setTodaysMatchesList(todaysMatches);
-      
-      if (is24Finished) {
-          const m24 = currentWeekMatches.find(m => m.id === 24);
-          if (m24) {
-              const matchTimeMs = getMatchTimeMs(m24.date, m24.time);
-              if (new Date().getTime() > matchTimeMs + (5 * 60 * 60 * 1000)) setActiveWeek(prev => prev + 1);
-          }
-      }
     };
 
     fetchMatchesAndPredictions(); 
     const interval = setInterval(fetchMatchesAndPredictions, 5000); 
     return () => clearInterval(interval);
-  }, [activeWeek, isWeekLoaded, mergedAccounts]);
+  }, [mergedAccounts]);
 
-  const toggleEvents = (matchId: number) => setOpenEventsMap((prev) => ({ ...prev, [matchId]: prev[matchId] === false ? true : false })); 
-  const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] })); 
-  const togglePossible = (matchId: number) => setOpenPossibleMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-  const toggleEliminated = (matchId: number) => setOpenEliminatedMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-  const toggleMatchExpansion = (matchId: number) => setExpandedMatches(prev => ({ ...prev, [matchId]: !prev[matchId] }));
+  const toggleEvents = (uniqueId: string) => setOpenEventsMap((prev) => ({ ...prev, [uniqueId]: prev[uniqueId] === false ? true : false })); 
+  const toggleWinners = (uniqueId: string) => setOpenWinnersMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] })); 
+  const togglePossible = (uniqueId: string) => setOpenPossibleMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const toggleEliminated = (uniqueId: string) => setOpenEliminatedMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const toggleMatchExpansion = (uniqueId: string) => setExpandedMatches(prev => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
   const togglePlayerRank = (uniqueKey: string) => setOpenPlayerRanks((prev) => ({ ...prev, [uniqueKey]: !prev[uniqueKey] }));
 
   if (!isWeekLoaded) {
@@ -289,13 +276,13 @@ export default function LiveMatchCard() {
   }
 
   const activeMatches = todaysMatchesList.filter(match => {
-     const uniqueId = getUniqueMatchId(activeWeek, match.id);
+     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
      const dbMatch = liveMatchesData[uniqueId] || {};
      return !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
   const finishedMatches = todaysMatchesList.filter(match => {
-     const uniqueId = getUniqueMatchId(activeWeek, match.id);
+     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
      const dbMatch = liveMatchesData[uniqueId] || {};
      return ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
@@ -304,13 +291,13 @@ export default function LiveMatchCard() {
       const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
       const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
 
-      const isEventsOpen = openEventsMap[match.id] !== false;
-      const isWinnersOpen = openWinnersMap[match.id] !== false;
-      const isPossibleOpen = openPossibleMap[match.id] || false;
-      const isEliminatedOpen = openEliminatedMap[match.id] || false;
-      const isExpanded = expandedMatches[match.id] !== undefined ? expandedMatches[match.id] : isFinishedGroup;
+      const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+      const isEventsOpen = openEventsMap[uniqueId] !== false;
+      const isWinnersOpen = openWinnersMap[uniqueId] !== false;
+      const isPossibleOpen = openPossibleMap[uniqueId] || false;
+      const isEliminatedOpen = openEliminatedMap[uniqueId] || false;
+      const isExpanded = expandedMatches[uniqueId] !== undefined ? expandedMatches[uniqueId] : isFinishedGroup;
 
-      const uniqueId = getUniqueMatchId(activeWeek, match.id);
       const dbMatch = liveMatchesData[uniqueId] || {};
       const isGoalFlashing = goalFlashes[uniqueId]; 
       
@@ -402,7 +389,7 @@ export default function LiveMatchCard() {
         const currentA = parseInt(awayScore);
 
         Object.keys(mergedAccounts).forEach(id => {
-          const predStr = predictionsData[`${id}-${activeWeek}-${match.id}`];
+          const predStr = predictionsData[`${id}-${match.week_num}-${match.id}`];
           if (!predStr || predStr === '-' || predStr === 'PAS') return;
           const name = mergedAccounts[id]?.name;
           if (!name) return;
@@ -439,7 +426,7 @@ export default function LiveMatchCard() {
       }
 
       return (
-        <div key={match.id} className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+        <div key={uniqueId} className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
             isGoalFlashing ? 'police-siren' : isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
         }`}>
           {theme.bgImg && (
@@ -450,7 +437,7 @@ export default function LiveMatchCard() {
           )}
 
           {!isExpanded && (
-            <div onClick={() => toggleMatchExpansion(match.id)} className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300">
+            <div onClick={() => toggleMatchExpansion(uniqueId)} className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300">
               <div className="flex-1 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
                 <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">{homeTeamUpper}</span>
               </div>
@@ -475,7 +462,7 @@ export default function LiveMatchCard() {
 
           {isExpanded && (
             <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
-              <button onClick={() => toggleMatchExpansion(match.id)} className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors" title="Küçült">✕</button>
+              <button onClick={() => toggleMatchExpansion(uniqueId)} className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors" title="Küçült">✕</button>
               <div className="relative z-10 flex flex-col h-full">
                 <div className="w-full text-center pt-3 pb-1">
                   <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{match.weekLabel}</span>
@@ -532,7 +519,7 @@ export default function LiveMatchCard() {
 
                 {safeEvents.length > 0 && (
                   <div className="w-full mb-3 flex flex-col gap-2 px-1.5 sm:px-6 relative z-30 animate-fadeIn">
-                    <button onClick={() => toggleEvents(match.id)} className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm">
+                    <button onClick={() => toggleEvents(uniqueId)} className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm">
                       <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2"><span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI</span>
                       <span className="text-slate-400 text-[10px]">{isEventsOpen ? '▲' : '▼'}</span>
                     </button>
@@ -589,7 +576,7 @@ export default function LiveMatchCard() {
                     </div>
                     <div className="text-right flex-1">
                       {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
-                        <button onClick={() => toggleWinners(match.id)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">{isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}</button>
+                        <button onClick={() => toggleWinners(uniqueId)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">{isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}</button>
                       )}
                     </div>
                   </div>
@@ -603,7 +590,7 @@ export default function LiveMatchCard() {
                           </div>
                           <div className="block p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
                             {exactWinners.map((winner, idx) => {
-                              const uniquePlayerKey = `${match.id}-${winner.id}`;
+                              const uniquePlayerKey = `${uniqueId}-${winner.id}`;
                               const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
                               const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
                               const dfoData = globalLiveRanks.DFO.find(x => x.id === winner.id);
@@ -630,7 +617,7 @@ export default function LiveMatchCard() {
 
                       {!isFinishedStatus && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
                         <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
-                          <button onClick={() => togglePossible(match.id)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
+                          <button onClick={() => togglePossible(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
                             <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)</span>
                             <span className="text-blue-400 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
                           </button>
@@ -648,7 +635,7 @@ export default function LiveMatchCard() {
 
                       {eliminatedPlayers.length > 0 && (
                         <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
-                          <button onClick={() => toggleEliminated(match.id)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
+                          <button onClick={() => toggleEliminated(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
                             <span className="text-red-400 font-bold text-[9px] sm:text-[10px]">❌ ŞANSI KALMAYANLAR ({eliminatedPlayers.length} KİŞİ)</span>
                             <span className="text-red-400 text-[10px]">{isEliminatedOpen ? '▲' : '▼'}</span>
                           </button>
@@ -671,26 +658,6 @@ export default function LiveMatchCard() {
           )}
         </div>
       );
-  };
-
-  const maxPts = weeklySortedStats.length > 0 ? weeklySortedStats[0].points : 0;
-  const maxScores = weeklySortedStats.length > 0 ? Math.max(...weeklySortedStats.map(s => s.exactScores)) : 0;
-  const ptsLeaders = weeklySortedStats.filter(s => s.points === maxPts && maxPts > 0);
-  const scoreLeaders = weeklySortedStats.filter(s => s.exactScores === maxScores && maxScores > 0);
-
-  const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
-      if (!is24thMatchFinished) return null; 
-      
-      if (type === 'points') {
-          if (ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
-              return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-amber-500 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🏆 +3 PUAN KAZANDI</span>;
-          }
-      } else if (type === 'scores') {
-          if (scoreLeaders.length === 1 && scoreLeaders[0].id === uid) {
-              return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🎯 +3 PUAN KAZANDI</span>;
-          }
-      }
-      return null;
   };
 
   return (
@@ -747,73 +714,106 @@ export default function LiveMatchCard() {
         </>
       )}
 
-      {/* 🔥 LİDERLİK RADARI (ALTTA) 🔥 */}
-      <div className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto mt-4">
-          <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
-              <span className="text-lg sm:text-xl">📡</span> {activeWeek}. HAFTA CANLI LİDERLİK RADARI
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
-                  <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
-                      <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
-                      {is24thMatchFinished && ptsLeaders.length > 1 && (
-                          <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
-                      )}
-                  </div>
-                  <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                      {weeklySortedStats.length > 0 ? (
-                          <table className="w-full text-left text-xs">
-                              <tbody className="divide-y divide-slate-800/50">
-                                  {weeklySortedStats.map((s, idx) => (
-                                      <tr key={s.id} className="hover:bg-slate-900/50">
-                                          <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
-                                          <td className="py-2 font-bold text-slate-200">
-                                              {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
-                                              {getLeaderBadge(s.id, 'points')}
-                                          </td>
-                                          <td className="py-2 pr-2 text-right font-black text-emerald-400">{s.points} P</td>
-                                      </tr>
-                                  ))}
-                              </tbody>
-                          </table>
-                      ) : (
-                          <div className="text-center py-4 text-slate-500 text-xs">HENÜZ PUAN ALAN YOK</div>
-                      )}
-                  </div>
-              </div>
+      {/* 🔥 ÇOKLU LİDERLİK RADARLARI (19 ÜSTTE, 18 ALTTA) 🔥 */}
+      {activeWeeks.map((week, index) => {
+          const wStats = weeklySortedStats[week] || [];
+          const maxPts = wStats.length > 0 ? wStats[0].points : 0;
+          const maxScores = wStats.length > 0 ? Math.max(...wStats.map((s:any) => s.exactScores)) : 0;
+          const ptsLeaders = wStats.filter((s:any) => s.points === maxPts && maxPts > 0);
+          const scoreLeaders = wStats.filter((s:any) => s.exactScores === maxScores && maxScores > 0);
+          const is24Finished = is24thMatchFinishedMap[week];
+          const isOldestWeek = index === activeWeeks.length - 1 && activeWeeks.length > 1;
 
-              <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
-                  <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
-                      <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
-                      {is24thMatchFinished && scoreLeaders.length > 1 && (
-                          <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
-                      )}
-                  </div>
-                  <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                      {weeklySortedStats.length > 0 && maxScores > 0 ? (
-                          <table className="w-full text-left text-xs">
-                              <tbody className="divide-y divide-slate-800/50">
-                                  {weeklySortedStats.filter(s => s.exactScores > 0).sort((a,b) => b.exactScores - a.exactScores).map((s, idx) => (
-                                      <tr key={s.id} className="hover:bg-slate-900/50">
-                                          <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
-                                          <td className="py-2 font-bold text-slate-200">
-                                              {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
-                                              {getLeaderBadge(s.id, 'scores')}
-                                          </td>
-                                          <td className="py-2 pr-2 text-right font-black text-amber-500">{s.exactScores} Maç</td>
-                                      </tr>
-                                  ))}
-                              </tbody>
-                          </table>
-                      ) : (
-                          <div className="text-center py-4 text-slate-500 text-xs">HENÜZ SKOR BİLEN YOK</div>
-                      )}
-                  </div>
-              </div>
-          </div>
-      </div>
-      // Son baglanti testi
+          const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
+              if (!is24Finished) return null; 
+              if (type === 'points') {
+                  if (ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
+                      return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-amber-500 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🏆 +3 PUAN KAZANDI</span>;
+                  }
+              } else if (type === 'scores') {
+                  if (scoreLeaders.length === 1 && scoreLeaders[0].id === uid) {
+                      return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🎯 +3 PUAN KAZANDI</span>;
+                  }
+              }
+              return null;
+          };
+
+          return (
+            <div key={`radar-${week}`} className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto mt-4">
+                <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
+                    <span className="text-lg sm:text-xl">📡</span> {week}. HAFTA CANLI LİDERLİK RADARI
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                        <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
+                            <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
+                            {is24Finished && ptsLeaders.length > 1 && (
+                                <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                            )}
+                        </div>
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {wStats.length > 0 ? (
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-slate-800/50">
+                                        {wStats.map((s:any, idx:number) => (
+                                            <tr key={s.id} className="hover:bg-slate-900/50">
+                                                <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                                <td className="py-2 font-bold text-slate-200">
+                                                    {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                                    {getLeaderBadge(s.id, 'points')}
+                                                </td>
+                                                <td className="py-2 pr-2 text-right font-black text-emerald-400">{s.points} P</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-xs">HENÜZ PUAN ALAN YOK</div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                        <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
+                            <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
+                            {is24Finished && scoreLeaders.length > 1 && (
+                                <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                            )}
+                        </div>
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {wStats.length > 0 && maxScores > 0 ? (
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-slate-800/50">
+                                        {wStats.filter((s:any) => s.exactScores > 0).sort((a:any,b:any) => b.exactScores - a.exactScores).map((s:any, idx:number) => (
+                                            <tr key={s.id} className="hover:bg-slate-900/50">
+                                                <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                                <td className="py-2 font-bold text-slate-200">
+                                                    {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                                    {getLeaderBadge(s.id, 'scores')}
+                                                </td>
+                                                <td className="py-2 pr-2 text-right font-black text-amber-500">{s.exactScores} Maç</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-xs">HENÜZ SKOR BİLEN YOK</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {isOldestWeek && ptsLeaders.length > 0 && (
+                    <div className="mt-4 bg-amber-950/50 p-3 rounded-xl border border-amber-500/30 text-center shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                        <span className="text-amber-500 font-black text-[11px] tracking-widest">
+                            ✨ {week}. HAFTA BONUS KAZANAN YARIŞMACI(LAR): <span className="text-white ml-2">{ptsLeaders.map((p:any) => mergedAccounts[p.id]?.name).join(' & ')}</span> ✨
+                        </span>
+                    </div>
+                )}
+            </div>
+          );
+      })}
     </div>
   );
 }
