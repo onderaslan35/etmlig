@@ -29,7 +29,6 @@ const teamDict: Record<string, string> = {
     "ARNAVUTLUK": "Albania", "BELARUS": "Belarus", "SLOVAKYA": "Slovakia", "MOLDOVA": "Moldova"
 };
 
-// 🔥 İŞTE SAATLİ BOMBA BURADAYDI! BURASI SÜPER LİG VE 1. LİG İÇİN GÜNCELLENDİ 🔥
 function isTffMatchCheck(category: string) {
     if(!category) return false;
     const uppercaseCat = category.toUpperCase();
@@ -255,6 +254,7 @@ export async function GET(request: Request) {
                 else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
                 const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
+                const isLive = ['LIVE', '1H', '2H', 'HT', 'IN PLAY', 'WAITING_APPROVAL'].includes(dbMatch.status);
                 const isTff = isTffMatchCheck(catDict[`${weekNum}-${matchIndex}`] || "");
 
                 winnerIds.forEach(wId => {
@@ -274,7 +274,18 @@ export async function GET(request: Request) {
                                 st[wId].dfoSkorAll += 1; 
                                 if (weekNum < highestWeekFound) { st[wId].dfoBasePrev += pts; st[wId].dfoSkorPrev += 1; }
                             }
-                        } 
+                        } else if (isLive) {
+                            // 🔥 ARTIK CANLI MAÇLARIN PUANI DA ANINDA LİDERLİK TABLOSUNA YANSIYACAK 🔥
+                            st[wId].masterLive += pts;
+                            st[wId].skorLive += 1;
+                            if (isTff) {
+                                st[wId].tffLive += pts;
+                                st[wId].tffSkorLive += 1;
+                            } else {
+                                st[wId].dfoLive += pts;
+                                st[wId].dfoSkorLive += 1;
+                            }
+                        }
                     }
                 });
             }
@@ -287,22 +298,23 @@ export async function GET(request: Request) {
         const sortFunc = (a:any, b:any) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr');
         const makePrevRanks = (list: any[]) => { const r:Record<string,number>={}; list.forEach((p,i)=>r[p.id]=i+1); return r; };
 
-        const currList = Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBaseAll + getAdminBonus(id, highestWeekFound) })).sort(sortFunc);
+        // LİDERLİK SIRALAMALARINA (CANLI) PUANLAR DAHİL EDİLDİ
+        const currList = Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBaseAll + st[id].masterLive + getAdminBonus(id, highestWeekFound) })).sort(sortFunc);
         const prevRanks = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBasePrev + getAdminBonus(id, highestWeekFound - 1) })).sort(sortFunc));
         
-        const currListDfo = Object.keys(st).map(id => ({ id, score: st[id].dfoPts })).sort(sortFunc);
+        const currListDfo = Object.keys(st).map(id => ({ id, score: st[id].dfoPts + st[id].dfoLive })).sort(sortFunc);
         const prevRanksDfo = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].dfoPts - st[id].dfoBaseAll + st[id].dfoBasePrev })).sort(sortFunc));
         
-        const currListTff = Object.keys(st).map(id => ({ id, score: st[id].tffPts })).sort(sortFunc);
+        const currListTff = Object.keys(st).map(id => ({ id, score: st[id].tffPts + st[id].tffLive })).sort(sortFunc);
         const prevRanksTff = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffPts - st[id].tffBaseAll + st[id].tffBasePrev })).sort(sortFunc));
 
-        const currSkor = Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorAll })).sort(sortFunc);
+        const currSkor = Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorAll + st[id].skorLive })).sort(sortFunc);
         const prevRanksSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorPrev })).sort(sortFunc));
         
-        const currDfoSkor = Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorAll })).sort(sortFunc);
+        const currDfoSkor = Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorAll + st[id].dfoSkorLive })).sort(sortFunc);
         const prevRanksDfoSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorPrev })).sort(sortFunc));
         
-        const currTffSkor = Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorAll })).sort(sortFunc);
+        const currTffSkor = Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorAll + st[id].tffSkorLive })).sort(sortFunc);
         const prevRanksTffSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorPrev })).sort(sortFunc));
 
         const getTrend = (currListArr:any[], prevRanksObj:Record<string,number>, pId:string) => {
@@ -356,5 +368,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Mutfak Coktu', error: e });
     }
 
-    return NextResponse.json({ message: 'API BAGLANTISI VE OTONOM RADAR BASARIYLA CALISTI. CİFTE KAVRULMA HATASI GİDERİLDİ!' });
+    return NextResponse.json({ message: 'API BAGLANTISI VE OTONOM RADAR BASARIYLA CALISTI. CANLI PUAN GUNCELLEMESI AKTIF!' });
 }
