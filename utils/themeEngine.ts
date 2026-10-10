@@ -207,7 +207,7 @@ export const localTeamLogos: Record<string, string> = {
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
   "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
   "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
-  
+ 
   "SABAH FA": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
   "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
   "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
@@ -312,7 +312,7 @@ export const localTeamLogos: Record<string, string> = {
   "CREMONESE": "https://images.fotmob.com/image_resources/logo/teamlogo/7801_large.png",
   "HELLAS VERONA": "https://images.fotmob.com/image_resources/logo/teamlogo/9876_large.png",
   "ALAVÉS": "https://images.fotmob.com/image_resources/logo/teamlogo/9866_large.png",
-  
+ 
   "HEERENVEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/10228_large.png",
   "NOTTM FOREST": "https://upload.wikimedia.org/wikipedia/it/9/91/Nottingham_Forest_FC_Logo.svg",
 
@@ -450,7 +450,7 @@ export const localTeamLogos: Record<string, string> = {
   "BOCA JUNIORS": "https://images.fotmob.com/image_resources/logo/teamlogo/10077_large.png",
   "SAO PAULO": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
   "SÃO PAULO": "https://images.fotmob.com/image_resources/logo/teamlogo/10277_large.png",
-  
+ 
   // YEREL KLASÖRLER (Sadece Yerli Alt Lig Takımları İçin Korundu)
   "ÇORUM FK": "/logos/corum-fk.png", "ESENLER EROKSPOR": "/logos/erokspor.png", "EROKSPOR": "/logos/erokspor.png",
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
@@ -481,12 +481,23 @@ export const getLocalLogoUrl = (teamName: string) => {
   return `/logos/${slug}.png`;
 };
 
+// 🔥 SÜPER LİG VE 1. LİG DÜZELTİLDİ 🔥
 export const isTffMatchCheck = (category: string) => {
   if(!category) return false;
   const uppercaseCat = category.toUpperCase();
   return ( 
     uppercaseCat.includes("TÜRKİYE") || 
+    uppercaseCat.includes("TURKİYE") || 
+    uppercaseCat.includes("TURKIYE") || 
     uppercaseCat.includes("TFF") || 
+    uppercaseCat.includes("SÜPER LİG") || 
+    uppercaseCat.includes("SÜPER LIG") || 
+    uppercaseCat.includes("SUPER LİG") || 
+    uppercaseCat.includes("SUPER LIG") || 
+    uppercaseCat.includes("1. LİG") || 
+    uppercaseCat.includes("1. LIG") || 
+    uppercaseCat.includes("1.LİG") || 
+    uppercaseCat.includes("1.LIG") || 
     uppercaseCat.includes("AMATÖR") || 
     uppercaseCat.includes("PTT") || 
     uppercaseCat.includes("2.LİG") || 
@@ -580,8 +591,8 @@ export const getEliteTheme = (category: string, homeTeam: string, awayTeam: stri
   if (upCat.includes("ŞAMPİYONLAR LİGİ") || upCat.includes("Ş.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png";
   else if (upCat.includes("AVRUPA LİGİ") || upCat.includes("A.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/73.png";
   else if (upCat.includes("KONFERANS LİGİ") || upCat.includes("K.L.")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/10216.png";
-  else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
-  else if (upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("1. LİG") || upCat.includes("1.LİG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/165.png";
+  else if (upCat.includes("TÜRKİYE SÜPER LİG") || upCat.includes("TRENDYOL SÜPER LİG") || upCat.includes("SÜPER LİG") || upCat.includes("SÜPER LIG") || upCat.includes("SUPER LİG") || upCat.includes("SUPER LIG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png";
+  else if (upCat.includes("TÜRKİYE 1.LİG") || upCat.includes("1. LİG") || upCat.includes("1.LİG") || upCat.includes("1. LIG") || upCat.includes("1.LIG")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/165.png";
   else if (upCat.includes("TÜRKİYE KUPASI")) leagueLogoUrl = "https://upload.wikimedia.org/wikipedia/tr/e/ee/Ziraat_T%C3%BCrkiye_Kupasi_logo.png";
   else if (upCat.includes("İSPANYA") || upCat.includes("LA LIGA")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png";
   else if (upCat.includes("İNGİLTERE") || upCat.includes("PREMIER")) leagueLogoUrl = "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
