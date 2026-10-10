@@ -81,6 +81,7 @@ export default function CanliSkorTahtasi({ macIdleri }: { macIdleri: string }) {
                 <span className="text-white font-bold text-lg sm:text-xl">{deplasman}</span>
               </div>
             </div>
+            OK
 
             {/* ALT BÖLÜM: OLAYLAR (Goller & Kartlar) */}
             {(goller.length > 0 || kirmiziKartlar.length > 0) && (
