@@ -319,12 +319,14 @@ export default function LiveMatchCard() {
       let awayScore = dbMatch.away_score || '-';
 
       const matchTimeMs = getMatchTimeMs(match.date, match.time);
-      const twoHoursMs = 2 * 60 * 60 * 1000;
+      // Komutanın emri: 90. dakikada onaya DÜŞMEYECEK! 
+      // Tam 6 saat (360 dakika) boyunca maç CANLI kalacak. Sen bitirene kadar "Onay"a düşmez.
+      const liveDurationMs = 6 * 60 * 60 * 1000; 
       
       if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
         if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
-            if (now >= matchTimeMs && now < matchTimeMs + twoHoursMs) { matchStatus = 'LIVE'; } 
-            else if (now >= matchTimeMs + twoHoursMs) { matchStatus = 'WAITING_APPROVAL'; }
+            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { matchStatus = 'LIVE'; } 
+            else if (now >= matchTimeMs + liveDurationMs) { matchStatus = 'WAITING_APPROVAL'; }
         }
       }
 
@@ -345,8 +347,20 @@ export default function LiveMatchCard() {
 
       let displayMinute = '';
       if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
-         if (safeExtra) { displayMinute = `${safeElapsed}+${safeExtra}'`; } 
-         else { displayMinute = `${safeElapsed}'`; }
+         if (safeExtra) { 
+             displayMinute = `${safeElapsed}+${safeExtra}'`; 
+         } else { 
+             if (Number(safeElapsed) >= 90) displayMinute = `90+'`;
+             else displayMinute = `${safeElapsed}'`; 
+         }
+      } else if (isLiveStatus) {
+         // Eğer API'den dakika gelmiyorsa, Karargah kendi dakikasını hesaplar!
+         const diffMins = Math.floor((now - matchTimeMs) / 60000);
+         if (diffMins >= 105) displayMinute = `90+'`; // Maç 90'a dayandıysa sonsuza kadar 90+ yazar
+         else if (diffMins >= 60) displayMinute = `${diffMins - 15}'`; // İkinci yarı
+         else if (diffMins >= 45) displayMinute = `HT`; // Devre Arası
+         else if (diffMins > 0) displayMinute = `${diffMins}'`;
+         else displayMinute = `1'`;
       }
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
