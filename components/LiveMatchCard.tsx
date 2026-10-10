@@ -318,15 +318,16 @@ export default function LiveMatchCard() {
       let homeScore = dbMatch.home_score || '-';
       let awayScore = dbMatch.away_score || '-';
 
+      // 🔴 SİNSİ ONAY BEKLİYOR DURUMUNU EZİYORUZ - SONSUZA DEK CANLI 🔴
+      if (matchStatus === 'WAITING_APPROVAL') {
+          matchStatus = 'LIVE';
+      }
+
       const matchTimeMs = getMatchTimeMs(match.date, match.time);
-      // Komutanın emri: 90. dakikada onaya DÜŞMEYECEK! 
-      // Tam 6 saat (360 dakika) boyunca maç CANLI kalacak. Sen bitirene kadar "Onay"a düşmez.
-      const liveDurationMs = 6 * 60 * 60 * 1000; 
       
       if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
         if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
-            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { matchStatus = 'LIVE'; } 
-            else if (now >= matchTimeMs + liveDurationMs) { matchStatus = 'WAITING_APPROVAL'; }
+            if (now >= matchTimeMs) { matchStatus = 'LIVE'; } // Sonsuza kadar LIVE
         }
       }
 
@@ -334,7 +335,7 @@ export default function LiveMatchCard() {
       const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P'].includes(matchStatus);
       const isHT = matchStatus === 'HT';
 
-      if (isLiveStatus || matchStatus === 'WAITING_APPROVAL') {
+      if (isLiveStatus) {
          if (homeScore === '-') homeScore = '0';
          if (awayScore === '-') awayScore = '0';
       }
@@ -356,8 +357,7 @@ export default function LiveMatchCard() {
       } else if (isLiveStatus) {
          // Eğer API'den dakika gelmiyorsa, Karargah kendi dakikasını hesaplar!
          const diffMins = Math.floor((now - matchTimeMs) / 60000);
-         if (diffMins >= 105) displayMinute = `90+'`; // Maç 90'a dayandıysa sonsuza kadar 90+ yazar
-         else if (diffMins >= 60) displayMinute = `${diffMins - 15}'`; // İkinci yarı
+         if (diffMins >= 90) displayMinute = `90+'`; // Maç 90'a dayandıysa sonsuza kadar 90+ yazar
          else if (diffMins >= 45) displayMinute = `HT`; // Devre Arası
          else if (diffMins > 0) displayMinute = `${diffMins}'`;
          else displayMinute = `1'`;
@@ -399,7 +399,7 @@ export default function LiveMatchCard() {
       let possibleWinners: {name: string, score: string}[] = [];
       let eliminatedPlayers: {name: string, score: string}[] = [];
 
-      if ((isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && homeScore !== '-' && awayScore !== '-') {
+      if ((isLiveStatus || isFinishedStatus || isHT) && homeScore !== '-' && awayScore !== '-') {
         const currentH = parseInt(homeScore);
         const currentA = parseInt(awayScore);
 
@@ -413,7 +413,7 @@ export default function LiveMatchCard() {
           const pH = parseInt(pHStr); const pA = parseInt(pAStr);
 
           if (pH === currentH && pA === currentA) { exactWinners.push({ id, name, score: predStr }); } 
-          else if (pH >= currentH && pA >= currentA && !isFinishedStatus && matchStatus !== 'WAITING_APPROVAL') { possibleWinners.push({ name, score: predStr }); } 
+          else if (pH >= currentH && pA >= currentA && !isFinishedStatus) { possibleWinners.push({ name, score: predStr }); } 
           else { eliminatedPlayers.push({ name, score: predStr }); }
         });
 
@@ -460,10 +460,10 @@ export default function LiveMatchCard() {
                 <img src={theme.homeLogo} alt={homeTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
                 <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
                   <div className="mb-0.5 flex items-center justify-center">
-                    {isHT ? (<span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>) : isLiveStatus ? (<span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">{displayMinute}</span>) : matchStatus === 'WAITING_APPROVAL' ? (<span className="text-[8px] sm:text-[9px] font-black text-amber-500 tracking-wider">ONAY</span>) : isFinishedStatus ? (<span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>) : (<span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>)}
+                    {isHT ? (<span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>) : isLiveStatus ? (<span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">{displayMinute}</span>) : isFinishedStatus ? (<span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>) : (<span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>)}
                   </div>
                   <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' : (isLiveStatus || isHT) ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'}`}>
-                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>{(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? 'v' : `${homeScore}-${awayScore}`}</span>
+                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>{(!isLiveStatus && !isFinishedStatus && !isHT) ? 'v' : `${homeScore}-${awayScore}`}</span>
                   </div>
                 </div>
                 <img src={theme.awayLogo} alt={awayTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
@@ -500,7 +500,7 @@ export default function LiveMatchCard() {
                         <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
                       </div>
                     )}
-                    {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') && (
+                    {(!isLiveStatus && !isFinishedStatus && !isHT) && (
                       <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                         <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                       </div>
@@ -512,14 +512,13 @@ export default function LiveMatchCard() {
                         <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">🔴 CANLI</span>
                       </div>
                     )}
-                    {matchStatus === 'WAITING_APPROVAL' && (<div className="bg-amber-950/80 border border-amber-700 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md"><span className="text-amber-500 text-[9px] sm:text-[10px] font-black tracking-widest">ONAY BEKLİYOR</span></div>)}
                     {isFinishedStatus && (<div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md"><span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span></div>)}
                     <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
                       <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{homeScore}</span>
                       <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
                       <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{awayScore}</span>
                     </div>
-                    {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') && countdownText && (
+                    {(!isLiveStatus && !isFinishedStatus && !isHT) && countdownText && (
                       <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1"><span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">{countdownText}</span></div>
                     )}
                   </div>
@@ -578,7 +577,7 @@ export default function LiveMatchCard() {
                 <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative mt-auto`}>
                   <div className="flex justify-between items-center w-full">
                     <div className="text-left flex-1">
-                      {(!isLiveStatus && !isFinishedStatus && !isHT && matchStatus !== 'WAITING_APPROVAL') ? (
+                      {(!isLiveStatus && !isFinishedStatus && !isHT) ? (
                         <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
                       ) : exactWinners.length === 0 ? (
                          !isFinishedStatus && possibleWinners.length > 0 ? (<span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>) : (<span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>)
@@ -590,13 +589,13 @@ export default function LiveMatchCard() {
                       <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>{isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}</span>
                     </div>
                     <div className="text-right flex-1">
-                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
+                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT) && (
                         <button onClick={() => toggleWinners(uniqueId)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">{isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}</button>
                       )}
                     </div>
                   </div>
                 
-                  {isWinnersOpen && (isLiveStatus || isFinishedStatus || isHT || matchStatus === 'WAITING_APPROVAL') && (
+                  {isWinnersOpen && (isLiveStatus || isFinishedStatus || isHT) && (
                     <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
                       {exactWinners.length > 0 && (
                         <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
@@ -630,7 +629,7 @@ export default function LiveMatchCard() {
                         </div>
                       )}
 
-                      {!isFinishedStatus && matchStatus !== 'WAITING_APPROVAL' && possibleWinners.length > 0 && (
+                      {!isFinishedStatus && possibleWinners.length > 0 && (
                         <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
                           <button onClick={() => togglePossible(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
                             <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)</span>
