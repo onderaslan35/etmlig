@@ -82,8 +82,8 @@ export const getWeekLabel = (weekNum: number | string) => {
 // 🔴 2. LİG HAVUZU VE KATEGORİLER
 export const LIG_HAVUZU: Record<string, string[]> = {
   "TÜRKİYE SÜPER LİG": ["ALANYASPOR", "AMED", "BAŞAKŞEHİR", "BEŞİKTAŞ", "RIZESPOR", "ÇORUM FK", "ERZURUMSPOR FK", "EYÜPSPOR", "FENERBAHÇE", "GALATASARAY", "GAZİANTEP FK", "GENÇLERBİRLİĞİ", "GÖZTEPE", "KASIMPAŞA", "KOCAELİSPOR", "KONYASPOR", "SAMSUNSPOR", "TRABZONSPOR"],
-  "TÜRKİYE 1. LİG": ["ANTALYASPOR", "BANDIRMASPOR", "BATMAN PETROLSPOR", "BODRUMSPOR", "BOLUSPOR", "BURSASPOR", "EROKSPOR", "FATİH KARAGÜMRÜK", "IĞDIR FK", "İSTANBULSPOR", "KAYSERİSPOR", "KEÇİÖRENGÜCÜ", "MANİSA FK", "MARDİN 1969", "MUĞLASPOR", "PENDİKSPOR", "SARIYER", "SİVASSPOR", "ÜMRANIYESPOR", "VANSPOR FK"],
-  "İNGİLTERE PREMIER LİG": ["ARSENAL", "ASTON VILLA", "BOURNEMOUTH", "BRENTFORD", "BRIGHTON", "CHELSEA", "COVENTRY CITY", "CRYSTAL PALACE", "EVERTON", "FULHAM", "HULL CITY", "IPSWICH TOWN", "LEEDS UNITED", "LIVERPOOL", "MANCHESTER CITY", "MANCHESTER UNITED", "NEWCASTLE UNITED", "NOTTINGHAM FOREST", "SUNDERLAND", "TOTTENHAM", "MIDDLESBROUGH"],
+  "TÜRKİYE 1. LİG": ["ANTALYASPOR", "BANDIRMASPOR", "BATMAN PETROLSPOR", "BODRUMSPOR", "BOLUSPOR", "BURSASPOR", "EROKSPOR", "FATİH KARAGÜMRÜK", "IĞDIR FK", "İSTANBULSPOR", "KAYSERISPOR", "KEÇİÖRENGÜCÜ", "MANİSA FK", "MARDİN 1969", "MUĞLASPOR", "PENDİKSPOR", "SARIYER", "SİVASSPOR", "ÜMRANIYESPOR", "VANSPOR FK"],
+  "İNGİLTERE PREMIER LİG": ["ARSENAL", "ASTON VILLA", "BOURNEMOUTH", "BRENTFORD", "BRIGHTON", "CHELSEA", "COVENTRY CITY", "CRYSTAL PALACE", "EVERTON", "FULHAM", "HULL CITY", "IPSWICH TOWN", "LEEDS", "LIVERPOOL", "MANCHESTER CITY", "MANCHESTER UNITED", "NEWCASTLE UNITED", "NOTTINGHAM FOREST", "SUNDERLAND", "TOTTENHAM", "MIDDLESBROUGH"],
   "ALMANYA BUNDESLIGA": ["FC AUGSBURG", "BAYER LEVERKUSEN", "BAYERN MÜNİH", "BORUSSIA DORTMUND", "MÖNCHENGLADBACH", "EINTRACHT FRANKFURT", "ELVERSBERG", "FREIBURG", "HAMBURG", "HOFFENHEIM", "KÖLN", "FSV MAINZ 05", "RB LEIPZIG", "SCHALKE 04", "STUTTGART", "UNION BERLIN", "WERDER BREMEN", "WOLFSBURG", "BOCHUM", "ST. PAULI", "HEIDENHEIM", "HOLSTEIN KIEL"],
   "FRANSA LIGUE 1": ["ANGERS", "BREST", "LE MANS", "LENS", "LILLE", "LORIENT", "LYON", "MARSİLYA", "MONACO", "PARIS FC", "PARIS SAINT-GERMAIN", "RENNES", "STRASBOURG", "TOULOUSE", "TROYES", "NICE", "LE HAVRE", "AUXERRE", "NANTES", "REIMS"],
   "İTALYA SERIE A": ["ATALANTA", "BOLOGNA", "CAGLIARI", "COMO",("FIORENTINA"), ("FROSINONE"), ("GENOA"), ("INTER"), ("JUVENTUS"), ("LAZIO"), ("LECCE"), ("MILAN"), ("NAPOLI"), ("PARMA"), ("ROMA"), ("SASSUOLO"), ("TORINO"), ("UDINESE"), ("VENEZIA"), ("MONZA"), ("HELLAS VERONA"), ("EMPOLI")],
@@ -184,7 +184,7 @@ export const localTeamLogos: Record<string, string> = {
   "VANSPOR FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Vanspor_FK_(2019).svg",
   "MANİSA FK": "https://tr.wikipedia.org/wiki/Special:FilePath/Manisa_FK.png",
   "BAŞAKŞEHİR": "https://de.wikipedia.org/wiki/Special:FilePath/Istanbul_Basaksehir_FK_Logo.svg",
-  "KAYSERİSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Kayserispor.svg",
+  "KAYSERISPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Kayserispor.svg",
   "SİVASSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Sivasspor_-_Logo.svg",
   "AMED": "https://tr.wikipedia.org/wiki/Special:FilePath/Amed_SK.png",
   "MARDİN 1969": "https://tr.wikipedia.org/wiki/Special:FilePath/Mardin_1969_SK.png",
@@ -272,7 +272,7 @@ export const localTeamLogos: Record<string, string> = {
   "HULL CITY": "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png",
   "IPSWICH TOWN": "https://en.wikipedia.org/wiki/Special:FilePath/Ipswich_Town.svg",
   "SALZBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/10013_large.png"
-,  "LEEDS UNITED": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
+,  "LEEDS": "https://en.wikipedia.org/wiki/Special:FilePath/Leeds_United_F.C._logo.svg",
   "LIVERPOOL": "https://images.fotmob.com/image_resources/logo/teamlogo/8650_large.png",
   "MANCHESTER CITY": "https://sco.wikipedia.org/wiki/Special:FilePath/Manchester_City_FC_badge.svg",
   "NORVICH": "https://images.fotmob.com/image_resources/logo/teamlogo/9850_large.png",
