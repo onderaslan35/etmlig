@@ -435,7 +435,7 @@ export const localTeamLogos: Record<string, string> = {
   "PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
   "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
   "BENFICA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
-  "BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10264_large.png",
+  "SC BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10264_large.png",
 
   // İSKOÇYA
   "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
