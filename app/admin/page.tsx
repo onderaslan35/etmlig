@@ -867,12 +867,14 @@ export default function AdminRadarPortal() {
         return;
       }
 
+      // 🔥 İŞTE BÜTÜN DÜĞÜM BURADAYDI! 🔥
+      // Eski sistem isTffMatchCheck kullanmadığı için 1. Ligi algılamıyordu.
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
 
       let confirmMsg = matchId === 24 
           ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
-          : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?`;
+          : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?\n(Sistem Bu Maçı ${leagueName} Olarak Algıladı)`;
 
       if (!window.confirm(confirmMsg)) return;
 
