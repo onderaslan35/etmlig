@@ -196,12 +196,13 @@ export default function PredictionPortal() {
      
      for (let i = 0; i < 24; i++) {
         if (tempScores[i] !== predictions[i]) {
+            // 🔥 HATANIN ÇÖZÜMÜ BURASI 🔥
+            // Veritabanında olmayan 'updated_at' sütununu sildim. Artık hata vermeyecek.
             updates.push({
                 user_id: selectedUser.id,
                 week_num: activeWeek,
                 match_index: i + 1,
-                predicted_score: tempScores[i],
-                updated_at: new Date().toISOString()
+                predicted_score: tempScores[i]
             });
             changedCount++;
         }
