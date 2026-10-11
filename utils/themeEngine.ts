@@ -177,7 +177,7 @@ export const localTeamLogos: Record<string, string> = {
   "RIZESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/2166_large.png",
   "FATIH KARAGÜMRÜK": "https://images.fotmob.com/image_resources/logo/teamlogo/2088_large.png",
   "ÜMRANIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/281460_large.png",
-  "GAZIANTEP FK": "https://images.fotmob.com/image_resources/logo/teamlogo/10193_large.png",
+  "GAZIANTEP FK": "https://images.fotmob.com/image_resources/logo/teamlogo/4081_large.png",
   "ALANYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10194_large.png",
   "GENÇLERBIRLIĞI S.K.": "https://images.fotmob.com/image_resources/logo/teamlogo/7800_large.png",
   "IĞDIR FK": "https://images.fotmob.com/image_resources/logo/teamlogo/1281818_large.png",
@@ -191,10 +191,10 @@ export const localTeamLogos: Record<string, string> = {
   "ANTALYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1931_large.png",
   "BATMAN PETROLSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/163008_large.png",
   "KEÇİÖRENGÜCÜ": "https://images.fotmob.com/image_resources/logo/teamlogo/10203_large.png",
-  "BURSASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10204_large.png",
+  "BURSASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10270_large.png",
   "SAMSUNSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10205_large.png",
   "GÖZTEPE": "https://images.fotmob.com/image_resources/logo/teamlogo/10206_large.png",
-  "KOCAELISPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10207_large.png",
+  "KOCAELISPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1569_large.png",
   "EYÜPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10208_large.png",
 
   // AVRUPA GENEL
