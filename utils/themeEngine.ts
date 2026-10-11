@@ -193,9 +193,9 @@ export const localTeamLogos: Record<string, string> = {
   "KEÇİÖRENGÜCÜ": "https://images.fotmob.com/image_resources/logo/teamlogo/10203_large.png",
   "BURSASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10270_large.png",
   "SAMSUNSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10205_large.png",
-  "GÖZTEPE": "https://images.fotmob.com/image_resources/logo/teamlogo/10206_large.png",
+  "GÖZTEPE": "https://images.fotmob.com/image_resources/logo/teamlogo/1925_large.png",
   "KOCAELISPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1569_large.png",
-  "EYÜPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10208_large.png",
+  "EYÜPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4681_large.png",
 
   // AVRUPA GENEL
   "KARABAĞ FK": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Qaraba%C4%9F_FK_2024.svg",
