@@ -4,12 +4,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 import { 
-  TEST_ACCOUNTS, // 🔥 İŞTE BUNU KULLANMAYI UNUTMUŞTUK!
+  TEST_ACCOUNTS,
   staticPlayersList, 
   customWeekNames, 
   getWeekLabel, 
   getUniqueMatchId,
-  isTffMatchCheck
+  isTffMatchCheck,
+  getEliteTheme // 🔥 EFSANE KART TASARIM MOTORU EKLENDİ
 } from '@/utils/themeEngine';
 
 export default function PredictionPortal() {
@@ -144,18 +145,15 @@ export default function PredictionPortal() {
     let isValid = false;
     let uName = "";
 
-    // 🔥 ÇİFTE KALKAN: ÖNCE YEREL LİSTEYE (TEST_ACCOUNTS) BAK 🔥
     if (TEST_ACCOUNTS[userIdInput]) {
         if (TEST_ACCOUNTS[userIdInput].pass === String(userPassInput).trim()) {
             isValid = true;
             uName = TEST_ACCOUNTS[userIdInput].name;
         }
     } 
-    // EĞER YEREL LİSTEDE YOKSA, VERİTABANINA BAK
     else {
         const { data: dbPlayers } = await supabase.from('players').select('*').eq('username', userIdInput).single();
         if (dbPlayers) {
-            // Şifreyi metin olarak alıp kıyasla (password veya pass sütunu)
             const dbPass = dbPlayers.password || dbPlayers.pass;
             if (String(dbPass).trim() === String(userPassInput).trim()) { 
                 isValid = true; 
@@ -376,7 +374,7 @@ export default function PredictionPortal() {
 
       </div>
 
-      {/* 🟢 TAHMİN GİRİŞ MODAL PENCERESİ 🟢 */}
+      {/* 🔥 EFSANE MAÇ KARTLARI MODALI (GERİ GELDİ!) 🔥 */}
       {isModalOpen && selectedUser && (
          <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-slate-950/95 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
              <div className="bg-slate-900 border border-amber-500/30 rounded-2xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative mt-4 sm:mt-0 pb-6 mb-20 sm:mb-0">
@@ -394,72 +392,100 @@ export default function PredictionPortal() {
                  </div>
 
                  <div className="px-2 sm:px-6 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                          {bulletin.map((m, idx) => {
                              const logInfo = liveInfoStateMap[m.match_index];
                              const matchStatus = logInfo?.status || 'NOT_STARTED';
                              const isLocked = matchStatus !== 'NOT_STARTED';
-                             const isTff = isTffMatchCheck(m.category);
+                             
+                             // 🔥 İŞTE EFSANE KART TASARIMINI OLUŞTURAN MOTOR ÇAĞRILDI 🔥
+                             const homeTeamUpper = m.home_team?.toUpperCase() || "";
+                             const awayTeamUpper = m.away_team?.toUpperCase() || "";
+                             const theme = getEliteTheme(m.category, homeTeamUpper, awayTeamUpper);
 
                              return (
-                                 <div key={idx} className={`bg-slate-950 border rounded-xl p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4 transition-all relative overflow-hidden ${isLocked ? 'border-red-900/50 opacity-80' : 'border-slate-800 hover:border-amber-500/50'}`}>
+                                 <div key={idx} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg} ${isLocked ? 'opacity-80 scale-[0.98]' : 'hover:scale-[1.02]'}`}>
                                      
                                      {isLocked && (
-                                         <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
-                                             <div className="bg-red-950/90 text-red-400 font-black text-[10px] sm:text-xs px-4 py-1.5 rounded border border-red-800/50 tracking-widest shadow-lg -rotate-12">
-                                                 🔒 MAÇ BAŞLADI / KİLİTLİ
+                                         <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-[2px]">
+                                             <div className="bg-red-950/90 text-red-400 font-black text-[11px] sm:text-sm px-6 py-2 rounded-lg border-2 border-red-800/80 tracking-[0.2em] shadow-[0_0_30px_rgba(220,38,38,0.5)] -rotate-12">
+                                                 🔒 MAÇ KİLİTLENDİ
                                              </div>
                                          </div>
                                      )}
 
-                                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded bg-slate-900 border border-slate-800 flex items-center justify-center font-black text-slate-500 text-xs sm:text-sm shrink-0">
-                                         {m.match_index}
-                                     </div>
+                                     <div className="p-4 sm:p-5 relative flex-grow overflow-hidden flex flex-col justify-center min-h-[140px]">
+                                       {theme.bgImg && (
+                                         <>
+                                           <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
+                                           <div className="absolute inset-0 bg-slate-900/60 z-0"></div>
+                                         </>
+                                       )}
+                                       <div className="relative z-10 flex flex-col h-full justify-between">
 
-                                     <div className="flex-1 flex flex-col min-w-0">
-                                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5 flex-wrap">
-                                             <span className="bg-slate-900 text-slate-400 text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded border border-slate-700 whitespace-nowrap">
-                                                 {m.match_date} - {m.match_time}
-                                             </span>
-                                             <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded border uppercase truncate max-w-[100px] sm:max-w-[150px] ${isTff ? 'bg-red-950/50 text-red-400 border-red-900' : 'bg-blue-950/50 text-blue-400 border-blue-900'}`}>
+                                         <div className="flex items-center justify-between mb-3 w-full">
+                                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded bg-slate-950/80 border border-slate-700 flex items-center justify-center font-black text-slate-400 text-xs sm:text-sm shadow-inner shrink-0">
+                                                {m.match_index}
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                               <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded border text-center ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} shadow-sm backdrop-blur-sm`}>
                                                  {m.category || 'BELİRSİZ LİG'}
-                                             </span>
+                                               </span>
+                                               <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold mt-1 tracking-widest bg-slate-950/50 px-2 rounded">
+                                                  {m.match_date} - {m.match_time}
+                                               </span>
+                                            </div>
                                          </div>
-                                         <div className="font-black text-[10px] sm:text-[11px] text-slate-200 tracking-wide uppercase leading-tight line-clamp-2 pr-1">
-                                             {m.home_team || 'EV SAHİBİ'} <span className="text-slate-500 mx-0.5">-</span> {m.away_team || 'DEPLASMAN'}
-                                         </div>
-                                     </div>
 
-                                     <div className="shrink-0 flex flex-col justify-center bg-[#080d1a] border border-slate-700/80 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg relative z-0">
-                                        <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-                                           <select 
-                                             disabled={isLocked}
-                                             value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0]} 
-                                             onChange={e => {
-                                                const currentAway = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1];
-                                                const newHome = e.target.value;
-                                                handleScoreChange(idx, newHome === "-" && currentAway === "-" ? "-" : `${newHome === "-" ? "0" : newHome}-${currentAway === "-" ? "0" : currentAway}`);
-                                             }}
-                                             className="bg-slate-900 text-amber-400 font-black text-sm sm:text-lg border border-slate-700 rounded outline-none text-center cursor-pointer appearance-none w-8 sm:w-10 py-1"
-                                             style={{textAlignLast: 'center'}}
-                                           >
-                                              {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt}>{opt}</option>)}
-                                           </select>
-                                           <span className="text-slate-600 font-bold text-xs sm:text-sm">:</span>
-                                           <select 
-                                             disabled={isLocked}
-                                             value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1]} 
-                                             onChange={e => {
-                                                const currentHome = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0];
-                                                const newAway = e.target.value;
-                                                handleScoreChange(idx, currentHome === "-" && newAway === "-" ? "-" : `${currentHome === "-" ? "0" : currentHome}-${newAway === "-" ? "0" : newAway}`);
-                                             }}
-                                             className="bg-slate-900 text-amber-400 font-black text-sm sm:text-lg border border-slate-700 rounded outline-none text-center cursor-pointer appearance-none w-8 sm:w-10 py-1"
-                                             style={{textAlignLast: 'center'}}
-                                           >
-                                              {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt}>{opt}</option>)}
-                                           </select>
-                                        </div>
+                                         <div className="flex items-center justify-between">
+                                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                                              <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center relative z-20">
+                                                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)]" />
+                                              </div>
+                                              <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wider drop-shadow-lg leading-tight px-1 max-w-[120px] line-clamp-2 h-[28px]">{homeTeamUpper || 'EV SAHİBİ'}</span>
+                                           </div>
+
+                                           <div className="flex flex-col items-center justify-center mx-2 z-30">
+                                             <div className={`bg-[#080d1a]/90 border ${theme.scoreBorder} py-2 sm:py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-1.5 sm:gap-3 shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md`}>
+                                               <select 
+                                                 disabled={isLocked}
+                                                 value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0]} 
+                                                 onChange={e => {
+                                                    const currentAway = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1];
+                                                    const newHome = e.target.value;
+                                                    handleScoreChange(idx, newHome === "-" && currentAway === "-" ? "-" : `${newHome === "-" ? "0" : newHome}-${currentAway === "-" ? "0" : currentAway}`);
+                                                 }}
+                                                 className="bg-transparent text-lg sm:text-2xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md w-6 sm:w-8"
+                                                 style={{textAlignLast: 'center'}}
+                                               >
+                                                  {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt}>{opt}</option>)}
+                                               </select>
+                                               <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
+                                               <select 
+                                                 disabled={isLocked}
+                                                 value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1]} 
+                                                 onChange={e => {
+                                                    const currentHome = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0];
+                                                    const newAway = e.target.value;
+                                                    handleScoreChange(idx, currentHome === "-" && newAway === "-" ? "-" : `${currentHome === "-" ? "0" : currentHome}-${newAway === "-" ? "0" : newAway}`);
+                                                 }}
+                                                 className="bg-transparent text-lg sm:text-2xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md w-6 sm:w-8"
+                                                 style={{textAlignLast: 'center'}}
+                                               >
+                                                  {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt}>{opt}</option>)}
+                                               </select>
+                                             </div>
+                                           </div>
+
+                                           <div className="flex flex-col items-center justify-center flex-1 gap-2">
+                                              <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center relative z-20">
+                                                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)]" />
+                                              </div>
+                                              <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wider drop-shadow-lg leading-tight px-1 max-w-[120px] line-clamp-2 h-[28px]">{awayTeamUpper || 'DEPLASMAN'}</span>
+                                           </div>
+                                         </div>
+
+                                       </div>
                                      </div>
                                  </div>
                              )
