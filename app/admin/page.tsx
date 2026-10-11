@@ -297,10 +297,11 @@ export default function AdminRadarPortal() {
        return;
     } 
 
+    // 🔥 SKORCU ŞİFRELERİ (Skorcum34 için şifre güncellendi: 343434) 🔥
     const validSkorcular: Record<string, string> = {
        'skorcum01': '150101',
        'skorcum06': '191006',
-       'skorcum34': '192306'
+       'skorcum34': '343434'
     };
 
     if (validSkorcular[usernameInput]) {
@@ -348,7 +349,6 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
-  // 🔥 YIKILAN CANLI YÖNETİM VERİ ÇEKME İŞLEMLERİ BURADA 🔥
   useEffect(() => {
     if (!isAuthenticated || selectedLiveWeek === 0) return;
 
@@ -460,7 +460,6 @@ export default function AdminRadarPortal() {
     }
   }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
-  // 🔥 BÜLTEN YÜKLEME 🔥
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
     const loadBulletinData = async () => {
@@ -486,7 +485,6 @@ export default function AdminRadarPortal() {
           });
           setBulletinMatches(mapped as any);
 
-          // 🔥 SABİT SLOT SİSTEMİ YÜKLEMESİ 🔥
           const loadedSecilen = Array(24).fill(null);
           data.forEach(m => {
               loadedSecilen[m.match_index - 1] = {
@@ -513,7 +511,6 @@ export default function AdminRadarPortal() {
     loadBulletinData();
   }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
-  // 🔥 TAHMİNLER DURUMU YÜKLEMESİ 🔥
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master' || selectedPredictionWeek === 0) return;
     if (activeTab !== 'predictions') return;
@@ -985,7 +982,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🎯 YENİ SİSTEM: TARİH, SAAT VE LİG FİLTRELİ UYDU ÇEKİMİ (KESİN EŞLEŞME) 🎯
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
@@ -1025,7 +1021,7 @@ export default function AdminRadarPortal() {
                         date: dateStr,
                         time: d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}),
                         league_name: fix.league.name,
-                        country: fix.league.country, // 🔥 Ülke Verisi Eklendi
+                        country: fix.league.country,
                         category: fix.league.name
                     };
                 });
@@ -1033,24 +1029,20 @@ export default function AdminRadarPortal() {
             }
         }
         
-        // 1. SAAT FİLTRESİ UYGULA
         havuzTemp = havuzTemp.filter(mac => {
             return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
         });
 
-        // 2. KESİN LİG FİLTRESİ UYGULA (Ülke + Lig Adı Tam Eşleşme)
         if (seciliLigFiltreleri.length > 0 || ozelLigFiltresi.trim() !== '') {
             havuzTemp = havuzTemp.filter(mac => {
                 const matchLeague = mac.league_name.toLowerCase();
                 const matchCountry = (mac.country || '').toLowerCase();
                 
-                // Popüler liglerden biri seçiliyse KESİN kontrol et
                 const matchesPopuler = seciliLigFiltreleri.length > 0 
                     ? seciliLigFiltreleri.some(filterId => {
                         const fObj = POPULER_LIG_SECENEKLERI.find(f => f.id === filterId);
                         if(!fObj) return false;
                         
-                        // Tam Eşleşme (Lig adı ve Ülkesi)
                         const isLeagueMatch = matchLeague === fObj.apiAd.toLowerCase();
                         const isCountryMatch = fObj.country === 'World' ? true : matchCountry === fObj.country.toLowerCase();
                         
@@ -1058,7 +1050,6 @@ export default function AdminRadarPortal() {
                     })
                     : false;
                 
-                // Özel kutuya bir şey yazıldıysa kontrol et
                 const matchesOzel = ozelLigFiltresi.trim() !== '' 
                     ? matchLeague.includes(ozelLigFiltresi.toLowerCase()) || matchCountry.includes(ozelLigFiltresi.toLowerCase())
                     : false;
@@ -1067,7 +1058,6 @@ export default function AdminRadarPortal() {
             });
         }
 
-        // SIRALAMA: Önce Tarih, Sonra Saat
         havuzTemp.sort((a,b) => {
             if (a.date !== b.date) {
                 const dA = parseDateLocal(a.date).getTime();
@@ -1089,17 +1079,14 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 SABİT SLOT MANTIĞI: Listeden çıkarılan maçın yeri boş kalır (null), yeni eklenen maç o boşluğa dolar! 🔥
   const toggleHavuzMac = (mac: any) => {
     const newSecilen = [...secilenMaclar];
     const existingIndex = newSecilen.findIndex(m => m && m.fixture_id === mac.fixture_id);
     
     if (existingIndex !== -1) {
-        // Zaten listede var, çıkar ve yerini boş (null) bırak ki alttakiler yukarı kaymasın!
         newSecilen[existingIndex] = null;
         setSecilenMaclar(newSecilen);
     } else {
-        // Listede yok, YENİ MAÇ EKLENECEK. İlk boş (null) koltuğu bul.
         const emptyIndex = newSecilen.findIndex(m => m === null);
         if (emptyIndex !== -1) {
             newSecilen[emptyIndex] = { ...mac };
@@ -1111,7 +1098,6 @@ export default function AdminRadarPortal() {
   };
 
   const bulteniPatlat = async () => {
-    // 24 slotun hepsi dolu mu diye bakıyoruz
     const selectedCount = secilenMaclar.filter(m => m !== null).length;
 
     if (selectedCount !== 24) {
@@ -1121,7 +1107,7 @@ export default function AdminRadarPortal() {
     setIsPublishing(true);
     try {
       const payload = secilenMaclar.map((m, idx) => {
-         if (!m) return null; // Boş slotları geçiyoruz (veritabanında o index boş kalacak)
+         if (!m) return null; 
          return {
              week_num: bulletinWeek, 
              match_index: idx + 1, 
@@ -1516,9 +1502,11 @@ export default function AdminRadarPortal() {
                               <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner inline-block w-full">
                                 ✅ BU MAÇIN PUANLARI DAĞITILDI
                               </div>
-                              <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
-                                İPTAL ET & PUANLARI GERİ AL
-                              </button>
+                              {userRole === 'master' && (
+                                <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
+                                  İPTAL ET & PUANLARI GERİ AL
+                                </button>
+                              )}
                             </div>
                           ) : (
                             <>
@@ -1528,45 +1516,60 @@ export default function AdminRadarPortal() {
                               <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">
                                 2. ADIM: MAÇI BİTİR (DAĞIT)
                               </button>
-                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
-                                SIFIRLA
-                              </button>
+                              {userRole === 'master' && (
+                                <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
+                                  SIFIRLA
+                                </button>
+                              )}
                             </>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
-                      <div className="flex items-center justify-between mb-3 w-full">
-                         <div className="flex items-center gap-2">
-                             <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
-                             <span className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest uppercase">
-                                 {winnersCount > 0 ? `${winnersCount} KİŞİ BİLDİ (Kişi Başı: ${displayPoints} Puan)` : "BU SKORU BİLEN YOK"}
+                    {/* 🔥 KOMUTANIN KÖR NOKTA (BLINDFOLD) GİZLİLİK PROTOKOLÜ BURADA BAŞLIYOR 🔥 */}
+                    {userRole === 'master' ? (
+                        <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
+                          <div className="flex items-center justify-between mb-3 w-full">
+                             <div className="flex items-center gap-2">
+                                 <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
+                                 <span className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest uppercase">
+                                     {winnersCount > 0 ? `${winnersCount} KİŞİ BİLDİ (Kişi Başı: ${displayPoints} Puan)` : "BU SKORU BİLEN YOK"}
+                                 </span>
+                             </div>
+                             <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
+                                {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                              </span>
-                         </div>
-                         <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                            {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
-                         </span>
-                         {winnersCount > 0 && (
-                            <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
-                              {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
-                            </button>
-                         )}
-                      </div>
+                             {winnersCount > 0 && (
+                                <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
+                                  {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                                </button>
+                             )}
+                          </div>
 
-                      {isWinnersOpen && winnersCount > 0 && (
-                         <div className="flex items-center justify-center border-t border-slate-700/50 pt-3 animate-fadeIn">
-                            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
-                               {currentWinners.map((p, i) => (
-                                   <span key={i} className="bg-slate-950/80 border px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm uppercase tracking-wider border-slate-600/50">
-                                      {p}
-                                   </span>
-                               ))}
-                            </div>
-                         </div>
-                      )}
-                    </div>
+                          {isWinnersOpen && winnersCount > 0 && (
+                             <div className="flex items-center justify-center border-t border-slate-700/50 pt-3 animate-fadeIn">
+                                <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+                                   {currentWinners.map((p, i) => (
+                                       <span key={i} className="bg-slate-950/80 border px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm uppercase tracking-wider border-slate-600/50">
+                                          {p}
+                                       </span>
+                                   ))}
+                                </div>
+                             </div>
+                          )}
+                        </div>
+                    ) : (
+                        <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative flex flex-col items-center justify-center gap-1.5`}>
+                           <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
+                              {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
+                           </span>
+                           <span className="text-slate-400 text-[9px] font-bold tracking-widest uppercase flex items-center gap-1 mt-1 bg-slate-900/80 px-3 py-1 rounded-md border border-slate-700/50 shadow-inner">
+                              🔒 GİZLİLİK AKTİF: TAHMİNLER SADECE BAŞKOMUTAN TARAFINDAN GÖRÜLEBİLİR
+                           </span>
+                        </div>
+                    )}
+                    {/* 🔥 KÖR NOKTA PROTOKOLÜ BİTTİ 🔥 */}
 
                   </div>
                 );
