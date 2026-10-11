@@ -32,7 +32,7 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ 🏆
+// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ (KONFERANS LİGİ EKLENDİ) 🏆
 const POPULER_LIG_SECENEKLERI = [
   { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig' },
   { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig' },
@@ -44,6 +44,7 @@ const POPULER_LIG_SECENEKLERI = [
   { id: 'eredivisie', ad: '🇳🇱 Eredivisie', apiAd: 'Eredivisie' },
   { id: 'ucl', ad: '⭐ Şampiyonlar L.', apiAd: 'UEFA Champions League' },
   { id: 'uel', ad: '🟠 Avrupa L.', apiAd: 'UEFA Europa League' },
+  { id: 'uecl', ad: '🟢 Konferans L.', apiAd: 'Conference League' },
   { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League' }
 ];
 
@@ -867,8 +868,6 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 İŞTE BÜTÜN DÜĞÜM BURADAYDI! 🔥
-      // Eski sistem isTffMatchCheck kullanmadığı için 1. Ligi algılamıyordu.
       const isTff = isTffMatchCheck(matchData.category);
       const leagueName = isTff ? 'TFF' : 'DFO';
 
