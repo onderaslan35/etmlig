@@ -170,12 +170,12 @@ export const localTeamLogos: Record<string, string> = {
   // TÜRKİYE (KULÜPLER)
   "BEŞIKTAŞ": "https://images.fotmob.com/image_resources/logo/teamlogo/10188_large.png",
   "GALATASARAY": "https://images.fotmob.com/image_resources/logo/teamlogo/8637_large.png",
-  "FENERBAHÇE": "https://images.fotmob.com/image_resources/logo/teamlogo/10189_large.png",
+  "FENERBAHÇE": "https://images.fotmob.com/image_resources/logo/teamlogo/8695_large.png",
   "TRABZONSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/9752_large.png",
   "KASIMPAŞA": "https://images.fotmob.com/image_resources/logo/teamlogo/10190_large.png",
   "KONYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10191_large.png",
   "RIZESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/2166_large.png",
-  "FATIH KARAGÜMRÜK": "https://images.fotmob.com/image_resources/logo/teamlogo/10192_large.png",
+  "FATIH KARAGÜMRÜK": "https://images.fotmob.com/image_resources/logo/teamlogo/2088_large.png",
   "ÜMRANIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/281460_large.png",
   "GAZIANTEP FK": "https://images.fotmob.com/image_resources/logo/teamlogo/10193_large.png",
   "ALANYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10194_large.png",
@@ -415,7 +415,7 @@ export const localTeamLogos: Record<string, string> = {
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
 
   // BELÇİKA
-  "CLUB BRUGGE KV": "https://images.fotmob.com/image_resources/logo/teamlogo/8392.png",
+  "CLUB BRUGGE KV": "https://images.fotmob.com/image_resources/logo/teamlogo/8342_large.png",
   "ANDERLECHT": "https://images.fotmob.com/image_resources/logo/teamlogo/8635.png",
   "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
   "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
