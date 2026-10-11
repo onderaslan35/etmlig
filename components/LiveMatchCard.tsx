@@ -94,8 +94,10 @@ export default function LiveMatchCard() {
       const todayDate = parseDateLocal(todayDateStr);
       todayDate.setHours(0,0,0,0);
 
-      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
+      // 🔥 İŞTE EFSANEVİ ÇÖZÜM BURADA: standings (ANA KASA) TABLOSUNU ÇEKİYORUZ 🔥
+      const [leaderboardRes, standingsRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
           supabase.from('live_leaderboard').select('*'),
+          supabase.from('standings').select('*'),
           supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
           supabase.from('live_matches').select('*')
       ]);
@@ -133,17 +135,40 @@ export default function LiveMatchCard() {
       }
 
       const leaderboardData = leaderboardRes.data || [];
+      const standingsData = standingsRes.data || [];
       const dbLiveMatches = dbLiveMatchesRes.data || [];
 
+      // 🔥 ANA KASADAN PUANLARI HARMANLAMA MOTORU 🔥
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
-      leaderboardData.forEach(row => {
-          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
-          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
-          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
-          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
+      
+      const uids = Array.from(new Set([
+          ...standingsData.map(s => String(s.user_id)), 
+          ...leaderboardData.map(l => String(l.id))
+      ]));
+
+      uids.forEach(uid => {
+          const name = mergedAccounts[uid]?.name || standingsData.find(s => String(s.user_id) === uid)?.user_name || leaderboardData.find(l => String(l.id) === uid)?.name || "ASLAN PARÇASI";
+          
+          const sTff = standingsData.find(s => String(s.user_id) === uid && s.league_type === 'TFF');
+          const sDfo = standingsData.find(s => String(s.user_id) === uid && s.league_type === 'DFO');
+          const sMaster = standingsData.find(s => String(s.user_id) === uid && s.league_type === 'MASTER');
+          const lData = leaderboardData.find(l => String(l.id) === uid);
+
+          // Puanı Ana Kasa'dan (standings) al, eğer orada yoksa eski view'e bak.
+          const tffPts = sTff ? sTff.points : (lData ? lData.tff_pts : 0);
+          const dfoPts = sDfo ? sDfo.points : (lData ? lData.dfo_pts : 0);
+          const masterPts = sMaster ? sMaster.points : (lData ? lData.master_pts : 0);
+          const skorPts = lData ? lData.skor_pts : 0; // Skor isabet sayısını viewden çekmeye devam ediyoruz
+
+          if (tffPts > 0) arrTFF.push({ id: uid, name, pts: tffPts });
+          if (dfoPts > 0) arrDFO.push({ id: uid, name, pts: dfoPts });
+          if (masterPts > 0) arrMASTER.push({ id: uid, name, pts: masterPts });
+          if (skorPts > 0) arrSKOR.push({ id: uid, name, pts: skorPts });
       });
+
       const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
       arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
+      
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
       const pDict: Record<string, string> = {};
