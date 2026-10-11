@@ -169,7 +169,7 @@ export const localTeamLogos: Record<string, string> = {
 
   // TÜRKİYE (KULÜPLER)
   "BEŞIKTAŞ": "https://images.fotmob.com/image_resources/logo/teamlogo/10188_large.png",
-  "GALATASARAY": "https://de.wikipedia.org/wiki/Special:FilePath/Galatasaray_S.K._Logo_2026_5-stars.svg",
+  "GALATASARAY": "https://images.fotmob.com/image_resources/logo/teamlogo/8637_large.png",
   "FENERBAHÇE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Fenerbah%C3%A7e_SK_-_120_Yil_(1907-2027).svg",
   "TRABZONSPOR": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Trabzonspor_2022.svg",
   "KASIMPAŞA": "https://de.wikipedia.org/wiki/Special:FilePath/Kasimpasa_Logo.svg",
