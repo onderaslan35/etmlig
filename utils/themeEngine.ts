@@ -210,7 +210,7 @@ export const localTeamLogos: Record<string, string> = {
   
   "SABAH FA": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
   "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
-  "THUN": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_Thun_Logo_2011.svg",
+  "FC THUN": "https://images.fotmob.com/image_resources/logo/teamlogo/10191_large.png",
   "DINAMO ZAGREB": "https://tr.wikipedia.org/wiki/Special:FilePath/Logo_GNK_Dinamo_Zagreb_(2019).svg",
   "LARNE FC": "https://fr.wikipedia.org/wiki/Special:FilePath/Larne_FC_(logo).svg",
   "KIZILYILDIZ": "https://en.wikipedia.org/wiki/Special:FilePath/Red_Star_Belgrade_crest.svg",
