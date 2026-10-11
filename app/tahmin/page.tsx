@@ -171,7 +171,7 @@ export default function PredictionPortal() {
       };
 
       fetchPlayerStatus();
-  }, [selectedEntryWeek, systemPlayers, isModalOpen]); // isModalOpen eklendi ki tahmin yaptıktan sonra liste güncellensin
+  }, [selectedEntryWeek, systemPlayers, isModalOpen]); 
 
   useEffect(() => {
     const fetchLiveMatchStatuses = async () => {
@@ -401,37 +401,57 @@ export default function PredictionPortal() {
                       TAHMİNLER AÇIK (PARÇA KAYIT)
                    </div>
                    
-                   <form onSubmit={handleAuth} className="w-full max-w-[280px] flex flex-col gap-5 mt-4">
-                      <div className="flex flex-col items-center gap-2">
-                         <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Giriş Yapılacak Hafta</span>
-                         <select 
-                           value={selectedEntryWeek} 
-                           onChange={e => setSelectedEntryWeek(Number(e.target.value))}
-                           className="w-full bg-slate-950 border border-slate-700 text-amber-400 text-sm font-black px-4 py-3 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest cursor-pointer shadow-inner"
-                         >
-                           {availableWeeks.map(w => (
-                               <option key={`opt-${w}`} value={w}>{customWeekNames[w] || `${w}. HAFTA`}</option>
-                           ))}
-                         </select>
+                   <form onSubmit={handleAuth} className="w-full max-w-[280px] flex flex-col gap-4 mt-4">
+                      
+                      {/* 🔥 İŞTE O MEŞHUR ESPİRİLİ, SİNYAL YAKAN HAFTA KUTUSU 🔥 */}
+                      <div className="flex flex-col items-center gap-1.5 w-full relative group">
+                         <span className="text-[10px] text-amber-500 font-black tracking-widest uppercase flex items-center gap-2">
+                           <span className="animate-bounce text-base">⬇️</span> DİKKAT: HAFTAYI SEÇ <span className="animate-bounce text-base">⬇️</span>
+                         </span>
+                         
+                         <div className="w-full relative flex items-center justify-center">
+                           <span className="absolute -left-7 text-xl animate-pulse hidden sm:block">👉</span>
+                           {availableWeeks.length > 0 ? (
+                             <select 
+                               value={selectedEntryWeek} 
+                               onChange={e => setSelectedEntryWeek(Number(e.target.value))}
+                               className="w-full bg-slate-950 border-2 border-amber-500 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none focus:border-amber-400 text-center tracking-widest cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all"
+                             >
+                               {availableWeeks.map(w => (
+                                   <option key={`opt-${w}`} value={w}>{customWeekNames[w] || `${w}. HAFTA`}</option>
+                               ))}
+                             </select>
+                           ) : (
+                             <div className="w-full bg-slate-950 border-2 border-slate-700 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none text-center tracking-widest cursor-not-allowed">
+                                BÜLTEN BEKLENİYOR
+                             </div>
+                           )}
+                           <span className="absolute -right-7 text-xl animate-pulse hidden sm:block">👈</span>
+                         </div>
+                         
+                         <p className="text-[8px] sm:text-[9px] font-black text-rose-400 tracking-wide text-center mt-1 bg-rose-950/40 px-2 py-1.5 rounded-lg border border-rose-900/50 leading-tight">
+                           ⚠️ TIKLA VE DEĞİŞTİR! "Vay efendim ben niye yapmamışım" diye sonra ağlamak yok! 😭
+                         </p>
                       </div>
                       
+                      {/* ID VE ŞİFRE (Bir tık küçültüldü) */}
                       <input 
                          type="text" 
                          value={userIdInput} 
                          onChange={e => setUserIdInput(e.target.value)} 
-                         className="w-full bg-slate-100 border-2 border-transparent text-slate-900 px-4 py-3.5 rounded-xl outline-none focus:border-blue-500 text-center font-black tracking-widest text-sm shadow-inner placeholder:text-slate-400 placeholder:font-bold lowercase" 
+                         className="w-full bg-slate-100 border-2 border-transparent text-slate-900 px-4 py-2.5 rounded-xl outline-none focus:border-blue-500 text-center font-black tracking-widest text-sm shadow-inner placeholder:text-slate-400 placeholder:font-bold lowercase" 
                          placeholder="ID GİRİNİZ" 
                       />
                       <input 
                          type="password" 
                          value={userPassInput} 
                          onChange={e => setUserPassInput(e.target.value)} 
-                         className="w-full bg-slate-100 border-2 border-transparent text-slate-900 px-4 py-3.5 rounded-xl outline-none focus:border-blue-500 text-center font-black tracking-[0.4em] text-lg shadow-inner placeholder:text-slate-400 placeholder:font-bold placeholder:tracking-normal" 
+                         className="w-full bg-slate-100 border-2 border-transparent text-slate-900 px-4 py-2.5 rounded-xl outline-none focus:border-blue-500 text-center font-black tracking-[0.4em] text-lg shadow-inner placeholder:text-slate-400 placeholder:font-bold placeholder:tracking-normal" 
                          placeholder="ŞİFRE" 
                       />
                       <button 
                          type="submit" 
-                         className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] mt-2 uppercase text-sm"
+                         className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] mt-1 uppercase text-sm"
                       >
                          GİRİŞ YAP VE DOLDUR
                       </button>
@@ -489,7 +509,6 @@ export default function PredictionPortal() {
                    <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-5">
                       Maçı başlayan yarışmacıların skor tercihleri şeffaf bir şekilde sergilenir. Başlamamış maçlar gizlidir.
                    </p>
-                   {/* 🔥 VİEW DEĞİŞTİRİCİ OLARAK GÜNCELLENDİ 🔥 */}
                    <button onClick={() => setView('declaration')} className="bg-blue-950 hover:bg-blue-900 text-blue-400 font-bold tracking-widest py-3 px-8 rounded-xl border border-blue-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                       RESMİ DEKLARASYONU AÇ
                    </button>
@@ -507,7 +526,6 @@ export default function PredictionPortal() {
                    <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-5">
                       Maç başladığı an kilit kalkar, skoru kimin tahmin ettiğini ve alınan puanları anında görürsünüz.
                    </p>
-                   {/* 🔥 VİEW DEĞİŞTİRİCİ OLARAK GÜNCELLENDİ 🔥 */}
                    <button onClick={() => setView('tahminmatik')} className="bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-500 font-bold tracking-widest py-3 px-8 rounded-xl border border-emerald-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                       TAHMİNMATİK CANLI İZLE
                    </button>
@@ -799,156 +817,6 @@ export default function PredictionPortal() {
         )}
 
       </div>
-
-      {/* 🔥 EFSANE MAÇ KARTLARI MODALI (TAHMİN GİRİŞİ İÇİN) 🔥 */}
-      {isModalOpen && selectedUser && (
-         <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-slate-950/95 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
-             <div className="bg-slate-900 border border-amber-500/30 rounded-2xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative mt-4 sm:mt-0 pb-6 mb-20 sm:mb-0 flex flex-col items-center">
-                 
-                 <div className="w-full sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 rounded-t-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                     <div className="text-center sm:text-left w-full sm:w-auto flex flex-col items-center sm:items-start">
-                         <div className="text-amber-500 font-black text-lg sm:text-xl tracking-widest uppercase break-words px-2 text-center">{selectedUser.name}</div>
-                         <div className="text-slate-400 font-bold tracking-widest text-xs mt-1 bg-slate-950 inline-block px-3 py-1 rounded-lg border border-slate-800 text-center">
-                             {customWeekNames[activeWeek] || `${activeWeek}. HAFTA`} GİRİŞİ
-                         </div>
-                     </div>
-                     <button onClick={() => setIsModalOpen(false)} className="bg-slate-800 hover:bg-rose-900 text-slate-300 hover:text-rose-400 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors border border-slate-700 hover:border-rose-500 absolute top-4 right-4 sm:static shrink-0">
-                         ✕
-                     </button>
-                 </div>
-
-                 <div className="w-full px-2 sm:px-6 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 justify-items-center w-full max-w-5xl mx-auto">
-                         {bulletin.map((m, idx) => {
-                             const logInfo = liveInfoStateMap[m.match_index];
-                             const matchStatus = logInfo?.status || 'NOT_STARTED';
-                             const isLocked = matchStatus !== 'NOT_STARTED';
-                             const isTff = isTffMatchCheck(m.category);
-                             
-                             const homeTeamUpper = m.home_team?.toUpperCase() || "";
-                             const awayTeamUpper = m.away_team?.toUpperCase() || "";
-                             const theme = getEliteTheme(m.category, homeTeamUpper, awayTeamUpper);
-
-                             return (
-                                 <div key={idx} className={`w-full max-w-md mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg} ${isLocked ? 'opacity-80 scale-[0.98]' : 'hover:scale-[1.02]'}`}>
-                                     
-                                     {isLocked && (
-                                         <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-[2px]">
-                                             <div className="bg-red-950/90 text-red-400 font-black text-[11px] sm:text-sm px-6 py-2 rounded-lg border-2 border-red-800/80 tracking-[0.2em] shadow-[0_0_30px_rgba(220,38,38,0.5)] -rotate-12">
-                                                 🔒 MAÇ KİLİTLENDİ
-                                             </div>
-                                         </div>
-                                     )}
-
-                                     <div className="p-4 sm:p-5 relative flex-grow overflow-hidden flex flex-col justify-center min-h-[140px] items-center">
-                                       {theme.bgImg && (
-                                         <>
-                                           <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
-                                           <div className="absolute inset-0 bg-slate-900/60 z-0"></div>
-                                         </>
-                                       )}
-                                       <div className="relative z-10 flex flex-col h-full justify-between w-full">
-
-                                         <div className="flex items-center justify-between mb-3 w-full">
-                                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded bg-slate-950/80 border border-slate-700 flex items-center justify-center font-black text-slate-400 text-xs sm:text-sm shadow-inner shrink-0">
-                                                {m.match_index}
-                                            </div>
-                                            <div className="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[70%]">
-                                               <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded border text-center ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder} shadow-sm backdrop-blur-sm truncate max-w-full block`}>
-                                                 {m.category || 'BELİRSİZ LİG'}
-                                               </span>
-                                               <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold mt-1 tracking-widest bg-slate-950/50 px-2 rounded block">
-                                                  {m.match_date} - {m.match_time}
-                                               </span>
-                                            </div>
-                                         </div>
-
-                                         <div className="flex items-center justify-center w-full">
-                                           <div className="flex flex-col items-center justify-center flex-1 gap-2 w-1/3">
-                                              <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center relative z-20">
-                                                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)]" />
-                                              </div>
-                                              <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wider drop-shadow-lg leading-tight px-1 max-w-[120px] line-clamp-2 h-[28px]">{homeTeamUpper || 'EV SAHİBİ'}</span>
-                                           </div>
-
-                                           <div className="flex flex-col items-center justify-center mx-2 z-30 shrink-0 w-[110px]">
-                                             
-                                             {theme.leagueLogo && (
-                                               <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
-                                                 <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
-                                               </div>
-                                             )}
-
-                                             <div className={`w-full bg-[#080d1a]/90 border ${theme.scoreBorder} py-3 px-2 sm:px-3 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                                               <select 
-                                                 disabled={isLocked}
-                                                 value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0]} 
-                                                 onChange={e => {
-                                                    const currentAway = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1];
-                                                    const newHome = e.target.value;
-                                                    handleScoreChange(idx, newHome === "-" && currentAway === "-" ? "-" : `${newHome === "-" ? "0" : newHome}-${currentAway === "-" ? "0" : currentAway}`);
-                                                 }}
-                                                 className="bg-transparent text-lg sm:text-2xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md w-8 sm:w-10"
-                                                 style={{textAlignLast: 'center'}}
-                                               >
-                                                  {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt}>{opt}</option>)}
-                                               </select>
-                                               <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
-                                               <select 
-                                                 disabled={isLocked}
-                                                 value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1]} 
-                                                 onChange={e => {
-                                                    const currentHome = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0];
-                                                    const newAway = e.target.value;
-                                                    handleScoreChange(idx, currentHome === "-" && newAway === "-" ? "-" : `${currentHome === "-" ? "0" : currentHome}-${newAway === "-" ? "0" : newAway}`);
-                                                 }}
-                                                 className="bg-transparent text-lg sm:text-2xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md w-8 sm:w-10"
-                                                 style={{textAlignLast: 'center'}}
-                                               >
-                                                  {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt}>{opt}</option>)}
-                                               </select>
-                                             </div>
-                                           </div>
-
-                                           <div className="flex flex-col items-center justify-center flex-1 gap-2 w-1/3">
-                                              <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center relative z-20">
-                                                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)]" />
-                                              </div>
-                                              <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wider drop-shadow-lg leading-tight px-1 max-w-[120px] line-clamp-2 h-[28px]">{awayTeamUpper || 'DEPLASMAN'}</span>
-                                           </div>
-                                         </div>
-                                         
-                                         {/* 🔥 İŞTE TFF VE DFO ETİKETLERİ BURADA 🔥 */}
-                                         <div className="w-full flex justify-center mt-2">
-                                            <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shadow-sm ${isTff ? 'bg-red-950/80 text-red-400 border-red-900' : 'bg-slate-800/80 text-slate-300 border-slate-600'}`}>
-                                                {isTff ? "TFF MAÇI" : "DFO MAÇI"}
-                                            </span>
-                                         </div>
-
-                                       </div>
-                                     </div>
-                                 </div>
-                             )
-                         })}
-                     </div>
-                 </div>
-
-                 <div className="w-full sticky bottom-0 z-30 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 px-4 sm:px-8 py-4 sm:py-6 rounded-b-2xl mt-4 sm:mt-0 flex flex-col items-center">
-                     <button 
-                         onClick={handleSubmitPredictions}
-                         disabled={isSubmitting}
-                         className="w-full max-w-2xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black tracking-widest text-sm sm:text-base py-4 sm:py-5 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] uppercase border border-amber-400/50 flex justify-center items-center gap-2"
-                     >
-                         {isSubmitting ? 'KARARGAHA İŞLENİYOR...' : 'SEÇİMLERİMİ KAYDET / ONAYLA'}
-                     </button>
-                     <p className="text-center text-slate-500 text-[9px] sm:text-[10px] mt-3 font-medium uppercase tracking-widest px-2">
-                         Skorunu değiştirmediğiniz veya "Tire (-)" bıraktığınız maçlar kaydedilmez.
-                     </p>
-                 </div>
-
-             </div>
-         </div>
-      )}
 
       {/* Global Neon Animasyon Stilleri */}
       <style dangerouslySetInnerHTML={{__html: `
