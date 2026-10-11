@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 import { 
   staticPlayersList, 
@@ -32,8 +33,9 @@ export default function PredictionPortal() {
   const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(0); 
 
-  // 🔥 YENİ: TAHMİN GİRMEYENLER LİSTESİ İÇİN STATE 🔥
+  // 🔥 YENİ: ÇİFT TARAFLI NEON LİSTELERİ 🔥
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
+  const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
@@ -97,27 +99,30 @@ export default function PredictionPortal() {
      return () => { supabase.removeChannel(channel); };
   }, [activeWeek]);
 
-  // 🔥 YENİ: SEÇİLİ HAFTAYA KİM TAHMİN GİRMEMİŞ ONU BULAN SİSTEM 🔥
+  // 🔥 HAFTA DEĞİŞTİKÇE YEŞİL VE KIRMIZI LİSTELERİ ANINDA GÜNCELLEYEN MOTOR 🔥
   useEffect(() => {
       if (selectedEntryWeek === 0 || Object.keys(systemPlayers).length === 0) return;
 
-      const fetchMissingPlayers = async () => {
+      const fetchPlayerStatus = async () => {
           const { data: preds } = await supabase
               .from('player_predictions')
               .select('user_id')
               .eq('week_num', selectedEntryWeek);
 
           const submittedUserIds = new Set((preds || []).map(p => String(p.user_id)));
-          
-          const allUserIds = Object.keys(systemPlayers).filter(id => id !== 'mankoman'); // Admini çıkar
+          const allUserIds = Object.keys(systemPlayers).filter(id => id !== 'mankoman'); 
           
           const missingIds = allUserIds.filter(id => !submittedUserIds.has(id));
+          const submittedIds = allUserIds.filter(id => submittedUserIds.has(id));
           
           const missingNames = missingIds.map(id => systemPlayers[id]).sort((a, b) => a.localeCompare(b, 'tr'));
+          const submittedNames = submittedIds.map(id => systemPlayers[id]).sort((a, b) => a.localeCompare(b, 'tr'));
+          
           setMissingPlayers(missingNames);
+          setSubmittedPlayers(submittedNames);
       };
 
-      fetchMissingPlayers();
+      fetchPlayerStatus();
   }, [selectedEntryWeek, systemPlayers]);
 
 
@@ -281,63 +286,77 @@ export default function PredictionPortal() {
                </form>
             </div>
 
-            {/* 2. KÜP (ÜST SAĞ): 🚨 NEON TAHMİN GİRMEYENLER PANOSU 🚨 */}
-            <div className="bg-[#1a0505] border-2 border-red-600 rounded-3xl p-6 relative flex flex-col justify-start items-center shadow-[0_0_30px_rgba(220,38,38,0.3)] animate-pulse-border h-[400px]">
-               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-950 text-red-500 px-8 py-2 rounded-full text-[11px] font-black tracking-[0.2em] border border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.8)] whitespace-nowrap animate-neon-flash">
-                  🚨 {selectedEntryWeek}. HAFTA TAHMİN GİRMEYENLER 🚨
+            {/* 2. KÜP (ÜST SAĞ): 🟢🔴 ÇİFT TARAFLI NEON DURUM PANOSU */}
+            <div className="bg-[#0a0f16] border border-slate-700 rounded-3xl p-6 relative flex flex-col justify-start items-center shadow-xl h-[400px]">
+               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-slate-300 px-8 py-2 rounded-full text-[11px] font-black tracking-[0.2em] border border-slate-600 shadow-[0_0_15px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                  ⚡ {selectedEntryWeek}. HAFTA TAHMİN DURUMU ⚡
                </div>
                
-               <div className="mt-6 flex flex-col items-center w-full h-full">
-                  <div className="bg-red-950/50 border border-red-900/50 px-4 py-2 rounded-lg mb-4 text-center w-full">
-                      <span className="text-red-400 text-xs font-bold tracking-widest uppercase">
-                          HEDEF TAHTASINDA <span className="text-white text-sm bg-red-600 px-2 py-0.5 rounded">{missingPlayers.length}</span> ASLAN VAR
-                      </span>
-                  </div>
+               <div className="mt-6 flex flex-row gap-3 w-full h-full overflow-hidden">
                   
-                  <div className="w-full flex-1 overflow-y-auto custom-scrollbar-red pr-2 pb-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {missingPlayers.length === 0 ? (
-                              <div className="col-span-1 sm:col-span-2 text-center text-emerald-500 font-black mt-10 tracking-widest text-sm bg-emerald-950/30 p-4 rounded-xl border border-emerald-900">
-                                  🏆 HARİKA! HERKES TAHMİNİNİ GİRMİŞ!
-                              </div>
-                          ) : (
-                              missingPlayers.map((name, idx) => (
-                                  <div key={idx} className="bg-red-950/30 border border-red-800/50 px-3 py-2 rounded text-[10px] font-black text-red-200 tracking-wider truncate text-center shadow-inner hover:bg-red-900/50 transition-colors">
-                                      {name}
-                                  </div>
-                              ))
-                          )}
-                      </div>
+                  {/* 🟢 YAPANLAR (YEŞİL NEON) */}
+                  <div className="flex-1 flex flex-col border border-emerald-600 rounded-xl bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.2)] animate-neon-flash-green overflow-hidden">
+                     <div className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black tracking-widest text-center py-2.5 border-b border-emerald-800/50">
+                         🟢 YAPANLAR ({submittedPlayers.length})
+                     </div>
+                     <div className="flex-1 overflow-y-auto custom-scrollbar-green p-2 flex flex-col gap-1.5">
+                         {submittedPlayers.map((name, idx) => (
+                            <div key={`sub-${idx}`} className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded text-[9px] font-black text-emerald-300 tracking-wider truncate text-center shadow-inner">
+                                {name}
+                            </div>
+                         ))}
+                     </div>
                   </div>
+
+                  {/* 🔴 YAPMAYANLAR (KIRMIZI NEON) */}
+                  <div className="flex-1 flex flex-col border border-red-600 rounded-xl bg-red-950/20 shadow-[0_0_15px_rgba(220,38,38,0.2)] animate-neon-flash-red overflow-hidden">
+                     <div className="bg-red-950/80 text-red-400 text-[10px] font-black tracking-widest text-center py-2.5 border-b border-red-800/50">
+                         🔴 EKSİKLER ({missingPlayers.length})
+                     </div>
+                     <div className="flex-1 overflow-y-auto custom-scrollbar-red p-2 flex flex-col gap-1.5">
+                         {missingPlayers.map((name, idx) => (
+                            <div key={`mis-${idx}`} className="bg-red-950/40 border border-red-800/40 px-2 py-1.5 rounded text-[9px] font-black text-red-300 tracking-wider truncate text-center shadow-inner">
+                                {name}
+                            </div>
+                         ))}
+                     </div>
+                  </div>
+
                </div>
             </div>
 
             {/* 3. KÜP (ALT SOL): RESMİ DEKLARASYON */}
             <div className="bg-[#0b1120] border border-blue-900 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(30,58,138,0.2)] hover:border-blue-700 transition-all h-[300px]">
-               <div className="w-20 h-20 bg-blue-950 rounded-full flex items-center justify-center mb-6 shadow-inner border border-blue-800">
-                  <span className="text-4xl drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">📜</span>
+               <div className="w-16 h-16 bg-blue-950 rounded-full flex items-center justify-center mb-4 shadow-inner border border-blue-800">
+                  <span className="text-3xl drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">📜</span>
                </div>
-               <h2 className="text-blue-400 font-black tracking-widest text-lg mb-3">RESMİ DEKLARASYON</h2>
-               <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-6">
-                  Maçı başlayan yarışmacıların skor tercihleri açıkça sergilenir. Başlamamış maçlar gizlidir.
+               <h2 className="text-blue-400 font-black tracking-widest text-lg mb-2">RESMİ DEKLARASYON</h2>
+               <p className="text-slate-400 text-[10px] font-bold mb-3 bg-blue-950/50 px-3 py-1 rounded-lg border border-blue-900/50 tracking-widest uppercase">
+                   Şu ana kadar {submittedPlayers.length} kişi hedefini belirledi
                </p>
-               <a href="/tahmin/deklarasyon" className="bg-blue-950 hover:bg-blue-900 text-blue-400 font-bold tracking-widest py-3 px-8 rounded-xl border border-blue-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                  ARŞİVE GİRİŞ YAP
-               </a>
+               <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-5">
+                  Maçı başlayan yarışmacıların skor tercihleri şeffaf bir şekilde sergilenir. Başlamamış maçlar gizlidir.
+               </p>
+               <Link href="/tahmin/deklarasyon" className="bg-blue-950 hover:bg-blue-900 text-blue-400 font-bold tracking-widest py-3 px-8 rounded-xl border border-blue-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                  RESMİ DEKLARASYONU AÇ
+               </Link>
             </div>
 
             {/* 4. KÜP (ALT SAĞ): TAHMİNMATİK */}
             <div className="bg-[#05100a] border border-emerald-900 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(6,78,59,0.2)] hover:border-emerald-700 transition-all h-[300px]">
-               <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-800">
-                  <span className="text-4xl drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">⚡</span>
+               <div className="w-16 h-16 bg-emerald-950 rounded-full flex items-center justify-center mb-4 shadow-inner border border-emerald-800">
+                  <span className="text-3xl drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">⚡</span>
                </div>
-               <h2 className="text-emerald-500 font-black tracking-widest text-lg mb-3">TAHMİNMATİK</h2>
-               <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-6">
-                  Maç başladığı an kilit kalkar, skoru kimin tahmin ettiğini anında görürsünüz.
+               <h2 className="text-emerald-500 font-black tracking-widest text-lg mb-2">TAHMİNMATİK</h2>
+               <p className="text-slate-400 text-[10px] font-bold mb-3 bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-900/50 tracking-widest uppercase">
+                   Canlı Radar ve Skor Bildirim Merkezi
                </p>
-               <a href="/tahmin/canli" className="bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-500 font-bold tracking-widest py-3 px-8 rounded-xl border border-emerald-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                  TAHMİNMATİK'İ AÇ
-               </a>
+               <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-5">
+                  Maç başladığı an kilit kalkar, skoru kimin tahmin ettiğini ve alınan puanları anında görürsünüz.
+               </p>
+               <Link href="/tahmin/canli" className="bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-500 font-bold tracking-widest py-3 px-8 rounded-xl border border-emerald-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                  TAHMİNMATİK CANLI İZLE
+               </Link>
             </div>
 
          </div>
@@ -454,29 +473,26 @@ export default function PredictionPortal() {
 
       {/* Global Neon Animasyon Stilleri */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes neonFlash {
-            0%, 100% { 
-                box-shadow: 0 0 10px rgba(220,38,38,0.5), inset 0 0 10px rgba(220,38,38,0.5);
-                border-color: rgba(220,38,38,0.8);
-                color: rgba(239,68,68,1);
-            }
-            50% { 
-                box-shadow: 0 0 30px rgba(239,68,68,1), inset 0 0 20px rgba(239,68,68,0.8);
-                border-color: rgba(248,113,113,1);
-                color: rgba(254,202,202,1);
-            }
+        @keyframes neonFlashRed {
+            0%, 100% { box-shadow: 0 0 10px rgba(220,38,38,0.3), inset 0 0 10px rgba(220,38,38,0.2); border-color: rgba(220,38,38,0.6); }
+            50% { box-shadow: 0 0 25px rgba(239,68,68,0.8), inset 0 0 15px rgba(239,68,68,0.6); border-color: rgba(248,113,113,0.9); }
         }
-        @keyframes borderPulse {
-            0%, 100% { border-color: rgba(185,28,28,0.8); box-shadow: 0 0 20px rgba(185,28,28,0.2); }
-            50% { border-color: rgba(239,68,68,1); box-shadow: 0 0 40px rgba(239,68,68,0.4); }
+        @keyframes neonFlashGreen {
+            0%, 100% { box-shadow: 0 0 10px rgba(16,185,129,0.3), inset 0 0 10px rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.6); }
+            50% { box-shadow: 0 0 25px rgba(52,211,153,0.8), inset 0 0 15px rgba(52,211,153,0.6); border-color: rgba(110,231,183,0.9); }
         }
-        .animate-neon-flash { animation: neonFlash 1.5s infinite alternate ease-in-out; }
-        .animate-pulse-border { animation: borderPulse 2s infinite alternate ease-in-out; }
+        .animate-neon-flash-red { animation: neonFlashRed 1.5s infinite alternate ease-in-out; }
+        .animate-neon-flash-green { animation: neonFlashGreen 1.5s infinite alternate ease-in-out; }
         
         .custom-scrollbar-red::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar-red::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
         .custom-scrollbar-red::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.4); border-radius: 10px; }
         .custom-scrollbar-red::-webkit-scrollbar-thumb:hover { background: rgba(239,68,68,0.8); }
+
+        .custom-scrollbar-green::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar-green::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .custom-scrollbar-green::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.4); border-radius: 10px; }
+        .custom-scrollbar-green::-webkit-scrollbar-thumb:hover { background: rgba(52,211,153,0.8); }
       `}} />
 
     </div>
