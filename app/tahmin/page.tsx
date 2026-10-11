@@ -31,9 +31,11 @@ export default function PredictionPortal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
+  
+  // 🔥 HAFTA SEÇİMİ İÇİN DÜZELTİLMİŞ STATE 🔥
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(0); 
 
-  // 🔥 YENİ: ÇİFT TARAFLI NEON LİSTELERİ 🔥
+  // ÇİFT TARAFLI NEON LİSTELERİ
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
 
@@ -61,7 +63,10 @@ export default function PredictionPortal() {
              if (wArray.length > 0) {
                  const latest = Math.max(...wArray);
                  setActiveWeek(latest);
-                 setSelectedEntryWeek(latest);
+                 // Sadece sayfa ilk açıldığında en son haftayı seçili yapıyoruz
+                 if (selectedEntryWeek === 0) {
+                     setSelectedEntryWeek(latest);
+                 }
              }
          }
      };
@@ -244,7 +249,7 @@ export default function PredictionPortal() {
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl items-stretch">
             
             {/* 1. KÜP (ÜST SOL): GİRİŞ KUTUSU */}
-            <div className="bg-[#0b1120] border border-amber-500/50 rounded-3xl p-8 relative flex flex-col justify-center items-center shadow-[0_0_30px_rgba(245,158,11,0.15)] hover:border-amber-400 hover:shadow-[0_0_40px_rgba(245,158,11,0.3)] transition-all h-full">
+            <div className="bg-[#0b1120] border border-amber-500/50 rounded-3xl p-8 relative flex flex-col justify-center items-center shadow-[0_0_30px_rgba(245,158,11,0.15)] hover:border-amber-400 hover:shadow-[0_0_40px_rgba(245,158,11,0.3)] transition-all h-[400px]">
                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-950 text-amber-400 px-6 py-1 rounded-full text-xs font-black tracking-widest border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.5)] whitespace-nowrap">
                   TAHMİNLER AÇIK (PARÇA KAYIT)
                </div>
@@ -296,12 +301,12 @@ export default function PredictionPortal() {
                   
                   {/* 🟢 YAPANLAR (YEŞİL NEON) */}
                   <div className="flex-1 flex flex-col border border-emerald-600 rounded-xl bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.2)] animate-neon-flash-green overflow-hidden">
-                     <div className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black tracking-widest text-center py-2.5 border-b border-emerald-800/50">
+                     <div className="bg-emerald-950/80 text-emerald-400 text-[10px] font-black tracking-widest text-center py-2.5 border-b border-emerald-800/50 sticky top-0 z-10">
                          🟢 YAPANLAR ({submittedPlayers.length})
                      </div>
-                     <div className="flex-1 overflow-y-auto custom-scrollbar-green p-2 flex flex-col gap-1.5">
+                     <div className="flex-1 overflow-y-auto custom-scrollbar-green p-2 flex flex-col gap-1.5 h-full">
                          {submittedPlayers.map((name, idx) => (
-                            <div key={`sub-${idx}`} className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded text-[9px] font-black text-emerald-300 tracking-wider truncate text-center shadow-inner">
+                            <div key={`sub-${idx}`} className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded text-[9px] font-black text-emerald-300 tracking-wider truncate text-center shadow-inner shrink-0">
                                 {name}
                             </div>
                          ))}
@@ -310,12 +315,12 @@ export default function PredictionPortal() {
 
                   {/* 🔴 YAPMAYANLAR (KIRMIZI NEON) */}
                   <div className="flex-1 flex flex-col border border-red-600 rounded-xl bg-red-950/20 shadow-[0_0_15px_rgba(220,38,38,0.2)] animate-neon-flash-red overflow-hidden">
-                     <div className="bg-red-950/80 text-red-400 text-[10px] font-black tracking-widest text-center py-2.5 border-b border-red-800/50">
+                     <div className="bg-red-950/80 text-red-400 text-[10px] font-black tracking-widest text-center py-2.5 border-b border-red-800/50 sticky top-0 z-10">
                          🔴 EKSİKLER ({missingPlayers.length})
                      </div>
-                     <div className="flex-1 overflow-y-auto custom-scrollbar-red p-2 flex flex-col gap-1.5">
+                     <div className="flex-1 overflow-y-auto custom-scrollbar-red p-2 flex flex-col gap-1.5 h-full">
                          {missingPlayers.map((name, idx) => (
-                            <div key={`mis-${idx}`} className="bg-red-950/40 border border-red-800/40 px-2 py-1.5 rounded text-[9px] font-black text-red-300 tracking-wider truncate text-center shadow-inner">
+                            <div key={`mis-${idx}`} className="bg-red-950/40 border border-red-800/40 px-2 py-1.5 rounded text-[9px] font-black text-red-300 tracking-wider truncate text-center shadow-inner shrink-0">
                                 {name}
                             </div>
                          ))}
@@ -337,7 +342,7 @@ export default function PredictionPortal() {
                <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-5">
                   Maçı başlayan yarışmacıların skor tercihleri şeffaf bir şekilde sergilenir. Başlamamış maçlar gizlidir.
                </p>
-               <Link href="/tahmin/deklarasyon" className="bg-blue-950 hover:bg-blue-900 text-blue-400 font-bold tracking-widest py-3 px-8 rounded-xl border border-blue-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+               <Link href="/deklarasyon" className="bg-blue-950 hover:bg-blue-900 text-blue-400 font-bold tracking-widest py-3 px-8 rounded-xl border border-blue-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                   RESMİ DEKLARASYONU AÇ
                </Link>
             </div>
@@ -354,7 +359,7 @@ export default function PredictionPortal() {
                <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-5">
                   Maç başladığı an kilit kalkar, skoru kimin tahmin ettiğini ve alınan puanları anında görürsünüz.
                </p>
-               <Link href="/tahmin/canli" className="bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-500 font-bold tracking-widest py-3 px-8 rounded-xl border border-emerald-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+               <Link href="/canli" className="bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-500 font-bold tracking-widest py-3 px-8 rounded-xl border border-emerald-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                   TAHMİNMATİK CANLI İZLE
                </Link>
             </div>
