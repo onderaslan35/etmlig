@@ -366,60 +366,63 @@ export default function MasterPuanDurumuPage() {
             </div>
 
             <div className="overflow-x-auto overflow-y-hidden">
-              <table className="w-full text-left text-[12px] sm:text-sm">
-                <thead className="text-[#64748b] uppercase text-[10px] sm:text-[11px] bg-[#0f172a]">
+              <table className="w-full text-left text-xs md:text-sm">
+                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
                   <tr>
-                    <th className="pl-3 sm:pl-4 py-2 sm:py-3 text-left">YARIŞMACI</th>
-                    <th className="px-2 py-2 sm:py-3 w-20 sm:w-28 text-center">PUAN</th>
+                    <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
+                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                    <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
+                    <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1e293b]">
                   {liveList.map((row, idx) => (
                     <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
                       
-                      <td className="pl-2 sm:pl-4 py-2 sm:py-3 align-middle">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                           
-                           {/* 🔥 SIRA VE OK ROZETİ (BADGE) 🔥 */}
-                           <div className="flex flex-col items-center justify-center w-8 sm:w-10 shrink-0 gap-0.5 bg-slate-950/80 py-1 sm:py-1.5 rounded-lg border border-slate-800/80 shadow-inner">
-                             <span className="text-slate-300 font-black text-[11px] sm:text-[13px] leading-none">{idx + 1}.</span>
-                             <div className="mt-0.5">
-                               {row.rankChange > 0 && <span className="text-emerald-500 font-black text-[8px] sm:text-[9px] flex items-center leading-none tracking-tighter">▲ {row.rankChange}</span>}
-                               {row.rankChange < 0 && <span className="text-rose-500 font-black text-[8px] sm:text-[9px] flex items-center leading-none tracking-tighter">▼ {Math.abs(row.rankChange)}</span>}
-                               {row.rankChange === 0 && <span className="text-slate-600 font-black text-[8px] sm:text-[9px] flex items-center leading-none">➖</span>}
-                             </div>
-                           </div>
-
-                           <div className="flex flex-col gap-1">
-                             <div className="flex flex-wrap items-center gap-1.5 font-bold">
-                               <span className="text-white text-[12px] sm:text-sm whitespace-nowrap">{row.name}</span>
-                               {row.liveBonus > 0 && (
-                                 <span className="text-[8px] sm:text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                                   +{row.liveBonus} CANLI
-                                 </span>
-                               )}
-                             </div>
-                             
-                             {(row.badges.includes('points') || row.badges.includes('score')) && (
-                               <div className="flex flex-wrap gap-1 mt-0.5">
-                                 {row.badges.includes('points') && (
-                                   <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
-                                     +3 PUAN HAFTANIN LİDERİ
-                                   </span>
-                                 )}
-                                 {row.badges.includes('score') && (
-                                   <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
-                                     +3 PUAN SKOR LİDERİ
-                                   </span>
-                                 )}
-                               </div>
-                             )}
-                           </div>
-
+                      {/* 🔥 SIRA VE OK 🔥 */}
+                      <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
+                        <div className="flex items-center">
+                          <span className="text-left w-5">{row.currentRank}</span>
+                          {row.rankChange > 0 && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.rankChange}</span></span>}
+                          {row.rankChange < 0 && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{Math.abs(row.rankChange)}</span></span>}
                         </div>
                       </td>
 
-                      <td className="px-2 py-2 sm:py-3 align-middle font-bold text-[12px] sm:text-sm text-amber-500 text-center">
+                      {/* 🔥 İSİM VE ROZETLER 🔥 */}
+                      <td className="px-1 md:px-2 py-3 align-middle">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold text-[12px] sm:text-sm">
+                            <span className="whitespace-nowrap">{row.name}</span>
+                          </div>
+                          
+                          {(row.badges.includes('points') || row.badges.includes('score')) && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {row.badges.includes('points') && (
+                                <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
+                                  +3 PUAN HAFTANIN LİDERİ
+                                </span>
+                              )}
+                              {row.badges.includes('score') && (
+                                <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
+                                  +3 PUAN SKOR LİDERİ
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* 🔥 CANLI BONUS (Aynı DFO şablonundaki gibi) 🔥 */}
+                      <td className="px-1 py-3 align-middle text-right">
+                        {row.liveBonus > 0 && (
+                          <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
+                            +{row.liveBonus} CANLI
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 🔥 TOPLAM PUAN 🔥 */}
+                      <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-[12px] sm:text-sm text-amber-500 text-center">
                         {row.score}
                       </td>
 
