@@ -176,10 +176,15 @@ export default function MasterPuanDurumuPage() {
 
         const isBonusDistributedInDB = pastAndActivePoints.some(pt => Number(pt.hafta) === activeWeek && (pt.ev_sahibi === 'HAFTANIN' || pt.ev_sahibi === 'SKOR'));
 
+        // 🔥 OKLAR İÇİN EKLENEN YENİ DEĞİŞKENLER 🔥
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
+            prevFinishedBonus: 0, // Önceki hafta puanı
+            prevRank: 0,
+            currentRank: 0,
+            rankChange: 0,
             badges: [] as string[]
         }));
 
@@ -189,7 +194,13 @@ export default function MasterPuanDurumuPage() {
                 if (haftaNum > 13) { 
                     const userNameStr = String(pt.user_name || "");
                     const targetPlayer = updatedList.find(p => p.name.includes(userNameStr) || userNameStr.includes(p.name));
-                    if (targetPlayer) targetPlayer.finishedBonus += Number(pt.puan || 0);
+                    if (targetPlayer) {
+                        targetPlayer.finishedBonus += Number(pt.puan || 0);
+                        // Eğer puan geçmiş haftanınsa, ok hesaplaması için eski puana da ekle
+                        if (haftaNum < activeWeek) {
+                            targetPlayer.prevFinishedBonus += Number(pt.puan || 0);
+                        }
+                    }
                 }
             });
         }
@@ -271,7 +282,6 @@ export default function MasterPuanDurumuPage() {
                 if (maxExacts > 0 && s.exacts === maxExacts) { exactsLeadersCount++; exactsLeaderName = name; }
             });
 
-            // 🔥 KOMUTANIN KESİN EMRİ: 24 MAÇIN TAMAMI "FINISHED" OLMADAN HİÇBİR ROZET EKRANA ÇIKMAZ! 🔥
             const all24Finished = activeWeekMatches.length >= 24 && activeWeekMatches.every(m => m.status === 'FINISHED' || m.status === 'FT');
 
             if (all24Finished) {
@@ -292,10 +302,27 @@ export default function MasterPuanDurumuPage() {
             }
         }
 
+        // 🔥 OKLAR İÇİN: ÖNCEKİ HAFTA SIRALAMASINI BUL 🔥
+        const prevList = [...updatedList].map(p => ({
+            name: p.name,
+            prevScoreTotal: p.score + p.prevFinishedBonus
+        })).sort((a, b) => b.prevScoreTotal - a.prevScoreTotal);
+
+        prevList.forEach((p, index) => {
+            const target = updatedList.find(t => t.name === p.name);
+            if (target) target.prevRank = index + 1;
+        });
+
+        // 🔥 OKLAR İÇİN: GÜNCEL SIRALAMA VE FARK HESABI 🔥
         updatedList = updatedList.map(p => ({
             ...p,
             score: p.score + p.finishedBonus + p.liveBonus
         })).sort((a, b) => b.score - a.score);
+
+        updatedList.forEach((p, index) => {
+            p.currentRank = index + 1;
+            p.rankChange = p.prevRank - p.currentRank; // Pozitifse yükselmiş demektir
+        });
 
         setLiveList(updatedList);
 
@@ -350,33 +377,45 @@ export default function MasterPuanDurumuPage() {
                   {liveList.map((row, idx) => (
                     <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
                       
-                      <td className="pl-3 sm:pl-4 py-2 sm:py-3 align-middle">
-                        <div className="flex flex-col gap-1">
-                          
-                          <div className="flex flex-wrap items-center gap-1.5 font-bold">
-                            <span className="text-slate-400 w-6 sm:w-7 text-[12px] sm:text-sm">{idx + 1}.</span>
-                            <span className="text-white text-[12px] sm:text-sm whitespace-nowrap">{row.name}</span>
-                            {row.liveBonus > 0 && (
-                              <span className="text-[8px] sm:text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                                +{row.liveBonus} CANLI
-                              </span>
-                            )}
-                          </div>
-                          
-                          {(row.badges.includes('points') || row.badges.includes('score')) && (
-                            <div className="flex flex-wrap gap-1 mt-0.5 ml-7 sm:ml-8">
-                              {row.badges.includes('points') && (
-                                <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
-                                  +3 PUAN HAFTANIN LİDERİ
-                                </span>
-                              )}
-                              {row.badges.includes('score') && (
-                                <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
-                                  +3 PUAN SKOR LİDERİ
-                                </span>
-                              )}
-                            </div>
-                          )}
+                      <td className="pl-2 sm:pl-4 py-2 sm:py-3 align-middle">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                           
+                           {/* 🔥 SIRA VE OK ROZETİ (BADGE) 🔥 */}
+                           <div className="flex flex-col items-center justify-center w-8 sm:w-10 shrink-0 gap-0.5 bg-slate-950/80 py-1 sm:py-1.5 rounded-lg border border-slate-800/80 shadow-inner">
+                             <span className="text-slate-300 font-black text-[11px] sm:text-[13px] leading-none">{idx + 1}.</span>
+                             <div className="mt-0.5">
+                               {row.rankChange > 0 && <span className="text-emerald-500 font-black text-[8px] sm:text-[9px] flex items-center leading-none tracking-tighter">▲ {row.rankChange}</span>}
+                               {row.rankChange < 0 && <span className="text-rose-500 font-black text-[8px] sm:text-[9px] flex items-center leading-none tracking-tighter">▼ {Math.abs(row.rankChange)}</span>}
+                               {row.rankChange === 0 && <span className="text-slate-600 font-black text-[8px] sm:text-[9px] flex items-center leading-none">➖</span>}
+                             </div>
+                           </div>
+
+                           <div className="flex flex-col gap-1">
+                             <div className="flex flex-wrap items-center gap-1.5 font-bold">
+                               <span className="text-white text-[12px] sm:text-sm whitespace-nowrap">{row.name}</span>
+                               {row.liveBonus > 0 && (
+                                 <span className="text-[8px] sm:text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
+                                   +{row.liveBonus} CANLI
+                                 </span>
+                               )}
+                             </div>
+                             
+                             {(row.badges.includes('points') || row.badges.includes('score')) && (
+                               <div className="flex flex-wrap gap-1 mt-0.5">
+                                 {row.badges.includes('points') && (
+                                   <span className="bg-amber-950/60 text-amber-500 border border-amber-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
+                                     +3 PUAN HAFTANIN LİDERİ
+                                   </span>
+                                 )}
+                                 {row.badges.includes('score') && (
+                                   <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-600/50 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-tight whitespace-nowrap shadow-sm">
+                                     +3 PUAN SKOR LİDERİ
+                                   </span>
+                                 )}
+                               </div>
+                             )}
+                           </div>
+
                         </div>
                       </td>
 
