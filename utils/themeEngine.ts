@@ -173,7 +173,7 @@ export const localTeamLogos: Record<string, string> = {
   "FENERBAHÇE": "https://images.fotmob.com/image_resources/logo/teamlogo/8695_large.png",
   "TRABZONSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/9752_large.png",
   "KASIMPAŞA": "https://images.fotmob.com/image_resources/logo/teamlogo/10190_large.png",
-  "KONYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/10191_large.png",
+  "KONYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/8622_large.png",
   "RIZESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/2166_large.png",
   "FATIH KARAGÜMRÜK": "https://images.fotmob.com/image_resources/logo/teamlogo/2088_large.png",
   "ÜMRANIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/281460_large.png",
