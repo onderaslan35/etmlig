@@ -1,2242 +1,804 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
-import {
-  staticPlayersList,
-  LIG_HAVUZU,
-  defaultCategoriesList,
-  getTodayDateString,
-  parseDateLocal,
-  generateTimeOptions,
-  generateWeekDates,
-  getUniqueMatchId,
-  isTffMatchCheck,
-  getMatchTimeMs,
-  getEliteTheme,
-  localTeamLogos,
-  getLocalLogoUrl
-} from '@/utils/themeEngine';
+import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck, getTodayDateString } from '@/utils/themeEngine';
 
-const timeOptionsArr = generateTimeOptions();
+const engToTr: Record<string, string> = {
+  "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
+  "TURKEY": "TÜRKİYE", "TURKIYE": "TÜRKİYE", "FRANCE": "FRANSA", "ITALY": "İTALYA",
+  "SPAIN": "İSPANYA", "ENGLAND": "İNGİLTERE", "BELGIUM": "BELÇİKA",
+  "PORTUGAL": "PORTEKİZ", "GREECE": "YUNANİSTAN", "NORWAY": "NORVEÇ",
+  "DENMARK": "DANİMARKA", "WALES": "GALLER", "IRELAND": "İRLANDA", "REPUBLIC OF IRELAND": "İRLANDA",
+  "SWITZERLAND": "İSVİÇRE", "SWEDEN": "İSVEÇ", "CROATIA": "HIRVATİSTAN",
+  "CZECH REPUBLIC": "ÇEKYA", "CZECHIA": "ÇEKYA", "POLAND": "POLONYA", "SCOTLAND": "İSKOÇYA",
+  "HUNGARY": "MACARİSTAN", "AUSTRIA": "AVUSTURYA", "ROMANIA": "ROMANYA", "ALBANIA": "ARNAVUTLUK",
+  "GEORGIA": "GÜRCİSTAN", "ICELAND": "İZLANDA", "SLOVAKIA": "SLOVAKYA", "SLOVENIA": "SLOVENYA",
+  "MONTENEGRO": "KARADAĞ", "NORTH MACEDONIA": "KUZEY MAKEDONYA", "MACEDONIA": "KUZEY MAKEDONYA",
+  "BOSNIA": "BOSNA-HERSEK", "BOSNIA AND HERZEGOVINA": "BOSNA-HERSEK", "CYPRUS": "KIBRIS",
+  "LITHUANIA": "LİTVANYA", "LATVIA": "LETONYA", "ESTONIA": "ESTONYA", "FINLAND": "FİNLANDİYA",
+  "BULGARIA": "BULGARİSTAN", "UKRAINE": "UKRAYNA", "RUSSIA": "RUSYA", "ARMENIA": "ERMENİSTAN",
+  "FAROE ISLANDS": "FAROE ADALARI", "KAZAKHSTAN": "KAZAKİSTAN", "MOLDOVA": "MOLDOVA",
+  "LUXEMBOURG": "LÜKSEMBURG", "LIECHTENSTEIN": "LİHTENŞTAYN", "SAN MARINO": "SAN MARİNO",
+  "MALTA": "MALTA", "ANDORRA": "ANDORRA", "KOSOVO": "KOSOVA", "BELARUS": "BELARUS"
+};
 
-// 🔥 ÖZEL İZOLASYON: İSRAİL HARİÇ UEFA ULUSLAR LİGİ MİLLİ TAKIM HAVUZU 🔥
-const UEFA_ULUSLAR_LIGI_HAVUZU = [
-  "ALMANYA", "ANDORRA", "ARNAVUTLUK", "AVUSTURYA", "AZERBAYCAN", "BELARUS", "BELÇİKA", 
-  "BOSNA-HERSEK", "BULGARİSTAN", "CEBELİTARIK", "ÇEKYA", "DANİMARKA", "ERMENİSTAN", 
-  "ESTONYA", "FAROE ADALARI", "FİNLANDİYA", "FRANSA", "GALLER", "GÜRCİSTAN", 
-  "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA", "İSKOÇYA", "İSPANYA", "İSVEÇ", 
-  "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS", 
-  "KOSOVA", "K. İRLANDA", "KUZEY MAKEDONYA", "LETONYA", "LİHTENŞTAYN", "LİTVANYA", 
-  "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA", "PORTEKİZ", 
-  "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
-].sort((a, b) => a.localeCompare(b, 'tr'));
+const sanitizeStr = (s: string) => {
+    if (!s) return "";
+    let res = s.toUpperCase().trim();
+    res = engToTr[res] || res; 
+    return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
+};
 
-// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ (ÜLKE FİLTRELİ VE KESİN EŞLEŞMELİ) 🏆
-const POPULER_LIG_SECENEKLERI = [
-  { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig', country: 'Turkey' },
-  { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig', country: 'Turkey' },
-  { id: 'premier', ad: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier Lig', apiAd: 'Premier League', country: 'England' },
-  { id: 'laliga', ad: '🇪🇸 La Liga', apiAd: 'La Liga', country: 'Spain' },
-  { id: 'seriea', ad: '🇮🇹 Serie A', apiAd: 'Serie A', country: 'Italy' },
-  { id: 'bundesliga', ad: '🇩🇪 Bundesliga', apiAd: 'Bundesliga', country: 'Germany' },
-  { id: 'ligue1', ad: '🇫🇷 Ligue 1', apiAd: 'Ligue 1', country: 'France' },
-  { id: 'eredivisie', ad: '🇳🇱 Eredivisie', apiAd: 'Eredivisie', country: 'Netherlands' },
-  { id: 'primeira', ad: '🇵🇹 Primeira Liga', apiAd: 'Primeira Liga', country: 'Portugal' },
-  { id: 'ucl', ad: '⭐ Şampiyonlar L.', apiAd: 'UEFA Champions League', country: 'World' },
-  { id: 'uel', ad: '🟠 Avrupa L.', apiAd: 'UEFA Europa League', country: 'World' },
-  { id: 'uecl', ad: '🟢 Konferans L.', apiAd: 'UEFA Europa Conference League', country: 'World' },
-  { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League', country: 'World' }
-];
+export default function LiveMatchCard() {
+  const [activeWeeks, setActiveWeeks] = useState<number[]>([]);
+  const [isWeekLoaded, setIsWeekLoaded] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+  const prevScoresRef = useRef<Record<string, string>>({});
+  const [goalFlashes, setGoalFlashes] = useState<Record<string, boolean>>({});
+  const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
+  const [liveMatchesData, setLiveMatchesData] = useState<Record<string, any>>({});
+  const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
+  const [globalLiveRanks, setGlobalLiveRanks] = useState<{ TFF: any[], DFO: any[], MASTER: any[], SKOR: any[] }>({ TFF: [], DFO: [], MASTER: [], SKOR: [] });
+  const [now, setNow] = useState<number>(new Date().getTime());
+  
+  const [weeklySortedStats, setWeeklySortedStats] = useState<Record<number, { id: string, points: number, exactScores: number }[]>>({});
+  const [is24thMatchFinishedMap, setIs24thMatchFinishedMap] = useState<Record<number, boolean>>({});
+  
+  // 🔥 EFSANEVİ YAMA: DAĞITILMIŞ MAÇLAR LİSTESİ 🔥
+  const [distributedMatchesSet, setDistributedMatchesSet] = useState<Set<string>>(new Set());
 
-export default function AdminRadarPortal() {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-      const interval = setInterval(() => setNow(Date.now()), 1000);
-      return () => clearInterval(interval);
-  }, []);
+  const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
+  const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
+  
+  const [openEventsMap, setOpenEventsMap] = useState<{ [key: string]: boolean }>({});
+  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: string]: boolean }>({});
+  const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: string]: boolean }>({});
+  const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: string]: boolean }>({});
+  const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
+  const [expandedMatches, setExpandedMatches] = useState<Record<string, boolean>>({});
+  const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
-  const [usernameInput, setUsernameInput] = useState<string>('');
-  const [passwordInput, setPasswordInput] = useState<string>('');
-
-  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'predictions' | 'players' | 'teams'>('live');
-  const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
-
-  const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
-  const [newPlayerId, setNewPlayerId] = useState('');
-  const [newPlayerName, setNewPlayerName] = useState('');
-  const [newPlayerPass, setNewPlayerPass] = useState('');
-  const [isPlayerLoading, setIsPlayerLoading] = useState(false);
-
-  const [dynamicLigHavuzu, setDynamicLigHavuzu] = useState<Record<string, string[]>>(LIG_HAVUZU);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamLeague, setNewTeamLeague] = useState('');
-
-  const [editTeamName, setEditTeamName] = useState('');
-  const [editTargetLeague, setEditTargetLeague] = useState('');
-
-  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
-  const previousScoresRef = useRef<Record<string, number>>({});
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
-  const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
-  const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); 
-
-  // 🔥 YENİ SİSTEM BÜLTEN DEĞİŞKENLERİ 🔥
-  const [apiHavuz, setApiHavuz] = useState<any[]>([]);
-  const [secilenMaclar, setSecilenMaclar] = useState<any[]>([]);
-  const [isHavuzLoading, setIsHavuzLoading] = useState(false);
-
-  // 🎯 YENİ SİSTEM: TARİH VE SAAT FİLTRELERİ 🎯
-  const [havuzBaslangicTarihi, setHavuzBaslangicTarihi] = useState('');
-  const [havuzBitisTarihi, setHavuzBitisTarihi] = useState('');
-  const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState('15:00'); 
-  const [havuzBitisSaati, setHavuzBitisSaati] = useState('23:59');
-
-  // 🏆 YENİ SİSTEM: LİG FİLTRELERİ 🏆
-  const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
-  const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
-
-  const toggleLigFiltresi = (id: string) => {
-     if (seciliLigFiltreleri.includes(id)) {
-         setSeciliLigFiltreleri(prev => prev.filter(l => l !== id));
-     } else {
-         setSeciliLigFiltreleri(prev => [...prev, id]);
-     }
+  const toggleSound = () => {
+      const newState = !soundEnabled;
+      setSoundEnabled(newState);
+      soundEnabledRef.current = newState;
+      if (newState) {
+          const audio = new Audio('/sounds/goal.mp3');
+          audio.muted = true;
+          audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(e => console.log("Ses kilidi:", e));
+      }
   };
 
   useEffect(() => {
-    if (isAuthenticated && activeTab === 'live') {
-      const apiRadar = setInterval(async () => {
-        try {
-          await fetch('/api/canli-skor'); 
-          console.log("30 saniyelik uydu taraması yapıldı.");
-        } catch (e) {
-          console.log("Radar hatası:", e);
+     const fetchDbPlayers = async () => {
+        const { data } = await supabase.from('players').select('*');
+        if (data) {
+           const newAccounts = { ...TEST_ACCOUNTS };
+           data.forEach(p => {
+               const pid = String(p.username || p.id).trim();
+               newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
+           });
+           setMergedAccounts(newAccounts);
         }
-      }, 30000); 
-
-      return () => clearInterval(apiRadar);
-    }
-  }, [isAuthenticated, activeTab]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-       audioRef.current = new Audio('/sounds/goal.mp3');
-       audioRef.current.load(); 
-    }
+     };
+     fetchDbPlayers();
   }, []);
 
-  const handleSoundToggle = () => {
-     const newState = !isSoundEnabled;
-     setIsSoundEnabled(newState);
-     if (newState && audioRef.current) {
-         audioRef.current.muted = true;
-         audioRef.current.play().then(() => {
-             audioRef.current!.pause();
-             audioRef.current!.currentTime = 0;
-             audioRef.current!.muted = false; 
-         }).catch(e => console.log("Ses kilidi açılamadı:", e));
-     }
-  };
-
-  const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({});
-  const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
-
-  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(0); 
-  const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([]);
-  const [systemActiveWeek, setSystemActiveWeek] = useState<number>(0);
-
   useEffect(() => {
-  setAdminScores({});
-  setLiveMatchesDB([]);
-  setLiveInfoStateMap({});
-  }, [selectedLiveWeek]);
-
-  const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
-  const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
-  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
-  const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
-  const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
-  const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
-
-  const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
-  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
-  const [isPublishing, setIsPublishing] = useState<boolean>(false);
-
-  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(0);
-  const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
-  const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
-  const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
-
-  const [bulletinMatches, setBulletinMatches] = useState(
-    Array.from({ length: 24 }, (_, i) => ({
-      match_index: i + 1,
-      category: '',
-      match_date: generateWeekDates(6)[0],
-      match_time: '21:00',
-      home_team: '',
-      away_team: '',
-      api_match_id: '' 
-    }))
-  );
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-       const auth = sessionStorage.getItem('admin_auth');
-       const role = sessionStorage.getItem('admin_role') as any;
-       if (auth === 'true' && role) {
-          setIsAuthenticated(true);
-          setUserRole(role);
-          if (role.startsWith('skorcum')) setShowOnlyToday(true);
-       }
-
-       const savedHavuz = localStorage.getItem('ekmel_lig_havuzu');
-       if (savedHavuz) {
-           setDynamicLigHavuzu(JSON.parse(savedHavuz));
-       } else {
-           setDynamicLigHavuzu(LIG_HAVUZU);
-       }
-    }
+    const timer = setInterval(() => setNow(new Date().getTime()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const updateLigHavuzu = (newHavuz: Record<string, string[]>) => {
-    setDynamicLigHavuzu(newHavuz);
-    localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(newHavuz));
-  };
-
-  const getDynamicCategories = () => {
-    const base = Object.keys(dynamicLigHavuzu);
-    return Array.from(new Set([...base, ...defaultCategoriesList, "UEFA ULUSLAR LİGİ"])).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const getAllTeamsFlatList = () => {
-     let all: string[] = [];
-     Object.values(dynamicLigHavuzu).forEach(teams => {
-         all = [...all, ...teams];
-     });
-     return Array.from(new Set(all)).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const fetchSkorcuStatus = async () => {
-     try {
-       const { data } = await supabase.from('skorcu_auth').select('*');
-       if (data) {
-          const newMap: Record<string, boolean> = {};
-          data.forEach(row => { newMap[row.username] = row.is_active; });
-          setSkorcuStatusMap(prev => ({...prev, ...newMap}));
-       }
-     } catch (e) {}
-  };
-
   useEffect(() => {
-    if (isAuthenticated && userRole === 'master') {
-       fetchSkorcuStatus();
-    }
-  }, [isAuthenticated, userRole]);
+    const fetchMatchesAndPredictions = async () => {
+      const todayDateStr = getTodayDateString();
+      const todayDate = parseDateLocal(todayDateStr);
+      todayDate.setHours(0,0,0,0);
 
-  const fetchAllSystemPlayers = async () => {
-    const { data } = await supabase.from('players').select('*').order('name');
-    if (data) {
-       setDbPlayersList(data);
-       const newMergedMap = { ...staticPlayersList };
-       data.forEach((p: any) => {
-          newMergedMap[String(p.username)] = p.name; 
-       });
-       setMergedPlayers(newMergedMap); 
-    }
-  };
+      // 🔥 PUAN TABLOSUNU (points) ÇEKEREK HANGİ MAÇLARIN RESMİYETE DÖKÜLDÜĞÜNÜ BULUYORUZ 🔥
+      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes, pointsRes] = await Promise.all([
+          supabase.from('live_leaderboard').select('*'),
+          supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
+          supabase.from('live_matches').select('*'),
+          supabase.from('points').select('hafta, ev_sahibi, deplasman')
+      ]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-        fetchAllSystemPlayers();
-        const fetchAvailableWeeks = async () => {
-            const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
-            if (data) {
-                const todayDate = new Date();
-                todayDate.setHours(0,0,0,0);
+      const distPoints = pointsRes.data || [];
+      const distSet = new Set<string>(distPoints.map((p: any) => `${p.hafta}-${p.ev_sahibi}-${p.deplasman}`));
+      setDistributedMatchesSet(distSet);
 
-                const weeksSet = new Set<number>(data.map(d => d.week_num));
-                const weeks = Array.from(weeksSet).filter(w => w >= 6).sort((a,b) => a-b);
-                
-                let targetWeek = 6;
-                const upcomingMatches = data.filter(d => parseDateLocal(d.match_date) >= todayDate).sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
-                
-                if (upcomingMatches.length > 0) {
-                    targetWeek = upcomingMatches[0].week_num;
-                } else if (weeks.length > 0) {
-                    targetWeek = Math.max(...weeks);
-                }
-
-                setSystemActiveWeek(targetWeek);
-
-                if (weeks.length > 0) setLiveWeekOptions(weeks);
-                
-                if (selectedLiveWeek === 0) setSelectedLiveWeek(targetWeek);
-                if (bulletinWeek === 0) setBulletinWeek(targetWeek);
-                if (selectedPredictionWeek === 0) setSelectedPredictionWeek(targetWeek);
-            }
-        };
-        fetchAvailableWeeks();
-    }
-  }, [isAuthenticated]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
-       setIsAuthenticated(true);
-       setUserRole('master');
-       sessionStorage.setItem('admin_auth', 'true');
-       sessionStorage.setItem('admin_role', 'master');
-       setShowOnlyToday(false);
-       return;
-    } 
-
-    const validSkorcular: Record<string, string> = {
-       'skorcum01': '150101',
-       'skorcum06': '191006',
-       'skorcum34': '192306'
-    };
-
-    if (validSkorcular[usernameInput]) {
-       if (passwordInput === validSkorcular[usernameInput]) {
-          try {
-             const { data } = await supabase.from('skorcu_auth').select('is_active').eq('username', usernameInput).single();
-             if (data && data.is_active === false) {
-                 alert("❌ YETKİLERİNİZ DONDURULDU!\nSistemden uzaklaştırıldınız. Lütfen Genelkurmay ile iletişime geçin.");
-                 return;
-             }
-          } catch(err) {}
-
-          setIsAuthenticated(true);
-          setUserRole(usernameInput as any);
-          sessionStorage.setItem('admin_auth', 'true');
-          sessionStorage.setItem('admin_role', usernameInput);
-          setActiveTab('live');
-          setShowOnlyToday(true);
-          return;
-       }
-    }
-
-    alert("❌ Erişim Reddedildi! Hatalı Kullanıcı Adı veya Şifre.");
-    setPasswordInput('');
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_auth');
-    sessionStorage.removeItem('admin_role');
-    setIsAuthenticated(false);
-    setUserRole(null);
-    setUsernameInput('');
-    setPasswordInput('');
-  };
-
-  const toggleSkorcuAccess = async (skorcuName: string, currentStatus: boolean) => {
-     const newStatus = !currentStatus;
-     setSkorcuStatusMap(prev => ({...prev, [skorcuName]: newStatus}));
-     try {
-        await supabase.from('skorcu_auth').upsert({ username: skorcuName, is_active: newStatus }, { onConflict: 'username' });
-     } catch (e) {}
-  };
-
-  const getPlayerIdByName = (name: string) => {
-    return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
-  };
-
-  useEffect(() => {
-    if (!isAuthenticated || selectedLiveWeek === 0) return;
-
-    const fetchLiveAdminData = async () => {
-      if (userRole && userRole.startsWith('skorcum')) {
-         try {
-           const { data } = await supabase.from('skorcu_auth').select('is_active').eq('username', userRole).single();
-           if (data && data.is_active === false) {
-              handleLogout();
-              return;
-           }
-         } catch(e) {}
-      }
-
-      const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
-
-      let currentBulten = bultenData || [];
-      setLiveMatchesDB(currentBulten);
-
-      const idsToFetch = currentBulten.map((m: any) => getUniqueMatchId(selectedLiveWeek, m.match_index));
-      let liveData: any[] = [];
-      if (idsToFetch.length > 0) {
-         const { data } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
-         if (data) liveData = data;
-      }
-
-      let allPredictions: any[] = [];
-      let fetchMore = true;
-      let from = 0;
-      const step = 1000;
-
-      while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase
-          .from('player_predictions')
-          .select('*')
-          .eq('week_num', selectedLiveWeek)
-          .order('user_id', { ascending: true })
-          .order('match_index', { ascending: true })
-          .range(from, from + step - 1);
-
-        if (error) break;
-
-        if (pDataChunk && pDataChunk.length > 0) {
-           allPredictions = [...allPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; 
-           else from += step; 
-        } else {
-           fetchMore = false; 
-        }
-      }
-
-      const initialScores: Record<number, { home: string, away: string }> = {};
-      const lockedMatches: Record<number, boolean> = {};
-      const infoMap: Record<number, any> = {}; 
-      let goalHappened = false;
-
-      currentBulten.forEach(m => {
-         const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
-         const liveInfo = liveData.find(l => l.id === uniqueId);
-
-         if (liveInfo) {
-           initialScores[m.match_index] = { home: liveInfo.home_score, away: liveInfo.away_score };
-           infoMap[m.match_index] = liveInfo; 
-
-           if (liveInfo.status === 'FINISHED') {
-              lockedMatches[m.match_index] = true;
-           }
-
-           if (liveInfo.home_score !== '-' && liveInfo.away_score !== '-') {
-             const newTotal = parseInt(liveInfo.home_score) + parseInt(liveInfo.away_score);
-             const prevTotal = previousScoresRef.current[uniqueId];
-             if (prevTotal !== undefined && newTotal > prevTotal) goalHappened = true;
-             previousScoresRef.current[uniqueId] = newTotal;
-           }
-         } else {
-           initialScores[m.match_index] = { home: "-", away: "-" };
-         }
+      const allBulten = allBulletinRes.data || [];
+      const dbLiveMatches = dbLiveMatchesRes.data || [];
+      
+      const relevantMatches = allBulten.filter(m => {
+          const matchTimeMs = getMatchTimeMs(m.match_date, m.match_time);
+          const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+          return m.match_date === todayDateStr || isWithinLast5Hours;
       });
 
-      setAdminScores(initialScores);
-      setDistributedMatches(lockedMatches);
-      setLiveInfoStateMap(infoMap);
-
-      if (goalHappened && isSoundEnabled && audioRef.current) {
-         audioRef.current.currentTime = 0; 
-         audioRef.current.play().catch(e => console.log("Ses çalınamadı:", e));
-      }
-
-      if (allPredictions.length > 0) {
-         const pMap: Record<string, string[]> = {};
-         allPredictions.forEach(row => {
-            const rowUserId = String(row.user_id);
-            if(!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
-            pMap[rowUserId][row.match_index - 1] = row.predicted_score;
-         });
-         setPredictionsDB(pMap);
-      }
-    };
-
-    if (activeTab === 'live') {
-        fetchLiveAdminData();
-        const channel = supabase.channel('public:live_matches')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
-                fetchLiveAdminData();
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }
-  }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
-
-  useEffect(() => {
-    if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
-    const loadBulletinData = async () => {
-      const newDates = generateWeekDates(bulletinWeek);
-      setCurrentWeekDates(newDates);
-
-      if (newDates && newDates.length > 0) {
-         setHavuzBaslangicTarihi(newDates[0]); 
-         setHavuzBitisTarihi(newDates[newDates.length > 2 ? 2 : newDates.length - 1]); 
-      }
-
-      if (activeTab === 'bulletin') {
-        const { data } = await supabase.from('matches_bulletin').select('*').eq('week_num', bulletinWeek).order('match_index', { ascending: true });
-
-        if (data && data.length > 0) {
-          const mapped = Array.from({ length: 24 }, (_, i) => {
-            const existing = data.find(m => m.match_index === i + 1);
-            return {
-              match_index: i + 1, category: existing?.category || '', match_date: existing?.match_date || newDates[0],
-              match_time: existing?.match_time || '21:00', home_team: existing?.home_team || '', away_team: existing?.away_team || '',
-              api_match_id: existing?.api_match_id || '' 
-            };
-          });
-          setBulletinMatches(mapped as any);
-
-          const loadedSecilen = data.map(m => ({
-              fixture_id: m.api_match_id || `temp-${m.match_index}`,
-              home_team: m.home_team,
-              away_team: m.away_team,
-              date: m.match_date,
-              time: m.match_time,
-              category: m.category,
-              league_name: m.category
-          }));
-          setSecilenMaclar(loadedSecilen);
-
-        } else {
-          setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
-            match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: '', api_match_id: ''
-          })));
-          setSecilenMaclar([]); 
-        }
-        setApiHavuz([]); 
-      }
-    };
-    loadBulletinData();
-  }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
-
-  useEffect(() => {
-    if (!isAuthenticated || userRole !== 'master' || selectedPredictionWeek === 0) return;
-    if (activeTab !== 'predictions') return;
-
-    const fetchPredictionData = async () => {
-      let allPredictions: any[] = [];
-      let fetchMore = true;
-      let from = 0;
-      const step = 1000;
-
-      while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase
-          .from('player_predictions')
-          .select('*')
-          .eq('week_num', selectedPredictionWeek)
-          .order('user_id', { ascending: true })
-          .order('match_index', { ascending: true })
-          .range(from, from + step - 1);
-
-        if (!error && pDataChunk && pDataChunk.length > 0) {
-           allPredictions = [...allPredictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; 
-           else from += step; 
-        } else {
-           fetchMore = false; 
-        }
-      }
-
-      const pMap: Record<string, string[]> = {};
-      const allUserIds = Object.keys(mergedPlayers); 
-
-      if (allPredictions.length > 0) {
-         allPredictions.forEach(row => {
-            const rowUserId = String(row.user_id);
-            if (!pMap[rowUserId]) pMap[rowUserId] = Array(24).fill('-');
-            pMap[rowUserId][row.match_index - 1] = row.predicted_score;
-         });
-      }
-
-      const submitted: string[] = [];
-      const missing: string[] = [];
-
-      allUserIds.forEach(id => {
-         if (pMap[id]) submitted.push(id);
-         else missing.push(id);
-      });
-
-      submitted.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
-      missing.sort((a, b) => (mergedPlayers[a] || '').localeCompare(mergedPlayers[b] || '', 'tr'));
-
-      setPlayerPredictionsMap(pMap);
-      setSubmittedPlayers(submitted);
-      setMissingPlayers(missing);
-    };
-
-    fetchPredictionData();
-  }, [activeTab, selectedPredictionWeek, isAuthenticated, userRole, mergedPlayers]);
-
-  const normalizeTeamName = (name: string) => {
-    if (!name) return "";
-    let normalized = name.toLocaleLowerCase('tr-TR')
-      .replace(/fc|sk|club|united|city|as|spor|aş|a\.ş\.|k\.|\./g, '')
-      .replace(/[çc]/g, 'c')
-      .replace(/[ğg]/g, 'g')
-      .replace(/[şs]/g, 's')
-      .replace(/[öo]/g, 'o')
-      .replace(/[üu]/g, 'u')
-      .replace(/[ıiî]/g, 'i')
-      .replace(/[^a-z0-9]/g, '')
-      .trim();
-
-    const dictionary: Record<string, string> = {
-      "kibris": "cyprus", "kibrisrumkesimi": "cyprus", "kuzeyirlanda": "northernireland", "kirlanda": "northernireland",
-      "turkiye": "turkey", "almanya": "germany", "ispanya": "spain", "fransa": "france", "ingiltere": "england",
-      "italya": "italy", "hollanda": "netherlands", "belcika": "belgium", "portekiz": "portugal", "iskocya": "scotland",
-      "galler": "wales", "hirvatistan": "croatia", "isvicre": "switzerland", "isvec": "sweden", "yunanistan": "greece",
-      "cekya": "czechrepublic", "cekhumhuriyeti": "czechrepublic", "macaristan": "hungary", "polonya": "poland",
-      "avusturya": "austria", "danimarka": "denmark", "sirbistan": "serbia", "romanya": "romania", "norvec": "norway",
-      "ukrayna": "ukraine", "bulgaristan": "bulgaria", "gurcistan": "georgia", "kuzeymakedonya": "northmacedonia",
-      "arnavutluk": "albania", "karadag": "montenegro", "izlanda": "iceland", "irlanda": "ireland", "republicofireland": "ireland",
-      "finlandiya": "finland", "bosnahersek": "bosnia", "ermenistan": "armenia", "azerbaycan": "azerbaijan",
-      "litvanya": "lithuania", "letonya": "latvia", "estonya": "estonia", "moldova": "moldova", "kazakistan": "kazakhstan",
-      "faroeadalari": "faroeislands", "luksemburg": "luxembourg", "cebelitarik": "gibraltar", "sanmarino": "sanmarino",
-      "andorra": "andorra", "lihtenstayn": "liechtenstein", "slovakya": "slovakia", "slovenya": "slovenia", "belarus": "belarus",
-      "kizilyildiz": "crvenazvezda", "redstar": "crvenazvezda"
-    };
-
-    return dictionary[normalized] || normalized;
-  };
-
-  const handleAutoMatch = async () => {
-    setIsAutoMatching(true);
-    let updatedMatches = [...bulletinMatches];
-    let matchedCount = 0;
-    
-    const uniqueDates = Array.from(new Set(updatedMatches.map(m => m.match_date).filter(d => d)));
-    let newApiData = { ...apiMatchesByDate };
-    
-    for (const dateStr of uniqueDates) {
-      let formattedDate = dateStr;
-      if (formattedDate.includes('.')) {
-          const parts = formattedDate.split('.');
-          formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      const relevantWeeksSet = new Set<number>(relevantMatches.map(m => m.week_num));
+      const relevantWeeksArray = Array.from(relevantWeeksSet);
+      
+      if (relevantWeeksArray.length === 0) {
+          const upcomingMatches = allBulten.filter(d => parseDateLocal(d.match_date) >= todayDate).sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
+          if (upcomingMatches.length > 0) relevantWeeksArray.push(upcomingMatches[0].week_num);
+          else if (allBulten.length > 0) relevantWeeksArray.push(Math.max(...allBulten.map(m => m.week_num)));
       }
       
-      if (!newApiData[formattedDate]) {
-        try {
-            const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
-                headers: {
-                    'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
-                    'x-rapidapi-host': 'v3.football.api-sports.io'
-                }
-            });
-            const data = await res.json();
-            if (data.response && data.response.length > 0) {
-               newApiData[formattedDate] = data.response;
-            } else {
-               newApiData[formattedDate] = [];
-            }
-        } catch (e) { console.log("Auto-match fetch error", e); }
-      }
-    }
-    
-    setApiMatchesByDate(newApiData);
-    
-    updatedMatches = updatedMatches.map(m => {
-       if (m.api_match_id || !m.home_team || !m.match_date) return m; 
-       
-       let formattedDate = m.match_date;
-       if (formattedDate.includes('.')) {
-           const parts = formattedDate.split('.');
-           formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-       }
-       
-       const dailyFixtures = newApiData[formattedDate] || [];
-       if (dailyFixtures.length === 0) return m;
+      setActiveWeeks(relevantWeeksArray.sort((a,b) => b - a)); 
+      setIsWeekLoaded(true);
 
-       const normHome = normalizeTeamName(m.home_team);
-       const normAway = normalizeTeamName(m.away_team);
-
-       let bestMatch = null;
-       
-       for (const fix of dailyFixtures) {
-          const apiHome = normalizeTeamName(fix.teams.home.name);
-          const apiAway = normalizeTeamName(fix.teams.away.name);
-          
-          if ((apiHome.includes(normHome) || normHome.includes(apiHome)) || 
-              (apiAway.includes(normAway) || normAway.includes(apiAway))) {
-              bestMatch = fix;
-              break;
+      const targetBulten = allBulten.filter(m => relevantWeeksArray.includes(m.week_num));
+      
+      let allPredictions: any[] = [];
+      for (const week of relevantWeeksArray) {
+          let from = 0; const step = 1000; let keepFetching = true;
+          while(keepFetching) {
+              const { data } = await supabase.from('player_predictions').select('*').eq('week_num', week).range(from, from + step - 1);
+              if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length < step) keepFetching = false; else from += step; } 
+              else keepFetching = false;
           }
-       }
-       
-       if (bestMatch) {
-          matchedCount++;
-          return { ...m, api_match_id: String(bestMatch.fixture.id) };
-       }
-       
-       return m;
-    });
-
-    setBulletinMatches(updatedMatches);
-    setIsAutoMatching(false);
-    
-    if (matchedCount > 0) {
-        alert(`✅ RADAR TARAMASI TAMAMLANDI!\n${matchedCount} maç uydudaki muadiliyle otomatik eşleştirildi.\nEşleşmeyen kaldıysa lütfen listeden manuel seçin.`);
-    } else {
-        alert(`⚠️ EŞLEŞME BULUNAMADI.\nSistem sizin isimlerinizle uydu isimleri arasında benzerlik yakalayamadı.`);
-    }
-  };
-
-  const handleAddNewPlayer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
-    setIsPlayerLoading(true);
-    try {
-       const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
-       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: cleanName, password: newPlayerPass.trim() });
-       if (error) throw error;
-       alert(`✅ BAŞARILI! ${cleanName} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
-       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ HATA: " + err.message); }
-    setIsPlayerLoading(false);
-  };
-
-  const handleBanishPlayer = async (userId: string, userName: string) => {
-    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEğer bu kişiyi silerseniz Karargah sisteminden çıkacaktır. Emin misiniz?`);
-    if (!confirmDelete) return;
-    try {
-       const { error } = await supabase.from('players').delete().eq('username', userId);
-       if (error) throw error;
-       alert(`✅ İhraç başarılı. ${userName} sistemden atıldı.`);
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ Hata: " + err.message); }
-  };
-
-  const handleAddLocalTeam = (e: React.FormEvent) => {
-    e.preventDefault();
-    if(!newTeamName.trim() || !newTeamLeague.trim()) {
-      alert("Lütfen takım adını ve ligini boş bırakmayın Komutanım!");
-      return;
-    }
-    const tName = newTeamName.trim().toUpperCase();
-    const tLeague = newTeamLeague.trim().toUpperCase();
-
-    const updatedHavuz = { ...dynamicLigHavuzu };
-
-    if (!updatedHavuz[tLeague]) {
-      updatedHavuz[tLeague] = [];
-    }
-
-    let exists = false;
-    Object.keys(updatedHavuz).forEach(lg => {
-        if (updatedHavuz[lg].includes(tName)) exists = true;
-    });
-
-    if (exists) {
-        alert(`Bu takım zaten sistemde var! İsterseniz aşağıdaki "Birlik Kaydırma" panelinden ligini değiştirebilirsiniz.`);
-        return;
-    }
-
-    updatedHavuz[tLeague].push(tName);
-    updatedHavuz[tLeague].sort((a,b) => a.localeCompare(b, 'tr'));
-
-    updateLigHavuzu(updatedHavuz);
-    setNewTeamName('');
-    setNewTeamLeague('');
-    alert(`✅ MÜKEMMEL! ${tName} takımı, ${tLeague} ligini kurarak Karargaha giriş yaptı!`);
-  };
-
-  const handleMoveTeam = (e: React.FormEvent) => {
-      e.preventDefault();
-      if(!editTeamName.trim() || !editTargetLeague.trim()) {
-          alert("Lütfen taşınacak takımı ve hedef ligi seçin!");
-          return;
       }
-      const tName = editTeamName.trim().toUpperCase();
-      const targetLg = editTargetLeague.trim().toUpperCase();
 
-      const updatedHavuz = { ...dynamicLigHavuzu };
+      const pDict: Record<string, string> = {};
+      allPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (uid === 'mankoman') return;
+          pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
+      });
+      setPredictionsData(pDict);
 
-      let oldLeague = "";
-      Object.keys(updatedHavuz).forEach(lg => {
-          if (updatedHavuz[lg].includes(tName)) {
-              oldLeague = lg;
-              updatedHavuz[lg] = updatedHavuz[lg].filter(t => t !== tName);
+      // 🔥 KESİNTİSİZ HEYECAN KÖPRÜSÜ (MEMORY BRIDGE) 🔥
+      // Eğer maç 90'ı geçmişse (FT) ama Komutan henüz onaylamamışsa, puanlar kara deliğe düşmesin diye manuel ekliyoruz!
+      const patchedLeaderboard = leaderboardRes.data ? JSON.parse(JSON.stringify(leaderboardRes.data)) : [];
+      
+      targetBulten.forEach(m => {
+          const uniqueId = getUniqueMatchId(m.week_num, m.match_index);
+          const liveMatch = dbLiveMatches.find(l => l.id === uniqueId);
+          
+          if (liveMatch && liveMatch.home_score !== '-' && liveMatch.away_score !== '-') {
+              const isLiveLike = ['LIVE', '1H', '2H', 'HT', 'ET', 'P'].includes(liveMatch.status);
+              const isDistributed = distSet.has(`${m.week_num}-${m.home_team}-${m.away_team}`);
+
+              // EĞER MAÇ BİTTİ (FT) AMA HENÜZ ONAYLANMADIYSA
+              if (!isLiveLike && !isDistributed) {
+                  const targetScore = `${liveMatch.home_score}-${liveMatch.away_score}`.replace(/\s+/g, '');
+                  const winnerIds = Object.keys(mergedAccounts).filter(uid => pDict[`${uid}-${m.week_num}-${m.match_index}`] === targetScore);
+                  
+                  let pts = 1;
+                  if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
+                  else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
+                  else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
+                  else if(winnerIds.length >= 7) pts = 1; else pts = 0;
+
+                  if (pts > 0) {
+                      const isTff = isTffMatchCheck(m.category);
+                      winnerIds.forEach(uid => {
+                          let player = patchedLeaderboard.find((p: any) => String(p.id) === uid);
+                          if (!player) {
+                              player = { id: uid, name: mergedAccounts[uid]?.name || 'Bilinmeyen', tff_pts: 0, dfo_pts: 0, master_pts: 0, skor_pts: 0 };
+                              patchedLeaderboard.push(player);
+                          }
+                          player.master_pts = (player.master_pts || 0) + pts;
+                          player.skor_pts = (player.skor_pts || 0) + 1;
+                          if (isTff) player.tff_pts = (player.tff_pts || 0) + pts;
+                          else player.dfo_pts = (player.dfo_pts || 0) + pts;
+                      });
+                  }
+              }
           }
       });
 
-      if (!oldLeague) {
-          alert("Takım Karargahta bulunamadı!");
-          return;
-      }
+      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
+      patchedLeaderboard.forEach((row: any) => {
+          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
+          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
+          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
+          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
+      });
+      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
+      arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
+      setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
-      if (!updatedHavuz[targetLg]) {
-          updatedHavuz[targetLg] = [];
-      }
+      const liveMap: Record<string, any> = {};
+      dbLiveMatches.forEach(row => liveMap[String(row.id)] = row); 
+      setLiveMatchesData(liveMap);
 
-      updatedHavuz[targetLg].push(tName);
-      updatedHavuz[targetLg].sort((a,b) => a.localeCompare(b, 'tr'));
-
-      updateLigHavuzu(updatedHavuz);
-      setEditTeamName('');
-      setEditTargetLeague('');
-      alert(`🔄 TRANSFER BAŞARILI! ${tName} takımı, ${oldLeague} liginden alındı ve ${targetLg} ligine aktarıldı!`);
-  };
-
-  const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
-
-  const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
-    setAdminScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "-", away: "-" }), [team]: score } }));
-  };
-
-  const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
-
-  const weeklyStats = useMemo(() => {
-     const stats: Record<string, { points: number, exactScores: number }> = {};
-     Object.keys(mergedPlayers).forEach(uid => {
-         stats[uid] = { points: 0, exactScores: 0 };
-     });
-
-     liveMatchesDB.forEach(match => {
-         const hScore = adminScores[match.match_index]?.home || "-";
-         const aScore = adminScores[match.match_index]?.away || "-";
-
-         if (hScore !== "-" && aScore !== "-") {
-             const targetScore = `${hScore}-${aScore}`;
-             const predsSource = predictionsDB;
-
-             const winners = Object.keys(predsSource).filter(uid => {
-                 const targetIndex = match.match_index - 1;
-                 return predsSource[uid] && predsSource[uid][targetIndex] === targetScore;
-             });
-
-             const wCount = winners.length;
-             let pts = 0;
-             if (wCount === 1) pts = 12;
-             else if (wCount === 2) pts = 6;
-             else if (wCount === 3) pts = 5;
-             else if (wCount === 4) pts = 4;
-             else if (wCount === 5) pts = 3;
-             else if (wCount === 6) pts = 2;
-             else if (wCount >= 7) pts = 1;
-
-             winners.forEach(uid => {
-                 if (stats[uid]) {
-                     stats[uid].points += pts;
-                     stats[uid].exactScores += 1;
-                 }
-             });
-         }
-     });
-
-     let maxPts = 0;
-     let maxScores = 0;
-     Object.values(stats).forEach(s => {
-         if (s.points > maxPts) maxPts = s.points;
-         if (s.exactScores > maxScores) maxScores = s.exactScores;
-     });
-
-     let pLeadersArray: string[] = [];
-     let sLeadersArray: string[] = [];
-
-     if (maxPts > 0) {
-         pLeadersArray = Object.keys(stats).filter(uid => stats[uid].points === maxPts);
-     }
-     if (maxScores > 0) {
-         sLeadersArray = Object.keys(stats).filter(uid => stats[uid].exactScores === maxScores);
-     }
-
-     return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
-  }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
-
-  const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
-    const homeScore = adminScores[matchId]?.home || "-";
-    const awayScore = adminScores[matchId]?.away || "-";
-    const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
-
-    const nowTime = new Date();
-    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
-
-    if (action === 'Skoru Güncelle') {
-      if (isSoundEnabled && audioRef.current) {
-         audioRef.current.currentTime = 0;
-         audioRef.current.play().catch(e => console.log("Ses çalınamadı:", e));
-      }
-
-      const { error: liveError } = await supabase.from('live_matches').upsert({ 
-         id: uniqueId, home_score: homeScore, away_score: awayScore, status: 'LIVE',
-         updated_by: userRole, updated_at: timeString 
-      }, { onConflict: 'id' });
-      
-      if (liveError) alert("Canlı skor tablosu güncellenirken hata: " + liveError.message);
-      else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek.`);
-      return;
-    }
-
-    if (action === 'Maçı Onayla (Puan Dağıt)') {
-      if (homeScore === "-" || awayScore === "-") {
-        alert("Lütfen önce takımların skorunu girin!");
-        return;
-      }
-
-      const isTff = isTffMatchCheck(matchData.category);
-      const leagueName = isTff ? 'TFF' : 'DFO';
-
-      let confirmMsg = matchId === 24 
-          ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
-          : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?\n(Sistem Bu Maçı ${leagueName} Olarak Algıladı)`;
-
-      if (!window.confirm(confirmMsg)) return;
-
-      if (matchId === 24) {
-            let bonusInserts: any[] = [];
-            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
-            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
-
-            if (finalPLeader) {
-                bonusInserts.push({
-                    hafta: selectedLiveWeek, 
-                    user_name: mergedPlayers[finalPLeader], 
-                    username: finalPLeader, 
-                    kategori: 'MASTER', 
-                    ev_sahibi: 'HAFTANIN', 
-                    deplasman: 'LİDERİ',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                });
-            }
-
-            if (finalSLeader) {
-                bonusInserts.push({
-                    hafta: selectedLiveWeek, 
-                    user_name: mergedPlayers[finalSLeader], 
-                    username: finalSLeader, 
-                    kategori: 'MASTER', 
-                    ev_sahibi: 'SKOR', 
-                    deplasman: 'KRALI',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                });
-            }
-
-            if (bonusInserts.length > 0) {
-                const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
-                if (bInsertError) {
-                    alert(`❌ DİKKAT! Bonuslar veritabanına yazılamadı!\nSebep: ${bInsertError.message}`);
-                } else {
-                    for (const insert of bonusInserts) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', insert.username);
-                        if (stData) {
-                            const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
-                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Haftanın liderlerine +3 puan MASTER kasasına kalıcı eklendi!)`);
-                }
-            } else {
-               alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
-            }
-      }
-
-      try {
-        await supabase.from('live_matches').upsert({ 
-           id: uniqueId, home_score: homeScore, away_score: awayScore, status: 'FINISHED',
-           updated_by: userRole, updated_at: timeString 
-        }, { onConflict: 'id' });
-
-        if (currentWinners.length > 0) {
-          const { data: existingPointsCheck } = await supabase
-            .from('points')
-            .select('id')
-            .eq('hafta', selectedLiveWeek)
-            .eq('ev_sahibi', matchData.home_team)
-            .eq('deplasman', matchData.away_team);
-
-          if (existingPointsCheck && existingPointsCheck.length > 0) {
-            alert(`⚠️ DUR KOMUTANIM!\nBu maçın (${matchData.home_team} vs ${matchData.away_team}) puanları zaten dağıtılmış!\nÇifte sayım engellendi, puanlar şişirilmedi.`);
-            return;
-          }
-
-          const inserts: any[] = [];
-          currentWinners.forEach(winnerName => {
-            const userId = getPlayerIdByName(winnerName);
-            const baseData = {
-              hafta: selectedLiveWeek, user_name: winnerName, username: userId, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
-              gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
-            };
-            inserts.push({ ...baseData, kategori: leagueName });
-            inserts.push({ ...baseData, kategori: 'MASTER' });
-          });
-
-          const { error: insertError } = await supabase.from('points').insert(inserts);
-          if (insertError) { alert(`❌ HATA! Fişler eklenemedi.\nMesaj: ${insertError.message}`); return; }
-
-          for (const winnerName of currentWinners) {
-            const userId = getPlayerIdByName(winnerName);
-            if (!userId) continue;
-            const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
-            if (stData) {
-              const lRow = stData.find((r: any) => r.league_type === leagueName);
-              if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
-              else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
-
-              const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-              if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
-              else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
-            }
-          }
-          if (matchId !== 24) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
-        } else {
-          if (matchId !== 24) alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
-        }
-
-        setDistributedMatches(prev => ({...prev, [matchId]: true})); 
-      } catch (error: any) { alert("❌ BEKLENMEYEN HATA: " + error.message); }
-      return;
-    }
-
-    if (action === 'Geri Al' || action === 'Resetle') {
-      const isLocked = distributedMatches[matchId];
-      if (isLocked) {
-        const confirmUndo = window.confirm(`DİKKAT: Bu maçın puanları daha önce dağıtılmıştı!\n\nEğer onaylarsan; bu maçtan kazanılan puanlar 'standings' (kasa) tablosundan DÜŞÜLECEK, 'points' tablosundaki fişler SİLİNECEK ve maç tekrar MÜDAHALEYE AÇILACAK.\n\nBunu yapmak istediğine emin misin?`);
-        if (!confirmUndo) return;
-
-        try {
-          if (matchId === 24) {
-               const { data: bonusPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
-               if (bonusPoints && bonusPoints.length > 0) {
-                   for (const row of bonusPoints) {
-                       const pts = row.puan; const uid = row.username;
-                       const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
-                       if (stData) {
-                           const mRow = stData.find(r => r.league_type === 'MASTER');
-                           if (mRow) await supabase.from('standings').update({ points: Math.max(0, mRow.points - pts) }).eq('id', mRow.id);
-                       }
-                   }
-                   await supabase.from('points').delete().eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
-               }
-          }
-
-          const { data: existingPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
-          if (existingPoints && existingPoints.length > 0) {
-            for (const row of existingPoints) {
-              const pts = row.puan; const uid = row.username; const rowCategory = row.kategori;
-              const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
-              if (stData) {
-                const targetRow = stData.find(r => r.league_type === rowCategory);
-                if (targetRow) {
-                   await supabase.from('standings').update({ points: Math.max(0, targetRow.points - pts) }).eq('id', targetRow.id);
-                }
-              }
-            }
-            await supabase.from('points').delete().eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
-          }
-          alert("✅ GERİ ALMA BAŞARILI! Puanlar ve varsa Bonuslar kasadan düşüldü, fişler silindi.");
-        } catch (error: any) { alert("❌ HATA: " + error.message); return; }
-      }
-
-      await supabase.from('live_matches').upsert({ 
-         id: uniqueId, home_score: '-', away_score: '-', status: 'NOT_STARTED',
-         updated_by: userRole, updated_at: timeString 
-      }, { onConflict: 'id' });
-      setAdminScores(prev => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
-      setOpenWinnersMap(prev => ({ ...prev, [matchId]: false })); 
-      setDistributedMatches(prev => ({ ...prev, [matchId]: false })); 
-      if(!isLocked) alert("✅ Skor başarıyla sıfırlandı.");
-    }
-  };
-
-  const handleBulkSilentLive = async () => {
-    const todayMatches = displayedMatches.filter(m => m.match_date === getTodayDateString());
-    
-    if (todayMatches.length === 0) {
-        alert("⚠️ Bugün oynanacak herhangi bir maç bulunamadı!");
-        return;
-    }
-
-    const confirmBulk = window.confirm(`DİKKAT: Bugün oynanacak olan tam ${todayMatches.length} maç, otomatik radar (API) tarafından çekilebilsin diye arka planda SESSİZCE canlı sistemine kilitlenecek.\n\nSkorlar "0-0" YERİNE "-" (tire) olarak girecek, böylece kimseye SAHTE PUAN (spoiler) dağıtılmayacak.\n\nOnaylıyor musun Komutanım?`);
-    
-    if (!confirmBulk) return;
-
-    try {
-        const nowTime = new Date();
-        const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
-        
-        const bulkPayload = todayMatches.map(m => {
-            const uniqueId = getUniqueMatchId(selectedLiveWeek, m.match_index);
-            return {
-                id: uniqueId,
-                home_score: '-',
-                away_score: '-',
-                status: 'NOT_STARTED',
-                updated_by: 'MASTER_OTO',
-                updated_at: timeString
-            };
-        });
-
-        const { error } = await supabase.from('live_matches').upsert(bulkPayload, { onConflict: 'id' });
-        
-        if (error) throw error;
-        
-        alert(`✅ MÜKEMMEL OPERASYON!\nBugünün ${todayMatches.length} maçı Karargah sistemine SESSİZCE kilitlendi.\nArtık tek yapman gereken API radarının saatleri geldiğinde maçları otomatik güncellemesini izlemek.`);
-        
-    } catch (e: any) {
-        alert("❌ Toplu aktarım sırasında hata: " + e.message);
-    }
-  };
-
-  const getAvailableTeams = (currentIndex: number, isHome: boolean) => {
-    const currentMatch = bulletinMatches[currentIndex];
-    const currentCat = currentMatch.category ? currentMatch.category.toUpperCase() : '';
-    const opponent = isHome ? currentMatch.away_team : currentMatch.home_team;
-
-    if (!currentCat) return [];
-
-    let havuz: string[] = [];
-
-    if (currentCat === "UEFA ULUSLAR LİGİ") {
-       havuz = [...UEFA_ULUSLAR_LIGI_HAVUZU];
-    } else {
-       havuz = dynamicLigHavuzu[currentCat] || [];
-       if (!havuz || currentCat.includes("KUPA") || currentCat.includes("CUP") || currentCat.includes("Ş.L.") || currentCat.includes("A.L.") || currentCat.includes("K.L.")) {
-          havuz = Object.values(dynamicLigHavuzu).flat();
-       }
-    }
-
-    const fullHavuz = Array.from(new Set([...havuz]));
-    const usedTeams = new Set<string>();
-
-    bulletinMatches.forEach((m, idx) => {
-       if (idx === currentIndex) return; 
-       const mCat = m.category ? m.category.toUpperCase() : '';
-       if (currentCat === mCat) {
-           if (m.home_team) usedTeams.add(m.home_team.toUpperCase());
-           if (m.away_team) usedTeams.add(m.away_team.toUpperCase());
-       }
-    });
-
-    return fullHavuz.filter(t => t !== opponent && !usedTeams.has(t)).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
-  const handleBulletinChange = (index: number, field: string, value: string) => {
-    const newMatches = [...bulletinMatches];
-    (newMatches[index] as any)[field] = value;
-    if (field === 'category') {
-        newMatches[index].home_team = ''; newMatches[index].away_team = '';
-    }
-    setBulletinMatches(newMatches);
-  };
-
-  const copyDateTimeToAll = () => {
-    const firstDate = bulletinMatches[0].match_date;
-    const firstTime = bulletinMatches[0].match_time;
-    if(!firstDate || !firstTime) return alert("Önce 1. maçın tarih ve saatini doldurun!");
-    const updated = bulletinMatches.map(m => ({ ...m, match_date: firstDate, match_time: firstTime }));
-    setBulletinMatches(updated);
-  };
-
-  const fetchApiMatchesForDate = async (dateStr: string) => {
-      setIsApiLoading(true);
-      try {
-          let formattedDate = dateStr;
-          if (formattedDate.includes('.')) {
-              const parts = formattedDate.split('.');
-              formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-          }
-
-          if (apiMatchesByDate[formattedDate]) {
-              setIsApiLoading(false);
-              return;
-          }
-
-          const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
-              headers: {
-                  'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
-                  'x-rapidapi-host': 'v3.football.api-sports.io'
-              }
-          });
-          const data = await res.json();
-          
-          if (data.errors && Object.keys(data.errors).length > 0) {
-               alert("API Uyarı: " + JSON.stringify(data.errors));
-               setIsApiLoading(false);
-               return;
-          }
-          
-          if (data.response && data.response.length > 0) {
-              const sortedMatches = data.response.sort((a: any, b: any) => {
-                  const timeA = new Date(a.fixture.date).getTime();
-                  const timeB = new Date(b.fixture.date).getTime();
-                  return timeA - timeB; 
-              });
-              
-              setApiMatchesByDate(prev => ({...prev, [formattedDate]: sortedMatches}));
-          } else {
-              setApiMatchesByDate(prev => ({...prev, [formattedDate]: []}));
-              alert(`${formattedDate} tarihinde uyduda hiç maç bulunamadı.`);
-          }
-      } catch (error) {
-          console.error("API Bağlantı Hatası:", error);
-          alert("Sinyal koptu! Lütfen sayfayı yenileyip tekrar deneyin.");
-      } finally {
-          setIsApiLoading(false);
-      }
-  };
-
-  // 🎯 YENİ SİSTEM: TARİH, SAAT VE LİG FİLTRELİ UYDU ÇEKİMİ (KESİN EŞLEŞME) 🎯
-  const fetchHaftalikHavuz = async () => {
-    setIsHavuzLoading(true);
-    let havuzTemp: any[] = [];
-    try {
-        const startIndex = currentWeekDates.indexOf(havuzBaslangicTarihi);
-        const endIndex = currentWeekDates.indexOf(havuzBitisTarihi);
-        
-        let datesToFetch = currentWeekDates;
-        if (startIndex !== -1 && endIndex !== -1 && startIndex <= endIndex) {
-            datesToFetch = currentWeekDates.slice(startIndex, endIndex + 1);
-        } else if (startIndex !== -1 && endIndex !== -1 && startIndex > endIndex) {
-            alert("❌ HATA: Bitiş tarihi, başlangıç tarihinden önce olamaz komutanım!");
-            setIsHavuzLoading(false);
-            return;
-        }
-
-        for (const dateStr of datesToFetch) {
-            let formattedDate = dateStr;
-            if (formattedDate.includes('.')) {
-                const parts = formattedDate.split('.');
-                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
-            const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
-                headers: {
-                    'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
-                    'x-rapidapi-host': 'v3.football.api-sports.io'
-                }
-            });
-            const data = await res.json();
-            if (data.response && data.response.length > 0) {
-                const mapped = data.response.map((fix: any) => {
-                    const d = new Date(fix.fixture.date);
-                    return {
-                        fixture_id: fix.fixture.id,
-                        home_team: fix.teams.home.name,
-                        away_team: fix.teams.away.name,
-                        date: dateStr,
-                        time: d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}),
-                        league_name: fix.league.name,
-                        country: fix.league.country, // 🔥 Ülke Verisi Eklendi
-                        category: fix.league.name
-                    };
-                });
-                havuzTemp = [...havuzTemp, ...mapped];
-            }
-        }
-        
-        // 1. SAAT FİLTRESİ UYGULA
-        havuzTemp = havuzTemp.filter(mac => {
-            return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
-        });
-
-        // 2. KESİN LİG FİLTRESİ UYGULA (Ülke + Lig Adı Tam Eşleşme)
-        if (seciliLigFiltreleri.length > 0 || ozelLigFiltresi.trim() !== '') {
-            havuzTemp = havuzTemp.filter(mac => {
-                const matchLeague = mac.league_name.toLowerCase();
-                const matchCountry = (mac.country || '').toLowerCase();
-                
-                // Popüler liglerden biri seçiliyse KESİN kontrol et
-                const matchesPopuler = seciliLigFiltreleri.length > 0 
-                    ? seciliLigFiltreleri.some(filterId => {
-                        const fObj = POPULER_LIG_SECENEKLERI.find(f => f.id === filterId);
-                        if(!fObj) return false;
-                        
-                        // Tam Eşleşme (Lig adı ve Ülkesi)
-                        const isLeagueMatch = matchLeague === fObj.apiAd.toLowerCase();
-                        const isCountryMatch = fObj.country === 'World' ? true : matchCountry === fObj.country.toLowerCase();
-                        
-                        return isLeagueMatch && isCountryMatch;
-                    })
-                    : false;
-                
-                // Özel kutuya bir şey yazıldıysa kontrol et (includes ile esnek bırakıldı ki kolay bulunsun)
-                const matchesOzel = ozelLigFiltresi.trim() !== '' 
-                    ? matchLeague.includes(ozelLigFiltresi.toLowerCase()) || matchCountry.includes(ozelLigFiltresi.toLowerCase())
-                    : false;
-                
-                return matchesPopuler || matchesOzel;
-            });
-        }
-
-        // SIRALAMA: Önce Tarih, Sonra Saat
-        havuzTemp.sort((a,b) => {
-            if (a.date !== b.date) {
-                const dA = parseDateLocal(a.date).getTime();
-                const dB = parseDateLocal(b.date).getTime();
-                return dA - dB;
-            }
-            return a.time.localeCompare(b.time);
-        });
-
-        setApiHavuz(havuzTemp);
-        
-        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan tam isabet ${havuzTemp.length} adet maç çekildi.`);
-        else alert("⚠️ Belirttiğin tarih, saat ve lig kalkanından hiçbir maç geçemedi. Başka ligler seçebilirsin.");
-    } catch (error: any) {
-        console.error(error);
-        alert("API Hatası: " + error.message);
-    } finally {
-        setIsHavuzLoading(false);
-    }
-  };
-
-  const toggleHavuzMac = (mac: any) => {
-    const alreadySelected = secilenMaclar.find(m => m.fixture_id === mac.fixture_id);
-    if (alreadySelected) {
-        setSecilenMaclar(secilenMaclar.filter(m => m.fixture_id !== mac.fixture_id));
-    } else {
-        if (secilenMaclar.length < 24) {
-            setSecilenMaclar([...secilenMaclar, { ...mac }]);
-        } else {
-            alert("⚠️ Başkomutanım, 24 maçlık kapasite doldu!");
-        }
-    }
-  };
-
-  const bulteniPatlat = async () => {
-    if (secilenMaclar.length !== 24) {
-      if(!window.confirm("Bülten henüz 24 maça ulaşmadı! Yinede MÜHÜRLEMEK istiyor musun?")) return;
-    }
-    setIsPublishing(true);
-    try {
-      const payload = secilenMaclar.map((m, idx) => ({
-         week_num: bulletinWeek, 
-         match_index: idx + 1, 
-         category: m.category || m.league_name || '', 
-         match_date: m.date, 
-         match_time: m.time,
-         home_team: String(m.home_team).trim().toUpperCase(), 
-         away_team: String(m.away_team).trim().toUpperCase(),
-         api_match_id: m.fixture_id && !String(m.fixture_id).startsWith('temp-') ? parseInt(String(m.fixture_id)) : null 
+      const currentWeekMatches = targetBulten.map((m) => ({
+        id: m.match_index,
+        week_num: m.week_num,
+        weekLabel: `${m.week_num}. HAFTA ${m.match_index}. MAÇ`,
+        category: m.category,
+        date: m.match_date,
+        time: m.match_time,
+        home_team: m.home_team,
+        away_team: m.away_team
       }));
 
-      const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
-      if (error) throw error;
-      
-      const liveMatchesPayload = secilenMaclar
-         .filter(m => m.fixture_id && !String(m.fixture_id).startsWith('temp-'))
-         .map((m, idx) => ({
-             id: getUniqueMatchId(bulletinWeek, idx + 1), 
-             api_match_id: parseInt(String(m.fixture_id)) 
-         }));
+      const new24FinishedMap: Record<number, boolean> = {};
+      relevantWeeksArray.forEach(w => {
+         const m24Id = getUniqueMatchId(w, 24);
+         const dbMatch24 = liveMap[String(m24Id)];
+         new24FinishedMap[w] = (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status));
+      });
+      setIs24thMatchFinishedMap(new24FinishedMap);
 
-      if (liveMatchesPayload.length > 0) {
-          await supabase.from('live_matches').upsert(liveMatchesPayload, { onConflict: 'id' });
+      let goalHappened = false;
+      let newGoalIds: string[] = [];
+      Object.keys(liveMap).forEach(key => {
+          const dbMatch = liveMap[key];
+          const isLiveOrFinished3 = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
+          if (isLiveOrFinished3 && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+              const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+              const prevScore = prevScoresRef.current[key];
+              if (prevScore && prevScore !== currentScore) { goalHappened = true; newGoalIds.push(String(key)); }
+              prevScoresRef.current[key] = currentScore;
+          }
+      });
+
+      if (goalHappened) {
+          if (soundEnabledRef.current) {
+              const audio = new Audio('/sounds/goal.mp3');
+              audio.play().catch(e => console.log("Ses çalınamadı:", e));
+          }
+          if (newGoalIds.length > 0) {
+              setGoalFlashes(prev => { const next = { ...prev }; newGoalIds.forEach(id => { next[id] = true; }); return next; });
+              setTimeout(() => { setGoalFlashes(prev => { const next = { ...prev }; newGoalIds.forEach(id => { delete next[id]; }); return next; }); }, 8000);
+          }
       }
 
-      alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nSeçilen maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
-    } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
-    setIsPublishing(false);
-  };
+      let allWeeklyStats: Record<number, any> = {};
+      relevantWeeksArray.forEach(week => {
+          let stats: Record<string, { points: number, exactScores: number }> = {};
+          Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
-  const displayedMatches = liveMatchesDB.filter(match => {
-      const logInfo = liveInfoStateMap[match.match_index];
-      const status = logInfo?.status || 'NOT_STARTED';
+          currentWeekMatches.filter(m => m.week_num === week).forEach(m => {
+              const uniqueId = String(getUniqueMatchId(week, m.id));
+              const dbMatch = liveMap[uniqueId];
+              if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+                  const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+                  const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${week}-${m.id}`] === targetScore);
+                  
+                  let pts = 1;
+                  if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
+                  else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
+                  else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
+                  else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
-      const isFinished = status === 'FINISHED';
-      const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
-      const isToday = match.match_date === getTodayDateString();
+                  winnerIds.forEach(wId => {
+                      if(!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
+                      stats[wId].points += pts;
+                      stats[wId].exactScores += 1;
+                  });
+              }
+          });
 
-      const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
-      const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+          allWeeklyStats[week] = Object.keys(stats)
+              .map(uid => ({ id: uid, points: stats[uid].points, exactScores: stats[uid].exactScores }))
+              .filter(s => s.points > 0 || s.exactScores > 0)
+              .sort((a, b) => b.points - a.points || b.exactScores - a.exactScores || mergedAccounts[a.id]?.name.localeCompare(mergedAccounts[b.id]?.name, 'tr'));
+      });
+      setWeeklySortedStats(allWeeklyStats);
 
-      if (userRole && userRole.startsWith('skorcum')) {
-          if (isFinished) return false; 
-          if (isLive || isWithinLast5Hours) return true; 
-          
-          const mDate = parseDateLocal(match.match_date);
-          const today = new Date();
-          today.setHours(0,0,0,0);
-          
-          if (mDate < today && !isWithinLast5Hours) return false; 
-          return true; 
-      }
+      const todaysMatches = currentWeekMatches.filter(m => {
+           const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
+           const dbMatch = liveMap[uniqueId];
+           const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
+           
+           // Dağıtılmamış maçlar, canlı sekmesinde yeşil kalsın diye
+           const isDistributed = distSet.has(`${m.week_num}-${m.home_team}-${m.away_team}`);
+           
+           const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(status);
+           
+           const isToday = m.date === todayDateStr; 
+           
+           if (isLiveOrFinished4 && !isDistributed) return true; // Dağıtılmamış her şey canlıda!
+           if (isLiveOrFinished4 && isDistributed && isToday) return true; // Bugün dağıtıldıysa bitenlere düşer ama gösterilir
+           return isToday;
+      });
 
-      if (showOnlyToday) {
-          if (isFinished) return false; 
-          if (isLive || isWithinLast5Hours) return true;     
-          return isToday;                
-      }
-      return true; 
-  });
+      todaysMatches.sort((a, b) => {
+         const timeA = getMatchTimeMs(a.date, a.time);
+         const timeB = getMatchTimeMs(b.date, b.time);
+         return timeA - timeB;
+      });
 
-  if (!isAuthenticated) {
+      setTodaysMatchesList(todaysMatches);
+    };
+
+    fetchMatchesAndPredictions(); 
+    const interval = setInterval(fetchMatchesAndPredictions, 5000); 
+    return () => clearInterval(interval);
+  }, [mergedAccounts, now]);
+
+  const toggleEvents = (uniqueId: string) => setOpenEventsMap((prev) => ({ ...prev, [uniqueId]: prev[uniqueId] === false ? true : false })); 
+  const toggleWinners = (uniqueId: string) => setOpenWinnersMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] })); 
+  const togglePossible = (uniqueId: string) => setOpenPossibleMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const toggleEliminated = (uniqueId: string) => setOpenEliminatedMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const toggleMatchExpansion = (uniqueId: string) => setExpandedMatches(prev => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const togglePlayerRank = (uniqueKey: string) => setOpenPlayerRanks((prev) => ({ ...prev, [uniqueKey]: !prev[uniqueKey] }));
+
+  if (!isWeekLoaded) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-900 border border-slate-700 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
-          <span className="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">🛡️</span>
-          <h1 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-md">Karargah Girişi</h1>
-
-          <form onSubmit={handleLogin} className="flex flex-col gap-4 mt-6">
-            <input 
-              type="text" 
-              value={usernameInput} 
-              onChange={e => setUsernameInput(e.target.value)} 
-              className="bg-slate-950 border border-slate-700 text-slate-300 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest font-bold text-sm shadow-inner placeholder:text-slate-600 lowercase" 
-              placeholder="KULLANICI ADI" 
-            />
-            <input 
-              type="password" 
-              value={passwordInput} 
-              onChange={e => setPasswordInput(e.target.value)} 
-              className="bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3.5 rounded-xl outline-none focus:border-amber-500 text-center tracking-[0.3em] font-black text-lg shadow-inner placeholder:text-slate-600" 
-              placeholder="••••••••" 
-            />
-            <button 
-              type="submit" 
-              className="bg-amber-600 hover:bg-amber-500 text-white font-black tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] mt-2"
-            >
-              KAPIYI AÇ
-            </button>
-          </form>
-        </div>
+      <div className="w-full max-w-6xl mx-auto mb-8 flex justify-center py-10">
+         <span className="text-slate-500 text-sm font-medium animate-pulse tracking-widest">📡 Radar Ayarlanıyor...</span>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
-      <div className="max-w-7xl mx-auto pt-6">
+  // Dağıtılmayan her maç Aktif/Canlıdır
+  const activeMatches = todaysMatchesList.filter(match => {
+     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+     const dbMatch = liveMatchesData[uniqueId] || {};
+     const isDistributed = distributedMatchesSet.has(`${match.week_num}-${match.home_team}-${match.away_team}`);
+     
+     if (['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status)) {
+         return !isDistributed; 
+     }
+     return true;
+  });
 
-        {/* 🔴 SEKME (TAB) MENÜSÜ 🔴 */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
-           <button 
-             onClick={() => setActiveTab('live')}
-             className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-           >
-             🔴 CANLI YÖNETİM
-           </button>
+  // Sadece Onaylanan (Dağıtılan) maçlar Bitenlere düşer
+  const finishedMatches = todaysMatchesList.filter(match => {
+     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+     const dbMatch = liveMatchesData[uniqueId] || {};
+     const isDistributed = distributedMatchesSet.has(`${match.week_num}-${match.home_team}-${match.away_team}`);
+     
+     if (['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status)) {
+         return isDistributed;
+     }
+     return false;
+  });
 
-           {userRole === 'master' && (
-             <>
-               <button 
-                 onClick={() => setActiveTab('bulletin')}
-                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-               >
-                 🛠️ BÜLTEN
-               </button>
-               <button 
-                 onClick={() => setActiveTab('predictions')}
-                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'predictions' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-               >
-                 📊 TAHMİNLER
-               </button>
-               <button 
-                 onClick={() => setActiveTab('players')}
-                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-               >
-                 👥 YARIŞMACILAR
-               </button>
-               <button 
-                 onClick={() => setActiveTab('teams')}
-                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'teams' ? 'bg-cyan-600 text-white shadow-[0_0_15px_rgba(8,145,178,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
-               >
-                 🛡️ LOJİSTİK / TRANSFER
-               </button>
-             </>
-           )}
-        </div>
+  const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
+      const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
+      const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
 
-        {/* 🚀 CANLI YÖNETİM EKRANI 🚀 */}
-        {activeTab === 'live' && (
-          <div className="animate-fade-in">
-            {userRole === 'master' && (
-               <div className="mb-6 bg-slate-900 border border-slate-700/80 rounded-2xl p-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                     <div className="flex items-center gap-2">
-                        <span className="text-2xl drop-shadow-md">⚔️</span>
-                        <div>
-                           <h2 className="text-white font-black tracking-widest uppercase text-sm">SKORCU DİSİPLİN PANELİ</h2>
-                           <p className="text-slate-400 text-[10px]">Aktif Skorcuları anında sistemden atabilir veya yetki verebilirsin.</p>
-                        </div>
-                     </div>
-                     <div className="flex gap-3 flex-wrap justify-center">
-                        {['skorcum01', 'skorcum06', 'skorcum34'].map(sk => {
-                           const isActive = skorcuStatusMap[sk] !== false; 
-                           return (
-                              <button 
-                                 key={sk}
-                                 onClick={() => toggleSkorcuAccess(sk, isActive)}
-                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs transition-all shadow-md ${
-                                    isActive ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400 hover:bg-emerald-900' : 'bg-rose-950/80 border-rose-500/50 text-rose-400 hover:bg-rose-900'
-                                 }`}
-                              >
-                                 <span className="uppercase tracking-widest">{sk}</span>
-                                 <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.8)]'}`}></div>
-                              </button>
-                           )
-                        })}
-                     </div>
+      const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+      const isEventsOpen = openEventsMap[uniqueId] !== false;
+      const isWinnersOpen = openWinnersMap[uniqueId] !== false;
+      const isPossibleOpen = openPossibleMap[uniqueId] || false;
+      const isEliminatedOpen = openEliminatedMap[uniqueId] || false;
+      const isExpanded = expandedMatches[uniqueId] !== undefined ? expandedMatches[uniqueId] : isFinishedGroup;
+
+      const dbMatch = liveMatchesData[uniqueId] || {};
+      const isGoalFlashing = goalFlashes[uniqueId]; 
+      
+      let safeEvents: any[] = [];
+      if (Array.isArray(dbMatch.events)) {
+         safeEvents = dbMatch.events;
+      } else if (typeof dbMatch.events === 'string') {
+         try {
+            const parsed = JSON.parse(dbMatch.events);
+            safeEvents = Array.isArray(parsed) ? parsed : [];
+         } catch (e) {
+            safeEvents = [];
+         }
+      }
+
+      let matchStatus = dbMatch.status || 'NOT_STARTED';
+      let homeScore = dbMatch.home_score || '-';
+      let awayScore = dbMatch.away_score || '-';
+
+      const isDistributed = distributedMatchesSet.has(`${match.week_num}-${homeTeamUpper}-${awayTeamUpper}`);
+
+      // 🔥 GÖRSEL KİLİT: Maç 90'da bitse bile ONAYLANMADIYSA ekranda CANLI ve 90+ gözükmeye devam edecek! 🔥
+      if (['FT', 'FINISHED', 'AET', 'PEN', 'WAITING_APPROVAL'].includes(matchStatus) && !isDistributed) {
+          matchStatus = 'LIVE';
+      } else if (matchStatus === 'WAITING_APPROVAL') {
+          matchStatus = 'LIVE';
+      }
+
+      const matchTimeMs = getMatchTimeMs(match.date, match.time);
+      const liveDurationMs = 8 * 60 * 60 * 1000; 
+      
+      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
+        if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
+            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { matchStatus = 'LIVE'; } 
+            else if (now >= matchTimeMs + liveDurationMs) { matchStatus = 'WAITING_APPROVAL'; }
+        }
+      }
+
+      const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
+      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P'].includes(matchStatus);
+      const isHT = matchStatus === 'HT';
+
+      if (isLiveStatus) {
+         if (homeScore === '-') homeScore = '0';
+         if (awayScore === '-') awayScore = '0';
+      }
+
+      const rawElapsed = dbMatch.elapsed;
+      let safeElapsed = typeof rawElapsed === 'object' && rawElapsed !== null ? rawElapsed.elapsed : rawElapsed;
+      
+      const systemTimeEvent = safeEvents.find((e: any) => e.type === 'SystemTime');
+      const safeExtra = systemTimeEvent ? systemTimeEvent.detail : null;
+
+      let displayMinute = '';
+      if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
+         if (safeExtra) { 
+             displayMinute = `${safeElapsed}+${safeExtra}'`; 
+         } else { 
+             displayMinute = `${safeElapsed}'`; 
+         }
+      } else if (isLiveStatus) {
+         const diffMins = Math.floor((now - matchTimeMs) / 60000);
+         if (diffMins >= 120) displayMinute = `90+'`; 
+         else if (diffMins >= 60) displayMinute = `${diffMins - 15}'`; 
+         else if (diffMins >= 45) displayMinute = `HT`;
+         else if (diffMins > 0) displayMinute = `${diffMins}'`;
+         else displayMinute = `1'`;
+      }
+
+      const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+      const isTffMatch = isTffMatchCheck(match.category);
+      const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
+
+      const hName = sanitizeStr(homeTeamUpper);
+      const aName = sanitizeStr(awayTeamUpper);
+
+      let homeTeamId: number | null = null;
+      let awayTeamId: number | null = null;
+
+      safeEvents.forEach((e: any) => {
+          if (e.team && e.team.id) {
+              const eName = sanitizeStr(e.team.name);
+              if (eName === hName || hName.includes(eName) || eName.includes(hName)) {
+                  homeTeamId = e.team.id;
+              } else if (eName === aName || aName.includes(eName) || eName.includes(aName)) {
+                  awayTeamId = e.team.id;
+              }
+          }
+      });
+
+      if (homeTeamId && !awayTeamId) {
+          const otherEvent = safeEvents.find((e: any) => e.team?.id && e.team.id !== homeTeamId);
+          if (otherEvent) awayTeamId = otherEvent.team.id;
+      } else if (awayTeamId && !homeTeamId) {
+          const otherEvent = safeEvents.find((e: any) => e.team?.id && e.team.id !== awayTeamId);
+          if (otherEvent) homeTeamId = otherEvent.team.id;
+      }
+
+      const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || (homeTeamId && e.team?.id === homeTeamId) || (!homeTeamId && sanitizeStr(e.team?.name) === hName)));
+      const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (awayTeamId && e.team?.id === awayTeamId) || (!awayTeamId && sanitizeStr(e.team?.name) === aName)));
+
+      let exactWinners: {id: string, name: string, score: string}[] = [];
+      let possibleWinners: {name: string, score: string}[] = [];
+      let eliminatedPlayers: {name: string, score: string}[] = [];
+
+      if ((isLiveStatus || isFinishedStatus || isHT) && homeScore !== '-' && awayScore !== '-') {
+        const currentH = parseInt(homeScore);
+        const currentA = parseInt(awayScore);
+
+        Object.keys(mergedAccounts).forEach(id => {
+          const predStr = predictionsData[`${id}-${match.week_num}-${match.id}`];
+          if (!predStr || predStr === '-' || predStr === 'PAS') return;
+          const name = mergedAccounts[id]?.name;
+          if (!name) return;
+
+          const [pHStr, pAStr] = predStr.split('-');
+          const pH = parseInt(pHStr); const pA = parseInt(pAStr);
+
+          if (pH === currentH && pA === currentA) { exactWinners.push({ id, name, score: predStr }); } 
+          else if (pH >= currentH && pA >= currentA && !isFinishedStatus) { possibleWinners.push({ name, score: predStr }); } 
+          else { eliminatedPlayers.push({ name, score: predStr }); }
+        });
+
+        exactWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        possibleWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        eliminatedPlayers.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+      }
+      
+      const winnersCount = exactWinners.length;
+      let displayPoints = 1;
+      if(winnersCount === 1) displayPoints = 12; else if(winnersCount === 2) displayPoints = 6;
+      else if(winnersCount === 3) displayPoints = 5; else if(winnersCount === 4) displayPoints = 4;
+      else if(winnersCount === 5) displayPoints = 3; else if(winnersCount === 6) displayPoints = 2;
+      else if(winnersCount >= 7) displayPoints = 1; else displayPoints = 0;
+
+      let countdownText = "";
+      if (now < matchTimeMs && (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD')) {
+        const distance = matchTimeMs - now;
+        if (distance > 0) {
+          const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((distance % (1000 * 60)) / 1000);
+          countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+      }
+
+      return (
+        <div key={uniqueId} className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+            isGoalFlashing ? 'police-siren' : isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
+        }`}>
+          {theme.bgImg && (
+            <>
+              <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}></div>
+              <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded || isGoalFlashing ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
+            </>
+          )}
+
+          {!isExpanded && (
+            <div onClick={() => toggleMatchExpansion(uniqueId)} className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300">
+              <div className="flex-1 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">{homeTeamUpper}</span>
+              </div>
+              <div className="flex items-center justify-center shrink-0">
+                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
+                <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
+                  <div className="mb-0.5 flex items-center justify-center">
+                    {isHT ? (<span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>) : isLiveStatus ? (<span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">{displayMinute}</span>) : isFinishedStatus ? (<span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>) : (<span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>)}
                   </div>
-               </div>
-            )}
-
-            {userRole === 'master' && (
-            <div className="mb-8 p-5 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)]">
-                <h2 className="text-center font-black text-blue-400 text-sm tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
-                    <span className="text-xl">🏆</span> {selectedLiveWeek}. HAFTA CANLI LİDERLİK RADARI
-                </h2>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center">
-                        <span className="text-emerald-400 text-[10px] font-bold tracking-widest mb-1">🔥 HAFTANIN PUAN LİDERİ</span>
-                        <span className="text-white font-black text-sm uppercase text-center leading-snug">
-                            {weeklyStats.pLeadersArray.length > 0 
-                                ? weeklyStats.pLeadersArray.map(uid => mergedPlayers[uid]).join(' & ') 
-                                : 'MÜSTAKİL LİDER YOK'}
-                        </span>
-                        <span className="text-emerald-500 font-bold text-xs mt-1 bg-emerald-950/50 px-2 rounded">
-                            {weeklyStats.pLeadersArray.length > 0 ? `${weeklyStats.maxPts} PUAN TOPLADI` : '---'}
-                        </span>
-                    </div>
-
-                    <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl p-3 w-full max-w-xs shadow-inner flex flex-col items-center">
-                        <span className="text-amber-400 text-[10px] font-bold tracking-widest mb-1">⚽ HAFTANIN SKOR KRALI</span>
-                        <span className="text-white font-black text-sm uppercase text-center leading-snug">
-                            {weeklyStats.sLeadersArray.length > 0 
-                                ? weeklyStats.sLeadersArray.map(uid => mergedPlayers[uid]).join(' & ') 
-                                : 'MÜSTAKİL KRAL YOK'}
-                        </span>
-                        <span className="text-amber-500 font-bold text-xs mt-1 bg-amber-950/50 px-2 rounded">
-                            {weeklyStats.sLeadersArray.length > 0 ? `${weeklyStats.maxScores} MAÇ BİLDİ` : '---'}
-                        </span>
-                    </div>
+                  <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' : (isLiveStatus || isHT) ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'}`}>
+                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>{(!isLiveStatus && !isFinishedStatus && !isHT) ? 'v' : `${homeScore}-${awayScore}`}</span>
+                  </div>
                 </div>
-                <p className="text-center text-slate-500 text-[10px] mt-4 italic">
-                    Not: Bu radar sizin girdiğiniz skorlara göre anlık güncellenir.
-                </p>
+                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
+              </div>
+              <div className="flex-1 flex items-center justify-start overflow-hidden pl-1.5 sm:pl-3">
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-left">{awayTeamUpper}</span>
+              </div>
+              <div className="absolute right-1 sm:right-2 opacity-30 text-[8px] text-white group-hover:opacity-100 transition-opacity">▼</div>
             </div>
-            )}
+          )}
 
-            {/* 🔥 KOMUTANIN DEV TOPLU İŞLEM BUTONU 🔥 */}
-            {userRole === 'master' && (
-              <div className="w-full flex justify-center mb-8">
-                  <button 
-                      onClick={handleBulkSilentLive}
-                      className="bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1 w-full max-w-3xl"
-                  >
-                      <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BUGÜNÜN BÜTÜN MAÇLARINI TOPLU OLARAK CANLIYA AL</span>
-                      <span className="text-[10px] sm:text-xs text-amber-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Sessiz Mod: Puanlar gizlenir, spoiler engellenir, API saatinde otomatik çeker.</span>
-                  </button>
-              </div>
-            )}
+          {isExpanded && (
+            <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
+              <button onClick={() => toggleMatchExpansion(uniqueId)} className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors" title="Küçült">✕</button>
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="w-full text-center pt-3 pb-1">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{match.weekLabel}</span>
+                </div>
+                <div className="w-full text-center px-2 mt-2 relative z-30">
+                  <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
+                </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
-              <div className="text-center sm:text-left">
-                <h1 className="text-xl sm:text-2xl font-bold text-amber-400 tracking-tight flex items-center justify-center sm:justify-start gap-2">
-                  🔴 KÖK KOMUTA MERKEZİ / CANLI RADAR
-                </h1>
-                <p className="text-slate-400 text-xs mt-1 flex items-center justify-center sm:justify-start gap-2">
-                  Veritabanındaki maçların skorunu gir ve puanları dağıt.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3">
-                 <button 
-                   onClick={handleLogout} 
-                   className="px-4 py-2 bg-rose-950 hover:bg-rose-900 text-rose-400 text-xs font-bold rounded-xl shadow-md border border-rose-900/50 flex items-center gap-2 transition-all"
-                 >
-                   🔒 KİLİTLE ÇIK
-                 </button>
-
-                 <button 
-                    onClick={handleSoundToggle}
-                    className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md ${
-                        isSoundEnabled ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500' : 'bg-slate-800/50 text-slate-500 border border-slate-700 hover:bg-slate-800'
-                    }`}
-                 >
-                    {isSoundEnabled ? '🔊 GOL SESİ AÇIK' : '🔇 GOL SESİ KAPALI'}
-                 </button>
-
-                 <div className="flex items-center gap-2 ml-0 sm:ml-2">
-                    {userRole === 'master' && (
-                       <button 
-                          onClick={() => setShowOnlyToday(!showOnlyToday)}
-                          className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md ${
-                              showOnlyToday ? 'bg-indigo-900/80 text-indigo-300 border border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.3)]' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-800'
-                          }`}
-                       >
-                          {showOnlyToday ? '📅 SADECE BUGÜN (BİTENLER GİZLİ)' : '📋 TÜM LİSTE'}
-                       </button>
-                    )}
-
-                    <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                       <span className="text-slate-400 font-bold text-xs tracking-wider">AKTİF HAFTA:</span>
-                       <select 
-                         value={selectedLiveWeek}
-                         onChange={(e) => setSelectedLiveWeek(Number(e.target.value))}
-                         className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
-                       >
-                          {[...Array(92)].map((_, i) => <option key={`lw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
-                       </select>
+                <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                      <img src={theme.homeLogo} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
                     </div>
-                 </div>
-              </div>
-            </div>
+                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{homeTeamUpper}</span>
+                  </div>
 
-            {displayedMatches.length === 0 ? (
-                 <div className="w-full py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl shadow-inner">
-                    <span className="text-5xl mb-4 block opacity-50">{userRole && userRole.startsWith('skorcum') ? '🛡️' : '📡'}</span>
-                    <h2 className={`text-xl font-bold mb-2 tracking-widest uppercase ${userRole && userRole.startsWith('skorcum') ? 'text-amber-500' : 'text-slate-400'}`}>
-                       {userRole && userRole.startsWith('skorcum') 
-                          ? `EKRANDA İŞLEM YAPILACAK (BEKLEYEN VEYA GELECEK) MAÇ YOK` 
-                          : (liveMatchesDB.length > 0 ? "FİLTREYE UYGUN MAÇ BULUNMUYOR" : `${selectedLiveWeek}. HAFTA BÜLTENİ BULUNAMADI`)}
-                    </h2>
-                 </div>
-            ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {displayedMatches.map((match) => {
-                const isWinnersOpen = !!openWinnersMap[match.match_index];
-                const isTffMatch = isTffMatchCheck(match.category);
+                  <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30 relative">
+                    {theme.leagueLogo && (
+                      <div className="w-10 h-10 sm:w-14 sm:h-14 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform duration-500 z-40">
+                        <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                    {(!isLiveStatus && !isFinishedStatus && !isHT) && (
+                      <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                        <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                      </div>
+                    )}
+                    {isHT && (<div className="flex flex-col items-center justify-center mb-1.5 z-40 relative"><span className="text-amber-400 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span></div>)}
+                    {isLiveStatus && (
+                      <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
+                        <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">{displayMinute}</span>
+                        <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">🔴 CANLI</span>
+                      </div>
+                    )}
+                    {isFinishedStatus && (<div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md"><span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span></div>)}
+                    <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{homeScore}</span>
+                      <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{awayScore}</span>
+                    </div>
+                    {(!isLiveStatus && !isFinishedStatus && !isHT) && countdownText && (
+                      <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1"><span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">{countdownText}</span></div>
+                    )}
+                  </div>
 
-                const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase() || "";
-                const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase() || "";
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                      <img src={theme.awayLogo} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{awayTeamUpper}</span>
+                  </div>
+                </div>
 
-                const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
-
-                const homeScore = adminScores[match.match_index]?.home || "-";
-                const awayScore = adminScores[match.match_index]?.away || "-";
-
-                let currentWinners: string[] = [];
-                let winnersCount = 0;
-                let displayPoints = 0;
-
-                if (homeScore !== "-" && awayScore !== "-") {
-                  const targetScore = `${homeScore}-${awayScore}`;
-                  let predictionsSource = predictionsDB;
-
-                  currentWinners = Object.keys(predictionsSource)
-                    .filter(uid => {
-                        return predictionsSource[uid] && predictionsSource[uid][match.match_index - 1] === targetScore;
-                    })
-                    .map(uid => mergedPlayers[uid] || "Bilinmeyen")
-                    .sort((a, b) => a.localeCompare(b, 'tr'));
-
-                  winnersCount = currentWinners.length;
-
-                  if(winnersCount === 1) displayPoints = 12;
-                  else if(winnersCount === 2) displayPoints = 6;
-                  else if(winnersCount === 3) displayPoints = 5;
-                  else if(winnersCount === 4) displayPoints = 4;
-                  else if(winnersCount === 5) displayPoints = 3;
-                  else if(winnersCount === 6) displayPoints = 2;
-                  else if(winnersCount >= 7) displayPoints = 1;
-                  else displayPoints = 0;
-                }
-
-                const isLocked = distributedMatches[match.match_index];
-                const logInfo = liveInfoStateMap[match.match_index];
-
-                return (
-                  <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
-                    <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
-                      {theme.bgImg && (
-                        <>
-                          <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div>
-                          <div className="absolute inset-0 bg-slate-900/40 z-0"></div>
-                        </>
+                {safeEvents.length > 0 && (
+                  <div className="w-full mb-3 flex flex-col gap-2 px-1.5 sm:px-6 relative z-30 animate-fadeIn">
+                    <button onClick={() => toggleEvents(uniqueId)} className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm">
+                      <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2"><span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI</span>
+                      <span className="text-slate-400 text-[10px]">{isEventsOpen ? '▲' : '▼'}</span>
+                    </button>
+                    {isEventsOpen && (
+                      <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-1.5 sm:p-3 border border-slate-800/80 shadow-inner">
+                        <div className="flex-1 flex flex-col gap-1 items-start pr-1 sm:pr-3 border-r border-slate-700/50 overflow-hidden">
+                          {homeEvents.map((e: any, i: number) => {
+                            let icon = ''; let text = '';
+                            if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
+                            return (
+                              <span key={`h-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full">
+                                <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span> 
+                                <span className="font-medium text-slate-200 flex-1 text-left text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                        <div className="flex-1 flex flex-col gap-1 items-end pl-1 sm:pl-3 overflow-hidden">
+                          {awayEvents.map((e: any, i: number) => {
+                            let icon = ''; let text = '';
+                            if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
+                            return (
+                              <span key={`a-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full justify-end">
+                                <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span> 
+                                <span className="font-medium text-slate-200 flex-1 text-right text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative mt-auto`}>
+                  <div className="flex justify-between items-center w-full">
+                    <div className="text-left flex-1">
+                      {(!isLiveStatus && !isFinishedStatus && !isHT) ? (
+                        <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
+                      ) : exactWinners.length === 0 ? (
+                         !isFinishedStatus && possibleWinners.length > 0 ? (<span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>) : (<span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>)
+                      ) : (
+                        <span className="text-[9px] sm:text-[10px] font-medium text-emerald-300"><strong className="text-emerald-400">{exactWinners.length} kişi</strong> tam isabetli</span>
                       )}
-                      <div className="relative z-10 flex flex-col h-full justify-between">
-
-                        <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
-                          <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
-                            {match.week_num}. Hafta - {match.match_index}. MAÇ ({match.match_date} - {match.match_time})
-                          </span>
-                          <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                            🏆 {match.category}
-                          </span>
+                    </div>
+                    <div className="flex-0 text-center px-1">
+                      <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>{isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}</span>
+                    </div>
+                    <div className="text-right flex-1">
+                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT) && (
+                        <button onClick={() => toggleWinners(uniqueId)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">{isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}</button>
+                      )}
+                    </div>
+                  </div>
+                
+                  {isWinnersOpen && (isLiveStatus || isFinishedStatus || isHT) && (
+                    <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
+                      {exactWinners.length > 0 && (
+                        <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
+                          <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
+                              <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-sm border border-emerald-300 tracking-widest text-center">+{displayPoints} PUAN YAZILIYOR</span>
+                          </div>
+                          <div className="block p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                            {exactWinners.map((winner, idx) => {
+                              const uniquePlayerKey = `${uniqueId}-${winner.id}`;
+                              const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
+                              const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
+                              const dfoData = globalLiveRanks.DFO.find(x => x.id === winner.id);
+                              const masterData = globalLiveRanks.MASTER.find(x => x.id === winner.id);
+                              const skorData = globalLiveRanks.SKOR.find(x => x.id === winner.id);
+                              return (
+                                <div key={idx} className="mb-2 bg-slate-950 border border-slate-700/80 rounded-lg shadow-xl relative overflow-hidden transition-all duration-300">
+                                   <button onClick={() => togglePlayerRank(uniquePlayerKey)} className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}>
+                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center">{winner.name} <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span></span>
+                                   </button>
+                                   {isRankOpen && (
+                                     <div className="flex flex-wrap justify-center gap-1.5 w-full pb-3 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">MASTER SIRA {masterData?.rank||'-'} / {masterData?.pts||0} PUAN</span>
+                                         {isTffMatch ? (<span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">TFF SIRA {tffData?.rank||'-'} / {tffData?.pts||0} PUAN</span>) : (<span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-900/30 text-blue-400 border-blue-700/50 tracking-wider whitespace-nowrap">DFO SIRA {dfoData?.rank||'-'} / {dfoData?.pts||0} PUAN</span>)}
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">SKOR SIRA {skorData?.rank||'-'} / {skorData?.pts||0} İSABET</span>
+                                     </div>
+                                   )}
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
+                      )}
 
-                        <div className="flex items-center justify-between px-0 sm:px-4">
-                          <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                              <img src={theme.homeLogo} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                      {!isFinishedStatus && possibleWinners.length > 0 && (
+                        <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
+                          <button onClick={() => togglePossible(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
+                            <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)</span>
+                            <span className="text-blue-400 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
+                          </button>
+                          {isPossibleOpen && (
+                            <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-blue-900/50">
+                              {possibleWinners.map((winner, idx) => (
+                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center">
+                                  <span>{winner.name}</span><span className="text-cyan-400 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                </span>
+                              ))}
                             </div>
-                            <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{homeTeamUpper}</span>
-                          </div>
-
-                          <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
-                            <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                              <select disabled={isLocked} value={homeScore} onChange={e => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
-                                {timeOptionsArr.map((_, i) => <option key={`h-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
-                              </select>
-                              <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
-                              <select disabled={isLocked} value={awayScore} onChange={e => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
-                                {timeOptionsArr.map((_, i) => <option key={`a-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
-                              <img src={theme.awayLogo} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
-                            </div>
-                            <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{awayTeamUpper}</span>
-                          </div>
-                        </div>
-
-                        {logInfo?.updated_by && (
-                           <div className="mt-4 flex justify-center">
-                              <div className="bg-slate-950/80 border border-slate-700/50 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-inner">
-                                 <span className="text-[10px] sm:text-xs drop-shadow-md">📝</span>
-                                 <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">
-                                    Son İşlem: <strong className="text-amber-400 uppercase tracking-widest">{logInfo.updated_by}</strong> tarafından <span className="text-slate-300 font-bold">{logInfo.updated_at}</span>.
-                                 </span>
-                              </div>
-                           </div>
-                        )}
-
-                        <div className="flex justify-center gap-2 mt-5 min-h-[32px] items-center">
-                          {isLocked ? (
-                            <div className="w-full text-center">
-                              <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner inline-block w-full">
-                                ✅ BU MAÇIN PUANLARI DAĞITILDI
-                              </div>
-                              <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
-                                İPTAL ET & PUANLARI GERİ AL
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <button onClick={() => handleAction('Skoru Güncelle', match.match_index, match, currentWinners, displayPoints)} className="bg-blue-600/80 hover:bg-blue-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-blue-400 transition-all shadow-md">
-                                1. ADIM: CANLIYA YANSIT
-                              </button>
-                              <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">
-                                2. ADIM: MAÇI BİTİR (DAĞIT)
-                              </button>
-                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
-                                SIFIRLA
-                              </button>
-                            </>
                           )}
                         </div>
-                      </div>
-                    </div>
+                      )}
 
-                    <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
-                      <div className="flex items-center justify-between mb-3 w-full">
-                         <div className="flex items-center gap-2">
-                             <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
-                             <span className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest uppercase">
-                                 {winnersCount > 0 ? `${winnersCount} KİŞİ BİLDİ (Kişi Başı: ${displayPoints} Puan)` : "BU SKORU BİLEN YOK"}
-                             </span>
-                         </div>
-                         <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                            {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
-                         </span>
-                         {winnersCount > 0 && (
-                            <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
-                              {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
-                            </button>
-                         )}
-                      </div>
-
-                      {isWinnersOpen && winnersCount > 0 && (
-                         <div className="flex items-center justify-center border-t border-slate-700/50 pt-3 animate-fadeIn">
-                            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
-                               {currentWinners.map((p, i) => (
-                                   <span key={i} className="bg-slate-950/80 border px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm uppercase tracking-wider border-slate-600/50">
-                                      {p}
-                                   </span>
-                               ))}
+                      {eliminatedPlayers.length > 0 && (
+                        <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
+                          <button onClick={() => toggleEliminated(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
+                            <span className="text-red-400 font-bold text-[9px] sm:text-[10px]">❌ ŞANSI KALMAYANLAR ({eliminatedPlayers.length} KİŞİ)</span>
+                            <span className="text-red-400 text-[10px]">{isEliminatedOpen ? '▲' : '▼'}</span>
+                          </button>
+                          {isEliminatedOpen && (
+                            <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-red-900/30">
+                              {eliminatedPlayers.map((winner, idx) => (
+                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-red-950/40 text-slate-400 border-red-900/50 flex gap-1 items-center opacity-70">
+                                  <span className="line-through">{winner.name}</span><span className="text-red-500 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                </span>
+                              ))}
                             </div>
-                         </div>
+                          )}
+                        </div>
                       )}
                     </div>
-
-                  </div>
-                );
-              })}
-            </div>
-            )}
-          </div>
-        )}
-
-        {/* 🚀 YENİ NESİL BÜLTEN ÜRETİM FABRİKASI (MANUEL HEDEFLEME + FİLTRELİ) 🚀 */}
-        {activeTab === 'bulletin' && userRole === 'master' && (
-          <div className="animate-fade-in">
-             <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
-                <h2 className="text-xl font-black text-indigo-400 flex items-center gap-2">
-                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(Manuel Seçim)</span>
-                </h2>
-                <div className="flex items-center gap-3">
-                   <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
-                      {[...Array(92)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
-                   </select>
+                  )}
                 </div>
-             </div>
-
-             <div className="flex flex-col xl:flex-row gap-6">
-                {/* SOL PANEL: API HAVUZU VE FİLTRELER */}
-                <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
-                    <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
-                        <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
-                    </div>
-
-                    {/* 🎯 RADAR FİLTRELERİ 🎯 */}
-                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3 flex flex-col gap-2 shadow-inner">
-                       <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
-                          <span>⚙️</span> API RADAR FİLTRELERİ (Kesin Eşleşme - Tam İsabet)
-                       </div>
-                       
-                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">İlk Gün</label>
-                             <select value={havuzBaslangicTarihi} onChange={e=>setHavuzBaslangicTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
-                                {currentWeekDates.map(d=><option key={`start-${d}`} value={d}>{d}</option>)}
-                             </select>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Son Gün</label>
-                             <select value={havuzBitisTarihi} onChange={e=>setHavuzBitisTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
-                                {currentWeekDates.map(d=><option key={`end-${d}`} value={d}>{d}</option>)}
-                             </select>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saatten İtibaren?</label>
-                             <input type="time" value={havuzBaslangicSaati} onChange={e=>setHavuzBaslangicSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saate Kadar?</label>
-                             <input type="time" value={havuzBitisSaati} onChange={e=>setHavuzBitisSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
-                          </div>
-                       </div>
-
-                       {/* 🏆 KOMUTANIN LİG SEÇİM KALKANI (TAM EŞLEŞME) 🏆 */}
-                       <div className="mt-3 border-t border-slate-800 pt-3">
-                          <label className="text-[10px] font-bold text-emerald-400 uppercase mb-2 block tracking-widest">🏆 HIZLI LİG FİLTRELERİ <span className="text-slate-500 font-normal">(Boş bırakırsanız tüm dünyayı çeker)</span></label>
-                          <div className="flex flex-wrap gap-2">
-                             {POPULER_LIG_SECENEKLERI.map(lig => {
-                                const isActive = seciliLigFiltreleri.includes(lig.id);
-                                return (
-                                   <button
-                                      key={lig.id}
-                                      onClick={() => toggleLigFiltresi(lig.id)}
-                                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider transition-all border ${
-                                         isActive 
-                                         ? 'bg-emerald-900/80 text-emerald-300 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
-                                         : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-500 hover:text-slate-300'
-                                      }`}
-                                   >
-                                      {lig.ad}
-                                   </button>
-                                )
-                             })}
-                          </div>
-                          
-                          <div className="flex flex-col gap-1 mt-3">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Veya Menüde Olmayan Özel Lig Yazın (Örn: Eredivisie, Saudi Pro League)</label>
-                             <input 
-                                type="text" 
-                                value={ozelLigFiltresi} 
-                                onChange={e => setOzelLigFiltresi(e.target.value)} 
-                                placeholder="Lig veya ülke adını buraya yazarak arat..."
-                                className="w-full sm:w-1/2 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
-                             />
-                          </div>
-                       </div>
-                    </div>
-
-                    <button
-                        onClick={fetchHaftalikHavuz}
-                        disabled={isHavuzLoading}
-                        className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white font-black tracking-widest text-xs px-5 py-3 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all flex items-center gap-2 w-full justify-center mb-3"
-                    >
-                        {isHavuzLoading ? (
-                            <>⏳ UYDU TARANIYOR VE FİLTRELENİYOR...</>
-                        ) : (
-                            <>🛰️ FİLTREYE UYGUN MAÇLARI ÇEK</>
-                        )}
-                    </button>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
-                        {apiHavuz.length === 0 && !isHavuzLoading && (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
-                                <span className="text-6xl mb-4">📡</span>
-                                <span className="text-sm font-bold tracking-widest text-center">HAVUZ BOŞ.<br/>YUKARIDAKİ FİLTRELERİ AYARLAYIP "ÇEK" BUTONUNA BASIN.</span>
-                            </div>
-                        )}
-                        {apiHavuz.map(mac => {
-                            const isSelected = secilenMaclar.some(m => m.fixture_id === mac.fixture_id);
-                            const secimSirasi = secilenMaclar.findIndex(m => m.fixture_id === mac.fixture_id) + 1;
-                            return (
-                                <div
-                                    key={`havuz-${mac.fixture_id}`}
-                                    onClick={() => toggleHavuzMac(mac)}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex justify-between items-center ${
-                                        isSelected
-                                            ? 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                                            : 'bg-slate-950 border-slate-700 hover:border-cyan-500 hover:bg-slate-800'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-md flex items-center justify-center font-black text-sm shadow-inner transition-colors ${isSelected ? 'bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-slate-800 text-slate-400'}`}>
-                                            {isSelected ? secimSirasi : '+'}
-                                        </div>
-                                        <div>
-                                            <div className={`font-black text-sm uppercase ${isSelected ? 'text-emerald-400' : 'text-slate-200'}`}>
-                                                {mac.home_team} - {mac.away_team}
-                                            </div>
-                                            <div className="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5">
-                                                <span className="text-cyan-500">{mac.date}</span> | <span className="text-amber-500">{mac.time}</span> | <span className="text-fuchsia-400">{mac.country} - {mac.league_name}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-
-                {/* SAĞ PANEL: SEÇİLENLER (BÜLTEN) */}
-                <div className="w-full xl:w-[500px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-black text-indigo-400 flex items-center gap-2"><span className="text-lg">📝</span> HEDEF BÜLTEN</h3>
-                        <div className="text-2xl font-black bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
-                            <span className={secilenMaclar.length === 24 ? "text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "text-amber-500"}>
-                                {secilenMaclar.length}
-                            </span>
-                            <span className="text-slate-600"> / 24</span>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 mb-4">
-                        {secilenMaclar.length === 0 && (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
-                                <span className="text-5xl mb-4">🎯</span>
-                                <span className="text-sm font-bold tracking-widest text-center">HENÜZ MAÇ SEÇİLMEDİ.<br/>SOLDAN TIKLAYARAK 24 MAÇLIK LİSTEYİ OLUŞTURUN.</span>
-                            </div>
-                        )}
-                        {secilenMaclar.map((mac, idx) => (
-                            <div key={`secilen-${idx}`} className="bg-slate-950 p-2.5 rounded-lg border border-indigo-900/50 flex flex-col gap-2 relative group hover:border-indigo-500 transition-colors">
-                                <button
-                                    onClick={() => toggleHavuzMac(mac)}
-                                    className="absolute top-2 right-2 text-rose-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity bg-rose-950/50 rounded-full w-6 h-6 flex items-center justify-center font-bold"
-                                    title="Listeden Çıkar"
-                                >
-                                    ✖
-                                </button>
-                                <div className="flex items-center gap-2 pr-8">
-                                    <span className="bg-indigo-950 text-indigo-400 border border-indigo-500/50 font-black text-xs w-6 h-6 flex items-center justify-center rounded">{idx + 1}</span>
-                                    <span className="text-white font-bold text-xs uppercase truncate">{mac.home_team} - {mac.away_team}</span>
-                                </div>
-                                <div className="flex items-center gap-2 pl-8">
-                                    <select
-                                        value={mac.category}
-                                        onChange={(e) => {
-                                            const newSecilen = [...secilenMaclar];
-                                            newSecilen[idx].category = e.target.value;
-                                            setSecilenMaclar(newSecilen);
-                                        }}
-                                        className={`bg-slate-900 border text-[10px] px-2 py-1.5 rounded outline-none font-bold flex-1 ${mac.category ? 'border-emerald-500/50 text-emerald-400' : 'border-rose-500/50 text-rose-400'}`}
-                                    >
-                                        <option value="">-- KATEGORİSİNİ SEÇİN (ZORUNLU) --</option>
-                                        {getDynamicCategories().map(c => <option key={c} value={c}>{c}</option>)}
-                                        <option value={mac.league_name}>{mac.league_name} (UYDU ORİJİNAL)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <button
-                        onClick={bulteniPatlat}
-                        disabled={secilenMaclar.length !== 24 || isPublishing}
-                        className={`w-full py-4 rounded-xl font-black text-lg tracking-widest uppercase transition-all flex justify-center items-center gap-2 ${
-                            secilenMaclar.length === 24 && !isPublishing
-                                ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-[0_0_20px_rgba(225,29,72,0.6)] hover:scale-[1.02] active:scale-95 cursor-pointer'
-                                : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                        }`}
-                    >
-                        {isPublishing ? 'MÜHÜRLENİYOR...' : '🚀 BÜLTENİ PATLAT VE KAYDET'}
-                    </button>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {/* 🚀 TAHMİNLER DURUM PANELİ 🚀 */}
-        {activeTab === 'predictions' && userRole === 'master' && (
-           <div className="animate-fade-in">
-              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
-                 <h2 className="text-xl font-black text-emerald-400">📊 TAHMİNLER (CANLI DURUM)</h2>
-                 <select value={selectedPredictionWeek} onChange={e => setSelectedPredictionWeek(Number(e.target.value))} className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded outline-none border border-emerald-700/50 cursor-pointer">
-                    {[...Array(92)].map((_, i) => <option key={`pw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
-                 </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg">
-                    <h3 className="text-rose-400 font-black mb-3 pb-2 border-b border-rose-900/50 tracking-widest flex items-center justify-between">
-                       <span>EKSİKLER</span>
-                       <span className="bg-rose-950 px-2 py-0.5 rounded text-xs">{missingPlayers.length} KİŞİ</span>
-                    </h3>
-                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                       {missingPlayers.map(id => <div key={id} className="text-[11px] font-bold text-slate-400 py-1.5 border-b border-slate-800/50 uppercase">{mergedPlayers[id]}</div>)}
-                    </div>
-                 </div>
-                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg">
-                    <h3 className="text-emerald-400 font-black mb-3 pb-2 border-b border-emerald-900/50 tracking-widest flex items-center justify-between">
-                       <span>GİRENLER</span>
-                       <span className="bg-emerald-950 px-2 py-0.5 rounded text-xs">{submittedPlayers.length} KİŞİ</span>
-                    </h3>
-                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                       {submittedPlayers.map(id => <div key={id} className="text-[11px] font-bold text-emerald-500/70 py-1.5 border-b border-slate-800/50 uppercase">{mergedPlayers[id]}</div>)}
-                    </div>
-                 </div>
-              </div>
-           </div>
-        )}
-
-        {/* 🚀 YARIŞMACI YÖNETİMİ ODASI 🚀 */}
-        {activeTab === 'players' && userRole === 'master' && (
-          <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-black text-fuchsia-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
-                  <span className="text-3xl">👥</span> YARIŞMACI YÖNETİMİ
-                </h1>
-                <p className="text-slate-400 text-sm mt-1">
-                  Buradan eklediğiniz veya sildiğiniz yarışmacılar listelere anında yansır.
-                </p>
               </div>
             </div>
+          )}
+        </div>
+      );
+  };
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  const sortedWeeks = [...activeWeeks].sort((a, b) => b - a);
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
-                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-black text-fuchsia-400 flex items-center gap-2">
-                       <span className="text-xl">➕</span> YENİ ASLAN PARÇASI EKLE
-                    </h2>
-                 </div>
+  return (
+    <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes siren { 0% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); } 25% { box-shadow: 0 0 80px #1d4ed8, inset 0 0 60px #1d4ed8; border-color: #2563eb; background-color: rgba(29, 78, 216, 0.6); } 50% { box-shadow: 0 0 15px #e11d48, inset 0 0 15px #e11d48; border-color: #f43f5e; background-color: rgba(225, 29, 72, 0.2); } 75% { box-shadow: 0 0 80px #be123c, inset 0 0 60px #be123c; border-color: #e11d48; background-color: rgba(190, 18, 60, 0.6); } 100% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); } }
+        .police-siren { animation: siren 0.4s ease-in-out infinite; z-index: 50; transform: scale(1.02); transition: all 0.2s; }
+      `}} />
 
-                 <form onSubmit={handleAddNewPlayer} className="flex flex-col gap-5">
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">6 HANELİ YARIŞMACI ID</label>
-                       <input 
-                         type="text" 
-                         value={newPlayerId} 
-                         onChange={e => setNewPlayerId(e.target.value)} 
-                         placeholder="Örn: 262888"
-                         maxLength={6}
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">İSİM SOYİSİM</label>
-                       <input 
-                         type="text" 
-                         value={newPlayerName} 
-                         onChange={e => setNewPlayerName(e.target.value)} 
-                         placeholder="Örn: SİNAN ENGİN"
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">GİRİŞ ŞİFRESİ</label>
-                       <input 
-                         type="text" 
-                         value={newPlayerPass} 
-                         onChange={e => setNewPlayerPass(e.target.value)} 
-                         placeholder="Örn: 19030"
-                         className="w-full bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={isPlayerLoading}
-                      className="mt-4 bg-fuchsia-600 hover:bg-fuchsia-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(192,38,211,0.4)] flex justify-center items-center gap-2"
-                    >
-                      {isPlayerLoading ? 'KAYDEDİLİYOR...' : 'SİSTEME KAYDET VE DAHİL ET'}
-                    </button>
-                 </form>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                 <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-black text-rose-500 flex items-center gap-2">
-                       <span className="text-xl">⚖️</span> DİSİPLİN KURULU (TÜM LİSTE)
-                    </h2>
-                    <span className="bg-slate-950 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold border border-slate-800">
-                       {dbPlayersList.length + Object.keys(staticPlayersList).length} Toplam Aktif
-                    </span>
-                 </div>
-
-                 <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                    {dbPlayersList.map(p => (
-                      <div key={`dyn-${p.id}`} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
-                         <div className="flex flex-col">
-                            <span className="font-black text-fuchsia-400 text-sm uppercase tracking-wide flex items-center gap-2">
-                               {p.name} <span className="text-[8px] bg-fuchsia-950/50 border border-fuchsia-500/30 px-1.5 py-0.5 rounded text-fuchsia-300">YENİ</span>
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.username} | ŞİFRE: {p.password}</span>
-                         </div>
-                         <button 
-                           onClick={() => handleBanishPlayer(p.username, p.name)}
-                           className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
-                         >
-                           ❌ İHRAÇ ET
-                         </button>
-                      </div>
-                    ))}
-
-                    {Object.keys(staticPlayersList).map(id => (
-                      <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
-                         <div className="flex flex-col">
-                            <span className="font-black text-slate-300 text-sm uppercase tracking-wide">{staticPlayersList[id]}</span>
-                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {id}</span>
-                         </div>
-                         <button 
-                           onClick={() => handleBanishPlayer(id, staticPlayersList[id])}
-                           className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)] opacity-80 hover:opacity-100"
-                         >
-                           ❌ İHRAÇ ET
-                         </button>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* 🚀 TAKIM LOJİSTİK VE TRANSFER MERKEZİ 🚀 */}
-        {activeTab === 'teams' && userRole === 'master' && (
-          <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-black text-cyan-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
-                  <span className="text-3xl">🛡️</span> LOJİSTİK VE TRANSFER MERKEZİ
-                </h1>
-                <p className="text-slate-400 text-sm mt-1">
-                  Karargaha yepyeni bir lig veya takım ekleyebilir, mevcut takımları ait oldukları lige kaydırabilirsiniz.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                 <div className="absolute top-0 right-0 bg-cyan-600 text-white text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">YENİ KAYIT</div>
-                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-black text-cyan-400 flex items-center gap-2">
-                       <span className="text-xl">➕</span> YENİ TAKIM VE LİG OLUŞTUR
-                    </h2>
-                 </div>
-
-                 <form onSubmit={handleAddLocalTeam} className="flex flex-col gap-5">
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">TAKIMIN TAM ADI</label>
-                       <input 
-                         type="text" 
-                         value={newTeamName} 
-                         onChange={e => setNewTeamName(e.target.value)} 
-                         placeholder="Örn: RIVER PLATE"
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">LİGİ / KATEGORİSİ</label>
-                       <input 
-                         type="text" 
-                         list="leagueOptions"
-                         value={newTeamLeague} 
-                         onChange={e => setNewTeamLeague(e.target.value)} 
-                         placeholder="Örn: ARJANTİN LİGİ"
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-cyan-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
-                       />
-                       <p className="text-[10px] text-slate-500 mt-2 ml-1 leading-relaxed">
-                          Yazdığınız ligin adında <strong className="text-red-400">Türkiye, TFF, PTT, Amatör, 2.Lig</strong> vs. geçiyorsa maçın puanları otomatik <strong className="text-red-400">TFF</strong> kasasına gider. Geçmiyorsa otomatik <strong className="text-blue-400">DFO</strong> kasasına gider!
-                       </p>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      className="mt-2 bg-cyan-600 hover:bg-cyan-500 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)] flex justify-center items-center gap-2"
-                    >
-                      BÜLTENLERE KAYDET
-                    </button>
-                 </form>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                 <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">EDİTLEME</div>
-                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-black text-emerald-400 flex items-center gap-2">
-                       <span className="text-xl">🔄</span> BİRLİK KAYDIRMA (TRANSFER)
-                    </h2>
-                 </div>
-
-                 <form onSubmit={handleMoveTeam} className="flex flex-col gap-5">
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">TAŞINACAK TAKIM (MEVCUT)</label>
-                       <select 
-                         value={editTeamName} 
-                         onChange={e => setEditTeamName(e.target.value)} 
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-emerald-500 font-bold uppercase shadow-inner"
-                       >
-                         <option value="">-- BİR TAKIM SEÇİN --</option>
-                         {getAllTeamsFlatList().map(t => <option key={`move-${t}`} value={t}>{t}</option>)}
-                       </select>
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">GİDECEĞİ YENİ LİG (HEDEF)</label>
-                       <input 
-                         type="text" 
-                         list="leagueOptions"
-                         value={editTargetLeague} 
-                         onChange={e => setEditTargetLeague(e.target.value)} 
-                         placeholder="Örn: HOLLANDA EREDIVISIE"
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-emerald-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
-                       />
-                       <p className="text-[10px] text-slate-500 mt-2 ml-1 leading-relaxed">
-                          Takımı eski liginden siler ve yazdığınız yeni lige kalıcı olarak taşır. Çeşitli Avrupa klasörünü boşaltmak için kullanabilirsiniz.
-                       </p>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex justify-center items-center gap-2"
-                    >
-                      TAKIMI TRANSFER ET (TAŞI)
-                    </button>
-                 </form>
-              </div>
-
-            </div>
-
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-xl">
-               <h2 className="text-lg font-black text-slate-400 mb-4 border-b border-slate-800 pb-4 flex items-center gap-2">
-                  <span className="text-xl">📋</span> KARARGAH LİG VE TAKIM ENVANTERİ
-               </h2>
-               <div className="max-h-[600px] overflow-y-auto custom-scrollbar flex flex-col gap-6 pr-2">
-                  {Object.keys(dynamicLigHavuzu).sort((a,b) => a.localeCompare(b, 'tr')).map(ligAdi => (
-                     <div key={ligAdi} className="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80">
-                        <div className="flex items-center justify-between mb-3 border-b border-slate-800/50 pb-2">
-                           <h3 className="text-sm font-black text-amber-500 tracking-widest uppercase">{ligAdi}</h3>
-                           <span className="bg-amber-950 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded">{dynamicLigHavuzu[ligAdi].length} Takım</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                           {dynamicLigHavuzu[ligAdi].length === 0 ? (
-                              <span className="text-slate-600 text-xs italic">Bu birlikte şu an asker yok.</span>
-                           ) : (
-                              dynamicLigHavuzu[ligAdi].map(takim => (
-                                 <span key={`${ligAdi}-${takim}`} className="bg-slate-900 border border-slate-700 px-2 py-1 rounded text-[10px] font-bold text-slate-300 uppercase shadow-sm">
-                                    {takim}
-                                 </span>
-                              ))
-                           )}
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            <datalist id="leagueOptions">
-               {Object.keys(dynamicLigHavuzu).sort((a,b) => a.localeCompare(b, 'tr')).map(lg => <option key={`dl-${lg}`} value={lg} />)}
-            </datalist>
-
-          </div>
-        )}
-
+      <div className="w-full flex justify-end px-2 sm:px-0">
+          <button onClick={toggleSound} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${soundEnabled ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'}`}>
+              {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
+          </button>
       </div>
+
+      {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
+      {todaysMatchesList.length === 0 ? (
+        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl mt-2">
+          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
+          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
+        </div>
+      ) : (
+        <>
+          {finishedMatches.length > 0 && (
+            <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden mt-2">
+              <button onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)} className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group">
+                <div className="flex-1"></div> 
+                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-500 text-[10px] sm:text-xs">▼</span></div></div>
+              </button>
+              {isFinishedAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
+                  {finishedMatches.map(match => renderMatchCard(match, true))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeMatches.length > 0 && (
+            <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden mt-2">
+              <button onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)} className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group">
+                <div className="flex-1 flex items-center gap-2"><span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span></div> 
+                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">GÜNÜN CANLI MAÇLARI ({activeMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-400 text-[10px] sm:text-xs">▼</span></div></div>
+              </button>
+              {isLiveAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+                  {activeMatches.map(match => renderMatchCard(match, false))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
     </div>
   );
 }
