@@ -1,790 +1,484 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from '@/utils/supabase';
-import {
-  TEST_ACCOUNTS,
-  normalizeTurkish,
-  isTffMatchCheck,
-  getEliteTheme,
-  cleanTeamName,
-  getMatchTimeMs,
-  getWeekLabel
+import { 
+  staticPlayersList, 
+  customWeekNames, 
+  getWeekLabel, 
+  getUniqueMatchId,
+  isTffMatchCheck
 } from '@/utils/themeEngine';
 
-export default function TahminlerPortal() {
-  const [view, setView] = useState<'lobby' | 'declaration' | 'entry' | 'tahminmatik'>('lobby');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState(''); 
-  const [loginError, setLoginError] = useState('');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z'); 
-
-  const [bulletinMap, setBulletinMap] = useState<Record<number, any[]>>({}); 
-  const [predictions, setPredictions] = useState<Record<number, { home: string, away: string }>>({});
-  const [oldPredictions, setOldPredictions] = useState<Record<number, { home: string, away: string }>>({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string, away: string }>>({});
-
-  const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
-  const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
+export default function PredictionPortal() {
+  const [activeWeek, setActiveWeek] = useState<number>(5); 
+  const [bulletin, setBulletin] = useState<any[]>([]);
+  const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({});
   
-  const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
+  const [systemPlayers, setSystemPlayers] = useState<Record<string, string>>(staticPlayersList);
+  const [skorcularList, setSkorcularList] = useState<string[]>([]);
   
-  // 🔴 YENİ: Gerçek maç skorlarını hafızada tutacak radar devresi
-  const [liveMatchStatus, setLiveMatchStatus] = useState<Record<number, { status: string, score: string }>>({});
+  const [userIdInput, setUserIdInput] = useState<string>('');
+  const [userPassInput, setUserPassInput] = useState<string>('');
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: string, name: string } | null>(null);
+  
+  const [predictions, setPredictions] = useState<string[]>(Array(24).fill('-'));
+  const [tempScores, setTempScores] = useState<string[]>(Array(24).fill('-')); 
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getDisplayWeek = (week: number) => {
-      if (week === 16) return "1, 2 VE 3 EKİM ÖZEL BÜLTENİ";
-      if (week === 17) return "4, 5 VE 6 EKİM ÖZEL BÜLTENİ";
-      return getWeekLabel(week);
-  };
+  const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
+  const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(0); 
 
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-      const interval = setInterval(() => setNow(Date.now()), 1000);
-      return () => clearInterval(interval);
-  }, []);
+  // 🔥 YENİ: TAHMİN GİRMEYENLER LİSTESİ İÇİN STATE 🔥
+  const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
+
+  const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
   useEffect(() => {
-      const fetchDbPlayers = async () => {
-         const { data } = await supabase.from('players').select('*');
-         if (data) {
-            const newAccounts = { ...TEST_ACCOUNTS };
-            data.forEach(p => {
-                const pid = String(p.username || p.id);
-                if (TEST_ACCOUNTS[pid]) {
-                    newAccounts[pid] = { 
-                        pass: TEST_ACCOUNTS[pid].pass, 
-                        name: p.name || p.full_name || TEST_ACCOUNTS[pid].name 
-                    };
-                } else {
-                    newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
-                }
-            });
-            setMergedAccounts(newAccounts);
+     const fetchSysData = async () => {
+         const { data: dbPlayers } = await supabase.from('players').select('*');
+         if (dbPlayers) {
+             const merged = { ...staticPlayersList };
+             dbPlayers.forEach((p: any) => { merged[String(p.username)] = p.name; });
+             setSystemPlayers(merged);
          }
-      };
-      fetchDbPlayers();
-  }, []);
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
-      if (bultenData) {
-         const newMap: Record<number, any[]> = {};
-         let maxWeek = 0;
-         bultenData.forEach(row => {
-            if(!newMap[row.week_num]) newMap[row.week_num] = [];
-            newMap[row.week_num].push({
-               id: row.match_index,
-               weekLabel: `${getDisplayWeek(row.week_num)} - ${row.match_index}. MAÇ`,
-               category: row.category,
-               date: row.match_date,
-               time: row.match_time,
-               homeTeam: row.home_team,
-               awayTeam: row.away_team
-            });
-            if (row.week_num > maxWeek) maxWeek = row.week_num;
-         });
-         
-         Object.keys(newMap).forEach(week => { newMap[Number(week)].sort((a,b) => a.id - b.id); });
-         setBulletinMap(newMap);
-         
-         if (maxWeek > 0) {
-             setActiveBulletinWeek(maxWeek);
+         const { data: skorcuAuthData } = await supabase.from('skorcu_auth').select('username');
+         if (skorcuAuthData) {
+             setSkorcularList(skorcuAuthData.map(r => r.username));
          }
-      }
-    };
-    fetchInitialData();
-  }, []);
 
-  // 🔴 YENİ RADAR: Seçili haftanın gerçek canlı/bitmiş skorlarını çeker
-  useEffect(() => {
-    const fetchLiveMatchStatuses = async () => {
-      if (!selectedTahminWeek) return;
-      const { data } = await supabase
-        .from('live_matches')
-        .select('id, status, home_score, away_score')
-        .gte('id', selectedTahminWeek * 100)
-        .lt('id', (selectedTahminWeek + 1) * 100);
-      
-      if (data) {
-        const statusMap: Record<number, { status: string, score: string }> = {};
-        data.forEach(m => {
-          const matchIndex = m.id % 100;
-          statusMap[matchIndex] = {
-            status: m.status,
-            score: `${m.home_score}-${m.away_score}`.replace(/\s+/g, '')
-          };
-        });
-        setLiveMatchStatus(statusMap);
-      }
-    };
-    
-    if (view === 'declaration' || view === 'tahminmatik') {
-      fetchLiveMatchStatuses();
-    }
-  }, [selectedTahminWeek, view]);
-
-  const gateStatus = useMemo(() => {
-      if (!activeBulletinWeek || !bulletinMap[activeBulletinWeek]) return 'CLOSED';
-      const matches = bulletinMap[activeBulletinWeek];
-      const hasOpenMatch = matches.some(m => now < getMatchTimeMs(m.date, m.time) - 60000);
-      return hasOpenMatch ? 'OPEN' : 'CLOSED';
-  }, [activeBulletinWeek, bulletinMap, now]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoginError('');
-    
-    if (username.trim().toLowerCase() !== 'mankoman') {
-        if (gateStatus === 'CLOSED') {
-            setLoginError(`${getDisplayWeek(activeBulletinWeek)} bültenindeki tüm maçlar başladığı veya henüz bülten olmadığı için tahminler kapanmıştır.`);
-            return;
-        }
-    }
-
-    const userKey = username.trim(); const passKey = password.trim(); 
-    const account = mergedAccounts[userKey];
-
-    if (account && passKey === account.pass) { 
-      setDisplayName(account.name); 
-      await fetchBulletinAndPredictions(userKey); 
-      setView('entry');
-    } else { 
-        setLoginError('ID veya Şifre Hatalı! Lütfen bilgilerinizi kontrol ediniz.'); 
-    }
-  };
-
-  const fetchBulletinAndPredictions = async (currentUsername: string) => {
-    const bData = bulletinMap[activeBulletinWeek] || [];
-    const { data: pData } = await supabase.from('player_predictions').select('*').eq('week_num', activeBulletinWeek).eq('user_id', currentUsername);
-    if (bData && bData.length > 0) {
-      const initialPreds: Record<number, { home: string, away: string }> = {};
-      bData.forEach((m:any) => {
-        const existingPred = pData?.find(p => p.match_index === m.id);
-        if (existingPred && existingPred.predicted_score && existingPred.predicted_score !== 'PAS' && existingPred.predicted_score !== '---') {
-          const [h, a] = existingPred.predicted_score.split('-');
-          initialPreds[m.id] = { home: h || '-', away: a || '-' };
-        } else { initialPreds[m.id] = { home: '-', away: '-' }; }
-      });
-      setPredictions(initialPreds); setOldPredictions(JSON.parse(JSON.stringify(initialPreds))); 
-    }
-  };
-
-  const handleScoreChange = (matchIndex: number, team: 'home' | 'away', score: string) => { setPredictions(prev => ({ ...prev, [matchIndex]: { ...prev[matchIndex], [team]: score } })); };
-  const handleTahminmatikChange = (matchId: number, type: 'home' | 'away', val: string) => { setTahminmatikScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: '-', away: '-' }), [type]: val } })); };
-  
-  const handleTahminMatikRastgele = () => {
-    const newPreds = { ...predictions };
-    Object.keys(newPreds).forEach(matchIndex => {
-      const matchObj = bulletinMap[activeBulletinWeek].find((m:any) => m.id === Number(matchIndex));
-      const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
-      
-      if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
-        newPreds[Number(matchIndex)] = { home: Math.floor(Math.random() * 4).toString(), away: Math.floor(Math.random() * 4).toString() };
-      }
-    });
-    setPredictions(newPreds);
-  };
-
-  const savePredictions = async () => {
-    setIsSaving(true);
-    try {
-      const payload = Object.keys(predictions).map(matchIndex => ({
-        user_id: username.trim(), week_num: activeBulletinWeek, match_index: Number(matchIndex),
-        predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
-      }));
-      const { error } = await supabase.from('player_predictions').upsert(payload, { onConflict: 'user_id,week_num,match_index' });
-      if(error) throw error;
-      try {
-        await fetch('/api/log-tahmin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kullanici_id: username.trim(), kullanici_adi: displayName, hafta: activeBulletinWeek, eski_tahminler: oldPredictions, yeni_tahminler: predictions }) });
-      } catch (logErr) {}
-      setShowSuccessModal(true);
-    } catch (e) { alert('❌ Kayıt sırasında bir hata oluştu!'); }
-    setIsSaving(false);
-  };
-
-  const scoreOptionsArr = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
-  const toggleSortOrder = () => { if (sortOrder === 'A-Z') setSortOrder('Z-A'); else if (sortOrder === 'Z-A') setSortOrder('ZAMAN'); else setSortOrder('A-Z'); };
-
-  const [livePredictionsData, setLivePredictionsData] = useState<Record<number, Record<string, string[]>>>({});
-
-  useEffect(() => {
-     const fetchLivePreds = async () => {
-        if (!selectedTahminWeek) return;
-
-        let allData: any[] = []; let from = 0; let step = 999; let keepFetching = true;
-        while(keepFetching) {
-            const { data } = await supabase.from('player_predictions').select('*').eq('week_num', selectedTahminWeek).range(from, from + step);
-            if (data && data.length > 0) { allData = [...allData, ...data]; if (data.length <= step) keepFetching = false; else from += step + 1; } else { keepFetching = false; }
-        }
-        if (allData.length > 0) {
-            const newData: Record<number, Record<string, string[]>> = {};
-            allData.forEach(row => {
-                const wk = row.week_num; const uid = String(row.user_id);
-                if (uid === 'mankoman') return; 
-
-                if(!newData[wk]) newData[wk] = {};
-                if(!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
-                newData[wk][uid][row.match_index - 1] = row.predicted_score;
-            });
-            setLivePredictionsData(newData);
-        } else { setLivePredictionsData({}); }
+         const { data: bData } = await supabase.from('matches_bulletin').select('week_num');
+         if (bData) {
+             const wSet = new Set<number>(bData.map(b => b.week_num));
+             const wArray = Array.from(wSet).filter(w => w >= 5).sort((a,b) => a-b);
+             setAvailableWeeks(wArray);
+             if (wArray.length > 0) {
+                 const latest = Math.max(...wArray);
+                 setActiveWeek(latest);
+                 setSelectedEntryWeek(latest);
+             }
+         }
      };
-     fetchLivePreds();
-  }, [selectedTahminWeek, view]);
-
-  const [lobbyMissing, setLobbyMissing] = useState(0);
-  const [lobbySubmitted, setLobbySubmitted] = useState(0);
+     fetchSysData();
+  }, []);
 
   useEffect(() => {
-    if (activeBulletinWeek === 0) return;
-    const fetchLobbyStats = async () => {
-      let allData: any[] = []; let from = 0; let step = 999; let keepFetching = true;
-      while(keepFetching) {
-         const { data } = await supabase.from('player_predictions').select('user_id').eq('week_num', activeBulletinWeek).range(from, from + step);
-         if (data && data.length > 0) { allData = [...allData, ...data]; if (data.length <= step) keepFetching = false; else from += step + 1; } else { keepFetching = false; }
-      }
-      
-      const uniqueUsers = new Set(allData.map(r => String(r.user_id)).filter(id => id !== 'mankoman'));
-      const allPlayerCount = Object.keys(mergedAccounts).filter(id => id !== 'mankoman').length;
-      const submitted = uniqueUsers.size;
-      
-      setLobbySubmitted(submitted);
-      setLobbyMissing(allPlayerCount - submitted);
-    };
-    fetchLobbyStats();
-  }, [activeBulletinWeek, view, mergedAccounts]);
+     if (activeWeek === 0) return;
+     const loadWeekData = async () => {
+         const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', activeWeek).order('match_index', { ascending: true });
+         const currentBulten = bultenData || [];
+         setBulletin(currentBulten);
 
-  const finalPlayersList = useMemo(() => {
-    let allIds = Object.keys(mergedAccounts).filter(id => id !== 'mankoman');
-    const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-    
-    if (searchTerm) {
-      const normalizedSearch = normalizeTurkish(searchTerm);
-      allIds = allIds.filter(id => { const pName = normalizeTurkish(mergedAccounts[id]?.name || ""); return pName.includes(normalizedSearch); });
+         const idsToFetch = currentBulten.map(m => getUniqueMatchId(activeWeek, m.match_index));
+         if (idsToFetch.length > 0) {
+             const { data: liveData } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
+             const infoMap: Record<number, any> = {};
+             if (liveData) {
+                 liveData.forEach(l => {
+                     const matchIndex = l.id % 100;
+                     infoMap[matchIndex] = l;
+                 });
+             }
+             setLiveInfoStateMap(infoMap);
+         }
+     };
+     loadWeekData();
+
+     const channel = supabase.channel('public:live_matches')
+         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_matches' }, payload => {
+             loadWeekData();
+         })
+         .subscribe();
+
+     return () => { supabase.removeChannel(channel); };
+  }, [activeWeek]);
+
+  // 🔥 YENİ: SEÇİLİ HAFTAYA KİM TAHMİN GİRMEMİŞ ONU BULAN SİSTEM 🔥
+  useEffect(() => {
+      if (selectedEntryWeek === 0 || Object.keys(systemPlayers).length === 0) return;
+
+      const fetchMissingPlayers = async () => {
+          const { data: preds } = await supabase
+              .from('player_predictions')
+              .select('user_id')
+              .eq('week_num', selectedEntryWeek);
+
+          const submittedUserIds = new Set((preds || []).map(p => String(p.user_id)));
+          
+          const allUserIds = Object.keys(systemPlayers).filter(id => id !== 'mankoman'); // Admini çıkar
+          
+          const missingIds = allUserIds.filter(id => !submittedUserIds.has(id));
+          
+          const missingNames = missingIds.map(id => systemPlayers[id]).sort((a, b) => a.localeCompare(b, 'tr'));
+          setMissingPlayers(missingNames);
+      };
+
+      fetchMissingPlayers();
+  }, [selectedEntryWeek, systemPlayers]);
+
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userIdInput.trim() || !userPassInput.trim()) {
+        alert("Lütfen ID ve Şifrenizi boş bırakmayın."); return;
     }
-    const submittedIds = allIds.filter(id => selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS' && s !== '-'));
-    
-    if (sortOrder === 'A-Z') { submittedIds.sort((a, b) => mergedAccounts[a].name.localeCompare(mergedAccounts[b].name, 'tr')); } 
-    else if (sortOrder === 'Z-A') { submittedIds.sort((a, b) => mergedAccounts[b].name.localeCompare(mergedAccounts[a].name, 'tr')); }
-    return submittedIds; 
-  }, [searchTerm, sortOrder, selectedTahminWeek, livePredictionsData, mergedAccounts]);
+    if (selectedEntryWeek === 0) {
+        alert("Lütfen giriş yapacağınız haftayı seçin!"); return;
+    }
 
-  const ghostColumns = Array.from({ length: 10 });
+    if (userIdInput === 'mankoman' || skorcularList.includes(userIdInput)) {
+        alert("❌ DİKKAT! Yönetim yetkisine sahip hesaplarla (Admin/Skorcu) tahmine girilemez!");
+        return;
+    }
 
-  const downloadJPEG = async () => {
-    setIsDownloading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500)); 
-      const htmlToImage = await import('html-to-image');
-      const element = document.getElementById('jpeg-export-container');
-      if (!element) throw new Error("Stüdyo elementi bulunamadı");
-      const dataUrl = await htmlToImage.toJpeg(element, { quality: 0.95, backgroundColor: '#050b14', pixelRatio: 1.5 });
-      const link = document.createElement("a"); link.download = `ETM_Lig_${selectedTahminWeek}_Hafta_Tahminler.jpg`; link.href = dataUrl;
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    } catch (error: any) { alert("HATA: Fotoğraf motoru bir engele takıldı. Detay: " + error.message); }
-    setIsDownloading(false);
+    let isValid = false;
+    let uName = "";
+
+    const { data: dbPlayers } = await supabase.from('players').select('*').eq('username', userIdInput).single();
+    if (dbPlayers) {
+        if (dbPlayers.password === userPassInput) { isValid = true; uName = dbPlayers.name; }
+    } else {
+        alert("Kullanıcı ID Karargahta bulunamadı! Genelkurmayla iletişime geçin.");
+        return;
+    }
+
+    if (isValid) {
+        setSelectedUser({ id: userIdInput, name: uName });
+        setActiveWeek(selectedEntryWeek); 
+        
+        const { data: userPreds } = await supabase.from('player_predictions').select('*').eq('week_num', selectedEntryWeek).eq('user_id', userIdInput);
+        
+        const initialPreds = Array(24).fill('-');
+        if (userPreds && userPreds.length > 0) {
+            userPreds.forEach(p => { initialPreds[p.match_index - 1] = p.predicted_score; });
+        }
+        setPredictions(initialPreds);
+        setTempScores([...initialPreds]); 
+        
+        setIsModalOpen(true);
+        setUserIdInput(''); setUserPassInput('');
+    } else {
+        alert("❌ Girdiğiniz ŞİFRE hatalıdır. Lütfen tekrar deneyin!");
+    }
   };
 
-  const activePlayersForJPEG = useMemo(() => {
-    const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-    return Object.keys(mergedAccounts).filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS' && s !== '-')).sort((a, b) => mergedAccounts[a].name.localeCompare(mergedAccounts[b].name, 'tr'));
-  }, [selectedTahminWeek, livePredictionsData, mergedAccounts]);
+  const handleScoreChange = (matchIndexZeroBased: number, value: string) => {
+      const newScores = [...tempScores];
+      newScores[matchIndexZeroBased] = value;
+      setTempScores(newScores);
+  };
 
-  const availableWeeks = Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => a - b);
+  const handleSubmitPredictions = async () => {
+     if (!selectedUser) return;
+     
+     let changedCount = 0;
+     const updates: any[] = [];
+     
+     for (let i = 0; i < 24; i++) {
+        if (tempScores[i] !== predictions[i]) {
+            updates.push({
+                user_id: selectedUser.id,
+                week_num: activeWeek,
+                match_index: i + 1,
+                predicted_score: tempScores[i],
+                updated_at: new Date().toISOString()
+            });
+            changedCount++;
+        }
+     }
 
-  useEffect(() => {
-      if (availableWeeks.length > 0 && (!selectedTahminWeek || !availableWeeks.includes(selectedTahminWeek))) {
-          setSelectedTahminWeek(Math.max(...availableWeeks));
-      }
-  }, [availableWeeks, selectedTahminWeek]);
+     if (changedCount === 0) {
+         alert("⚠️ Hiçbir değişiklik yapmadınız!");
+         setIsModalOpen(false);
+         return;
+     }
+
+     const confirmMsg = `DİKKAT: Toplam ${changedCount} adet maçta skor güncellediniz.\nBu seçimleriniz ${activeWeek}. Hafta için Karargaha kaydedilecektir.\nOnaylıyor musunuz?`;
+     if (!window.confirm(confirmMsg)) return;
+
+     setIsSubmitting(true);
+     try {
+         const { error } = await supabase.from('player_predictions').upsert(updates, { onConflict: 'user_id,week_num,match_index' });
+         if (error) throw error;
+         
+         alert(`✅ TAHMİNLERİNİZ BAŞARIYLA KAYDEDİLDİ!\n(${changedCount} skor Karargaha işlendi)`);
+         setIsModalOpen(false);
+         setSelectedUser(null);
+     } catch (e: any) {
+         alert("❌ HATA OLUŞTU: " + e.message);
+     } finally {
+         setIsSubmitting(false);
+     }
+  };
 
   return (
-    <div className="min-h-screen bg-[#050b14] text-slate-200 p-4 font-sans pb-24 transition-opacity duration-500">
-      
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)] relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div><div className="text-6xl mb-6 mt-2 drop-shadow-lg">🏆</div>
-            <h3 className="text-3xl font-black text-emerald-400 mb-3 tracking-widest">TEBRİKLER!</h3>
-            <p className="text-slate-300 font-medium mb-8 text-sm leading-relaxed">Tahminleriniz sisteme kaydedilmiştir. (İsterseniz daha sonra kilitlenmemiş maçlarınızı güncelleyebilirsiniz.)</p>
-            <button onClick={() => { setShowSuccessModal(false); setView('lobby'); setUsername(''); setPassword(''); }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] uppercase">TAMAM</button>
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden flex flex-col items-center">
+      {/* ARKA PLAN EFEKTLERİ */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-900/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-      <div className="max-w-[1400px] mx-auto pt-10">
-        
-        {view === 'lobby' && (
-          <div className="animate-fade-in-up">
-            <div className="text-center mb-8">
-               <h1 className="text-4xl md:text-5xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">ETM LİGİ MERKEZ PORTALI</h1>
-               <p className="text-amber-400 mt-5 text-lg font-bold tracking-wide">Lütfen tahminlerinizi buradan yapın.</p>
-               <div className="text-amber-500 text-3xl animate-bounce mt-2">⬇</div>
-               
-               {activeBulletinWeek > 0 && username.trim().toLowerCase() === 'mankoman' && (
-                   <div className="mt-4 flex items-center justify-center gap-4 animate-fade-in">
-                       <span className="bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
-                           GİREN: {lobbySubmitted}
-                       </span>
-                       <span className="bg-rose-950/50 border border-rose-500/30 text-rose-400 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-inner">
-                           EKSİK: {lobbyMissing}
-                       </span>
-                   </div>
-               )}
+      <div className="w-full max-w-7xl mx-auto px-4 py-12 relative z-10 flex flex-col items-center">
+         
+         <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-600 tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+               ETM LİGİ MERKEZ PORTALI
+            </h1>
+            <p className="text-amber-500 font-bold tracking-widest text-sm md:text-base">
+               Lütfen tahminlerinizi buradan yapın.
+            </p>
+            <div className="mt-6 animate-bounce">
+                <span className="bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-[0_0_10px_rgba(37,99,235,0.6)]">⬇️</span>
             </div>
+         </div>
+
+         {/* 🔥 KOMUTANIN İSTEDİĞİ 2x2 DÖRTLÜ KÜP YAPISI 🔥 */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl items-stretch">
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-              
-              <div className="bg-slate-900/80 border-2 border-amber-500/30 rounded-3xl p-8 flex flex-col relative shadow-[0_0_30px_rgba(245,158,11,0.1)] order-1">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-4 w-full text-center">
-                   <span className={`font-black tracking-widest text-[11px] sm:text-xs px-4 py-1.5 rounded-full border shadow-md whitespace-nowrap ${gateStatus === 'OPEN' ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>
-                      {gateStatus === 'OPEN' ? 'TAHMİNLER AÇIK (PARÇA KAYIT)' : 'TAHMİNLER KAPANDI (TÜM MAÇLAR BAŞLADI)'}
-                   </span>
-                </div>
-                
-                <div className="mt-6 mb-4">
-                   <label className="block text-center text-xs font-bold text-slate-400 tracking-widest mb-2">GİRİŞ YAPILACAK HAFTA</label>
-                   {availableWeeks.length > 0 ? (
-                     <select
-                       value={activeBulletinWeek}
-                       onChange={e => setActiveBulletinWeek(Number(e.target.value))}
-                       className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-sm sm:text-base px-2 py-3 rounded-xl text-center shadow-inner cursor-pointer outline-none focus:border-amber-500"
+            {/* 1. KÜP (ÜST SOL): GİRİŞ KUTUSU */}
+            <div className="bg-[#0b1120] border border-amber-500/50 rounded-3xl p-8 relative flex flex-col justify-center items-center shadow-[0_0_30px_rgba(245,158,11,0.15)] hover:border-amber-400 hover:shadow-[0_0_40px_rgba(245,158,11,0.3)] transition-all h-full">
+               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-950 text-amber-400 px-6 py-1 rounded-full text-xs font-black tracking-widest border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.5)] whitespace-nowrap">
+                  TAHMİNLER AÇIK (PARÇA KAYIT)
+               </div>
+               
+               <form onSubmit={handleAuth} className="w-full max-w-[280px] flex flex-col gap-5 mt-4">
+                  <div className="flex flex-col items-center gap-2">
+                     <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Giriş Yapılacak Hafta</span>
+                     <select 
+                       value={selectedEntryWeek} 
+                       onChange={e => setSelectedEntryWeek(Number(e.target.value))}
+                       className="w-full bg-slate-950 border border-slate-700 text-amber-400 text-sm font-black px-4 py-3 rounded-xl outline-none focus:border-amber-500 text-center tracking-widest cursor-pointer shadow-inner"
                      >
                        {availableWeeks.map(w => (
-                         <option key={w} value={w}>{getDisplayWeek(w)}</option>
+                           <option key={`opt-${w}`} value={w}>{customWeekNames[w] || `${w}. HAFTA`}</option>
                        ))}
                      </select>
-                   ) : (
-                     <div className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-black text-sm sm:text-base px-2 py-3 rounded-xl text-center shadow-inner cursor-not-allowed">
-                       BÜLTEN BEKLENİYOR
-                     </div>
-                   )}
-                </div>
-                
-                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-5"></div>
-                
-                <form onSubmit={handleLogin} className="flex flex-col gap-3">
-                  <input type="text" placeholder="Yarışmacı ID" value={username} onChange={e => setUsername(e.target.value)} className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none text-center font-black tracking-widest text-sm" />
-                  <input type="password" placeholder="Şifre" value={password} onChange={e => setPassword(e.target.value)} className="bg-slate-950 border border-slate-700 px-4 py-2.5 rounded-xl text-white outline-none text-center tracking-widest text-sm" />
-                  {loginError && <p className="text-[10px] text-red-400 font-bold text-center bg-red-950/50 py-2 px-2 rounded-lg border border-red-500/30 leading-relaxed">{loginError}</p>}
-                  
-                  <button type="submit" className={`${gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed'} font-black py-3.5 rounded-xl transition-all mt-1 tracking-widest flex items-center justify-center gap-2 text-sm`}>
-                     {gateStatus === 'OPEN' || username.trim().toLowerCase() === 'mankoman' ? 'GİRİŞ YAP VE DOLDUR' : 'KİLİTLİ'}
-                  </button>
-                </form>
-              </div>
-
-              <div onClick={() => setView('declaration')} className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-900/20 hover:border-indigo-500 transition-all group shadow-[0_0_30px_rgba(79,70,229,0.1)] order-2">
-                <div className="w-20 h-20 bg-indigo-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><span className="text-4xl">📜</span></div>
-                <h2 className="text-xl font-black text-indigo-400 tracking-widest mb-3">RESMİ DEKLARASYON</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Maçı başlayan yarışmacıların skor tercihleri açıkça sergilenir. Başlamamış maçlar gizlidir.</p>
-                <div className="mt-8 px-6 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-colors">Arşive Giriş Yap</div>
-              </div>
-
-              <div onClick={() => setView('tahminmatik')} className="bg-slate-900/50 border-2 border-emerald-500/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-emerald-900/20 hover:border-emerald-500 transition-all group shadow-[0_0_30px_rgba(16,185,129,0.1)] order-3">
-                <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_currentColor]"><span className="text-4xl drop-shadow-md">⚡</span></div>
-                <h2 className="text-xl font-black text-emerald-400 tracking-widest mb-3">TAHMİNMATİK</h2>
-                <p className="text-slate-400 text-xs leading-relaxed">Maç başladığı an kilit kalkar, skoru kimin tahmin ettiğini anında görürsünüz.</p>
-                <div className="mt-8 px-6 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 rounded-full font-bold text-xs uppercase tracking-widest group-hover:bg-emerald-600 group-hover:text-white transition-colors">Tahminmatik'i Aç</div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* ===================== TAHMİNMATİK ===================== */}
-        {view === 'tahminmatik' && (
-          <div className="animate-fade-in-up w-full">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)] relative z-50">
-              <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors"><span>⬅</span> Lobiye Dön</button>
-              <div className="text-center"><h2 className="text-2xl md:text-3xl font-black text-emerald-500 tracking-widest drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] uppercase flex items-center justify-center gap-3"><span className="text-3xl md:text-4xl">⚡</span> TAHMİNMATİK</h2></div>
-              <div>
-                  {availableWeeks.length > 0 ? (
-                      <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 sm:px-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all shadow text-xs sm:text-sm max-w-[150px] sm:max-w-none">
-                          {availableWeeks.map(week => ( <option key={`tahminmatik-${week}`} value={week}>{getDisplayWeek(week)}</option> ))}
-                      </select>
-                  ) : (
-                      <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Açık Hafta Yok</div>
-                  )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {bulletinMap[selectedTahminWeek] ? bulletinMap[selectedTahminWeek].map((match: any) => {
-                const hName = cleanTeamName(match.homeTeam || match.home_team);
-                const aName = cleanTeamName(match.awayTeam || match.away_team);
-                const theme = getEliteTheme(match.category, hName, aName);
-                
-                const tScore = tahminmatikScores[match.id] || { home: '-', away: '-' };
-                const isComplete = tScore.home !== '-' && tScore.away !== '-';
-                const targetScore = `${tScore.home}-${tScore.away}`;
-                  
-                const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-                const predictors = isComplete ? Object.keys(selectedWeekData).filter(uid => selectedWeekData[uid][match.id - 1] === targetScore && mergedAccounts[uid]).map(uid => mergedAccounts[uid]?.name || "Bilinmeyen").sort((a,b) => a.localeCompare(b, 'tr')) : [];
-
-                const matchTimeMs = getMatchTimeMs(match.date, match.time);
-                const isRevealed = (now >= matchTimeMs - 60000);
-
-                return (
-                  <div key={`tm-${match.id}`} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
-                    <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
-                      {theme.bgImg && ( <><div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div><div className="absolute inset-0 bg-slate-900/40 z-0"></div></> )}
-                      <div className="relative z-10 flex flex-col h-full justify-between">
-                        <div className="flex flex-col items-center justify-center mb-2 sm:mb-4 gap-1.5 sm:gap-2">
-                           <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest">{match.weekLabel}</span>
-                           <span className={`text-[10px] sm:text-[11px] font-black uppercase px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>🏆 {match.category}</span>
-                        </div>
-                        <div className="flex items-center justify-between px-0 sm:px-4 mt-2">
-                          <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
-                            <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{hName}</span>
-                          </div>
-                          
-                          <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
-                            {theme.leagueLogo && (
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
-                                <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
-                              </div>
-                            )}
-
-                            {!isRevealed ? (
-                               <div className="flex flex-col items-center justify-center py-4 w-full text-center gap-1 bg-slate-900/80 rounded-xl border border-slate-700 shadow-inner backdrop-blur-md">
-                                   <span className="text-2xl sm:text-3xl opacity-50">🔒</span>
-                                   <span className="text-slate-400 font-bold text-[8px] sm:text-[9px] tracking-widest uppercase px-2">
-                                       Tahminler Gizli
-                                   </span>
-                                   <span className="text-amber-500 text-[8px] font-black tracking-widest mt-1">
-                                       AÇILIŞ: {match.time}
-                                   </span>
-                               </div>
-                            ) : (
-                               <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                                 <select value={tScore.home} onChange={e => handleTahminmatikChange(match.id, 'home', e.target.value)} className="bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg sm:text-2xl px-1 sm:px-2 py-1 rounded-lg outline-none text-center w-10 sm:w-12 appearance-none cursor-pointer" style={{textAlignLast: 'center'}}>{scoreOptionsArr.map(o => <option key={o} value={o}>{o}</option>)}</select><span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span><select value={tScore.away} onChange={e => handleTahminmatikChange(match.id, 'away', e.target.value)} className="bg-slate-950 border border-slate-700 text-amber-400 font-black text-lg sm:text-2xl px-1 sm:px-2 py-1 rounded-lg outline-none text-center w-10 sm:w-12 appearance-none cursor-pointer" style={{textAlignLast: 'center'}}>{scoreOptionsArr.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                               </div>
-                            )}
-                          </div>
-
-                          <div className="flex flex-col items-center justify-center flex-1 gap-1.5 sm:gap-3">
-                            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]" /></div>
-                            <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{aName}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
-                       <div className="flex items-center gap-2 mb-3">
-                          <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
-                          <span className={`font-black text-[10px] sm:text-xs tracking-widest ${isRevealed && predictors.length > 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse' : 'text-amber-500'}`}>
-                             SKORU BİLENLER [{isRevealed ? predictors.length : '?'} KİŞİ]
-                          </span>
-                       </div>
-                       
-                       <div className="flex items-center justify-center border-t border-slate-700/50 pt-3">
-                           {!isRevealed ? (
-                               <span className="text-slate-500 text-[10px] sm:text-xs italic tracking-wide font-bold">Mühür kırılmadığı için liste kapalıdır...</span>
-                           ) : !isComplete ? ( 
-                               <span className="text-slate-500 text-[10px] sm:text-xs italic tracking-wide">Lütfen yukarıdan skoru seçin...</span> 
-                           ) : predictors.length === 0 ? ( 
-                               <span className="text-slate-400 text-[10px] sm:text-xs font-medium tracking-wide">Bu skoru tahmin eden yarışmacı bulunamadı.</span> 
-                           ) : ( 
-                               <div className="flex flex-wrap justify-center gap-2 sm:gap-3"> 
-                                  {predictors.map((p, i) => ( 
-                                     <span key={i} className="bg-emerald-950/80 border-2 border-emerald-400/80 px-3 py-1.5 rounded-md text-[10px] sm:text-[11px] font-black text-emerald-300 uppercase tracking-widest shadow-[0_0_15px_rgba(52,211,153,0.6)] animate-pulse drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]">
-                                        {p}
-                                     </span> 
-                                  ))} 
-                               </div> 
-                           )}
-                       </div>
-                    </div>
                   </div>
-                );
-              }) : ( <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl"><span className="text-5xl mb-4 block opacity-50">⏳</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">{availableWeeks.length === 0 ? "ŞU AN TAHMİNMATİK İÇİN AÇIK HAFTA YOKTUR" : `${getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}</h2></div> )}
-            </div>
-          </div>
-        )}
-
-        {/* ===================== RESMİ DEKLARASYON ===================== */}
-        {view === 'declaration' && (
-          <div className="animate-fade-in-up w-full">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative z-50">
-              <button onClick={() => setView('lobby')} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 transition-colors"><span>⬅</span> Lobiye Dön</button>
-              <div className="text-center"><h2 className="text-3xl font-black text-amber-500 tracking-widest drop-shadow-[0_0_10px_rgba(245,158,11,0.4)] uppercase">RESMİ DEKLARASYON</h2></div>
-              <div className="flex flex-wrap md:flex-nowrap gap-3 items-center w-full md:w-auto relative">
-                <button onClick={downloadJPEG} disabled={isDownloading || !bulletinMap[selectedTahminWeek]} className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black px-4 py-2 rounded-lg flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] disabled:opacity-50"><span className="text-lg">📸</span> {isDownloading ? 'HAZIRLANIYOR...' : 'İNDİR'}</button>
-                <div className="relative flex-1 md:min-w-[200px]">
-                  <input type="text" placeholder="Yarışmacı ara..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} className="w-full bg-slate-950 border border-slate-700 px-4 py-2 rounded-lg text-white text-sm outline-none focus:border-amber-500" />
-                  {isSearchFocused && ( <div className="absolute top-full left-0 w-full bg-slate-900 border border-slate-700 mt-1 rounded-lg shadow-2xl z-[100] max-h-48 overflow-y-auto custom-scrollbar"> {finalPlayersList.map(id => ( <div key={`drop-${id}`} className="px-4 py-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 border-b border-slate-800/50" onClick={() => { setSearchTerm(mergedAccounts[id].name); setIsSearchFocused(false); }}>{mergedAccounts[id].name}</div> ))} </div> )}
-                </div>
-                
-                {availableWeeks.length > 0 ? (
-                    <select value={selectedTahminWeek} onChange={(e) => setSelectedTahminWeek(Number(e.target.value))} className="bg-amber-500 text-slate-950 font-black px-2 sm:px-4 py-2 rounded-lg outline-none cursor-pointer shadow-md text-xs sm:text-sm max-w-[150px] sm:max-w-none">
-                        {availableWeeks.map(week => ( <option key={`dec-${week}`} value={week}>{getDisplayWeek(week)}</option> ))}
-                    </select>
-                ) : (
-                    <div className="bg-slate-800 text-slate-400 font-bold px-4 py-2 rounded-lg text-sm border border-slate-700">Deklare Yok</div>
-                )}
-              </div>
-            </div>
-
-            {bulletinMap[selectedTahminWeek] ? (
-              <div className="bg-[#050b14] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative z-10">
-                <div className="mb-4 text-center bg-indigo-950/30 border border-indigo-500/30 p-2 rounded-lg text-indigo-300 text-xs font-bold tracking-widest shadow-inner">
-                   BAŞLAMAMIŞ MAÇLARIN TAHMİNLERİ "🔒" İLE GİZLENMİŞTİR. (MAÇA 1 DK KALA AÇILIR)
-                </div>
-
-                <div className="overflow-auto custom-scrollbar max-h-[70vh] border border-slate-800/50 rounded-lg">
-                  <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
-                    <thead className="sticky top-0 z-40 bg-slate-950 shadow-md">
-                      <tr>
-                        <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left"><span className="text-amber-500 font-black tracking-widest uppercase">{getDisplayWeek(selectedTahminWeek)}</span></th>
-                        {bulletinMap[selectedTahminWeek].map((m: any) => ( <th key={m.id} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px]">{m.id}</th> ))}
-                        {ghostColumns.map((_, i) => ( <th key={`g1-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
-                      </tr>
-                      <tr>
-                        <th className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-left"><span className="text-white font-black tracking-widest text-sm uppercase">OYUNCU İSMİ</span></th>
-                        {bulletinMap[selectedTahminWeek].map((m: any) => {
-                          const hName = cleanTeamName(m.homeTeam || m.home_team);
-                          const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          const theme = getEliteTheme(m.category, hName, aName);
-                          return ( <th key={`home-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-md" title={hName} /></div></th> )})}
-                        {ghostColumns.map((_, i) => ( <th key={`g2-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
-                      </tr>
-                      <tr>
-                        <th onClick={toggleSortOrder} className="sticky left-0 z-50 bg-slate-950 border-b border-r border-slate-800 p-3 text-right cursor-pointer hover:bg-slate-900 transition-colors group"><div className="flex justify-end items-center gap-2"><span className="text-slate-500 text-[8px] uppercase group-hover:text-amber-300">Sırala: {sortOrder}</span><span className="text-amber-500 font-bold text-[9px] uppercase border border-amber-500/50 px-2 py-1 rounded bg-amber-950/30">SIRA / LİSTE</span></div></th>
-                        {bulletinMap[selectedTahminWeek].map((m: any) => {
-                          const hName = cleanTeamName(m.homeTeam || m.home_team);
-                          const aName = cleanTeamName(m.awayTeam || m.away_team);
-                          const theme = getEliteTheme(m.category, hName, aName);
-                          return ( <th key={`away-${m.id}`} className="p-1 border-b border-r border-slate-800 bg-slate-900/50"><div className="w-6 h-6 mx-auto flex items-center justify-center"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-md" title={aName} /></div></th> )})}
-                        {ghostColumns.map((_, i) => ( <th key={`g3-${i}`} className="min-w-[60px] opacity-0 border-none"></th> ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {finalPlayersList.map(id => {
-                        const playerName = mergedAccounts[id]?.name || "Bilinmeyen Oyuncu";
-                        const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
-                        const preds = selectedWeekData[id] || Array(24).fill('PAS');
-                        
-                        return ( 
-                          <tr key={id} className="hover:bg-slate-800/50 transition-colors group">
-                              <td className="sticky left-0 z-30 bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold tracking-wide group-hover:bg-slate-900"><span className="text-slate-300">{playerName}</span></td>
-                              {preds.map((score: string, idx: number) => {
-                                  const matchIndex = idx + 1;
-                                  const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === matchIndex);
-                                  
-                                  let isRevealed = true;
-                                  if (matchObj) {
-                                      const matchTimeMs = getMatchTimeMs(matchObj.date, matchObj.time);
-                                      if (now < matchTimeMs - 60000) isRevealed = false;
-                                  }
-                                  
-                                  // 🔴 NEON RADAR KONTROLÜ
-                                  const liveInfo = liveMatchStatus[matchIndex];
-                                  const isMatchFinished = liveInfo && (liveInfo.status === 'FINISHED' || liveInfo.status === 'WAITING_APPROVAL' || liveInfo.status === 'FT');
-                                  const isExactMatch = isMatchFinished && score === liveInfo.score && score !== 'PAS' && score !== '-';
-                                  
-                                  const displayScore = isRevealed ? score : '🔒';
-                                  
-                                  let cellStyle = "border-b border-r border-slate-800 p-2 font-black ";
-                                  if (!isRevealed) {
-                                      cellStyle += "bg-[#0a1120] text-slate-600 text-lg";
-                                  } else if (isExactMatch) {
-                                      // Tam isabet yapanların neon ışığı burada yanar!
-                                      cellStyle += "bg-emerald-950/20 text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,1)] animate-pulse"; 
-                                  } else {
-                                      cellStyle += "bg-[#0a1120] text-amber-500";
-                                  }
-
-                                  return (
-                                    <td key={idx} className={cellStyle}>{displayScore}</td>
-                                  )
-                              })}
-                              {ghostColumns.map((_, i) => ( <td key={`gd-${i}`} className="min-w-[60px] opacity-0 border-none"></td> ))}
-                          </tr> 
-                        );
-                      })}
-                      {finalPlayersList.length === 0 && ( <tr><td colSpan={35} className="py-8 border-b border-slate-800 text-slate-500 italic bg-[#0a1120]">Sistemde henüz kayıtlı tahmin bulunmuyor.</td></tr> )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : ( 
-               <div className="col-span-1 md:col-span-2 py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
-                  <span className="text-5xl mb-4 block opacity-50">⏳</span>
-                  <h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest uppercase">
-                     {availableWeeks.length === 0 ? "ŞU AN RESMİ DEKLARASYON İÇİN AÇIK HAFTA YOKTUR" : `${getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ GİZLİ VEYA BULUNAMADI`}
-                  </h2>
-               </div> 
-            )}
-
-            <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, opacity: 0, pointerEvents: 'none' }}>
-              <div id="jpeg-export-container" className="bg-[#050b14] p-8 inline-block w-max">
-                <div className="text-center mb-6 border-b border-slate-800 pb-4"><h2 className="text-3xl font-black text-amber-500 tracking-widest uppercase">ETM LİGİ - {getDisplayWeek(selectedTahminWeek)} TAHMİNLERİ</h2></div>
-                {bulletinMap[selectedTahminWeek] && (
-                  <table className="w-full text-xs text-center border-separate border-spacing-0 whitespace-nowrap">
-                    <thead className="bg-slate-950">
-                      <tr><th className="bg-slate-950 border-b border-r border-slate-800 p-3 min-w-[200px] text-left"><span className="text-amber-500 font-black tracking-widest text-lg">YARIŞMACI / MAÇ NO</span></th>{bulletinMap[selectedTahminWeek].map((m: any) => ( <th key={`exp-m1-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900 text-slate-400 font-bold min-w-[50px] text-lg">{m.id}</th> ))}</tr>
-                      <tr><th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left"><span className="text-white font-black tracking-widest text-sm uppercase">EV SAHİBİ TAKIM</span></th>{bulletinMap[selectedTahminWeek].map((m: any) => ( <th key={`exp-home-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">{cleanTeamName(m.homeTeam || m.home_team)}</th> ))}</tr>
-                      <tr><th className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left"><span className="text-white font-black tracking-widest text-sm uppercase">DEPLASMAN TAKIM</span></th>{bulletinMap[selectedTahminWeek].map((m: any) => ( <th key={`exp-away-${m.id}`} className="p-2 border-b border-r border-slate-800 bg-slate-900/50 text-slate-300 font-bold uppercase text-[9px] whitespace-nowrap">{cleanTeamName(m.awayTeam || m.away_team)}</th> ))}</tr>
-                    </thead>
-                    <tbody>
-                      {activePlayersForJPEG.map(id => {
-                        const playerName = mergedAccounts[id]?.name || "Bilinmeyen Oyuncu"; const preds = (livePredictionsData[selectedTahminWeek] || {})[id]; if(!preds) return null;
-                        return ( 
-                            <tr key={`exp-${id}`}>
-                                <td className="bg-slate-950 border-b border-r border-slate-800 p-3 text-left font-bold text-slate-300 tracking-wide">{playerName}</td>
-                                {preds.map((score: string, idx: number) => {
-                                    const matchIndex = idx + 1;
-                                    const matchObj = bulletinMap[selectedTahminWeek].find((m:any) => m.id === matchIndex);
-                                    let isRevealed = true;
-                                    if (matchObj) {
-                                        const matchTimeMs = getMatchTimeMs(matchObj.date, matchObj.time);
-                                        if (now < matchTimeMs - 60000) isRevealed = false;
-                                    }
-                                    
-                                    // 🔴 FOTOĞRAF ÇIKTISI İÇİN DE NEON IŞIKLARI EKLENDİ
-                                    const liveInfo = liveMatchStatus[matchIndex];
-                                    const isMatchFinished = liveInfo && (liveInfo.status === 'FINISHED' || liveInfo.status === 'WAITING_APPROVAL' || liveInfo.status === 'FT');
-                                    const isExactMatch = isMatchFinished && score === liveInfo.score && score !== 'PAS' && score !== '-';
-
-                                    let expStyle = "border-b border-r border-slate-800 p-2 font-black text-base ";
-                                    if (!isRevealed) {
-                                        expStyle += "bg-[#0a1120] text-slate-600 text-lg";
-                                    } else if (isExactMatch) {
-                                        // Fotoğrafta pulse (yanıp sönme) olmaz ama parlama ve renk durur!
-                                        expStyle += "bg-emerald-950/40 text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,1)]"; 
-                                    } else {
-                                        expStyle += "bg-[#0a1120] text-amber-500";
-                                    }
-
-                                    const displayScore = isRevealed ? score : '🔒';
-                                    return ( <td key={`exp-sc-${idx}`} className={expStyle}>{displayScore}</td> )
-                                })}
-                            </tr> 
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* ===================== ELİT TAHMİN GİRİŞ PORTALI ===================== */}
-        {view === 'entry' && (
-          <div className="w-full animate-fade-in-up">
-            <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-6 rounded-2xl border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-              <div><h2 className="text-2xl font-black text-amber-500 tracking-widest uppercase">{getDisplayWeek(activeBulletinWeek)} GÖREV KAĞIDI</h2><p className="text-slate-400 text-sm mt-1">Yarışmacı: <span className="text-white font-bold">{displayName}</span></p></div>
-              <button onClick={() => { setView('lobby'); setUsername(''); setPassword(''); }} className="text-red-400 hover:text-red-300 font-bold bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">Oturumu Kapat</button>
-            </div>
-
-            <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
-               <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
-               <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
-                  Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
-                  <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
-               </p>
-            </div>
-
-            {(!bulletinMap[activeBulletinWeek] || bulletinMap[activeBulletinWeek].length === 0) ? (
-               <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{getDisplayWeek(activeBulletinWeek)} BÜLTENİ BEKLENİYOR</h2></div>
-            ) : (
-              <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-                {bulletinMap[activeBulletinWeek].map((match) => {
-                  const hName = cleanTeamName(match.homeTeam || match.home_team);
-                  const aName = cleanTeamName(match.awayTeam || match.away_team);
-                  const theme = getEliteTheme(match.category, hName, aName);
-                  const hScore = predictions[match.id]?.home || '-'; const aScore = predictions[match.id]?.away || '-';
                   
-                  const isTff = isTffMatchCheck(match.category);
-                  const matchTimeMs = getMatchTimeMs(match.date, match.time);
-                  const isLocked = (now >= matchTimeMs - 60000);
+                  <input 
+                     type="text" 
+                     value={userIdInput} 
+                     onChange={e => setUserIdInput(e.target.value)} 
+                     className="w-full bg-slate-100 border-2 border-transparent text-slate-900 px-4 py-3.5 rounded-xl outline-none focus:border-blue-500 text-center font-black tracking-widest text-sm shadow-inner placeholder:text-slate-400 placeholder:font-bold lowercase" 
+                     placeholder="ID GİRİNİZ" 
+                  />
+                  <input 
+                     type="password" 
+                     value={userPassInput} 
+                     onChange={e => setUserPassInput(e.target.value)} 
+                     className="w-full bg-slate-100 border-2 border-transparent text-slate-900 px-4 py-3.5 rounded-xl outline-none focus:border-blue-500 text-center font-black tracking-[0.4em] text-lg shadow-inner placeholder:text-slate-400 placeholder:font-bold placeholder:tracking-normal" 
+                     placeholder="ŞİFRE" 
+                  />
+                  <button 
+                     type="submit" 
+                     className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] mt-2 uppercase text-sm"
+                  >
+                     GİRİŞ YAP VE DOLDUR
+                  </button>
+               </form>
+            </div>
 
-                  return (
-                    <div key={match.id} className={`w-full mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg} ${isLocked ? 'opacity-85 grayscale-[15%]' : ''}`}>
-                      {theme.bgImg && ( <><div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}></div><div className="absolute inset-0 bg-slate-900/70 z-0"></div></> )}
-                      
-                      {isLocked && (
-                          <div className="absolute top-0 right-0 bg-red-600 text-white text-[8px] sm:text-[9px] font-black px-3 py-1 rounded-bl-lg z-50 shadow-md">
-                              🔒 SÜRE DOLDU
-                          </div>
-                      )}
-
-                      <div className="relative z-10 flex flex-col h-full py-2">
-                        
-                        <div className="w-full flex justify-between items-center px-4 pt-3 pb-1">
-                          <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-[0_0_10px_currentColor] bg-slate-950/80 ${theme.badgeText} ${theme.badgeBorder}`}>
-                            {match.weekLabel}
-                          </span>
-                          <span className={`text-[9px] sm:text-[10px] font-black tracking-widest px-3 py-1 rounded-full border shadow-[0_0_10px_currentColor] bg-slate-950/80 ${theme.badgeText} ${theme.badgeBorder}`}>
-                            {match.date} - {match.time}
-                          </span>
-                        </div>
-                        
-                        <div className="w-full flex flex-col items-center gap-1.5 px-2 mt-1 mb-2">
-                          <span className={`inline-block px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                            🏆 {match.category}
-                          </span>
-                          <span className={`inline-block px-2.5 py-0.5 rounded-md border shadow-[0_0_10px_currentColor] text-[8px] font-black uppercase tracking-widest ${isTff ? 'bg-red-950/80 text-red-400 border-red-500/50' : 'bg-blue-950/80 text-cyan-400 border-blue-500/50'}`}>
-                            {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between px-4 pb-4 mt-2">
-                          <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={theme.homeLogo} alt={hName} className="w-full h-full object-contain drop-shadow-lg" /></div>
-                            <span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{hName}</span>
-                          </div>
-                          <div className="flex flex-col items-center justify-center gap-2 mx-2 w-40 z-30 relative">
-                            
-                            {theme.leagueLogo && (
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
-                                <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+            {/* 2. KÜP (ÜST SAĞ): 🚨 NEON TAHMİN GİRMEYENLER PANOSU 🚨 */}
+            <div className="bg-[#1a0505] border-2 border-red-600 rounded-3xl p-6 relative flex flex-col justify-start items-center shadow-[0_0_30px_rgba(220,38,38,0.3)] animate-pulse-border h-[400px]">
+               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-950 text-red-500 px-8 py-2 rounded-full text-[11px] font-black tracking-[0.2em] border border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.8)] whitespace-nowrap animate-neon-flash">
+                  🚨 {selectedEntryWeek}. HAFTA TAHMİN GİRMEYENLER 🚨
+               </div>
+               
+               <div className="mt-6 flex flex-col items-center w-full h-full">
+                  <div className="bg-red-950/50 border border-red-900/50 px-4 py-2 rounded-lg mb-4 text-center w-full">
+                      <span className="text-red-400 text-xs font-bold tracking-widest uppercase">
+                          HEDEF TAHTASINDA <span className="text-white text-sm bg-red-600 px-2 py-0.5 rounded">{missingPlayers.length}</span> ASLAN VAR
+                      </span>
+                  </div>
+                  
+                  <div className="w-full flex-1 overflow-y-auto custom-scrollbar-red pr-2 pb-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {missingPlayers.length === 0 ? (
+                              <div className="col-span-1 sm:col-span-2 text-center text-emerald-500 font-black mt-10 tracking-widest text-sm bg-emerald-950/30 p-4 rounded-xl border border-emerald-900">
+                                  🏆 HARİKA! HERKES TAHMİNİNİ GİRMİŞ!
                               </div>
-                            )}
-
-                            <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
-                              <select disabled={isLocked} value={hScore} onChange={e => handleScoreChange(match.id, 'home', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none text-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                                {["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"].map(opt => (<option key={`h-${opt}`} value={opt}>{opt}</option>))}
-                              </select>
-                              <span className="text-xl font-bold text-slate-500">:</span>
-                              <select disabled={isLocked} value={aScore} onChange={e => handleScoreChange(match.id, 'away', e.target.value)} className="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg font-black text-xl text-amber-400 outline-none text-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                                {["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"].map(opt => (<option key={`a-${opt}`} value={opt}>{opt}</option>))}
-                              </select>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                            <div className="w-16 h-16 flex items-center justify-center relative z-20"><img src={theme.awayLogo} alt={aName} className="w-full h-full object-contain drop-shadow-lg" /></div>
-                            <span className="text-white font-extrabold text-[10px] text-center uppercase drop-shadow-md">{aName}</span>
-                          </div>
-                        </div>
+                          ) : (
+                              missingPlayers.map((name, idx) => (
+                                  <div key={idx} className="bg-red-950/30 border border-red-800/50 px-3 py-2 rounded text-[10px] font-black text-red-200 tracking-wider truncate text-center shadow-inner hover:bg-red-900/50 transition-colors">
+                                      {name}
+                                  </div>
+                              ))
+                          )}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+               </div>
+            </div>
 
-            {bulletinMap[activeBulletinWeek] && bulletinMap[activeBulletinWeek].length > 0 && (
-              <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
-                <button onClick={handleTahminMatikRastgele} className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center gap-2">🎲 RASTGELE DOLDUR</button>
-                <button onClick={savePredictions} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.5)]">{isSaving ? 'ŞİFRELENİYOR...' : '🚀 TAHMİNLERİMİ MÜHÜRLE'}</button>
-              </div>
-            )}
-          </div>
-        )}
+            {/* 3. KÜP (ALT SOL): RESMİ DEKLARASYON */}
+            <div className="bg-[#0b1120] border border-blue-900 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(30,58,138,0.2)] hover:border-blue-700 transition-all h-[300px]">
+               <div className="w-20 h-20 bg-blue-950 rounded-full flex items-center justify-center mb-6 shadow-inner border border-blue-800">
+                  <span className="text-4xl drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">📜</span>
+               </div>
+               <h2 className="text-blue-400 font-black tracking-widest text-lg mb-3">RESMİ DEKLARASYON</h2>
+               <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-6">
+                  Maçı başlayan yarışmacıların skor tercihleri açıkça sergilenir. Başlamamış maçlar gizlidir.
+               </p>
+               <a href="/tahmin/deklarasyon" className="bg-blue-950 hover:bg-blue-900 text-blue-400 font-bold tracking-widest py-3 px-8 rounded-xl border border-blue-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                  ARŞİVE GİRİŞ YAP
+               </a>
+            </div>
+
+            {/* 4. KÜP (ALT SAĞ): TAHMİNMATİK */}
+            <div className="bg-[#05100a] border border-emerald-900 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(6,78,59,0.2)] hover:border-emerald-700 transition-all h-[300px]">
+               <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-800">
+                  <span className="text-4xl drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">⚡</span>
+               </div>
+               <h2 className="text-emerald-500 font-black tracking-widest text-lg mb-3">TAHMİNMATİK</h2>
+               <p className="text-slate-500 text-[11px] leading-relaxed max-w-[280px] mb-6">
+                  Maç başladığı an kilit kalkar, skoru kimin tahmin ettiğini anında görürsünüz.
+               </p>
+               <a href="/tahmin/canli" className="bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-500 font-bold tracking-widest py-3 px-8 rounded-xl border border-emerald-800/50 transition-all text-xs uppercase shadow-md hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                  TAHMİNMATİK'İ AÇ
+               </a>
+            </div>
+
+         </div>
+
       </div>
+
+      {/* 🟢 TAHMİN GİRİŞ MODAL PENCERESİ 🟢 */}
+      {isModalOpen && selectedUser && (
+         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-slate-950/95 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
+             <div className="bg-slate-900 border border-amber-500/30 rounded-2xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative mt-4 sm:mt-0 pb-6 mb-20 sm:mb-0">
+                 
+                 <div className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 rounded-t-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                     <div className="text-center sm:text-left w-full sm:w-auto">
+                         <div className="text-amber-500 font-black text-lg sm:text-xl tracking-widest uppercase break-words px-2">{selectedUser.name}</div>
+                         <div className="text-slate-400 font-bold tracking-widest text-xs mt-1 bg-slate-950 inline-block px-3 py-1 rounded-lg border border-slate-800">
+                             {customWeekNames[activeWeek] || `${activeWeek}. HAFTA`} GİRİŞİ
+                         </div>
+                     </div>
+                     <button onClick={() => setIsModalOpen(false)} className="bg-slate-800 hover:bg-rose-900 text-slate-300 hover:text-rose-400 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors border border-slate-700 hover:border-rose-500 absolute top-4 right-4 sm:static shrink-0">
+                         ✕
+                     </button>
+                 </div>
+
+                 <div className="px-2 sm:px-6 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                         {bulletin.map((m, idx) => {
+                             const logInfo = liveInfoStateMap[m.match_index];
+                             const matchStatus = logInfo?.status || 'NOT_STARTED';
+                             const isLocked = matchStatus !== 'NOT_STARTED';
+                             const isTff = isTffMatchCheck(m.category);
+
+                             return (
+                                 <div key={idx} className={`bg-slate-950 border rounded-xl p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4 transition-all relative overflow-hidden ${isLocked ? 'border-red-900/50 opacity-80' : 'border-slate-800 hover:border-amber-500/50'}`}>
+                                     
+                                     {isLocked && (
+                                         <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                                             <div className="bg-red-950/90 text-red-400 font-black text-[10px] sm:text-xs px-4 py-1.5 rounded border border-red-800/50 tracking-widest shadow-lg -rotate-12">
+                                                 🔒 MAÇ BAŞLADI / KİLİTLİ
+                                             </div>
+                                         </div>
+                                     )}
+
+                                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded bg-slate-900 border border-slate-800 flex items-center justify-center font-black text-slate-500 text-xs sm:text-sm shrink-0">
+                                         {m.match_index}
+                                     </div>
+
+                                     <div className="flex-1 flex flex-col min-w-0">
+                                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5 flex-wrap">
+                                             <span className="bg-slate-900 text-slate-400 text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded border border-slate-700 whitespace-nowrap">
+                                                 {m.match_date} - {m.match_time}
+                                             </span>
+                                             <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded border uppercase truncate max-w-[100px] sm:max-w-[150px] ${isTff ? 'bg-red-950/50 text-red-400 border-red-900' : 'bg-blue-950/50 text-blue-400 border-blue-900'}`}>
+                                                 {m.category || 'BELİRSİZ LİG'}
+                                             </span>
+                                         </div>
+                                         <div className="font-black text-[10px] sm:text-[11px] text-slate-200 tracking-wide uppercase leading-tight line-clamp-2 pr-1">
+                                             {m.home_team || 'EV SAHİBİ'} <span className="text-slate-500 mx-0.5">-</span> {m.away_team || 'DEPLASMAN'}
+                                         </div>
+                                     </div>
+
+                                     <div className="shrink-0 flex flex-col justify-center bg-[#080d1a] border border-slate-700/80 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg relative z-0">
+                                        <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+                                           <select 
+                                             disabled={isLocked}
+                                             value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0]} 
+                                             onChange={e => {
+                                                const currentAway = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1];
+                                                const newHome = e.target.value;
+                                                handleScoreChange(idx, newHome === "-" && currentAway === "-" ? "-" : `${newHome === "-" ? "0" : newHome}-${currentAway === "-" ? "0" : currentAway}`);
+                                             }}
+                                             className="bg-slate-900 text-amber-400 font-black text-sm sm:text-lg border border-slate-700 rounded outline-none text-center cursor-pointer appearance-none w-8 sm:w-10 py-1"
+                                             style={{textAlignLast: 'center'}}
+                                           >
+                                              {scoreOptions.map(opt => <option key={`h-${opt}`} value={opt}>{opt}</option>)}
+                                           </select>
+                                           <span className="text-slate-600 font-bold text-xs sm:text-sm">:</span>
+                                           <select 
+                                             disabled={isLocked}
+                                             value={tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[1]} 
+                                             onChange={e => {
+                                                const currentHome = tempScores[idx] === "-" ? "-" : tempScores[idx].split('-')[0];
+                                                const newAway = e.target.value;
+                                                handleScoreChange(idx, currentHome === "-" && newAway === "-" ? "-" : `${currentHome === "-" ? "0" : currentHome}-${newAway === "-" ? "0" : newAway}`);
+                                             }}
+                                             className="bg-slate-900 text-amber-400 font-black text-sm sm:text-lg border border-slate-700 rounded outline-none text-center cursor-pointer appearance-none w-8 sm:w-10 py-1"
+                                             style={{textAlignLast: 'center'}}
+                                           >
+                                              {scoreOptions.map(opt => <option key={`a-${opt}`} value={opt}>{opt}</option>)}
+                                           </select>
+                                        </div>
+                                     </div>
+                                 </div>
+                             )
+                         })}
+                     </div>
+                 </div>
+
+                 <div className="sticky bottom-0 z-30 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 px-4 sm:px-8 py-4 sm:py-6 rounded-b-2xl mt-4 sm:mt-0">
+                     <button 
+                         onClick={handleSubmitPredictions}
+                         disabled={isSubmitting}
+                         className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black tracking-widest text-sm sm:text-base py-4 sm:py-5 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] uppercase border border-amber-400/50 flex justify-center items-center gap-2"
+                     >
+                         {isSubmitting ? 'KARARGAHA İŞLENİYOR...' : 'SEÇİMLERİMİ KAYDET / ONAYLA'}
+                     </button>
+                     <p className="text-center text-slate-500 text-[9px] sm:text-[10px] mt-3 font-medium uppercase tracking-widest px-2">
+                         Skorunu değiştirmediğiniz veya "Tire (-)" bıraktığınız maçlar kaydedilmez.
+                     </p>
+                 </div>
+
+             </div>
+         </div>
+      )}
+
+      {/* Global Neon Animasyon Stilleri */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes neonFlash {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(220,38,38,0.5), inset 0 0 10px rgba(220,38,38,0.5);
+                border-color: rgba(220,38,38,0.8);
+                color: rgba(239,68,68,1);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(239,68,68,1), inset 0 0 20px rgba(239,68,68,0.8);
+                border-color: rgba(248,113,113,1);
+                color: rgba(254,202,202,1);
+            }
+        }
+        @keyframes borderPulse {
+            0%, 100% { border-color: rgba(185,28,28,0.8); box-shadow: 0 0 20px rgba(185,28,28,0.2); }
+            50% { border-color: rgba(239,68,68,1); box-shadow: 0 0 40px rgba(239,68,68,0.4); }
+        }
+        .animate-neon-flash { animation: neonFlash 1.5s infinite alternate ease-in-out; }
+        .animate-pulse-border { animation: borderPulse 2s infinite alternate ease-in-out; }
+        
+        .custom-scrollbar-red::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar-red::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .custom-scrollbar-red::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.4); border-radius: 10px; }
+        .custom-scrollbar-red::-webkit-scrollbar-thumb:hover { background: rgba(239,68,68,0.8); }
+      `}} />
+
     </div>
   );
 }
