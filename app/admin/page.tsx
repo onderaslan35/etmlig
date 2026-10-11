@@ -44,7 +44,7 @@ const POPULER_LIG_SECENEKLERI = [
   { id: 'eredivisie', ad: '🇳🇱 Eredivisie', apiAd: 'Eredivisie' },
   { id: 'ucl', ad: '⭐ Şampiyonlar L.', apiAd: 'UEFA Champions League' },
   { id: 'uel', ad: '🟠 Avrupa L.', apiAd: 'UEFA Europa League' },
-  { id: 'uecl', ad: '🟢 Konferans L.', apiAd: 'Conference League' },
+  { id: 'uecl', ad: '🟢 Konferans L.', apiAd: 'UEFA Europa Conference League' },
   { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League' }
 ];
 
@@ -1550,9 +1550,8 @@ export default function AdminRadarPortal() {
                          onChange={(e) => setSelectedLiveWeek(Number(e.target.value))}
                          className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
                        >
-                          {liveWeekOptions.map(w => (
-                              <option key={w} value={w}>{w}. HAFTA</option>
-                          ))}
+                          {/* 🔥 BURADAKİ LİMİTİ KALDIRDIK 🔥 */}
+                          {[...Array(92)].map((_, i) => <option key={`lw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                        </select>
                     </div>
                  </div>
@@ -1746,7 +1745,8 @@ export default function AdminRadarPortal() {
                 </h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
-                      {[...Array(34)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
+                      {/* 🔥 BURADAKİ LİMİTİ KALDIRDIK 🔥 */}
+                      {[...Array(92)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                    </select>
                 </div>
              </div>
@@ -1946,7 +1946,8 @@ export default function AdminRadarPortal() {
               <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
                  <h2 className="text-xl font-black text-emerald-400">📊 TAHMİNLER (CANLI DURUM)</h2>
                  <select value={selectedPredictionWeek} onChange={e => setSelectedPredictionWeek(Number(e.target.value))} className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded outline-none border border-emerald-700/50 cursor-pointer">
-                    {[...Array(34)].map((_, i) => <option key={`pw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
+                    {/* 🔥 BURADAKİ LİMİTİ KALDIRDIK 🔥 */}
+                    {[...Array(92)].map((_, i) => <option key={`pw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                  </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
