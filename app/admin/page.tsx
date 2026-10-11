@@ -26,7 +26,7 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "BOSNA-HERSEK", "BULGARİSTAN", "CEBELİTARIK", "ÇEKYA", "DANİMARKA", "ERMENİSTAN", 
   "ESTONYA", "FAROE ADALARI", "FİNLANDİYA", "FRANSA", "GALLER", "GÜRCİSTAN", 
   "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA", "İSKOÇYA", "İSPANYA", "İSVEÇ", 
-  "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS", 
+  "SVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS", 
   "KOSOVA", "K. İRLANDA", "KUZEY MAKEDONYA", "LETONYA", "LİHTENŞTAYN", "LİTVANYA", 
   "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA", "PORTEKİZ", 
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
@@ -57,7 +57,7 @@ export default function AdminRadarPortal() {
   }, []);
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | null>(null);
+  const [userRole, setUserRole] = useState<'master' | 'skorcum01' | 'skorcum06' | 'skorcum34' | 'skorcumlevent' | null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
@@ -288,7 +288,12 @@ export default function AdminRadarPortal() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (usernameInput === 'mankoman' && passwordInput === '24351324Yurt.') {
+    
+    // BÜYÜK/KÜÇÜK HARF DUYARLILIĞI KALDIRILDI - HEPSİNİ KÜÇÜK HARFE ÇEVİR
+    const cleanUsername = usernameInput.toLowerCase().trim();
+    const cleanPassword = passwordInput.trim();
+
+    if (cleanUsername === 'mankoman' && cleanPassword === '24351324Yurt.') {
        setIsAuthenticated(true);
        setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
@@ -297,17 +302,18 @@ export default function AdminRadarPortal() {
        return;
     } 
 
-    // 🔥 SKORCU ŞİFRELERİ (Skorcum34 için şifre güncellendi: 343434) 🔥
+    // 🔥 YENİ SKORCU (LEVENT) EKLENDİ VE ŞİFRELER GÜNCELLENDİ 🔥
     const validSkorcular: Record<string, string> = {
        'skorcum01': '150101',
        'skorcum06': '191006',
-       'skorcum34': '343434'
+       'skorcum34': '343434',
+       'skorcumlevent': '190706'
     };
 
-    if (validSkorcular[usernameInput]) {
-       if (passwordInput === validSkorcular[usernameInput]) {
+    if (validSkorcular[cleanUsername]) {
+       if (cleanPassword === validSkorcular[cleanUsername]) {
           try {
-             const { data } = await supabase.from('skorcu_auth').select('is_active').eq('username', usernameInput).single();
+             const { data } = await supabase.from('skorcu_auth').select('is_active').eq('username', cleanUsername).single();
              if (data && data.is_active === false) {
                  alert("❌ YETKİLERİNİZ DONDURULDU!\nSistemden uzaklaştırıldınız. Lütfen Genelkurmay ile iletişime geçin.");
                  return;
@@ -315,9 +321,9 @@ export default function AdminRadarPortal() {
           } catch(err) {}
 
           setIsAuthenticated(true);
-          setUserRole(usernameInput as any);
+          setUserRole(cleanUsername as any);
           sessionStorage.setItem('admin_auth', 'true');
-          sessionStorage.setItem('admin_role', usernameInput);
+          sessionStorage.setItem('admin_role', cleanUsername);
           setActiveTab('live');
           setShowOnlyToday(true);
           return;
@@ -1262,7 +1268,7 @@ export default function AdminRadarPortal() {
                         </div>
                      </div>
                      <div className="flex gap-3 flex-wrap justify-center">
-                        {['skorcum01', 'skorcum06', 'skorcum34'].map(sk => {
+                        {['skorcum01', 'skorcum06', 'skorcum34', 'skorcumlevent'].map(sk => {
                            const isActive = skorcuStatusMap[sk] !== false; 
                            return (
                               <button 
@@ -1527,7 +1533,7 @@ export default function AdminRadarPortal() {
                       </div>
                     </div>
 
-                    {/* 🔥 KOMUTANIN KÖR NOKTA (BLINDFOLD) GİZLİLİK PROTOKOLÜ BURADA BAŞLIYOR 🔥 */}
+                    {/* 🔥 KOMUTANIN KÖR NOKTA (BLINDFOLD) GİZLİLİK PROTOKOLÜ 🔥 */}
                     {userRole === 'master' ? (
                         <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
                           <div className="flex items-center justify-between mb-3 w-full">
@@ -1564,9 +1570,7 @@ export default function AdminRadarPortal() {
                            <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
                               {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                            </span>
-                           <span className="text-slate-400 text-[9px] font-bold tracking-widest uppercase flex items-center gap-1 mt-1 bg-slate-900/80 px-3 py-1 rounded-md border border-slate-700/50 shadow-inner">
-                              🔒 GİZLİLİK AKTİF: TAHMİNLER SADECE BAŞKOMUTAN TARAFINDAN GÖRÜLEBİLİR
-                           </span>
+                           {/* DİPLOMASİ UYGULANDI: Skorcular hiçbir uyarı veya gizlilik mesajı görmeyecek, sadece tertemiz bir ekran görecekler. */}
                         </div>
                     )}
                     {/* 🔥 KÖR NOKTA PROTOKOLÜ BİTTİ 🔥 */}
