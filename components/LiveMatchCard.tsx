@@ -45,9 +45,6 @@ export default function LiveMatchCard() {
   
   const [weeklySortedStats, setWeeklySortedStats] = useState<Record<number, { id: string, points: number, exactScores: number }[]>>({});
   const [is24thMatchFinishedMap, setIs24thMatchFinishedMap] = useState<Record<number, boolean>>({});
-  
-  // 🔥 EFSANEVİ YAMA: DAĞITILMIŞ MAÇLAR LİSTESİ 🔥
-  const [distributedMatchesSet, setDistributedMatchesSet] = useState<Set<string>>(new Set());
 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
@@ -97,20 +94,13 @@ export default function LiveMatchCard() {
       const todayDate = parseDateLocal(todayDateStr);
       todayDate.setHours(0,0,0,0);
 
-      // 🔥 PUAN TABLOSUNU (points) ÇEKEREK HANGİ MAÇLARIN RESMİYETE DÖKÜLDÜĞÜNÜ BULUYORUZ 🔥
-      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes, pointsRes] = await Promise.all([
+      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
           supabase.from('live_leaderboard').select('*'),
           supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
-          supabase.from('live_matches').select('*'),
-          supabase.from('points').select('hafta, ev_sahibi, deplasman')
+          supabase.from('live_matches').select('*')
       ]);
 
-      const distPoints = pointsRes.data || [];
-      const distSet = new Set<string>(distPoints.map((p: any) => `${p.hafta}-${p.ev_sahibi}-${p.deplasman}`));
-      setDistributedMatchesSet(distSet);
-
       const allBulten = allBulletinRes.data || [];
-      const dbLiveMatches = dbLiveMatchesRes.data || [];
       
       const relevantMatches = allBulten.filter(m => {
           const matchTimeMs = getMatchTimeMs(m.match_date, m.match_time);
@@ -142,57 +132,10 @@ export default function LiveMatchCard() {
           }
       }
 
-      const pDict: Record<string, string> = {};
-      allPredictions.forEach(pred => {
-          const uid = String(pred.user_id);
-          if (uid === 'mankoman') return;
-          pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
-      });
-      setPredictionsData(pDict);
-
-      // 🔥 KESİNTİSİZ HEYECAN KÖPRÜSÜ (MEMORY BRIDGE) 🔥
-      // Eğer maç 90'ı geçmişse (FT) ama Komutan henüz onaylamamışsa, puanlar kara deliğe düşmesin diye manuel ekliyoruz!
-      const patchedLeaderboard = leaderboardRes.data ? JSON.parse(JSON.stringify(leaderboardRes.data)) : [];
-      
-      targetBulten.forEach(m => {
-          const uniqueId = getUniqueMatchId(m.week_num, m.match_index);
-          const liveMatch = dbLiveMatches.find(l => l.id === uniqueId);
-          
-          if (liveMatch && liveMatch.home_score !== '-' && liveMatch.away_score !== '-') {
-              const isLiveLike = ['LIVE', '1H', '2H', 'HT', 'ET', 'P'].includes(liveMatch.status);
-              const isDistributed = distSet.has(`${m.week_num}-${m.home_team}-${m.away_team}`);
-
-              // EĞER MAÇ BİTTİ (FT) AMA HENÜZ ONAYLANMADIYSA
-              if (!isLiveLike && !isDistributed) {
-                  const targetScore = `${liveMatch.home_score}-${liveMatch.away_score}`.replace(/\s+/g, '');
-                  const winnerIds = Object.keys(mergedAccounts).filter(uid => pDict[`${uid}-${m.week_num}-${m.match_index}`] === targetScore);
-                  
-                  let pts = 1;
-                  if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
-                  else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
-                  else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
-                  else if(winnerIds.length >= 7) pts = 1; else pts = 0;
-
-                  if (pts > 0) {
-                      const isTff = isTffMatchCheck(m.category);
-                      winnerIds.forEach(uid => {
-                          let player = patchedLeaderboard.find((p: any) => String(p.id) === uid);
-                          if (!player) {
-                              player = { id: uid, name: mergedAccounts[uid]?.name || 'Bilinmeyen', tff_pts: 0, dfo_pts: 0, master_pts: 0, skor_pts: 0 };
-                              patchedLeaderboard.push(player);
-                          }
-                          player.master_pts = (player.master_pts || 0) + pts;
-                          player.skor_pts = (player.skor_pts || 0) + 1;
-                          if (isTff) player.tff_pts = (player.tff_pts || 0) + pts;
-                          else player.dfo_pts = (player.dfo_pts || 0) + pts;
-                      });
-                  }
-              }
-          }
-      });
-
+      // 🔥 SAF OTOMASYON: Puanlar Supabase'in Kendi Tablosundan Direkt Çekilir 🔥
+      const leaderboardData = leaderboardRes.data || [];
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
-      patchedLeaderboard.forEach((row: any) => {
+      leaderboardData.forEach(row => {
           arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
           arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
           arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
@@ -202,6 +145,15 @@ export default function LiveMatchCard() {
       arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
+      const pDict: Record<string, string> = {};
+      allPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (uid === 'mankoman') return;
+          pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
+      });
+      setPredictionsData(pDict);
+
+      const dbLiveMatches = dbLiveMatchesRes.data || [];
       const liveMap: Record<string, any> = {};
       dbLiveMatches.forEach(row => liveMap[String(row.id)] = row); 
       setLiveMatchesData(liveMap);
@@ -213,8 +165,8 @@ export default function LiveMatchCard() {
         category: m.category,
         date: m.match_date,
         time: m.match_time,
-        home_team: m.home_team,
-        away_team: m.away_team
+        homeTeam: m.home_team,
+        awayTeam: m.away_team
       }));
 
       const new24FinishedMap: Record<number, boolean> = {};
@@ -286,16 +238,11 @@ export default function LiveMatchCard() {
            const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
            const dbMatch = liveMap[uniqueId];
            const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
-           
-           // Dağıtılmamış maçlar, canlı sekmesinde yeşil kalsın diye
-           const isDistributed = distSet.has(`${m.week_num}-${m.home_team}-${m.away_team}`);
-           
            const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(status);
            
            const isToday = m.date === todayDateStr; 
            
-           if (isLiveOrFinished4 && !isDistributed) return true; // Dağıtılmamış her şey canlıda!
-           if (isLiveOrFinished4 && isDistributed && isToday) return true; // Bugün dağıtıldıysa bitenlere düşer ama gösterilir
+           if (isLiveOrFinished4) return true;
            return isToday;
       });
 
@@ -328,28 +275,16 @@ export default function LiveMatchCard() {
     );
   }
 
-  // Dağıtılmayan her maç Aktif/Canlıdır
   const activeMatches = todaysMatchesList.filter(match => {
      const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
      const dbMatch = liveMatchesData[uniqueId] || {};
-     const isDistributed = distributedMatchesSet.has(`${match.week_num}-${match.home_team}-${match.away_team}`);
-     
-     if (['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status)) {
-         return !isDistributed; 
-     }
-     return true;
+     return !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
-  // Sadece Onaylanan (Dağıtılan) maçlar Bitenlere düşer
   const finishedMatches = todaysMatchesList.filter(match => {
      const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
      const dbMatch = liveMatchesData[uniqueId] || {};
-     const isDistributed = distributedMatchesSet.has(`${match.week_num}-${match.home_team}-${match.away_team}`);
-     
-     if (['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status)) {
-         return isDistributed;
-     }
-     return false;
+     return ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
   const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
@@ -382,30 +317,25 @@ export default function LiveMatchCard() {
       let homeScore = dbMatch.home_score || '-';
       let awayScore = dbMatch.away_score || '-';
 
-      const isDistributed = distributedMatchesSet.has(`${match.week_num}-${homeTeamUpper}-${awayTeamUpper}`);
-
-      // 🔥 GÖRSEL KİLİT: Maç 90'da bitse bile ONAYLANMADIYSA ekranda CANLI ve 90+ gözükmeye devam edecek! 🔥
-      if (['FT', 'FINISHED', 'AET', 'PEN', 'WAITING_APPROVAL'].includes(matchStatus) && !isDistributed) {
-          matchStatus = 'LIVE';
-      } else if (matchStatus === 'WAITING_APPROVAL') {
-          matchStatus = 'LIVE';
-      }
-
       const matchTimeMs = getMatchTimeMs(match.date, match.time);
       const liveDurationMs = 8 * 60 * 60 * 1000; 
       
-      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
+      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus)) {
         if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
-            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { matchStatus = 'LIVE'; } 
-            else if (now >= matchTimeMs + liveDurationMs) { matchStatus = 'WAITING_APPROVAL'; }
+            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { 
+                matchStatus = 'LIVE'; 
+            } else if (now >= matchTimeMs + liveDurationMs) { 
+                matchStatus = 'WAITING_APPROVAL'; 
+            }
         }
       }
 
+      // 🔥 SAF OTOMASYON DURUM KONTROLÜ 🔥
       const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
-      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P'].includes(matchStatus);
+      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus);
       const isHT = matchStatus === 'HT';
 
-      if (isLiveStatus) {
+      if (isLiveStatus || isFinishedStatus || isHT) {
          if (homeScore === '-') homeScore = '0';
          if (awayScore === '-') awayScore = '0';
       }
@@ -799,6 +729,107 @@ export default function LiveMatchCard() {
         </>
       )}
 
+      {/* 🔥 ÇOKLU LİDERLİK RADARLARI (19 ÜSTTE, 18 ALTTA) 🔥 */}
+      {sortedWeeks.map((week, index) => {
+          const wStats = weeklySortedStats[week] || [];
+          const maxPts = wStats.length > 0 ? wStats[0].points : 0;
+          const maxScores = wStats.length > 0 ? Math.max(...wStats.map((s:any) => s.exactScores)) : 0;
+          const ptsLeaders = wStats.filter((s:any) => s.points === maxPts && maxPts > 0);
+          const scoreLeaders = wStats.filter((s:any) => s.exactScores === maxScores && maxScores > 0);
+          const is24Finished = is24thMatchFinishedMap[week];
+          const isOldestWeek = index === sortedWeeks.length - 1 && sortedWeeks.length > 1;
+
+          const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
+              if (!is24Finished) return null; 
+              if (type === 'points') {
+                  if (ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
+                      return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-amber-500 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🏆 +3 PUAN KAZANDI</span>;
+                  }
+              } else if (type === 'scores') {
+                  if (scoreLeaders.length === 1 && scoreLeaders[0].id === uid) {
+                      return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🎯 +3 PUAN KAZANDI</span>;
+                  }
+              }
+              return null;
+          };
+
+          return (
+            <div key={`radar-${week}`} className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto mt-4">
+                <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
+                    <span className="text-lg sm:text-xl">📡</span> {week}. HAFTA CANLI LİDERLİK RADARI
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                        <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
+                            <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
+                            {is24Finished && ptsLeaders.length > 1 && (
+                                <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                            )}
+                        </div>
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {wStats.length > 0 ? (
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-slate-800/50">
+                                        {wStats.map((s:any, idx:number) => (
+                                            <tr key={s.id} className="hover:bg-slate-900/50">
+                                                <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                                <td className="py-2 font-bold text-slate-200">
+                                                    {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                                    {getLeaderBadge(s.id, 'points')}
+                                                </td>
+                                                <td className="py-2 pr-2 text-right font-black text-emerald-400">{s.points} P</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-xs">HENÜZ PUAN ALAN YOK</div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                        <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
+                            <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
+                            {is24Finished && scoreLeaders.length > 1 && (
+                                <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                            )}
+                        </div>
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {wStats.length > 0 && maxScores > 0 ? (
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-slate-800/50">
+                                        {wStats.filter((s:any) => s.exactScores > 0).sort((a:any,b:any) => b.exactScores - a.exactScores).map((s:any, idx:number) => (
+                                            <tr key={s.id} className="hover:bg-slate-900/50">
+                                                <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                                <td className="py-2 font-bold text-slate-200">
+                                                    {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                                    {getLeaderBadge(s.id, 'scores')}
+                                                </td>
+                                                <td className="py-2 pr-2 text-right font-black text-amber-500">{s.exactScores} Maç</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-xs">HENÜZ SKOR BİLEN YOK</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 🔴 KOMUTANIN İSTEDİĞİ: 18. HAFTA EN ALTTA VE BONUS KAZANAN YARIŞMACILAR YAZISI 🔴 */}
+                {isOldestWeek && ptsLeaders.length > 0 && (
+                    <div className="mt-4 bg-amber-950/50 p-3 rounded-xl border border-amber-500/30 text-center shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                        <span className="text-amber-500 font-black text-[11px] tracking-widest">
+                            ✨ {week}. HAFTA BONUS KAZANAN YARIŞMACI(LAR): <span className="text-white ml-2">{ptsLeaders.map((p:any) => mergedAccounts[p.id]?.name).join(' & ')}</span> ✨
+                        </span>
+                    </div>
+                )}
+            </div>
+          );
+      })}
     </div>
   );
 }
