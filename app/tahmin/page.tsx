@@ -430,7 +430,7 @@ export default function PredictionPortal() {
                          </div>
                          
                          <p className="text-[8px] sm:text-[9px] font-black text-rose-400 tracking-wide text-center mt-1 bg-rose-950/40 px-2 py-1.5 rounded-lg border border-rose-900/50 leading-tight">
-                           ⚠️ TIKLA VE DEĞİŞTİR! "Vay efendim ben niye yapmamışım" diye sonra ağlamak yok! 😭
+                           ⚠️ TIKLA VE DEĞİŞTİR! "MÜSLÜM BABADAN "SON PİŞMANLIK NEYE YARAR"
                          </p>
                       </div>
                       
