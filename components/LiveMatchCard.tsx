@@ -132,9 +132,18 @@ export default function LiveMatchCard() {
           }
       }
 
-      // 🔥 PUANLARI ARAF'TAN KURTARACAK MOTOR BURADA BAŞLIYOR 🔥
-      const leaderboardData = leaderboardRes.data ? JSON.parse(JSON.stringify(leaderboardRes.data)) : [];
-      const dbLiveMatches = dbLiveMatchesRes.data || [];
+      // 🔥 SAF OTOMASYON: Puanlar Supabase'in Kendi Tablosundan Direkt Çekilir 🔥
+      const leaderboardData = leaderboardRes.data || [];
+      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
+      leaderboardData.forEach(row => {
+          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
+          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
+          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
+          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
+      });
+      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
+      arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
+      setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
       const pDict: Record<string, string> = {};
       allPredictions.forEach(pred => {
@@ -144,64 +153,7 @@ export default function LiveMatchCard() {
       });
       setPredictionsData(pDict);
 
-      // Veritabanı view'inin okuyamadığı 90. dakika (FT, AET, PEN, WAITING_APPROVAL) maçlarını yakalıyoruz
-      const limboMatches = dbLiveMatches.filter(m => ['FT', 'AET', 'PEN', 'WAITING_APPROVAL', 'Finished'].includes(m.status));
-      
-      limboMatches.forEach(m => {
-          if (!m.home_score || m.home_score === '-' || !m.away_score || m.away_score === '-') return;
-          
-          const bMatch = allBulten.find(b => getUniqueMatchId(b.week_num, b.match_index) === m.id);
-          if (!bMatch) return;
-          
-          const isTff = isTffMatchCheck(bMatch.category);
-          const targetScore = `${m.home_score}-${m.away_score}`.replace(/\s+/g, '');
-          
-          const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${bMatch.week_num}-${bMatch.match_index}`] === targetScore);
-          
-          let pts = 1;
-          if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
-          else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
-          else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
-          else if(winnerIds.length >= 7) pts = 1; else pts = 0;
-
-          if (pts > 0) {
-              winnerIds.forEach(uid => {
-                  let playerStats = leaderboardData.find((l: any) => String(l.id) === uid);
-                  if (!playerStats) {
-                      playerStats = { id: uid, name: mergedAccounts[uid]?.name || 'Bilinmeyen', tff_pts: 0, dfo_pts: 0, master_pts: 0, skor_pts: 0 };
-                      leaderboardData.push(playerStats);
-                  }
-                  
-                  playerStats.master_pts = (playerStats.master_pts || 0) + pts;
-                  playerStats.skor_pts = (playerStats.skor_pts || 0) + 1;
-                  if (isTff) {
-                      playerStats.tff_pts = (playerStats.tff_pts || 0) + pts;
-                  } else {
-                      playerStats.dfo_pts = (playerStats.dfo_pts || 0) + pts;
-                  }
-              });
-          }
-      });
-
-      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
-      leaderboardData.forEach((row: any) => {
-          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank || 0 });
-          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank || 0 });
-          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank || 0 });
-          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank || 0 });
-      });
-      
-      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
-      arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
-      
-      // Sıralamaları (Rank) Araf Yaması eklendikten sonra yeniden atıyoruz
-      arrTFF.forEach((item, idx) => item.rank = idx + 1);
-      arrDFO.forEach((item, idx) => item.rank = idx + 1);
-      arrMASTER.forEach((item, idx) => item.rank = idx + 1);
-      arrSKOR.forEach((item, idx) => item.rank = idx + 1);
-
-      setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
-
+      const dbLiveMatches = dbLiveMatchesRes.data || [];
       const liveMap: Record<string, any> = {};
       dbLiveMatches.forEach(row => liveMap[String(row.id)] = row); 
       setLiveMatchesData(liveMap);
@@ -286,7 +238,7 @@ export default function LiveMatchCard() {
            const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
            const dbMatch = liveMap[uniqueId];
            const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
-           const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN'].includes(status);
+           const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(status);
            
            const isToday = m.date === todayDateStr; 
            
@@ -365,22 +317,22 @@ export default function LiveMatchCard() {
       let homeScore = dbMatch.home_score || '-';
       let awayScore = dbMatch.away_score || '-';
 
-      if (matchStatus === 'WAITING_APPROVAL') {
-          matchStatus = 'LIVE';
-      }
-
       const matchTimeMs = getMatchTimeMs(match.date, match.time);
       const liveDurationMs = 8 * 60 * 60 * 1000; 
       
-      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P'].includes(matchStatus)) {
+      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus)) {
         if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
-            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { matchStatus = 'LIVE'; } 
-            else if (now >= matchTimeMs + liveDurationMs) { matchStatus = 'WAITING_APPROVAL'; }
+            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { 
+                matchStatus = 'LIVE'; 
+            } else if (now >= matchTimeMs + liveDurationMs) { 
+                matchStatus = 'WAITING_APPROVAL'; 
+            }
         }
       }
 
+      // 🔥 SAF OTOMASYON DURUM KONTROLÜ 🔥
       const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
-      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P'].includes(matchStatus);
+      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus);
       const isHT = matchStatus === 'HT';
 
       if (isLiveStatus || isFinishedStatus || isHT) {
