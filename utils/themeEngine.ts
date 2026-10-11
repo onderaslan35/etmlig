@@ -342,7 +342,7 @@ export const localTeamLogos: Record<string, string> = {
   "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
   "FSV MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9905_large.png",
 
-  "1899 HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/10223.png",
+  "1899 HOFFENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/8226_large.png",
   "FC AUGSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8406.png",
   "UNION BERLIN": "https://images.fotmob.com/image_resources/logo/teamlogo/9795.png",
   "BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/9911.png",
@@ -437,12 +437,12 @@ export const localTeamLogos: Record<string, string> = {
   "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
   "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
   "FC PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
-  "BENFİCA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
-  "BENFICA": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
+  
+  "BENFICA": "https://images.fotmob.com/image_resources/logo/teamlogo/9772_large.png",
   "SC BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10264_large.png",
 
   // İSKOÇYA
-  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9827.png",
+  "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9925_large.png",
   "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
   "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
   "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
