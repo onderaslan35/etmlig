@@ -463,7 +463,7 @@ export const localTeamLogos: Record<string, string> = {
   "SARIYER": "/logos/sariyer.png", "PENDİKSPOR": "/logos/pendikspor.png", "BOLUSPOR": "/logos/boluspor.png", 
   "İSTANBULSPOR": "/logos/istanbulspor.png", "BODRUM FK": "/logos/bodrumspor.png", "ERZURUMSPOR FK": "/logos/erzurumspor.png",
   "MUĞLASPOR": "/logos/muglaspor.png", "BANDIRMASPOR": "/logos/bandirmaspor.png", 
-  "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROSI TC": "/logos/ferencvaros.png",
+  "VOJVODINA": "/logos/vojvodina.png", "FERENCVAROS": "/logos/ferencvaros.png",
   "HAMMARBY": "/logos/hammarby.png", 
   "PAOK": "/logos/paok.png",  
   "OLYMPIC LYON": "/logos/lyon.png",  "OLYMPIQUE LYONNAIS": "/logos/lyon.png"
