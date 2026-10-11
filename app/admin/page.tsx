@@ -26,7 +26,7 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "BOSNA-HERSEK", "BULGARİSTAN", "CEBELİTARIK", "ÇEKYA", "DANİMARKA", "ERMENİSTAN", 
   "ESTONYA", "FAROE ADALARI", "FİNLANDİYA", "FRANSA", "GALLER", "GÜRCİSTAN", 
   "HIRVATİSTAN", "HOLLANDA", "İNGİLTERE", "İRLANDA", "İSKOÇYA", "İSPANYA", "İSVEÇ", 
-  "SVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS", 
+  "İSVİÇRE", "İTALYA", "İZLANDA", "KARADAĞ", "KAZAKİSTAN", "KIBRIS", 
   "KOSOVA", "K. İRLANDA", "KUZEY MAKEDONYA", "LETONYA", "LİHTENŞTAYN", "LİTVANYA", 
   "LÜKSEMBURG", "MACARİSTAN", "MALTA", "MOLDOVA", "NORVEÇ", "POLONYA", "PORTEKİZ", 
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
@@ -289,7 +289,6 @@ export default function AdminRadarPortal() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // BÜYÜK/KÜÇÜK HARF DUYARLILIĞI KALDIRILDI - HEPSİNİ KÜÇÜK HARFE ÇEVİR
     const cleanUsername = usernameInput.toLowerCase().trim();
     const cleanPassword = passwordInput.trim();
 
@@ -302,7 +301,6 @@ export default function AdminRadarPortal() {
        return;
     } 
 
-    // 🔥 YENİ SKORCU (LEVENT) EKLENDİ VE ŞİFRELER GÜNCELLENDİ 🔥
     const validSkorcular: Record<string, string> = {
        'skorcum01': '150101',
        'skorcum06': '191006',
@@ -1508,11 +1506,10 @@ export default function AdminRadarPortal() {
                               <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner inline-block w-full">
                                 ✅ BU MAÇIN PUANLARI DAĞITILDI
                               </div>
-                              {userRole === 'master' && (
-                                <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
-                                  İPTAL ET & PUANLARI GERİ AL
-                                </button>
-                              )}
+                              {/* 🔥 SIFIRLAMA KİLİDİ KALDIRILDI! Skorcular da hata yaparsa düzeltebilecek 🔥 */}
+                              <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
+                                İPTAL ET & PUANLARI GERİ AL
+                              </button>
                             </div>
                           ) : (
                             <>
@@ -1522,11 +1519,10 @@ export default function AdminRadarPortal() {
                               <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">
                                 2. ADIM: MAÇI BİTİR (DAĞIT)
                               </button>
-                              {userRole === 'master' && (
-                                <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
-                                  SIFIRLA
-                                </button>
-                              )}
+                              {/* 🔥 SIFIRLAMA KİLİDİ KALDIRILDI! Skorcular da hata yaparsa düzeltebilecek 🔥 */}
+                              <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
+                                SIFIRLA
+                              </button>
                             </>
                           )}
                         </div>
