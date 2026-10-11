@@ -32,20 +32,21 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ (KONFERANS LİGİ EKLENDİ) 🏆
+// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ (ÜLKE FİLTRELİ VE KESİN EŞLEŞMELİ) 🏆
 const POPULER_LIG_SECENEKLERI = [
-  { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig' },
-  { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig' },
-  { id: 'premier', ad: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier Lig', apiAd: 'Premier League' },
-  { id: 'laliga', ad: '🇪🇸 La Liga', apiAd: 'La Liga' },
-  { id: 'seriea', ad: '🇮🇹 Serie A', apiAd: 'Serie A' },
-  { id: 'bundesliga', ad: '🇩🇪 Bundesliga', apiAd: 'Bundesliga' },
-  { id: 'ligue1', ad: '🇫🇷 Ligue 1', apiAd: 'Ligue 1' },
-  { id: 'eredivisie', ad: '🇳🇱 Eredivisie', apiAd: 'Eredivisie' },
-  { id: 'ucl', ad: '⭐ Şampiyonlar L.', apiAd: 'UEFA Champions League' },
-  { id: 'uel', ad: '🟠 Avrupa L.', apiAd: 'UEFA Europa League' },
-  { id: 'uecl', ad: '🟢 Konferans L.', apiAd: 'UEFA Europa Conference League' },
-  { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League' }
+  { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig', country: 'Turkey' },
+  { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig', country: 'Turkey' },
+  { id: 'premier', ad: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier Lig', apiAd: 'Premier League', country: 'England' },
+  { id: 'laliga', ad: '🇪🇸 La Liga', apiAd: 'La Liga', country: 'Spain' },
+  { id: 'seriea', ad: '🇮🇹 Serie A', apiAd: 'Serie A', country: 'Italy' },
+  { id: 'bundesliga', ad: '🇩🇪 Bundesliga', apiAd: 'Bundesliga', country: 'Germany' },
+  { id: 'ligue1', ad: '🇫🇷 Ligue 1', apiAd: 'Ligue 1', country: 'France' },
+  { id: 'eredivisie', ad: '🇳🇱 Eredivisie', apiAd: 'Eredivisie', country: 'Netherlands' },
+  { id: 'primeira', ad: '🇵🇹 Primeira Liga', apiAd: 'Primeira Liga', country: 'Portugal' },
+  { id: 'ucl', ad: '⭐ Şampiyonlar L.', apiAd: 'UEFA Champions League', country: 'World' },
+  { id: 'uel', ad: '🟠 Avrupa L.', apiAd: 'UEFA Europa League', country: 'World' },
+  { id: 'uecl', ad: '🟢 Konferans L.', apiAd: 'UEFA Europa Conference League', country: 'World' },
+  { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League', country: 'World' }
 ];
 
 export default function AdminRadarPortal() {
@@ -99,11 +100,11 @@ export default function AdminRadarPortal() {
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
   const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
 
-  const toggleLigFiltresi = (apiAd: string) => {
-     if (seciliLigFiltreleri.includes(apiAd)) {
-         setSeciliLigFiltreleri(prev => prev.filter(l => l !== apiAd));
+  const toggleLigFiltresi = (id: string) => {
+     if (seciliLigFiltreleri.includes(id)) {
+         setSeciliLigFiltreleri(prev => prev.filter(l => l !== id));
      } else {
-         setSeciliLigFiltreleri(prev => [...prev, apiAd]);
+         setSeciliLigFiltreleri(prev => [...prev, id]);
      }
   };
 
@@ -1170,7 +1171,7 @@ export default function AdminRadarPortal() {
       }
   };
 
-  // 🎯 YENİ SİSTEM: TARİH, SAAT VE LİG FİLTRELİ UYDU ÇEKİMİ 🎯
+  // 🎯 YENİ SİSTEM: TARİH, SAAT VE LİG FİLTRELİ UYDU ÇEKİMİ (KESİN EŞLEŞME) 🎯
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
@@ -1210,6 +1211,7 @@ export default function AdminRadarPortal() {
                         date: dateStr,
                         time: d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}),
                         league_name: fix.league.name,
+                        country: fix.league.country, // 🔥 Ülke Verisi Eklendi
                         category: fix.league.name
                     };
                 });
@@ -1222,19 +1224,29 @@ export default function AdminRadarPortal() {
             return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
         });
 
-        // 2. LİG FİLTRESİ UYGULA
+        // 2. KESİN LİG FİLTRESİ UYGULA (Ülke + Lig Adı Tam Eşleşme)
         if (seciliLigFiltreleri.length > 0 || ozelLigFiltresi.trim() !== '') {
             havuzTemp = havuzTemp.filter(mac => {
                 const matchLeague = mac.league_name.toLowerCase();
+                const matchCountry = (mac.country || '').toLowerCase();
                 
-                // Popüler liglerden biri seçiliyse kontrol et
+                // Popüler liglerden biri seçiliyse KESİN kontrol et
                 const matchesPopuler = seciliLigFiltreleri.length > 0 
-                    ? seciliLigFiltreleri.some(l => matchLeague.includes(l.toLowerCase()))
+                    ? seciliLigFiltreleri.some(filterId => {
+                        const fObj = POPULER_LIG_SECENEKLERI.find(f => f.id === filterId);
+                        if(!fObj) return false;
+                        
+                        // Tam Eşleşme (Lig adı ve Ülkesi)
+                        const isLeagueMatch = matchLeague === fObj.apiAd.toLowerCase();
+                        const isCountryMatch = fObj.country === 'World' ? true : matchCountry === fObj.country.toLowerCase();
+                        
+                        return isLeagueMatch && isCountryMatch;
+                    })
                     : false;
                 
-                // Özel kutuya bir şey yazıldıysa kontrol et
+                // Özel kutuya bir şey yazıldıysa kontrol et (includes ile esnek bırakıldı ki kolay bulunsun)
                 const matchesOzel = ozelLigFiltresi.trim() !== '' 
-                    ? matchLeague.includes(ozelLigFiltresi.toLowerCase())
+                    ? matchLeague.includes(ozelLigFiltresi.toLowerCase()) || matchCountry.includes(ozelLigFiltresi.toLowerCase())
                     : false;
                 
                 return matchesPopuler || matchesOzel;
@@ -1253,8 +1265,8 @@ export default function AdminRadarPortal() {
 
         setApiHavuz(havuzTemp);
         
-        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan sadece kriterlerine uyan ${havuzTemp.length} adet maç çekildi.`);
-        else alert("⚠️ Belirttiğin tarih, saat ve lig kalkanından hiçbir maç geçemedi. Kriterleri biraz gevşetebilirsin.");
+        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan tam isabet ${havuzTemp.length} adet maç çekildi.`);
+        else alert("⚠️ Belirttiğin tarih, saat ve lig kalkanından hiçbir maç geçemedi. Başka ligler seçebilirsin.");
     } catch (error: any) {
         console.error(error);
         alert("API Hatası: " + error.message);
@@ -1550,7 +1562,6 @@ export default function AdminRadarPortal() {
                          onChange={(e) => setSelectedLiveWeek(Number(e.target.value))}
                          className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
                        >
-                          {/* 🔥 BURADAKİ LİMİTİ KALDIRDIK 🔥 */}
                           {[...Array(92)].map((_, i) => <option key={`lw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                        </select>
                     </div>
@@ -1745,7 +1756,6 @@ export default function AdminRadarPortal() {
                 </h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={e => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
-                      {/* 🔥 BURADAKİ LİMİTİ KALDIRDIK 🔥 */}
                       {[...Array(92)].map((_, i) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                    </select>
                 </div>
@@ -1761,7 +1771,7 @@ export default function AdminRadarPortal() {
                     {/* 🎯 RADAR FİLTRELERİ 🎯 */}
                     <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3 flex flex-col gap-2 shadow-inner">
                        <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
-                          <span>⚙️</span> API RADAR FİLTRELERİ (Binlerce çöp maçı engeller)
+                          <span>⚙️</span> API RADAR FİLTRELERİ (Kesin Eşleşme - Tam İsabet)
                        </div>
                        
                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1787,16 +1797,16 @@ export default function AdminRadarPortal() {
                           </div>
                        </div>
 
-                       {/* 🏆 KOMUTANIN LİG SEÇİM KALKANI 🏆 */}
+                       {/* 🏆 KOMUTANIN LİG SEÇİM KALKANI (TAM EŞLEŞME) 🏆 */}
                        <div className="mt-3 border-t border-slate-800 pt-3">
                           <label className="text-[10px] font-bold text-emerald-400 uppercase mb-2 block tracking-widest">🏆 HIZLI LİG FİLTRELERİ <span className="text-slate-500 font-normal">(Boş bırakırsanız tüm dünyayı çeker)</span></label>
                           <div className="flex flex-wrap gap-2">
                              {POPULER_LIG_SECENEKLERI.map(lig => {
-                                const isActive = seciliLigFiltreleri.includes(lig.apiAd);
+                                const isActive = seciliLigFiltreleri.includes(lig.id);
                                 return (
                                    <button
                                       key={lig.id}
-                                      onClick={() => toggleLigFiltresi(lig.apiAd)}
+                                      onClick={() => toggleLigFiltresi(lig.id)}
                                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider transition-all border ${
                                          isActive 
                                          ? 'bg-emerald-900/80 text-emerald-300 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
@@ -1815,7 +1825,7 @@ export default function AdminRadarPortal() {
                                 type="text" 
                                 value={ozelLigFiltresi} 
                                 onChange={e => setOzelLigFiltresi(e.target.value)} 
-                                placeholder="Lig adını buraya yazarak filtrele..."
+                                placeholder="Lig veya ülke adını buraya yazarak arat..."
                                 className="w-full sm:w-1/2 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
                              />
                           </div>
@@ -1863,7 +1873,7 @@ export default function AdminRadarPortal() {
                                                 {mac.home_team} - {mac.away_team}
                                             </div>
                                             <div className="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5">
-                                                <span className="text-cyan-500">{mac.date}</span> | <span className="text-amber-500">{mac.time}</span> | <span className="text-fuchsia-400">{mac.league_name}</span>
+                                                <span className="text-cyan-500">{mac.date}</span> | <span className="text-amber-500">{mac.time}</span> | <span className="text-fuchsia-400">{mac.country} - {mac.league_name}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1946,7 +1956,6 @@ export default function AdminRadarPortal() {
               <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
                  <h2 className="text-xl font-black text-emerald-400">📊 TAHMİNLER (CANLI DURUM)</h2>
                  <select value={selectedPredictionWeek} onChange={e => setSelectedPredictionWeek(Number(e.target.value))} className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded outline-none border border-emerald-700/50 cursor-pointer">
-                    {/* 🔥 BURADAKİ LİMİTİ KALDIRDIK 🔥 */}
                     {[...Array(92)].map((_, i) => <option key={`pw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
                  </select>
               </div>
