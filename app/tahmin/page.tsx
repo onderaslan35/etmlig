@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase';
 import { 
+  TEST_ACCOUNTS, // 🔥 İŞTE BUNU KULLANMAYI UNUTMUŞTUK!
   staticPlayersList, 
   customWeekNames, 
   getWeekLabel, 
@@ -143,17 +144,24 @@ export default function PredictionPortal() {
     let isValid = false;
     let uName = "";
 
-    const { data: dbPlayers } = await supabase.from('players').select('*').eq('username', userIdInput).single();
-    if (dbPlayers) {
-        // 🔥 İŞTE BÜTÜN SORUNU ÇÖZEN ZIRH DELİCİ SATIR BURASI 🔥
-        // Veritabanındaki şifre sayı olsa bile metne çeviriyoruz, girilen şifreyi de metne çevirip eşleştiriyoruz.
-        if (String(dbPlayers.password).trim() === String(userPassInput).trim()) { 
-            isValid = true; 
-            uName = dbPlayers.name; 
+    // 🔥 ÇİFTE KALKAN: ÖNCE YEREL LİSTEYE (TEST_ACCOUNTS) BAK 🔥
+    if (TEST_ACCOUNTS[userIdInput]) {
+        if (TEST_ACCOUNTS[userIdInput].pass === String(userPassInput).trim()) {
+            isValid = true;
+            uName = TEST_ACCOUNTS[userIdInput].name;
         }
-    } else {
-        alert("Kullanıcı ID Karargahta bulunamadı! Genelkurmayla iletişime geçin.");
-        return;
+    } 
+    // EĞER YEREL LİSTEDE YOKSA, VERİTABANINA BAK
+    else {
+        const { data: dbPlayers } = await supabase.from('players').select('*').eq('username', userIdInput).single();
+        if (dbPlayers) {
+            // Şifreyi metin olarak alıp kıyasla (password veya pass sütunu)
+            const dbPass = dbPlayers.password || dbPlayers.pass;
+            if (String(dbPass).trim() === String(userPassInput).trim()) { 
+                isValid = true; 
+                uName = dbPlayers.name; 
+            }
+        }
     }
 
     if (isValid) {
