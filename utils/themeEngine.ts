@@ -426,7 +426,7 @@ export const localTeamLogos: Record<string, string> = {
   "ANDERLECHT": "https://images.fotmob.com/image_resources/logo/teamlogo/8635.png",
   "GENK": "https://images.fotmob.com/image_resources/logo/teamlogo/9987.png",
   "UNION SG": "https://images.fotmob.com/image_resources/logo/teamlogo/6806.png",
-  "USG": "https://images.fotmob.com/image_resources/logo/teamlogo/7978_large.png",
+  "UNION ST. GILLOISE": "https://images.fotmob.com/image_resources/logo/teamlogo/7978_large.png",
   "GENT": "https://images.fotmob.com/image_resources/logo/teamlogo/9996.png",
   "ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/10141.png",
   "ROYAL ANTWERP": "https://images.fotmob.com/image_resources/logo/teamlogo/9982.png",
