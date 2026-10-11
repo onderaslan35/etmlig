@@ -94,10 +94,8 @@ export default function LiveMatchCard() {
       const todayDate = parseDateLocal(todayDateStr);
       todayDate.setHours(0,0,0,0);
 
-      // 🔥 İŞTE EFSANEVİ ÇÖZÜM BURADA: standings (ANA KASA) TABLOSUNU ÇEKİYORUZ 🔥
-      const [leaderboardRes, standingsRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
+      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
           supabase.from('live_leaderboard').select('*'),
-          supabase.from('standings').select('*'),
           supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
           supabase.from('live_matches').select('*')
       ]);
@@ -135,40 +133,17 @@ export default function LiveMatchCard() {
       }
 
       const leaderboardData = leaderboardRes.data || [];
-      const standingsData = standingsRes.data || [];
       const dbLiveMatches = dbLiveMatchesRes.data || [];
 
-      // 🔥 ANA KASADAN PUANLARI HARMANLAMA MOTORU 🔥
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
-      
-      const uids = Array.from(new Set([
-          ...standingsData.map(s => String(s.user_id)), 
-          ...leaderboardData.map(l => String(l.id))
-      ]));
-
-      uids.forEach(uid => {
-          const name = mergedAccounts[uid]?.name || standingsData.find(s => String(s.user_id) === uid)?.user_name || leaderboardData.find(l => String(l.id) === uid)?.name || "ASLAN PARÇASI";
-          
-          const sTff = standingsData.find(s => String(s.user_id) === uid && s.league_type === 'TFF');
-          const sDfo = standingsData.find(s => String(s.user_id) === uid && s.league_type === 'DFO');
-          const sMaster = standingsData.find(s => String(s.user_id) === uid && s.league_type === 'MASTER');
-          const lData = leaderboardData.find(l => String(l.id) === uid);
-
-          // Puanı Ana Kasa'dan (standings) al, eğer orada yoksa eski view'e bak.
-          const tffPts = sTff ? sTff.points : (lData ? lData.tff_pts : 0);
-          const dfoPts = sDfo ? sDfo.points : (lData ? lData.dfo_pts : 0);
-          const masterPts = sMaster ? sMaster.points : (lData ? lData.master_pts : 0);
-          const skorPts = lData ? lData.skor_pts : 0; // Skor isabet sayısını viewden çekmeye devam ediyoruz
-
-          if (tffPts > 0) arrTFF.push({ id: uid, name, pts: tffPts });
-          if (dfoPts > 0) arrDFO.push({ id: uid, name, pts: dfoPts });
-          if (masterPts > 0) arrMASTER.push({ id: uid, name, pts: masterPts });
-          if (skorPts > 0) arrSKOR.push({ id: uid, name, pts: skorPts });
+      leaderboardData.forEach(row => {
+          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
+          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
+          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
+          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
       });
-
       const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
       arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
-      
       setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
       const pDict: Record<string, string> = {};
@@ -713,86 +688,6 @@ export default function LiveMatchCard() {
               {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
           </button>
       </div>
-
-      {/* 🔥 KOMUTANIN İSTEDİĞİ 6'LI LİDERLİK VİTRİNİ BURADA BAŞLIYOR 🔥 */}
-      <div className="w-full bg-slate-900/60 border border-slate-700/50 rounded-2xl p-4 shadow-xl mb-4 backdrop-blur-md">
-         <h2 className="text-center font-black text-amber-500 text-sm sm:text-base tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
-            <span className="text-xl">🏆</span> KARARGAH CANLI ZİRVE VİTRİNİ
-         </h2>
-         
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
-            {/* MASTER PUAN VİTRİNİ */}
-            <div className="bg-gradient-to-br from-amber-950/80 to-slate-900/80 border border-amber-600/50 rounded-xl p-3 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-               <h3 className="text-center font-black text-amber-400 text-[10px] tracking-widest mb-2 pb-2 border-b border-amber-800/50">👑 MASTER İLK 3</h3>
-               <div className="flex flex-col gap-1.5">
-                  {globalLiveRanks.MASTER.slice(0, 3).map((p, i) => (
-                     <div key={`m-${i}`} className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800">
-                        <span className="text-slate-300 font-bold text-[10px] uppercase truncate w-2/3">{i+1}. {p.name}</span>
-                        <span className="text-amber-500 font-black text-[10px]">{p.pts} P</span>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* DFO PUAN VİTRİNİ */}
-            <div className="bg-gradient-to-br from-blue-950/80 to-slate-900/80 border border-blue-600/50 rounded-xl p-3 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
-               <h3 className="text-center font-black text-blue-400 text-[10px] tracking-widest mb-2 pb-2 border-b border-blue-800/50">🌍 DFO İLK 3</h3>
-               <div className="flex flex-col gap-1.5">
-                  {globalLiveRanks.DFO.slice(0, 3).map((p, i) => (
-                     <div key={`d-${i}`} className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800">
-                        <span className="text-slate-300 font-bold text-[10px] uppercase truncate w-2/3">{i+1}. {p.name}</span>
-                        <span className="text-blue-400 font-black text-[10px]">{p.pts} P</span>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* TFF PUAN VİTRİNİ */}
-            <div className="bg-gradient-to-br from-red-950/80 to-slate-900/80 border border-red-600/50 rounded-xl p-3 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
-               <h3 className="text-center font-black text-red-400 text-[10px] tracking-widest mb-2 pb-2 border-b border-red-800/50">🇹🇷 TFF İLK 3</h3>
-               <div className="flex flex-col gap-1.5">
-                  {globalLiveRanks.TFF.slice(0, 3).map((p, i) => (
-                     <div key={`t-${i}`} className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800">
-                        <span className="text-slate-300 font-bold text-[10px] uppercase truncate w-2/3">{i+1}. {p.name}</span>
-                        <span className="text-red-400 font-black text-[10px]">{p.pts} P</span>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* MASTER SKOR VİTRİNİ */}
-            <div className="bg-gradient-to-br from-emerald-950/80 to-slate-900/80 border border-emerald-600/50 rounded-xl p-3 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-               <h3 className="text-center font-black text-emerald-400 text-[10px] tracking-widest mb-2 pb-2 border-b border-emerald-800/50">🎯 MASTER SKOR İLK 3</h3>
-               <div className="flex flex-col gap-1.5">
-                  {globalLiveRanks.SKOR.slice(0, 3).map((p, i) => (
-                     <div key={`sm-${i}`} className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800">
-                        <span className="text-slate-300 font-bold text-[10px] uppercase truncate w-2/3">{i+1}. {p.name}</span>
-                        <span className="text-emerald-400 font-black text-[10px]">{p.pts} İSABET</span>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* DFO SKOR VİTRİNİ (Şu an tabloda DFO SKOR yok, SKOR tablosunu kullanıyoruz) */}
-            <div className="bg-gradient-to-br from-cyan-950/80 to-slate-900/80 border border-cyan-600/50 rounded-xl p-3 shadow-[0_0_15px_rgba(6,182,212,0.2)] opacity-70">
-               <h3 className="text-center font-black text-cyan-400 text-[10px] tracking-widest mb-2 pb-2 border-b border-cyan-800/50">🎯 DFO SKOR İLK 3</h3>
-               <div className="flex flex-col gap-1.5">
-                  <div className="text-center text-slate-500 text-[9px] font-bold py-3 italic">Yakında Aktif Edilecek</div>
-               </div>
-            </div>
-
-            {/* TFF SKOR VİTRİNİ (Şu an tabloda TFF SKOR yok, SKOR tablosunu kullanıyoruz) */}
-            <div className="bg-gradient-to-br from-rose-950/80 to-slate-900/80 border border-rose-600/50 rounded-xl p-3 shadow-[0_0_15px_rgba(225,29,72,0.2)] opacity-70">
-               <h3 className="text-center font-black text-rose-400 text-[10px] tracking-widest mb-2 pb-2 border-b border-rose-800/50">🎯 TFF SKOR İLK 3</h3>
-               <div className="flex flex-col gap-1.5">
-                  <div className="text-center text-slate-500 text-[9px] font-bold py-3 italic">Yakında Aktif Edilecek</div>
-               </div>
-            </div>
-
-         </div>
-      </div>
-      {/* 🔥 6'LI LİDERLİK VİTRİNİ BURADA BİTİYOR 🔥 */}
 
       {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
       {todaysMatchesList.length === 0 ? (
