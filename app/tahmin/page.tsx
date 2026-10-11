@@ -31,11 +31,8 @@ export default function PredictionPortal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
-  
-  // 🔥 HAFTA SEÇİMİ İÇİN DÜZELTİLMİŞ STATE 🔥
   const [selectedEntryWeek, setSelectedEntryWeek] = useState<number>(0); 
 
-  // ÇİFT TARAFLI NEON LİSTELERİ
   const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
   const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
 
@@ -63,7 +60,6 @@ export default function PredictionPortal() {
              if (wArray.length > 0) {
                  const latest = Math.max(...wArray);
                  setActiveWeek(latest);
-                 // Sadece sayfa ilk açıldığında en son haftayı seçili yapıyoruz
                  if (selectedEntryWeek === 0) {
                      setSelectedEntryWeek(latest);
                  }
@@ -104,7 +100,6 @@ export default function PredictionPortal() {
      return () => { supabase.removeChannel(channel); };
   }, [activeWeek]);
 
-  // 🔥 HAFTA DEĞİŞTİKÇE YEŞİL VE KIRMIZI LİSTELERİ ANINDA GÜNCELLEYEN MOTOR 🔥
   useEffect(() => {
       if (selectedEntryWeek === 0 || Object.keys(systemPlayers).length === 0) return;
 
@@ -150,7 +145,12 @@ export default function PredictionPortal() {
 
     const { data: dbPlayers } = await supabase.from('players').select('*').eq('username', userIdInput).single();
     if (dbPlayers) {
-        if (dbPlayers.password === userPassInput) { isValid = true; uName = dbPlayers.name; }
+        // 🔥 İŞTE BÜTÜN SORUNU ÇÖZEN ZIRH DELİCİ SATIR BURASI 🔥
+        // Veritabanındaki şifre sayı olsa bile metne çeviriyoruz, girilen şifreyi de metne çevirip eşleştiriyoruz.
+        if (String(dbPlayers.password).trim() === String(userPassInput).trim()) { 
+            isValid = true; 
+            uName = dbPlayers.name; 
+        }
     } else {
         alert("Kullanıcı ID Karargahta bulunamadı! Genelkurmayla iletişime geçin.");
         return;
