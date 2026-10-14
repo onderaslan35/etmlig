@@ -9,7 +9,7 @@ const matchesData = [
   { id: 4, home: "FENERBAHÇE", away: "STURM GRAZ", type: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 4, date: "5 Ağustos | 21:00" },
   { id: 5, home: "PANATHINAIKOS", away: "CSKA 1948", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 5, date: "5 Ağustos | 21:30" },
   { id: 6, home: "PAIDE LINNAMEESKOND", away: "RAPID WIEN", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 6, date: "6 Ağustos | 19:00" },
-  { id: 7, home: "HRADEC KRALOVE", away: "BEŞİKTAŞ", type: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 7, date: "6 Ağustos | 20:00" },
+  { id: 7, home: "HRADEC KRALOVE", away: "BEŞIKTAŞ", type: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 7, date: "6 Ağustos | 20:00" },
   { id: 8, home: "DEBRECEN", away: "KOPENAG", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 8, date: "6 Ağustos | 20:00" },
   { id: 9, home: "DINAMO KIEV", away: "KARABAĞ FK", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 9, date: "6 Ağustos | 20:00" },
   { id: 10, home: "GOTEBORG", away: "GENT", type: "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ", matchNo: 10, date: "6 Ağustos | 20:00" },

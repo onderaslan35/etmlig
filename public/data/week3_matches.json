@@ -5,7 +5,7 @@
   {"id": 4, "week": 3, "home": "FENERBAHÇE", "away": "STURM GRAZ", "time": "21:00", "date": "05.08.2026", "dateLabel": "5 AĞUSTOS ÇARŞAMBA", "league": "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 5, "week": 3, "home": "PANATHINAIKOS", "away": "CSKA 1948", "time": "21:30", "date": "05.08.2026", "dateLabel": "5 AĞUSTOS ÇARŞAMBA", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 6, "week": 3, "home": "PAIDE LINNAMEESKOND", "away": "RAPID WIEN", "time": "19:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
-  {"id": 7, "week": 3, "home": "HRADEC KRALOVE", "away": "BEŞİKTAŞ", "time": "20:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
+  {"id": 7, "week": 3, "home": "HRADEC KRALOVE", "away": "BEŞIKTAŞ", "time": "20:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 8, "week": 3, "home": "DEBRECEN", "away": "KOPENAG", "time": "20:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 9, "week": 3, "home": "DINAMO KIEV", "away": "KARABAĞ FK", "time": "20:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},
   {"id": 10, "week": 3, "home": "GOTEBORG", "away": "GENT", "time": "20:00", "date": "06.08.2026", "dateLabel": "6 AĞUSTOS PERŞEMBE", "league": "UEFA KONFERANS LİGİ ÖN ELEME 3.TUR İLK MAÇ"},

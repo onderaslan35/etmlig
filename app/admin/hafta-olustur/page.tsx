@@ -26,7 +26,7 @@ const MOCK_FIXTURES: MatchItem[] = [
   { id: 3, mac_no: 3, ev_sahibi: "USG", deplasman: "BODO", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
   { id: 4, mac_no: 4, ev_sahibi: "FENERBAHÇE", deplasman: "STURM GRAZ", tur: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 3", kategori: "dfo" },
   { id: 5, mac_no: 5, ev_sahibi: "PANATHINAIKOS", deplasman: "CSKA 1948", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
-  { id: 6, mac_no: 6, ev_sahibi: "HRADEC KRALOVE", deplasman: "BEŞİKTAŞ", tur: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İL", kategori: "dfo" },
+  { id: 6, mac_no: 6, ev_sahibi: "HRADEC KRALOVE", deplasman: "BEŞIKTAŞ", tur: "UEFA AVRUPA LİGİ ÖN ELEME 3.TUR İL", kategori: "dfo" },
   { id: 7, mac_no: 7, ev_sahibi: "DEBRECEN", deplasman: "KOPENAG", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
   { id: 8, mac_no: 8, ev_sahibi: "DINAMO KIEV", deplasman: "KARABAĞ FK", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },
   { id: 9, mac_no: 9, ev_sahibi: "GOTEBORG", deplasman: "GENT", tur: "UEFA KONFERANS LİGİ ÖN ELEME 3.Tİ", kategori: "dfo" },

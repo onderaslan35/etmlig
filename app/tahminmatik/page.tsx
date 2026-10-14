@@ -73,7 +73,7 @@ const week4Matches = [
   { id: 1, title: "4. HAFTA 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME", homeTeam: "STURM GRAZ", awayTeam: "FENERBAHÇE" },
   { id: 2, title: "4. HAFTA 2. MAÇ", category: "UEFA SÜPER KUPA", homeTeam: "PARIS SAINT-GERMAIN", awayTeam: "ASTON VILLA" },
   { id: 3, title: "4. HAFTA 3. MAÇ", category: "UEFA KONFERANS LİGİ ÖN ELEME", homeTeam: "KARABAĞ FK", awayTeam: "DINAMO KIEV" },
-  { id: 4, title: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME", homeTeam: "BEŞİKTAŞ", awayTeam: "HRADEC KRALOVE" },
+  { id: 4, title: "4. HAFTA 4. MAÇ", category: "UEFA AVRUPA LİGİ ÖN ELEME", homeTeam: "BEŞIKTAŞ", awayTeam: "HRADEC KRALOVE" },
   { id: 5, title: "4. HAFTA 5. MAÇ", category: "TÜRKİYE SÜPER LİG", homeTeam: "GALATASARAY", awayTeam: "ÇORUM FK" },
   { id: 6, title: "4. HAFTA 6. MAÇ", category: "TÜRKİYE 1.LİG", homeTeam: "EROKSPOR", awayTeam: "SARIYER" },
   { id: 7, title: "4. HAFTA 7. MAÇ", category: "TÜRKİYE SÜPER LİG", homeTeam: "KASIMPAŞA", awayTeam: "TRABZONSPOR" },
