@@ -85,21 +85,18 @@ export default function AdminRadarPortal() {
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
   const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); 
 
-  // 🔥 YENİ SİSTEM BÜLTEN DEĞİŞKENLERİ 🔥
+  // 🔥 MANUEL API ÇEKİMİ İÇİN YENİ STATE 🔥
+  const [isManualFetching, setIsManualFetching] = useState(false);
+
   const [apiHavuz, setApiHavuz] = useState<any[]>([]);
-  
-  // ⚡ SABİT SLOT DEĞİŞİKLİĞİ: secilenMaclar artık her zaman 24 elemanlı (boşsa null) bir dizi olacak! ⚡
   const [secilenMaclar, setSecilenMaclar] = useState<any[]>(Array(24).fill(null));
-  
   const [isHavuzLoading, setIsHavuzLoading] = useState(false);
 
-  // 🎯 YENİ SİSTEM: TARİH VE SAAT FİLTRELERİ 🎯
   const [havuzBaslangicTarihi, setHavuzBaslangicTarihi] = useState('');
   const [havuzBitisTarihi, setHavuzBitisTarihi] = useState('');
   const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState('15:00'); 
   const [havuzBitisSaati, setHavuzBitisSaati] = useState('23:59');
 
-  // 🏆 YENİ SİSTEM: LİG FİLTRELERİ 🏆
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
   const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
 
@@ -111,19 +108,25 @@ export default function AdminRadarPortal() {
      }
   };
 
-  useEffect(() => {
-    if (isAuthenticated && activeTab === 'live') {
-      const apiRadar = setInterval(async () => {
-        try {
-          await fetch('/api/canli-skor'); 
-        } catch (e) {
-          console.log("Radar hatası:", e);
-        }
-      }, 30000); 
+  // 🔥 DİKKAT: ARKA PLANDA HER 30 SANİYEDE BİR ÇALIŞIP 100 LİMİTİNİ BİTİREN OTOMATİK "/api/canli-skor" KODU TAMAMEN SİLİNDİ! 🔥
 
-      return () => clearInterval(apiRadar);
-    }
-  }, [isAuthenticated, activeTab]);
+  // 🔥 YENİ EKLENEN MANUEL API ÇEKİM FONKSİYONU 🔥
+  const handleManualApiFetch = async () => {
+     setIsManualFetching(true);
+     try {
+        const res = await fetch('/api/canli-skor');
+        if (res.ok) {
+           alert("✅ Manuel uydu taraması başarılı! Güncel skorlar çekildi.");
+        } else {
+           alert("⚠️ Uyarı: API'den veri çekilirken hata oluştu. Günlük 100 limitiniz dolmuş olabilir.");
+        }
+     } catch (e) {
+        console.log("Radar hatası:", e);
+        alert("❌ Bağlantı hatası!");
+     } finally {
+        setIsManualFetching(false);
+     }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1322,15 +1325,27 @@ export default function AdminRadarPortal() {
             </div>
             )}
 
-            {/* 🔥 KOMUTANIN DEV TOPLU İŞLEM BUTONU 🔥 */}
+            {/* 🔥 KOMUTANIN DEV TOPLU İŞLEM VE MANUEL API BUTONLARI 🔥 */}
             {userRole === 'master' && (
-              <div className="w-full flex justify-center mb-8">
+              <div className="w-full flex flex-col sm:flex-row justify-center gap-4 mb-8 max-w-5xl mx-auto">
                   <button 
                       onClick={handleBulkSilentLive}
-                      className="bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1 w-full max-w-3xl"
+                      className="flex-1 bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
                   >
-                      <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BUGÜNÜN BÜTÜN MAÇLARINI TOPLU OLARAK CANLIYA AL</span>
-                      <span className="text-[10px] sm:text-xs text-amber-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Sessiz Mod: Puanlar gizlenir, spoiler engellenir, API saatinde otomatik çeker.</span>
+                      <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BÜTÜN MAÇLARI CANLIYA AL</span>
+                      <span className="text-[10px] sm:text-xs text-amber-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Sessiz Mod: Puanlar gizlenir, spoiler engellenir.</span>
+                  </button>
+
+                  <button 
+                      onClick={handleManualApiFetch}
+                      disabled={isManualFetching}
+                      className="flex-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                  >
+                      <span className="flex items-center gap-2">
+                          <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
+                          {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : 'MANUEL API ÇEK (1 KONTÖR)'}
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-blue-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">100 limitini korur. Sadece basınca çeker.</span>
                   </button>
               </div>
             )}
@@ -1506,7 +1521,6 @@ export default function AdminRadarPortal() {
                               <div className="bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-black px-6 py-2 rounded-lg border border-emerald-500/30 uppercase tracking-widest shadow-inner inline-block w-full">
                                 ✅ BU MAÇIN PUANLARI DAĞITILDI
                               </div>
-                              {/* 🔥 SIFIRLAMA KİLİDİ KALDIRILDI! Skorcular da hata yaparsa düzeltebilecek 🔥 */}
                               <button onClick={() => handleAction('Geri Al', match.match_index, match, currentWinners, displayPoints)} className="bg-red-900/80 hover:bg-red-700 text-red-200 text-[9px] font-bold px-3 py-1.5 rounded uppercase border border-red-500/50 transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)] mt-2 w-3/4 mx-auto block">
                                 İPTAL ET & PUANLARI GERİ AL
                               </button>
@@ -1519,7 +1533,6 @@ export default function AdminRadarPortal() {
                               <button onClick={() => handleAction('Maçı Onayla (Puan Dağıt)', match.match_index, match, currentWinners, displayPoints)} className="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]">
                                 2. ADIM: MAÇI BİTİR (DAĞIT)
                               </button>
-                              {/* 🔥 SIFIRLAMA KİLİDİ KALDIRILDI! Skorcular da hata yaparsa düzeltebilecek 🔥 */}
                               <button onClick={() => handleAction('Resetle', match.match_index, match, currentWinners, displayPoints)} className="bg-red-600/80 hover:bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded uppercase border border-red-400 transition-all shadow-md">
                                 SIFIRLA
                               </button>
@@ -1566,7 +1579,6 @@ export default function AdminRadarPortal() {
                            <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
                               {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                            </span>
-                           {/* DİPLOMASİ UYGULANDI: Skorcular hiçbir uyarı veya gizlilik mesajı görmeyecek, sadece tertemiz bir ekran görecekler. */}
                         </div>
                     )}
                     {/* 🔥 KÖR NOKTA PROTOKOLÜ BİTTİ 🔥 */}
@@ -2083,4 +2095,4 @@ export default function AdminRadarPortal() {
       </div>
     </div>
   );
-} 
+}
