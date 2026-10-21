@@ -13,9 +13,7 @@ import {
   getUniqueMatchId,
   isTffMatchCheck,
   getMatchTimeMs,
-  getEliteTheme,
-  localTeamLogos,
-  getLocalLogoUrl
+  getEliteTheme
 } from '@/utils/themeEngine';
 
 const timeOptionsArr = generateTimeOptions();
@@ -83,7 +81,6 @@ export default function AdminRadarPortal() {
 
   const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
-  const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); 
 
   // 🔥 MANUEL API ÇEKİMİ VE KONTÖR TAKİBİ 🔥
   const [isManualFetching, setIsManualFetching] = useState(false);
@@ -100,6 +97,35 @@ export default function AdminRadarPortal() {
 
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
   const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
+
+  const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({});
+  const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
+
+  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(0); 
+  const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([]);
+  const [systemActiveWeek, setSystemActiveWeek] = useState<number>(0);
+
+  const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
+  const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
+  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
+  const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
+  const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
+  const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
+
+  const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
+  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
+  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+
+  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(0);
+  const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
+  const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
+  const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    setAdminScores({});
+    setLiveMatchesDB([]);
+    setLiveInfoStateMap({});
+  }, [selectedLiveWeek]);
 
   const toggleLigFiltresi = (id: string) => {
      if (seciliLigFiltreleri.includes(id)) {
@@ -138,18 +164,93 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 YENİ EKLENEN MANUEL API ÇEKİM FONKSİYONU 🔥
+  // 🔥 YEPYENİ: DOĞRUDAN UYDU BAĞLANTISI (VERCEL CACHE İPTAL) 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
-        const res = await fetch('/api/canli-skor');
-        if (res.ok) {
-           alert("✅ Manuel uydu taraması başarılı! Güncel skorlar Karargaha indirildi.");
-           // Skoru çektikten 2 saniye sonra kontörü tekrar kontrol et ki güncel sayıyı göstersin
-           setTimeout(() => { checkApiLimit(); }, 2000);
-        } else {
-           alert("⚠️ Uyarı: API'den veri çekilirken hata oluştu. Günlük 100 limitiniz tamamen bitmiş olabilir!");
+        const maclarWithApiId = liveMatchesDB.filter(m => m.api_match_id);
+
+        if (maclarWithApiId.length === 0) {
+           alert("⚠️ Bültende API ile eşleşmiş (uydu ID'si olan) hiçbir maç yok! Lütfen önce bülten yaparken 'API ÇEK' ile maçları eşleştirin.");
+           setIsManualFetching(false);
+           return;
         }
+
+        const allIds = maclarWithApiId.map(m => m.api_match_id);
+        let allFixtures: any[] = [];
+
+        for (let i = 0; i < allIds.length; i += 20) {
+            const idsChunk = allIds.slice(i, i + 20).join('-');
+            const res = await fetch(`https://v3.football.api-sports.io/fixtures?ids=${idsChunk}`, {
+               headers: {
+                  'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+                  'x-rapidapi-host': 'v3.football.api-sports.io'
+               }
+            });
+            const data = await res.json();
+            
+            if (data.errors && Object.keys(data.errors).length > 0) {
+               alert("❌ API HATASI (Günlük limitiniz bitmiş olabilir): " + JSON.stringify(data.errors));
+               setIsManualFetching(false);
+               return;
+            }
+
+            if (data.response && data.response.length > 0) {
+                allFixtures = [...allFixtures, ...data.response];
+            }
+        }
+
+        if (allFixtures.length === 0) {
+           alert(`⚠️ Uydu yanıt verdi ancak maçların canlı verisine ulaşılamadı.`);
+           setIsManualFetching(false);
+           return;
+        }
+
+        const nowTime = new Date();
+        const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
+
+        const updates = [];
+
+        for (const bultenMaci of maclarWithApiId) {
+            const fixtureId = bultenMaci.api_match_id;
+            const fix = allFixtures.find((f: any) => f.fixture.id == fixtureId);
+            
+            if (fix) {
+                const uniqueId = getUniqueMatchId(selectedLiveWeek, bultenMaci.match_index);
+                
+                let homeScore = fix.goals.home !== null ? String(fix.goals.home) : '-';
+                let awayScore = fix.goals.away !== null ? String(fix.goals.away) : '-';
+                let status = fix.fixture.status.short; 
+                
+                if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(status)) status = 'LIVE';
+                else if (['FT', 'AET', 'PEN'].includes(status)) status = 'FINISHED';
+
+                updates.push({
+                   id: uniqueId,
+                   api_match_id: fixtureId,
+                   home_score: homeScore,
+                   away_score: awayScore,
+                   status: status,
+                   updated_by: 'MASTER_RADAR',
+                   updated_at: timeString,
+                   events: JSON.stringify(fix.events || []),
+                   elapsed: fix.fixture.status.elapsed
+                });
+            }
+        }
+
+        if (updates.length > 0) {
+            const { error } = await supabase.from('live_matches').upsert(updates, { onConflict: 'id' });
+            if (error) {
+                alert("❌ Supabase güncellenirken hata: " + error.message);
+            } else {
+                alert(`✅ Radar Başarılı! Ekranda API uydusuna bağlı olan ${updates.length} adet maçın verisi Karargaha işlendi.`);
+                setTimeout(() => { checkApiLimit(); }, 1500); 
+            }
+        } else {
+            alert("⚠️ Veriler çekildi ancak Karargaha yazılacak güncel bir değişiklik bulunamadı.");
+        }
+
      } catch (e) {
         console.log("Radar hatası:", e);
         alert("❌ Uydu bağlantı hatası!");
@@ -177,47 +278,6 @@ export default function AdminRadarPortal() {
          }).catch(e => console.log("Ses kilidi açılamadı:", e));
      }
   };
-
-  const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({});
-  const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
-
-  const [selectedLiveWeek, setSelectedLiveWeek] = useState<number>(0); 
-  const [liveWeekOptions, setLiveWeekOptions] = useState<number[]>([]);
-  const [systemActiveWeek, setSystemActiveWeek] = useState<number>(0);
-
-  useEffect(() => {
-    setAdminScores({});
-    setLiveMatchesDB([]);
-    setLiveInfoStateMap({});
-  }, [selectedLiveWeek]);
-
-  const [liveMatchesDB, setLiveMatchesDB] = useState<any[]>([]);
-  const [adminScores, setAdminScores] = useState<Record<number, { home: string, away: string }>>({});
-  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: number]: boolean }>({});
-  const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
-  const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
-  const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
-
-  const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
-  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
-  const [isPublishing, setIsPublishing] = useState<boolean>(false);
-
-  const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(0);
-  const [submittedPlayers, setSubmittedPlayers] = useState<string[]>([]);
-  const [missingPlayers, setMissingPlayers] = useState<string[]>([]);
-  const [playerPredictionsMap, setPlayerPredictionsMap] = useState<Record<string, string[]>>({});
-
-  const [bulletinMatches, setBulletinMatches] = useState(
-    Array.from({ length: 24 }, (_, i) => ({
-      match_index: i + 1,
-      category: '',
-      match_date: generateWeekDates(6)[0],
-      match_time: '21:00',
-      home_team: '',
-      away_team: '',
-      api_match_id: '' 
-    }))
-  );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -520,7 +580,7 @@ export default function AdminRadarPortal() {
               api_match_id: existing?.api_match_id || '' 
             };
           });
-          setBulletinMatches(mapped as any);
+          (mapped as any);
 
           const loadedSecilen = Array(24).fill(null);
           data.forEach(m => {
@@ -537,7 +597,7 @@ export default function AdminRadarPortal() {
           setSecilenMaclar(loadedSecilen);
 
         } else {
-          setBulletinMatches(Array.from({ length: 24 }, (_, i) => ({
+          (Array.from({ length: 24 }, (_, i) => ({
             match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: '', api_match_id: ''
           })));
           setSecilenMaclar(Array(24).fill(null)); 
