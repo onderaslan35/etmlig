@@ -85,8 +85,9 @@ export default function AdminRadarPortal() {
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
   const [isAutoMatching, setIsAutoMatching] = useState<boolean>(false); 
 
-  // 🔥 MANUEL API ÇEKİMİ İÇİN YENİ STATE 🔥
+  // 🔥 MANUEL API ÇEKİMİ VE KONTÖR TAKİBİ 🔥
   const [isManualFetching, setIsManualFetching] = useState(false);
+  const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
 
   const [apiHavuz, setApiHavuz] = useState<any[]>([]);
   const [secilenMaclar, setSecilenMaclar] = useState<any[]>(Array(24).fill(null));
@@ -108,7 +109,34 @@ export default function AdminRadarPortal() {
      }
   };
 
-  // 🔥 DİKKAT: ARKA PLANDA HER 30 SANİYEDE BİR ÇALIŞIP 100 LİMİTİNİ BİTİREN OTOMATİK "/api/canli-skor" KODU TAMAMEN SİLİNDİ! 🔥
+  // 🔥 API KONTÖRÜNÜ ÖĞRENEN SİNSİ RADAR (KONTÖR HARCAMAZ) 🔥
+  const checkApiLimit = async () => {
+      try {
+          const res = await fetch('https://v3.football.api-sports.io/status', {
+              headers: {
+                  'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+                  'x-rapidapi-host': 'v3.football.api-sports.io'
+              }
+          });
+          const data = await res.json();
+          if (data.response && data.response.subscription) {
+              const current = data.response.requests.current;
+              const limit = data.response.requests.limit_day;
+              setApiLimitRemaining(limit - current);
+          } else {
+              setApiLimitRemaining('?');
+          }
+      } catch (e) {
+          console.error("Limit kontrol hatası:", e);
+          setApiLimitRemaining('?');
+      }
+  };
+
+  useEffect(() => {
+      if (isAuthenticated && activeTab === 'live') {
+          checkApiLimit();
+      }
+  }, [isAuthenticated, activeTab]);
 
   // 🔥 YENİ EKLENEN MANUEL API ÇEKİM FONKSİYONU 🔥
   const handleManualApiFetch = async () => {
@@ -116,13 +144,15 @@ export default function AdminRadarPortal() {
      try {
         const res = await fetch('/api/canli-skor');
         if (res.ok) {
-           alert("✅ Manuel uydu taraması başarılı! Güncel skorlar çekildi.");
+           alert("✅ Manuel uydu taraması başarılı! Güncel skorlar Karargaha indirildi.");
+           // Skoru çektikten 2 saniye sonra kontörü tekrar kontrol et ki güncel sayıyı göstersin
+           setTimeout(() => { checkApiLimit(); }, 2000);
         } else {
-           alert("⚠️ Uyarı: API'den veri çekilirken hata oluştu. Günlük 100 limitiniz dolmuş olabilir.");
+           alert("⚠️ Uyarı: API'den veri çekilirken hata oluştu. Günlük 100 limitiniz tamamen bitmiş olabilir!");
         }
      } catch (e) {
         console.log("Radar hatası:", e);
-        alert("❌ Bağlantı hatası!");
+        alert("❌ Uydu bağlantı hatası!");
      } finally {
         setIsManualFetching(false);
      }
@@ -1325,8 +1355,8 @@ export default function AdminRadarPortal() {
             </div>
             )}
 
-            {/* 🔥 KOMUTANIN DEV TOPLU İŞLEM VE MANUEL API BUTONLARI 🔥 */}
-            {userRole === 'master' && (
+            {/* 🔥 KOMUTANIN DEV TOPLU İŞLEM VE MANUEL API BUTONLARI (SKORCULAR DA GÖRECEK) 🔥 */}
+            {(userRole === 'master' || userRole?.startsWith('skorcum')) && (
               <div className="w-full flex flex-col sm:flex-row justify-center gap-4 mb-8 max-w-5xl mx-auto">
                   <button 
                       onClick={handleBulkSilentLive}
@@ -1343,7 +1373,7 @@ export default function AdminRadarPortal() {
                   >
                       <span className="flex items-center gap-2">
                           <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
-                          {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : 'MANUEL API ÇEK (1 KONTÖR)'}
+                          {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `MANUEL API ÇEK (KALAN KONTÖR: ${apiLimitRemaining})`}
                       </span>
                       <span className="text-[10px] sm:text-xs text-blue-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">100 limitini korur. Sadece basınca çeker.</span>
                   </button>
