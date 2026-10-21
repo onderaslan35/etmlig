@@ -83,10 +83,26 @@ export default function LiveMatchCard() {
      fetchDbPlayers();
   }, []);
 
+  // KRONOMETREYİ BESLEYEN ZAMAN DÖNGÜSÜ
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // 🔥 OTOMATİK KRONOMETRE MOTORU 🔥
+  const getDynamicElapsed = (logInfo: any) => {
+     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
+     const parts = logInfo.updated_at.split(':');
+     if (parts.length >= 2) {
+         const upDate = new Date(now);
+         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
+         let diffMs = now - upDate.getTime();
+         if (diffMs < -43200000) diffMs += 86400000; // Gece yarısı geçiş düzeltmesi
+         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
+         return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
+     }
+     return `${logInfo.elapsed}'`;
+  };
 
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
@@ -132,7 +148,6 @@ export default function LiveMatchCard() {
           }
       }
 
-      // 🔥 SAF OTOMASYON: Puanlar Supabase'in Kendi Tablosundan Direkt Çekilir 🔥
       const leaderboardData = leaderboardRes.data || [];
       let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
       leaderboardData.forEach(row => {
@@ -330,7 +345,6 @@ export default function LiveMatchCard() {
         }
       }
 
-      // 🔥 SAF OTOMASYON DURUM KONTROLÜ 🔥
       const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
       const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus);
       const isHT = matchStatus === 'HT';
@@ -346,20 +360,15 @@ export default function LiveMatchCard() {
       const systemTimeEvent = safeEvents.find((e: any) => e.type === 'SystemTime');
       const safeExtra = systemTimeEvent ? systemTimeEvent.detail : null;
 
+      // 🔥 YENİ: KRONOMETRE ÇAĞRISI BURAYA ENTEGRE EDİLDİ 🔥
       let displayMinute = '';
-      if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
-         if (safeExtra) { 
-             displayMinute = `${safeElapsed}+${safeExtra}'`; 
-         } else { 
-             displayMinute = `${safeElapsed}'`; 
-         }
-      } else if (isLiveStatus) {
-         const diffMins = Math.floor((now - matchTimeMs) / 60000);
-         if (diffMins >= 120) displayMinute = `90+'`; 
-         else if (diffMins >= 60) displayMinute = `${diffMins - 15}'`; 
-         else if (diffMins >= 45) displayMinute = `HT`;
-         else if (diffMins > 0) displayMinute = `${diffMins}'`;
-         else displayMinute = `1'`;
+      if (isLiveStatus) {
+         displayMinute = getDynamicElapsed(dbMatch);
+      } else if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
+         if (safeExtra) displayMinute = `${safeElapsed}+${safeExtra}'`; 
+         else displayMinute = `${safeElapsed}'`; 
+      } else {
+         displayMinute = `1'`;
       }
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
