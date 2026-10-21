@@ -164,61 +164,51 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 YEPYENİ: FREE PLAN (ÜCRETSİZ) UYUMLU MANUEL API ÇEKİMİ 🔥
+  // 🔥 YEPYENİ: ULTRA TASARRUF MODU (SADECE BUGÜNÜ ÇEKER, KESİN 1 KONTÖR YER) 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
-        const maclarWithApiId = liveMatchesDB.filter(m => m.api_match_id);
+        const todayStr = getTodayDateString();
+        const maclarWithApiId = liveMatchesDB.filter(m => m.api_match_id && m.match_date === todayStr);
 
         if (maclarWithApiId.length === 0) {
-           alert("⚠️ Bültende API ile eşleşmiş (uydu ID'si olan) hiçbir maç yok! Lütfen önce bülten yaparken 'API ÇEK' ile maçları eşleştirin.");
+           alert(`⚠️ Bültende BUGÜN (${todayStr}) oynanacak API destekli maç yok!\nKontör israfını önlemek için uydudan veri çekilmedi.`);
            setIsManualFetching(false);
            return;
         }
 
-        // Karargahtaki maçların tarihlerini (Örn: 21.10.2026) topla
-        const datesToFetch = Array.from(new Set(maclarWithApiId.map(m => m.match_date)));
-        let allFixtures: any[] = [];
-
-        // Her bir tarih için "Günün Tüm Maçlarını" çek
-        for (const dateStr of datesToFetch) {
-            let formattedDate = dateStr;
-            if (formattedDate.includes('.')) {
-                const parts = formattedDate.split('.');
-                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // YYYY-MM-DD formatı
-            }
-
-            const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
-               headers: {
-                  'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
-                  'x-rapidapi-host': 'v3.football.api-sports.io'
-               }
-            });
-            const data = await res.json();
-            
-            if (data.errors && Object.keys(data.errors).length > 0) {
-               alert("❌ API HATASI: " + JSON.stringify(data.errors));
-               setIsManualFetching(false);
-               return;
-            }
-
-            if (data.response && data.response.length > 0) {
-                allFixtures = [...allFixtures, ...data.response];
-            }
+        let formattedDate = todayStr;
+        if (formattedDate.includes('.')) {
+            const parts = formattedDate.split('.');
+            formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
         }
 
-        if (allFixtures.length === 0) {
-           alert(`⚠️ Uydu yanıt verdi ancak maçların canlı verisine ulaşılamadı.`);
+        const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
+           headers: {
+              'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+              'x-rapidapi-host': 'v3.football.api-sports.io'
+           }
+        });
+        const data = await res.json();
+        
+        if (data.errors && Object.keys(data.errors).length > 0) {
+           alert("❌ API HATASI: " + JSON.stringify(data.errors));
            setIsManualFetching(false);
            return;
         }
 
+        if (!data.response || data.response.length === 0) {
+           alert(`⚠️ Uydu bugün için boş yanıt verdi. Maç verisine ulaşılamadı.`);
+           setIsManualFetching(false);
+           return;
+        }
+
+        const allFixtures = data.response;
         const nowTime = new Date();
         const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
 
         const updates = [];
 
-        // Gelen devasa havuzdan sadece Karargah'taki maçları (fixtureId) bul
         for (const bultenMaci of maclarWithApiId) {
             const fixtureId = bultenMaci.api_match_id;
             const fix = allFixtures.find((f: any) => f.fixture.id == fixtureId);
@@ -252,11 +242,11 @@ export default function AdminRadarPortal() {
             if (error) {
                 alert("❌ Supabase güncellenirken hata: " + error.message);
             } else {
-                alert(`✅ Radar Başarılı! Ekranda API uydusuna bağlı olan ${updates.length} adet maçın verisi Karargaha işlendi.`);
+                alert(`✅ Ultra Radar Başarılı! Ekranda BUGÜN oynanan ${updates.length} adet maçın verisi Karargaha işlendi.`);
                 setTimeout(() => { checkApiLimit(); }, 1500); 
             }
         } else {
-            alert("⚠️ Veriler çekildi ancak Karargaha yazılacak güncel bir değişiklik bulunamadı.");
+            alert("⚠️ Veriler çekildi ancak bugünün maçları için güncel bir değişiklik bulunamadı.");
         }
 
      } catch (e) {
@@ -1275,6 +1265,21 @@ export default function AdminRadarPortal() {
       return true; 
   });
 
+  // 🔥 OTOMATİK KRONOMETRE HESAPLAMA (API GEREKTİRMEZ) 🔥
+  const getDynamicElapsed = (logInfo: any) => {
+     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
+     const parts = logInfo.updated_at.split(':');
+     if (parts.length >= 2) {
+         const upDate = new Date(now);
+         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
+         let diffMs = now - upDate.getTime();
+         if (diffMs < -43200000) diffMs += 86400000; 
+         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
+         return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
+     }
+     return `${logInfo.elapsed}'`;
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
@@ -1441,9 +1446,9 @@ export default function AdminRadarPortal() {
                   >
                       <span className="flex items-center gap-2">
                           <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
-                          {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `MANUEL API ÇEK (KALAN KONTÖR: ${apiLimitRemaining})`}
+                          {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK (KALAN KONTÖR: ${apiLimitRemaining})`}
                       </span>
-                      <span className="text-[10px] sm:text-xs text-blue-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">100 limitini korur. Sadece basınca çeker.</span>
+                      <span className="text-[10px] sm:text-xs text-blue-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Kesin Tasarruf: 1 Tık = 1 Kontör. Sadece bugünü tarar.</span>
                   </button>
               </div>
             )}
@@ -1553,6 +1558,12 @@ export default function AdminRadarPortal() {
 
                 const isLocked = distributedMatches[match.match_index];
                 const logInfo = liveInfoStateMap[match.match_index];
+                // 🔥 KRONOMETRE HESAPLAYICI ÇAĞRISI 🔥
+                let timerBadge = "BEKLİYOR";
+                let badgeClass = "text-slate-300";
+                if (logInfo?.status === 'FINISHED') { timerBadge = "BİTTİ (FT)"; badgeClass = "text-emerald-400"; }
+                else if (logInfo?.status === 'HT') { timerBadge = "DEVRE ARASI"; badgeClass = "text-amber-400"; }
+                else if (logInfo?.status === 'LIVE') { timerBadge = `🔴 CANLI (${getDynamicElapsed(logInfo)})`; badgeClass = "text-red-400 animate-pulse"; }
 
                 return (
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
@@ -1570,7 +1581,7 @@ export default function AdminRadarPortal() {
                             {match.week_num}. Hafta - {match.match_index}. MAÇ ({match.match_date} - {match.match_time})
                           </span>
                           <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                            🏆 {match.category}
+                            🏆 {match.category} - <span className={badgeClass}>{timerBadge}</span>
                           </span>
                         </div>
 
