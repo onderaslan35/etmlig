@@ -164,7 +164,7 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 YEPYENİ: DOĞRUDAN UYDU BAĞLANTISI (VERCEL CACHE İPTAL) 🔥
+  // 🔥 YEPYENİ: FREE PLAN (ÜCRETSİZ) UYUMLU MANUEL API ÇEKİMİ 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
@@ -176,12 +176,19 @@ export default function AdminRadarPortal() {
            return;
         }
 
-        const allIds = maclarWithApiId.map(m => m.api_match_id);
+        // Karargahtaki maçların tarihlerini (Örn: 21.10.2026) topla
+        const datesToFetch = Array.from(new Set(maclarWithApiId.map(m => m.match_date)));
         let allFixtures: any[] = [];
 
-        for (let i = 0; i < allIds.length; i += 20) {
-            const idsChunk = allIds.slice(i, i + 20).join('-');
-            const res = await fetch(`https://v3.football.api-sports.io/fixtures?ids=${idsChunk}`, {
+        // Her bir tarih için "Günün Tüm Maçlarını" çek
+        for (const dateStr of datesToFetch) {
+            let formattedDate = dateStr;
+            if (formattedDate.includes('.')) {
+                const parts = formattedDate.split('.');
+                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // YYYY-MM-DD formatı
+            }
+
+            const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
                headers: {
                   'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
                   'x-rapidapi-host': 'v3.football.api-sports.io'
@@ -190,7 +197,7 @@ export default function AdminRadarPortal() {
             const data = await res.json();
             
             if (data.errors && Object.keys(data.errors).length > 0) {
-               alert("❌ API HATASI (Günlük limitiniz bitmiş olabilir): " + JSON.stringify(data.errors));
+               alert("❌ API HATASI: " + JSON.stringify(data.errors));
                setIsManualFetching(false);
                return;
             }
@@ -211,6 +218,7 @@ export default function AdminRadarPortal() {
 
         const updates = [];
 
+        // Gelen devasa havuzdan sadece Karargah'taki maçları (fixtureId) bul
         for (const bultenMaci of maclarWithApiId) {
             const fixtureId = bultenMaci.api_match_id;
             const fix = allFixtures.find((f: any) => f.fixture.id == fixtureId);
