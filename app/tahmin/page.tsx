@@ -78,6 +78,12 @@ export default function PredictionPortal() {
       fetchDbPlayers();
   }, []);
 
+  // 🔥 1. ADIM: AKTİF HAFTAYI BELİRLEME (LOBİDE SADECE EN YENİ HAFTA SEÇİLİ OLACAK) 🔥
+  const availableWeeks = useMemo(() => {
+    const weeks = Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => b - a); // En yeniden en eskiye sırala
+    return weeks;
+  }, [bulletinMap]);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
@@ -102,7 +108,7 @@ export default function PredictionPortal() {
          setBulletinMap(newMap);
          
          if (maxWeek > 0) {
-             setActiveBulletinWeek(maxWeek);
+             setActiveBulletinWeek(maxWeek); // Otomatik olarak en yeni haftayı aktif yap
              setSelectedTahminWeek(maxWeek);
          }
       }
@@ -190,7 +196,6 @@ export default function PredictionPortal() {
      }
   }, [selectedTahminWeek, view]);
 
-  // 🔥 EFSANEVİ VE SORUNSUZ GİRİŞ SİSTEMİ 🔥
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); 
     setLoginError('');
@@ -257,14 +262,26 @@ export default function PredictionPortal() {
   const savePredictions = async () => {
     setIsSaving(true);
     try {
-      const payload = Object.keys(predictions).map(matchIndex => ({
-        user_id: username.trim(), 
-        week_num: activeBulletinWeek, 
-        match_index: Number(matchIndex),
-        predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
-      }));
-      const { error } = await supabase.from('player_predictions').upsert(payload, { onConflict: 'user_id,week_num,match_index' });
-      if(error) throw error;
+      // 🔥 2. ADIM: SADECE KİLİTLENMEMİŞ (SÜRESİ GEÇMEMİŞ) MAÇLARI KAYDET 🔥
+      const payload = Object.keys(predictions).map(matchIndex => {
+        const matchObj = bulletinMap[activeBulletinWeek].find((m:any) => m.id === Number(matchIndex));
+        const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
+        
+        // Eğer maç kilitliyse, null döndür (kaydetme listesine alma)
+        if (isLocked) return null;
+
+        return {
+          user_id: username.trim(), 
+          week_num: activeBulletinWeek, 
+          match_index: Number(matchIndex),
+          predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
+        };
+      }).filter(p => p !== null); // null olanları temizle
+
+      if (payload.length > 0) {
+          const { error } = await supabase.from('player_predictions').upsert(payload, { onConflict: 'user_id,week_num,match_index' });
+          if(error) throw error;
+      }
       
       setShowSuccessModal(true);
     } catch (e) { alert('❌ Kayıt sırasında bir hata oluştu!'); }
@@ -292,14 +309,6 @@ export default function PredictionPortal() {
     const selectedWeekData = livePredictionsData[selectedTahminWeek] || {};
     return Object.keys(mergedAccounts).filter(id => id !== 'mankoman' && selectedWeekData[id] && selectedWeekData[id].some(s => s !== 'PAS' && s !== '-')).sort((a, b) => mergedAccounts[a].name.localeCompare(mergedAccounts[b].name, 'tr'));
   }, [selectedTahminWeek, livePredictionsData, mergedAccounts]);
-
-  const availableWeeks = Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => a - b);
-
-  useEffect(() => {
-      if (availableWeeks.length > 0 && (!selectedTahminWeek || !availableWeeks.includes(selectedTahminWeek))) {
-          setSelectedTahminWeek(Math.max(...availableWeeks));
-      }
-  }, [availableWeeks, selectedTahminWeek]);
 
   const ghostColumns = Array.from({ length: 10 });
 
@@ -357,7 +366,6 @@ export default function PredictionPortal() {
                    
                    <form onSubmit={handleLogin} className="w-full max-w-[280px] flex flex-col gap-4 mt-4">
                       
-                      {/* 🔥 İŞTE O MEŞHUR ESPİRİLİ, SİNYAL YAKAN HAFTA KUTUSU 🔥 */}
                       <div className="flex flex-col items-center gap-1.5 w-full relative group">
                          <span className="text-[10px] text-amber-500 font-black tracking-widest uppercase flex items-center gap-2">
                            <span className="animate-bounce text-base">⬇️</span> DİKKAT: HAFTAYI SEÇ <span className="animate-bounce text-base">⬇️</span>
@@ -369,11 +377,18 @@ export default function PredictionPortal() {
                              <select 
                                value={activeBulletinWeek} 
                                onChange={e => setActiveBulletinWeek(Number(e.target.value))}
-                               className="w-full bg-slate-950 border-2 border-amber-500 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none focus:border-amber-400 text-center tracking-widest cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all"
+                               className="w-full bg-slate-950 border-2 border-amber-500 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none focus:border-amber-400 text-center tracking-widest cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all appearance-none"
+                               style={{textAlignLast: 'center'}}
                              >
-                               {availableWeeks.map(w => (
-                                   <option key={`opt-${w}`} value={w}>{getDisplayWeek(w)}</option>
-                               ))}
+                               {/* 🔥 3. ADIM: ESKİ HAFTALARA SÜRE DOLDU UYARISI YAZ GÖRSEL OLARAK 🔥 */}
+                               {availableWeeks.map(w => {
+                                  const isPastWeek = w < Math.max(...availableWeeks);
+                                  return (
+                                    <option key={`opt-${w}`} value={w}>
+                                        {getDisplayWeek(w)} {isPastWeek ? " 🔒 (SÜRE DOLDU - KAPALI)" : ""}
+                                    </option>
+                                  )
+                               })}
                              </select>
                            ) : (
                              <div className="w-full bg-slate-950 border-2 border-slate-700 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none text-center tracking-widest cursor-not-allowed">
@@ -503,13 +518,25 @@ export default function PredictionPortal() {
               </button>
             </div>
 
-            <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
-               <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
-               <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
-                  Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
-                  <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
-               </p>
-            </div>
+            {/* 🔥 4. ADIM: EĞER GEÇMİŞ (ESKİ) BİR HAFTA SEÇİLDİYSE GİZLE VEYA BÜYÜK UYARI BAS 🔥 */}
+            {activeBulletinWeek < Math.max(...availableWeeks) && (
+                <div className="w-full max-w-4xl mx-auto bg-red-950/80 border border-red-500 p-8 rounded-xl mb-6 text-center shadow-[0_0_30px_rgba(220,38,38,0.5)]">
+                   <span className="text-4xl sm:text-6xl mb-4 block">🚫</span>
+                   <h2 className="text-red-400 text-xl sm:text-3xl font-black tracking-widest uppercase mb-2">BU HAFTANIN SÜRESİ DOLMUŞTUR</h2>
+                   <p className="text-slate-300 text-sm sm:text-base font-bold">Geçmiş haftalara tahmin girişi veya düzenlemesi yapılamaz. Lütfen Lobiye dönüp mevcut (aktif) haftayı seçiniz.</p>
+                </div>
+            )}
+
+            {/* 🔥 EĞER AKTİF HAFTAYSAYSA NORMAL ÇALIŞSIN 🔥 */}
+            {activeBulletinWeek === Math.max(...availableWeeks) && (
+                <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
+                   <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
+                   <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
+                      Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
+                      <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
+                   </p>
+                </div>
+            )}
 
             {(!bulletinMap[activeBulletinWeek] || bulletinMap[activeBulletinWeek].length === 0) ? (
                <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{getDisplayWeek(activeBulletinWeek)} BÜLTENİ BEKLENİYOR</h2></div>
@@ -523,7 +550,9 @@ export default function PredictionPortal() {
                   
                   const isTff = isTffMatchCheck(match.category);
                   const matchTimeMs = getMatchTimeMs(match.date, match.time);
-                  const isLocked = (now >= matchTimeMs - 60000);
+                  
+                  // 🔥 5. ADIM: TAM KİLİT MEKANİZMASI: Maçın saati geçtiyse VEYA eski (tamamen bitmiş) bir haftadaysak KİLİTLE 🔥
+                  const isLocked = (now >= matchTimeMs - 60000) || (activeBulletinWeek < Math.max(...availableWeeks));
 
                   return (
                     <div key={match.id} className={`w-full max-w-md mx-auto border rounded-2xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg} ${isLocked ? 'opacity-85 grayscale-[15%] scale-[0.98]' : 'hover:scale-[1.02]'}`}>
@@ -596,7 +625,8 @@ export default function PredictionPortal() {
               </div>
             )}
 
-            {bulletinMap[activeBulletinWeek] && bulletinMap[activeBulletinWeek].length > 0 && (
+            {/* SADECE AKTİF HAFTADAYSAK KAYDET VE RASTGELE BUTONLARINI GÖSTER */}
+            {activeBulletinWeek === Math.max(...availableWeeks) && bulletinMap[activeBulletinWeek] && bulletinMap[activeBulletinWeek].length > 0 && (
               <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
                 <button onClick={handleTahminMatikRastgele} className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center gap-2">🎲 RASTGELE DOLDUR</button>
                 <button onClick={savePredictions} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.5)]">{isSaving ? 'ŞİFRELENİYOR...' : '🚀 TAHMİNLERİMİ MÜHÜRLE'}</button>
@@ -821,7 +851,7 @@ export default function PredictionPortal() {
                             <span className="text-white font-extrabold text-[9px] sm:text-[12px] text-center uppercase tracking-wide drop-shadow-lg leading-tight px-1">{hName}</span>
                           </div>
                           
-                          <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
+                          <div className="flex flex-col items-center justify-center gap-2 mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                             {theme.leagueLogo && (
                               <div className="w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
                                 <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
