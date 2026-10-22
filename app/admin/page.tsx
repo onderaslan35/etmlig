@@ -1106,6 +1106,14 @@ export default function AdminRadarPortal() {
                 }
             });
             const data = await res.json();
+
+            // 🔥 YENİ: GİZLİ API HATALARINI YAKALAMA 🔥
+            if (data.errors && Object.keys(data.errors).length > 0) {
+                alert("❌ API UYARISI: " + JSON.stringify(data.errors) + "\n\n(Günlük 100 limitiniz bitmiş olabilir!)");
+                setIsHavuzLoading(false);
+                return;
+            }
+
             if (data.response && data.response.length > 0) {
                 const mapped = data.response.map((fix: any) => {
                     const d = new Date(fix.fixture.date);
