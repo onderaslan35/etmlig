@@ -1,1120 +1,846 @@
-package com.example.futbol90pro.presentation
+'use client';
 
-import android.content.Context
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.RectF
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.os.Build
-import android.os.Bundle
-import android.os.PowerManager
-import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.view.KeyEvent
-import android.view.WindowManager
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material3.MaterialTheme
-import androidx.wear.compose.material3.Text
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import org.json.JSONArray
-import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlin.math.cos
-import kotlin.math.sin
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { supabase } from '@/utils/supabase';
+import { TEST_ACCOUNTS, getEliteTheme, getMatchTimeMs, parseDateLocal, getUniqueMatchId, isTffMatchCheck, getTodayDateString } from '@/utils/themeEngine';
 
-data class MatchEvent(
-    val minuteLabel: String,
-    val team: String,
-    val type: String,
-    val playerNo: String,
-    val detail: String = ""
-)
+const engToTr: Record<string, string> = {
+  "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
+  "TURKEY": "TÜRKİYE", "TURKIYE": "TÜRKİYE", "FRANCE": "FRANSA", "ITALY": "İTALYA",
+  "SPAIN": "İSPANYA", "ENGLAND": "İNGİLTERE", "BELGIUM": "BELÇİKA",
+  "PORTUGAL": "PORTEKİZ", "GREECE": "YUNANİSTAN", "NORWAY": "NORVEÇ",
+  "DENMARK": "DANİMARKA", "WALES": "GALLER", "IRELAND": "İRLANDA", "REPUBLIC OF IRELAND": "İRLANDA",
+  "SWITZERLAND": "İSVİÇRE", "SWEDEN": "İSVEÇ", "CROATIA": "HIRVATİSTAN",
+  "CZECH REPUBLIC": "ÇEKYA", "CZECHIA": "ÇEKYA", "POLAND": "POLONYA", "SCOTLAND": "İSKOÇYA",
+  "HUNGARY": "MACARİSTAN", "AUSTRIA": "AVUSTURYA", "ROMANIA": "ROMANYA", "ALBANIA": "ARNAVUTLUK",
+  "GEORGIA": "GÜRCİSTAN", "ICELAND": "İZLANDA", "SLOVAKIA": "SLOVAKYA", "SLOVENIA": "SLOVENYA",
+  "MONTENEGRO": "KARADAĞ", "NORTH MACEDONIA": "KUZEY MAKEDONYA", "MACEDONIA": "KUZEY MAKEDONYA",
+  "BOSNIA": "BOSNA-HERSEK", "BOSNIA AND HERZEGOVINA": "BOSNA-HERSEK", "CYPRUS": "KIBRIS",
+  "LITHUANIA": "LİTVANYA", "LATVIA": "LETONYA", "ESTONIA": "ESTONYA", "FINLAND": "FİNLANDİYA",
+  "BULGARIA": "BULGARİSTAN", "UKRAINE": "UKRAYNA", "RUSSIA": "RUSYA", "ARMENIA": "ERMENİSTAN",
+  "FAROE ISLANDS": "FAROE ADALARI", "KAZAKHSTAN": "KAZAKİSTAN", "MOLDOVA": "MOLDOVA",
+  "LUXEMBOURG": "LÜKSEMBURG", "LIECHTENSTEIN": "LİHTENŞTAYN", "SAN MARINO": "SAN MARİNO",
+  "MALTA": "MALTA", "ANDORRA": "ANDORRA", "KOSOVO": "KOSOVA", "BELARUS": "BELARUS"
+};
 
-data class SavedMatch(
-    val id: String,
-    val date: String,
-    val category: String,
-    val homeTeam: String,
-    val awayTeam: String,
-    val homeScore: Int,
-    val awayScore: Int,
-    val events: List<MatchEvent>
-)
+const sanitizeStr = (s: string) => {
+    if (!s) return "";
+    let res = s.toUpperCase().trim();
+    res = engToTr[res] || res; 
+    return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
+};
 
-@Composable
-fun EventItemViewReadOnly(ev: MatchEvent, teamColor: Color) {
-    val icon = when(ev.type) { "GOL" -> "⚽"; "SARI KART" -> "🟨"; "KIRMIZI KART" -> "🟥"; else -> "" }
-    val detailFull = ev.detail 
-    val numberColor = if (ev.team == "EV SAHİBİ") Color.Black else Color.White
-    val isFieldPlayer = ev.playerNo.toIntOrNull() != null
+export default function LiveMatchCard() {
+  const [activeWeeks, setActiveWeeks] = useState<number[]>([]);
+  const [isWeekLoaded, setIsWeekLoaded] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+  const prevScoresRef = useRef<Record<string, string>>({});
+  const [goalFlashes, setGoalFlashes] = useState<Record<string, boolean>>({});
+  const [todaysMatchesList, setTodaysMatchesList] = useState<any[]>([]);
+  const [liveMatchesData, setLiveMatchesData] = useState<Record<string, any>>({});
+  const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
+  const [globalLiveRanks, setGlobalLiveRanks] = useState<{ TFF: any[], DFO: any[], MASTER: any[], SKOR: any[] }>({ TFF: [], DFO: [], MASTER: [], SKOR: [] });
+  const [now, setNow] = useState<number>(new Date().getTime());
+  
+  const [weeklySortedStats, setWeeklySortedStats] = useState<Record<number, { id: string, points: number, exactScores: number }[]>>({});
+  const [is24thMatchFinishedMap, setIs24thMatchFinishedMap] = useState<Record<number, boolean>>({});
 
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 16.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            if (isFieldPlayer) {
-                Box(modifier = Modifier.size(50.dp), contentAlignment = Alignment.Center) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val w = size.width; val h = size.height
-                        val path = androidx.compose.ui.graphics.Path().apply {
-                            moveTo(w * 0.3f, h * 0.05f); lineTo(w * 0.7f, h * 0.05f) 
-                            lineTo(w * 0.95f, h * 0.35f); lineTo(w * 0.85f, h * 0.5f) 
-                            lineTo(w * 0.75f, h * 0.4f); lineTo(w * 0.75f, h * 0.95f) 
-                            lineTo(w * 0.25f, h * 0.95f); lineTo(w * 0.25f, h * 0.4f) 
-                            lineTo(w * 0.15f, h * 0.5f); lineTo(w * 0.05f, h * 0.35f) 
-                            close()
-                        }
-                        drawPath(path, color = teamColor)
-                    }
-                    Text(text = ev.playerNo, color = numberColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                Box(modifier = Modifier.size(50.dp).background(Color(0xFF444444), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
-                    Text(text = ev.playerNo, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 12.sp)
-                }
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "${ev.minuteLabel}'", color = Color.Cyan, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    if (detailFull.isNotEmpty()) { Text(text = detailFull, color = Color.LightGray, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
-                }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = "${ev.type} $icon", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-            }
+  const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true); 
+  const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
+  
+  const [openEventsMap, setOpenEventsMap] = useState<{ [key: string]: boolean }>({});
+  const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: string]: boolean }>({});
+  const [openPossibleMap, setOpenPossibleMap] = useState<{ [key: string]: boolean }>({});
+  const [openEliminatedMap, setOpenEliminatedMap] = useState<{ [key: string]: boolean }>({});
+  const [openPlayerRanks, setOpenPlayerRanks] = useState<{ [key: string]: boolean }>({});
+  const [expandedMatches, setExpandedMatches] = useState<Record<string, boolean>>({});
+  const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string, name: string }>>(TEST_ACCOUNTS);
+
+  const toggleSound = () => {
+      const newState = !soundEnabled;
+      setSoundEnabled(newState);
+      soundEnabledRef.current = newState;
+      if (newState) {
+          const audio = new Audio('/sounds/goal.mp3');
+          audio.muted = true;
+          audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(e => console.log("Ses kilidi:", e));
+      }
+  };
+
+  useEffect(() => {
+     const fetchDbPlayers = async () => {
+        const { data } = await supabase.from('players').select('*');
+        if (data) {
+           const newAccounts = { ...TEST_ACCOUNTS };
+           data.forEach(p => {
+               const pid = String(p.username || p.id).trim();
+               newAccounts[pid] = { pass: p.password, name: p.name || p.full_name };
+           });
+           setMergedAccounts(newAccounts);
         }
-        Spacer(Modifier.height(8.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.DarkGray))
-    }
-}
+     };
+     fetchDbPlayers();
+  }, []);
 
-class MainActivity : ComponentActivity() {
+  // 🔥 KRONOMETREYİ BESLEYEN ZAMAN DÖNGÜSÜ 🔥
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date().getTime()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    private var matchState by mutableStateOf(0) 
-    private var halfDuration by mutableStateOf(45) 
-    
-    private var matchCategory by mutableStateOf("Kategori Seç")
-    private var homeTeamName by mutableStateOf("BALÇOVASPOR")
-    private var awayTeamName by mutableStateOf("NARLIDERE")
-    
-    private var isMatchActive by mutableStateOf(false)
-    private var isPaused by mutableStateOf(false)
-    private var isFrozen by mutableStateOf(false) 
-    
-    private var isScreenLocked by mutableStateOf(false)
-    private var lastLockToggleTime = 0L
-    
-    private var hasFirstHalfStarted by mutableStateOf(false)
-    private var hasSecondHalfStarted by mutableStateOf(false)
-    
-    private var mainTime by mutableStateOf(0)
-    private var lostTime by mutableStateOf(0)
-    private var addedTime by mutableStateOf(0)
-    private var halftimeBreakTime by mutableStateOf(15 * 60)
-    
-    private var awardedStoppageTime by mutableStateOf(0)
+  // 🔥 YENİ: OTOMATİK KRONOMETRE MOTORU 🔥
+  const getDynamicElapsed = (logInfo: any) => {
+     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
+     const parts = logInfo.updated_at.split(':');
+     if (parts.length >= 2) {
+         const upDate = new Date(now);
+         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
+         let diffMs = now - upDate.getTime();
+         if (diffMs < -43200000) diffMs += 86400000; 
+         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
+         return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
+     }
+     return `${logInfo.elapsed}'`;
+  };
 
-    private var homeScore by mutableStateOf(0)
-    private var awayScore by mutableStateOf(0)
+  useEffect(() => {
+    const fetchMatchesAndPredictions = async () => {
+      const todayDateStr = getTodayDateString();
+      const todayDate = parseDateLocal(todayDateStr);
+      todayDate.setHours(0,0,0,0);
 
-    private var activeMenuState by mutableStateOf(0)
-    private var pendingTeam by mutableStateOf("")
-    private var pendingAction by mutableStateOf("")
-    private var pendingPlayerNo by mutableStateOf("")
+      const [leaderboardRes, allBulletinRes, dbLiveMatchesRes] = await Promise.all([
+          supabase.from('live_leaderboard').select('*'),
+          supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
+          supabase.from('live_matches').select('*')
+      ]);
 
-    private val matchEvents = mutableStateListOf<MatchEvent>()
-    private var doubleYellowWarningPlayer by mutableStateOf("")
+      const allBulten = allBulletinRes.data || [];
+      
+      const relevantMatches = allBulten.filter(m => {
+          const matchTimeMs = getMatchTimeMs(m.match_date, m.match_time);
+          const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+          return m.match_date === todayDateStr || isWithinLast5Hours;
+      });
 
-    private var isSubCountdownActive by mutableStateOf(false)
-    private var subCountdownValue by mutableStateOf(10)
-    private var isPenaltyActive by mutableStateOf(false)
-    private var penaltyValue by mutableStateOf(60)
+      const relevantWeeksSet = new Set<number>(relevantMatches.map(m => m.week_num));
+      const relevantWeeksArray = Array.from(relevantWeeksSet);
+      
+      if (relevantWeeksArray.length === 0) {
+          const upcomingMatches = allBulten.filter(d => parseDateLocal(d.match_date) >= todayDate).sort((a,b) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
+          if (upcomingMatches.length > 0) relevantWeeksArray.push(upcomingMatches[0].week_num);
+          else if (allBulten.length > 0) relevantWeeksArray.push(Math.max(...allBulten.map(m => m.week_num)));
+      }
+      
+      setActiveWeeks(relevantWeeksArray.sort((a,b) => b - a)); 
+      setIsWeekLoaded(true);
 
-    private var toneGenerator: ToneGenerator? = null
-    private var vibrator: Vibrator? = null
-    private var wakeLock: PowerManager.WakeLock? = null
-    private val matchScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private var lastTickTime = 0L
+      const targetBulten = allBulten.filter(m => relevantWeeksArray.includes(m.week_num));
+      
+      let allPredictions: any[] = [];
+      for (const week of relevantWeeksArray) {
+          let from = 0; const step = 1000; let keepFetching = true;
+          while(keepFetching) {
+              const { data } = await supabase.from('player_predictions').select('*').eq('week_num', week).range(from, from + step - 1);
+              if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length < step) keepFetching = false; else from += step; } 
+              else keepFetching = false;
+          }
+      }
 
-    private var showStoppageTimer by mutableStateOf(false)
-    private var stoppageTimeRemaining by mutableStateOf(0)
+      const leaderboardData = leaderboardRes.data || [];
+      let arrTFF: any[] = [], arrDFO: any[] = [], arrMASTER: any[] = [], arrSKOR: any[] = [];
+      leaderboardData.forEach(row => {
+          arrTFF.push({ id: row.id, name: row.name, pts: row.tff_pts, rank: row.tff_rank });
+          arrDFO.push({ id: row.id, name: row.name, pts: row.dfo_pts, rank: row.dfo_rank });
+          arrMASTER.push({ id: row.id, name: row.name, pts: row.master_pts, rank: row.master_rank });
+          arrSKOR.push({ id: row.id, name: row.name, pts: row.skor_pts, rank: row.skor_rank });
+      });
+      const sortFunc = (a: any, b: any) => b.pts - a.pts || a.name.localeCompare(b.name, 'tr');
+      arrTFF.sort(sortFunc); arrDFO.sort(sortFunc); arrMASTER.sort(sortFunc); arrSKOR.sort(sortFunc);
+      setGlobalLiveRanks({ TFF: arrTFF, DFO: arrDFO, MASTER: arrMASTER, SKOR: arrSKOR });
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) 
+      const pDict: Record<string, string> = {};
+      allPredictions.forEach(pred => {
+          const uid = String(pred.user_id);
+          if (uid === 'mankoman') return;
+          pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, '');
+      });
+      setPredictionsData(pDict);
 
-        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION") getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
+      const dbLiveMatches = dbLiveMatchesRes.data || [];
+      const liveMap: Record<string, any> = {};
+      dbLiveMatches.forEach(row => liveMap[String(row.id)] = row); 
+      setLiveMatchesData(liveMap);
 
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Futbol90Pro::TimerWakeLock")
-        wakeLock?.acquire(4 * 60 * 60 * 1000L) 
+      const currentWeekMatches = targetBulten.map((m) => ({
+        id: m.match_index,
+        week_num: m.week_num,
+        weekLabel: `${m.week_num}. HAFTA ${m.match_index}. MAÇ`,
+        category: m.category,
+        date: m.match_date,
+        time: m.match_time,
+        homeTeam: m.home_team,
+        awayTeam: m.away_team
+      }));
 
-        toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+      const new24FinishedMap: Record<number, boolean> = {};
+      relevantWeeksArray.forEach(w => {
+         const m24Id = getUniqueMatchId(w, 24);
+         const dbMatch24 = liveMap[String(m24Id)];
+         new24FinishedMap[w] = (dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status));
+      });
+      setIs24thMatchFinishedMap(new24FinishedMap);
 
-        matchScope.launch {
-            lastTickTime = SystemClock.elapsedRealtime()
-            while (isActive) {
-                delay(250) 
-                val now = SystemClock.elapsedRealtime()
-                val delta = now - lastTickTime
-                if (delta >= 1000) {
-                    val secondsToTick = (delta / 1000).toInt()
-                    lastTickTime += secondsToTick * 1000L
-                    for (i in 0 until secondsToTick) { tickOneSecond() }
-                }
-            }
-        }
+      let goalHappened = false;
+      let newGoalIds: string[] = [];
+      Object.keys(liveMap).forEach(key => {
+          const dbMatch = liveMap[key];
+          const isLiveOrFinished3 = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status);
+          if (isLiveOrFinished3 && dbMatch.home_score !== '-' && dbMatch.away_score !== '-') {
+              const currentScore = `${dbMatch.home_score}-${dbMatch.away_score}`;
+              const prevScore = prevScoresRef.current[key];
+              if (prevScore && prevScore !== currentScore) { goalHappened = true; newGoalIds.push(String(key)); }
+              prevScoresRef.current[key] = currentScore;
+          }
+      });
 
-        setContent { MaterialTheme { HakemSaatiTasarim() } }
-    }
+      if (goalHappened) {
+          if (soundEnabledRef.current) {
+              const audio = new Audio('/sounds/goal.mp3');
+              audio.play().catch(e => console.log("Ses çalınamadı:", e));
+          }
+          if (newGoalIds.length > 0) {
+              setGoalFlashes(prev => { const next = { ...prev }; newGoalIds.forEach(id => { next[id] = true; }); return next; });
+              setTimeout(() => { setGoalFlashes(prev => { const next = { ...prev }; newGoalIds.forEach(id => { delete next[id]; }); return next; }); }, 8000);
+          }
+      }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        matchScope.cancel() 
-        toneGenerator?.release()
-        if (wakeLock?.isHeld == true) wakeLock?.release()
-    }
+      let allWeeklyStats: Record<number, any> = {};
+      relevantWeeksArray.forEach(week => {
+          let stats: Record<string, { points: number, exactScores: number }> = {};
+          Object.keys(mergedAccounts).forEach(uid => { stats[uid] = { points: 0, exactScores: 0 }; });
 
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-            val keyCode = event.keyCode
-            if (keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_HOME && keyCode != KeyEvent.KEYCODE_POWER) {
-                if (isScreenLocked) return true 
-                if ((matchState == 1 || matchState == 3 || isPaused) && activeMenuState == 0 && !isFrozen && !isSubCountdownActive) {
-                    val isPeriodStarted = if (matchState == 1) hasFirstHalfStarted else if (matchState == 3) hasSecondHalfStarted else false
-                    if (isPeriodStarted) { togglePause() }
-                    return true 
-                }
-            }
-        }
-        return super.dispatchKeyEvent(event)
-    }
+          currentWeekMatches.filter(m => m.week_num === week).forEach(m => {
+              const uniqueId = String(getUniqueMatchId(week, m.id));
+              const dbMatch = liveMap[uniqueId];
+              if (dbMatch && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
+                  const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+                  const winnerIds = Object.keys(mergedAccounts).filter(id => pDict[`${id}-${week}-${m.id}`] === targetScore);
+                  
+                  let pts = 1;
+                  if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
+                  else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
+                  else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
+                  else if(winnerIds.length >= 7) pts = 1; else pts = 0;
 
-    private fun saveMatchToArchive() {
-        if (matchEvents.isEmpty() && homeScore == 0 && awayScore == 0) return
-        try {
-            val prefs = getSharedPreferences("MatchArchive", Context.MODE_PRIVATE)
-            val matchesArray = JSONArray(prefs.getString("matches", "[]") ?: "[]")
-            val newMatch = JSONObject()
-            newMatch.put("id", System.currentTimeMillis().toString())
-            newMatch.put("date", SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()))
-            newMatch.put("category", matchCategory)
-            newMatch.put("homeTeam", homeTeamName)
-            newMatch.put("awayTeam", awayTeamName)
-            newMatch.put("homeScore", homeScore)
-            newMatch.put("awayScore", awayScore)
-            val eventsArray = JSONArray()
-            matchEvents.forEach { ev ->
-                val evObj = JSONObject()
-                evObj.put("minuteLabel", ev.minuteLabel); evObj.put("team", ev.team)
-                evObj.put("type", ev.type); evObj.put("playerNo", ev.playerNo)
-                evObj.put("detail", ev.detail); eventsArray.put(evObj)
-            }
-            newMatch.put("events", eventsArray)
-            matchesArray.put(newMatch)
-            prefs.edit().putString("matches", matchesArray.toString()).apply()
-        } catch (e: Exception) { e.printStackTrace() }
-    }
+                  winnerIds.forEach(wId => {
+                      if(!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
+                      stats[wId].points += pts;
+                      stats[wId].exactScores += 1;
+                  });
+              }
+          });
 
-    private fun loadMatchesFromArchive(context: Context): List<SavedMatch> {
-        val result = mutableListOf<SavedMatch>()
-        try {
-            val prefs = context.getSharedPreferences("MatchArchive", Context.MODE_PRIVATE)
-            val matchesArray = JSONArray(prefs.getString("matches", "[]") ?: "[]")
-            for (i in 0 until matchesArray.length()) {
-                val matchObj = matchesArray.getJSONObject(i)
-                val eventsArray = matchObj.getJSONArray("events")
-                val events = mutableListOf<MatchEvent>()
-                for (j in 0 until eventsArray.length()) {
-                    val evObj = eventsArray.getJSONObject(j)
-                    events.add(MatchEvent(
-                        minuteLabel = evObj.getString("minuteLabel"), team = evObj.getString("team"),
-                        type = evObj.getString("type"), playerNo = evObj.getString("playerNo"), detail = evObj.getString("detail")
-                    ))
-                }
-                result.add(SavedMatch(
-                    id = matchObj.getString("id"), date = matchObj.getString("date"),
-                    category = if (matchObj.has("category")) matchObj.getString("category") else "Bilinmeyen",
-                    homeTeam = if (matchObj.has("homeTeam")) matchObj.getString("homeTeam") else "Ev Sahibi",
-                    awayTeam = if (matchObj.has("awayTeam")) matchObj.getString("awayTeam") else "Misafir",
-                    homeScore = matchObj.getInt("homeScore"), awayScore = matchObj.getInt("awayScore"), events = events
-                ))
-            }
-        } catch (e: Exception) { e.printStackTrace() }
-        return result.reversed()
-    }
+          allWeeklyStats[week] = Object.keys(stats)
+              .map(uid => ({ id: uid, points: stats[uid].points, exactScores: stats[uid].exactScores }))
+              .filter(s => s.points > 0 || s.exactScores > 0)
+              .sort((a, b) => b.points - a.points || b.exactScores - a.exactScores || mergedAccounts[a.id]?.name.localeCompare(mergedAccounts[b.id]?.name, 'tr'));
+      });
+      setWeeklySortedStats(allWeeklyStats);
 
-    private fun titret(sureMs: Long) {
-        vibrator?.let {
-            if (it.hasVibrator()) it.vibrate(VibrationEffect.createOneShot(sureMs, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
-    }
+      const todaysMatches = currentWeekMatches.filter(m => {
+           const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
+           const dbMatch = liveMap[uniqueId];
+           const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
+           const isLiveOrFinished4 = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(status);
+           
+           const isToday = m.date === todayDateStr; 
+           
+           if (isLiveOrFinished4) return true;
+           return isToday;
+      });
 
-    private fun titretUyari() {
-        vibrator?.let {
-            if (it.hasVibrator()) {
-                val pattern = longArrayOf(0, 200, 150, 200, 150, 500, 600, 200, 150, 200, 150, 500, 600, 200, 150, 200, 150, 500)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) it.vibrate(VibrationEffect.createWaveform(pattern, -1))
-                else @Suppress("DEPRECATION") it.vibrate(pattern, -1)
-            }
-        }
-    }
+      todaysMatches.sort((a, b) => {
+         const timeA = getMatchTimeMs(a.date, a.time);
+         const timeB = getMatchTimeMs(b.date, b.time);
+         return timeA - timeB;
+      });
 
-    private fun titretCezaBitis() {
-        vibrator?.let {
-            if (it.hasVibrator()) {
-                val pattern = longArrayOf(0, 100, 100, 100, 100, 100, 100, 800) 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) it.vibrate(VibrationEffect.createWaveform(pattern, -1))
-                else @Suppress("DEPRECATION") it.vibrate(pattern, -1)
-            }
-        }
-    }
+      setTodaysMatchesList(todaysMatches);
+    };
 
-    private fun tickOneSecond() {
-        if (isSubCountdownActive) {
-            if (subCountdownValue > 0) {
-                subCountdownValue--
-                if (subCountdownValue == 0) {
-                    titret(1000)
-                    toneGenerator?.startTone(ToneGenerator.TONE_CDMA_HIGH_L, 800) 
-                    matchScope.launch { delay(1500); isSubCountdownActive = false }
-                } else if (subCountdownValue <= 3) {
-                    titret(300)
-                    toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200) 
-                } else {
-                    titret(100)
-                    toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 100) 
-                }
-            }
-        }
+    fetchMatchesAndPredictions(); 
+    const interval = setInterval(fetchMatchesAndPredictions, 5000); 
+    return () => clearInterval(interval);
+  }, [mergedAccounts, now]);
 
-        if (isPenaltyActive) {
-            if (penaltyValue > 0) {
-                penaltyValue--
-                if (penaltyValue == 0) { 
-                    vibrator?.let {
-                        if (it.hasVibrator()) {
-                            val pattern = longArrayOf(0, 100, 100, 100, 100, 100, 100, 800) 
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) it.vibrate(VibrationEffect.createWaveform(pattern, -1))
-                            else @Suppress("DEPRECATION") it.vibrate(pattern, -1)
-                        }
-                    }
-                }
+  const toggleEvents = (uniqueId: string) => setOpenEventsMap((prev) => ({ ...prev, [uniqueId]: prev[uniqueId] === false ? true : false })); 
+  const toggleWinners = (uniqueId: string) => setOpenWinnersMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] })); 
+  const togglePossible = (uniqueId: string) => setOpenPossibleMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const toggleEliminated = (uniqueId: string) => setOpenEliminatedMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const toggleMatchExpansion = (uniqueId: string) => setExpandedMatches(prev => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+  const togglePlayerRank = (uniqueKey: string) => setOpenPlayerRanks((prev) => ({ ...prev, [uniqueKey]: !prev[uniqueKey] }));
+
+  if (!isWeekLoaded) {
+    return (
+      <div className="w-full max-w-6xl mx-auto mb-8 flex justify-center py-10">
+         <span className="text-slate-500 text-sm font-medium animate-pulse tracking-widest">📡 Radar Ayarlanıyor...</span>
+      </div>
+    );
+  }
+
+  const activeMatches = todaysMatchesList.filter(match => {
+     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+     const dbMatch = liveMatchesData[uniqueId] || {};
+     return !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
+  });
+
+  const finishedMatches = todaysMatchesList.filter(match => {
+     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+     const dbMatch = liveMatchesData[uniqueId] || {};
+     return ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
+  });
+
+  const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
+      const homeTeamUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase();
+      const awayTeamUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase();
+
+      const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+      const isEventsOpen = openEventsMap[uniqueId] !== false;
+      const isWinnersOpen = openWinnersMap[uniqueId] !== false;
+      const isPossibleOpen = openPossibleMap[uniqueId] || false;
+      const isEliminatedOpen = openEliminatedMap[uniqueId] || false;
+      const isExpanded = expandedMatches[uniqueId] !== undefined ? expandedMatches[uniqueId] : isFinishedGroup;
+
+      const dbMatch = liveMatchesData[uniqueId] || {};
+      const isGoalFlashing = goalFlashes[uniqueId]; 
+      
+      let safeEvents: any[] = [];
+      if (Array.isArray(dbMatch.events)) {
+         safeEvents = dbMatch.events;
+      } else if (typeof dbMatch.events === 'string') {
+         try {
+            const parsed = JSON.parse(dbMatch.events);
+            safeEvents = Array.isArray(parsed) ? parsed : [];
+         } catch (e) {
+            safeEvents = [];
+         }
+      }
+
+      let matchStatus = dbMatch.status || 'NOT_STARTED';
+      let homeScore = dbMatch.home_score || '-';
+      let awayScore = dbMatch.away_score || '-';
+
+      const matchTimeMs = getMatchTimeMs(match.date, match.time);
+      const liveDurationMs = 8 * 60 * 60 * 1000; 
+      
+      if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus)) {
+        if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
+            if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) { 
+                matchStatus = 'LIVE'; 
+            } else if (now >= matchTimeMs + liveDurationMs) { 
+                matchStatus = 'WAITING_APPROVAL'; 
             }
         }
+      }
 
-        if (matchState == 2) { 
-            if (halftimeBreakTime > 0) halftimeBreakTime-- else handleNextState()
-        } else if (isMatchActive && !isFrozen) {
-            val limit = if (matchState == 1) halfDuration * 60 else (halfDuration * 2) * 60
-            
-            mainTime++
-            if (isPaused) { lostTime++ }
-            
-            if (mainTime > limit) { 
-                addedTime++
-                if (addedTime == lostTime && lostTime > 0 && !isPaused) titret(1500) 
-            }
-            
-            val warningTime1 = limit - (3 * 60)
-            val warningTime2 = limit - (2 * 60)
-            if ((mainTime == warningTime1 || mainTime == warningTime2) && !isPaused) titretUyari()
+      const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
+      const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus);
+      const isHT = matchStatus === 'HT';
+      const isWaitingApproval = matchStatus === 'WAITING_APPROVAL';
+
+      if (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) {
+         if (homeScore === '-') homeScore = '0';
+         if (awayScore === '-') awayScore = '0';
+      }
+
+      const rawElapsed = dbMatch.elapsed;
+      let safeElapsed = typeof rawElapsed === 'object' && rawElapsed !== null ? rawElapsed.elapsed : rawElapsed;
+      
+      const systemTimeEvent = safeEvents.find((e: any) => e.type === 'SystemTime');
+      const safeExtra = systemTimeEvent ? systemTimeEvent.detail : null;
+
+      // 🔥 KRONOMETRE ÇAĞRISI BURAYA ENTEGRE EDİLDİ 🔥
+      let displayMinute = '';
+      if (isLiveStatus && !isWaitingApproval) {
+         displayMinute = getDynamicElapsed(dbMatch);
+      } else if (safeElapsed !== null && safeElapsed !== undefined && safeElapsed !== '') {
+         if (safeExtra) displayMinute = `${safeElapsed}+${safeExtra}'`; 
+         else displayMinute = `${safeElapsed}'`; 
+      } else {
+         displayMinute = `1'`;
+      }
+
+      const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
+      const isTffMatch = isTffMatchCheck(match.category);
+      const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
+
+      const hName = sanitizeStr(homeTeamUpper);
+      const aName = sanitizeStr(awayTeamUpper);
+
+      let homeTeamId: number | null = null;
+      let awayTeamId: number | null = null;
+
+      safeEvents.forEach((e: any) => {
+          if (e.team && e.team.id) {
+              const eName = sanitizeStr(e.team.name);
+              if (eName === hName || hName.includes(eName) || eName.includes(hName)) {
+                  homeTeamId = e.team.id;
+              } else if (eName === aName || aName.includes(eName) || eName.includes(aName)) {
+                  awayTeamId = e.team.id;
+              }
+          }
+      });
+
+      if (homeTeamId && !awayTeamId) {
+          const otherEvent = safeEvents.find((e: any) => e.team?.id && e.team.id !== homeTeamId);
+          if (otherEvent) awayTeamId = otherEvent.team.id;
+      } else if (awayTeamId && !homeTeamId) {
+          const otherEvent = safeEvents.find((e: any) => e.team?.id && e.team.id !== awayTeamId);
+          if (otherEvent) homeTeamId = otherEvent.team.id;
+      }
+
+      const homeEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === true || (homeTeamId && e.team?.id === homeTeamId) || (!homeTeamId && sanitizeStr(e.team?.name) === hName)));
+      const awayEvents = safeEvents.filter((e: any) => e.type !== 'SystemTime' && (e.isHome === false || (awayTeamId && e.team?.id === awayTeamId) || (!awayTeamId && sanitizeStr(e.team?.name) === aName)));
+
+      let exactWinners: {id: string, name: string, score: string}[] = [];
+      let possibleWinners: {name: string, score: string}[] = [];
+      let eliminatedPlayers: {name: string, score: string}[] = [];
+
+      if ((isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) && homeScore !== '-' && awayScore !== '-') {
+        const currentH = parseInt(homeScore);
+        const currentA = parseInt(awayScore);
+
+        Object.keys(mergedAccounts).forEach(id => {
+          const predStr = predictionsData[`${id}-${match.week_num}-${match.id}`];
+          if (!predStr || predStr === '-' || predStr === 'PAS') return;
+          const name = mergedAccounts[id]?.name;
+          if (!name) return;
+
+          const [pHStr, pAStr] = predStr.split('-');
+          const pH = parseInt(pHStr); const pA = parseInt(pAStr);
+
+          if (pH === currentH && pA === currentA) { exactWinners.push({ id, name, score: predStr }); } 
+          else if (pH >= currentH && pA >= currentA && !isFinishedStatus) { possibleWinners.push({ name, score: predStr }); } 
+          else { eliminatedPlayers.push({ name, score: predStr }); }
+        });
+
+        exactWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        possibleWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        eliminatedPlayers.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+      }
+      
+      const winnersCount = exactWinners.length;
+      let displayPoints = 1;
+      if(winnersCount === 1) displayPoints = 12; else if(winnersCount === 2) displayPoints = 6;
+      else if(winnersCount === 3) displayPoints = 5; else if(winnersCount === 4) displayPoints = 4;
+      else if(winnersCount === 5) displayPoints = 3; else if(winnersCount === 6) displayPoints = 2;
+      else if(winnersCount >= 7) displayPoints = 1; else displayPoints = 0;
+
+      let countdownText = "";
+      if (now < matchTimeMs && (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD')) {
+        const distance = matchTimeMs - now;
+        if (distance > 0) {
+          const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((distance % (1000 * 60)) / 1000);
+          countdownText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
-    }
+      }
 
-    private fun togglePause() {
-        if (matchState == 2 || matchState == 0 || matchState == 12 || isFrozen || activeMenuState != 0) return
-        if (!isMatchActive) { isMatchActive = true; isPaused = false } 
-        else { isPaused = !isPaused }
-        titret(100)
-    }
+      return (
+        <div key={uniqueId} className={`w-full max-w-2xl mx-auto border rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative ${
+            isGoalFlashing ? 'police-siren' : isExpanded ? theme.containerBorder + ' ' + theme.containerShadow + ' ' + theme.containerBg : theme.containerBorder + ' shadow-md hover:shadow-[0_0_15px_currentColor] ' + theme.badgeText + ' ' + (theme.bgImg ? '' : 'bg-slate-950')
+        }`}>
+          {theme.bgImg && (
+            <>
+              <div className="absolute inset-0 z-0 opacity-100" style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}></div>
+              <div className={`absolute inset-0 z-0 transition-colors duration-300 ${isExpanded || isGoalFlashing ? 'bg-slate-900/60' : 'bg-slate-950/70 hover:bg-slate-900/60'}`}></div>
+            </>
+          )}
 
-    private fun handleNextState() {
-        if (matchState == 1) {
-            matchState = 2; isMatchActive = false; isFrozen = false; isPaused = false
-            halftimeBreakTime = if (halfDuration == 25) 10 * 60 else 15 * 60
-            hasSecondHalfStarted = false
-            awardedStoppageTime = 0 
-            titret(800)
-        } else if (matchState == 2) {
-            matchState = 3; mainTime = halfDuration * 60; lostTime = 0; addedTime = 0
-            isMatchActive = false; isFrozen = false; isPaused = false
-            hasSecondHalfStarted = false
-            awardedStoppageTime = 0 
-            titret(500)
-        } else if (matchState == 3) {
-            titret(500)
-        }
-    }
+          {!isExpanded && (
+            <div onClick={() => toggleMatchExpansion(uniqueId)} className="cursor-pointer px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-black/50 relative z-20 group transition-all duration-300">
+              <div className="flex-1 flex items-center justify-end overflow-hidden pr-1.5 sm:pr-3">
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-right">{homeTeamUpper}</span>
+              </div>
+              <div className="flex items-center justify-center shrink-0">
+                <img src={theme.homeLogo} alt={homeTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
+                <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
+                  <div className="mb-0.5 flex items-center justify-center">
+                    {isWaitingApproval ? (<span className="text-[9px] sm:text-[10px] font-black text-blue-400 drop-shadow-md tracking-wider animate-pulse">ONAY BEKLİYOR</span>) : isHT ? (<span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>) : isLiveStatus ? (<span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">{displayMinute}</span>) : isFinishedStatus ? (<span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>) : (<span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>)}
+                  </div>
+                  <div className={`flex items-center justify-center px-1.5 py-0.5 sm:py-1 rounded border shadow-inner backdrop-blur-md transition-all w-full ${isGoalFlashing ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110' : (isLiveStatus || isHT || isWaitingApproval) ? 'bg-green-950/60 border-green-500/40' : 'bg-[#080d1a]/80 border-slate-700/60'}`}>
+                    <span className={`font-black text-[12px] sm:text-[14px] tracking-widest leading-none ${isGoalFlashing ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,1)]' : 'text-white'}`}>{(!isLiveStatus && !isFinishedStatus && !isHT && !isWaitingApproval) ? 'v' : `${homeScore}-${awayScore}`}</span>
+                  </div>
+                </div>
+                <img src={theme.awayLogo} alt={awayTeamUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform z-10" />
+              </div>
+              <div className="flex-1 flex items-center justify-start overflow-hidden pl-1.5 sm:pl-3">
+                <span className="text-[9px] sm:text-xs text-slate-200 font-bold uppercase tracking-wide truncate group-hover:text-white transition-colors text-left">{awayTeamUpper}</span>
+              </div>
+              <div className="absolute right-1 sm:right-2 opacity-30 text-[8px] text-white group-hover:opacity-100 transition-opacity">▼</div>
+            </div>
+          )}
 
-    private fun handleReset() {
-        matchState = 0; mainTime = 0; lostTime = 0; addedTime = 0
-        isMatchActive = false; isPaused = false; isFrozen = false; activeMenuState = 0
-        homeScore = 0; awayScore = 0; matchEvents.clear()
-        isSubCountdownActive = false; isPenaltyActive = false; doubleYellowWarningPlayer = ""
-        isScreenLocked = false; hasFirstHalfStarted = false; hasSecondHalfStarted = false
-        awardedStoppageTime = 0
-        titret(1000)
-    }
+          {isExpanded && (
+            <div className="relative flex-grow overflow-hidden animate-fadeIn z-10">
+              <button onClick={() => toggleMatchExpansion(uniqueId)} className="absolute top-2 right-2 sm:top-3 sm:right-3 z-50 bg-slate-950/50 text-slate-300 hover:text-white border border-slate-700/50 rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg backdrop-blur-md transition-colors" title="Küçült">✕</button>
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="w-full text-center pt-3 pb-1">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">{match.weekLabel}</span>
+                </div>
+                <div className="w-full text-center px-2 mt-2 relative z-30">
+                  <span className={`inline-block w-[95%] sm:w-[85%] mx-auto px-3 py-1.5 rounded-lg border shadow-[0_0_15px_currentColor] text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-snug whitespace-nowrap ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>{match.category}</span>
+                </div>
 
-    @Composable
-    fun HakemSaatiTasarim() {
-        val context = LocalContext.current
-        var currentTime by remember { mutableStateOf("") }
+                <div className="flex items-center justify-between px-2 sm:px-6 pt-3 pb-4">
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                      <img src={theme.homeLogo} alt={homeTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{homeTeamUpper}</span>
+                  </div>
 
-        var drag9to3Active by remember { mutableStateOf(false) }
-        var targetResetProgress by remember { mutableStateOf(0f) }
-        val animatedResetProgress by animateFloatAsState(targetValue = targetResetProgress, animationSpec = tween(durationMillis = if (drag9to3Active) 0 else 300, easing = LinearEasing), label = "reset_anim")
-        
-        var drag3to9Active by remember { mutableStateOf(false) }
-        var targetEndHalfProgress by remember { mutableStateOf(0f) }
-        var drag3to9ActionType by remember { mutableStateOf(0) } 
-        val animatedEndHalfProgress by animateFloatAsState(targetValue = targetEndHalfProgress, animationSpec = tween(durationMillis = if (drag3to9Active) 0 else 300, easing = LinearEasing), label = "end_half_anim")
-        
-        var dragLayer2Active by remember { mutableStateOf(false) }
-        var dragLayer2Y by remember { mutableStateOf(0f) }
+                  <div className="flex flex-col items-center justify-center gap-2 mx-1 sm:mx-4 w-36 sm:w-44 z-30 relative">
+                    {theme.leagueLogo && (
+                      <div className="w-10 h-10 sm:w-14 sm:h-14 mb-1 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:scale-110 transition-transform duration-500 z-40">
+                        <img src={theme.leagueLogo} alt="League Logo" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                    {(!isLiveStatus && !isFinishedStatus && !isHT && !isWaitingApproval) && (
+                      <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                        <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                      </div>
+                    )}
+                    {isWaitingApproval && (<div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse"><span className="text-blue-400 font-black text-[10px] sm:text-xs border border-blue-500/50 bg-blue-950/80 px-3 py-1 rounded-full drop-shadow-md tracking-widest">ONAY BEKLİYOR</span></div>)}
+                    {isHT && (<div className="flex flex-col items-center justify-center mb-1.5 z-40 relative"><span className="text-amber-400 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span></div>)}
+                    {isLiveStatus && !isWaitingApproval && (
+                      <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
+                        <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">{displayMinute}</span>
+                        <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">🔴 CANLI</span>
+                      </div>
+                    )}
+                    {isFinishedStatus && (<div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md"><span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span></div>)}
+                    <div className={`w-full bg-[#080d1a]/80 border ${isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder} py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 ${!isGoalFlashing && 'shadow-[0_0_15px_rgba(0,0,0,0.5)]'} backdrop-blur-md transition-all duration-300`}>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{homeScore}</span>
+                      <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                      <span className={`text-xl sm:text-3xl font-black drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-300 ${isGoalFlashing ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,1)]' : 'text-white'}`}>{awayScore}</span>
+                    </div>
+                    {(!isLiveStatus && !isFinishedStatus && !isHT && !isWaitingApproval) && countdownText && (
+                      <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center shadow-md mt-1"><span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest drop-shadow-sm">{countdownText}</span></div>
+                    )}
+                  </div>
 
-        var archiveMatches by remember { mutableStateOf(emptyList<SavedMatch>()) }
-        var selectedArchiveMatch by remember { mutableStateOf<SavedMatch?>(null) }
-        
-        var isHoldingPause by remember { mutableStateOf(false) }
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center relative z-20">
+                      <img src={theme.awayLogo} alt={awayTeamUpper} className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)] hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <span className="text-white font-extrabold text-[9px] sm:text-[11px] text-center uppercase tracking-wide drop-shadow-md">{awayTeamUpper}</span>
+                  </div>
+                </div>
 
-        val effectiveMainTime = mainTime - lostTime
-        val limitForCalc = if (matchState == 1) halfDuration * 60 else (halfDuration * 2) * 60
-
-        LaunchedEffect(Unit) {
-            while (true) { currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()); delay(1000) }
-        }
-
-        if (doubleYellowWarningPlayer.isNotEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color.Red).clickable { 
-                    doubleYellowWarningPlayer = "" 
-                    titret(50)
-                }, 
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = doubleYellowWarningPlayer, color = Color.White, fontSize = 120.sp, fontWeight = FontWeight.Bold)
-            }
-            return
-        }
-
-        if (matchState == 0) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("MAÇ KURULUMU", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.85f).background(Color(0xFF333333), RoundedCornerShape(8.dp)).clickable { matchState = 11; titret(50) }.padding(10.dp), contentAlignment = Alignment.Center) {
-                    Text(matchCategory, color = Color.Yellow, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                BasicTextField(value = homeTeamName, onValueChange = { homeTeamName = it }, textStyle = TextStyle(color = Color.White, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 14.sp), singleLine = true, cursorBrush = SolidColor(Color.White), modifier = Modifier.fillMaxWidth(0.85f).background(Color.DarkGray, RoundedCornerShape(8.dp)).padding(10.dp))
-                Spacer(modifier = Modifier.height(8.dp))
-                BasicTextField(value = awayTeamName, onValueChange = { awayTeamName = it }, textStyle = TextStyle(color = Color.Red, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 14.sp), singleLine = true, cursorBrush = SolidColor(Color.White), modifier = Modifier.fillMaxWidth(0.85f).background(Color.DarkGray, RoundedCornerShape(8.dp)).padding(10.dp))
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.7f).background(Color(0xFF006400), RoundedCornerShape(20.dp)).clickable { matchState = 12; titret(100) }.padding(10.dp), contentAlignment = Alignment.Center) {
-                    Text("SÜRE SEÇİMİ ->", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).height(1.dp).background(Color.DarkGray))
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.8f).background(Color(0xFF004488), RoundedCornerShape(12.dp)).clickable { matchState = 8; titret(100) }.padding(10.dp), contentAlignment = Alignment.Center) {
-                    Text("ARŞİV (Geçmiş Maçlar)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-            return
-        }
-
-        if (matchState == 11) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text(text = "KATEGORİ SEÇ", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                val cats = listOf("Süper Amatör", "1. Amatör", "2. Amatör", "BGL", "Gelişim Ligi", "Özel Maç")
-                cats.forEach { cat ->
-                    Box(modifier = Modifier.fillMaxWidth(0.8f).background(Color.DarkGray, RoundedCornerShape(12.dp)).clickable { matchCategory = cat; matchState = 0; titret(50) }.padding(10.dp), contentAlignment = Alignment.Center) { Text(cat, color = Color.White, fontWeight = FontWeight.Bold) }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                Spacer(Modifier.height(12.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).background(Color.Red.copy(alpha=0.5f), RoundedCornerShape(20.dp)).clickable { matchState = 0; titret(100) }.padding(8.dp), contentAlignment = Alignment.Center) { Text("GERİ", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
-
-        if (matchState == 12) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text(text = "MAÇ SÜRESİ", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                val butonlar = listOf(Pair(45, "90 DK (45+45)"), Pair(40, "80 DK (40+40)"), Pair(35, "70 DK (35+35)"), Pair(30, "60 DK (30+30)"), Pair(25, "50 DK (25+25)"))
-                butonlar.forEach { (sure, metin) ->
-                    Box(modifier = Modifier.fillMaxWidth(0.8f).background(Color.DarkGray, RoundedCornerShape(12.dp)).clickable { halfDuration = sure; halftimeBreakTime = if (sure == 25) 10 * 60 else 15 * 60; matchState = 1; titret(200) }.padding(10.dp), contentAlignment = Alignment.Center) { Text(metin, color = Color.White, fontWeight = FontWeight.Bold) }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                Spacer(Modifier.height(12.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).background(Color.Red.copy(alpha=0.5f), RoundedCornerShape(20.dp)).clickable { matchState = 0; titret(100) }.padding(8.dp), contentAlignment = Alignment.Center) { Text("GERİ DÖN", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
-
-        if (matchState == 8) {
-            LaunchedEffect(Unit) { archiveMatches = loadMatchesFromArchive(context) }
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("GEÇMİŞ MAÇLAR", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(16.dp))
-                if (archiveMatches.isEmpty()) { Text("Arşiv boş.", color = Color.Gray, fontSize = 14.sp) } 
-                else {
-                    archiveMatches.forEach { match ->
-                        Box(modifier = Modifier.fillMaxWidth(0.9f).background(Color(0xFF333333), RoundedCornerShape(8.dp)).clickable { selectedArchiveMatch = match; matchState = 9; titret(50) }.padding(12.dp), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(match.category, color = Color.Yellow, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                Spacer(Modifier.height(2.dp))
-                                Text(match.date, color = Color.LightGray, fontSize = 10.sp)
-                                Spacer(Modifier.height(4.dp))
-                                Text("${match.homeTeam} ${match.homeScore} - ${match.awayScore} ${match.awayTeam}", color = Color.Cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                            }
-                        }
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).background(Color.Red.copy(alpha=0.5f), RoundedCornerShape(20.dp)).clickable { matchState = 0; titret(100) }.padding(8.dp), contentAlignment = Alignment.Center) { Text("GERİ", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
-
-        if (matchState == 9 && selectedArchiveMatch != null) {
-            val match = selectedArchiveMatch!!
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(top = 16.dp, bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(match.category, color = Color.Yellow, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text(match.date, color = Color.LightGray, fontSize = 10.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(match.homeTeam, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("${match.homeScore} - ${match.awayScore}", color = Color.Cyan, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                Text(match.awayTeam, color = Color(0xFFFF0000), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                {safeEvents.length > 0 && (
+                  <div className="w-full mb-3 flex flex-col gap-2 px-1.5 sm:px-6 relative z-30 animate-fadeIn">
+                    <button onClick={() => toggleEvents(uniqueId)} className="w-full flex justify-between items-center px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800/80 transition-colors border border-slate-700/50 rounded-lg backdrop-blur-md shadow-sm">
+                      <span className="text-slate-300 font-bold text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2"><span>📊</span> MAÇ İSTATİSTİKLERİ VE OLAYLARI</span>
+                      <span className="text-slate-400 text-[10px]">{isEventsOpen ? '▲' : '▼'}</span>
+                    </button>
+                    {isEventsOpen && (
+                      <div className="flex justify-between w-full text-xs sm:text-sm text-slate-300 bg-slate-900/40 rounded-lg p-1.5 sm:p-3 border border-slate-800/80 shadow-inner">
+                        <div className="flex-1 flex flex-col gap-1 items-start pr-1 sm:pr-3 border-r border-slate-700/50 overflow-hidden">
+                          {homeEvents.map((e: any, i: number) => {
+                            let icon = ''; let text = '';
+                            if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
+                            return (
+                              <span key={`h-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full">
+                                <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span> 
+                                <span className="font-medium text-slate-200 flex-1 text-left text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                        <div className="flex-1 flex flex-col gap-1 items-end pl-1 sm:pl-3 overflow-hidden">
+                          {awayEvents.map((e: any, i: number) => {
+                            let icon = ''; let text = '';
+                            if (e.type === 'Goal') { icon = e.detail === 'Penalty' ? '🎯' : (e.detail === 'Own Goal' ? '🤦‍♂️' : '⚽'); text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'Card') { icon = e.detail === 'Yellow Card' ? '🟨' : '🟥'; text = String(e.player?.name || 'Oyuncu'); } 
+                            else if (e.type === 'subst') { icon = '🔄'; text = `${String(e.assist?.name || 'Giren')} / ${String(e.player?.name || 'Çıkan')}`; } else return null;
+                            return (
+                              <span key={`a-e-${i}`} className="flex items-center gap-1 bg-slate-800/40 px-1 sm:px-2 py-0.5 rounded shadow-sm w-full justify-end">
+                                <span className="text-emerald-400 font-bold text-[8px] sm:text-[9px] shrink-0">({String(e.time?.elapsed || 0)}')</span> 
+                                <span className="font-medium text-slate-200 flex-1 text-right text-[8.5px] sm:text-[10px] leading-[1.1] break-words whitespace-normal">{text}</span> 
+                                <span className="text-[9px] sm:text-xs drop-shadow-md shrink-0">{icon}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.8f).height(1.dp).background(Color.DarkGray))
-                Spacer(modifier = Modifier.height(12.dp))
+                <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative mt-auto`}>
+                  <div className="flex justify-between items-center w-full">
+                    <div className="text-left flex-1">
+                      {(!isLiveStatus && !isFinishedStatus && !isHT && !isWaitingApproval) ? (
+                        <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
+                      ) : exactWinners.length === 0 ? (
+                         !isFinishedStatus && possibleWinners.length > 0 ? (<span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">Tam isabet yok, {possibleWinners.length} kişi pusuda!</span>) : (<span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Skoru bilen kalmadı.</span>)
+                      ) : (
+                        <span className="text-[9px] sm:text-[10px] font-medium text-emerald-300"><strong className="text-emerald-400">{exactWinners.length} kişi</strong> tam isabetli</span>
+                      )}
+                    </div>
+                    <div className="flex-0 text-center px-1">
+                      <span className={`text-[8px] font-black tracking-widest whitespace-nowrap px-2 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>{isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}</span>
+                    </div>
+                    <div className="text-right flex-1">
+                      {(exactWinners.length > 0 || possibleWinners.length > 0 || eliminatedPlayers.length > 0) && (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) && (
+                        <button onClick={() => toggleWinners(uniqueId)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm">{isWinnersOpen ? "Radarı Gizle ▲" : "Tüm Tahmin Radarı →"}</button>
+                      )}
+                    </div>
+                  </div>
                 
-                val evEvents = match.events.filter { it.team == "EV SAHİBİ" }
-                if (evEvents.isNotEmpty()) {
-                    Text(match.homeTeam, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    evEvents.forEach { ev -> EventItemViewReadOnly(ev = ev, teamColor = Color.White) }
-                    Spacer(Modifier.height(16.dp))
-                }
-                val depEvents = match.events.filter { it.team == "MİSAFİR" }
-                if (depEvents.isNotEmpty()) {
-                    Text(match.awayTeam, color = Color(0xFFFF0000), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    depEvents.forEach { ev -> EventItemViewReadOnly(ev = ev, teamColor = Color(0xFFFF0000)) }
-                }
-                Spacer(Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.5f).background(Color.DarkGray, RoundedCornerShape(20.dp)).clickable { matchState = 8; titret(100) }.padding(6.dp), contentAlignment = Alignment.Center) { Text("GERİ DÖN", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
+                  {isWinnersOpen && (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) && (
+                    <div className="w-full mt-2 flex flex-col gap-2 animate-fadeIn pb-1">
+                      {exactWinners.length > 0 && (
+                        <div className="w-full bg-slate-950/80 rounded-xl border border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] overflow-hidden mt-1 mb-2">
+                          <div className="bg-emerald-950/80 p-2 border-b border-emerald-500/50 flex justify-center items-center relative overflow-hidden">
+                              <span className="bg-emerald-500 text-slate-950 font-black px-4 py-1 rounded-full text-[10px] sm:text-xs z-10 shadow-sm border border-emerald-300 tracking-widest text-center">+{displayPoints} PUAN YAZILIYOR</span>
+                          </div>
+                          <div className="block p-2 max-h-[350px] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                            {exactWinners.map((winner, idx) => {
+                              const uniquePlayerKey = `${uniqueId}-${winner.id}`;
+                              const isRankOpen = openPlayerRanks[uniquePlayerKey] || false;
+                              const tffData = globalLiveRanks.TFF.find(x => x.id === winner.id);
+                              const dfoData = globalLiveRanks.DFO.find(x => x.id === winner.id);
+                              const masterData = globalLiveRanks.MASTER.find(x => x.id === winner.id);
+                              const skorData = globalLiveRanks.SKOR.find(x => x.id === winner.id);
+                              return (
+                                <div key={idx} className="mb-2 bg-slate-950 border border-slate-700/80 rounded-lg shadow-xl relative overflow-hidden transition-all duration-300">
+                                   <button onClick={() => togglePlayerRank(uniquePlayerKey)} className={`w-full flex items-center justify-center py-3 px-4 relative z-10 transition-colors ${isRankOpen ? 'bg-slate-900/80' : 'bg-slate-950 hover:bg-slate-900/50'}`}>
+                                       <span className="text-slate-100 font-black text-[12px] sm:text-sm uppercase tracking-widest flex items-center gap-2 text-center">{winner.name} <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span></span>
+                                   </button>
+                                   {isRankOpen && (
+                                     <div className="flex flex-wrap justify-center gap-1.5 w-full pb-3 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">MASTER SIRA {masterData?.rank||'-'} / {masterData?.pts||0} PUAN</span>
+                                         {isTffMatch ? (<span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">TFF SIRA {tffData?.rank||'-'} / {tffData?.pts||0} PUAN</span>) : (<span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-900/30 text-blue-400 border-blue-700/50 tracking-wider whitespace-nowrap">DFO SIRA {dfoData?.rank||'-'} / {dfoData?.pts||0} PUAN</span>)}
+                                         <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">SKOR SIRA {skorData?.rank||'-'} / {skorData?.pts||0} İSABET</span>
+                                     </div>
+                                   )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
 
-        // İKİNCİ KATMAN: İNFO VE CEZALAR MENÜSÜ 
-        if (activeMenuState == 8) {
-            Column(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).verticalScroll(rememberScrollState()).padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                      {!isFinishedStatus && possibleWinners.length > 0 && (
+                        <div className="w-full bg-blue-950/30 rounded-lg border border-blue-800/50 shadow-inner overflow-hidden">
+                          <button onClick={() => togglePossible(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
+                            <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)</span>
+                            <span className="text-blue-400 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
+                          </button>
+                          {isPossibleOpen && (
+                            <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-blue-900/50">
+                              {possibleWinners.map((winner, idx) => (
+                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center">
+                                  <span>{winner.name}</span><span className="text-cyan-400 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {eliminatedPlayers.length > 0 && (
+                        <div className="w-full bg-red-950/20 rounded-lg border border-red-900/30 shadow-inner overflow-hidden">
+                          <button onClick={() => toggleEliminated(uniqueId)} className="w-full flex justify-between items-center p-2.5 bg-red-900/20 hover:bg-red-800/30 transition-colors">
+                            <span className="text-red-400 font-bold text-[9px] sm:text-[10px]">❌ ŞANSI KALMAYANLAR ({eliminatedPlayers.length} KİŞİ)</span>
+                            <span className="text-red-400 text-[10px]">{isEliminatedOpen ? '▲' : '▼'}</span>
+                          </button>
+                          {isEliminatedOpen && (
+                            <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-red-900/30">
+                              {eliminatedPlayers.map((winner, idx) => (
+                                <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-red-950/40 text-slate-400 border-red-900/50 flex gap-1 items-center opacity-70">
+                                  <span className="line-through">{winner.name}</span><span className="text-red-500 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+  };
+
+  const sortedWeeks = [...activeWeeks].sort((a, b) => b - a);
+
+  return (
+    <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes siren { 0% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); } 25% { box-shadow: 0 0 80px #1d4ed8, inset 0 0 60px #1d4ed8; border-color: #2563eb; background-color: rgba(29, 78, 216, 0.6); } 50% { box-shadow: 0 0 15px #e11d48, inset 0 0 15px #e11d48; border-color: #f43f5e; background-color: rgba(225, 29, 72, 0.2); } 75% { box-shadow: 0 0 80px #be123c, inset 0 0 60px #be123c; border-color: #e11d48; background-color: rgba(190, 18, 60, 0.6); } 100% { box-shadow: 0 0 15px #2563eb, inset 0 0 15px #2563eb; border-color: #3b82f6; background-color: rgba(37, 99, 235, 0.2); } }
+        .police-siren { animation: siren 0.4s ease-in-out infinite; z-index: 50; transform: scale(1.02); transition: all 0.2s; }
+      `}} />
+
+      <div className="w-full flex justify-end px-2 sm:px-0">
+          <button onClick={toggleSound} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${soundEnabled ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'}`}>
+              {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
+          </button>
+      </div>
+
+      {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
+      {todaysMatchesList.length === 0 ? (
+        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl mt-2">
+          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
+          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
+        </div>
+      ) : (
+        <>
+          {finishedMatches.length > 0 && (
+            <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden mt-2">
+              <button onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)} className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group">
+                <div className="flex-1"></div> 
+                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-500 text-[10px] sm:text-xs">▼</span></div></div>
+              </button>
+              {isFinishedAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
+                  {finishedMatches.map(match => renderMatchCard(match, true))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeMatches.length > 0 && (
+            <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden mt-2">
+              <button onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)} className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group">
+                <div className="flex-1 flex items-center gap-2"><span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span></div> 
+                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">GÜNÜN CANLI MAÇLARI ({activeMatches.length})</h2>
+                <div className="flex-1 flex justify-end"><div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}><span className="text-slate-400 text-[10px] sm:text-xs">▼</span></div></div>
+              </button>
+              {isLiveAccordionOpen && (
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+                  {activeMatches.map(match => renderMatchCard(match, false))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 🔥 ÇOKLU LİDERLİK RADARLARI (19 ÜSTTE, 18 ALTTA) 🔥 */}
+      {sortedWeeks.map((week, index) => {
+          const wStats = weeklySortedStats[week] || [];
+          const maxPts = wStats.length > 0 ? wStats[0].points : 0;
+          const maxScores = wStats.length > 0 ? Math.max(...wStats.map((s:any) => s.exactScores)) : 0;
+          const ptsLeaders = wStats.filter((s:any) => s.points === maxPts && maxPts > 0);
+          const scoreLeaders = wStats.filter((s:any) => s.exactScores === maxScores && maxScores > 0);
+          const is24Finished = is24thMatchFinishedMap[week];
+          const isOldestWeek = index === sortedWeeks.length - 1 && sortedWeeks.length > 1;
+
+          const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
+              if (!is24Finished) return null; 
+              if (type === 'points') {
+                  if (ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
+                      return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-amber-500 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🏆 +3 PUAN KAZANDI</span>;
+                  }
+              } else if (type === 'scores') {
+                  if (scoreLeaders.length === 1 && scoreLeaders[0].id === uid) {
+                      return <span className="ml-2 text-[9px] sm:text-[10px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-600/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_currentColor] animate-pulse">🎯 +3 PUAN KAZANDI</span>;
+                  }
+              }
+              return null;
+          };
+
+          return (
+            <div key={`radar-${week}`} className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto mt-4">
+                <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
+                    <span className="text-lg sm:text-xl">📡</span> {week}. HAFTA CANLI LİDERLİK RADARI
+                </h2>
                 
-                Text("KONTROL MENÜSÜ", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(16.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(0.9f), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Box(modifier = Modifier.weight(1f).height(45.dp).background(Color(0xFF333333), RoundedCornerShape(8.dp)).clickable { activeMenuState = 4; titret(100) }, contentAlignment = Alignment.Center) {
-                        Text("EV İNFO", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Box(modifier = Modifier.weight(1f).height(45.dp).background(Color(0xFF333333), RoundedCornerShape(8.dp)).clickable { activeMenuState = 5; titret(100) }, contentAlignment = Alignment.Center) {
-                        Text("MSFR İNFO", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(0.9f), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Box(modifier = Modifier.weight(1f).height(45.dp).background(Color(0xFFFFA500), RoundedCornerShape(8.dp)).clickable { 
-                        if (!isSubCountdownActive) { isSubCountdownActive = true; subCountdownValue = 10; titret(100) }
-                        activeMenuState = 0
-                    }, contentAlignment = Alignment.Center) {
-                        Text("10 SN CEZA", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Box(modifier = Modifier.weight(1f).height(45.dp).background(Color.DarkGray, RoundedCornerShape(8.dp)).clickable { 
-                        if (!isPenaltyActive || penaltyValue == 0) { isPenaltyActive = true; penaltyValue = 60; titret(100) } 
-                        else { isPenaltyActive = false; titret(50) }
-                        activeMenuState = 0
-                    }, contentAlignment = Alignment.Center) {
-                        Text(if (isPenaltyActive) "CEZA İPTAL" else "1 DK CEZA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    }
-                }
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                        <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
+                            <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
+                            {is24Finished && ptsLeaders.length > 1 && (
+                                <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                            )}
+                        </div>
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {wStats.length > 0 ? (
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-slate-800/50">
+                                        {wStats.map((s:any, idx:number) => (
+                                            <tr key={s.id} className="hover:bg-slate-900/50">
+                                                <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                                <td className="py-2 font-bold text-slate-200">
+                                                    {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                                    {getLeaderBadge(s.id, 'points')}
+                                                </td>
+                                                <td className="py-2 pr-2 text-right font-black text-emerald-400">{s.points} P</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-xs">HENÜZ PUAN ALAN YOK</div>
+                            )}
+                        </div>
+                    </div>
 
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.9f).height(45.dp).background(Color(0xFF006400), RoundedCornerShape(8.dp)).clickable { 
-                    activeMenuState = 13; titret(100) 
-                }, contentAlignment = Alignment.Center) {
-                    Text("İLAVE SÜRE EKLE (+)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
+                    <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
+                        <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
+                            <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
+                            {is24Finished && scoreLeaders.length > 1 && (
+                                <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)</span>
+                            )}
+                        </div>
+                        <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {wStats.length > 0 && maxScores > 0 ? (
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-slate-800/50">
+                                        {wStats.filter((s:any) => s.exactScores > 0).sort((a:any,b:any) => b.exactScores - a.exactScores).map((s:any, idx:number) => (
+                                            <tr key={s.id} className="hover:bg-slate-900/50">
+                                                <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
+                                                <td className="py-2 font-bold text-slate-200">
+                                                    {mergedAccounts[s.id]?.name.replace(/🏆/g, '').trim()}
+                                                    {getLeaderBadge(s.id, 'scores')}
+                                                </td>
+                                                <td className="py-2 pr-2 text-right font-black text-amber-500">{s.exactScores} Maç</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-xs">HENÜZ SKOR BİLEN YOK</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
-                Spacer(modifier = Modifier.height(24.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).background(Color.Red.copy(alpha=0.5f), RoundedCornerShape(20.dp)).clickable { activeMenuState = 0; titret(100) }.padding(8.dp), contentAlignment = Alignment.Center) { 
-                    Text("ANA EKRANA DÖN", color = Color.White, fontSize = 11.sp) 
-                }
-            }
-            return
-        }
-
-        // İLAVE SÜRE SEÇİM EKRANI (Menü 13)
-        if (activeMenuState == 13) {
-            Column(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).verticalScroll(rememberScrollState()).padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text("İLAVE SÜRE BELİRLE", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                
-                val suggested = (lostTime + 45) / 60
-                val suggestText = if (suggested > 0) "+$suggested DK" else "0 DK"
-                Text("Kayıp Zaman: ${String.format("%02d:%02d", lostTime/60, lostTime%60)}", color = Color.Red, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("(Önerilen İlave: $suggestText)", color = Color.Gray, fontSize = 12.sp)
-                
-                Spacer(Modifier.height(16.dp))
-                
-                val numbers = (1..15).toList()
-                val numRows = numbers.chunked(3)
-                numRows.forEach { rowItems ->
-                    Row(modifier = Modifier.fillMaxWidth(0.9f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        rowItems.forEach { num -> 
-                            Box(modifier = Modifier.weight(1f).height(45.dp).background(Color(0xFF004488), RoundedCornerShape(8.dp)).clickable { 
-                                awardedStoppageTime = num
-                                activeMenuState = 0
-                                titret(200)
-                            }, contentAlignment = Alignment.Center) { 
-                                Text("+$num", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) 
-                            } 
-                        }
-                        for (i in 0 until (3 - rowItems.size)) { Spacer(modifier = Modifier.weight(1f)) } 
-                    }
-                    Spacer(Modifier.height(8.dp))
-                }
-                
-                Spacer(Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).background(Color.Red.copy(alpha=0.5f), RoundedCornerShape(20.dp)).clickable { activeMenuState = 8; titret(100) }.padding(8.dp), contentAlignment = Alignment.Center) { 
-                    Text("İPTAL / GERİ", color = Color.White, fontSize = 12.sp) 
-                }
-            }
-            return
-        }
-
-        if (activeMenuState == 6) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text("MAÇI BİTİR / SIFIRLA?", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(20.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Box(modifier = Modifier.background(Color.DarkGray, RoundedCornerShape(12.dp)).clickable { activeMenuState = 0; titret(100) }.padding(horizontal = 20.dp, vertical = 14.dp), contentAlignment = Alignment.Center) { Text("HAYIR", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-                    Box(modifier = Modifier.background(Color.Red, RoundedCornerShape(12.dp)).clickable { activeMenuState = 7; titret(200) }.padding(horizontal = 20.dp, vertical = 14.dp), contentAlignment = Alignment.Center) { Text("EVET", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-                }
-            }
-            return
-        }
-
-        if (activeMenuState == 11) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                val baslik = if (matchState == 1) "İLK YARIYI BİTİR?" else "MAÇI BİTİR?"
-                Text(baslik, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(20.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Box(modifier = Modifier.background(Color.DarkGray, RoundedCornerShape(12.dp)).clickable { activeMenuState = 0; titret(100) }.padding(horizontal = 20.dp, vertical = 14.dp), contentAlignment = Alignment.Center) { Text("HAYIR", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-                    Box(modifier = Modifier.background(Color(0xFF006400), RoundedCornerShape(12.dp)).clickable { handleNextState(); activeMenuState = 0; titret(200) }.padding(horizontal = 20.dp, vertical = 14.dp), contentAlignment = Alignment.Center) { Text("EVET", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-                }
-            }
-            return
-        }
-
-        if (activeMenuState == 7) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text("EMİN MİSİNİZ?", color = Color.Red, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text("(Arşive kaydedilecek)", color = Color.Gray, fontSize = 12.sp)
-                Spacer(Modifier.height(20.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Box(modifier = Modifier.background(Color.DarkGray, RoundedCornerShape(12.dp)).clickable { activeMenuState = 0; titret(100) }.padding(horizontal = 16.dp, vertical = 14.dp), contentAlignment = Alignment.Center) { Text("İPTAL", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
-                    Box(modifier = Modifier.background(Color(0xFF8B0000), RoundedCornerShape(12.dp)).clickable { saveMatchToArchive(); handleReset(); titret(500) }.padding(horizontal = 16.dp, vertical = 14.dp), contentAlignment = Alignment.Center) { Text("BİTİR/KAYDET", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
-                }
-            }
-            return
-        }
-
-        if (activeMenuState == 1) {
-            val teamColor = if (pendingTeam == "EV SAHİBİ") Color.White else Color(0xFFFF0000)
-            val teamDispName = if (pendingTeam == "EV SAHİBİ") homeTeamName else awayTeamName
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = teamDispName, color = teamColor, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(16.dp))
-                val actions = listOf(Pair("GOL", Color.White), Pair("SARI KART", Color.Yellow), Pair("KIRMIZI KART", Color.Red))
-                actions.forEach { (actionName, actionColor) ->
-                    Box(modifier = Modifier.fillMaxWidth(0.85f).background(actionColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)).clickable { titret(50); pendingAction = actionName; pendingPlayerNo = ""; activeMenuState = 2 }.padding(vertical = 14.dp), contentAlignment = Alignment.Center) { Text(actionName, color = actionColor, fontWeight = FontWeight.Bold, fontSize = 15.sp) }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.6f).background(Color.DarkGray, RoundedCornerShape(20.dp)).clickable { activeMenuState = 0; titret(100) }.padding(8.dp), contentAlignment = Alignment.Center) { Text("KAPAT", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
-
-        if (activeMenuState == 2) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                val headerColor = if (pendingAction == "GOL") Color.White else if (pendingAction == "SARI KART") Color.Yellow else Color.Red 
-                Text(text = "$pendingAction İÇİN SEÇ:", color = headerColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(12.dp))
-                val onSelect = { selection: String ->
-                    titret(30); pendingPlayerNo = selection
-                    if(pendingAction == "GOL") { activeMenuState = 3 } 
-                    else {
-                        val minInt = (mainTime / 60) + 1
-                        val minLabel = if (matchState == 1 && minInt > halfDuration) "$halfDuration+${minInt - halfDuration}" else if (matchState == 3 && minInt > halfDuration * 2) "${halfDuration * 2}+${minInt - halfDuration * 2}" else "$minInt"
-                        if (pendingAction == "SARI KART") {
-                            val existingYellows = matchEvents.count { it.team == pendingTeam && it.playerNo == selection && it.type == "SARI KART" }
-                            matchEvents.add(MatchEvent(minLabel, pendingTeam, pendingAction, selection, ""))
-                            if (existingYellows >= 1) { matchEvents.add(MatchEvent(minLabel, pendingTeam, "KIRMIZI KART", selection, "2. SARI")); doubleYellowWarningPlayer = selection; titret(1500) } else { titret(300) }
-                        } else { matchEvents.add(MatchEvent(minLabel, pendingTeam, pendingAction, selection, "")); titret(300) }
-                        activeMenuState = 0
-                    }
-                }
-                Text("SAHA İÇİ OYUNCULAR", color = Color.Gray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(6.dp))
-                val numbers = (1..99).toList().map { it.toString() }
-                val numRows = numbers.chunked(4)
-                numRows.forEach { rowItems ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        rowItems.forEach { num -> Box(modifier = Modifier.weight(1f).aspectRatio(1f).background(Color.DarkGray, RoundedCornerShape(8.dp)).clickable { onSelect(num) }, contentAlignment = Alignment.Center) { Text(text = num, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) } }
-                        for (i in 0 until (4 - rowItems.size)) { Spacer(modifier = Modifier.weight(1f)) } 
-                    }
-                    Spacer(Modifier.height(6.dp))
-                }
-                Spacer(Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.5f).background(Color.Red.copy(alpha=0.5f), RoundedCornerShape(20.dp)).clickable { activeMenuState = 1 }.padding(8.dp), contentAlignment = Alignment.Center) { Text("İPTAL", color = Color.White, fontSize = 12.sp) }
-                Spacer(Modifier.height(30.dp)) 
-            }
-            return
-        }
-
-        if (activeMenuState == 3) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text("GOLÜN ŞEKLİ (#$pendingPlayerNo)", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(10.dp))
-                val types = listOf("AYAK", "KAFA", "PENALTI", "KENDİ KALESİNE")
-                types.forEach { t ->
-                    Box(modifier = Modifier.fillMaxWidth(0.85f).background(Color(0xFF006400), RoundedCornerShape(8.dp)).clickable {
-                        val minInt = (mainTime / 60) + 1
-                        val minLabel = if (matchState == 1 && minInt > halfDuration) "$halfDuration+${minInt - halfDuration}" else if (matchState == 3 && minInt > halfDuration * 2) "${halfDuration * 2}+${minInt - halfDuration * 2}" else "$minInt"
-                        if (t == "KENDİ KALESİNE") { if (pendingTeam == "EV SAHİBİ") awayScore++ else homeScore++ } 
-                        else { if (pendingTeam == "EV SAHİBİ") homeScore++ else awayScore++ }
-                        matchEvents.add(MatchEvent(minLabel, pendingTeam, pendingAction, pendingPlayerNo, t))
-                        activeMenuState = 0; titret(300)
-                    }.padding(12.dp), contentAlignment = Alignment.Center) { Text(t, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-                    Spacer(Modifier.height(6.dp))
-                }
-            }
-            return
-        }
-
-        if (activeMenuState == 4) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).padding(top = 16.dp, bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(homeTeamName, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
-                    val evEvents = matchEvents.filter { it.team == "EV SAHİBİ" }
-                    if (evEvents.isEmpty()) { Spacer(Modifier.height(20.dp)); Text("Kayıt Yok", color = Color.DarkGray, fontSize = 14.sp) } 
-                    else { evEvents.forEach { ev -> EventItemViewReadOnly(ev = ev, teamColor = Color.White) } }
-                }
-                Spacer(Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.5f).background(Color.DarkGray, RoundedCornerShape(20.dp)).clickable { activeMenuState = 8; titret(100) }.padding(6.dp), contentAlignment = Alignment.Center) { Text("GERİ", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
-
-        if (activeMenuState == 5) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.Black).padding(top = 16.dp, bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(awayTeamName, color = Color(0xFFFF0000), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
-                    val depEvents = matchEvents.filter { it.team == "MİSAFİR" }
-                    if (depEvents.isEmpty()) { Spacer(Modifier.height(20.dp)); Text("Kayıt Yok", color = Color.DarkGray, fontSize = 14.sp) } 
-                    else { depEvents.forEach { ev -> EventItemViewReadOnly(ev = ev, teamColor = Color(0xFFFF0000)) } }
-                }
-                Spacer(Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth(0.5f).background(Color.DarkGray, RoundedCornerShape(20.dp)).clickable { activeMenuState = 8; titret(100) }.padding(6.dp), contentAlignment = Alignment.Center) { Text("GERİ", color = Color.White, fontSize = 12.sp) }
-            }
-            return
-        }
-
-        Box(
-            modifier = Modifier.fillMaxSize().background(Color.Black)
-            .pointerInput(Unit) {
-                // İKİ PARMAK KİLİDİ 
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-                        val pressedPointers = event.changes.filter { it.pressed }
-                        if (pressedPointers.size == 2) {
-                            val now = System.currentTimeMillis()
-                            if (now - lastLockToggleTime > 500) {
-                                isScreenLocked = !isScreenLocked
-                                lastLockToggleTime = now
-                                titret(80) 
-                            }
-                            pressedPointers.forEach { it.consume() }
-                        }
-                    }
-                }
-            }
-            .pointerInput(Unit) {
-                // DOKUNMATİK MOTORU (Hatasız ve Kurşun Geçirmez)
-                detectTapGestures(
-                    onDoubleTap = { offset ->
-                        if (isScreenLocked) return@detectTapGestures
-                        val w = size.width; val h = size.height
-                        
-                        // İLAVE ZAMAN GÖSTERİMİ İÇİN GÜNEYE ÇİFT TIK
-                        val limitForCalc = if (matchState == 1) halfDuration * 60 else (halfDuration * 2) * 60
-                        if (mainTime >= limitForCalc && !isFrozen) {
-                            if (offset.y > h * 0.5f && offset.y < h * 0.85f && offset.x > w * 0.35f && offset.x < w * 0.65f) { 
-                                if (!showStoppageTimer) { showStoppageTimer = true; stoppageTimeRemaining = lostTime; titret(80) } 
-                                return@detectTapGestures
-                            }
-                        }
-                        
-                        // ÇİFT TIKLAMA İLE MORS ALFABESİ (Tık-Tık!)
-                        if (activeMenuState == 0 && (matchState == 1 || matchState == 3) && !isFrozen && !isSubCountdownActive) {
-                            val isCenter = offset.x > w * 0.35f && offset.x < w * 0.65f && offset.y > h * 0.35f && offset.y < h * 0.65f
-                            val isBottomClock = offset.y > h * 0.85f
-
-                            if (!isCenter && !isBottomClock) {
-                                if (offset.y <= h * 0.5f) { // KUZEY
-                                    if (offset.x < w / 2) { mainTime += 1 }       // Sol Üst
-                                    else { mainTime += 60 }                       // Sağ Üst
-                                } else { // GÜNEY
-                                    if (offset.x < w / 2) { if (mainTime >= 1) mainTime -= 1 } // Sol Alt
-                                    else { if (mainTime >= 60) mainTime -= 60 else mainTime = 0 } // Sağ Alt
-                                }
-                                titret(30)
-                            }
-                        }
-                    },
-                    onPress = { offset ->
-                        if (isScreenLocked) return@detectTapGestures
-                        val w = size.width; val h = size.height
-                        val isLostTimeArea = offset.x < w / 2 && offset.y > h * 0.5f && offset.y < h * 0.85f
-                        val isPeriodStarted = if (matchState == 1) hasFirstHalfStarted else if (matchState == 3) hasSecondHalfStarted else false
-                        
-                        // KAYIP ZAMANA BASILI TUTARAK OYUNU DURDUR/BAŞLAT
-                        if (activeMenuState == 0 && (matchState == 1 || matchState == 3) && !isFrozen && !isSubCountdownActive && isLostTimeArea && isPeriodStarted) {
-                            val holdJob = matchScope.launch {
-                                delay(250) 
-                                isHoldingPause = true
-                                titret(800) 
-                            }
-                            val success = tryAwaitRelease()
-                            holdJob.cancel()
-                            
-                            if (isHoldingPause) {
-                                isHoldingPause = false
-                                if (success) {
-                                    togglePause() 
-                                }
-                            }
-                        }
-                    },
-                    onLongPress = { offset ->
-                        if (isScreenLocked) return@detectTapGestures
-                        val w = size.width; val h = size.height
-                        if (activeMenuState == 0 && (matchState == 1 || matchState == 3) && !isFrozen && !isSubCountdownActive) {
-                            if (offset.y <= h * 0.5f) { 
-                                if (offset.x <= w / 2) { pendingTeam = "EV SAHİBİ"; activeMenuState = 1; titret(200) } 
-                                else { pendingTeam = "MİSAFİR"; activeMenuState = 1; titret(200) }
-                            }
-                        }
-                    }
-                )
-            }.pointerInput(Unit) {
-                var dragOffsetX = 0f; var dragOffsetY = 0f
-                detectDragGestures(
-                    onDragStart = { offset -> 
-                        if (isScreenLocked) return@detectDragGestures
-                        val w = size.width; val h = size.height
-                        if (activeMenuState == 0 && matchState != 0 && matchState != 12 && !isSubCountdownActive) { 
-                            val limit = halfDuration * 60
-                            // 9'dan 3'e Çekiş - Arşivleme
-                            if (offset.x < w * 0.25f && offset.y > h * 0.3f && offset.y < h * 0.7f) { 
-                                drag9to3Active = true; targetResetProgress = 0f; titret(30) 
-                            }
-                            // 3'ten 9'a Çekiş - Anayasa Kuralları
-                            else if (offset.x > w * 0.75f && offset.y > h * 0.3f && offset.y < h * 0.7f) {
-                                if (matchState == 1 && !hasFirstHalfStarted) { drag3to9ActionType = 1; drag3to9Active = true; targetEndHalfProgress = 0f; titret(30) } 
-                                else if (matchState == 1 && mainTime >= limit) { drag3to9ActionType = 2; drag3to9Active = true; targetEndHalfProgress = 0f; titret(30) } 
-                                else if (matchState == 3 && !hasSecondHalfStarted) { drag3to9ActionType = 3; drag3to9Active = true; targetEndHalfProgress = 0f; titret(30) } 
-                                else if (matchState == 3 && mainTime >= limit * 2) { drag3to9ActionType = 4; drag3to9Active = true; targetEndHalfProgress = 0f; titret(30) } 
-                                else if (matchState == 2) { drag3to9ActionType = 5; drag3to9Active = true; targetEndHalfProgress = 0f; titret(30) } 
-                                else { titret(50) }
-                            }
-                            // KİTAP YAPRAĞI (6'dan Ortaya Çekiş -> 2. Katmana Geçiş)
-                            else if (offset.y > h * 0.75f && offset.x > w * 0.25f && offset.x < w * 0.75f) {
-                                dragLayer2Active = true; dragLayer2Y = offset.y; titret(30)
-                            }
-                        }
-                    },
-                    onDrag = { change, dragAmount -> 
-                        if (isScreenLocked) return@detectDragGestures
-                        if (drag9to3Active) {
-                            change.consume(); val w = size.width
-                            var progress = (change.position.x / w) * 360f
-                            if (progress < 0f) progress = 0f; if (progress > 360f) progress = 360f
-                            targetResetProgress = progress
-                        } else if (drag3to9Active) {
-                            change.consume(); val w = size.width
-                            var progress = ((w - change.position.x) / w) * 360f
-                            if (progress < 0f) progress = 0f; if (progress > 360f) progress = 360f
-                            targetEndHalfProgress = progress
-                        } else if (dragLayer2Active) {
-                            change.consume()
-                            dragLayer2Y += dragAmount.y
-                            if (dragLayer2Y < size.height / 2f) {
-                                dragLayer2Active = false
-                                activeMenuState = 8
-                                titret(100)
-                            }
-                        } else { dragOffsetX += dragAmount.x; dragOffsetY += dragAmount.y }
-                    },
-                    onDragEnd = {
-                        if (drag9to3Active) {
-                            drag9to3Active = false 
-                            if (targetResetProgress > 320f) { targetResetProgress = 0f; activeMenuState = 6; titret(300) } else { targetResetProgress = 0f }
-                        }
-                        if (drag3to9Active) {
-                            drag3to9Active = false 
-                            if (targetEndHalfProgress > 320f) { 
-                                targetEndHalfProgress = 0f
-                                when (drag3to9ActionType) {
-                                    1 -> { hasFirstHalfStarted = true; togglePause(); titret(500) }
-                                    2 -> { activeMenuState = 11; titret(300) }
-                                    3 -> { hasSecondHalfStarted = true; togglePause(); titret(500) }
-                                    4 -> { activeMenuState = 11; titret(300) }
-                                    5 -> { handleNextState(); titret(300) }
-                                }
-                            } else { targetEndHalfProgress = 0f }
-                        }
-                        dragLayer2Active = false
-                    },
-                    onDragCancel = { drag9to3Active = false; targetResetProgress = 0f; drag3to9Active = false; targetEndHalfProgress = 0f; dragLayer2Active = false }
-                )
-            }, contentAlignment = Alignment.Center
-        ) {
-            val infiniteTransition = rememberInfiniteTransition()
-
-            if (matchState == 2) {
-                val rotationAnimation by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(animation = tween(6000, easing = LinearEasing), repeatMode = RepeatMode.Restart))
-                val pulseAlpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 1f, animationSpec = infiniteRepeatable(animation = tween(1200, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse))
-
-                Canvas(modifier = Modifier.fillMaxSize().padding(4.dp)) {
-                    val center = Offset(size.width / 2, size.height / 2)
-                    drawArc(Color.DarkGray.copy(alpha = 0.4f), 0f, 360f, false, style = Stroke(width = 2.dp.toPx()))
-                    rotate(rotationAnimation, center) { drawArc(Color(0xFF00FF00).copy(alpha = 0.3f), 0f, 360f, false, style = Stroke(width = 4.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 20f), 0f))) }
-                    val maxHalftime = if (halfDuration == 25) 10 * 60f else 15 * 60f
-                    val sweepAngle = (halftimeBreakTime / maxHalftime) * 360f
-                    if (sweepAngle > 0f) drawArc(Color.Red, -90f, sweepAngle, false, style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round))
-                }
-
-                Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 30.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = currentTime, color = Color.LightGray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "DEVRE ARASI", color = Color.Red.copy(alpha = pulseAlpha), fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    
-                    val hMin = halftimeBreakTime / 60; val hSec = halftimeBreakTime % 60
-                    Text(text = String.format("%02d:%02d", hMin, hSec), color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("2. YARIYA GEÇMEK İÇİN SAĞDAN", color = Color.Gray, fontSize = 10.sp)
-                    Text("SOLA ÇEK (3'TEN 9'A)", color = Color.Gray, fontSize = 10.sp)
-                }
-            } else {
-                Canvas(modifier = Modifier.fillMaxSize().padding(2.dp)) {
-                    val radius = size.minDimension / 2; val center = Offset(size.width / 2, size.height / 2)
-                    for (i in 0..11) {
-                        val angle = (i * 30f) - 90f; val rad = Math.toRadians(angle.toDouble())
-                        drawCircle(color = Color.DarkGray, radius = 1.5.dp.toPx(), center = Offset(center.x + radius * cos(rad).toFloat(), center.y + radius * sin(rad).toFloat()))
-                    }
-                    val maxSweep = halfDuration * 6f
-                    val currentSecondsInHalf = if (matchState == 1) effectiveMainTime else (effectiveMainTime - halfDuration * 60)
-                    val sweepAngle = (currentSecondsInHalf / 60f * 6f).coerceAtMost(maxSweep)
-                    val cyanSweep = 360f - maxSweep
-
-                    if (cyanSweep > 0f) drawArc(Color.Cyan, -90f + maxSweep, cyanSweep, false, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
-                    if (sweepAngle < maxSweep) drawArc(Color.Red, -90f + sweepAngle, maxSweep - sweepAngle, false, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
-                    if (sweepAngle > 0f) drawArc(Color(0xFF00FF00), -90f, sweepAngle, false, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
-                }
-
-                // KUSURSUZ EKRAN DİZİLİMİ (ŞAPKA/ÇATI DÜZENİ)
-                Column(modifier = Modifier.fillMaxSize()) {
-                    
-                    // KUZEY YARIM KÜRE
-                    Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.BottomCenter) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 6.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                val neonAmber = Color(0xFFFFB300)
-                                Text(text = "$homeScore", color = neonAmber, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.width(4.dp)) 
-                                Text(text = "-", color = neonAmber, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.width(4.dp)) 
-                                Text(text = "$awayScore", color = neonAmber, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                            }
-                            
-                            Spacer(modifier = Modifier.height(2.dp))
-                            
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                val homeReds = matchEvents.count { it.team == "EV SAHİBİ" && it.type == "KIRMIZI KART" && it.playerNo.toIntOrNull() != null }
-                                if (homeReds > 0) {
-                                    Box(modifier = Modifier.padding(end = 6.dp, bottom = 4.dp).size(width = 16.dp, height = 22.dp).background(Color.Red, RoundedCornerShape(2.dp)), contentAlignment = Alignment.Center) {
-                                        Text(text = "$homeReds", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                } else { Spacer(modifier = Modifier.padding(end = 6.dp, bottom = 4.dp).size(width = 16.dp, height = 22.dp)) }
-                                
-                                Text(text = String.format("%02d:%02d", mainTime / 60, mainTime % 60), fontSize = 50.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                
-                                val awayReds = matchEvents.count { it.team == "MİSAFİR" && it.type == "KIRMIZI KART" && it.playerNo.toIntOrNull() != null }
-                                if (awayReds > 0) {
-                                    Box(modifier = Modifier.padding(start = 6.dp, bottom = 4.dp).size(width = 16.dp, height = 22.dp).background(Color.Red, RoundedCornerShape(2.dp)), contentAlignment = Alignment.Center) {
-                                        Text(text = "$awayReds", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                } else { Spacer(modifier = Modifier.padding(start = 6.dp, bottom = 4.dp).size(width = 16.dp, height = 22.dp)) }
-                            }
-                        }
-                    }
-
-                    // GÜNEY YARIM KÜRE (Çatı Sistemi - TopCenter Hizalama)
-                    Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.TopCenter) {
-                        Row(modifier = Modifier.fillMaxWidth(0.9f).padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Top) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("KAYIP ZAMAN", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                Text(text = String.format("%02d:%02d", lostTime / 60, lostTime % 60), color = Color.Red, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                val limitForCalc = if (matchState == 1) halfDuration * 60 else (halfDuration * 2) * 60
-                                if (effectiveMainTime < limitForCalc) {
-                                    val rem = limitForCalc - effectiveMainTime
-                                    Text("KALAN SÜRE", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                    Text(text = String.format("%02d:%02d", rem / 60, rem % 60), color = Color(0xFF00FF00), fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                                } else {
-                                    if (awardedStoppageTime > 0) {
-                                        val over = effectiveMainTime - limitForCalc
-                                        val remainingExtra = (awardedStoppageTime * 60) - over
-                                        if (remainingExtra >= 0) {
-                                            Text("UZATMA (KALAN)", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                            Text(text = String.format("%02d:%02d", remainingExtra / 60, remainingExtra % 60), color = Color(0xFFFFB300), fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                                        } else {
-                                            val exceeded = -remainingExtra
-                                            Text("SÜRE DOLDU (+)", color = Color.Red, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                            Text(text = "+${String.format("%02d:%02d", exceeded / 60, exceeded % 60)}", color = Color.Red, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                                        }
-                                    } else {
-                                        val over = effectiveMainTime - limitForCalc
-                                        Text("İLAVE OYNANAN", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = "+${String.format("%02d:%02d", over / 60, over % 60)}", color = Color(0xFF00FF00), fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // GERÇEK SAAT VE (+) İKONU BİRLEŞİMİ
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) { 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 12.dp)) {
-                        Box(modifier = Modifier.background(Color(0xFF333333), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 2.dp)) {
-                            val badgeText = if (awardedStoppageTime > 0) "+$awardedStoppageTime DK" else "+"
-                            Text(text = badgeText, color = Color(0xFFFFB300), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (isScreenLocked) { Text(text = "🔒 ", color = Color.Red, fontSize = 16.sp) }
-                            Text(text = currentTime, color = Color.LightGray, fontSize = 18.sp, fontWeight = FontWeight.Bold) 
-                        }
-                    }
-                }
-            }
-
-            // --- KİTAP YAPRAĞI ANİMASYONU ---
-            if (dragLayer2Active) {
-                Box(modifier = Modifier.fillMaxSize().offset { IntOffset(0, dragLayer2Y.toInt()) }.background(Color(0xFF111111), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), contentAlignment = Alignment.TopCenter) {
-                        Box(modifier = Modifier.width(40.dp).height(4.dp).background(Color.Gray, RoundedCornerShape(2.dp)))
-                    }
-                }
-            }
-
-            // --- ANİMASYONLAR VE POPUPLAR ---
-            if (drag9to3Active || animatedResetProgress > 0f) {
-                Canvas(modifier = Modifier.fillMaxSize().padding(6.dp)) { drawArc(color = Color.Red, startAngle = 180f, sweepAngle = animatedResetProgress, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)) }
-            }
-            
-            if (drag3to9Active || animatedEndHalfProgress > 0f) {
-                Box(modifier = Modifier.fillMaxSize().background(Color(0xCC006400)), contentAlignment = Alignment.Center) {
-                    val textAction = when (drag3to9ActionType) { 1 -> "MAÇ BAŞLIYOR..."; 2 -> "İLK YARI BİTİYOR..."; 3 -> "2. YARI BAŞLIYOR..."; 4 -> "MAÇ BİTİYOR..."; 5 -> "DEVREYİ GEÇ..."; else -> "" }
-                    Text(text = textAction, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                }
-                Canvas(modifier = Modifier.fillMaxSize().padding(6.dp)) { drawArc(color = Color.Green, startAngle = 0f, sweepAngle = -animatedEndHalfProgress, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)) }
-            }
-
-            if (isHoldingPause) {
-                val isResuming = isPaused
-                val bgColor = if (isResuming) Color(0xCC00AA00) else Color(0xCCFF0000)
-                val actionText = if (isResuming) "OYUN BAŞLATILIYOR..." else "OYUN DURDURULUYOR..."
-                Box(modifier = Modifier.fillMaxSize().background(bgColor), contentAlignment = Alignment.Center) {
-                    Text(text = actionText, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                }
-            }
-        }
-    }
+                {/* 🔴 KOMUTANIN İSTEDİĞİ: 18. HAFTA EN ALTTA VE BONUS KAZANAN YARIŞMACILAR YAZISI 🔴 */}
+                {isOldestWeek && ptsLeaders.length > 0 && (
+                    <div className="mt-4 bg-amber-950/50 p-3 rounded-xl border border-amber-500/30 text-center shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                        <span className="text-amber-500 font-black text-[11px] tracking-widest">
+                            ✨ {week}. HAFTA BONUS KAZANAN YARIŞMACI(LAR): <span className="text-white ml-2">{ptsLeaders.map((p:any) => mergedAccounts[p.id]?.name).join(' & ')}</span> ✨
+                        </span>
+                    </div>
+                )}
+            </div>
+          );
+      })}
+    </div>
+  );
 }
