@@ -215,12 +215,19 @@ export default function AdminRadarPortal() {
                 let awayScore = fix.goals.away !== null ? String(fix.goals.away) : '-';
                 let status = fix.fixture.status.short; 
                 
-                // 🔥 KURAL 1: DEVRE ARASINDA KRONOMETRE DONDURMASI İÇİN 'HT' KORUMASI EKLENDİ 🔥
+                // 🔥 ONAY KORUMA KALKANI: Eğer sen maçı çoktan bitirdiysen (FINISHED), statüyü koru! 🔥
+                const currentDbMatch = liveInfoStateMap[bultenMaci.match_index];
+                const isAlreadyFinished = currentDbMatch?.status === 'FINISHED';
+
+                // 🔥 KURAL 1: DEVRE ARASINDA KRONOMETRE DONDURMASI İÇİN 'HT' KORUMASI 🔥
                 if (['1H', '2H', 'ET', 'P', 'LIVE'].includes(status)) status = 'LIVE';
                 else if (status === 'HT') status = 'HT'; // HT'yi LIVE yapma, HT olarak bırak.
                 
-                // 🔥 KURAL 2: OTOMATİK ONAY İPTALİ ('FINISHED' YERİNE 'WAITING_APPROVAL' OLACAK) 🔥
-                else if (['FT', 'AET', 'PEN', 'FINISHED'].includes(status)) status = 'WAITING_APPROVAL';
+                // 🔥 KURAL 2: OTOMATİK ONAY KONTROLÜ 🔥
+                else if (['FT', 'AET', 'PEN', 'FINISHED'].includes(status)) {
+                    // Eğer maç Karargahta çoktan onaylanıp FINISHED olduysa, onu WAITING_APPROVAL'a düşürme!
+                    status = isAlreadyFinished ? 'FINISHED' : 'WAITING_APPROVAL';
+                }
 
                 updates.push({
                    id: uniqueId,
