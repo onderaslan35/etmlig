@@ -110,7 +110,7 @@ export default function AdminRadarPortal() {
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
 
   const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
-  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>(generateWeekDates(6));
+  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
   const [selectedPredictionWeek, setSelectedPredictionWeek] = useState<number>(0);
@@ -564,30 +564,42 @@ export default function AdminRadarPortal() {
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
     const loadBulletinData = async () => {
-      const newDates = generateWeekDates(bulletinWeek);
-      setCurrentWeekDates(newDates);
-
-      if (newDates && newDates.length > 0) {
-         setHavuzBaslangicTarihi(newDates[0]); 
-         setHavuzBitisTarihi(newDates[newDates.length > 2 ? 2 : newDates.length - 1]); 
-      }
-
       if (activeTab === 'bulletin') {
         const { data } = await supabase.from('matches_bulletin').select('*').eq('week_num', bulletinWeek).order('match_index', { ascending: true });
 
-        if (data && data.length > 0) {
-          const mapped = Array.from({ length: 24 }, (_, i) => {
-            const existing = data.find(m => m.match_index === i + 1);
-            return {
-              match_index: i + 1, category: existing?.category || '', match_date: existing?.match_date || newDates[0],
-              match_time: existing?.match_time || '21:00', home_team: existing?.home_team || '', away_team: existing?.away_team || '',
-              api_match_id: existing?.api_match_id || '' 
-            };
-          });
-          (mapped as any);
+        const existingMatches = data || [];
+        
+        // 🔥 AKILLI TARİH MOTORU: Geleceği tahmin etmek yerine GERÇEK maçların tarihlerini ve BUGÜNÜ baz alır 🔥
+        const dateSet = new Set<string>();
+        
+        // 1. Varsa eski maçların (veya mevcut bültenin) tarihlerini havuza ekle
+        existingMatches.forEach(m => {
+            if (m.match_date) dateSet.add(m.match_date);
+        });
+        
+        // 2. Yeni maç eklenecekse diye, bugünden itibaren önümüzdeki 7 GÜNÜ de ekle
+        const today = new Date();
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + i);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            dateSet.add(`${dd}.${mm}.${yyyy}`);
+        }
 
+        // 3. Tarihleri eskiden yeniye sırala
+        const newDates = Array.from(dateSet).sort((a, b) => parseDateLocal(a).getTime() - parseDateLocal(b).getTime());
+        setCurrentWeekDates(newDates);
+
+        if (newDates.length > 0) {
+           setHavuzBaslangicTarihi(newDates[0]); 
+           setHavuzBitisTarihi(newDates[newDates.length > 2 ? 2 : newDates.length - 1]); 
+        }
+
+        if (existingMatches.length > 0) {
           const loadedSecilen = Array(24).fill(null);
-          data.forEach(m => {
+          existingMatches.forEach(m => {
               loadedSecilen[m.match_index - 1] = {
                   fixture_id: m.api_match_id || `temp-${m.match_index}`,
                   home_team: m.home_team,
@@ -599,11 +611,7 @@ export default function AdminRadarPortal() {
               };
           });
           setSecilenMaclar(loadedSecilen);
-
         } else {
-          (Array.from({ length: 24 }, (_, i) => ({
-            match_index: i + 1, category: '', match_date: newDates[0], match_time: '21:00', home_team: '', away_team: '', api_match_id: ''
-          })));
           setSecilenMaclar(Array(24).fill(null)); 
         }
         setApiHavuz([]); 
