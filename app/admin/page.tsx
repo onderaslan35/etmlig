@@ -18,7 +18,6 @@ import {
 
 const timeOptionsArr = generateTimeOptions();
 
-// 🔥 ÖZEL İZOLASYON: İSRAİL HARİÇ UEFA ULUSLAR LİGİ MİLLİ TAKIM HAVUZU 🔥
 const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "ALMANYA", "ANDORRA", "ARNAVUTLUK", "AVUSTURYA", "AZERBAYCAN", "BELARUS", "BELÇİKA", 
   "BOSNA-HERSEK", "BULGARİSTAN", "CEBELİTARIK", "ÇEKYA", "DANİMARKA", "ERMENİSTAN", 
@@ -30,7 +29,6 @@ const UEFA_ULUSLAR_LIGI_HAVUZU = [
   "ROMANYA", "SAN MARİNO", "SIRBİSTAN", "SLOVAKYA", "SLOVENYA", "TÜRKİYE", "UKRAYNA", "YUNANİSTAN"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-// 🏆 KOMUTANIN ÖZEL LİG SEÇENEKLERİ (ÜLKE FİLTRELİ VE KESİN EŞLEŞMELİ) 🏆
 const POPULER_LIG_SECENEKLERI = [
   { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig', country: 'Turkey' },
   { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig', country: 'Turkey' },
@@ -82,7 +80,6 @@ export default function AdminRadarPortal() {
   const [apiMatchesByDate, setApiMatchesByDate] = useState<Record<string, any[]>>({});
   const [isApiLoading, setIsApiLoading] = useState<boolean>(false);
 
-  // 🔥 MANUEL API ÇEKİMİ VE KONTÖR TAKİBİ 🔥
   const [isManualFetching, setIsManualFetching] = useState(false);
   const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
 
@@ -135,7 +132,6 @@ export default function AdminRadarPortal() {
      }
   };
 
-  // 🔥 API KONTÖRÜNÜ ÖĞRENEN SİNSİ RADAR (KONTÖR HARCAMAZ) 🔥
   const checkApiLimit = async () => {
       try {
           const res = await fetch('https://v3.football.api-sports.io/status', {
@@ -164,7 +160,6 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 YEPYENİ: ULTRA TASARRUF MODU (SADECE BUGÜNÜ ÇEKER, KESİN 1 KONTÖR YER) 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
@@ -220,8 +215,12 @@ export default function AdminRadarPortal() {
                 let awayScore = fix.goals.away !== null ? String(fix.goals.away) : '-';
                 let status = fix.fixture.status.short; 
                 
-                if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(status)) status = 'LIVE';
-                else if (['FT', 'AET', 'PEN'].includes(status)) status = 'FINISHED';
+                // 🔥 KURAL 1: DEVRE ARASINDA KRONOMETRE DONDURMASI İÇİN 'HT' KORUMASI EKLENDİ 🔥
+                if (['1H', '2H', 'ET', 'P', 'LIVE'].includes(status)) status = 'LIVE';
+                else if (status === 'HT') status = 'HT'; // HT'yi LIVE yapma, HT olarak bırak.
+                
+                // 🔥 KURAL 2: OTOMATİK ONAY İPTALİ ('FINISHED' YERİNE 'WAITING_APPROVAL' OLACAK) 🔥
+                else if (['FT', 'AET', 'PEN', 'FINISHED'].includes(status)) status = 'WAITING_APPROVAL';
 
                 updates.push({
                    id: uniqueId,
@@ -1106,8 +1105,7 @@ export default function AdminRadarPortal() {
                 }
             });
             const data = await res.json();
-
-            // 🔥 YENİ: GİZLİ API HATALARINI YAKALAMA 🔥
+            
             if (data.errors && Object.keys(data.errors).length > 0) {
                 alert("❌ API UYARISI: " + JSON.stringify(data.errors) + "\n\n(Günlük 100 limitiniz bitmiş olabilir!)");
                 setIsHavuzLoading(false);
@@ -1571,6 +1569,7 @@ export default function AdminRadarPortal() {
                 let badgeClass = "text-slate-300";
                 if (logInfo?.status === 'FINISHED') { timerBadge = "BİTTİ (FT)"; badgeClass = "text-emerald-400"; }
                 else if (logInfo?.status === 'HT') { timerBadge = "DEVRE ARASI"; badgeClass = "text-amber-400"; }
+                else if (logInfo?.status === 'WAITING_APPROVAL') { timerBadge = "ONAY BEKLİYOR"; badgeClass = "text-blue-400 animate-pulse"; }
                 else if (logInfo?.status === 'LIVE') { timerBadge = `🔴 CANLI (${getDynamicElapsed(logInfo)})`; badgeClass = "text-red-400 animate-pulse"; }
 
                 return (
