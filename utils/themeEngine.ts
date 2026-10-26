@@ -195,6 +195,20 @@ export const localTeamLogos: Record<string, string> = {
   "SAMSUNSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/9750.png",
   "GÖZTEPE": "https://images.fotmob.com/image_resources/logo/teamlogo/1925_large.png",
   "KOCAELISPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1569_large.png",
+  "ETIMESGUT SK": "https://images.fotmob.com/image_resources/logo/teamlogo/1807216.png",
+  "KARSIYAK": "https://images.fotmob.com/image_resources/logo/teamlogo/4066.png",
+  "AYVALIKGUCU": "https://images.fotmob.com/image_resources/logo/teamlogo/468175.png",
+  "ORDUSPOR 1967": "https://images.fotmob.com/image_resources/logo/teamlogo/1281973.png",
+  "AĞRI 1970": "https://images.fotmob.com/image_resources/logo/teamlogo/874734.png",
+  "PAZARSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4680.png",
+  "ALIAĞA FAŞ": "https://images.fotmob.com/image_resources/logo/teamlogo/1559147.png",
+  "ADANA ADALETGUC": "https://images.fotmob.com/image_resources/logo/teamlogo/2355223.png",
+  "ANKARAGÜCÜ": "https://images.fotmob.com/image_resources/logo/teamlogo/9742.png",
+  "VFL BOCHUM": "https://images.fotmob.com/image_resources/logo/teamlogo/9911.png",
+  "KARLSRUHER SC": "https://images.fotmob.com/image_resources/logo/teamlogo/8295.png",
+  "MAZIDAĞI FOSFATSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1406158.png",
+  "12 BINGÖLSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/581800.png",
+
   "EYÜPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4681_large.png",
 
   // AVRUPA GENEL
@@ -206,6 +220,7 @@ export const localTeamLogos: Record<string, string> = {
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
   "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
+  "SANTA CLAR": "https://images.fotmob.com/image_resources/logo/teamlogo/1567.png",
   "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
   
   "SABAH FA": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
@@ -359,6 +374,7 @@ export const localTeamLogos: Record<string, string> = {
   "BORUSSIA MÖNCHENGLADBACH": "https://images.fotmob.com/image_resources/logo/teamlogo/9788_large.png",
   "WERDER BREMEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8697_large.png",
   "WOLFSBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9721.png",
+  "HAMBURGER S": "https://images.fotmob.com/image_resources/logo/teamlogo/9790.png",
   "FSV MAINZ 05": "https://images.fotmob.com/image_resources/logo/teamlogo/9905_large.png",
   
 
