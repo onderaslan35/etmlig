@@ -509,28 +509,25 @@ export const getLocalLogoUrl = (teamName: string) => {
   return `/logos/${slug}.png`;
 };
 
-// 🔥 SÜPER LİG VE 1. LİG DÜZELTİLDİ 🔥
 export const isTffMatchCheck = (category: string) => {
-  if(!category) return false;
-  const uppercaseCat = category.toUpperCase();
-  return ( 
-    uppercaseCat.includes("TÜRKİYE") || 
-    uppercaseCat.includes("TURKİYE") || 
-    uppercaseCat.includes("TURKIYE") || 
-    uppercaseCat.includes("TFF") || 
-    uppercaseCat.includes("SÜPER LİG") || 
-    uppercaseCat.includes("SÜPER LIG") || 
-    uppercaseCat.includes("SUPER LİG") || 
-    uppercaseCat.includes("SUPER LIG") || 
-    uppercaseCat.includes("1. LİG") || 
-    uppercaseCat.includes("1. LIG") || 
-    uppercaseCat.includes("1.LİG") || 
-    uppercaseCat.includes("1.LIG") || 
-    uppercaseCat.includes("AMATÖR") || 
-    uppercaseCat.includes("PTT") || 
-    uppercaseCat.includes("2.LİG") || 
-    uppercaseCat.includes("3.LİG") 
-  );
+    if (!category) return false;
+    
+    // Gelen kategori adını her ihtimale karşı tam büyük harfe ve Türkçe formata çeviriyoruz
+    const cat = category.toLocaleUpperCase('tr-TR');
+    
+    return (
+        cat.includes('TFF') || 
+        cat.includes('TÜRKİYE') || 
+        cat.includes('TURKIYE') || 
+        cat.includes('KUPASI') || 
+        cat.includes('SÜPER LİG') || 
+        cat.includes('SUPER LIG') || 
+        cat.includes('AMATÖR') || 
+        cat.includes('PTT') ||
+        cat.includes('1. LİG') ||
+        cat.includes('2. LİG') ||
+        cat.includes('3. LİG')
+    );
 };
 
 export const cleanTeamName = (name: string) => {
