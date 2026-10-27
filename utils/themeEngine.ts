@@ -253,6 +253,20 @@ export const localTeamLogos: Record<string, string> = {
   "HRADEC KRALOVE": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Hradec_Kralove.png",
   "STURM GRAZ": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Sturm_Graz_logo.svg",
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
+  "1. FC NÜRNBERG": "https://images.fotmob.com/image_resources/logo/teamlogo/8165.png",
+  "1. FC MAGDEBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8188.png",
+  "HANNOVER 96": "https://images.fotmob.com/image_resources/logo/teamlogo/9904.png",
+  "1. FC KAISERSLAUTERN": https://images.fotmob.com/image_resources/logo/teamlogo/8350.png
+  "HOLSTEIN KIEL": https://images.fotmob.com/image_resources/logo/teamlogo/8150.png
+  "VFL WOLFSBURG": https://images.fotmob.com/image_resources/logo/teamlogo/8721.png
+  "BANÍK OSTRAVA": https://images.fotmob.com/image_resources/logo/teamlogo/6362.png
+  "MARKO": https://images.fotmob.com/image_resources/logo/teamlogo/1787833.png
+  "ARIS THESSALONIKIS": https://images.fotmob.com/image_resources/logo/teamlogo/8239.png
+  "LARISA": https://images.fotmob.com/image_resources/logo/teamlogo/8120.png
+  "DUNDEE UTD": https://images.fotmob.com/image_resources/logo/teamlogo/9938.png
+  "DUNDEE": https://images.fotmob.com/image_resources/logo/teamlogo/8284.png
+  "KILMARNOCK": https://images.fotmob.com/image_resources/logo/teamlogo/8597.png
+  "NAVALCARNERO": https://images.fotmob.com/image_resources/logo/teamlogo/161758.png
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
   "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
   "SANTA CLARA": "https://images.fotmob.com/image_resources/logo/teamlogo/1567.png",
