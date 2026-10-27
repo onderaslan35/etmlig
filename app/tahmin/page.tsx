@@ -78,10 +78,8 @@ export default function PredictionPortal() {
       fetchDbPlayers();
   }, []);
 
-  // 🔥 1. ADIM: AKTİF HAFTAYI BELİRLEME (LOBİDE SADECE EN YENİ HAFTA SEÇİLİ OLACAK) 🔥
   const availableWeeks = useMemo(() => {
-    const weeks = Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => b - a); // En yeniden en eskiye sırala
-    return weeks;
+    return Object.keys(bulletinMap).map(Number).filter(w => w >= 6).sort((a, b) => b - a);
   }, [bulletinMap]);
 
   useEffect(() => {
@@ -108,7 +106,7 @@ export default function PredictionPortal() {
          setBulletinMap(newMap);
          
          if (maxWeek > 0) {
-             setActiveBulletinWeek(maxWeek); // Otomatik olarak en yeni haftayı aktif yap
+             setActiveBulletinWeek(maxWeek); 
              setSelectedTahminWeek(maxWeek);
          }
       }
@@ -262,12 +260,10 @@ export default function PredictionPortal() {
   const savePredictions = async () => {
     setIsSaving(true);
     try {
-      // 🔥 2. ADIM: SADECE KİLİTLENMEMİŞ (SÜRESİ GEÇMEMİŞ) MAÇLARI KAYDET 🔥
       const payload = Object.keys(predictions).map(matchIndex => {
         const matchObj = bulletinMap[activeBulletinWeek].find((m:any) => m.id === Number(matchIndex));
         const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
         
-        // Eğer maç kilitliyse, null döndür (kaydetme listesine alma)
         if (isLocked) return null;
 
         return {
@@ -276,7 +272,7 @@ export default function PredictionPortal() {
           match_index: Number(matchIndex),
           predicted_score: `${predictions[Number(matchIndex)].home}-${predictions[Number(matchIndex)].away}`
         };
-      }).filter(p => p !== null); // null olanları temizle
+      }).filter(p => p !== null); 
 
       if (payload.length > 0) {
           const { error } = await supabase.from('player_predictions').upsert(payload, { onConflict: 'user_id,week_num,match_index' });
@@ -516,13 +512,12 @@ export default function PredictionPortal() {
 
             {/* 🔥 DİNAMİK KİLİT SİSTEMİ HER HAFTA İÇİN GEÇERLİDİR 🔥 */}
             <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
-                   <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
-                   <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
-                      Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
-                      <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
-                   </p>
-                </div>
-            )}
+               <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
+               <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
+                  Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
+                  <strong className="text-rose-400">ÖNEMLİ:</strong> Her maçın tahmin kutusu, maçın başlama saatine <strong className="text-white">son 1 dakika kala</strong> otomatik olarak kilitlenir!
+               </p>
+            </div>
 
             {(!bulletinMap[activeBulletinWeek] || bulletinMap[activeBulletinWeek].length === 0) ? (
                <div className="py-20 text-center bg-slate-900/50 border border-slate-800 rounded-2xl max-w-2xl mx-auto"><span className="text-5xl mb-4 block opacity-50">🛡️</span><h2 className="text-xl font-bold text-slate-400 mb-2 tracking-widest">{getDisplayWeek(activeBulletinWeek)} BÜLTENİ BEKLENİYOR</h2></div>
