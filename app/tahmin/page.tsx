@@ -380,15 +380,11 @@ export default function PredictionPortal() {
                                className="w-full bg-slate-950 border-2 border-amber-500 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none focus:border-amber-400 text-center tracking-widest cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all appearance-none"
                                style={{textAlignLast: 'center'}}
                              >
-                               {/* 🔥 3. ADIM: ESKİ HAFTALARA SÜRE DOLDU UYARISI YAZ GÖRSEL OLARAK 🔥 */}
-                               {availableWeeks.map(w => {
-                                  const isPastWeek = w < Math.max(...availableWeeks);
-                                  return (
-                                    <option key={`opt-${w}`} value={w}>
-                                        {getDisplayWeek(w)} {isPastWeek ? " 🔒 (SÜRE DOLDU - KAPALI)" : ""}
-                                    </option>
-                                  )
-                               })}
+                               {availableWeeks.map(w => (
+                                  <option key={`opt-${w}`} value={w}>
+                                      {getDisplayWeek(w)}
+                                  </option>
+                               ))}
                              </select>
                            ) : (
                              <div className="w-full bg-slate-950 border-2 border-slate-700 text-amber-400 text-sm font-black px-4 py-2.5 rounded-xl outline-none text-center tracking-widest cursor-not-allowed">
@@ -518,18 +514,8 @@ export default function PredictionPortal() {
               </button>
             </div>
 
-            {/* 🔥 4. ADIM: EĞER GEÇMİŞ (ESKİ) BİR HAFTA SEÇİLDİYSE GİZLE VEYA BÜYÜK UYARI BAS 🔥 */}
-            {activeBulletinWeek < Math.max(...availableWeeks) && (
-                <div className="w-full max-w-4xl mx-auto bg-red-950/80 border border-red-500 p-8 rounded-xl mb-6 text-center shadow-[0_0_30px_rgba(220,38,38,0.5)]">
-                   <span className="text-4xl sm:text-6xl mb-4 block">🚫</span>
-                   <h2 className="text-red-400 text-xl sm:text-3xl font-black tracking-widest uppercase mb-2">BU HAFTANIN SÜRESİ DOLMUŞTUR</h2>
-                   <p className="text-slate-300 text-sm sm:text-base font-bold">Geçmiş haftalara tahmin girişi veya düzenlemesi yapılamaz. Lütfen Lobiye dönüp mevcut (aktif) haftayı seçiniz.</p>
-                </div>
-            )}
-
-            {/* 🔥 EĞER AKTİF HAFTAYSAYSA NORMAL ÇALIŞSIN 🔥 */}
-            {activeBulletinWeek === Math.max(...availableWeeks) && (
-                <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
+            {/* 🔥 DİNAMİK KİLİT SİSTEMİ HER HAFTA İÇİN GEÇERLİDİR 🔥 */}
+            <div className="w-full max-w-4xl mx-auto bg-blue-950/40 border border-blue-500/30 p-4 rounded-xl mb-6 text-center shadow-inner">
                    <span className="text-xl sm:text-2xl mb-2 block">⏱️ DİNAMİK KİLİT SİSTEMİ AKTİF</span>
                    <p className="text-blue-300 text-xs sm:text-sm font-medium leading-relaxed">
                       Artık tüm haftayı tek seferde doldurmak zorunda değilsiniz. Maçlarınızı parça parça kaydedebilirsiniz.<br/>
@@ -551,8 +537,8 @@ export default function PredictionPortal() {
                   const isTff = isTffMatchCheck(match.category);
                   const matchTimeMs = getMatchTimeMs(match.date, match.time);
                   
-                  // 🔥 5. ADIM: TAM KİLİT MEKANİZMASI: Maçın saati geçtiyse VEYA eski (tamamen bitmiş) bir haftadaysak KİLİTLE 🔥
-                  const isLocked = (now >= matchTimeMs - 60000) || (activeBulletinWeek < Math.max(...availableWeeks));
+                  // 🔥 DİNAMİK KİLİT: SADECE MAÇIN SAATİ GEÇTİYSE KİLİTLER 🔥
+                  const isLocked = (now >= matchTimeMs - 60000);
 
                   return (
                     <div key={match.id} className={`w-full max-w-md mx-auto border rounded-2xl overflow-hidden transition-all duration-300 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg} ${isLocked ? 'opacity-85 grayscale-[15%] scale-[0.98]' : 'hover:scale-[1.02]'}`}>
@@ -625,8 +611,8 @@ export default function PredictionPortal() {
               </div>
             )}
 
-            {/* SADECE AKTİF HAFTADAYSAK KAYDET VE RASTGELE BUTONLARINI GÖSTER */}
-            {activeBulletinWeek === Math.max(...availableWeeks) && bulletinMap[activeBulletinWeek] && bulletinMap[activeBulletinWeek].length > 0 && (
+            {/* HER ZAMAN KAYDET VE RASTGELE BUTONLARINI GÖSTER */}
+            {bulletinMap[activeBulletinWeek] && bulletinMap[activeBulletinWeek].length > 0 && (
               <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-4 sticky bottom-6 z-50">
                 <button onClick={handleTahminMatikRastgele} className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center gap-2">🎲 RASTGELE DOLDUR</button>
                 <button onClick={savePredictions} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white font-black text-sm md:text-lg px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.5)]">{isSaving ? 'ŞİFRELENİYOR...' : '🚀 TAHMİNLERİMİ MÜHÜRLE'}</button>
