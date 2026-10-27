@@ -15,7 +15,6 @@ import {
 
 const timeOptionsArr = generateTimeOptions();
 
-// 🔥 KOMUTANIN İSTEDİĞİ DEV LİG LİSTESİ (HEM RADARDA HEM MANUELDE GÖRÜNECEK) 🔥
 const POPULER_LIG_SECENEKLERI = [
   { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig', country: 'Turkey' },
   { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig', country: 'Turkey' },
@@ -48,7 +47,6 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  // 🔥 TAHMİNLER VE LOJİSTİK/TRANSFER SEKMELERİ SİLİNDİ 🔥
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'players'>('live');
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
@@ -58,8 +56,12 @@ export default function AdminRadarPortal() {
   const [newPlayerPass, setNewPlayerPass] = useState('');
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
-  // 🔥 BOMBOŞ BİR HAVUZ (Takımlar eklendikçe buraya dolacak) 🔥
+  // 🔥 BOMBOŞ BİR YEREL HAVUZ 🔥
   const [dynamicLigHavuzu, setDynamicLigHavuzu] = useState<Record<string, string[]>>({});
+  
+  // 🔥 LİG VE TAKIM EKLE (YENİ PANEL) İÇİN STATE'LER 🔥
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamLeague, setNewTeamLeague] = useState('');
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
@@ -80,7 +82,7 @@ export default function AdminRadarPortal() {
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
   const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
 
-  // 🔥 MANUEL MAÇ EKLENTİSİ İÇİN STATE'LER 🔥
+  // 🔥 MANUEL MAÇ HAVUZU İÇİN STATE'LER 🔥
   const [manuelEv, setManuelEv] = useState('');
   const [manuelDep, setManuelDep] = useState('');
   const [manuelLig, setManuelLig] = useState('');
@@ -112,9 +114,8 @@ export default function AdminRadarPortal() {
   }, [selectedLiveWeek]);
 
   useEffect(() => {
-      // 8 günlük liste varsa ve manuel tarih henüz seçilmediyse bugünü (1. index) otomatik seç
       if (currentWeekDates.length > 1 && !manuelTarih) {
-          setManuelTarih(currentWeekDates[1]);
+          setManuelTarih(currentWeekDates[1]); // Bugünü seç
       } else if (currentWeekDates.length > 0 && !manuelTarih) {
           setManuelTarih(currentWeekDates[0]);
       }
@@ -156,7 +157,6 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 AVCI MOTORLU API ÇEKİMİ 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
@@ -209,7 +209,6 @@ export default function AdminRadarPortal() {
             if (fixtureId && !String(fixtureId).startsWith('manuel-')) {
                 fix = allFixtures.find((f: any) => f.fixture.id == fixtureId);
             } else {
-                // AVCI MOTORU DEVREDE
                 const hName = String(bultenMaci.home_team).trim().toUpperCase();
                 const aName = String(bultenMaci.away_team).trim().toUpperCase();
 
@@ -330,12 +329,6 @@ export default function AdminRadarPortal() {
     localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(newHavuz));
   };
 
-  const getDynamicCategories = () => {
-    const base = Object.keys(dynamicLigHavuzu);
-    const defaults = POPULER_LIG_SECENEKLERI.map(l => l.apiAd.toUpperCase());
-    return Array.from(new Set([...base, ...defaults, "TÜRKİYE KUPASI"])).sort((a,b) => a.localeCompare(b, 'tr'));
-  };
-
   const fetchSkorcuStatus = async () => {
      try {
        const { data } = await supabase.from('skorcu_auth').select('*');
@@ -390,7 +383,6 @@ export default function AdminRadarPortal() {
 
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
                 
-                // 🔥 HATA BURADAYDI, SİLİNEN SEKMEYE AİT KOD KALDIRILDI 🔥
                 if (selectedLiveWeek === 0) setSelectedLiveWeek(targetWeek);
                 if (bulletinWeek === 0) setBulletinWeek(targetWeek);
             }
@@ -577,26 +569,22 @@ export default function AdminRadarPortal() {
     }
   }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
-  // 🔥 8 GÜNLÜK (DÜN + BUGÜN + 6 GÜN İLERİSİ) AKILLI TARİH MOTORU 🔥
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
     const loadBulletinData = async () => {
       if (activeTab === 'bulletin') {
         const { data } = await supabase.from('matches_bulletin').select('*').eq('week_num', bulletinWeek).order('match_index', { ascending: true });
-
         const existingMatches = data || [];
         
         const dateSet = new Set<string>();
-        
         existingMatches.forEach(m => {
             if (m.match_date) dateSet.add(m.match_date);
         });
         
-        // Dünden başlayarak 8 gün ileriye tarihleri oluştur
         const baseDate = new Date();
-        baseDate.setDate(baseDate.getDate() - 1); // 1 gün öncesi (dün)
+        baseDate.setDate(baseDate.getDate() - 1); 
         
-        for (let i = 0; i < 8; i++) { // toplam 8 gün (dün, bugün + 6 gün)
+        for (let i = 0; i < 8; i++) { 
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const dd = String(d.getDate()).padStart(2, '0');
@@ -609,7 +597,7 @@ export default function AdminRadarPortal() {
         setCurrentWeekDates(newDates);
 
         if (newDates.length > 1) {
-           setHavuzBaslangicTarihi(newDates[1]); // Bugünü varsayılan yap
+           setHavuzBaslangicTarihi(newDates[1]); 
            setHavuzBitisTarihi(newDates[newDates.length - 1]); 
         }
 
@@ -1126,7 +1114,34 @@ export default function AdminRadarPortal() {
     setIsPublishing(false);
   };
 
-  // 🔥 YENİ ZAMAN YOLCULUĞU MANUEL EKLEME VE OTO-KAYIT MOTORU 🔥
+  // 🔥 YENİ PANEL: 1. LİG VE TAKIM EKLE (HAVUZ OLUŞTURUCU) 🔥
+  const handleAddLocalTeam = (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!newTeamName.trim() || !newTeamLeague.trim()) {
+      alert("Lütfen takım adını ve ligini boş bırakmayın Komutanım!");
+      return;
+    }
+    const tName = newTeamName.trim().toUpperCase();
+    const tLeague = newTeamLeague.trim().toUpperCase();
+
+    const updatedHavuz = { ...dynamicLigHavuzu };
+    if (!updatedHavuz[tLeague]) updatedHavuz[tLeague] = [];
+
+    if (updatedHavuz[tLeague].includes(tName)) {
+        alert(`Bu takım zaten havuzda var!`);
+        return;
+    }
+
+    updatedHavuz[tLeague].push(tName);
+    updatedHavuz[tLeague].sort((a,b) => a.localeCompare(b, 'tr'));
+
+    updateLigHavuzu(updatedHavuz);
+    setNewTeamName(''); 
+    // Lig ismini silmiyorum, üst üste aynı lige takım eklemek kolay olsun diye.
+    alert(`✅ EKLENDİ!\n${tName}, ${tLeague} havuzuna kaydedildi.`);
+  };
+
+  // 🔥 2. MANUEL MAÇ HAVUZU (BÜLTENE YAPIŞTIR) 🔥
   const handleManuelMacEkle = (e: React.FormEvent) => {
       e.preventDefault();
       if(!manuelEv || !manuelDep || !manuelLig || !manuelTarih) {
@@ -1141,14 +1156,6 @@ export default function AdminRadarPortal() {
       const depName = manuelDep.trim().toUpperCase();
       const ligName = manuelLig.trim().toUpperCase();
 
-      // Takımları arkaplandaki havuza (veri tabanına/hafızaya) otomatik işle
-      const updatedHavuz = { ...dynamicLigHavuzu };
-      if (!updatedHavuz[ligName]) updatedHavuz[ligName] = [];
-      if (!updatedHavuz[ligName].includes(evName)) updatedHavuz[ligName].push(evName);
-      if (!updatedHavuz[ligName].includes(depName)) updatedHavuz[ligName].push(depName);
-      updatedHavuz[ligName].sort((a,b) => a.localeCompare(b, 'tr'));
-      updateLigHavuzu(updatedHavuz);
-
       const newSecilen = [...secilenMaclar];
       newSecilen[emptyIndex] = {
           fixture_id: `manuel-${Date.now()}`,
@@ -1162,7 +1169,7 @@ export default function AdminRadarPortal() {
       setSecilenMaclar(newSecilen);
       
       setManuelEv(''); setManuelDep('');
-      alert(`✅ MAÇ EKLENDİ!\n\n${evName} - ${depName} bültene yerleştirildi ve takım havuzuna işlendi.\n"BÜLTENİ PATLAT" butonuna basmayı unutmayın.`);
+      alert(`✅ MAÇ EKLENDİ!\n\n${evName} - ${depName} bültene yerleştirildi.\n"BÜLTENİ PATLAT" butonuna basmayı unutmayın.`);
   };
 
   const displayedMatches = liveMatchesDB.filter(match => {
@@ -1249,7 +1256,7 @@ export default function AdminRadarPortal() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
       <div className="max-w-7xl mx-auto pt-6">
 
-        {/* 🔴 SEKME (TAB) MENÜSÜ GÜNCELLENDİ (Tahminler ve Lojistik silindi, Yarışmacılar kaldı) 🔴 */}
+        {/* 🔴 SEKME (TAB) MENÜSÜ GÜNCELLENDİ 🔴 */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
            <button 
              onClick={() => setActiveTab('live')}
@@ -1749,90 +1756,116 @@ export default function AdminRadarPortal() {
                     </div>
                 </div>
 
-                {/* 🔥 ORTA PANEL: MANUEL ZAMAN YOLCULUĞU (YENİ SİSTEM - YAZARAK EKLE, HAVUZA KAYDOLSUN) 🔥 */}
-                <div className="w-full xl:w-[320px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
-                   <h3 className="font-black text-fuchsia-400 flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
-                      <span className="text-xl">⏳</span> ZAMAN YOLCULUĞU
-                   </h3>
+                {/* 🔥 ORTA SÜTUN: HEM LİG/TAKIM EKLEME HEM DE MANUEL HAVUZ BURADA 🔥 */}
+                <div className="w-full xl:w-[320px] flex flex-col gap-6 h-[85vh] overflow-y-auto custom-scrollbar pr-2">
                    
-                   <form onSubmit={handleManuelMacEkle} className="flex flex-col gap-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                   {/* 1. KISIM: LİG VE TAKIM EKLE PANELİ */}
+                   <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl shrink-0">
+                      <h3 className="font-black text-cyan-400 flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
+                         <span className="text-xl">➕</span> LİG VE TAKIM EKLE
+                      </h3>
+                      <form onSubmit={handleAddLocalTeam} className="flex flex-col gap-3">
+                         <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">1. Hangi Lig?</label>
+                            <input 
+                               type="text" 
+                               list="leagueOptions" 
+                               value={newTeamLeague} 
+                               onChange={e => setNewTeamLeague(e.target.value.toUpperCase())} 
+                               className="w-full bg-slate-950 border border-slate-700 text-cyan-400 font-bold px-3 py-2 rounded-lg outline-none text-xs" 
+                               placeholder="Örn: SÜPER LİG" 
+                            />
+                         </div>
+                         <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">2. Takım Adı (API İle Aynı)</label>
+                            <input 
+                               type="text" 
+                               value={newTeamName} 
+                               onChange={e => setNewTeamName(e.target.value.toUpperCase())} 
+                               className="w-full bg-slate-950 border border-slate-700 text-cyan-400 font-black px-3 py-2 rounded-lg outline-none uppercase text-xs" 
+                               placeholder="Örn: GALATASARAY" 
+                            />
+                         </div>
+                         <button type="submit" className="mt-1 bg-cyan-700 hover:bg-cyan-600 text-white font-black tracking-widest text-[10px] py-3 rounded-lg transition-all uppercase">
+                            HAVUZA EKLE (KAYDET)
+                         </button>
+                      </form>
+                   </div>
+
+                   {/* 2. KISIM: MANUEL MAÇ HAVUZU */}
+                   <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex-1 flex flex-col">
+                      <h3 className="font-black text-fuchsia-400 flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
+                         <span className="text-xl">⏳</span> MANUEL MAÇ HAVUZU
+                      </h3>
                       
-                      {/* 1. LİG SEÇİMİ VEYA YENİ YAZIM */}
-                      <div>
-                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">1. LİG / KATEGORİ SEÇİN (ZORUNLU)</label>
-                         <select 
-                           value={manuelLig} 
-                           onChange={e => {
-                              setManuelLig(e.target.value);
-                              setManuelEv(''); // Lig değişince takımları sıfırla ki kullanıcı yeni bir şey yazsın
-                              setManuelDep('');
-                           }} 
-                           className="w-full bg-slate-950 border border-slate-700 text-slate-200 font-bold px-3 py-2 rounded-lg outline-none text-xs"
-                         >
-                            <option value="">-- LİG SEÇİN VEYA EN ALTTA YENİ LİG DİYİN --</option>
-                            {/* POPULER LİGLER + EKLENMİŞ LİGLER */}
-                            {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map(l => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a,b) => a.localeCompare(b, 'tr')).map(c => <option key={`manlig-${c}`} value={c}>{c}</option>)}
-                         </select>
-                      </div>
-
-                      {/* 2. EV SAHİBİ (KLAVYE İLE YAZILACAK - OTOMATİK KAYDEDİLECEK) */}
-                      <div>
-                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">2. Ev Sahibi (API ile Aynı Olmalı)</label>
-                         <input 
-                           type="text" 
-                           list="evSahibiList"
-                           value={manuelEv} 
-                           onChange={e=>setManuelEv(e.target.value.toUpperCase())} 
-                           disabled={!manuelLig}
-                           placeholder="Örn: GALATASARAY"
-                           className="w-full bg-slate-950 border border-slate-700 text-fuchsia-400 font-black px-3 py-2 rounded-lg outline-none uppercase text-sm shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
-                         />
-                         {/* Eğer havuzda bu ligde önceden kayıtlı takım varsa altta öneri olarak çıkar */}
-                         <datalist id="evSahibiList">
-                            {manuelLig && dynamicLigHavuzu[manuelLig] ? dynamicLigHavuzu[manuelLig].map(t => <option key={`ev-${t}`} value={t} />) : null}
-                         </datalist>
-                      </div>
-
-                      {/* 3. DEPLASMAN (KLAVYE İLE YAZILACAK - OTOMATİK KAYDEDİLECEK) */}
-                      <div>
-                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">3. Deplasman (API ile Aynı Olmalı)</label>
-                         <input 
-                           type="text" 
-                           list="depSahibiList"
-                           value={manuelDep} 
-                           onChange={e=>setManuelDep(e.target.value.toUpperCase())} 
-                           disabled={!manuelLig}
-                           placeholder="Örn: FENERBAHCE"
-                           className="w-full bg-slate-950 border border-slate-700 text-fuchsia-400 font-black px-3 py-2 rounded-lg outline-none uppercase text-sm shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
-                         />
-                         <datalist id="depSahibiList">
-                            {manuelLig && dynamicLigHavuzu[manuelLig] ? dynamicLigHavuzu[manuelLig].map(t => <option key={`dep-${t}`} value={t} />) : null}
-                         </datalist>
-                      </div>
-
-                      <div className="flex gap-2">
-                         <div className="flex-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Tarih</label>
-                             <select value={manuelTarih} onChange={e=>setManuelTarih(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-300 font-bold px-2 py-2 rounded-lg outline-none text-xs">
-                                {currentWeekDates.map(d=><option key={`mandate-${d}`} value={d}>{d}</option>)}
-                             </select>
+                      <form onSubmit={handleManuelMacEkle} className="flex flex-col gap-4 flex-1">
+                         
+                         <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">1. LİG / KATEGORİ SEÇİN (ZORUNLU)</label>
+                            <select 
+                              value={manuelLig} 
+                              onChange={e => {
+                                 setManuelLig(e.target.value);
+                                 setManuelEv(''); 
+                                 setManuelDep('');
+                              }} 
+                              className="w-full bg-slate-950 border border-slate-700 text-slate-200 font-bold px-3 py-2 rounded-lg outline-none text-xs cursor-pointer"
+                            >
+                               <option value="">-- ÖNCE LİG SEÇİN --</option>
+                               {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map(l => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a,b) => a.localeCompare(b, 'tr')).map(c => <option key={`manlig-${c}`} value={c}>{c}</option>)}
+                            </select>
                          </div>
-                         <div className="flex-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Saat</label>
-                             <input type="time" value={manuelSaat} onChange={e=>setManuelSaat(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-300 font-bold px-2 py-2 rounded-lg outline-none text-xs" />
+
+                         <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">2. Ev Sahibi (Havuzdan Seç)</label>
+                            <select 
+                              value={manuelEv} 
+                              onChange={e=>setManuelEv(e.target.value)} 
+                              disabled={!manuelLig}
+                              className="w-full bg-slate-950 border border-slate-700 text-fuchsia-400 font-black px-3 py-2 rounded-lg outline-none uppercase text-sm shadow-inner disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                               <option value="">-- EV SAHİBİ SEÇ --</option>
+                               {manuelLig && dynamicLigHavuzu[manuelLig] ? dynamicLigHavuzu[manuelLig].map(t => <option key={`ev-${t}`} value={t}>{t}</option>) : null}
+                            </select>
                          </div>
-                      </div>
 
-                      <button type="submit" className="mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 text-white font-black tracking-widest text-xs px-4 py-4 rounded-xl shadow-[0_0_15px_rgba(192,38,211,0.5)] transition-all uppercase">
-                         🚀 BÜLTENE YAPIŞTIR
-                      </button>
+                         <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">3. Deplasman (Havuzdan Seç)</label>
+                            <select 
+                              value={manuelDep} 
+                              onChange={e=>setManuelDep(e.target.value)} 
+                              disabled={!manuelLig}
+                              className="w-full bg-slate-950 border border-slate-700 text-fuchsia-400 font-black px-3 py-2 rounded-lg outline-none uppercase text-sm shadow-inner disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                               <option value="">-- DEPLASMAN SEÇ --</option>
+                               {manuelLig && dynamicLigHavuzu[manuelLig] ? dynamicLigHavuzu[manuelLig].map(t => <option key={`dep-${t}`} value={t}>{t}</option>) : null}
+                            </select>
+                         </div>
 
-                      <div className="mt-4 bg-fuchsia-950/30 p-3 rounded-lg border border-fuchsia-900/50">
-                         <p className="text-[10px] text-fuchsia-300 leading-relaxed font-bold">
-                            <span className="text-white">DİKKAT:</span> Kutucuklara yazdığınız takımlar anında havuzun hafızasına işlenir. Bir dahaki sefere klavye yerine listeden tıklayıp seçebilirsiniz!
-                         </p>
-                      </div>
-                   </form>
+                         <div className="flex gap-2">
+                            <div className="flex-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Tarih</label>
+                                <select value={manuelTarih} onChange={e=>setManuelTarih(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-300 font-bold px-2 py-2 rounded-lg outline-none text-xs cursor-pointer">
+                                   {currentWeekDates.map(d=><option key={`mandate-${d}`} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Saat</label>
+                                <input type="time" value={manuelSaat} onChange={e=>setManuelSaat(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-300 font-bold px-2 py-2 rounded-lg outline-none text-xs cursor-pointer" />
+                            </div>
+                         </div>
+
+                         <button type="submit" className="mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 text-white font-black tracking-widest text-xs px-4 py-4 rounded-xl shadow-[0_0_15px_rgba(192,38,211,0.5)] transition-all uppercase">
+                            🚀 BÜLTENE YAPIŞTIR
+                         </button>
+
+                         <div className="mt-4 bg-fuchsia-950/30 p-3 rounded-lg border border-fuchsia-900/50">
+                            <p className="text-[10px] text-fuchsia-300 leading-relaxed font-bold">
+                               <span className="text-white">NOT:</span> Eğer takım listede yoksa, yukarıdaki "LİG VE TAKIM EKLE" panelinden ekleyiniz.
+                            </p>
+                         </div>
+                      </form>
+                   </div>
                 </div>
 
                 {/* SAĞ PANEL: SEÇİLENLER (BÜLTEN) */}
