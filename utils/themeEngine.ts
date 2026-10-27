@@ -264,7 +264,7 @@ export const localTeamLogos: Record<string, string> = {
   "REAL SOCIEDAD W": "https://images.fotmob.com/image_resources/logo/teamlogo/858300.png",
   "FENERBAHCE W": "https://images.fotmob.com/image_resources/logo/teamlogo/2038345.png",
   "CHELSEA W": "https://images.fotmob.com/image_resources/logo/teamlogo/258661.png",
-  "ROMA W": "https://images.fotmob.com/image_resources/logo/teamlogo/258661.png",
+  "ROMA W": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
   "ARSENAL W": "https://images.fotmob.com/image_resources/logo/teamlogo/258657.png",
   "SL BENFICA W": "https://images.fotmob.com/image_resources/logo/teamlogo/1198668.png",
   "LYON W": "https://images.fotmob.com/image_resources/logo/teamlogo/394119.png",
