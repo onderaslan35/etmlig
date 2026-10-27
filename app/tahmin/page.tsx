@@ -236,25 +236,98 @@ export default function PredictionPortal() {
     }
   };
 
+  // 🔥 YENİ KOTA SİSTEMİ (ANTİ-TROL): BİR SKOR EN FAZLA 6 KERE SEÇİLEBİLİR 🔥
   const handleScoreChange = (matchIndex: number, team: 'home' | 'away', score: string) => { 
-      setPredictions(prev => ({ ...prev, [matchIndex]: { ...prev[matchIndex], [team]: score } })); 
+      setPredictions(prev => {
+          const currentMatch = prev[matchIndex] || { home: '-', away: '-' };
+          const newHome = team === 'home' ? score : currentMatch.home;
+          const newAway = team === 'away' ? score : currentMatch.away;
+
+          if (newHome !== '-' && newAway !== '-') {
+              const proposedScore = `${newHome}-${newAway}`;
+              let usageCount = 0;
+              Object.keys(prev).forEach(key => {
+                  if (Number(key) !== matchIndex) {
+                      const m = prev[Number(key)];
+                      if (`${m.home}-${m.away}` === proposedScore) {
+                          usageCount++;
+                      }
+                  }
+              });
+
+              if (usageCount >= 6) {
+                  alert(`⚠️ DİKKAT KOMUTANIM!\nBir bültende aynı skoru (Örn: ${proposedScore}) en fazla 6 kere kullanabilirsiniz!\n\n(Anti-Trol Sistemi Devrede)`);
+                  return prev; // Değişikliği reddet
+              }
+          }
+
+          return { ...prev, [matchIndex]: { home: newHome, away: newAway } };
+      });
   };
   
   const handleTahminmatikChange = (matchId: number, type: 'home' | 'away', val: string) => { 
       setTahminmatikScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: '-', away: '-' }), [type]: val } })); 
   };
   
+  // 🔥 YENİ KAOS MOTORU: SAÇMA SKORLAR ÜRETİR VE 6 LİMİTİNE UYAR 🔥
   const handleTahminMatikRastgele = () => {
-    const newPreds = { ...predictions };
-    Object.keys(newPreds).forEach(matchIndex => {
-      const matchObj = bulletinMap[activeBulletinWeek].find((m:any) => m.id === Number(matchIndex));
-      const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
-      
-      if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
-        newPreds[Number(matchIndex)] = { home: Math.floor(Math.random() * 4).toString(), away: Math.floor(Math.random() * 4).toString() };
-      }
+    setPredictions(prev => {
+      const newPreds = { ...prev };
+      const scoreCounts: Record<string, number> = {};
+
+      // Önce dolu olan skorları say (Kotayı bilmek için)
+      Object.keys(newPreds).forEach(key => {
+          const m = newPreds[Number(key)];
+          if (m.home !== '-' && m.away !== '-') {
+              const s = `${m.home}-${m.away}`;
+              scoreCounts[s] = (scoreCounts[s] || 0) + 1;
+          }
+      });
+
+      const generateValidRandomScore = () => {
+          let attempts = 0;
+          while (attempts < 200) { 
+              // %70 ihtimalle kaos (saçma sapan skorlar), %30 ihtimalle normal
+              const isAbsurd = Math.random() > 0.3;
+              let h, a;
+              
+              if (isAbsurd) {
+                  // Kullanıcının istediği absürt havuz
+                  const absurdPool = [
+                      [5,4], [4,5], [8,7], [7,8], [10,9], [9,10], 
+                      [4,3], [3,4], [6,5], [5,6], [7,5], [5,7],
+                      [11,10], [10,11], [9,3], [12,1], [8,8], [5,5]
+                  ];
+                  const pick = absurdPool[Math.floor(Math.random() * absurdPool.length)];
+                  h = pick[0];
+                  a = pick[1];
+              } else {
+                  // Normal skorlar (0-3 arası) + 1-0 şansı
+                  h = Math.floor(Math.random() * 4);
+                  a = Math.floor(Math.random() * 4);
+              }
+
+              const s = `${h}-${a}`;
+              if ((scoreCounts[s] || 0) < 6) {
+                  scoreCounts[s] = (scoreCounts[s] || 0) + 1; // Kotayı 1 artır
+                  return { home: h.toString(), away: a.toString() };
+              }
+              attempts++;
+          }
+          // Eğer çok zorlanırsa 1-1 dön
+          return { home: '1', away: '1' }; 
+      };
+
+      Object.keys(newPreds).forEach(matchIndex => {
+          const matchObj = bulletinMap[activeBulletinWeek]?.find((m:any) => m.id === Number(matchIndex));
+          const isLocked = matchObj && (now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000);
+          
+          if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
+              newPreds[Number(matchIndex)] = generateValidRandomScore();
+          }
+      });
+      return newPreds;
     });
-    setPredictions(newPreds);
   };
 
   const savePredictions = async () => {
