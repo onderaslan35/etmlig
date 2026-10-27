@@ -208,7 +208,42 @@ export const localTeamLogos: Record<string, string> = {
   "KARLSRUHER SC": "https://images.fotmob.com/image_resources/logo/teamlogo/8295.png",
   "MAZIDAĞI FOSFATSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1406158.png",
   "12 BINGÖLSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/581800.png",
-
+  "KARS 36": "https://images.fotmob.com/image_resources/logo/teamlogo/1088990.png",
+  "ANKARA DEMIRSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/163000.png",
+  "NILÜFER BELEDIYE": "https://images.fotmob.com/image_resources/logo/teamlogo/2355143.png",
+  "ANKARASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/6615.png",
+  "KIRKLARELISPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/210038.png",
+  "DÜZCESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/162992.png",
+  "ISPARTA 32 SPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1181205.png",
+  "ANADOLU ÜNIVERSITESI": "https://images.fotmob.com/image_resources/logo/teamlogo/1687780.png",
+  "68 AKSARAY BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/162993.png",
+  "GÜZIDE GEBZESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/8386.png",
+  "YEŞILYURT BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1088482.png",
+  "İNEGÖLSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/5761.png",
+  "SEBAT GENÇLIKSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/2167.png",
+  "KASTAMONUSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/162995.png",
+  "24 ERZINCANSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/361059.png",
+  "MENEMEN FK": "https://images.fotmob.com/image_resources/logo/teamlogo/162970.png",
+  "KARACABEY BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/162990.png",
+  "SERIK SPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/914196.png",
+  "HAKKARI ZAPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/2355111.png",
+  "SILIVRISPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/361060.png",
+  "BEYOĞLU YENI ÇARŞI": "https://images.fotmob.com/image_resources/logo/teamlogo/551694.png",
+  "ADANA 01 FK": "https://images.fotmob.com/image_resources/logo/teamlogo/1559141.png",
+  "KÜTAHYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/763268.png",
+  "BALIKESIRSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/162978.png",
+  "ARNAVUTKÖY BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1181150.png",
+  "KARABÜK İDMAN YURDU": "https://images.fotmob.com/image_resources/logo/teamlogo/1559146.png",
+  "İSKENDERUNSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/551689.png",
+  "SOMASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1075468.png",
+  "ŞANLIURFASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/2506.png",
+  "GÖLCÜKSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/162958.png",
+  "KÜÇÜKÇEKMECE SINOPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1559139.png",
+  "FETHIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/8375.png",
+  "SAKARYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4124.png",
+  "BURSA YILDIRIMSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1088447.png",
+  "YENI ORDUSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/863845.png",
+  "1461 TRABZON FK": "https://images.fotmob.com/image_resources/logo/teamlogo/468166.png",
   "EYÜPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4681_large.png",
 
   // AVRUPA GENEL
@@ -222,6 +257,24 @@ export const localTeamLogos: Record<string, string> = {
   "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
   "SANTA CLARA": "https://images.fotmob.com/image_resources/logo/teamlogo/1567.png",
   "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
+
+
+
+
+  "REAL SOCIEDAD W": "https://images.fotmob.com/image_resources/logo/teamlogo/858300.png",
+  "FENERBAHCE W": "https://images.fotmob.com/image_resources/logo/teamlogo/2038345.png",
+  "CHELSEA W": "https://images.fotmob.com/image_resources/logo/teamlogo/4681_large.png",
+  "ROMA W": "https://images.fotmob.com/image_resources/logo/teamlogo/8638_large.png",
+  "ARSENAL W": "https://images.fotmob.com/image_resources/logo/teamlogo/4681_large.png",
+  "SL BENFICA W": "https://images.fotmob.com/image_resources/logo/teamlogo/8638_large.png",
+  "LYON W": "https://images.fotmob.com/image_resources/logo/teamlogo/10247.png",
+  "INTER MILANO W": "https://images.fotmob.com/image_resources/logo/teamlogo/8638_large.png",
+
+
+
+
+
+
   
   "SABAH FA": "https://images.fotmob.com/image_resources/logo/teamlogo/951893.png",
   "GORNİK ZABRZE": "https://fr.wikipedia.org/wiki/Special:FilePath/Logo_Gornik_Zabrze.svg",
