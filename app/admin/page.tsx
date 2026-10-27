@@ -156,7 +156,7 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 AVCI MOTORLU API ÇEKİMİ (Orjinal Yapı Korunarak) 🔥
+  // 🔥 AVCI MOTORLU API ÇEKİMİ 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
@@ -316,7 +316,6 @@ export default function AdminRadarPortal() {
           if (role.startsWith('skorcum')) setShowOnlyToday(true);
        }
 
-       // 🔥 ARTIK LIG HAVUZU BOS BASLATILIYOR VE ESKİ VERİLER VARSA ALINIYOR 🔥
        const savedHavuz = localStorage.getItem('ekmel_lig_havuzu');
        if (savedHavuz) {
            setDynamicLigHavuzu(JSON.parse(savedHavuz));
@@ -391,9 +390,9 @@ export default function AdminRadarPortal() {
 
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
                 
+                // 🔥 HATA BURADAYDI, SİLİNEN SEKMEYE AİT KOD KALDIRILDI 🔥
                 if (selectedLiveWeek === 0) setSelectedLiveWeek(targetWeek);
                 if (bulletinWeek === 0) setBulletinWeek(targetWeek);
-                if (selectedPredictionWeek === 0) setSelectedPredictionWeek(targetWeek);
             }
         };
         fetchAvailableWeeks();
@@ -1914,121 +1913,6 @@ export default function AdminRadarPortal() {
                     </button>
                 </div>
              </div>
-          </div>
-        )}
-
-        {/* 🚀 YARIŞMACI YÖNETİMİ ODASI (KORUNDU) 🚀 */}
-        {activeTab === 'players' && userRole === 'master' && (
-          <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-black text-fuchsia-400 tracking-tight flex items-center justify-center sm:justify-start gap-3 uppercase">
-                  <span className="text-3xl">👥</span> YARIŞMACI YÖNETİMİ
-                </h1>
-                <p className="text-slate-400 text-sm mt-1">
-                  Buradan eklediğiniz veya sildiğiniz yarışmacılar listelere anında yansır.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
-                 <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-black text-fuchsia-400 flex items-center gap-2">
-                       <span className="text-xl">➕</span> YENİ ASLAN PARÇASI EKLE
-                    </h2>
-                 </div>
-
-                 <form onSubmit={handleAddNewPlayer} className="flex flex-col gap-5">
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">6 HANELİ YARIŞMACI ID</label>
-                       <input 
-                         type="text" 
-                         value={newPlayerId} 
-                         onChange={e => setNewPlayerId(e.target.value)} 
-                         placeholder="Örn: 262888"
-                         maxLength={6}
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">İSİM SOYİSİM</label>
-                       <input 
-                         type="text" 
-                         value={newPlayerName} 
-                         onChange={e => setNewPlayerName(e.target.value)} 
-                         placeholder="Örn: SİNAN ENGİN"
-                         className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest uppercase shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-slate-400 tracking-widest mb-1.5 ml-1">GİRİŞ ŞİFRESİ</label>
-                       <input 
-                         type="text" 
-                         value={newPlayerPass} 
-                         onChange={e => setNewPlayerPass(e.target.value)} 
-                         placeholder="Örn: 19030"
-                         className="w-full bg-slate-950 border border-slate-700 text-amber-400 px-4 py-3 rounded-xl outline-none focus:border-fuchsia-500 font-black tracking-widest shadow-inner placeholder:text-slate-600"
-                       />
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={isPlayerLoading}
-                      className="mt-4 bg-fuchsia-600 hover:bg-fuchsia-500 disabled:bg-slate-700 text-white font-black tracking-widest py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(192,38,211,0.4)] flex justify-center items-center gap-2"
-                    >
-                      {isPlayerLoading ? 'KAYDEDİLİYOR...' : 'SİSTEME KAYDET VE DAHİL ET'}
-                    </button>
-                 </form>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                 <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-black text-rose-500 flex items-center gap-2">
-                       <span className="text-xl">⚖️</span> DİSİPLİN KURULU (TÜM LİSTE)
-                    </h2>
-                    <span className="bg-slate-950 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold border border-slate-800">
-                       {dbPlayersList.length + Object.keys(staticPlayersList).length} Toplam Aktif
-                    </span>
-                 </div>
-
-                 <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                    {dbPlayersList.map(p => (
-                      <div key={`dyn-${p.id}`} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
-                         <div className="flex flex-col">
-                            <span className="font-black text-fuchsia-400 text-sm uppercase tracking-wide flex items-center gap-2">
-                               {p.name} <span className="text-[8px] bg-fuchsia-950/50 border border-fuchsia-500/30 px-1.5 py-0.5 rounded text-fuchsia-300">YENİ</span>
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {p.username} | ŞİFRE: {p.password}</span>
-                         </div>
-                         <button 
-                           onClick={() => handleBanishPlayer(p.username, p.name)}
-                           className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)]"
-                         >
-                           ❌ İHRAÇ ET
-                         </button>
-                      </div>
-                    ))}
-
-                    {Object.keys(staticPlayersList).map(id => (
-                      <div key={`static-${id}`} className="bg-slate-950/50 border border-slate-800 p-3 rounded-xl flex justify-between items-center group hover:border-slate-600 transition-colors">
-                         <div className="flex flex-col">
-                            <span className="font-black text-slate-300 text-sm uppercase tracking-wide">{staticPlayersList[id]}</span>
-                            <span className="text-[10px] font-bold text-slate-500 tracking-widest mt-0.5">ID: {id}</span>
-                         </div>
-                         <button 
-                           onClick={() => handleBanishPlayer(id, staticPlayersList[id])}
-                           className="bg-rose-950/80 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all shadow-[0_0_10px_rgba(225,29,72,0.1)] hover:shadow-[0_0_15px_rgba(225,29,72,0.4)] opacity-80 hover:opacity-100"
-                         >
-                           ❌ İHRAÇ ET
-                         </button>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-
-            </div>
           </div>
         )}
 
