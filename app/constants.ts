@@ -49,6 +49,5 @@ export const USER_LIST = [
   { id: "262758", name: "MELİH PINAR" },
   { id: "262787", name: "MUSTAFA TUCİ" },
   { id: "262770", name: "OZKAYA MAZAKALI BAYRAM" },
-  { id: "262712", name: "MURAT AYDEMİR" },
-  { id: "262704", name: "YAPAY ZEKA" }
+   { id: "262704", name: "YAPAY ZEKA" }
 ];
