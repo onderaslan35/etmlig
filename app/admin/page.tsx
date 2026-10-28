@@ -65,6 +65,9 @@ export default function AdminRadarPortal() {
   // 🔥 ÖZEL LİG BUTONLARI İÇİN YENİ STATE 🔥
   const [customLeagueFilters, setCustomLeagueFilters] = useState<CustomFilterOption[]>([]);
 
+  // 🔥 YENİ: FİLTRE PANELİ GİZLE/GÖSTER ŞALTERİ 🔥
+  const [isApiFilterOpen, setIsApiFilterOpen] = useState<boolean>(true);
+
   // 🔥 LİG VE TAKIM EKLE (YENİ PANEL) İÇİN STATE'LER 🔥
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamLeague, setNewTeamLeague] = useState('');
@@ -328,7 +331,6 @@ export default function AdminRadarPortal() {
            setDynamicLigHavuzu({}); 
        }
 
-       // 🔥 ÖZEL FİLTRE BUTONLARINI YÜKLE 🔥
        const savedCustomFilters = localStorage.getItem('etml_custom_league_filters');
        if (savedCustomFilters) {
            setCustomLeagueFilters(JSON.parse(savedCustomFilters));
@@ -476,7 +478,6 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
-  // 🔥 YENİ: ÖZEL LİG BUTONU KAYDETME (KALIŞICI YAPMA) 🔥
   const handleOzelLigKaydet = () => {
       if (!ozelLigFiltresi.trim()) {
           alert("Lütfen önce bir ülke veya lig adı yazın!");
@@ -496,7 +497,6 @@ export default function AdminRadarPortal() {
       setOzelLigFiltresi('');
   };
 
-  // 🔥 YENİ: ÖZEL LİG BUTONU SİLME 🔥
   const handleRemoveCustomFilter = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       const updated = customLeagueFilters.filter(f => f.id !== id);
@@ -997,7 +997,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 GÜNCELLENEN HAVUZ ARAMA (ÖZEL LİGLERİ DE DESTEKLER VE HATA YAPMAZ) 🔥
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
@@ -1056,8 +1055,8 @@ export default function AdminRadarPortal() {
             return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
         });
 
-        // 🔥 HATA GİDERİLEN KISIM: Özel filtreler (isCustom) mantığı Type kontrolüyle düzeltildi 🔥
         if (seciliLigFiltreleri.length > 0 || ozelLigFiltresi.trim() !== '') {
+            const allFilters = [...POPULER_LIG_SECENEKLERI, ...customLeagueFilters];
             havuzTemp = havuzTemp.filter(mac => {
                 const matchLeague = mac.league_name.toLowerCase();
                 const matchCountry = (mac.country || '').toLowerCase();
@@ -1066,7 +1065,6 @@ export default function AdminRadarPortal() {
                 
                 if (seciliLigFiltreleri.length > 0) {
                     matchesPopuler = seciliLigFiltreleri.some(filterId => {
-                        // 1. Önce standart popüler liglerde ara
                         const popObj = POPULER_LIG_SECENEKLERI.find(f => f.id === filterId);
                         if (popObj) {
                             const isLeagueMatch = matchLeague === popObj.apiAd.toLowerCase();
@@ -1074,7 +1072,6 @@ export default function AdminRadarPortal() {
                             return isLeagueMatch && isCountryMatch;
                         }
                         
-                        // 2. Eğer popüler liglerde yoksa (kullanıcının kendi eklediği özelse)
                         const customObj = customLeagueFilters.find(f => f.id === filterId);
                         if (customObj) {
                             const searchTerm = customObj.apiAd.toLowerCase();
@@ -1106,7 +1103,11 @@ export default function AdminRadarPortal() {
 
         setApiHavuz(havuzTemp);
         
-        if(havuzTemp.length > 0) alert(`✅ Mükemmel Daraltma! Okyanustan tam isabet ${havuzTemp.length} adet maç çekildi.`);
+        if(havuzTemp.length > 0) {
+           alert(`✅ Mükemmel Daraltma! Okyanustan tam isabet ${havuzTemp.length} adet maç çekildi.`);
+           // 🔥 BURADA FİLTRELERİ OTOMATİK OLARAK GİZLİYORUZ Kİ MAÇ LİSTESİ TAM BOY AÇILSIN 🔥
+           setIsApiFilterOpen(false); 
+        }
         else alert("⚠️ Belirttiğin tarih, saat ve lig kalkanından hiçbir maç geçemedi. Başka ligler seçebilirsin.");
     } catch (error: any) {
         console.error(error);
@@ -1702,110 +1703,120 @@ export default function AdminRadarPortal() {
                 <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
                         <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
+                        {/* 🔥 YENİ: FİLTRE GİZLE/GÖSTER BUTONU 🔥 */}
+                        <button 
+                            onClick={() => setIsApiFilterOpen(!isApiFilterOpen)}
+                            className="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[10px] font-bold px-3 py-1.5 rounded border border-slate-600 transition-all shadow-sm"
+                        >
+                            {isApiFilterOpen ? '⚙️ FİLTRELERİ GİZLE ▲' : '⚙️ FİLTRELERİ GÖSTER ▼'}
+                        </button>
                     </div>
 
-                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3 flex flex-col gap-2 shadow-inner">
-                       <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
-                          <span>⚙️</span> API RADAR FİLTRELERİ (Kesin Eşleşme - Tam İsabet)
-                       </div>
-                       
-                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">İlk Gün</label>
-                             <select value={havuzBaslangicTarihi} onChange={e=>setHavuzBaslangicTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
-                                {currentWeekDates.map(d=><option key={`start-${d}`} value={d}>{d}</option>)}
-                             </select>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Son Gün</label>
-                             <select value={havuzBitisTarihi} onChange={e=>setHavuzBitisTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
-                                {currentWeekDates.map(d=><option key={`end-${d}`} value={d}>{d}</option>)}
-                             </select>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saatten İtibaren?</label>
-                             <input type="time" value={havuzBaslangicSaati} onChange={e=>setHavuzBaslangicSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saate Kadar?</label>
-                             <input type="time" value={havuzBitisSaati} onChange={e=>setHavuzBitisSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
-                          </div>
-                       </div>
+                    {/* 🔥 FİLTRE KUTUSU (AÇILIR KAPANIR) 🔥 */}
+                    {isApiFilterOpen && (
+                        <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3 flex flex-col gap-2 shadow-inner animate-fade-in">
+                           <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
+                              <span>⚙️</span> API RADAR FİLTRELERİ (Kesin Eşleşme - Tam İsabet)
+                           </div>
+                           
+                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              <div className="flex flex-col gap-1">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase">İlk Gün</label>
+                                 <select value={havuzBaslangicTarihi} onChange={e=>setHavuzBaslangicTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
+                                    {currentWeekDates.map(d=><option key={`start-${d}`} value={d}>{d}</option>)}
+                                 </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Son Gün</label>
+                                 <select value={havuzBitisTarihi} onChange={e=>setHavuzBitisTarihi(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold">
+                                    {currentWeekDates.map(d=><option key={`end-${d}`} value={d}>{d}</option>)}
+                                 </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saatten İtibaren?</label>
+                                 <input type="time" value={havuzBaslangicSaati} onChange={e=>setHavuzBaslangicSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Hangi Saate Kadar?</label>
+                                 <input type="time" value={havuzBitisSaati} onChange={e=>setHavuzBitisSaati(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-amber-500 text-[11px] p-2 rounded outline-none font-bold cursor-pointer" />
+                              </div>
+                           </div>
 
-                       <div className="mt-3 border-t border-slate-800 pt-3">
-                          <label className="text-[10px] font-bold text-emerald-400 uppercase mb-2 block tracking-widest">🏆 DEV LİG FİLTRELERİ <span className="text-slate-500 font-normal">(Boş bırakırsanız tüm dünyayı çeker)</span></label>
-                          <div className="flex flex-wrap gap-2">
-                             {POPULER_LIG_SECENEKLERI.map(lig => {
-                                const isActive = seciliLigFiltreleri.includes(lig.id);
-                                return (
-                                   <button
-                                      key={lig.id}
-                                      onClick={() => toggleLigFiltresi(lig.id)}
-                                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider transition-all border ${
-                                         isActive 
-                                         ? 'bg-emerald-900/80 text-emerald-300 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
-                                         : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-500 hover:text-slate-300'
-                                      }`}
+                           <div className="mt-3 border-t border-slate-800 pt-3">
+                              <label className="text-[10px] font-bold text-emerald-400 uppercase mb-2 block tracking-widest">🏆 DEV LİG FİLTRELERİ <span className="text-slate-500 font-normal">(Boş bırakırsanız tüm dünyayı çeker)</span></label>
+                              <div className="flex flex-wrap gap-2">
+                                 {POPULER_LIG_SECENEKLERI.map(lig => {
+                                    const isActive = seciliLigFiltreleri.includes(lig.id);
+                                    return (
+                                       <button
+                                          key={lig.id}
+                                          onClick={() => toggleLigFiltresi(lig.id)}
+                                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider transition-all border ${
+                                             isActive 
+                                             ? 'bg-emerald-900/80 text-emerald-300 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
+                                             : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-500 hover:text-slate-300'
+                                          }`}
+                                       >
+                                          {lig.ad}
+                                       </button>
+                                    )
+                                 })}
+                                 
+                                 {/* 🔥 KULLANICININ KENDİ EKLENDİĞİ BUTONLAR 🔥 */}
+                                 {customLeagueFilters.map(lig => {
+                                    const isActive = seciliLigFiltreleri.includes(lig.id);
+                                    return (
+                                       <div key={lig.id} className="relative group flex">
+                                         <button
+                                            onClick={() => toggleLigFiltresi(lig.id)}
+                                            className={`px-3 py-1.5 rounded-l-lg text-[10px] font-black tracking-wider transition-all border-y border-l ${
+                                               isActive 
+                                               ? 'bg-fuchsia-900/80 text-fuchsia-300 border-fuchsia-500 shadow-[0_0_8px_rgba(192,38,211,0.5)]' 
+                                               : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
+                                            }`}
+                                         >
+                                            {lig.ad}
+                                         </button>
+                                         <button 
+                                            onClick={(e) => handleRemoveCustomFilter(lig.id, e)}
+                                            className={`px-2 py-1.5 rounded-r-lg border-y border-r transition-all flex items-center justify-center ${
+                                                isActive
+                                                ? 'bg-fuchsia-900/80 border-fuchsia-500 text-fuchsia-400 hover:text-rose-400 hover:bg-fuchsia-950'
+                                                : 'bg-slate-900 border-slate-700 text-slate-600 hover:text-rose-400 hover:bg-slate-800'
+                                            }`}
+                                            title="Bu filtreyi kalıcı olarak sil"
+                                         >
+                                            ✖
+                                         </button>
+                                       </div>
+                                    )
+                                 })}
+                              </div>
+                              
+                              <div className="flex flex-col gap-1 mt-4 border-t border-slate-800 pt-3">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase">KENDİ LİG FİLTRENİ OLUŞTUR VE KAYDET (Örn: Suudi Arabistan, Brezilya)</label>
+                                 <div className="flex gap-2 w-full sm:w-2/3">
+                                   <input 
+                                      type="text" 
+                                      value={ozelLigFiltresi} 
+                                      onChange={e => setOzelLigFiltresi(e.target.value)} 
+                                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleOzelLigKaydet(); } }}
+                                      placeholder="Lig veya ülke adı yazın..."
+                                      className="flex-1 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
+                                   />
+                                   <button 
+                                      type="button"
+                                      onClick={handleOzelLigKaydet}
+                                      className="bg-fuchsia-700 hover:bg-fuchsia-600 text-white font-black px-4 py-2 rounded text-[10px] tracking-widest shadow-md transition-all whitespace-nowrap"
                                    >
-                                      {lig.ad}
+                                      BUTON OLARAK EKLE
                                    </button>
-                                )
-                             })}
-                             
-                             {/* 🔥 KULLANICININ KENDİ EKLENDİĞİ BUTONLAR 🔥 */}
-                             {customLeagueFilters.map(lig => {
-                                const isActive = seciliLigFiltreleri.includes(lig.id);
-                                return (
-                                   <div key={lig.id} className="relative group flex">
-                                     <button
-                                        onClick={() => toggleLigFiltresi(lig.id)}
-                                        className={`px-3 py-1.5 rounded-l-lg text-[10px] font-black tracking-wider transition-all border-y border-l ${
-                                           isActive 
-                                           ? 'bg-fuchsia-900/80 text-fuchsia-300 border-fuchsia-500 shadow-[0_0_8px_rgba(192,38,211,0.5)]' 
-                                           : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
-                                        }`}
-                                     >
-                                        {lig.ad}
-                                     </button>
-                                     <button 
-                                        onClick={(e) => handleRemoveCustomFilter(lig.id, e)}
-                                        className={`px-2 py-1.5 rounded-r-lg border-y border-r transition-all flex items-center justify-center ${
-                                            isActive
-                                            ? 'bg-fuchsia-900/80 border-fuchsia-500 text-fuchsia-400 hover:text-rose-400 hover:bg-fuchsia-950'
-                                            : 'bg-slate-900 border-slate-700 text-slate-600 hover:text-rose-400 hover:bg-slate-800'
-                                        }`}
-                                        title="Bu filtreyi kalıcı olarak sil"
-                                     >
-                                        ✖
-                                     </button>
-                                   </div>
-                                )
-                             })}
-                          </div>
-                          
-                          <div className="flex flex-col gap-1 mt-4 border-t border-slate-800 pt-3">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">KENDİ LİG FİLTRENİ OLUŞTUR VE KAYDET (Örn: Suudi Arabistan, Brezilya)</label>
-                             <div className="flex gap-2 w-full sm:w-2/3">
-                               <input 
-                                  type="text" 
-                                  value={ozelLigFiltresi} 
-                                  onChange={e => setOzelLigFiltresi(e.target.value)} 
-                                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleOzelLigKaydet(); } }}
-                                  placeholder="Lig veya ülke adı yazın..."
-                                  className="flex-1 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
-                               />
-                               <button 
-                                  type="button"
-                                  onClick={handleOzelLigKaydet}
-                                  className="bg-fuchsia-700 hover:bg-fuchsia-600 text-white font-black px-4 py-2 rounded text-[10px] tracking-widest shadow-md transition-all whitespace-nowrap"
-                               >
-                                  BUTON OLARAK EKLE
-                               </button>
-                             </div>
-                             <span className="text-[9px] text-slate-500 mt-1 italic">Yazdığınız kelimeyi kalıcı bir butona dönüştürür. Tıkladığınızda içinde o kelime geçen tüm maçları bulur. Geçici olarak aratmak istiyorsanız yazıp direkt "Çek" diyebilirsiniz.</span>
-                          </div>
-                       </div>
-                    </div>
+                                 </div>
+                                 <span className="text-[9px] text-slate-500 mt-1 italic">Yazdığınız kelimeyi kalıcı bir butona dönüştürür. Tıkladığınızda içinde o kelime geçen tüm maçları bulur. Geçici olarak aratmak istiyorsanız yazıp direkt "Çek" diyebilirsiniz.</span>
+                              </div>
+                           </div>
+                        </div>
+                    )}
 
                     <button
                         onClick={fetchHaftalikHavuz}
