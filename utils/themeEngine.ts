@@ -244,8 +244,9 @@ export const localTeamLogos: Record<string, string> = {
   "BURSA YILDIRIMSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1088447.png",
   "BITLIS ÖZGÜZELDERESPOR": "https://www.fotmob.com/img/team-fallback-dark.png",
   "KARAKÖPRÜ BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/888878.png",
-  "ÇORLUSPOR 1947": "https://images.fotmob.com/image_resources/logo/teamlogo/1559131.png",
   "ESKİŞEHIRSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/7966.png",
+  "ÇORLUSPOR 1947": "https://images.fotmob.com/image_resources/logo/teamlogo/1559131.png",
+  
 
 
   "YENI ORDUSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/863845.png",
@@ -289,9 +290,10 @@ export const localTeamLogos: Record<string, string> = {
   "ROMA W": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
   "ARSENAL W": "https://images.fotmob.com/image_resources/logo/teamlogo/258657.png",
   "SL BENFICA W": "https://images.fotmob.com/image_resources/logo/teamlogo/1198668.png",
-  "AUSTRIA WIEN ": "https://images.fotmob.com/image_resources/logo/teamlogo/1777852.png",
+  "AUSTRIA WIEN W": "https://images.fotmob.com/image_resources/logo/teamlogo/1777852.png",
   "JUVENTUS W": "https://images.fotmob.com/image_resources/logo/teamlogo/956623.png",
-  "KØGE ": "https://images.fotmob.com/image_resources/logo/teamlogo/1170164.png",
+  "KØGE W": "https://images.fotmob.com/image_resources/logo/teamlogo/1170164.png",
+  "BARCELONA W": "https://images.fotmob.com/image_resources/logo/teamlogo/401657.png",
   "MANCHESTER CITY W": "https://images.fotmob.com/image_resources/logo/teamlogo/231488.png",
   "PARIS SAINT GERMAIN W": "https://images.fotmob.com/image_resources/logo/teamlogo/294858.png",
   "ATLETICO CALATAYUD": "https://images.fotmob.com/image_resources/logo/teamlogo/190104.png",
@@ -304,7 +306,7 @@ export const localTeamLogos: Record<string, string> = {
   "RIBADESELLA CF": "https://images.fotmob.com/image_resources/logo/teamlogo/189591.png",
   "FAMALICAO": "https://images.fotmob.com/image_resources/logo/teamlogo/1634.png",
   "GIL VICENTE": "https://images.fotmob.com/image_resources/logo/teamlogo/9764.png",
- "LYON W": "https://images.fotmob.com/image_resources/logo/teamlogo/394119.png",
+  "LYON W": "https://images.fotmob.com/image_resources/logo/teamlogo/394119.png",
   "INTER MILANO W": "https://images.fotmob.com/image_resources/logo/teamlogo/1184314.png",
 
 
