@@ -36,6 +36,8 @@ const POPULER_LIG_SECENEKLERI = [
   { id: 'unl', ad: '🌍 Uluslar L.', apiAd: 'UEFA Nations League', country: 'World' }
 ];
 
+type CustomFilterOption = { id: string; ad: string; apiAd: string; isCustom: boolean };
+
 export default function AdminRadarPortal() {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -48,7 +50,6 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  // 🔥 TAHMİNLER VE LOJİSTİK/TRANSFER SEKMELERİ SİLİNDİ 🔥
   const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'players'>('live');
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
@@ -58,8 +59,15 @@ export default function AdminRadarPortal() {
   const [newPlayerPass, setNewPlayerPass] = useState('');
   const [isPlayerLoading, setIsPlayerLoading] = useState(false);
 
-  // 🔥 BOMBOŞ BİR HAVUZ (Takımlar eklendikçe buraya dolacak) 🔥
+  // 🔥 BOMBOŞ BİR YEREL HAVUZ 🔥
   const [dynamicLigHavuzu, setDynamicLigHavuzu] = useState<Record<string, string[]>>({});
+  
+  // 🔥 ÖZEL LİG BUTONLARI İÇİN YENİ STATE 🔥
+  const [customLeagueFilters, setCustomLeagueFilters] = useState<CustomFilterOption[]>([]);
+
+  // 🔥 LİG VE TAKIM EKLE (YENİ PANEL) İÇİN STATE'LER 🔥
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamLeague, setNewTeamLeague] = useState('');
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const previousScoresRef = useRef<Record<string, number>>({});
@@ -80,16 +88,12 @@ export default function AdminRadarPortal() {
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
   const [ozelLigFiltresi, setOzelLigFiltresi] = useState('');
 
-  // 🔥 MANUEL MAÇ EKLENTİSİ İÇİN STATE'LER 🔥
+  // 🔥 MANUEL MAÇ HAVUZU İÇİN STATE'LER 🔥
   const [manuelEv, setManuelEv] = useState('');
   const [manuelDep, setManuelDep] = useState('');
   const [manuelLig, setManuelLig] = useState('');
   const [manuelTarih, setManuelTarih] = useState('');
   const [manuelSaat, setManuelSaat] = useState('21:00');
-  
-  // 🔥 LİG VE TAKIM EKLE (YENİ PANEL) İÇİN STATE'LER 🔥
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamLeague, setNewTeamLeague] = useState('');
 
   const [skorcuStatusMap, setSkorcuStatusMap] = useState<Record<string, boolean>>({});
   const [showOnlyToday, setShowOnlyToday] = useState<boolean>(false);
@@ -116,9 +120,8 @@ export default function AdminRadarPortal() {
   }, [selectedLiveWeek]);
 
   useEffect(() => {
-      // 8 günlük liste varsa ve manuel tarih henüz seçilmediyse bugünü (1. index) otomatik seç
       if (currentWeekDates.length > 1 && !manuelTarih) {
-          setManuelTarih(currentWeekDates[1]);
+          setManuelTarih(currentWeekDates[1]); // Bugünü seç
       } else if (currentWeekDates.length > 0 && !manuelTarih) {
           setManuelTarih(currentWeekDates[0]);
       }
@@ -160,7 +163,6 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 AVCI MOTORLU API ÇEKİMİ (Orjinal Yapı Korunarak) 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
@@ -213,7 +215,6 @@ export default function AdminRadarPortal() {
             if (fixtureId && !String(fixtureId).startsWith('manuel-')) {
                 fix = allFixtures.find((f: any) => f.fixture.id == fixtureId);
             } else {
-                // AVCI MOTORU DEVREDE
                 const hName = String(bultenMaci.home_team).trim().toUpperCase();
                 const aName = String(bultenMaci.away_team).trim().toUpperCase();
 
@@ -320,12 +321,17 @@ export default function AdminRadarPortal() {
           if (role.startsWith('skorcum')) setShowOnlyToday(true);
        }
 
-       // 🔥 ARTIK LIG HAVUZU BOS BASLATILIYOR VE ESKİ VERİLER VARSA ALINIYOR 🔥
        const savedHavuz = localStorage.getItem('ekmel_lig_havuzu');
        if (savedHavuz) {
            setDynamicLigHavuzu(JSON.parse(savedHavuz));
        } else {
            setDynamicLigHavuzu({}); 
+       }
+
+       // 🔥 ÖZEL FİLTRE BUTONLARINI YÜKLE 🔥
+       const savedCustomFilters = localStorage.getItem('etml_custom_league_filters');
+       if (savedCustomFilters) {
+           setCustomLeagueFilters(JSON.parse(savedCustomFilters));
        }
     }
   }, []);
@@ -395,7 +401,6 @@ export default function AdminRadarPortal() {
 
                 if (weeks.length > 0) setLiveWeekOptions(weeks);
                 
-                // 🔥 HATA BURADAYDI, SİLİNEN SEKMEYE AİT KOD KALDIRILDI 🔥
                 if (selectedLiveWeek === 0) setSelectedLiveWeek(targetWeek);
                 if (bulletinWeek === 0) setBulletinWeek(targetWeek);
             }
@@ -469,6 +474,35 @@ export default function AdminRadarPortal() {
 
   const getPlayerIdByName = (name: string) => {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
+  };
+
+  // 🔥 YENİ: ÖZEL LİG BUTONU KAYDETME (KALIŞICI YAPMA) 🔥
+  const handleOzelLigKaydet = () => {
+      if (!ozelLigFiltresi.trim()) {
+          alert("Lütfen önce bir ülke veya lig adı yazın!");
+          return;
+      }
+      
+      const newFilter: CustomFilterOption = {
+          id: `custom-${Date.now()}`,
+          ad: `🎯 ${ozelLigFiltresi.trim().toUpperCase()}`,
+          apiAd: ozelLigFiltresi.trim(),
+          isCustom: true
+      };
+      
+      const updated = [...customLeagueFilters, newFilter];
+      setCustomLeagueFilters(updated);
+      localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
+      setOzelLigFiltresi('');
+  };
+
+  // 🔥 YENİ: ÖZEL LİG BUTONU SİLME 🔥
+  const handleRemoveCustomFilter = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const updated = customLeagueFilters.filter(f => f.id !== id);
+      setCustomLeagueFilters(updated);
+      localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
+      setSeciliLigFiltreleri(prev => prev.filter(f => f !== id));
   };
 
   useEffect(() => {
@@ -582,26 +616,22 @@ export default function AdminRadarPortal() {
     }
   }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
-  // 🔥 8 GÜNLÜK (DÜN + BUGÜN + 6 GÜN İLERİSİ) AKILLI TARİH MOTORU 🔥
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
     const loadBulletinData = async () => {
       if (activeTab === 'bulletin') {
         const { data } = await supabase.from('matches_bulletin').select('*').eq('week_num', bulletinWeek).order('match_index', { ascending: true });
-
         const existingMatches = data || [];
         
         const dateSet = new Set<string>();
-        
         existingMatches.forEach(m => {
             if (m.match_date) dateSet.add(m.match_date);
         });
         
-        // Dünden başlayarak 8 gün ileriye tarihleri oluştur
         const baseDate = new Date();
-        baseDate.setDate(baseDate.getDate() - 1); // 1 gün öncesi (dün)
+        baseDate.setDate(baseDate.getDate() - 1); 
         
-        for (let i = 0; i < 8; i++) { // toplam 8 gün (dün, bugün + 6 gün)
+        for (let i = 0; i < 8; i++) { 
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const dd = String(d.getDate()).padStart(2, '0');
@@ -614,7 +644,7 @@ export default function AdminRadarPortal() {
         setCurrentWeekDates(newDates);
 
         if (newDates.length > 1) {
-           setHavuzBaslangicTarihi(newDates[1]); // Bugünü varsayılan yap
+           setHavuzBaslangicTarihi(newDates[1]); 
            setHavuzBitisTarihi(newDates[newDates.length - 1]); 
         }
 
@@ -967,6 +997,7 @@ export default function AdminRadarPortal() {
     }
   };
 
+  // 🔥 GÜNCELLENEN HAVUZ ARAMA (ÖZEL LİGLERİ DE DESTEKLER VE HATA YAPMAZ) 🔥
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
@@ -1025,26 +1056,40 @@ export default function AdminRadarPortal() {
             return mac.time >= havuzBaslangicSaati && mac.time <= havuzBitisSaati;
         });
 
+        // 🔥 HATA GİDERİLEN KISIM: Özel filtreler (isCustom) mantığı Type kontrolüyle düzeltildi 🔥
         if (seciliLigFiltreleri.length > 0 || ozelLigFiltresi.trim() !== '') {
             havuzTemp = havuzTemp.filter(mac => {
                 const matchLeague = mac.league_name.toLowerCase();
                 const matchCountry = (mac.country || '').toLowerCase();
                 
-                const matchesPopuler = seciliLigFiltreleri.length > 0 
-                    ? seciliLigFiltreleri.some(filterId => {
-                        const fObj = POPULER_LIG_SECENEKLERI.find(f => f.id === filterId);
-                        if(!fObj) return false;
-                        
-                        const isLeagueMatch = matchLeague === fObj.apiAd.toLowerCase();
-                        const isCountryMatch = fObj.country === 'World' ? true : matchCountry === fObj.country.toLowerCase();
-                        
-                        return isLeagueMatch && isCountryMatch;
-                    })
-                    : false;
+                let matchesPopuler = false;
                 
-                const matchesOzel = ozelLigFiltresi.trim() !== '' 
-                    ? matchLeague.includes(ozelLigFiltresi.toLowerCase()) || matchCountry.includes(ozelLigFiltresi.toLowerCase())
-                    : false;
+                if (seciliLigFiltreleri.length > 0) {
+                    matchesPopuler = seciliLigFiltreleri.some(filterId => {
+                        // 1. Önce standart popüler liglerde ara
+                        const popObj = POPULER_LIG_SECENEKLERI.find(f => f.id === filterId);
+                        if (popObj) {
+                            const isLeagueMatch = matchLeague === popObj.apiAd.toLowerCase();
+                            const isCountryMatch = popObj.country === 'World' ? true : matchCountry === popObj.country.toLowerCase();
+                            return isLeagueMatch && isCountryMatch;
+                        }
+                        
+                        // 2. Eğer popüler liglerde yoksa (kullanıcının kendi eklediği özelse)
+                        const customObj = customLeagueFilters.find(f => f.id === filterId);
+                        if (customObj) {
+                            const searchTerm = customObj.apiAd.toLowerCase();
+                            return matchLeague.includes(searchTerm) || matchCountry.includes(searchTerm);
+                        }
+                        
+                        return false;
+                    });
+                }
+                
+                let matchesOzel = false;
+                if (ozelLigFiltresi.trim() !== '') {
+                    const searchOzel = ozelLigFiltresi.toLowerCase().trim();
+                    matchesOzel = matchLeague.includes(searchOzel) || matchCountry.includes(searchOzel);
+                }
                 
                 return matchesPopuler || matchesOzel;
             });
@@ -1706,17 +1751,58 @@ export default function AdminRadarPortal() {
                                    </button>
                                 )
                              })}
+                             
+                             {/* 🔥 KULLANICININ KENDİ EKLENDİĞİ BUTONLAR 🔥 */}
+                             {customLeagueFilters.map(lig => {
+                                const isActive = seciliLigFiltreleri.includes(lig.id);
+                                return (
+                                   <div key={lig.id} className="relative group flex">
+                                     <button
+                                        onClick={() => toggleLigFiltresi(lig.id)}
+                                        className={`px-3 py-1.5 rounded-l-lg text-[10px] font-black tracking-wider transition-all border-y border-l ${
+                                           isActive 
+                                           ? 'bg-fuchsia-900/80 text-fuchsia-300 border-fuchsia-500 shadow-[0_0_8px_rgba(192,38,211,0.5)]' 
+                                           : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
+                                        }`}
+                                     >
+                                        {lig.ad}
+                                     </button>
+                                     <button 
+                                        onClick={(e) => handleRemoveCustomFilter(lig.id, e)}
+                                        className={`px-2 py-1.5 rounded-r-lg border-y border-r transition-all flex items-center justify-center ${
+                                            isActive
+                                            ? 'bg-fuchsia-900/80 border-fuchsia-500 text-fuchsia-400 hover:text-rose-400 hover:bg-fuchsia-950'
+                                            : 'bg-slate-900 border-slate-700 text-slate-600 hover:text-rose-400 hover:bg-slate-800'
+                                        }`}
+                                        title="Bu filtreyi kalıcı olarak sil"
+                                     >
+                                        ✖
+                                     </button>
+                                   </div>
+                                )
+                             })}
                           </div>
                           
-                          <div className="flex flex-col gap-1 mt-3">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase">Veya Menüde Olmayan Özel Lig Yazın (Örn: Saudi Pro League)</label>
-                             <input 
-                                type="text" 
-                                value={ozelLigFiltresi} 
-                                onChange={e => setOzelLigFiltresi(e.target.value)} 
-                                placeholder="Lig veya ülke adını buraya yazarak arat..."
-                                className="w-full sm:w-1/2 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
-                             />
+                          <div className="flex flex-col gap-1 mt-4 border-t border-slate-800 pt-3">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">KENDİ LİG FİLTRENİ OLUŞTUR VE KAYDET (Örn: Suudi Arabistan, Brezilya)</label>
+                             <div className="flex gap-2 w-full sm:w-2/3">
+                               <input 
+                                  type="text" 
+                                  value={ozelLigFiltresi} 
+                                  onChange={e => setOzelLigFiltresi(e.target.value)} 
+                                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleOzelLigKaydet(); } }}
+                                  placeholder="Lig veya ülke adı yazın..."
+                                  className="flex-1 bg-slate-900 border border-slate-700 text-cyan-400 text-[11px] p-2 rounded outline-none font-bold placeholder:text-slate-600"
+                               />
+                               <button 
+                                  type="button"
+                                  onClick={handleOzelLigKaydet}
+                                  className="bg-fuchsia-700 hover:bg-fuchsia-600 text-white font-black px-4 py-2 rounded text-[10px] tracking-widest shadow-md transition-all whitespace-nowrap"
+                               >
+                                  BUTON OLARAK EKLE
+                               </button>
+                             </div>
+                             <span className="text-[9px] text-slate-500 mt-1 italic">Yazdığınız kelimeyi kalıcı bir butona dönüştürür. Tıkladığınızda içinde o kelime geçen tüm maçları bulur. Geçici olarak aratmak istiyorsanız yazıp direkt "Çek" diyebilirsiniz.</span>
                           </div>
                        </div>
                     </div>
