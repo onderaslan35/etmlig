@@ -242,6 +242,12 @@ export const localTeamLogos: Record<string, string> = {
   "FETHIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/8375.png",
   "SAKARYASPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4124.png",
   "BURSA YILDIRIMSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1088447.png",
+  "BITLIS ÖZGÜZELDERESPOR": "https://www.fotmob.com/img/team-fallback-dark.png",
+  "KARAKÖPRÜ BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/888878.png",
+  "ÇORLUSPOR 1947": "https://images.fotmob.com/image_resources/logo/teamlogo/1559131.png",
+  "ESKİŞEHIRSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/7966.png",
+
+
   "YENI ORDUSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/863845.png",
   "1461 TRABZON FK": "https://images.fotmob.com/image_resources/logo/teamlogo/468166.png",
   "EYÜPSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/4681_large.png",
@@ -255,6 +261,8 @@ export const localTeamLogos: Record<string, string> = {
   "DINAMO KIEV": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Dynamo_Kyiv_logo.svg",
   "1. FC NÜRNBERG": "https://images.fotmob.com/image_resources/logo/teamlogo/8165.png",
   "1. FC MAGDEBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/8188.png",
+  "AUSTRIA LUSTENAU": "https://images.fotmob.com/image_resources/logo/teamlogo/9982.png",
+
   "HANNOVER 96": "https://images.fotmob.com/image_resources/logo/teamlogo/9904.png",
   "1. FC KAISERSLAUTERN": "https://images.fotmob.com/image_resources/logo/teamlogo/8350.png",
   "HOLSTEIN KIEL": "https://images.fotmob.com/image_resources/logo/teamlogo/8150.png",
@@ -281,7 +289,22 @@ export const localTeamLogos: Record<string, string> = {
   "ROMA W": "https://images.fotmob.com/image_resources/logo/teamlogo/8686.png",
   "ARSENAL W": "https://images.fotmob.com/image_resources/logo/teamlogo/258657.png",
   "SL BENFICA W": "https://images.fotmob.com/image_resources/logo/teamlogo/1198668.png",
-  "LYON W": "https://images.fotmob.com/image_resources/logo/teamlogo/394119.png",
+  "AUSTRIA WIEN ": "https://images.fotmob.com/image_resources/logo/teamlogo/1777852.png",
+  "JUVENTUS W": "https://images.fotmob.com/image_resources/logo/teamlogo/956623.png",
+  "KØGE ": "https://images.fotmob.com/image_resources/logo/teamlogo/1170164.png",
+  "MANCHESTER CITY W": "https://images.fotmob.com/image_resources/logo/teamlogo/231488.png",
+  "PARIS SAINT GERMAIN W": "https://images.fotmob.com/image_resources/logo/teamlogo/294858.png",
+  "ATLETICO CALATAYUD": "https://images.fotmob.com/image_resources/logo/teamlogo/190104.png",
+  "LEBRIJANA": "https://images.fotmob.com/image_resources/logo/teamlogo/477697.png",
+  "GUIJUELO": "https://images.fotmob.com/image_resources/logo/teamlogo/161741.png",
+  "SPORTING GIJON": "https://images.fotmob.com/image_resources/logo/teamlogo/9869.png",
+  "AURIENSE": "https://images.fotmob.com/image_resources/logo/teamlogo/2341117.png",
+  "PRAT": "https://images.fotmob.com/image_resources/logo/teamlogo/189638.png",
+  "HORTALEZA": "https://images.fotmob.com/image_resources/logo/teamlogo/2360741.png",
+  "RIBADESELLA CF": "https://images.fotmob.com/image_resources/logo/teamlogo/189591.png",
+  "FAMALICAO": "https://images.fotmob.com/image_resources/logo/teamlogo/1634.png",
+  "GIL VICENTE": "https://images.fotmob.com/image_resources/logo/teamlogo/9764.png",
+ "LYON W": "https://images.fotmob.com/image_resources/logo/teamlogo/394119.png",
   "INTER MILANO W": "https://images.fotmob.com/image_resources/logo/teamlogo/1184314.png",
 
 
@@ -456,6 +479,14 @@ export const localTeamLogos: Record<string, string> = {
   "HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9790.png",
   "ELVERSBERG": "https://images.fotmob.com/image_resources/logo/teamlogo/8251.png",
   "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
+  "AARHUS FREMAD": "https://images.fotmob.com/image_resources/logo/teamlogo/8109.png",
+  "FC MIDTJYLLAND": "https://images.fotmob.com/image_resources/logo/teamlogo/8113.png",
+  "ODENSE": "https://images.fotmob.com/image_resources/logo/teamlogo/8414.png",
+  "BALTIKA": "https://images.fotmob.com/image_resources/logo/teamlogo/49694.png",
+  "ZENIT": "https://images.fotmob.com/image_resources/logo/teamlogo/8698.png",
+  "CSKA MOSCOW": "https://images.fotmob.com/image_resources/logo/teamlogo/9760.png",
+  "LOKOMOTIV": "https://images.fotmob.com/image_resources/logo/teamlogo/8710.png",
+
   "HEBC HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/946303_large.png",
 
   // FRANSA

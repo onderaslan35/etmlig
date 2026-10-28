@@ -124,7 +124,7 @@ export default function AdminRadarPortal() {
 
   useEffect(() => {
       if (currentWeekDates.length > 1 && !manuelTarih) {
-          setManuelTarih(currentWeekDates[1]); 
+          setManuelTarih(currentWeekDates[1]); // Bugünü seç
       } else if (currentWeekDates.length > 0 && !manuelTarih) {
           setManuelTarih(currentWeekDates[0]);
       }
@@ -166,7 +166,6 @@ export default function AdminRadarPortal() {
       }
   }, [isAuthenticated, activeTab]);
 
-  // 🔥 YEPYENİ KORUMALI API MOTORU (ÖN GÜNCELLEMEYİ ENGELLER) 🔥
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
@@ -209,24 +208,10 @@ export default function AdminRadarPortal() {
         const nowTime = new Date();
         const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
 
-        const idsToFetch = bugununBultenMaclari.map(m => getUniqueMatchId(selectedLiveWeek, m.match_index));
-        const { data: latestLiveDb } = await supabase.from('live_matches').select('id, status').in('id', idsToFetch);
-        const dbStatusMap: Record<string, string> = {};
-        if (latestLiveDb) {
-            latestLiveDb.forEach(l => { dbStatusMap[l.id] = l.status; });
-        }
-
         const updates = [];
         const bulletinUpdates = [];
 
         for (const bultenMaci of bugununBultenMaclari) {
-            const uniqueId = getUniqueMatchId(selectedLiveWeek, bultenMaci.match_index);
-            
-            const isAlreadyFinished = dbStatusMap[uniqueId] === 'FINISHED';
-            if (isAlreadyFinished) {
-                continue; 
-            }
-
             let fixtureId = bultenMaci.api_match_id;
             let fix = null;
             
@@ -253,13 +238,20 @@ export default function AdminRadarPortal() {
             }
 
             if (fix) {
+                const uniqueId = getUniqueMatchId(selectedLiveWeek, bultenMaci.match_index);
+                
                 let homeScore = fix.goals.home !== null ? String(fix.goals.home) : '-';
                 let awayScore = fix.goals.away !== null ? String(fix.goals.away) : '-';
                 let status = fix.fixture.status.short; 
                 
+                const currentDbMatch = liveInfoStateMap[bultenMaci.match_index];
+                const isAlreadyFinished = currentDbMatch?.status === 'FINISHED';
+
                 if (['1H', '2H', 'ET', 'P', 'LIVE'].includes(status)) status = 'LIVE';
                 else if (status === 'HT') status = 'HT';
-                else if (['FT', 'AET', 'PEN', 'FINISHED'].includes(status)) status = 'WAITING_APPROVAL';
+                else if (['FT', 'AET', 'PEN', 'FINISHED'].includes(status)) {
+                    status = isAlreadyFinished ? 'FINISHED' : 'WAITING_APPROVAL';
+                }
 
                 updates.push({
                    id: uniqueId,
@@ -287,11 +279,11 @@ export default function AdminRadarPortal() {
             if (error) {
                 alert("❌ Supabase güncellenirken hata: " + error.message);
             } else {
-                alert(`✅ Ultra Radar Başarılı! Ekranda BUGÜN oynanan ve ARŞİVLENMEMİŞ ${updates.length} maçın verisi güncellendi.`);
+                alert(`✅ Ultra Radar ve Avcı Motoru Başarılı! Ekranda BUGÜN oynanan ${updates.length} adet maçın verisi Karargaha işlendi.`);
                 setTimeout(() => { checkApiLimit(); }, 1500); 
             }
         } else {
-            alert("⚠️ Veriler çekildi ancak bugünün maçları için güncellenecek BİTMEMİŞ maç bulunamadı.");
+            alert("⚠️ Veriler çekildi ancak bugünün maçları için güncel bir değişiklik veya eşleşme bulunamadı.");
         }
 
      } catch (e) {
@@ -333,8 +325,11 @@ export default function AdminRadarPortal() {
        }
 
        const savedHavuz = localStorage.getItem('ekmel_lig_havuzu');
-       if (savedHavuz) setDynamicLigHavuzu(JSON.parse(savedHavuz));
-       else setDynamicLigHavuzu({}); 
+       if (savedHavuz) {
+           setDynamicLigHavuzu(JSON.parse(savedHavuz));
+       } else {
+           setDynamicLigHavuzu({}); 
+       }
 
        const savedCustomFilters = localStorage.getItem('etml_custom_league_filters');
        if (savedCustomFilters) {
@@ -346,6 +341,12 @@ export default function AdminRadarPortal() {
   const updateLigHavuzu = (newHavuz: Record<string, string[]>) => {
     setDynamicLigHavuzu(newHavuz);
     localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(newHavuz));
+  };
+
+  const getDynamicCategories = () => {
+    const base = Object.keys(dynamicLigHavuzu);
+    const defaults = POPULER_LIG_SECENEKLERI.map(l => l.apiAd.toUpperCase());
+    return Array.from(new Set([...base, ...defaults, "TÜRKİYE KUPASI"])).sort((a,b) => a.localeCompare(b, 'tr'));
   };
 
   const fetchSkorcuStatus = async () => {
@@ -615,51 +616,94 @@ export default function AdminRadarPortal() {
     }
   }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
 
-  // 🔥 HATA GİDERİLEN KISIM: DISPLAYED MATCHES ARTIK DOĞRU YERDE 🔥
-  const displayedMatches = liveMatchesDB.filter(match => {
-      const logInfo = liveInfoStateMap[match.match_index];
-      const status = logInfo?.status || 'NOT_STARTED';
+  useEffect(() => {
+    if (!isAuthenticated || userRole !== 'master' || bulletinWeek === 0) return;
+    const loadBulletinData = async () => {
+      if (activeTab === 'bulletin') {
+        const { data } = await supabase.from('matches_bulletin').select('*').eq('week_num', bulletinWeek).order('match_index', { ascending: true });
+        const existingMatches = data || [];
+        
+        const dateSet = new Set<string>();
+        existingMatches.forEach(m => {
+            if (m.match_date) dateSet.add(m.match_date);
+        });
+        
+        const baseDate = new Date();
+        baseDate.setDate(baseDate.getDate() - 1); 
+        
+        for (let i = 0; i < 8; i++) { 
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + i);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            dateSet.add(`${dd}.${mm}.${yyyy}`);
+        }
 
-      const isFinished = status === 'FINISHED';
-      const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
-      const isToday = match.match_date === getTodayDateString();
+        const newDates = Array.from(dateSet).sort((a, b) => parseDateLocal(a).getTime() - parseDateLocal(b).getTime());
+        setCurrentWeekDates(newDates);
 
-      const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
-      const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+        if (newDates.length > 1) {
+           setHavuzBaslangicTarihi(newDates[1]); 
+           setHavuzBitisTarihi(newDates[newDates.length - 1]); 
+        }
 
-      if (userRole && userRole.startsWith('skorcum')) {
-          if (isFinished) return false; 
-          if (isLive || isWithinLast5Hours) return true; 
-          
-          const mDate = parseDateLocal(match.match_date);
-          const today = new Date();
-          today.setHours(0,0,0,0);
-          
-          if (mDate < today && !isWithinLast5Hours) return false; 
-          return true; 
+        if (existingMatches.length > 0) {
+          const loadedSecilen = Array(24).fill(null);
+          existingMatches.forEach(m => {
+              loadedSecilen[m.match_index - 1] = {
+                  fixture_id: m.api_match_id || `temp-${m.match_index}`,
+                  home_team: m.home_team,
+                  away_team: m.away_team,
+                  date: m.match_date,
+                  time: m.match_time,
+                  category: m.category,
+                  league_name: m.category
+              };
+          });
+          setSecilenMaclar(loadedSecilen);
+        } else {
+          setSecilenMaclar(Array(24).fill(null)); 
+        }
+        setApiHavuz([]); 
       }
+    };
+    loadBulletinData();
+  }, [bulletinWeek, activeTab, isAuthenticated, userRole]);
 
-      if (showOnlyToday) {
-          if (isFinished) return false; 
-          if (isLive || isWithinLast5Hours) return true;     
-          return isToday;                
-      }
-      return true; 
-  });
-
-  const getDynamicElapsed = (logInfo: any) => {
-     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
-     const parts = logInfo.updated_at.split(':');
-     if (parts.length >= 2) {
-         const upDate = new Date(now);
-         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
-         let diffMs = now - upDate.getTime();
-         if (diffMs < -43200000) diffMs += 86400000; 
-         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
-         return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
-     }
-     return `${logInfo.elapsed}'`;
+  const handleAddNewPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
+    setIsPlayerLoading(true);
+    try {
+       const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
+       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: cleanName, password: newPlayerPass.trim() });
+       if (error) throw error;
+       alert(`✅ BAŞARILI! ${cleanName} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
+       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
+       fetchAllSystemPlayers(); 
+    } catch (err: any) { alert("❌ HATA: " + err.message); }
+    setIsPlayerLoading(false);
   };
+
+  const handleBanishPlayer = async (userId: string, userName: string) => {
+    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEğer bu kişiyi silerseniz Karargah sisteminden çıkacaktır. Emin misiniz?`);
+    if (!confirmDelete) return;
+    try {
+       const { error } = await supabase.from('players').delete().eq('username', userId);
+       if (error) throw error;
+       alert(`✅ İhraç başarılı. ${userName} sistemden atıldı.`);
+       fetchAllSystemPlayers(); 
+    } catch (err: any) { alert("❌ Hata: " + err.message); }
+  };
+
+  const toggleWinners = (matchId: number) => setOpenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+
+  const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
+    setAdminScores(prev => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "-", away: "-" }), [team]: score } }));
+  };
+
+  const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
@@ -953,128 +997,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  const handleBulkApprove = async () => {
-    const matchesToApprove = displayedMatches.filter(m => {
-        const logInfo = liveInfoStateMap[m.match_index];
-        return logInfo?.status === 'WAITING_APPROVAL';
-    });
-
-    if (matchesToApprove.length === 0) {
-        alert("⚠️ Ekranda 'ONAY BEKLİYOR' statüsünde hiçbir maç bulunamadı.");
-        return;
-    }
-
-    if (!window.confirm(`DİKKAT: Tam ${matchesToApprove.length} adet maçın puanları otomatik hesaplanıp kasalara eklenecek ve statüleri BİTTİ (FINISHED) olarak işaretlenecektir.\n\nOnaylıyor musunuz Komutanım?`)) return;
-
-    const nowTime = new Date();
-    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
-
-    let successCount = 0;
-    let skipCount = 0;
-
-    for (const match of matchesToApprove) {
-        const matchId = match.match_index;
-        const homeScore = adminScores[matchId]?.home || "-";
-        const awayScore = adminScores[matchId]?.away || "-";
-        const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
-        const isTff = isTffMatchCheck(match.category);
-        const leagueName = isTff ? 'TFF' : 'DFO';
-
-        if (homeScore === "-" || awayScore === "-") {
-            skipCount++;
-            continue;
-        }
-
-        const targetScore = `${homeScore}-${awayScore}`;
-        const currentWinners = Object.keys(predictionsDB)
-            .filter(uid => predictionsDB[uid] && predictionsDB[uid][matchId - 1] === targetScore)
-            .map(uid => mergedPlayers[uid] || "Bilinmeyen");
-
-        let winnersCount = currentWinners.length;
-        let displayPoints = 0;
-        if(winnersCount === 1) displayPoints = 12;
-        else if(winnersCount === 2) displayPoints = 6;
-        else if(winnersCount === 3) displayPoints = 5;
-        else if(winnersCount === 4) displayPoints = 4;
-        else if(winnersCount === 5) displayPoints = 3;
-        else if(winnersCount === 6) displayPoints = 2;
-        else if(winnersCount >= 7) displayPoints = 1;
-
-        if (matchId === 24) {
-            let bonusInserts: any[] = [];
-            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
-            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
-
-            if (finalPLeader) {
-                bonusInserts.push({ hafta: selectedLiveWeek, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
-            }
-            if (finalSLeader) {
-                bonusInserts.push({ hafta: selectedLiveWeek, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
-            }
-
-            if (bonusInserts.length > 0) {
-                const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
-                if (!bInsertError) {
-                    for (const insert of bonusInserts) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', insert.username);
-                        if (stData) {
-                            const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
-                }
-            }
-        }
-
-        const { data: existingPointsCheck } = await supabase.from('points').select('id').eq('hafta', selectedLiveWeek).eq('ev_sahibi', match.home_team).eq('deplasman', match.away_team);
-        
-        if (existingPointsCheck && existingPointsCheck.length > 0) {
-            await supabase.from('live_matches').update({ status: 'FINISHED', updated_by: userRole, updated_at: timeString }).eq('id', uniqueId);
-            setDistributedMatches(prev => ({...prev, [matchId]: true}));
-            successCount++;
-            continue;
-        }
-
-        if (currentWinners.length > 0) {
-            const inserts: any[] = [];
-            currentWinners.forEach(winnerName => {
-                const userId = getPlayerIdByName(winnerName);
-                if(!userId) return;
-                const baseData = {
-                    hafta: selectedLiveWeek, user_name: winnerName, username: userId, ev_sahibi: match.home_team, deplasman: match.away_team,
-                    gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
-                };
-                inserts.push({ ...baseData, kategori: leagueName });
-                inserts.push({ ...baseData, kategori: 'MASTER' });
-            });
-
-            const { error: insertError } = await supabase.from('points').insert(inserts);
-            if (!insertError) {
-                for (const winnerName of currentWinners) {
-                    const userId = getPlayerIdByName(winnerName);
-                    if (!userId) continue;
-                    const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
-                    if (stData) {
-                        const lRow = stData.find((r: any) => r.league_type === leagueName);
-                        if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
-                        else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
-
-                        const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                        if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
-                        else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
-                    }
-                }
-            }
-        }
-        
-        await supabase.from('live_matches').update({ status: 'FINISHED', updated_by: userRole, updated_at: timeString }).eq('id', uniqueId);
-        setDistributedMatches(prev => ({...prev, [matchId]: true}));
-        successCount++;
-    }
-
-    alert(`✅ TOPLU ONAY TAMAMLANDI!\n${successCount} adet maç başarıyla arşivlendi ve puanları dağıtıldı.${skipCount > 0 ? `\n(Skoru henüz girilmeyen ${skipCount} maç es geçildi)` : ''}`);
-  };
-
   const fetchHaftalikHavuz = async () => {
     setIsHavuzLoading(true);
     let havuzTemp: any[] = [];
@@ -1183,6 +1105,7 @@ export default function AdminRadarPortal() {
         
         if(havuzTemp.length > 0) {
            alert(`✅ Mükemmel Daraltma! Okyanustan tam isabet ${havuzTemp.length} adet maç çekildi.`);
+           // 🔥 BURADA FİLTRELERİ OTOMATİK OLARAK GİZLİYORUZ Kİ MAÇ LİSTESİ TAM BOY AÇILSIN 🔥
            setIsApiFilterOpen(false); 
         }
         else alert("⚠️ Belirttiğin tarih, saat ve lig kalkanından hiçbir maç geçemedi. Başka ligler seçebilirsin.");
@@ -1254,6 +1177,7 @@ export default function AdminRadarPortal() {
     setIsPublishing(false);
   };
 
+  // 🔥 LİG VE TAKIM EKLE (HAVUZ OLUŞTURUCU) 🔥
   const handleAddLocalTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if(!newTeamName.trim() || !newTeamLeague.trim()) {
@@ -1279,6 +1203,7 @@ export default function AdminRadarPortal() {
     alert(`✅ EKLENDİ!\n${tName}, ${tLeague} havuzuna kaydedildi.`);
   };
 
+  // 🔥 MANUEL MAÇ HAVUZU (BÜLTENE YAPIŞTIR) 🔥
   const handleManuelMacEkle = (e: React.FormEvent) => {
       e.preventDefault();
       if(!manuelEv || !manuelDep || !manuelLig || !manuelTarih) {
@@ -1307,6 +1232,51 @@ export default function AdminRadarPortal() {
       
       setManuelEv(''); setManuelDep('');
       alert(`✅ MAÇ EKLENDİ!\n\n${evName} - ${depName} bültene yerleştirildi.\n"BÜLTENİ PATLAT" butonuna basmayı unutmayın.`);
+  };
+
+  const displayedMatches = liveMatchesDB.filter(match => {
+      const logInfo = liveInfoStateMap[match.match_index];
+      const status = logInfo?.status || 'NOT_STARTED';
+
+      const isFinished = status === 'FINISHED';
+      const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
+      const isToday = match.match_date === getTodayDateString();
+
+      const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
+      const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
+
+      if (userRole && userRole.startsWith('skorcum')) {
+          if (isFinished) return false; 
+          if (isLive || isWithinLast5Hours) return true; 
+          
+          const mDate = parseDateLocal(match.match_date);
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          
+          if (mDate < today && !isWithinLast5Hours) return false; 
+          return true; 
+      }
+
+      if (showOnlyToday) {
+          if (isFinished) return false; 
+          if (isLive || isWithinLast5Hours) return true;     
+          return isToday;                
+      }
+      return true; 
+  });
+
+  const getDynamicElapsed = (logInfo: any) => {
+     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
+     const parts = logInfo.updated_at.split(':');
+     if (parts.length >= 2) {
+         const upDate = new Date(now);
+         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
+         let diffMs = now - upDate.getTime();
+         if (diffMs < -43200000) diffMs += 86400000; 
+         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
+         return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
+     }
+     return `${logInfo.elapsed}'`;
   };
 
   if (!isAuthenticated) {
@@ -1465,15 +1435,6 @@ export default function AdminRadarPortal() {
                           {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK (KALAN KONTÖR: ${apiLimitRemaining})`}
                       </span>
                       <span className="text-[10px] sm:text-xs text-blue-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Avcı Motoru devrededir, tüm manuel maçları otomatik bulur.</span>
-                  </button>
-                  
-                  {/* 🔥 YENİ SİLAH: TOPLU BİTİRME BUTONU 🔥 */}
-                  <button 
-                      onClick={handleBulkApprove}
-                      className="flex-1 bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-700 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.6)] border border-emerald-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
-                  >
-                      <span className="flex items-center gap-2"><span className="text-2xl animate-bounce">🏆</span> BİTENLERİ ONAYLA</span>
-                      <span className="text-[10px] sm:text-xs text-emerald-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Onay Bekleyen maçların puanlarını tek tıkla dağıt.</span>
                   </button>
               </div>
             )}
