@@ -3,6 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { isTffMatchCheck } from '@/utils/themeEngine'; 
 
+// 🔥 KURŞUN GEÇİRMEZ YENİ TÜRKİYE RADARI 🔥
+const checkIsTurkishLeague = (category: string) => {
+    if (!category) return false;
+    if (isTffMatchCheck(category)) return true;
+    
+    const c = category.toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G');
+    return c.includes('TFF') || 
+           c.includes('TURKIYE') || 
+           c.includes('TURKEY') || 
+           c.includes('SUPER LIG') || 
+           c.includes('1. LIG') || 
+           c.includes('2. LIG') || 
+           c.includes('3. LIG') || 
+           c.includes('KUPA') ||
+           c.includes('AMATOR') ||
+           c.includes('BAL');
+};
+
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
   const parts = dateStr.split('.');
@@ -19,19 +37,17 @@ export default function TffPuanDurumuPage() {
 
   const loadLeaderboard = async () => {
     try {
-      // 1. Maçları ve bülteni çekiyoruz
       const { data: allMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
       
       let activeWeek = 5, activeDate = '';
-      let liveWeeks: number[] = []; // 🔥 YENİ: Canlı maçı olan tüm haftaları tutacak dizi
+      let liveWeeks: number[] = [];
 
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
           
           allMatches.forEach(m => {
               statusMap[m.id] = m.status;
-              // 🔥 KİLİT NOKTASI: Eğer maç LIVE veya HT ise, o maçın haftasını liveWeeks dizisine ekle
               if (m.status === 'LIVE' || m.status === 'HT') {
                   const wNum = Math.floor(m.id / 100);
                   if (!liveWeeks.includes(wNum)) liveWeeks.push(wNum);
@@ -51,20 +67,17 @@ export default function TffPuanDurumuPage() {
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           activeDate = weeksData[activeWeek]?.date || '';
           
-          // 🔥 Aktif haftayı da mutlaka diziye ekle ki hata olmasın
           if (!liveWeeks.includes(activeWeek)) liveWeeks.push(activeWeek);
       }
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
 
-      // 2. ID ve İsim Eşleştirmesi
       const { data: playersData } = await supabase.from('players').select('username, name');
       const idToNameMap: Record<string, string> = {};
       if (playersData) {
           playersData.forEach(p => idToNameMap[p.username] = p.name);
       }
 
-      // 3. Tahminleri Çek (🔥 SADECE ACTIVE WEEK DEĞİL, CANLI MAÇI OLAN TÜM HAFTALARI ÇEK 🔥)
       let predictions: any[] = [];
       let fetchMore = true;
       let from = 0;
@@ -75,7 +88,7 @@ export default function TffPuanDurumuPage() {
               const { data: pDataChunk, error } = await supabase
                   .from('player_predictions')
                   .select('*')
-                  .in('week_num', liveWeeks) // 🔥 eq yerine in kullandık. Artık 29 da gelse 31 de gelse tanıyacak!
+                  .in('week_num', liveWeeks) 
                   .range(from, from + step - 1);
               if (error) break;
               if (pDataChunk && pDataChunk.length > 0) {
@@ -88,7 +101,6 @@ export default function TffPuanDurumuPage() {
           }
       }
 
-      // 4. Sabit (Dağıtılmış) TFF Puanlarını Çek
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_pts, tff_trend_direction, tff_trend_diff');
       
       if (leaderboardData && leaderboardData.length > 0) {
@@ -101,7 +113,6 @@ export default function TffPuanDurumuPage() {
             trendDiff: r.tff_trend_diff || 0
         }));
 
-        // 5. CANLI PUAN HESAPLAMA (SADECE TFF MAÇLARI)
         if (allMatches && predictions && dbBulletin) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -115,8 +126,7 @@ export default function TffPuanDurumuPage() {
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
                 
                 if (bulletinMatch) {
-                    const matchCategory = bulletinMatch.category ? bulletinMatch.category.toUpperCase() : '';
-                    const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+                    const isDefiniteTFF = checkIsTurkishLeague(bulletinMatch.category);
                     if (!isDefiniteTFF) return; 
                 }
 
@@ -141,7 +151,6 @@ export default function TffPuanDurumuPage() {
             });
         }
 
-        // 6. TOPLAM PUAN VE SIRALAMA
         const sortedList = updatedList.map(p => ({
             ...p,
             displayScore: p.baseScore + p.liveBonus

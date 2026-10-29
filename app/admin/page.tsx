@@ -13,6 +13,24 @@ import {
   getEliteTheme
 } from '@/utils/themeEngine';
 
+// 🔥 KURŞUN GEÇİRMEZ YENİ TÜRKİYE RADARI 🔥
+const checkIsTurkishLeague = (category: string) => {
+    if (!category) return false;
+    if (isTffMatchCheck(category)) return true;
+    
+    const c = category.toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G');
+    return c.includes('TFF') || 
+           c.includes('TURKIYE') || 
+           c.includes('TURKEY') || 
+           c.includes('SUPER LIG') || 
+           c.includes('1. LIG') || 
+           c.includes('2. LIG') || 
+           c.includes('3. LIG') || 
+           c.includes('KUPA') ||
+           c.includes('AMATOR') ||
+           c.includes('BAL');
+};
+
 const timeOptionsArr = generateTimeOptions();
 
 const POPULER_LIG_SECENEKLERI = [
@@ -1021,10 +1039,9 @@ export default function AdminRadarPortal() {
                 else if(wc === 6) displayPoints = 2;
                 else if(wc >= 7) displayPoints = 1;
 
-                // 🔥 BÜYÜK YAMA: Orijinal kategoriyi bozmadan gönderiyoruz
+                // 🔥 KİLİT NOKTASI: Yeni Sağlam Radar
                 const originalCat = m.category || '';
-                const catUpper = originalCat.toUpperCase();
-                const isDefiniteTFF = isTffMatchCheck(originalCat) || catUpper.includes('TÜRKİYE') || catUpper.includes('TURKIYE') || catUpper.includes('TURKEY');
+                const isDefiniteTFF = checkIsTurkishLeague(originalCat);
                 const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
                 correctUsers.forEach(uid => {
@@ -1114,10 +1131,9 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 BÜYÜK YAMA BURADA: Orijinal kategori ismiyle (büyük harfe zorlamadan) filtresine yolluyoruz
+      // 🔥 BÜYÜK YAMA BURADA: Orijinal kategori ismiyle (büyük harfe zorlamadan) sağlam radarımıza yolluyoruz
       const originalCat = matchData.category || '';
-      const catUpper = originalCat.toUpperCase();
-      const isDefiniteTFF = isTffMatchCheck(originalCat) || catUpper.includes('TÜRKİYE') || catUpper.includes('TURKIYE') || catUpper.includes('TURKEY');
+      const isDefiniteTFF = checkIsTurkishLeague(originalCat);
       const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
       let confirmMsg = matchId === 24 
@@ -1351,8 +1367,7 @@ export default function AdminRadarPortal() {
         
         // 🔥 BÜYÜK YAMA BURADA DA VAR (Toplu Onaylama)
         const originalCat = match.category || '';
-        const catUpper = originalCat.toUpperCase();
-        const isDefiniteTFF = isTffMatchCheck(originalCat) || catUpper.includes('TÜRKİYE') || catUpper.includes('TURKIYE') || catUpper.includes('TURKEY');
+        const isDefiniteTFF = checkIsTurkishLeague(originalCat);
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
         if (homeScore === "-" || awayScore === "-") {
@@ -2088,7 +2103,9 @@ export default function AdminRadarPortal() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               {displayedMatches.map((match: any) => {
                 const isWinnersOpen = !!openWinnersMap[match.match_index];
-                const isTffMatch = isTffMatchCheck(match.category);
+                
+                // 🔥 KART EKRANINDA DA AYNI RADAR 🔥
+                const isTffMatch = checkIsTurkishLeague(match.category);
 
                 const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase() || "";
                 const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase() || "";
