@@ -8,7 +8,7 @@ import {
   parseDateLocal,
   generateTimeOptions,
   getUniqueMatchId,
-  isTffMatchCheck,
+  isTffMatchCheck, // Bu hala duruyor
   getMatchTimeMs,
   getEliteTheme
 } from '@/utils/themeEngine';
@@ -48,7 +48,6 @@ type BulletinPayload = {
     api_match_id: number | null;
 };
 
-// SİMÜLASYON RAPORU İÇİN TİP TANIMLAMASI
 type AuditReportItem = {
     userName: string;
     userId: string;
@@ -133,8 +132,24 @@ export default function AdminRadarPortal() {
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
-  // 🔥 SİMÜLASYON RAPORU İÇİN STATE 🔥
   const [auditReport, setAuditReport] = useState<AuditReportItem[] | null>(null);
+
+  // 🔥 3. YAMA: getDynamicElapsed FONKSİYONU 🔥
+  const getDynamicElapsed = (logInfo: any) => {
+     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) {
+         return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
+     }
+     const parts = String(logInfo.updated_at).split(':');
+     if (parts.length >= 2) {
+         const upDate = new Date(now);
+         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
+         let diffMs = now - upDate.getTime();
+         if (diffMs < -43200000) diffMs += 86400000; 
+         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
+         return `${parseInt(String(logInfo.elapsed), 10) + diffMins}'`;
+     }
+     return `${logInfo.elapsed}'`;
+  };
 
   const displayedMatches = useMemo(() => {
     return liveMatchesDB.filter((match: any) => {
@@ -214,22 +229,6 @@ export default function AdminRadarPortal() {
       setCustomLeagueFilters(updated);
       localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
       setSeciliLigFiltreleri((prev: any) => prev.filter((f: any) => f !== id));
-  };
-  const getDynamicElapsed = (logInfo: any) => {
-     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) {
-         return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
-     }
-     // String() ile TS (TypeScript) korumasını aşıyoruz
-     const parts = String(logInfo.updated_at).split(':');
-     if (parts.length >= 2) {
-         const upDate = new Date(now);
-         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
-         let diffMs = now - upDate.getTime();
-         if (diffMs < -43200000) diffMs += 86400000; 
-         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
-         return `${parseInt(String(logInfo.elapsed), 10) + diffMins}'`;
-     }
-     return `${logInfo.elapsed}'`;
   };
 
   const checkApiLimit = async () => {
@@ -716,7 +715,6 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
-  // 🔥 weeklyStats MUST BE DEFINED BEFORE THE HANDLERS THAT USE IT 🔥
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach((uid: string) => {
@@ -776,7 +774,6 @@ export default function AdminRadarPortal() {
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
 
 
-  // 🔥 1. ADIM: SİMÜLASYON (RÖNTGEN) MOTORU (KASAYA DOKUNMAZ) 🔥
   const handleVaultAuditSimulation = async () => {
     const confirmMsg = "🕵️‍♂️ KASA RÖNTGENİ (SİMÜLASYON)\n\nBu işlem KASAYA (standings) ASLA DOKUNMAZ! Hiçbir puanı değiştirmez veya silmez.\n\nSadece geçmişten bugüne tüm fişleri sayarak bir 'Fark Raporu' oluşturur. (Eksik veya fazla puanlar tespit edilir).\n\nRöntgeni başlatalım mı?";
     if (!window.confirm(confirmMsg)) return;
@@ -835,7 +832,6 @@ export default function AdminRadarPortal() {
 
         Object.keys(userStats).forEach(uid => {
             const stats = userStats[uid];
-            // KİLİT NOKTASI: 'MASTER' | 'TFF' | 'DFO' diyerek (as const) TS hatasını önlüyoruz.
             (['MASTER', 'TFF', 'DFO'] as const).forEach(league => {
                 const realPoints = stats[league];
                 const existingRow = existingStandings?.find((r: any) => String(r.user_id) === String(uid) && r.league_type === league);
@@ -870,7 +866,6 @@ export default function AdminRadarPortal() {
     }
   };
 
-  // 🔥 2. ADIM: GERÇEK KASA EŞİTLEMESİ (VUR) 🔥
   const handleVaultAuditExecute = async () => {
     const confirmMsg = "⚠️ DİKKAT: BÜYÜK KASA EŞİTLEMESİ (GERÇEK İŞLEM)\n\nBu işlem Kasa Röntgeninde gördüğünüz tüm eksikleri ve fazlaları GERÇEKTEN DÜZELTECEK.\n\nTFF, DFO ve MASTER kasaları fişlere göre güncellenecek.\n\nSistemi tamamen onarmak için ONAYLIYOR MUSUNUZ?";
     if (!window.confirm(confirmMsg)) return;
@@ -928,7 +923,6 @@ export default function AdminRadarPortal() {
 
         Object.keys(userStats).forEach(uid => {
             const stats = userStats[uid];
-            // KİLİT NOKTASI: currentVal'in kesinlikle number (sayı) olmasını zorluyoruz.
             (['MASTER', 'TFF', 'DFO'] as const).forEach(league => {
                 const currentVal = stats[league];
                 const existingRow = existingStandings?.find((r: any) => String(r.user_id) === String(uid) && r.league_type === league);
@@ -965,7 +959,7 @@ export default function AdminRadarPortal() {
   };
 
   const handleArchiveRepair = async () => {
-    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 1)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tablo görebilmek için izole fiş basar.");
+    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 1)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tabloyu görebilmek için izole fiş basar.");
     if (!weekInput) return;
     
     const weekNum = parseInt(weekInput.trim());
@@ -1029,7 +1023,10 @@ export default function AdminRadarPortal() {
                 else if(wc >= 7) displayPoints = 1;
 
                 const isTff = isTffMatchCheck(m.category);
-                const leagueName = isTff ? 'TFF' : 'DFO';
+                // 🔥 KİLİT NOKTASI: Türkiye Kupasını ve alt ligleri ADMIN DE DAĞITIRKEN TFF OLARAK ALGILASIN
+                const matchCategory = m.category ? m.category.toUpperCase() : '';
+                const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+                const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
                 correctUsers.forEach(uid => {
                     const winnerName = mergedPlayers[uid] || 'Bilinmeyen';
@@ -1118,8 +1115,10 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      const isTff = isTffMatchCheck(matchData.category);
-      const leagueName = isTff ? 'TFF' : 'DFO';
+      // 🔥 KİLİT NOKTASI: Türkiye Kupasını ve alt ligleri ADMIN DE DAĞITIRKEN TFF OLARAK ALGILASIN
+      const matchCategory = matchData.category ? matchData.category.toUpperCase() : '';
+      const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+      const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
       let confirmMsg = matchId === 24 
           ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
@@ -1349,8 +1348,11 @@ export default function AdminRadarPortal() {
         const homeScore = adminScores[matchId]?.home || "-";
         const awayScore = adminScores[matchId]?.away || "-";
         const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
-        const isTff = isTffMatchCheck(match.category);
-        const leagueName = isTff ? 'TFF' : 'DFO';
+        
+        // 🔥 KİLİT NOKTASI: Türkiye Kupasını ve alt ligleri ADMIN DE DAĞITIRKEN TFF OLARAK ALGILASIN
+        const matchCategory = match.category ? match.category.toUpperCase() : '';
+        const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+        const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
         if (homeScore === "-" || awayScore === "-") {
             skipCount++;
@@ -1993,7 +1995,7 @@ export default function AdminRadarPortal() {
                               onClick={handleArchiveRepair}
                               className="flex-1 min-w-[200px] bg-gradient-to-r from-fuchsia-600 via-purple-500 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(192,38,211,0.6)] border border-fuchsia-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
                           >
-                              <span className="flex items-center gap-2"><span className="text-2xl animate-spin-slow">⏳</span> GEÇMİŞİ ONAR</span>
+                              <span className="flex items-center gap-2"><span className="text-2xl animate-spin-slow">⏳</span> GEÇMİŞİ ONAR (Zaman Makinesi)</span>
                           </button>
 
                           <div className="flex-1 flex flex-col sm:flex-row gap-4 min-w-[400px]">
