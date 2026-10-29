@@ -13,24 +13,6 @@ import {
   getEliteTheme
 } from '@/utils/themeEngine';
 
-// 🔥 KURŞUN GEÇİRMEZ YENİ TÜRKİYE RADARI 🔥
-const checkIsTurkishLeague = (category: string) => {
-    if (!category) return false;
-    if (isTffMatchCheck(category)) return true;
-    
-    const c = category.toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G');
-    return c.includes('TFF') || 
-           c.includes('TURKIYE') || 
-           c.includes('TURKEY') || 
-           c.includes('SUPER LIG') || 
-           c.includes('1. LIG') || 
-           c.includes('2. LIG') || 
-           c.includes('3. LIG') || 
-           c.includes('KUPA') ||
-           c.includes('AMATOR') ||
-           c.includes('BAL');
-};
-
 const timeOptionsArr = generateTimeOptions();
 
 const POPULER_LIG_SECENEKLERI = [
@@ -1039,9 +1021,14 @@ export default function AdminRadarPortal() {
                 else if(wc === 6) displayPoints = 2;
                 else if(wc >= 7) displayPoints = 1;
 
-                // 🔥 KİLİT NOKTASI: Yeni Sağlam Radar
-                const originalCat = m.category || '';
-                const isDefiniteTFF = checkIsTurkishLeague(originalCat);
+                // 🔥 YENİ KOD: TÜRKİYE KUPASI İÇİN ARŞİV DÜZELTMESİ 🔥
+                const rawCategory = String(m.category || '');
+                const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
+                const homeName = String(m.home_team || '').toLocaleLowerCase('tr-TR');
+                const awayName = String(m.away_team || '').toLocaleLowerCase('tr-TR');
+                const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
+
+                const isDefiniteTFF = isTffMatchCheck(m.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
                 const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
                 correctUsers.forEach(uid => {
@@ -1131,28 +1118,38 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 İLAVE KOD: KASAYI MANUEL SEÇME (KESİN ÇÖZÜM) 🔥
-      const originalCat = (matchData.category || '').toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
-      const homeName = (matchData.home_team || '').toUpperCase();
-      const awayName = (matchData.away_team || '').toUpperCase();
-      // Takım isimlerinde Türkiye'ye has ekler varsa garanti TFF yapsın:
-      const isTurkishTeam = /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(homeName) || /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(awayName);
+      // 🔥 İLAVE KOD: KASAYI MANUEL SEÇME (TÜRKİYE KUPASI KESİN ÇÖZÜM) 🔥
+      const rawCategory = String(matchData.category || '');
+      const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
+      
+      const homeName = String(matchData.home_team || '').toLocaleLowerCase('tr-TR');
+      const awayName = String(matchData.away_team || '').toLocaleLowerCase('tr-TR');
+      
+      const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-      const isDefiniteTFF = isTffMatchCheck(matchData.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL') || isTurkishTeam;
+      const isDefiniteTFF = isTffMatchCheck(matchData.category) || 
+                            catLower.includes('türkiye kupası') || 
+                            catLower.includes('turkiye kupasi') || 
+                            catLower.includes('tff') || 
+                            catLower.includes('süper lig') || 
+                            catLower.includes('1. lig') || 
+                            catLower.includes('amatör') || 
+                            catLower.includes('bal') || 
+                            isTurkishTeam;
       
       let defaultLeague = isDefiniteTFF ? 'TFF' : 'DFO';
       let leagueName = defaultLeague;
 
       if (matchId !== 24) {
-          const userChoice = window.prompt(`Bu maçın puanları dağıtılacak!\nLütfen puanların HANGİ KASAYA gideceğini onaylayın:\n(Kutuya TFF veya DFO yazın)`, defaultLeague);
+          const userChoice = window.prompt(`Maç Kategorisi: "${rawCategory}"\n\nKomutanım, puanlar HANGİ KASAYA gitsin?\n(Kutuya TFF veya DFO yazıp Enter'a basın)`, defaultLeague);
           
-          if (userChoice === null) return; // Admin iptal etti
+          if (userChoice === null) return; 
           
           const choiceClean = userChoice.trim().toUpperCase();
           if (choiceClean === 'TFF' || choiceClean === 'DFO') {
               leagueName = choiceClean;
           } else {
-              alert("❌ Hatalı giriş! Sadece TFF veya DFO yazabilirsiniz. İşlem iptal edildi.");
+              alert("❌ Hatalı giriş! İşlem iptal edildi.");
               return;
           }
       } else {
@@ -1383,13 +1380,25 @@ export default function AdminRadarPortal() {
         const awayScore = adminScores[matchId]?.away || "-";
         const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
         
-        // 🔥 İLAVE KOD: TOPLU ONAY TAKIM KONTROLÜ 🔥
-        const originalCat = (match.category || '').toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
-        const homeName = (match.home_team || '').toUpperCase();
-        const awayName = (match.away_team || '').toUpperCase();
-        const isTurkishTeam = /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(homeName) || /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(awayName);
+        // 🔥 İLAVE KOD: TOPLU ONAY TAKIM KONTROLÜ (TÜRKİYE KUPASI) 🔥
+        const rawCategory = String(match.category || '');
+        const catLower = rawCategory.toLocaleLowerCase('tr-TR');
+        
+        const homeName = String(match.home_team || '').toLocaleLowerCase('tr-TR');
+        const awayName = String(match.away_team || '').toLocaleLowerCase('tr-TR');
+        
+        const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-        const isDefiniteTFF = isTffMatchCheck(match.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL') || isTurkishTeam;
+        const isDefiniteTFF = isTffMatchCheck(match.category) || 
+                              catLower.includes('türkiye kupası') || 
+                              catLower.includes('turkiye kupasi') || 
+                              catLower.includes('tff') || 
+                              catLower.includes('süper lig') || 
+                              catLower.includes('1. lig') || 
+                              catLower.includes('amatör') || 
+                              catLower.includes('bal') || 
+                              isTurkishTeam;
+                              
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
         // 🔥 İLAVE KOD BİTİŞİ 🔥
 
@@ -2126,9 +2135,7 @@ export default function AdminRadarPortal() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               {displayedMatches.map((match: any) => {
                 const isWinnersOpen = !!openWinnersMap[match.match_index];
-                
-                // 🔥 KART EKRANINDA DA AYNI RADAR 🔥
-                const isTffMatch = checkIsTurkishLeague(match.category);
+                const isTffMatch = isTffMatchCheck(match.category);
 
                 const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase() || "";
                 const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase() || "";
