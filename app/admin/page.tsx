@@ -13,6 +13,23 @@ import {
   getEliteTheme
 } from '@/utils/themeEngine';
 
+const checkIsTurkishLeague = (category: string) => {
+    if (!category) return false;
+    if (isTffMatchCheck(category)) return true;
+    
+    const c = category.toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
+    return c.includes('TFF') || 
+           c.includes('TURKIYE') || 
+           c.includes('TURKEY') || 
+           c.includes('SUPERLIG') || 
+           c.includes('1.LIG') || 
+           c.includes('2.LIG') || 
+           c.includes('3.LIG') || 
+           c.includes('KUPA') ||
+           c.includes('AMATOR') ||
+           c.includes('BAL');
+};
+
 const timeOptionsArr = generateTimeOptions();
 
 const POPULER_LIG_SECENEKLERI = [
@@ -182,6 +199,25 @@ export default function AdminRadarPortal() {
         return true; 
     });
   }, [liveMatchesDB, liveInfoStateMap, now, userRole, showOnlyToday]);
+
+  // 🔥 KOMUTANIN EFSANE FİKRİ: MANUEL "1. LİG" YAPMA BUTONU 🔥
+  const handleForce1Lig = async (matchIndex: number) => {
+    try {
+        const { error } = await supabase
+            .from('matches_bulletin')
+            .update({ category: '1. Lig' })
+            .eq('week_num', selectedLiveWeek)
+            .eq('match_index', matchIndex);
+        
+        if (error) throw error;
+        alert(`✅ KOMUTANIN STRATEJİSİ İŞE YARADI!\n\n${matchIndex}. Maçın kategorisi veritabanında gizlice "1. Lig" yapıldı.\n\nLÜTFEN ŞİMDİ SAYFAYI YENİLEYİN (F5 YAPIN) ve maçı onaylayın. TFF sayfası artık bu maçı kesinlikle görecek!`);
+        
+        // Ekranda anında güncelle
+        setLiveMatchesDB(prev => prev.map(m => m.match_index === matchIndex ? { ...m, category: '1. Lig' } : m));
+    } catch (e: any) {
+        alert("❌ Hata oluştu: " + e.message);
+    }
+  };
 
   useEffect(() => {
     setAdminScores({});
@@ -1021,9 +1057,8 @@ export default function AdminRadarPortal() {
                 else if(wc === 6) displayPoints = 2;
                 else if(wc >= 7) displayPoints = 1;
 
-                // 🔥 YENİ KOD: TÜRKİYE KUPASI İÇİN ARŞİV DÜZELTMESİ 🔥
-                const rawCategory = String(m.category || '');
-                const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
+                const originalCat = String(m.category || '');
+                const catLower = originalCat.toLocaleLowerCase('tr-TR'); 
                 const homeName = String(m.home_team || '').toLocaleLowerCase('tr-TR');
                 const awayName = String(m.away_team || '').toLocaleLowerCase('tr-TR');
                 const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
@@ -1118,7 +1153,6 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 İLAVE KOD: KASAYI MANUEL SEÇME (TÜRKİYE KUPASI KESİN ÇÖZÜM) 🔥
       const rawCategory = String(matchData.category || '');
       const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
       
@@ -1155,7 +1189,6 @@ export default function AdminRadarPortal() {
       } else {
           if (!window.confirm(`DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`)) return;
       }
-      // 🔥 İLAVE KOD BİTİŞİ 🔥
 
       if (matchId === 24) {
             let bonusInserts: any[] = [];
@@ -1380,7 +1413,6 @@ export default function AdminRadarPortal() {
         const awayScore = adminScores[matchId]?.away || "-";
         const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
         
-        // 🔥 İLAVE KOD: TOPLU ONAY TAKIM KONTROLÜ (TÜRKİYE KUPASI) 🔥
         const rawCategory = String(match.category || '');
         const catLower = rawCategory.toLocaleLowerCase('tr-TR');
         
@@ -1400,7 +1432,6 @@ export default function AdminRadarPortal() {
                               isTurkishTeam;
                               
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
-        // 🔥 İLAVE KOD BİTİŞİ 🔥
 
         if (homeScore === "-" || awayScore === "-") {
             skipCount++;
@@ -1646,10 +1677,19 @@ export default function AdminRadarPortal() {
     setIsPublishing(true);
     try {
       const payload: BulletinPayload[] = secilenMaclar.filter((m: any) => m !== null).map((m: any, idx: number) => {
+         let rawCat = m.category || m.league_name || '';
+         let catLower = rawCat.toLocaleLowerCase('tr-TR');
+         let finalCat = rawCat;
+
+         // 🔥 KOMUTANIN EMRİ: Türkiye Kupası ve Alt ligleri otomatik 1. Lig yap! 🔥
+         if (catLower.includes('kupa') || catLower.includes('türkiye') || catLower.includes('amatör') || catLower.includes('bal') || catLower.includes('2. lig') || catLower.includes('3. lig')) {
+             finalCat = '1. Lig';
+         }
+
          return {
              week_num: bulletinWeek, 
              match_index: idx + 1, 
-             category: m.category || m.league_name || '', 
+             category: finalCat, 
              match_date: m.date, 
              match_time: m.time,
              home_team: String(m.home_team).trim().toUpperCase(), 
@@ -2135,7 +2175,7 @@ export default function AdminRadarPortal() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               {displayedMatches.map((match: any) => {
                 const isWinnersOpen = !!openWinnersMap[match.match_index];
-                const isTffMatch = isTffMatchCheck(match.category);
+                const isTffMatchUI = checkIsTurkishLeague(match.category);
 
                 const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase() || "";
                 const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase() || "";
@@ -2196,9 +2236,22 @@ export default function AdminRadarPortal() {
                           <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-black/80 border border-white/30 px-3 py-0.5 rounded-full uppercase tracking-widest shadow-md backdrop-blur-sm">
                             {match.week_num}. Hafta - {match.match_index}. MAÇ ({match.match_date} - {match.match_time})
                           </span>
-                          <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                            🏆 {match.category} - <span className={badgeClass}>{timerBadge}</span>
-                          </span>
+                          <div className="flex items-center gap-2">
+                              <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg border text-center flex items-center gap-1.5 ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
+                                🏆 {match.category} - <span className={badgeClass}>{timerBadge}</span>
+                              </span>
+                              
+                              {/* 🔥 KOMUTANIN SİHİRLİ BUTONU: 1. LİG YAP 🔥 */}
+                              {userRole === 'master' && !['1. Lig', 'Süper Lig'].includes(match.category) && isTffMatchUI && (
+                                  <button 
+                                     onClick={() => handleForce1Lig(match.match_index)}
+                                     className="bg-fuchsia-700 hover:bg-fuchsia-500 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-[0_0_10px_rgba(192,38,211,0.8)] transition-all uppercase"
+                                     title="TFF sorunu çözümü: Veritabanında adı 1. Lig olur"
+                                  >
+                                     🛠️ 1. LİG YAP
+                                  </button>
+                              )}
+                          </div>
                         </div>
 
                         <div className="flex items-center justify-between px-0 sm:px-4">
@@ -2277,7 +2330,7 @@ export default function AdminRadarPortal() {
                                  </span>
                              </div>
                              <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                                {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
+                                {isTffMatchUI ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                              </span>
                              {winnersCount > 0 && (
                                 <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
@@ -2301,7 +2354,7 @@ export default function AdminRadarPortal() {
                     ) : (
                         <div className={`${theme.bottomBar} border-t px-4 py-3 w-full backdrop-blur-md z-10 relative flex flex-col items-center justify-center gap-1.5`}>
                            <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                              {isTffMatch ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
+                              {isTffMatchUI ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
                            </span>
                         </div>
                     )}
