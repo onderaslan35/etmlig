@@ -83,33 +83,19 @@ export default function TffPuanDurumuPage() {
           }
       }
 
-      // 🔥 BÜYÜK BYPASS: Aracıyı (live_leaderboard) devreden çıkarıp, doğrudan KASAYI okuyoruz! 🔥
-      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_trend_direction, tff_trend_diff');
-      
-      // KASA BURASI: Admin panelinin puan yolladığı gerçek merkez.
-      const { data: rawStandings } = await supabase.from('standings').select('user_id, points, league_type');
+      // 🔥 ORİJİNAL VE KUSURSUZ OKUMA: GÖRÜNÜMDEN (VIEW) OKUMAYA GERİ DÖNÜYORUZ 🔥
+      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_pts, tff_trend_direction, tff_trend_diff');
       
       if (leaderboardData && leaderboardData.length > 0) {
-        let updatedList = leaderboardData.map(r => {
-            // Görünümün yalanına inanmıyoruz, kasada bu adamın TFF puanı neyse direkt onu alıyoruz!
-            const tffRows = rawStandings?.filter((s: any) => String(s.user_id) === String(r.id) && String(s.league_type).trim().toUpperCase() === 'TFF');
-            
-            let realTffPts = 0;
-            if (tffRows && tffRows.length > 0) {
-                realTffPts = tffRows.reduce((acc, curr) => acc + curr.points, 0); // Kasa puanlarının toplamı
-            }
+        let updatedList = leaderboardData.map(r => ({
+            id: r.id, 
+            name: r.name || "", 
+            baseScore: r.tff_pts || 0, // 🔥 Kasayı doğrudan okumayı bıraktık, Supabase'in 0 yapma hatasını çözdük
+            liveBonus: 0,
+            trend: r.tff_trend_direction || 'same', 
+            trendDiff: r.tff_trend_diff || 0
+        }));
 
-            return {
-                id: r.id, 
-                name: r.name || "", 
-                baseScore: realTffPts, // 🔥 Artık silinme ihtimali SIFIR!
-                liveBonus: 0,
-                trend: r.tff_trend_direction || 'same', 
-                trendDiff: r.tff_trend_diff || 0
-            };
-        });
-
-        // CANLI PUAN HESAPLAMA (TÜRKİYE KUPASI KORUMALI)
         if (allMatches && predictions && dbBulletin) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -123,6 +109,7 @@ export default function TffPuanDurumuPage() {
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
                 
                 if (bulletinMatch) {
+                    // 🔥 BÜYÜK/KÜÇÜK HARF KÖRLÜĞÜNÜ BİTİREN KOD BURADA DURUYOR 🔥
                     const rawCategory = String(bulletinMatch.category || '');
                     const catLower = rawCategory.toLocaleLowerCase('tr-TR');
                     
@@ -135,7 +122,7 @@ export default function TffPuanDurumuPage() {
                                           catLower.includes('amatör') || 
                                           catLower.includes('bal');
                                           
-                    if (!isDefiniteTFF) return; // TFF değilse atla
+                    if (!isDefiniteTFF) return; 
                 }
 
                 const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
