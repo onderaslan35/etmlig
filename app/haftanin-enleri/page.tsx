@@ -9,36 +9,35 @@ export default function HaftaninEnleriPortal() {
   
   const [bonuses, setBonuses] = useState({ puanLiderleri: [] as string[], skorKrallari: [] as string[] });
   
-  // İki farklı sıralama tutacağız
   const [standings, setStandings] = useState({
     MASTER_POINTS: [] as any[],
     MASTER_SCORES: [] as any[]
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. AŞAMA: Admin panelindeki gibi 6. haftadan itibaren mevcut en yüksek bültene kadar menüyü doldur
+  // 1. AŞAMA: Sınır 1. Haftaya indirildi!
   useEffect(() => {
     const fetchWeeks = async () => {
       const { data, error } = await supabase
         .from('matches_bulletin')
         .select('week_num')
-        .gte('week_num', 6)
+        .gte('week_num', 1) // 6 yerine 1 yapıldı
         .order('week_num', { ascending: false })
         .limit(1);
 
-      let maxWeek = 35; // Sistemde bülten bulunamazsa varsayılan
+      let maxWeek = 35; 
       if (data && data.length > 0) {
           maxWeek = data[0].week_num;
       }
       
       const weeksArray = [];
-      for (let i = maxWeek; i >= 6; i--) {
+      for (let i = maxWeek; i >= 1; i--) { // 6 yerine 1 yapıldı
           weeksArray.push(i);
       }
       
       setAvailableWeeks(weeksArray);
       if (weeksArray.length > 0) {
-        setSelectedWeek(weeksArray[0]); // Sayfa açılınca en son haftayı otomatik seç
+        setSelectedWeek(weeksArray[0]); 
       } else {
         setIsLoading(false);
       }
@@ -46,7 +45,7 @@ export default function HaftaninEnleriPortal() {
     fetchWeeks();
   }, []);
 
-  // 2. AŞAMA: Seçili Haftanın Fişlerini Çek ve İKİ FARKLI İSTATİSTİĞİ Hesapla
+  // 2. AŞAMA: Seçili Haftanın Fişlerini Çek
   useEffect(() => {
     if (!selectedWeek) return;
     
@@ -62,7 +61,6 @@ export default function HaftaninEnleriPortal() {
         const tempStats: any = {};
 
         data.forEach(row => {
-            // Şeref Kürsüsü (Bonuslar) Ayıklaması
             if (row.ev_sahibi === 'HAFTANIN') {
                 if (!tempBonuses.puanLiderleri.includes(row.user_name)) tempBonuses.puanLiderleri.push(row.user_name);
                 return;
@@ -72,20 +70,17 @@ export default function HaftaninEnleriPortal() {
                 return;
             }
 
-            // SADECE MASTER KATEGORİSİ İÇİN PUAN VE İSABET TOPLAMA
             if (row.kategori === 'MASTER') {
                 if (!tempStats[row.user_name]) {
                     tempStats[row.user_name] = { user_name: row.user_name, points: 0, scores: 0 };
                 }
                 tempStats[row.user_name].points += row.puan;
-                // Her bir fiş satırı 1 Tam İsabet skor demektir
                 tempStats[row.user_name].scores += 1; 
             }
         });
 
         const rawData = Object.values(tempStats);
 
-        // İki farklı sıralama algoritması: Biri Puana göre, diğeri İsabet (Skor) sayısına göre
         const sortedStandings = {
             MASTER_POINTS: [...rawData].sort((a: any, b: any) => b.points - a.points || b.scores - a.scores),
             MASTER_SCORES: [...rawData].sort((a: any, b: any) => b.scores - a.scores || b.points - a.points)
@@ -100,7 +95,6 @@ export default function HaftaninEnleriPortal() {
     fetchWeekData();
   }, [selectedWeek]);
 
-  // Altın, Gümüş, Bronz ve Standart Kart Tasarımı Motoru (Artık "mode" parametresi alıyor)
   const renderTable = (title: string, data: any[], themeClasses: string, icon: string, primaryMode: 'points' | 'scores') => (
     <div className={`bg-slate-900/80 border ${themeClasses} rounded-2xl overflow-hidden shadow-xl flex flex-col backdrop-blur-md w-full`}>
         <div className={`p-4 border-b ${themeClasses} flex items-center justify-center gap-2 bg-black/30`}>
@@ -108,25 +102,30 @@ export default function HaftaninEnleriPortal() {
             <h3 className="font-black text-sm tracking-widest uppercase">{title}</h3>
         </div>
         <div className="flex-1 p-3 sm:p-4 flex flex-col gap-3 max-h-[650px] overflow-y-auto custom-scrollbar">
-            {data.length === 0 && <div className="text-center text-slate-500 text-xs py-10 font-bold uppercase tracking-widest">Bu hafta için arşivde henüz fiş bulunmuyor.<br/>Admin panelinden 'Geçmişi Onar' butonunu kullanın.</div>}
+            {data.length === 0 && (
+              <div className="text-center text-slate-500 text-xs py-10 font-bold uppercase tracking-widest leading-relaxed">
+                Bu hafta için arşivde henüz fiş bulunmuyor.<br/>
+                Admin panelinden 'Geçmişi Onar' motorunu çalıştırın.
+                <br/><span className="text-rose-500 mt-2 block">(Eğer 4. Haftadaysanız, maçlar düzeltilene kadar burası boş kalacaktır)</span>
+              </div>
+            )}
             {data.map((user, idx) => {
                 let rowBg = "bg-slate-950";
                 let textCol = "text-slate-300";
                 let badgeCol = "bg-slate-800 text-slate-400";
                 let borderCol = "border-slate-800/50";
 
-                // Renklendirmeler "Mode" (Puan veya İsabet) için dinamik yapıldı
-                if (idx === 0) { // 1. OLANLAR (ŞAMPİYONLAR)
+                if (idx === 0) { 
                     rowBg = primaryMode === 'points' ? "bg-amber-950/40" : "bg-emerald-950/40";
                     textCol = primaryMode === 'points' ? "text-amber-400" : "text-emerald-400";
                     badgeCol = primaryMode === 'points' ? "bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.6)]" : "bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.6)]";
                     borderCol = primaryMode === 'points' ? "border-amber-500/40" : "border-emerald-500/40";
-                } else if (idx === 1) { // 2. OLANLAR
+                } else if (idx === 1) { 
                     rowBg = "bg-slate-800/40";
                     textCol = "text-slate-200";
                     badgeCol = "bg-slate-300 text-black shadow-[0_0_10px_rgba(203,213,225,0.6)]";
                     borderCol = "border-slate-400/40";
-                } else if (idx === 2) { // 3. OLANLAR
+                } else if (idx === 2) { 
                     rowBg = primaryMode === 'points' ? "bg-orange-950/40" : "bg-teal-950/40";
                     textCol = primaryMode === 'points' ? "text-orange-400" : "text-teal-400";
                     badgeCol = primaryMode === 'points' ? "bg-orange-600 text-white shadow-[0_0_10px_rgba(234,88,12,0.6)]" : "bg-teal-500 text-black shadow-[0_0_10px_rgba(20,184,166,0.6)]";
@@ -144,7 +143,6 @@ export default function HaftaninEnleriPortal() {
                             </span>
                         </div>
                         <div className="flex flex-col items-end justify-center">
-                            {/* EĞER PUAN KÜRSÜSÜYSE */}
                             {primaryMode === 'points' ? (
                                 <>
                                     <span className={`font-black text-lg sm:text-xl leading-none ${textCol}`}>
@@ -155,7 +153,6 @@ export default function HaftaninEnleriPortal() {
                                     </span>
                                 </>
                             ) : (
-                            /* EĞER İSABET (SKOR) KÜRSÜSÜYSE */
                                 <>
                                     <span className={`font-black text-lg sm:text-xl leading-none ${textCol}`}>
                                         {user.scores} <span className="text-[9px] sm:text-[10px] opacity-70 tracking-widest uppercase">İsabet</span>
@@ -175,10 +172,7 @@ export default function HaftaninEnleriPortal() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 font-sans pb-24 relative overflow-hidden">
-      
       <div className="max-w-7xl mx-auto relative z-10">
-        
-        {/* TEPEDEKİ BAŞLIK VE HAFTA SEÇİCİ */}
         <div className="flex flex-col items-center justify-center mb-10 sm:mb-12">
           <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(245,158,11,0.5)] mb-3 text-center">
             🏆 ZAMAN MAKİNESİ
@@ -216,10 +210,7 @@ export default function HaftaninEnleriPortal() {
             </div>
         ) : (
             <div className="animate-fade-in space-y-8 sm:space-y-12">
-                
-                {/* 🏆 ŞEREF KÜRSÜSÜ (BONUS ALANLAR) 🏆 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* PUAN LIDERI */}
                     <div className="bg-gradient-to-br from-amber-950/80 to-slate-900 border border-amber-500/50 rounded-3xl p-6 sm:p-8 shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col items-center transform transition-transform hover:-translate-y-1 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 transition-colors"></div>
                         <span className="text-5xl sm:text-6xl mb-4 drop-shadow-[0_0_20px_rgba(245,158,11,0.6)]">🔥</span>
@@ -230,7 +221,6 @@ export default function HaftaninEnleriPortal() {
                         {bonuses.puanLiderleri.length > 0 && <span className="mt-3 bg-amber-950/80 border border-amber-700/50 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">+3 Bonus Aldı</span>}
                     </div>
 
-                    {/* SKOR KRALI */}
                     <div className="bg-gradient-to-br from-emerald-950/80 to-slate-900 border border-emerald-500/50 rounded-3xl p-6 sm:p-8 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col items-center transform transition-transform hover:-translate-y-1 relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors"></div>
                         <span className="text-5xl sm:text-6xl mb-4 drop-shadow-[0_0_20px_rgba(16,185,129,0.6)]">🎯</span>
@@ -242,18 +232,12 @@ export default function HaftaninEnleriPortal() {
                     </div>
                 </div>
 
-                {/* 📊 YAN YANA İKİ KÜRSÜ: PUAN VE İSABET 📊 */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                    {/* SOL TABLO: PUANA GÖRE SIRALI */}
                     {renderTable("👑 MASTER PUAN KÜRSÜSÜ", standings.MASTER_POINTS, "border-amber-500/40 text-amber-500", "👑", "points")}
-                    
-                    {/* SAĞ TABLO: TAM İSABETE (SKORA) GÖRE SIRALI */}
                     {renderTable("🎯 MASTER İSABET KÜRSÜSÜ", standings.MASTER_SCORES, "border-emerald-500/40 text-emerald-500", "🎯", "scores")}
                 </div>
-
             </div>
         )}
-
       </div>
     </div>
   );
