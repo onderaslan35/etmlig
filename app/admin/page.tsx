@@ -1131,17 +1131,34 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 1. YAMA: ZIRHLI TFF RADARI (TEKLİ ONAY) 🔥
+      // 🔥 İLAVE KOD: KASAYI MANUEL SEÇME (KESİN ÇÖZÜM) 🔥
       const originalCat = (matchData.category || '').toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
-      const isDefiniteTFF = isTffMatchCheck(matchData.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL');
-      const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
-      // 🔥 YAMA BİTİŞİ 🔥
+      const homeName = (matchData.home_team || '').toUpperCase();
+      const awayName = (matchData.away_team || '').toUpperCase();
+      // Takım isimlerinde Türkiye'ye has ekler varsa garanti TFF yapsın:
+      const isTurkishTeam = /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(homeName) || /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(awayName);
 
-      let confirmMsg = matchId === 24 
-          ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
-          : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?\n(Sistem Bu Maçı ${leagueName} Olarak Algıladı)`;
+      const isDefiniteTFF = isTffMatchCheck(matchData.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL') || isTurkishTeam;
+      
+      let defaultLeague = isDefiniteTFF ? 'TFF' : 'DFO';
+      let leagueName = defaultLeague;
 
-      if (!window.confirm(confirmMsg)) return;
+      if (matchId !== 24) {
+          const userChoice = window.prompt(`Bu maçın puanları dağıtılacak!\nLütfen puanların HANGİ KASAYA gideceğini onaylayın:\n(Kutuya TFF veya DFO yazın)`, defaultLeague);
+          
+          if (userChoice === null) return; // Admin iptal etti
+          
+          const choiceClean = userChoice.trim().toUpperCase();
+          if (choiceClean === 'TFF' || choiceClean === 'DFO') {
+              leagueName = choiceClean;
+          } else {
+              alert("❌ Hatalı giriş! Sadece TFF veya DFO yazabilirsiniz. İşlem iptal edildi.");
+              return;
+          }
+      } else {
+          if (!window.confirm(`DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`)) return;
+      }
+      // 🔥 İLAVE KOD BİTİŞİ 🔥
 
       if (matchId === 24) {
             let bonusInserts: any[] = [];
@@ -1366,11 +1383,15 @@ export default function AdminRadarPortal() {
         const awayScore = adminScores[matchId]?.away || "-";
         const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
         
-        // 🔥 2. YAMA: ZIRHLI TFF RADARI (TOPLU ONAY) 🔥
+        // 🔥 İLAVE KOD: TOPLU ONAY TAKIM KONTROLÜ 🔥
         const originalCat = (match.category || '').toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
-        const isDefiniteTFF = isTffMatchCheck(match.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL');
+        const homeName = (match.home_team || '').toUpperCase();
+        const awayName = (match.away_team || '').toUpperCase();
+        const isTurkishTeam = /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(homeName) || /(SPOR|GÜCÜ|YURDU|BLD|BELEDİYE|DEMİR|GENÇLER|BİRLİĞİ|KARS|ANKARA|İZMİR|İSTANBUL|BURSA|TRABZON|ANTALYA|ESKİŞEHİR|KARŞIYAKA|ALTAY)/.test(awayName);
+
+        const isDefiniteTFF = isTffMatchCheck(match.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL') || isTurkishTeam;
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
-        // 🔥 YAMA BİTİŞİ 🔥
+        // 🔥 İLAVE KOD BİTİŞİ 🔥
 
         if (homeScore === "-" || awayScore === "-") {
             skipCount++;
