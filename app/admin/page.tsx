@@ -12,7 +12,7 @@ import {
   getEliteTheme
 } from '@/utils/themeEngine';
 
-// 🔥 YENİ: GECE 02:59'A KADAR OLAN SÜREYİ "BUGÜN" SAYAN ÖZEL FONKSİYON 🔥
+// 🔥 GECE 02:59'A KADAR OLAN SÜREYİ "BUGÜN" SAYAN ÖZEL FONKSİYON 🔥
 const getCustomTodayDateString = () => {
     const d = new Date();
     if (d.getHours() < 3) {
@@ -22,6 +22,24 @@ const getCustomTodayDateString = () => {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
     return `${day}.${month}.${year}`;
+};
+
+// 🔥 YENİ: İLERİYE DÖNÜK TAKVİM GÜNLERİNİ OTOMATİK ÜRETEN MOTOR 🔥
+const generateNextDays = (daysCount: number) => {
+    const dates = [];
+    const baseDate = new Date();
+    if (baseDate.getHours() < 3) {
+        baseDate.setDate(baseDate.getDate() - 1); // Gece 3'ten önceyse bugünü "dün" kabul et
+    }
+    for (let i = 0; i < daysCount; i++) {
+        const tempDate = new Date(baseDate);
+        tempDate.setDate(baseDate.getDate() + i);
+        const day = String(tempDate.getDate()).padStart(2, '0');
+        const month = String(tempDate.getMonth() + 1).padStart(2, '0');
+        const year = tempDate.getFullYear();
+        dates.push(`${day}.${month}.${year}`);
+    }
+    return dates;
 };
 
 const checkIsTurkishLeague = (category: string) => {
@@ -118,9 +136,12 @@ export default function AdminRadarPortal() {
   const [secilenMaclar, setSecilenMaclar] = useState<any[]>(Array(24).fill(null));
   const [isHavuzLoading, setIsHavuzLoading] = useState<boolean>(false);
 
+  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>([]);
+  
+  // 🔥 KOMUTANIN EMRİ: DEFAULT TARİH VE SAATLER AYARLANDI 🔥
   const [havuzBaslangicTarihi, setHavuzBaslangicTarihi] = useState<string>('');
   const [havuzBitisTarihi, setHavuzBitisTarihi] = useState<string>('');
-  const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState<string>('15:00'); 
+  const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState<string>('00:00'); 
   const [havuzBitisSaati, setHavuzBitisSaati] = useState<string>('23:59');
 
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
@@ -147,7 +168,6 @@ export default function AdminRadarPortal() {
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
 
   const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
-  const [currentWeekDates, setCurrentWeekDates] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
@@ -225,13 +245,49 @@ export default function AdminRadarPortal() {
     setLiveInfoStateMap({});
   }, [selectedLiveWeek]);
 
+  // 🔥 YENİ: SAYFA AÇILDIĞINDA TAKVİMİ DOLDUR VE BUGÜNÜ SEÇ 🔥
   useEffect(() => {
-      if (currentWeekDates.length > 1 && !manuelTarih) {
-          setManuelTarih(currentWeekDates[1]); 
-      } else if (currentWeekDates.length > 0 && !manuelTarih) {
-          setManuelTarih(currentWeekDates[0]);
-      }
-  }, [currentWeekDates]);
+      const nextDays = generateNextDays(14); // Gelecek 14 günü oluştur
+      setCurrentWeekDates(nextDays);
+      setHavuzBaslangicTarihi(nextDays[0]); // Default: Bugün
+      setHavuzBitisTarihi(nextDays[0]);     // Default: Bugün
+      setManuelTarih(nextDays[0]);          // Default: Bugün
+  }, []);
+
+  // 🔥 YENİ: GEÇMİŞ BÜLTENLERİ EKRANA (secilenMaclar'a) DİZ 🔥
+  useEffect(() => {
+      if (bulletinWeek === 0) return;
+      
+      const fetchBulletinForWeek = async () => {
+          const { data } = await supabase
+              .from('matches_bulletin')
+              .select('*')
+              .eq('week_num', bulletinWeek)
+              .order('match_index', { ascending: true });
+          
+          const newSecilen = Array(24).fill(null);
+          
+          if (data && data.length > 0) {
+              data.forEach((b: any) => {
+                  const idx = b.match_index - 1;
+                  if (idx >= 0 && idx < 24) {
+                      newSecilen[idx] = {
+                          fixture_id: b.api_match_id || `temp-${b.match_index}`,
+                          home_team: b.home_team,
+                          away_team: b.away_team,
+                          date: b.match_date,
+                          time: b.match_time,
+                          category: b.category,
+                          league_name: b.category
+                      };
+                  }
+              });
+          }
+          setSecilenMaclar(newSecilen);
+      };
+      
+      fetchBulletinForWeek();
+  }, [bulletinWeek]);
 
   const toggleLigFiltresi = (id: string) => {
      if (seciliLigFiltreleri.includes(id)) {
@@ -840,14 +896,23 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // Manuel DFO sormayı kaldırdık, sistem otomatik dağıtacak
       const rawCategory = String(matchData.category || '');
       const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
+      
       const homeName = String(matchData.home_team || '').toLocaleLowerCase('tr-TR');
       const awayName = String(matchData.away_team || '').toLocaleLowerCase('tr-TR');
+      
       const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-      const isDefiniteTFF = isTffMatchCheck(matchData.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
+      const isDefiniteTFF = isTffMatchCheck(matchData.category) || 
+                            catLower.includes('türkiye kupası') || 
+                            catLower.includes('turkiye kupasi') || 
+                            catLower.includes('tff') || 
+                            catLower.includes('süper lig') || 
+                            catLower.includes('1. lig') || 
+                            catLower.includes('amatör') || 
+                            catLower.includes('bal') || 
+                            isTurkishTeam;
       
       let leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
@@ -1049,7 +1114,15 @@ export default function AdminRadarPortal() {
         
         const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-        const isDefiniteTFF = isTffMatchCheck(match.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
+        const isDefiniteTFF = isTffMatchCheck(match.category) || 
+                              catLower.includes('türkiye kupası') || 
+                              catLower.includes('turkiye kupasi') || 
+                              catLower.includes('tff') || 
+                              catLower.includes('süper lig') || 
+                              catLower.includes('1. lig') || 
+                              catLower.includes('amatör') || 
+                              catLower.includes('bal') || 
+                              isTurkishTeam;
                               
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
@@ -1654,6 +1727,16 @@ export default function AdminRadarPortal() {
               </div>
 
               <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3">
+                 
+                 {userRole === 'master' && (
+                     <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2" title="Günlük Kalan API İsteği">
+                        <span className="text-slate-400 font-bold text-xs tracking-wider">📡 KOTA:</span>
+                        <span className={`font-black text-sm drop-shadow-md ${Number(apiLimitRemaining) > 20 ? 'text-emerald-400' : 'text-rose-500 animate-pulse'}`}>
+                            {apiLimitRemaining} <span className="text-slate-600 text-xs">/ {apiTotalLimit}</span>
+                        </span>
+                     </div>
+                 )}
+
                  <button 
                    onClick={handleLogout} 
                    className="px-4 py-2 bg-rose-950 hover:bg-rose-900 text-rose-400 text-xs font-bold rounded-xl shadow-md border border-rose-900/50 flex items-center gap-2 transition-all"
@@ -1755,7 +1838,6 @@ export default function AdminRadarPortal() {
                 else if (logInfo?.status === 'WAITING_APPROVAL') { timerBadge = "ONAY BEKLİYOR"; badgeClass = "text-blue-400 animate-pulse"; }
                 else if (logInfo?.status === 'LIVE') { timerBadge = `🔴 CANLI (${getDynamicElapsed(logInfo)})`; badgeClass = "text-red-400 animate-pulse"; }
 
-                // 🔥 KOMUTANIN EMRİ: DFO OLAN MAÇLARDA BUTON ASLA ÇIKMASIN 🔥
                 const rawCatUpper = (match.category || '').toUpperCase();
                 const showForce1LigButton = userRole === 'master' && 
                                             isTffMatchUI && 
@@ -1785,7 +1867,6 @@ export default function AdminRadarPortal() {
                                 🏆 {match.category} - <span className={badgeClass}>{timerBadge}</span>
                               </span>
                               
-                              {/* 🔥 DFO KALKANLI GÜVENLİ BUTON 🔥 */}
                               {showForce1LigButton && (
                                   <button 
                                      onClick={() => handleForce1Lig(match.match_index)}
