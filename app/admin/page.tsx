@@ -1797,7 +1797,24 @@ export default function AdminRadarPortal() {
                 const homeTeamUpper = match.home_team?.toUpperCase() || match.homeTeam?.toUpperCase() || "";
                 const awayTeamUpper = match.away_team?.toUpperCase() || match.awayTeam?.toUpperCase() || "";
 
-                const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
+                let theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
+                
+                // 🔥 KOMUTANIN EMRİ: TFF MAÇLARININ RENGİ KESİNLİKLE KIRMIZI OLACAK 🔥
+                if (isTffMatchUI) {
+                    theme = {
+                        ...theme,
+                        containerBorder: "border-red-500/50 hover:border-red-500/80",
+                        containerShadow: "shadow-[0_0_20px_rgba(220,38,38,0.15)]",
+                        containerBg: "bg-gradient-to-br from-red-950/40 via-slate-950 to-[#0a0f1c]",
+                        badgeBg: "bg-red-950/80",
+                        badgeText: "text-red-400",
+                        badgeBorder: "border-red-500/50",
+                        tagBg: "bg-red-950/80",
+                        tagText: "text-red-400",
+                        tagBorder: "border-red-500/50",
+                        scoreBorder: "border-red-900/50"
+                    };
+                }
 
                 const homeScore = adminScores[match.match_index]?.home || "-";
                 const awayScore = adminScores[match.match_index]?.away || "-";
