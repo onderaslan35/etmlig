@@ -83,14 +83,32 @@ export default function TffPuanDurumuPage() {
           }
       }
 
-      // 🔥 ORİJİNAL VE KUSURSUZ OKUMA: GÖRÜNÜMDEN (VIEW) OKUMAYA GERİ DÖNÜYORUZ 🔥
+      // Kör Görünümü çekiyoruz (Sadece isimleri ve trendleri almak için)
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_pts, tff_trend_direction, tff_trend_diff');
       
+      // 🔥 BÜYÜK BYPASS: Puanları "points" (Fişler) tablosundan doğrudan çekiyoruz! 🔥
+      const { data: publicPoints, error: pointsError } = await supabase.from('points').select('username, puan').eq('kategori', 'TFF');
+      
       if (leaderboardData && leaderboardData.length > 0) {
+        
+        let usePublicPoints = false;
+        const trueScores: Record<string, number> = {};
+        
+        // Fişler tablosundan veri başarıyla geldiyse gerçek puanları hesapla
+        if (!pointsError && publicPoints && publicPoints.length > 0) {
+            usePublicPoints = true;
+            publicPoints.forEach((row: any) => {
+                const uid = String(row.username);
+                if (!trueScores[uid]) trueScores[uid] = 0;
+                trueScores[uid] += (row.puan || 0);
+            });
+        }
+
         let updatedList = leaderboardData.map(r => ({
             id: r.id, 
             name: r.name || "", 
-            baseScore: r.tff_pts || 0, // 🔥 Kasayı doğrudan okumayı bıraktık, Supabase'in 0 yapma hatasını çözdük
+            // 🔥 SİHİR BURADA: Fişler okunduysa Türkiye Kupası dahil GERÇEK puanı yaz, okunamadıysa eski sisteme (r.tff_pts) dön ki sıfırlanmasın!
+            baseScore: usePublicPoints ? (trueScores[String(r.id)] || 0) : (r.tff_pts || 0),
             liveBonus: 0,
             trend: r.tff_trend_direction || 'same', 
             trendDiff: r.tff_trend_diff || 0
@@ -109,7 +127,6 @@ export default function TffPuanDurumuPage() {
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
                 
                 if (bulletinMatch) {
-                    // 🔥 BÜYÜK/KÜÇÜK HARF KÖRLÜĞÜNÜ BİTİREN KOD BURADA DURUYOR 🔥
                     const rawCategory = String(bulletinMatch.category || '');
                     const catLower = rawCategory.toLocaleLowerCase('tr-TR');
                     
