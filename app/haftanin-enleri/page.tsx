@@ -9,35 +9,41 @@ export default function HaftaninEnleriPortal() {
   
   const [bonuses, setBonuses] = useState({ puanLiderleri: [] as string[], skorKrallari: [] as string[] });
   const [standings, setStandings] = useState({
-    MASTER: [] as any[],
-    TFF: [] as any[],
-    DFO: [] as any[]
+    MASTER: [] as any[]
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. AŞAMA: 6. Haftadan İtibaren Veritabanında Bulunan Eşsiz Haftaları Çek
+  // 1. AŞAMA: Admin panelindeki gibi 6. haftadan itibaren mevcut en yüksek bültene kadar menüyü doldur
   useEffect(() => {
     const fetchWeeks = async () => {
       const { data, error } = await supabase
-        .from('points')
-        .select('hafta')
-        .gte('hafta', 6)
-        .order('hafta', { ascending: false });
+        .from('matches_bulletin')
+        .select('week_num')
+        .gte('week_num', 6)
+        .order('week_num', { ascending: false })
+        .limit(1);
 
-      if (data) {
-        const weeks = Array.from(new Set(data.map(d => d.hafta)));
-        setAvailableWeeks(weeks);
-        if (weeks.length > 0) {
-          setSelectedWeek(weeks[0]); // Sayfa açılınca en son haftayı otomatik seç
-        } else {
-          setIsLoading(false);
-        }
+      let maxWeek = 35; // Sistemde bülten bulunamazsa varsayılan
+      if (data && data.length > 0) {
+          maxWeek = data[0].week_num;
+      }
+      
+      const weeksArray = [];
+      for (let i = maxWeek; i >= 6; i--) {
+          weeksArray.push(i);
+      }
+      
+      setAvailableWeeks(weeksArray);
+      if (weeksArray.length > 0) {
+        setSelectedWeek(weeksArray[0]); // Sayfa açılınca en son haftayı otomatik seç
+      } else {
+        setIsLoading(false);
       }
     };
     fetchWeeks();
   }, []);
 
-  // 2. AŞAMA: Seçili Haftanın Tüm Fişlerini İndir ve Hesapla
+  // 2. AŞAMA: Seçili Haftanın Fişlerini Çek ve SADECE MASTER İSTATİSTİĞİNİ Hesapla
   useEffect(() => {
     if (!selectedWeek) return;
     
@@ -50,7 +56,7 @@ export default function HaftaninEnleriPortal() {
 
       if (data) {
         const tempBonuses = { puanLiderleri: [] as string[], skorKrallari: [] as string[] };
-        const tempStats: any = { MASTER: {}, TFF: {}, DFO: {} };
+        const tempStats: any = { MASTER: {} };
 
         data.forEach(row => {
             // Şeref Kürsüsü (Bonuslar) Ayıklaması
@@ -63,23 +69,20 @@ export default function HaftaninEnleriPortal() {
                 return;
             }
 
-            // Lig Puanları ve İsabet Sayıları Hesaplaması
-            const cat = row.kategori;
-            if (tempStats[cat]) {
-                if (!tempStats[cat][row.user_name]) {
-                    tempStats[cat][row.user_name] = { user_name: row.user_name, points: 0, scores: 0 };
+            // SADECE MASTER KATEGORİSİ - DFO VE TFF İPTAL EDİLDİ
+            if (row.kategori === 'MASTER') {
+                if (!tempStats.MASTER[row.user_name]) {
+                    tempStats.MASTER[row.user_name] = { user_name: row.user_name, points: 0, scores: 0 };
                 }
-                tempStats[cat][row.user_name].points += row.puan;
+                tempStats.MASTER[row.user_name].points += row.puan;
                 // Her bir fiş satırı 1 Tam İsabet skor demektir
-                tempStats[cat][row.user_name].scores += 1; 
+                tempStats.MASTER[row.user_name].scores += 1; 
             }
         });
 
         // Puanları büyükten küçüğe, eşitse isabet sayısına göre sırala
         const sortedStandings = {
-            MASTER: Object.values(tempStats.MASTER).sort((a: any, b: any) => b.points - a.points || b.scores - a.scores),
-            TFF: Object.values(tempStats.TFF).sort((a: any, b: any) => b.points - a.points || b.scores - a.scores),
-            DFO: Object.values(tempStats.DFO).sort((a: any, b: any) => b.points - a.points || b.scores - a.scores),
+            MASTER: Object.values(tempStats.MASTER).sort((a: any, b: any) => b.points - a.points || b.scores - a.scores)
         };
 
         setBonuses(tempBonuses);
@@ -93,13 +96,13 @@ export default function HaftaninEnleriPortal() {
 
   // Altın, Gümüş, Bronz ve Standart Kart Tasarımı Motoru
   const renderTable = (title: string, data: any[], themeClasses: string, icon: string) => (
-    <div className={`bg-slate-900/80 border ${themeClasses} rounded-2xl overflow-hidden shadow-xl flex flex-col backdrop-blur-md`}>
+    <div className={`bg-slate-900/80 border ${themeClasses} rounded-2xl overflow-hidden shadow-xl flex flex-col backdrop-blur-md w-full`}>
         <div className={`p-4 border-b ${themeClasses} flex items-center justify-center gap-2 bg-black/30`}>
             <span className="text-2xl drop-shadow-md">{icon}</span>
             <h3 className="font-black text-sm tracking-widest uppercase">{title}</h3>
         </div>
-        <div className="flex-1 p-3 flex flex-col gap-2 max-h-[600px] overflow-y-auto custom-scrollbar">
-            {data.length === 0 && <div className="text-center text-slate-500 text-xs py-10 font-bold uppercase tracking-widest">Bu ligde veri bulunamadı.</div>}
+        <div className="flex-1 p-4 flex flex-col gap-3 max-h-[650px] overflow-y-auto custom-scrollbar">
+            {data.length === 0 && <div className="text-center text-slate-500 text-xs py-10 font-bold uppercase tracking-widest">Bu hafta için arşivde henüz fiş bulunmuyor.<br/>Admin panelinden 'Geçmişi Onar' butonunu kullanın.</div>}
             {data.map((user, idx) => {
                 let rowBg = "bg-slate-950";
                 let textCol = "text-slate-300";
@@ -124,20 +127,20 @@ export default function HaftaninEnleriPortal() {
                 }
 
                 return (
-                    <div key={idx} className={`${rowBg} border ${borderCol} rounded-xl p-3 flex items-center justify-between transition-all hover:bg-slate-800/80 hover:scale-[1.02] group shadow-inner`}>
-                        <div className="flex items-center gap-3 sm:gap-4">
-                            <span className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-black text-sm ${badgeCol}`}>
+                    <div key={idx} className={`${rowBg} border ${borderCol} rounded-xl p-4 flex items-center justify-between transition-all hover:bg-slate-800/80 hover:scale-[1.02] group shadow-inner`}>
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            <span className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-base sm:text-lg ${badgeCol}`}>
                                 {idx + 1}
                             </span>
-                            <span className={`font-black text-xs sm:text-sm uppercase tracking-wider ${textCol} group-hover:text-white transition-colors truncate max-w-[120px] sm:max-w-[180px]`}>
+                            <span className={`font-black text-sm sm:text-base uppercase tracking-wider ${textCol} group-hover:text-white transition-colors truncate max-w-[160px] sm:max-w-[300px]`}>
                                 {user.user_name}
                             </span>
                         </div>
                         <div className="flex flex-col items-end justify-center">
-                            <span className={`font-black text-lg sm:text-xl leading-none ${textCol}`}>
-                                {user.points} <span className="text-[9px] sm:text-[10px] opacity-70 tracking-widest uppercase">Puan</span>
+                            <span className={`font-black text-xl sm:text-2xl leading-none ${textCol}`}>
+                                {user.points} <span className="text-[10px] sm:text-xs opacity-70 tracking-widest uppercase">Puan</span>
                             </span>
-                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 bg-black/30 px-2 py-0.5 rounded">
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1 bg-black/30 px-3 py-1 rounded-lg">
                                 {user.scores} TAM İSABET
                             </span>
                         </div>
@@ -151,7 +154,7 @@ export default function HaftaninEnleriPortal() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 font-sans pb-24 relative overflow-hidden">
       
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-6xl mx-auto relative z-10">
         
         {/* TEPEDEKİ BAŞLIK VE HAFTA SEÇİCİ */}
         <div className="flex flex-col items-center justify-center mb-10 sm:mb-12">
@@ -159,7 +162,7 @@ export default function HaftaninEnleriPortal() {
             🏆 ZAMAN MAKİNESİ
           </h1>
           <p className="text-slate-400 font-bold tracking-widest text-[10px] sm:text-xs text-center mb-6 max-w-2xl px-4">
-            KARARGAHTA ARŞİVLENEN GEÇMİŞ HAFTALARIN LİDERLERİ VE LİG TABLOLARI. (Not: 6. Haftadan itibaren kayıtlar aktiftir. Bir maçın puanı dağıtılmadan buraya yansımaz.)
+            KARARGAHTA ARŞİVLENEN GEÇMİŞ HAFTALARIN LİDERLERİ VE MASTER İSTATİSTİKLERİ. (6. Haftadan itibaren kayıtlar aktiftir)
           </p>
 
           <div className="bg-slate-900 border border-slate-700 p-2 sm:p-3 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-2xl backdrop-blur-md">
@@ -217,11 +220,9 @@ export default function HaftaninEnleriPortal() {
                     </div>
                 </div>
 
-                {/* 📊 LİG TABLOLARI 📊 */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                    {renderTable("👑 MASTER LİGİ", standings.MASTER, "border-amber-500/40 text-amber-500", "👑")}
-                    {renderTable("🇹🇷 TFF LİGİ", standings.TFF, "border-rose-500/40 text-rose-500", "🇹🇷")}
-                    {renderTable("🌍 DFO LİGİ", standings.DFO, "border-indigo-500/40 text-indigo-400", "🌍")}
+                {/* 📊 SADECE MASTER LİGİ TABLOSU 📊 */}
+                <div className="max-w-4xl mx-auto">
+                    {renderTable("👑 MASTER LİGİ (PUAN VE İSABET KÜRSÜSÜ)", standings.MASTER, "border-amber-500/40 text-amber-500", "👑")}
                 </div>
 
             </div>
