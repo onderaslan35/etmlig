@@ -38,6 +38,17 @@ const POPULER_LIG_SECENEKLERI = [
 
 type CustomFilterOption = { id: string; ad: string; apiAd: string; isCustom: boolean };
 
+type BulletinPayload = {
+    week_num: number;
+    match_index: number;
+    category: any;
+    match_date: any;
+    match_time: any;
+    home_team: string;
+    away_team: string;
+    api_match_id: number | null;
+};
+
 export default function AdminRadarPortal() {
   const [now, setNow] = useState<number>(Date.now());
   useEffect(() => {
@@ -59,16 +70,10 @@ export default function AdminRadarPortal() {
   const [newPlayerPass, setNewPlayerPass] = useState<string>('');
   const [isPlayerLoading, setIsPlayerLoading] = useState<boolean>(false);
 
-  // 🔥 BOMBOŞ BİR YEREL HAVUZ 🔥
   const [dynamicLigHavuzu, setDynamicLigHavuzu] = useState<Record<string, string[]>>({});
-  
-  // 🔥 ÖZEL LİG BUTONLARI İÇİN YENİ STATE 🔥
   const [customLeagueFilters, setCustomLeagueFilters] = useState<CustomFilterOption[]>([]);
-
-  // 🔥 YENİ: FİLTRE PANELİ GİZLE/GÖSTER ŞALTERİ 🔥
   const [isApiFilterOpen, setIsApiFilterOpen] = useState<boolean>(true);
 
-  // 🔥 LİG VE TAKIM EKLE (YENİ AKILLI PANEL) İÇİN GÜNCELLENEN STATE'LER 🔥
   const [selectedManageLeague, setSelectedManageLeague] = useState<string>('');
   const [newLeagueNameInput, setNewLeagueNameInput] = useState<string>('');
   const [newTeamName, setNewTeamName] = useState<string>('');
@@ -92,7 +97,6 @@ export default function AdminRadarPortal() {
   const [seciliLigFiltreleri, setSeciliLigFiltreleri] = useState<string[]>([]);
   const [ozelLigFiltresi, setOzelLigFiltresi] = useState<string>('');
 
-  // 🔥 MANUEL MAÇ HAVUZU İÇİN STATE'LER 🔥
   const [manuelEv, setManuelEv] = useState<string>('');
   const [manuelDep, setManuelDep] = useState<string>('');
   const [manuelLig, setManuelLig] = useState<string>('');
@@ -117,11 +121,9 @@ export default function AdminRadarPortal() {
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  // 🔥 YENİ: GEÇMİŞ HAFTALARIN BONUS (LİDERLİK) VERİLERİNİ TUTAN STATE 🔥
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
-  // 🔥 SÜPER GLOBAL DISPLAYED MATCHES 🔥
   const displayedMatches = useMemo(() => {
     return liveMatchesDB.filter((match: any) => {
         const logInfo = liveInfoStateMap[match.match_index];
@@ -448,7 +450,6 @@ export default function AdminRadarPortal() {
     }
   }, [isAuthenticated]);
 
-  // 🔥 GEÇMİŞ HAFTALARIN BONUS LİDERLERİNİ ÇEKEN MOTOR 🔥
   const fetchBonusHistory = async () => {
      try {
          const { data } = await supabase
@@ -496,7 +497,6 @@ export default function AdminRadarPortal() {
          } catch(e) {}
       }
 
-      // Canlı yönetim verileri yüklenirken aynı anda tarihçeyi de çekelim
       fetchBonusHistory();
 
       const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
@@ -843,7 +843,6 @@ export default function AdminRadarPortal() {
                         }
                     }
                     alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Haftanın liderlerine +3 puan MASTER kasasına kalıcı eklendi!)`);
-                    // 🎉 Yeni bir şampiyon eklendiği için geçmiş listesini otomatik olarak tekrar güncelliyoruz
                     fetchBonusHistory();
                 }
             } else {
@@ -922,12 +921,12 @@ export default function AdminRadarPortal() {
                        const pts = row.puan; const uid = row.username;
                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
                        if (stData) {
-                           const mRow = stData.find((r: any) => r.league_type === 'MASTER');
+                           const mRow = stData.find(r => r.league_type === 'MASTER');
                            if (mRow) await supabase.from('standings').update({ points: Math.max(0, mRow.points - pts) }).eq('id', mRow.id);
                        }
                    }
                    await supabase.from('points').delete().eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
-                   fetchBonusHistory(); // İptal edildiğinde de tarihçeyi güncelle
+                   fetchBonusHistory(); 
                }
           }
 
@@ -937,7 +936,7 @@ export default function AdminRadarPortal() {
               const pts = row.puan; const uid = row.username; const rowCategory = row.kategori;
               const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
               if (stData) {
-                const targetRow = stData.find((r: any) => r.league_type === rowCategory);
+                const targetRow = stData.find(r => r.league_type === rowCategory);
                 if (targetRow) {
                    await supabase.from('standings').update({ points: Math.max(0, targetRow.points - pts) }).eq('id', targetRow.id);
                 }
@@ -1120,7 +1119,7 @@ export default function AdminRadarPortal() {
         successCount++;
     }
 
-    if (finalMatchApproved) fetchBonusHistory(); // Eğer 24. maç onaylandıysa tarihçeyi hemen güncelle
+    if (finalMatchApproved) fetchBonusHistory(); 
 
     alert(`✅ TOPLU ONAY TAMAMLANDI!\n${successCount} adet maç başarıyla arşivlendi ve puanları dağıtıldı.${skipCount > 0 ? `\n(Skoru henüz girilmeyen ${skipCount} maç es geçildi)` : ''}`);
   };
@@ -1270,8 +1269,7 @@ export default function AdminRadarPortal() {
 
     setIsPublishing(true);
     try {
-      const payload = secilenMaclar.map((m: any, idx: number) => {
-         if (!m) return null; 
+      const payload: BulletinPayload[] = secilenMaclar.filter((m: any) => m !== null).map((m: any, idx: number) => {
          return {
              week_num: bulletinWeek, 
              match_index: idx + 1, 
@@ -1282,7 +1280,7 @@ export default function AdminRadarPortal() {
              away_team: String(m.away_team).trim().toUpperCase(),
              api_match_id: m.fixture_id && !String(m.fixture_id).startsWith('temp-') && !String(m.fixture_id).startsWith('manuel-') ? parseInt(String(m.fixture_id)) : null 
          };
-      }).filter((m: any) => m !== null);
+      });
 
       const { error } = await supabase.from('matches_bulletin').upsert(payload, { onConflict: 'week_num,match_index' });
       if (error) throw error;
@@ -1385,6 +1383,33 @@ export default function AdminRadarPortal() {
 
   const handleScoreChange = (matchId: number, team: 'home' | 'away', score: string) => {
     setAdminScores((prev: any) => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "-", away: "-" }), [team]: score } }));
+  };
+
+  // 🔥 YENİ: EKSİK OLAN FONKSİYON EKLENDİ 🔥
+  const handleBanishPlayer = async (userId: string, userName: string) => {
+    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEğer bu kişiyi silerseniz Karargah sisteminden çıkacaktır. Emin misiniz?`);
+    if (!confirmDelete) return;
+    try {
+       const { error } = await supabase.from('players').delete().eq('username', userId);
+       if (error) throw error;
+       alert(`✅ İhraç başarılı. ${userName} sistemden atıldı.`);
+       fetchAllSystemPlayers(); 
+    } catch (err: any) { alert("❌ Hata: " + err.message); }
+  };
+  
+  const handleAddNewPlayer = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
+    setIsPlayerLoading(true);
+    try {
+       const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
+       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: cleanName, password: newPlayerPass.trim() });
+       if (error) throw error;
+       alert(`✅ BAŞARILI! ${cleanName} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
+       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
+       fetchAllSystemPlayers(); 
+    } catch (err: any) { alert("❌ HATA: " + err.message); }
+    setIsPlayerLoading(false);
   };
 
   const scoreOptions = ["-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
