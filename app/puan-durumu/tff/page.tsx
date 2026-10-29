@@ -24,9 +24,20 @@ export default function TffPuanDurumuPage() {
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
       
       let activeWeek = 5, activeDate = '';
+      let liveWeeks: number[] = []; // 🔥 YENİ: Canlı maçı olan tüm haftaları tutacak dizi
+
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
-          allMatches.forEach(m => statusMap[m.id] = m.status);
+          
+          allMatches.forEach(m => {
+              statusMap[m.id] = m.status;
+              // 🔥 KİLİT NOKTASI: Eğer maç LIVE veya HT ise, o maçın haftasını liveWeeks dizisine ekle
+              if (m.status === 'LIVE' || m.status === 'HT') {
+                  const wNum = Math.floor(m.id / 100);
+                  if (!liveWeeks.includes(wNum)) liveWeeks.push(wNum);
+              }
+          });
+
           const weeksData: Record<number, { date: string, hasStartedMatch: boolean }> = {};
           
           dbBulletin.forEach(b => {
@@ -39,6 +50,9 @@ export default function TffPuanDurumuPage() {
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           activeDate = weeksData[activeWeek]?.date || '';
+          
+          // 🔥 Aktif haftayı da mutlaka diziye ekle ki hata olmasın
+          if (!liveWeeks.includes(activeWeek)) liveWeeks.push(activeWeek);
       }
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
@@ -50,24 +64,27 @@ export default function TffPuanDurumuPage() {
           playersData.forEach(p => idToNameMap[p.username] = p.name);
       }
 
-      // 3. Tahminleri 1000 limitini aşarak çek (Canlı hesaplama için şart)
+      // 3. Tahminleri Çek (🔥 SADECE ACTIVE WEEK DEĞİL, CANLI MAÇI OLAN TÜM HAFTALARI ÇEK 🔥)
       let predictions: any[] = [];
       let fetchMore = true;
       let from = 0;
       const step = 1000;
-      while (fetchMore) {
-          const { data: pDataChunk, error } = await supabase
-              .from('player_predictions')
-              .select('*')
-              .eq('week_num', activeWeek)
-              .range(from, from + step - 1);
-          if (error) break;
-          if (pDataChunk && pDataChunk.length > 0) {
-              predictions = [...predictions, ...pDataChunk];
-              if (pDataChunk.length < step) fetchMore = false; 
-              else from += step; 
-          } else {
-              fetchMore = false; 
+      
+      if (liveWeeks.length > 0) {
+          while (fetchMore) {
+              const { data: pDataChunk, error } = await supabase
+                  .from('player_predictions')
+                  .select('*')
+                  .in('week_num', liveWeeks) // 🔥 eq yerine in kullandık. Artık 29 da gelse 31 de gelse tanıyacak!
+                  .range(from, from + step - 1);
+              if (error) break;
+              if (pDataChunk && pDataChunk.length > 0) {
+                  predictions = [...predictions, ...pDataChunk];
+                  if (pDataChunk.length < step) fetchMore = false; 
+                  else from += step; 
+              } else {
+                  fetchMore = false; 
+              }
           }
       }
 
@@ -84,7 +101,7 @@ export default function TffPuanDurumuPage() {
             trendDiff: r.tff_trend_diff || 0
         }));
 
-        // 5. CANLI PUAN HESAPLAMA (SADECE TFF MAÇLARI İÇİN)
+        // 5. CANLI PUAN HESAPLAMA (SADECE TFF MAÇLARI)
         if (allMatches && predictions && dbBulletin) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -97,17 +114,13 @@ export default function TffPuanDurumuPage() {
                 
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
                 
-                // 🔥 KİLİT NOKTASI: Türkiye Kupası ve alt liglerin hepsi TFF olarak sayılmalı 🔥
                 if (bulletinMatch) {
                     const matchCategory = bulletinMatch.category ? bulletinMatch.category.toUpperCase() : '';
-                    
-                    // Eğer maç bir DFO (Master) maçıysa, işlemi atla. (Türkiye Kupası ve TFF liglerini GEÇİR)
                     const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
-                    
-                    if (!isDefiniteTFF) return; // Maç TFF veya Türkiye Kupası DEĞİLSE puan verme!
+                    if (!isDefiniteTFF) return; 
                 }
 
-                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
                 
                 let pts = 0;
                 if (winners.length === 1) pts = 12;
