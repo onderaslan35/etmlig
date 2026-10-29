@@ -1373,6 +1373,9 @@ export default function AdminRadarPortal() {
         // 🔥 YAMA BİTİŞİ 🔥
 
         if (homeScore === "-" || awayScore === "-") {
+            skipCount++;
+            continue;
+        }
 
         const targetScore = `${homeScore}-${awayScore}`;
         const currentWinners = Object.keys(predictionsDB)
