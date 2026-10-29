@@ -8,19 +8,14 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  <Link 
-   href="/haftanin-enleri" 
-   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 rounded-xl text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-all font-black text-xs tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.6)]"
->
-   <span className="text-lg">🏆</span> HAFTANIN ENLERİ
-</Link>
-
+  // Butonu dizinin içine yerleştirip "isEnler" etiketi verdim, böylece renderlarken özel tasarımını uygulayacağız.
   const navLinks = [
     { name: 'MAÇ ARŞİVİ', path: '/mac-arsivi' },
     { name: 'DFO PUAN DURUMU', path: '/puan-durumu/dfo' },
     { name: 'TFF PUAN DURUMU', path: '/puan-durumu/tff' },
     { name: 'MASTER PUAN DURUMU', path: '/puan-durumu/master', isMaster: true },
     { name: 'SKOR DURUMU', path: '/skor-durumu' },
+    { name: 'HAFTANIN ENLERİ', path: '/haftanin-enleri', isEnler: true }, // YENİ BUTON BURADA!
     { name: 'TAHMİNLER', path: '/tahmin' }, 
     { name: '🔴 CANLI', path: '/canli', isCanli: true }, 
   ];
@@ -40,6 +35,19 @@ export default function Navbar() {
                   return (
                     <Link key={link.path} href={link.path} className={`px-2 xl:px-3 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${isActive ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)] scale-105' : 'text-rose-500/80 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30'}`}>
                       <span className={isActive ? "animate-pulse" : ""}>{link.name}</span>
+                    </Link>
+                  );
+                }
+
+                // YENİ ÖZEL TASARIMLI ENLER BUTONU RENDER EDİLİYOR
+                if (link.isEnler) {
+                  return (
+                    <Link 
+                      key={link.path} 
+                      href={link.path} 
+                      className={`px-3 xl:px-4 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-2 mx-1 shadow-md hover:scale-105 ${isActive ? 'bg-amber-600 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.6)] border border-amber-400' : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.2)]'}`}
+                    >
+                      <span className="text-sm xl:text-base drop-shadow-md">🏆</span> {link.name}
                     </Link>
                   );
                 }
@@ -82,6 +90,7 @@ export default function Navbar() {
         <div className="lg:hidden bg-[#050b14] border-b border-slate-800 px-4 pt-2 pb-6 space-y-2 shadow-2xl absolute w-full left-0 top-full">
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
+            
             if (link.isCanli) {
               return (
                 <Link key={link.path} href={link.path} onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${isActive ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)]' : 'text-rose-500/80 hover:bg-rose-950/40 hover:text-rose-400'}`}>
@@ -89,6 +98,16 @@ export default function Navbar() {
                 </Link>
               );
             }
+
+            // MOBİL MENÜDE ENLER BUTONU
+            if (link.isEnler) {
+              return (
+                <Link key={link.path} href={link.path} onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${isActive ? 'bg-amber-600 text-slate-950 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950'}`}>
+                  <span className="text-lg">🏆</span> {link.name}
+                </Link>
+              );
+            }
+
             return (
               <Link key={link.path} href={link.path} onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${isActive ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}>
                 {link.name}
