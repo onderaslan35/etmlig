@@ -48,6 +48,16 @@ type BulletinPayload = {
     api_match_id: number | null;
 };
 
+// SİMÜLASYON RAPORU İÇİN TİP TANIMLAMASI
+type AuditReportItem = {
+    userName: string;
+    userId: string;
+    league: string;
+    vaultPoints: number; 
+    realPoints: number;  
+    difference: number;  
+};
+
 export default function AdminRadarPortal() {
   const [now, setNow] = useState<number>(Date.now());
   useEffect(() => {
@@ -123,6 +133,9 @@ export default function AdminRadarPortal() {
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
+  // 🔥 SİMÜLASYON RAPORU İÇİN STATE 🔥
+  const [auditReport, setAuditReport] = useState<AuditReportItem[] | null>(null);
+
   const displayedMatches = useMemo(() => {
     return liveMatchesDB.filter((match: any) => {
         const logInfo = liveInfoStateMap[match.match_index];
@@ -176,6 +189,47 @@ export default function AdminRadarPortal() {
      } else {
          setSeciliLigFiltreleri((prev: string[]) => [...prev, id]);
      }
+  };
+
+  const handleOzelLigKaydet = () => {
+      if (!ozelLigFiltresi.trim()) {
+          alert("Lütfen önce bir ülke veya lig adı yazın!");
+          return;
+      }
+      const newFilter: CustomFilterOption = {
+          id: `custom-${Date.now()}`,
+          ad: `🎯 ${ozelLigFiltresi.trim().toUpperCase()}`,
+          apiAd: ozelLigFiltresi.trim(),
+          isCustom: true
+      };
+      const updated = [...customLeagueFilters, newFilter];
+      setCustomLeagueFilters(updated);
+      localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
+      setOzelLigFiltresi('');
+  };
+
+  const handleRemoveCustomFilter = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      const updated = customLeagueFilters.filter((f: any) => f.id !== id);
+      setCustomLeagueFilters(updated);
+      localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
+      setSeciliLigFiltreleri((prev: any) => prev.filter((f: any) => f !== id));
+  };
+  const getDynamicElapsed = (logInfo: any) => {
+     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) {
+         return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
+     }
+     // String() ile TS (TypeScript) korumasını aşıyoruz
+     const parts = String(logInfo.updated_at).split(':');
+     if (parts.length >= 2) {
+         const upDate = new Date(now);
+         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
+         let diffMs = now - upDate.getTime();
+         if (diffMs < -43200000) diffMs += 86400000; 
+         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
+         return `${parseInt(String(logInfo.elapsed), 10) + diffMins}'`;
+     }
+     return `${logInfo.elapsed}'`;
   };
 
   const checkApiLimit = async () => {
@@ -426,7 +480,6 @@ export default function AdminRadarPortal() {
                 todayDate.setHours(0,0,0,0);
 
                 const weeksSet = new Set<number>(data.map((d: any) => d.week_num));
-                // KİLİT KIRILDI: ARTIK 1. HAFTADAN İTİBAREN TARAYABİLİRİZ
                 const weeks = Array.from(weeksSet).filter((w: any) => w >= 1).sort((a: any, b: any) => a-b);
                 
                 let targetWeek = 1;
@@ -456,7 +509,7 @@ export default function AdminRadarPortal() {
              .from('points')
              .select('hafta, user_name, ev_sahibi')
              .in('ev_sahibi', ['HAFTANIN', 'SKOR'])
-             .gte('hafta', 1) // KİLİT KIRILDI: 1. Haftaya kadar geçmişi görebiliriz
+             .gte('hafta', 1) 
              .order('hafta', { ascending: false });
          
          if (data) {
@@ -663,47 +716,7 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
-  const handleOzelLigKaydet = () => {
-      if (!ozelLigFiltresi.trim()) {
-          alert("Lütfen önce bir ülke veya lig adı yazın!");
-          return;
-      }
-      
-      const newFilter: CustomFilterOption = {
-          id: `custom-${Date.now()}`,
-          ad: `🎯 ${ozelLigFiltresi.trim().toUpperCase()}`,
-          apiAd: ozelLigFiltresi.trim(),
-          isCustom: true
-      };
-      
-      const updated = [...customLeagueFilters, newFilter];
-      setCustomLeagueFilters(updated);
-      localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
-      setOzelLigFiltresi('');
-  };
-
-  const handleRemoveCustomFilter = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation();
-      const updated = customLeagueFilters.filter((f: any) => f.id !== id);
-      setCustomLeagueFilters(updated);
-      localStorage.setItem('etml_custom_league_filters', JSON.stringify(updated));
-      setSeciliLigFiltreleri((prev: any) => prev.filter((f: any) => f !== id));
-  };
-
-  const getDynamicElapsed = (logInfo: any) => {
-     if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
-     const parts = logInfo.updated_at.split(':');
-     if (parts.length >= 2) {
-         const upDate = new Date(now);
-         upDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '0', 10), 0);
-         let diffMs = now - upDate.getTime();
-         if (diffMs < -43200000) diffMs += 86400000; 
-         const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
-         return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
-     }
-     return `${logInfo.elapsed}'`;
-  };
-
+  // 🔥 weeklyStats MUST BE DEFINED BEFORE THE HANDLERS THAT USE IT 🔥
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach((uid: string) => {
@@ -762,14 +775,201 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
 
-  // 🔥 YENİ SİLAH: GEÇMİŞİ ONAR (ARŞİV TARAYICI) MOTORU (KİLİT KIRILDI, SINIR 1) 🔥
+
+  // 🔥 1. ADIM: SİMÜLASYON (RÖNTGEN) MOTORU (KASAYA DOKUNMAZ) 🔥
+  const handleVaultAuditSimulation = async () => {
+    const confirmMsg = "🕵️‍♂️ KASA RÖNTGENİ (SİMÜLASYON)\n\nBu işlem KASAYA (standings) ASLA DOKUNMAZ! Hiçbir puanı değiştirmez veya silmez.\n\nSadece geçmişten bugüne tüm fişleri sayarak bir 'Fark Raporu' oluşturur. (Eksik veya fazla puanlar tespit edilir).\n\nRöntgeni başlatalım mı?";
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsManualFetching(true);
+    setAuditReport(null); 
+
+    try {
+        let allPoints: any[] = [];
+        let fetchMore = true;
+        let from = 0;
+        const step = 1000;
+
+        while (fetchMore) {
+            const { data, error } = await supabase
+                .from('points')
+                .select('username, user_name, kategori, puan')
+                .range(from, from + step - 1);
+            
+            if (error) throw error;
+            if (data && data.length > 0) {
+                allPoints = [...allPoints, ...data];
+                if (data.length < step) fetchMore = false;
+                else from += step;
+            } else {
+                fetchMore = false;
+            }
+        }
+
+        if (allPoints.length === 0) {
+            alert("⚠️ Sistemde hiç fiş bulunamadı!");
+            setIsManualFetching(false);
+            return;
+        }
+
+        const userStats: Record<string, { name: string, MASTER: number, TFF: number, DFO: number }> = {};
+        
+        allPoints.forEach(row => {
+            const uid = row.username;
+            const cat = row.kategori;
+            if (!uid || !cat) return;
+
+            if (!userStats[uid]) {
+                userStats[uid] = { name: row.user_name, MASTER: 0, TFF: 0, DFO: 0 };
+            }
+
+            if (cat === 'MASTER') userStats[uid].MASTER += row.puan;
+            else if (cat === 'TFF') userStats[uid].TFF += row.puan;
+            else if (cat === 'DFO') userStats[uid].DFO += row.puan;
+        });
+
+        const { data: existingStandings, error: esError } = await supabase.from('standings').select('*');
+        if (esError) throw esError;
+
+        const reportData: AuditReportItem[] = [];
+
+        Object.keys(userStats).forEach(uid => {
+            const stats = userStats[uid];
+            // KİLİT NOKTASI: 'MASTER' | 'TFF' | 'DFO' diyerek (as const) TS hatasını önlüyoruz.
+            (['MASTER', 'TFF', 'DFO'] as const).forEach(league => {
+                const realPoints = stats[league];
+                const existingRow = existingStandings?.find((r: any) => String(r.user_id) === String(uid) && r.league_type === league);
+                const vaultPoints = existingRow ? existingRow.points : 0;
+                
+                const diff = realPoints - vaultPoints;
+
+                if (diff !== 0) {
+                    reportData.push({
+                        userName: stats.name,
+                        userId: uid,
+                        league: league,
+                        vaultPoints: vaultPoints,
+                        realPoints: realPoints,
+                        difference: diff
+                    });
+                }
+            });
+        });
+
+        if (reportData.length > 0) {
+            setAuditReport(reportData);
+            alert(`🔍 RÖNTGEN TAMAMLANDI!\n\n${reportData.length} adet uyuşmazlık (fark) tespit edildi. Ekrandaki raporu inceleyin.`);
+        } else {
+            alert(`✅ KUSURSUZ!\n\nKasada kayıtlı puanlar ile geçmiş fişler %100 uyuşuyor. Hiçbir eksik veya fazla yok!`);
+        }
+
+    } catch (error: any) {
+        alert("❌ HATA OLUŞTU: " + error.message);
+    } finally {
+        setIsManualFetching(false);
+    }
+  };
+
+  // 🔥 2. ADIM: GERÇEK KASA EŞİTLEMESİ (VUR) 🔥
+  const handleVaultAuditExecute = async () => {
+    const confirmMsg = "⚠️ DİKKAT: BÜYÜK KASA EŞİTLEMESİ (GERÇEK İŞLEM)\n\nBu işlem Kasa Röntgeninde gördüğünüz tüm eksikleri ve fazlaları GERÇEKTEN DÜZELTECEK.\n\nTFF, DFO ve MASTER kasaları fişlere göre güncellenecek.\n\nSistemi tamamen onarmak için ONAYLIYOR MUSUNUZ?";
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsManualFetching(true);
+    try {
+        let allPoints: any[] = [];
+        let fetchMore = true;
+        let from = 0;
+        const step = 1000;
+
+        while (fetchMore) {
+            const { data, error } = await supabase
+                .from('points')
+                .select('username, user_name, kategori, puan')
+                .range(from, from + step - 1);
+            
+            if (error) throw error;
+            if (data && data.length > 0) {
+                allPoints = [...allPoints, ...data];
+                if (data.length < step) fetchMore = false;
+                else from += step;
+            } else {
+                fetchMore = false;
+            }
+        }
+
+        if (allPoints.length === 0) {
+            alert("⚠️ Sistemde hiç fiş bulunamadı!");
+            setIsManualFetching(false);
+            return;
+        }
+
+        const userStats: Record<string, { name: string, MASTER: number, TFF: number, DFO: number }> = {};
+        
+        allPoints.forEach(row => {
+            const uid = row.username;
+            const cat = row.kategori;
+            if (!uid || !cat) return;
+
+            if (!userStats[uid]) {
+                userStats[uid] = { name: row.user_name, MASTER: 0, TFF: 0, DFO: 0 };
+            }
+
+            if (cat === 'MASTER') userStats[uid].MASTER += row.puan;
+            else if (cat === 'TFF') userStats[uid].TFF += row.puan;
+            else if (cat === 'DFO') userStats[uid].DFO += row.puan;
+        });
+
+        const { data: existingStandings, error: esError } = await supabase.from('standings').select('*');
+        if (esError) throw esError;
+
+        const updates: any[] = [];
+        const inserts: any[] = [];
+
+        Object.keys(userStats).forEach(uid => {
+            const stats = userStats[uid];
+            // KİLİT NOKTASI: currentVal'in kesinlikle number (sayı) olmasını zorluyoruz.
+            (['MASTER', 'TFF', 'DFO'] as const).forEach(league => {
+                const currentVal = stats[league];
+                const existingRow = existingStandings?.find((r: any) => String(r.user_id) === String(uid) && r.league_type === league);
+                
+                if (existingRow) {
+                    if (existingRow.points !== currentVal) {
+                        updates.push({ id: existingRow.id, points: currentVal });
+                    }
+                } else {
+                    if (currentVal > 0) {
+                        inserts.push({ user_id: uid, user_name: stats.name, league_type: league, points: currentVal });
+                    }
+                }
+            });
+        });
+
+        if (updates.length > 0) {
+            for (const u of updates) {
+                await supabase.from('standings').update({ points: u.points }).eq('id', u.id);
+            }
+        }
+
+        if (inserts.length > 0) {
+            await supabase.from('standings').insert(inserts);
+        }
+
+        alert(`✅ BÜYÜK ONARIM TAMAMLANDI!\n\nEksik olan TFF ve DFO kasaları da dahil olmak üzere toplam ${updates.length + inserts.length} kasa kaydı fişlerle %100 eşitlendi.\n\nArtık TFF ve DFO puan durumları sitenizde hatasız görünecektir!`);
+        setAuditReport(null); 
+    } catch (error: any) {
+        alert("❌ HATA OLUŞTU: " + error.message);
+    } finally {
+        setIsManualFetching(false);
+    }
+  };
+
   const handleArchiveRepair = async () => {
-    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 1)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tabloyu görebilmen için izole fiş basar.");
+    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 1)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tablo görebilmek için izole fiş basar.");
     if (!weekInput) return;
     
     const weekNum = parseInt(weekInput.trim());
-    // KİLİT BURADA: Artık 1'den küçük olursa hata veriyor. (Önceden 6'ydı)
-    if (isNaN(weekNum) || weekNum < 1) {
+    if (isNaN(weekNum) || weekNum < 1) { 
         alert("❌ Geçersiz komut! Lütfen 1 veya daha büyük bir hafta numarası girin.");
         return;
     }
@@ -1637,6 +1837,52 @@ export default function AdminRadarPortal() {
                </div>
             )}
 
+            {/* 🔥 SİMÜLASYON RAPORU EKRANI 🔥 */}
+            {auditReport && (
+                <div className="mb-8 p-6 bg-slate-900 border border-cyan-500/50 rounded-2xl shadow-[0_0_30px_rgba(20,184,166,0.3)] animate-fade-in relative">
+                    <button 
+                        onClick={() => setAuditReport(null)} 
+                        className="absolute top-4 right-4 text-slate-400 hover:text-rose-400 text-2xl"
+                    >
+                        ✖
+                    </button>
+                    <h2 className="text-xl font-black text-cyan-400 tracking-widest uppercase mb-4 flex items-center gap-3">
+                        <span className="text-3xl animate-pulse">🕵️‍♂️</span> KASA RÖNTGENİ SONUCU (SİMÜLASYON)
+                    </h2>
+                    <p className="text-slate-400 text-sm mb-6 border-b border-slate-800 pb-4">
+                        Bu tablo sadece fişler (`points`) ile mevcut kasanız (`standings`) arasındaki uyumsuzlukları gösterir. Veritabanınızda hiçbir puan silinmedi veya değiştirilmedi.
+                    </p>
+                    
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                        {auditReport.map((item, idx) => (
+                            <div key={idx} className="bg-slate-950/80 border border-slate-700/50 p-4 rounded-xl flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <span className="font-black text-amber-400 uppercase tracking-widest text-lg">{item.userName}</span>
+                                    <span className="text-slate-500 text-xs font-bold uppercase mt-1">LİG: {item.league}</span>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase mb-1">Kasada Yazan</span>
+                                        <span className="text-xl font-black text-slate-300">{item.vaultPoints}</span>
+                                    </div>
+                                    <span className="text-2xl text-slate-700">➡️</span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[10px] text-cyan-400 font-bold uppercase mb-1">Gerçekte Olan (Fişler)</span>
+                                        <span className="text-xl font-black text-cyan-400">{item.realPoints}</span>
+                                    </div>
+                                    <div className="bg-slate-900 border border-slate-700 px-4 py-2 rounded-lg flex flex-col items-center min-w-[80px]">
+                                        <span className="text-[9px] text-slate-500 font-bold uppercase mb-1">FARK</span>
+                                        <span className={`text-lg font-black ${item.difference > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                            {item.difference > 0 ? `+${item.difference}` : item.difference}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {userRole === 'master' && (
             <div className="mb-8 p-5 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)]">
                 <h2 className="text-center font-black text-blue-400 text-sm tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
@@ -1711,43 +1957,64 @@ export default function AdminRadarPortal() {
             )}
 
             {(userRole === 'master' || userRole?.startsWith('skorcum')) && (
-              <div className="w-full flex flex-col sm:flex-row justify-center gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
-                  <button 
-                      onClick={handleBulkSilentLive}
-                      className="flex-1 min-w-[250px] bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
-                  >
-                      <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BÜTÜN MAÇLARI CANLIYA AL</span>
-                      <span className="text-[10px] sm:text-xs text-amber-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Sessiz Mod: Puanlar gizlenir, spoiler engellenir.</span>
-                  </button>
-
-                  <button 
-                      onClick={handleManualApiFetch}
-                      disabled={isManualFetching}
-                      className="flex-1 min-w-[250px] bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
-                  >
-                      <span className="flex items-center gap-2">
-                          <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
-                          {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK (KALAN KONTÖR: ${apiLimitRemaining})`}
-                      </span>
-                      <span className="text-[10px] sm:text-xs text-blue-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Avcı Motoru devrededir, tüm manuel maçları otomatik bulur.</span>
-                  </button>
+              <div className="w-full flex flex-col justify-center gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
                   
-                  <button 
-                      onClick={handleBulkApprove}
-                      className="flex-1 min-w-[250px] bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-700 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.6)] border border-emerald-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
-                  >
-                      <span className="flex items-center gap-2"><span className="text-2xl animate-bounce">🏆</span> BİTENLERİ ONAYLA</span>
-                      <span className="text-[10px] sm:text-xs text-emerald-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Onay Bekleyen maçların puanlarını tek tıkla dağıt.</span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full">
+                      <button 
+                          onClick={handleBulkSilentLive}
+                          className="flex-1 min-w-[200px] bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                      >
+                          <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BÜTÜN MAÇLARI CANLIYA AL</span>
+                      </button>
+
+                      <button 
+                          onClick={handleManualApiFetch}
+                          disabled={isManualFetching}
+                          className="flex-1 min-w-[200px] bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                      >
+                          <span className="flex items-center gap-2">
+                              <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
+                              {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK`}
+                          </span>
+                      </button>
+                      
+                      <button 
+                          onClick={handleBulkApprove}
+                          className="flex-1 min-w-[200px] bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-700 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.6)] border border-emerald-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                      >
+                          <span className="flex items-center gap-2"><span className="text-2xl animate-bounce">🏆</span> BİTENLERİ ONAYLA</span>
+                      </button>
+                  </div>
 
                   {userRole === 'master' && (
-                    <button 
-                        onClick={handleArchiveRepair}
-                        className="flex-1 min-w-[250px] bg-gradient-to-r from-fuchsia-600 via-purple-500 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(192,38,211,0.6)] border border-fuchsia-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
-                    >
-                        <span className="flex items-center gap-2"><span className="text-2xl animate-spin-slow">⏳</span> GEÇMİŞİ ONAR (ZAMAN MAKİNESİ)</span>
-                        <span className="text-[10px] sm:text-xs text-fuchsia-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Eski tahminleri tarar ve Tarihçeye 'İzole Fiş' basar. (Kasayı etkilemez).</span>
-                    </button>
+                      <div className="flex flex-col sm:flex-row gap-4 w-full mt-2 border-t border-slate-800 pt-6">
+                          
+                          <button 
+                              onClick={handleArchiveRepair}
+                              className="flex-1 min-w-[200px] bg-gradient-to-r from-fuchsia-600 via-purple-500 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(192,38,211,0.6)] border border-fuchsia-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                          >
+                              <span className="flex items-center gap-2"><span className="text-2xl animate-spin-slow">⏳</span> GEÇMİŞİ ONAR</span>
+                          </button>
+
+                          <div className="flex-1 flex flex-col sm:flex-row gap-4 min-w-[400px]">
+                              <button 
+                                  onClick={handleVaultAuditSimulation}
+                                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_15px_rgba(20,184,166,0.3)] border border-cyan-500/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                              >
+                                  <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">🕵️‍♂️</span> 1. ADIM: KASA RÖNTGENİ</span>
+                                  <span className="text-[10px] text-slate-400 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Eksikleri bulur ama kasaya DOKUNMAZ.</span>
+                              </button>
+
+                              <button 
+                                  onClick={handleVaultAuditExecute}
+                                  className="flex-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-700 hover:from-red-500 hover:to-rose-400 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(225,29,72,0.6)] border border-red-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                              >
+                                  <span className="flex items-center gap-2"><span className="text-2xl">💥</span> 2. ADIM: EKSİKLERİ DÜZELT (VUR)</span>
+                                  <span className="text-[10px] text-red-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Röntgendeki farkları GERÇEKTEN onarır.</span>
+                              </button>
+                          </div>
+
+                      </div>
                   )}
               </div>
             )}
