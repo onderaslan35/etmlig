@@ -8,6 +8,13 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  <Link 
+   href="/haftanin-enleri" 
+   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 rounded-xl text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-all font-black text-xs tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.6)]"
+>
+   <span className="text-lg">🏆</span> HAFTANIN ENLERİ
+</Link>
+
   const navLinks = [
     { name: 'MAÇ ARŞİVİ', path: '/mac-arsivi' },
     { name: 'DFO PUAN DURUMU', path: '/puan-durumu/dfo' },
