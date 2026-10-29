@@ -13,10 +13,8 @@ import {
 } from '@/utils/themeEngine';
 
 // 🔥 YENİ: GECE 02:59'A KADAR OLAN SÜREYİ "BUGÜN" SAYAN ÖZEL FONKSİYON 🔥
-// Artık gece 00:00'ı geçtiğinde bile sabaha karşı 02:59'a kadar sistem dünü arayacak.
 const getCustomTodayDateString = () => {
     const d = new Date();
-    // Eğer saat gece yarısı 00:00 ile 02:59 arasındaysa, hala BİR ÖNCEKİ GÜNÜN (bültenin) içindeyiz demektir.
     if (d.getHours() < 3) {
         d.setDate(d.getDate() - 1);
     }
@@ -113,7 +111,6 @@ export default function AdminRadarPortal() {
 
   const [isManualFetching, setIsManualFetching] = useState<boolean>(false);
   
-  // 🔥 YENİ: KOTA BİLGİSİNİ DÜZELTTİK 🔥
   const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
   const [apiTotalLimit, setApiTotalLimit] = useState<number | string>('100');
 
@@ -179,7 +176,7 @@ export default function AdminRadarPortal() {
 
         const isFinished = status === 'FINISHED';
         const isLive = status === 'LIVE' || status === 'WAITING_APPROVAL' || status === 'HT';
-        const isToday = match.match_date === getCustomTodayDateString(); // Gece 02:59 destekli kontrol
+        const isToday = match.match_date === getCustomTodayDateString(); 
 
         const matchTimeMs = getMatchTimeMs(match.match_date, match.match_time);
         const isWithinLast5Hours = (now - matchTimeMs) >= 0 && (now - matchTimeMs) <= (5 * 60 * 60 * 1000);
@@ -269,7 +266,6 @@ export default function AdminRadarPortal() {
       setSeciliLigFiltreleri((prev: any) => prev.filter((f: any) => f !== id));
   };
 
-  // 🔥 API KOTA KONTROLÜ DÜZELTİLDİ 🔥
   const checkApiLimit = async () => {
       try {
           const res = await fetch('https://v3.football.api-sports.io/status', {
@@ -302,7 +298,7 @@ export default function AdminRadarPortal() {
   const handleManualApiFetch = async () => {
      setIsManualFetching(true);
      try {
-        const todayStr = getCustomTodayDateString(); // Gece 02:59 destekli
+        const todayStr = getCustomTodayDateString(); 
         const bugununBultenMaclari = liveMatchesDB.filter((m: any) => m.match_date === todayStr);
 
         if (bugununBultenMaclari.length === 0) {
@@ -844,23 +840,14 @@ export default function AdminRadarPortal() {
         return;
       }
 
+      // Manuel DFO sormayı kaldırdık, sistem otomatik dağıtacak
       const rawCategory = String(matchData.category || '');
       const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
-      
       const homeName = String(matchData.home_team || '').toLocaleLowerCase('tr-TR');
       const awayName = String(matchData.away_team || '').toLocaleLowerCase('tr-TR');
-      
       const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-      const isDefiniteTFF = isTffMatchCheck(matchData.category) || 
-                            catLower.includes('türkiye kupası') || 
-                            catLower.includes('turkiye kupasi') || 
-                            catLower.includes('tff') || 
-                            catLower.includes('süper lig') || 
-                            catLower.includes('1. lig') || 
-                            catLower.includes('amatör') || 
-                            catLower.includes('bal') || 
-                            isTurkishTeam;
+      const isDefiniteTFF = isTffMatchCheck(matchData.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
       
       let leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
@@ -1062,15 +1049,7 @@ export default function AdminRadarPortal() {
         
         const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-        const isDefiniteTFF = isTffMatchCheck(match.category) || 
-                              catLower.includes('türkiye kupası') || 
-                              catLower.includes('turkiye kupasi') || 
-                              catLower.includes('tff') || 
-                              catLower.includes('süper lig') || 
-                              catLower.includes('1. lig') || 
-                              catLower.includes('amatör') || 
-                              catLower.includes('bal') || 
-                              isTurkishTeam;
+        const isDefiniteTFF = isTffMatchCheck(match.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
                               
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
@@ -1636,7 +1615,6 @@ export default function AdminRadarPortal() {
                         </div>
                     )}
                 </div>
-
             </div>
             )}
 
@@ -1651,7 +1629,7 @@ export default function AdminRadarPortal() {
                       >
                           <span className="flex items-center gap-2">
                               <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
-                              {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK`}
+                              {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK (KALAN KOTA: ${apiLimitRemaining})`}
                           </span>
                       </button>
                       
@@ -1676,17 +1654,6 @@ export default function AdminRadarPortal() {
               </div>
 
               <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3">
-                 
-                 {/* 🔥 YENİ: KOTA BİLGİSİ BURAYA EKLENDİ 🔥 */}
-                 {userRole === 'master' && (
-                     <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2" title="Günlük Kalan API İsteği">
-                        <span className="text-slate-400 font-bold text-xs tracking-wider">📡 KOTA:</span>
-                        <span className={`font-black text-sm drop-shadow-md ${Number(apiLimitRemaining) > 20 ? 'text-emerald-400' : 'text-rose-500 animate-pulse'}`}>
-                            {apiLimitRemaining} <span className="text-slate-600 text-xs">/ {apiTotalLimit}</span>
-                        </span>
-                     </div>
-                 )}
-
                  <button 
                    onClick={handleLogout} 
                    className="px-4 py-2 bg-rose-950 hover:bg-rose-900 text-rose-400 text-xs font-bold rounded-xl shadow-md border border-rose-900/50 flex items-center gap-2 transition-all"
@@ -1788,6 +1755,16 @@ export default function AdminRadarPortal() {
                 else if (logInfo?.status === 'WAITING_APPROVAL') { timerBadge = "ONAY BEKLİYOR"; badgeClass = "text-blue-400 animate-pulse"; }
                 else if (logInfo?.status === 'LIVE') { timerBadge = `🔴 CANLI (${getDynamicElapsed(logInfo)})`; badgeClass = "text-red-400 animate-pulse"; }
 
+                // 🔥 KOMUTANIN EMRİ: DFO OLAN MAÇLARDA BUTON ASLA ÇIKMASIN 🔥
+                const rawCatUpper = (match.category || '').toUpperCase();
+                const showForce1LigButton = userRole === 'master' && 
+                                            isTffMatchUI && 
+                                            !rawCatUpper.includes('DFO') && 
+                                            !rawCatUpper.includes('1. LİG') && 
+                                            !rawCatUpper.includes('1. LIG') && 
+                                            !rawCatUpper.includes('SÜPER') && 
+                                            !rawCatUpper.includes('SUPER');
+
                 return (
                   <div key={match.match_index} className={`w-full mx-auto border rounded-2xl overflow-hidden transition-all duration-500 flex flex-col relative ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}>
                     <div className="p-4 sm:p-6 relative flex-grow overflow-hidden flex flex-col justify-center">
@@ -1808,8 +1785,8 @@ export default function AdminRadarPortal() {
                                 🏆 {match.category} - <span className={badgeClass}>{timerBadge}</span>
                               </span>
                               
-                              {/* 🔥 KOMUTANIN SİHİRLİ BUTONU 🔥 */}
-                              {userRole === 'master' && !['1. Lig', 'Süper Lig'].includes(match.category) && (
+                              {/* 🔥 DFO KALKANLI GÜVENLİ BUTON 🔥 */}
+                              {showForce1LigButton && (
                                   <button 
                                      onClick={() => handleForce1Lig(match.match_index)}
                                      className="bg-fuchsia-700 hover:bg-fuchsia-500 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-[0_0_10px_rgba(192,38,211,0.8)] transition-all uppercase"
@@ -1892,11 +1869,32 @@ export default function AdminRadarPortal() {
                     <div className={`${theme.bottomBar} border-t px-4 py-4 w-full backdrop-blur-md z-10 relative min-h-[90px]`}>
                       <div className="flex items-center justify-between mb-3 w-full">
                          <div className="flex items-center gap-2">
+                             <span className="text-red-500 text-sm drop-shadow-md">🎯</span> 
                              <span className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest uppercase">
                                  {winnersCount > 0 ? `${winnersCount} KİŞİ BİLDİ (Kişi Başı: ${displayPoints} Puan)` : "BU SKORU BİLEN YOK"}
                              </span>
                          </div>
+                         <span className={`text-[9px] font-black tracking-widest whitespace-nowrap px-2.5 py-0.5 rounded block shadow-[0_0_10px_currentColor] border ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
+                            {isTffMatchUI ? "TFF MAÇI" : "MASTER & DFO MAÇI"}
+                         </span>
+                         {winnersCount > 0 && (
+                            <button onClick={() => toggleWinners(match.match_index)} className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[10px] sm:text-xs outline-none whitespace-nowrap drop-shadow-sm">
+                              {isWinnersOpen ? "Gizle ▲" : "Bilenleri gör →"}
+                            </button>
+                         )}
                       </div>
+
+                      {isWinnersOpen && winnersCount > 0 && (
+                         <div className="flex items-center justify-center border-t border-slate-700/50 pt-3 animate-fadeIn">
+                            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+                               {currentWinners.map((p: string, i: number) => (
+                                   <span key={i} className="bg-slate-950/80 border px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm uppercase tracking-wider border-slate-600/50">
+                                      {p}
+                                   </span>
+                               ))}
+                            </div>
+                         </div>
+                      )}
                     </div>
                   </div>
                 );
