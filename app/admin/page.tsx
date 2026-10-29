@@ -1131,10 +1131,11 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 BÜYÜK YAMA BURADA: Orijinal kategori ismiyle (büyük harfe zorlamadan) sağlam radarımıza yolluyoruz
-      const originalCat = matchData.category || '';
-      const isDefiniteTFF = checkIsTurkishLeague(originalCat);
+      // 🔥 1. YAMA: ZIRHLI TFF RADARI (TEKLİ ONAY) 🔥
+      const originalCat = (matchData.category || '').toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
+      const isDefiniteTFF = isTffMatchCheck(matchData.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL');
       const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
+      // 🔥 YAMA BİTİŞİ 🔥
 
       let confirmMsg = matchId === 24 
           ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
@@ -1365,15 +1366,13 @@ export default function AdminRadarPortal() {
         const awayScore = adminScores[matchId]?.away || "-";
         const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
         
-        // 🔥 BÜYÜK YAMA BURADA DA VAR (Toplu Onaylama)
-        const originalCat = match.category || '';
-        const isDefiniteTFF = checkIsTurkishLeague(originalCat);
+        // 🔥 2. YAMA: ZIRHLI TFF RADARI (TOPLU ONAY) 🔥
+        const originalCat = (match.category || '').toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/\s+/g, '');
+        const isDefiniteTFF = isTffMatchCheck(match.category) || originalCat.includes('TFF') || originalCat.includes('TURKIYE') || originalCat.includes('TURKEY') || originalCat.includes('SUPERLIG') || originalCat.includes('1.LIG') || originalCat.includes('KUPA') || originalCat.includes('AMATOR') || originalCat.includes('BAL');
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
+        // 🔥 YAMA BİTİŞİ 🔥
 
         if (homeScore === "-" || awayScore === "-") {
-            skipCount++;
-            continue;
-        }
 
         const targetScore = `${homeScore}-${awayScore}`;
         const currentWinners = Object.keys(predictionsDB)
