@@ -3,24 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { isTffMatchCheck } from '@/utils/themeEngine'; 
 
-// 🔥 KURŞUN GEÇİRMEZ YENİ TÜRKİYE RADARI 🔥
-const checkIsTurkishLeague = (category: string) => {
-    if (!category) return false;
-    if (isTffMatchCheck(category)) return true;
-    
-    const c = category.toUpperCase().replace(/İ/g, 'I').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/Ş/g, 'S').replace(/Ğ/g, 'G');
-    return c.includes('TFF') || 
-           c.includes('TURKIYE') || 
-           c.includes('TURKEY') || 
-           c.includes('SUPER LIG') || 
-           c.includes('1. LIG') || 
-           c.includes('2. LIG') || 
-           c.includes('3. LIG') || 
-           c.includes('KUPA') ||
-           c.includes('AMATOR') ||
-           c.includes('BAL');
-};
-
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
   const parts = dateStr.split('.');
@@ -101,18 +83,33 @@ export default function TffPuanDurumuPage() {
           }
       }
 
-      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_pts, tff_trend_direction, tff_trend_diff');
+      // 🔥 BÜYÜK BYPASS: Aracıyı (live_leaderboard) devreden çıkarıp, doğrudan KASAYI okuyoruz! 🔥
+      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, tff_trend_direction, tff_trend_diff');
+      
+      // KASA BURASI: Admin panelinin puan yolladığı gerçek merkez.
+      const { data: rawStandings } = await supabase.from('standings').select('user_id, points, league_type');
       
       if (leaderboardData && leaderboardData.length > 0) {
-        let updatedList = leaderboardData.map(r => ({
-            id: r.id, 
-            name: r.name || "", 
-            baseScore: r.tff_pts || 0, 
-            liveBonus: 0,
-            trend: r.tff_trend_direction || 'same', 
-            trendDiff: r.tff_trend_diff || 0
-        }));
+        let updatedList = leaderboardData.map(r => {
+            // Görünümün yalanına inanmıyoruz, kasada bu adamın TFF puanı neyse direkt onu alıyoruz!
+            const tffRows = rawStandings?.filter((s: any) => String(s.user_id) === String(r.id) && String(s.league_type).trim().toUpperCase() === 'TFF');
+            
+            let realTffPts = 0;
+            if (tffRows && tffRows.length > 0) {
+                realTffPts = tffRows.reduce((acc, curr) => acc + curr.points, 0); // Kasa puanlarının toplamı
+            }
 
+            return {
+                id: r.id, 
+                name: r.name || "", 
+                baseScore: realTffPts, // 🔥 Artık silinme ihtimali SIFIR!
+                liveBonus: 0,
+                trend: r.tff_trend_direction || 'same', 
+                trendDiff: r.tff_trend_diff || 0
+            };
+        });
+
+        // CANLI PUAN HESAPLAMA (TÜRKİYE KUPASI KORUMALI)
         if (allMatches && predictions && dbBulletin) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -126,8 +123,19 @@ export default function TffPuanDurumuPage() {
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
                 
                 if (bulletinMatch) {
-                    const isDefiniteTFF = checkIsTurkishLeague(bulletinMatch.category);
-                    if (!isDefiniteTFF) return; 
+                    const rawCategory = String(bulletinMatch.category || '');
+                    const catLower = rawCategory.toLocaleLowerCase('tr-TR');
+                    
+                    const isDefiniteTFF = isTffMatchCheck(bulletinMatch.category) || 
+                                          catLower.includes('türkiye kupası') || 
+                                          catLower.includes('turkiye kupasi') || 
+                                          catLower.includes('tff') || 
+                                          catLower.includes('süper lig') || 
+                                          catLower.includes('1. lig') || 
+                                          catLower.includes('amatör') || 
+                                          catLower.includes('bal');
+                                          
+                    if (!isDefiniteTFF) return; // TFF değilse atla
                 }
 
                 const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
