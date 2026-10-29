@@ -8,7 +8,7 @@ import {
   parseDateLocal,
   generateTimeOptions,
   getUniqueMatchId,
-  isTffMatchCheck, // Bu hala duruyor
+  isTffMatchCheck,
   getMatchTimeMs,
   getEliteTheme
 } from '@/utils/themeEngine';
@@ -134,7 +134,6 @@ export default function AdminRadarPortal() {
 
   const [auditReport, setAuditReport] = useState<AuditReportItem[] | null>(null);
 
-  // 🔥 3. YAMA: getDynamicElapsed FONKSİYONU 🔥
   const getDynamicElapsed = (logInfo: any) => {
      if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) {
          return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
@@ -1022,10 +1021,10 @@ export default function AdminRadarPortal() {
                 else if(wc === 6) displayPoints = 2;
                 else if(wc >= 7) displayPoints = 1;
 
-                const isTff = isTffMatchCheck(m.category);
-                // 🔥 KİLİT NOKTASI: Türkiye Kupasını ve alt ligleri ADMIN DE DAĞITIRKEN TFF OLARAK ALGILASIN
-                const matchCategory = m.category ? m.category.toUpperCase() : '';
-                const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+                // 🔥 BÜYÜK YAMA: Orijinal kategoriyi bozmadan gönderiyoruz
+                const originalCat = m.category || '';
+                const catUpper = originalCat.toUpperCase();
+                const isDefiniteTFF = isTffMatchCheck(originalCat) || catUpper.includes('TÜRKİYE') || catUpper.includes('TURKIYE') || catUpper.includes('TURKEY');
                 const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
                 correctUsers.forEach(uid => {
@@ -1115,9 +1114,10 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      // 🔥 KİLİT NOKTASI: Türkiye Kupasını ve alt ligleri ADMIN DE DAĞITIRKEN TFF OLARAK ALGILASIN
-      const matchCategory = matchData.category ? matchData.category.toUpperCase() : '';
-      const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+      // 🔥 BÜYÜK YAMA BURADA: Orijinal kategori ismiyle (büyük harfe zorlamadan) filtresine yolluyoruz
+      const originalCat = matchData.category || '';
+      const catUpper = originalCat.toUpperCase();
+      const isDefiniteTFF = isTffMatchCheck(originalCat) || catUpper.includes('TÜRKİYE') || catUpper.includes('TURKIYE') || catUpper.includes('TURKEY');
       const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
       let confirmMsg = matchId === 24 
@@ -1349,9 +1349,10 @@ export default function AdminRadarPortal() {
         const awayScore = adminScores[matchId]?.away || "-";
         const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
         
-        // 🔥 KİLİT NOKTASI: Türkiye Kupasını ve alt ligleri ADMIN DE DAĞITIRKEN TFF OLARAK ALGILASIN
-        const matchCategory = match.category ? match.category.toUpperCase() : '';
-        const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+        // 🔥 BÜYÜK YAMA BURADA DA VAR (Toplu Onaylama)
+        const originalCat = match.category || '';
+        const catUpper = originalCat.toUpperCase();
+        const isDefiniteTFF = isTffMatchCheck(originalCat) || catUpper.includes('TÜRKİYE') || catUpper.includes('TURKIYE') || catUpper.includes('TURKEY');
         const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
         if (homeScore === "-" || awayScore === "-") {
