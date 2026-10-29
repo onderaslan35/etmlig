@@ -256,7 +256,7 @@ export default function PredictionPortal() {
               });
 
               if (usageCount >= 6) {
-                  alert(`⚠️ DİKKAT KOMUTANIM!\nBir bültende aynı skoru (Örn: ${proposedScore}) en fazla 6 kere kullanabilirsiniz!\n\n(Anti-Trol Sistemi Devrede)`);
+                  alert(`⚠️ DİKKAT SAYIN TAHMİNCİM !!!\nBir bültende aynı skoru (Örn: ${proposedScore}) en fazla 6 kere kullanabilirsiniz!\n\n(%25 Kuralı)`);
                   return prev; // Değişikliği reddet
               }
           }
