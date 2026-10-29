@@ -426,9 +426,10 @@ export default function AdminRadarPortal() {
                 todayDate.setHours(0,0,0,0);
 
                 const weeksSet = new Set<number>(data.map((d: any) => d.week_num));
-                const weeks = Array.from(weeksSet).filter((w: any) => w >= 6).sort((a: any, b: any) => a-b);
+                // KİLİT KIRILDI: ARTIK 1. HAFTADAN İTİBAREN TARAYABİLİRİZ
+                const weeks = Array.from(weeksSet).filter((w: any) => w >= 1).sort((a: any, b: any) => a-b);
                 
-                let targetWeek = 6;
+                let targetWeek = 1;
                 const upcomingMatches = data.filter((d: any) => parseDateLocal(d.match_date) >= todayDate).sort((a: any, b: any) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
                 
                 if (upcomingMatches.length > 0) {
@@ -455,7 +456,7 @@ export default function AdminRadarPortal() {
              .from('points')
              .select('hafta, user_name, ev_sahibi')
              .in('ev_sahibi', ['HAFTANIN', 'SKOR'])
-             .gte('hafta', 6)
+             .gte('hafta', 1) // KİLİT KIRILDI: 1. Haftaya kadar geçmişi görebiliriz
              .order('hafta', { ascending: false });
          
          if (data) {
@@ -761,20 +762,20 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
 
-  // 🔥 YENİ SİLAH: GEÇMİŞİ ONAR (ARŞİV TARAYICI) MOTORU 🔥
+  // 🔥 YENİ SİLAH: GEÇMİŞİ ONAR (ARŞİV TARAYICI) MOTORU (KİLİT KIRILDI, SINIR 1) 🔥
   const handleArchiveRepair = async () => {
-    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 6)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tabloyu görebilmen için izole fiş (points) basar.");
+    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 1)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tabloyu görebilmen için izole fiş basar.");
     if (!weekInput) return;
     
     const weekNum = parseInt(weekInput.trim());
-    if (isNaN(weekNum) || weekNum < 6) {
-        alert("❌ Geçersiz komut! Lütfen 6 veya daha büyük bir hafta numarası girin.");
+    // KİLİT BURADA: Artık 1'den küçük olursa hata veriyor. (Önceden 6'ydı)
+    if (isNaN(weekNum) || weekNum < 1) {
+        alert("❌ Geçersiz komut! Lütfen 1 veya daha büyük bir hafta numarası girin.");
         return;
     }
 
     setIsManualFetching(true);
     try {
-        // 1. Önce bu hafta için zaten kesilmiş fiş var mı kontrol et
         const { data: existingPoints } = await supabase.from('points').select('id').eq('hafta', weekNum);
         if (existingPoints && existingPoints.length > 0) {
             const overwrite = window.confirm(`⚠️ DİKKAT: ${weekNum}. Hafta için sistemde zaten ${existingPoints.length} adet fiş bulunuyor!\n\nBunları SİLİP, arşive (geçmiş maç skorlarına) göre tamamen baştan, temiz bir şekilde fiş kesmek istiyor musun?`);
@@ -782,26 +783,22 @@ export default function AdminRadarPortal() {
             await supabase.from('points').delete().eq('hafta', weekNum);
         }
 
-        // 2. Bülteni Çek (Hangi takımlar oynadı?)
         const { data: bulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', weekNum).order('match_index');
         if (!bulletin || bulletin.length === 0) {
             alert(`❌ ${weekNum}. haftaya ait bülten (maç listesi) bulunamadı! Arşiv boş.`); setIsManualFetching(false); return; 
         }
 
-        // 3. Canlı (Biten) Skorları Çek
         const idsToFetch = bulletin.map((m:any) => getUniqueMatchId(weekNum, m.match_index));
         const { data: liveData } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
         if (!liveData || liveData.length === 0) {
             alert(`❌ ${weekNum}. haftaya ait maç sonucu bulunamadı! Lütfen önce o haftanın skorlarını girin.`); setIsManualFetching(false); return; 
         }
 
-        // 4. Yarışmacıların O Haftaki Tahminlerini Çek
         const { data: predictions } = await supabase.from('player_predictions').select('*').eq('week_num', weekNum);
         if (!predictions || predictions.length === 0) {
             alert(`❌ ${weekNum}. haftaya ait hiçbir yarışmacı tahmini bulunamadı!`); setIsManualFetching(false); return; 
         }
 
-        // Tahminleri grupla: Hangi maça, hangi skoru, kimler dedi?
         const predsMap: Record<number, Record<string, string[]>> = {};
         predictions.forEach(p => {
             if(!predsMap[p.match_index]) predsMap[p.match_index] = {};
@@ -812,11 +809,9 @@ export default function AdminRadarPortal() {
         const inserts: any[] = [];
         const stats: Record<string, { pts: number, scores: number }> = {};
 
-        // 5. Her Maçı Analiz Et ve Bilenlere Fiş Kes
         bulletin.forEach(m => {
             const uId = getUniqueMatchId(weekNum, m.match_index);
             const lMatch = liveData.find(l => l.id === uId);
-            // Maç bitmişse ve skor girilmişse değerlendir
             if (!lMatch || lMatch.home_score === '-' || lMatch.away_score === '-' || lMatch.status !== 'FINISHED') return;
 
             const targetScore = `${lMatch.home_score}-${lMatch.away_score}`;
@@ -853,7 +848,6 @@ export default function AdminRadarPortal() {
             }
         });
 
-        // 6. Haftanın Puan ve Skor Liderlerini Bulup Bonus Fişlerini Kes
         let maxPts = 0; let maxScores = 0;
         Object.values(stats).forEach(s => {
             if(s.pts > maxPts) maxPts = s.pts;
@@ -869,7 +863,6 @@ export default function AdminRadarPortal() {
             sLeadersArray = Object.keys(stats).filter(uid => stats[uid].scores === maxScores);
         }
 
-        // Sadece tek başına lider olanlara +3 bonus
         if (pLeadersArray.length === 1) {
             const finalPLeader = pLeadersArray[0];
             inserts.push({ hafta: weekNum, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
@@ -879,13 +872,11 @@ export default function AdminRadarPortal() {
             inserts.push({ hafta: weekNum, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
         }
 
-        // 7. Supabase'e Yaz
         if (inserts.length > 0) {
-            // DİKKAT: Standings tablosunu (kasayı) BURADA GÜNCELLEMİYORUZ. Sadece points tablosuna yazıyoruz.
             const { error } = await supabase.from('points').insert(inserts);
             if (error) throw error;
             alert(`✅ BAŞARILI! ${weekNum}. haftanın arşivi tarandı ve tam ${inserts.length} adet fiş kesildi.\n\nArtık 'Haftanın Enleri' menüsüne gidip ${weekNum}. Haftayı seçerek geçmiş tabloyu kusursuzca görebilirsiniz.`);
-            fetchBonusHistory(); // Panodaki tarihi güncelleyelim
+            fetchBonusHistory(); 
         } else {
             alert(`⚠️ ${weekNum}. hafta için tahminleri tutturan kimse bulunamadı. Fiş kesilmedi.`);
         }
@@ -1587,7 +1578,6 @@ export default function AdminRadarPortal() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
       <div className="max-w-7xl mx-auto pt-6">
 
-        {/* 🔴 SEKME (TAB) MENÜSÜ GÜNCELLENDİ 🔴 */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
            <button 
              onClick={() => setActiveTab('live')}
@@ -1614,7 +1604,6 @@ export default function AdminRadarPortal() {
            )}
         </div>
 
-        {/* 🚀 CANLI YÖNETİM EKRANI 🚀 */}
         {activeTab === 'live' && (
           <div className="animate-fade-in">
             {userRole === 'master' && (
@@ -1682,7 +1671,6 @@ export default function AdminRadarPortal() {
                     Not: Bu radar sizin girdiğiniz skorlara göre anlık güncellenir.
                 </p>
 
-                {/* 🔥 GEÇMİŞ HAFTALAR ŞEREF KÜRSÜSÜ (TARİHÇE) 🔥 */}
                 <div className="mt-6 flex flex-col items-center border-t border-slate-700/50 pt-4">
                     <button 
                         onClick={() => setShowHistory(!showHistory)}
@@ -1752,7 +1740,6 @@ export default function AdminRadarPortal() {
                       <span className="text-[10px] sm:text-xs text-emerald-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Onay Bekleyen maçların puanlarını tek tıkla dağıt.</span>
                   </button>
 
-                  {/* 🔥 YENİ: GEÇMİŞİ ONAR (ZAMAN MAKİNESİ) BUTONU 🔥 */}
                   {userRole === 'master' && (
                     <button 
                         onClick={handleArchiveRepair}
@@ -1811,7 +1798,7 @@ export default function AdminRadarPortal() {
                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedLiveWeek(Number(e.target.value))}
                          className="bg-amber-500 border border-amber-600 text-slate-950 font-black text-sm px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] outline-none cursor-pointer"
                        >
-                          {[...Array(92)].map((_: any, i: number) => <option key={`lw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
+                          {[...Array(100)].map((_: any, i: number) => <option key={`lw-${i+1}`} value={i+1}>{i+1}. HAFTA</option>)}
                        </select>
                     </div>
                  </div>
@@ -2009,23 +1996,21 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 BÜLTEN FABRİKASI (YENİ NESİL) 🚀 */}
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
              <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-black text-indigo-400 flex items-center gap-2">
-                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI <span className="text-[10px] bg-indigo-950 text-indigo-300 px-2 py-1 rounded border border-indigo-500 ml-2">(SABİT SLOT SİSTEMİ)</span>
+                    <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI
                 </h2>
                 <div className="flex items-center gap-3">
                    <select value={bulletinWeek} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
-                      {[...Array(92)].map((_: any, i: number) => <option key={`bw-${i+5}`} value={i+5}>{i+5}. HAFTA</option>)}
+                      {[...Array(100)].map((_: any, i: number) => <option key={`bw-${i+1}`} value={i+1}>{i+1}. HAFTA</option>)}
                    </select>
                 </div>
              </div>
 
              <div className="flex flex-col xl:flex-row gap-6">
                 
-                {/* SOL PANEL: API HAVUZU VE FİLTRELER */}
                 <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
                         <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
@@ -2117,7 +2102,7 @@ export default function AdminRadarPortal() {
                               </div>
                               
                               <div className="flex flex-col gap-1 mt-4 border-t border-slate-800 pt-3">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase">KENDİ LİG FİLTRENİ OLUŞTUR VE KAYDET (Örn: Suudi Arabistan, Brezilya)</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase">KENDİ LİG FİLTRENİ OLUŞTUR VE KAYDET</label>
                                  <div className="flex gap-2 w-full sm:w-2/3">
                                    <input 
                                       type="text" 
@@ -2135,7 +2120,6 @@ export default function AdminRadarPortal() {
                                       BUTON OLARAK EKLE
                                    </button>
                                  </div>
-                                 <span className="text-[9px] text-slate-500 mt-1 italic">Yazdığınız kelimeyi kalıcı bir butona dönüştürür. Tıkladığınızda içinde o kelime geçen tüm maçları bulur. Geçici olarak aratmak istiyorsanız yazıp direkt "Çek" diyebilirsiniz.</span>
                               </div>
                            </div>
                         </div>
@@ -2192,23 +2176,20 @@ export default function AdminRadarPortal() {
                     </div>
                 </div>
 
-                {/* 🔥 ORTA SÜTUN: AKILLI YENİ LİG & TAKIM EKLEME ALANI 🔥 */}
                 <div className="w-full xl:w-[320px] flex flex-col gap-6 h-[85vh] overflow-y-auto custom-scrollbar pr-2">
                    
-                   {/* 1. KISIM: TAKIM HAVUZU YÖNETİMİ */}
                    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl shrink-0">
                       <h3 className="font-black text-cyan-400 flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
                          <span className="text-xl">⚙️</span> TAKIM HAVUZU YÖNETİMİ
                       </h3>
                       
-                      {/* LİG SEÇİMİ (AÇILIR PENCERE) */}
                       <div className="mb-4">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">1. İşlem Yapılacak Ligi Seç (Zorunlu)</label>
                           <select 
                               value={selectedManageLeague} 
                               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                   setSelectedManageLeague(e.target.value);
-                                  setNewLeagueNameInput(''); // Ligi değiştirince yeni isim kutusunu temizle
+                                  setNewLeagueNameInput(''); 
                               }} 
                               className="w-full bg-slate-950 border border-slate-700 text-cyan-400 font-bold px-3 py-2 rounded-lg outline-none text-xs cursor-pointer mb-2"
                           >
@@ -2217,7 +2198,6 @@ export default function AdminRadarPortal() {
                               {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map((l: any) => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`managelig-${c}`} value={c}>{c}</option>)}
                           </select>
 
-                          {/* EĞER YENİ LİG OLUŞTUR SEÇİLDİYSE BU KUTU AÇILIR */}
                           {selectedManageLeague === 'YENI_LIG' && (
                               <input 
                                   type="text" 
@@ -2252,7 +2232,6 @@ export default function AdminRadarPortal() {
                          </div>
                       </form>
 
-                      {/* LİGEDEKİ EKLİ TAKIMLARI GÖR VE SİL AKORDEONU */}
                       {(selectedManageLeague && selectedManageLeague !== 'YENI_LIG') && dynamicLigHavuzu[selectedManageLeague] && dynamicLigHavuzu[selectedManageLeague].length > 0 && (
                           <div className="mt-4 border-t border-slate-800 pt-3 animate-fade-in">
                               <label className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-2 block flex items-center justify-between">
@@ -2278,7 +2257,6 @@ export default function AdminRadarPortal() {
                       )}
                    </div>
 
-                   {/* 2. KISIM: MANUEL MAÇ HAVUZU */}
                    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex-1 flex flex-col">
                       <h3 className="font-black text-fuchsia-400 flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
                          <span className="text-xl">⏳</span> MANUEL MAÇ HAVUZU
@@ -2345,16 +2323,10 @@ export default function AdminRadarPortal() {
                             🚀 BÜLTENE YAPIŞTIR
                          </button>
 
-                         <div className="mt-4 bg-fuchsia-950/30 p-3 rounded-lg border border-fuchsia-900/50">
-                            <p className="text-[10px] text-fuchsia-300 leading-relaxed font-bold">
-                               <span className="text-white">NOT:</span> Eğer takım listede yoksa, yukarıdaki "TAKIM HAVUZU YÖNETİMİ" panelinden ekleyiniz.
-                            </p>
-                         </div>
                       </form>
                    </div>
                 </div>
 
-                {/* SAĞ PANEL: SEÇİLENLER (BÜLTEN) */}
                 <div className="w-full xl:w-[400px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-black text-indigo-400 flex items-center gap-2"><span className="text-lg">📝</span> HEDEF BÜLTEN</h3>
@@ -2435,7 +2407,6 @@ export default function AdminRadarPortal() {
           </div>
         )}
 
-        {/* 🚀 YARIŞMACI YÖNETİMİ ODASI (KORUNDU) 🚀 */}
         {activeTab === 'players' && userRole === 'master' && (
           <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-800 pb-4">
