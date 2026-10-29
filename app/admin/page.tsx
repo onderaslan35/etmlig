@@ -15,7 +15,6 @@ import {
 
 const timeOptionsArr = generateTimeOptions();
 
-// 🔥 KOMUTANIN İSTEDİĞİ DEV LİG LİSTESİ (HEM RADARDA HEM MANUELDE GÖRÜNECEK) 🔥
 const POPULER_LIG_SECENEKLERI = [
   { id: 'superlig', ad: '🇹🇷 Süper Lig', apiAd: 'Süper Lig', country: 'Turkey' },
   { id: 'tff1', ad: '🇹🇷 1. Lig', apiAd: '1. Lig', country: 'Turkey' },
@@ -762,6 +761,142 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
 
+  // 🔥 YENİ SİLAH: GEÇMİŞİ ONAR (ARŞİV TARAYICI) MOTORU 🔥
+  const handleArchiveRepair = async () => {
+    const weekInput = window.prompt("🛠️ ARŞİV MOTORU (ZAMAN MAKİNESİ)\n\nGeçmişteki hangi haftayı tarayıp fişlerini kesmek istiyorsun?\n(Sadece sayı gir, örn: 6)\n\nDİKKAT: Bu işlem kasaya (standings) ASLA puan eklemez. Sadece 'Zaman Makinesi' sayfasında geçmiş tabloyu görebilmen için izole fiş (points) basar.");
+    if (!weekInput) return;
+    
+    const weekNum = parseInt(weekInput.trim());
+    if (isNaN(weekNum) || weekNum < 6) {
+        alert("❌ Geçersiz komut! Lütfen 6 veya daha büyük bir hafta numarası girin.");
+        return;
+    }
+
+    setIsManualFetching(true);
+    try {
+        // 1. Önce bu hafta için zaten kesilmiş fiş var mı kontrol et
+        const { data: existingPoints } = await supabase.from('points').select('id').eq('hafta', weekNum);
+        if (existingPoints && existingPoints.length > 0) {
+            const overwrite = window.confirm(`⚠️ DİKKAT: ${weekNum}. Hafta için sistemde zaten ${existingPoints.length} adet fiş bulunuyor!\n\nBunları SİLİP, arşive (geçmiş maç skorlarına) göre tamamen baştan, temiz bir şekilde fiş kesmek istiyor musun?`);
+            if (!overwrite) { setIsManualFetching(false); return; }
+            await supabase.from('points').delete().eq('hafta', weekNum);
+        }
+
+        // 2. Bülteni Çek (Hangi takımlar oynadı?)
+        const { data: bulletin } = await supabase.from('matches_bulletin').select('*').eq('week_num', weekNum).order('match_index');
+        if (!bulletin || bulletin.length === 0) {
+            alert(`❌ ${weekNum}. haftaya ait bülten (maç listesi) bulunamadı! Arşiv boş.`); setIsManualFetching(false); return; 
+        }
+
+        // 3. Canlı (Biten) Skorları Çek
+        const idsToFetch = bulletin.map((m:any) => getUniqueMatchId(weekNum, m.match_index));
+        const { data: liveData } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
+        if (!liveData || liveData.length === 0) {
+            alert(`❌ ${weekNum}. haftaya ait maç sonucu bulunamadı! Lütfen önce o haftanın skorlarını girin.`); setIsManualFetching(false); return; 
+        }
+
+        // 4. Yarışmacıların O Haftaki Tahminlerini Çek
+        const { data: predictions } = await supabase.from('player_predictions').select('*').eq('week_num', weekNum);
+        if (!predictions || predictions.length === 0) {
+            alert(`❌ ${weekNum}. haftaya ait hiçbir yarışmacı tahmini bulunamadı!`); setIsManualFetching(false); return; 
+        }
+
+        // Tahminleri grupla: Hangi maça, hangi skoru, kimler dedi?
+        const predsMap: Record<number, Record<string, string[]>> = {};
+        predictions.forEach(p => {
+            if(!predsMap[p.match_index]) predsMap[p.match_index] = {};
+            if(!predsMap[p.match_index][p.predicted_score]) predsMap[p.match_index][p.predicted_score] = [];
+            predsMap[p.match_index][p.predicted_score].push(String(p.user_id));
+        });
+
+        const inserts: any[] = [];
+        const stats: Record<string, { pts: number, scores: number }> = {};
+
+        // 5. Her Maçı Analiz Et ve Bilenlere Fiş Kes
+        bulletin.forEach(m => {
+            const uId = getUniqueMatchId(weekNum, m.match_index);
+            const lMatch = liveData.find(l => l.id === uId);
+            // Maç bitmişse ve skor girilmişse değerlendir
+            if (!lMatch || lMatch.home_score === '-' || lMatch.away_score === '-' || lMatch.status !== 'FINISHED') return;
+
+            const targetScore = `${lMatch.home_score}-${lMatch.away_score}`;
+            const correctUsers = predsMap[m.match_index]?.[targetScore] || [];
+
+            if (correctUsers.length > 0) {
+                let displayPoints = 0;
+                const wc = correctUsers.length;
+                if(wc === 1) displayPoints = 12;
+                else if(wc === 2) displayPoints = 6;
+                else if(wc === 3) displayPoints = 5;
+                else if(wc === 4) displayPoints = 4;
+                else if(wc === 5) displayPoints = 3;
+                else if(wc === 6) displayPoints = 2;
+                else if(wc >= 7) displayPoints = 1;
+
+                const isTff = isTffMatchCheck(m.category);
+                const leagueName = isTff ? 'TFF' : 'DFO';
+
+                correctUsers.forEach(uid => {
+                    const winnerName = mergedPlayers[uid] || 'Bilinmeyen';
+                    
+                    if(!stats[uid]) stats[uid] = {pts: 0, scores: 0};
+                    stats[uid].pts += displayPoints;
+                    stats[uid].scores += 1;
+
+                    const baseData = {
+                       hafta: weekNum, user_name: winnerName, username: uid, ev_sahibi: m.home_team, deplasman: m.away_team,
+                       gercek_ev: parseInt(lMatch.home_score, 10), gercek_dep: parseInt(lMatch.away_score, 10), tahmin_ev: lMatch.home_score, tahmin_dep: lMatch.away_score, puan: displayPoints
+                    };
+                    inserts.push({ ...baseData, kategori: leagueName });
+                    inserts.push({ ...baseData, kategori: 'MASTER' });
+                });
+            }
+        });
+
+        // 6. Haftanın Puan ve Skor Liderlerini Bulup Bonus Fişlerini Kes
+        let maxPts = 0; let maxScores = 0;
+        Object.values(stats).forEach(s => {
+            if(s.pts > maxPts) maxPts = s.pts;
+            if(s.scores > maxScores) maxScores = s.scores;
+        });
+
+        let pLeadersArray: string[] = [];
+        let sLeadersArray: string[] = [];
+        if(maxPts > 0) {
+            pLeadersArray = Object.keys(stats).filter(uid => stats[uid].pts === maxPts);
+        }
+        if(maxScores > 0) {
+            sLeadersArray = Object.keys(stats).filter(uid => stats[uid].scores === maxScores);
+        }
+
+        // Sadece tek başına lider olanlara +3 bonus
+        if (pLeadersArray.length === 1) {
+            const finalPLeader = pLeadersArray[0];
+            inserts.push({ hafta: weekNum, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
+        }
+        if (sLeadersArray.length === 1) {
+            const finalSLeader = sLeadersArray[0];
+            inserts.push({ hafta: weekNum, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
+        }
+
+        // 7. Supabase'e Yaz
+        if (inserts.length > 0) {
+            // DİKKAT: Standings tablosunu (kasayı) BURADA GÜNCELLEMİYORUZ. Sadece points tablosuna yazıyoruz.
+            const { error } = await supabase.from('points').insert(inserts);
+            if (error) throw error;
+            alert(`✅ BAŞARILI! ${weekNum}. haftanın arşivi tarandı ve tam ${inserts.length} adet fiş kesildi.\n\nArtık 'Haftanın Enleri' menüsüne gidip ${weekNum}. Haftayı seçerek geçmiş tabloyu kusursuzca görebilirsiniz.`);
+            fetchBonusHistory(); // Panodaki tarihi güncelleyelim
+        } else {
+            alert(`⚠️ ${weekNum}. hafta için tahminleri tutturan kimse bulunamadı. Fiş kesilmedi.`);
+        }
+
+    } catch (error: any) {
+        alert("❌ HATA OLUŞTU: " + error.message);
+    } finally {
+        setIsManualFetching(false);
+    }
+  };
+
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     const homeScore = adminScores[matchId]?.home || "-";
     const awayScore = adminScores[matchId]?.away || "-";
@@ -1385,7 +1520,6 @@ export default function AdminRadarPortal() {
     setAdminScores((prev: any) => ({ ...prev, [matchId]: { ...(prev[matchId] || { home: "-", away: "-" }), [team]: score } }));
   };
 
-  // 🔥 YENİ: EKSİK OLAN FONKSİYON EKLENDİ 🔥
   const handleBanishPlayer = async (userId: string, userName: string) => {
     const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEğer bu kişiyi silerseniz Karargah sisteminden çıkacaktır. Emin misiniz?`);
     if (!confirmDelete) return;
@@ -1548,7 +1682,7 @@ export default function AdminRadarPortal() {
                     Not: Bu radar sizin girdiğiniz skorlara göre anlık güncellenir.
                 </p>
 
-                {/* 🔥 YENİ: GEÇMİŞ HAFTALAR ŞEREF KÜRSÜSÜ (TARİHÇE) 🔥 */}
+                {/* 🔥 GEÇMİŞ HAFTALAR ŞEREF KÜRSÜSÜ (TARİHÇE) 🔥 */}
                 <div className="mt-6 flex flex-col items-center border-t border-slate-700/50 pt-4">
                     <button 
                         onClick={() => setShowHistory(!showHistory)}
@@ -1589,10 +1723,10 @@ export default function AdminRadarPortal() {
             )}
 
             {(userRole === 'master' || userRole?.startsWith('skorcum')) && (
-              <div className="w-full flex flex-col sm:flex-row justify-center gap-4 mb-8 max-w-5xl mx-auto">
+              <div className="w-full flex flex-col sm:flex-row justify-center gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
                   <button 
                       onClick={handleBulkSilentLive}
-                      className="flex-1 bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                      className="flex-1 min-w-[250px] bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 hover:from-amber-500 hover:to-red-500 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.6)] border border-amber-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
                   >
                       <span className="flex items-center gap-2"><span className="text-2xl animate-pulse">⚡</span> BÜTÜN MAÇLARI CANLIYA AL</span>
                       <span className="text-[10px] sm:text-xs text-amber-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Sessiz Mod: Puanlar gizlenir, spoiler engellenir.</span>
@@ -1601,7 +1735,7 @@ export default function AdminRadarPortal() {
                   <button 
                       onClick={handleManualApiFetch}
                       disabled={isManualFetching}
-                      className="flex-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                      className="flex-1 min-w-[250px] bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
                   >
                       <span className="flex items-center gap-2">
                           <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
@@ -1612,11 +1746,22 @@ export default function AdminRadarPortal() {
                   
                   <button 
                       onClick={handleBulkApprove}
-                      className="flex-1 bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-700 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.6)] border border-emerald-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                      className="flex-1 min-w-[250px] bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-700 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.6)] border border-emerald-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
                   >
                       <span className="flex items-center gap-2"><span className="text-2xl animate-bounce">🏆</span> BİTENLERİ ONAYLA</span>
                       <span className="text-[10px] sm:text-xs text-emerald-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Onay Bekleyen maçların puanlarını tek tıkla dağıt.</span>
                   </button>
+
+                  {/* 🔥 YENİ: GEÇMİŞİ ONAR (ZAMAN MAKİNESİ) BUTONU 🔥 */}
+                  {userRole === 'master' && (
+                    <button 
+                        onClick={handleArchiveRepair}
+                        className="flex-1 min-w-[250px] bg-gradient-to-r from-fuchsia-600 via-purple-500 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(192,38,211,0.6)] border border-fuchsia-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                    >
+                        <span className="flex items-center gap-2"><span className="text-2xl animate-spin-slow">⏳</span> GEÇMİŞİ ONAR (ZAMAN MAKİNESİ)</span>
+                        <span className="text-[10px] sm:text-xs text-fuchsia-100 font-medium bg-black/30 px-3 py-1 rounded-full mt-1">Eski tahminleri tarar ve Tarihçeye 'İzole Fiş' basar. (Kasayı etkilemez).</span>
+                    </button>
+                  )}
               </div>
             )}
 
@@ -1884,7 +2029,6 @@ export default function AdminRadarPortal() {
                 <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
                         <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
-                        {/* 🔥 YENİ: FİLTRE GİZLE/GÖSTER BUTONU 🔥 */}
                         <button 
                             onClick={() => setIsApiFilterOpen(!isApiFilterOpen)}
                             className="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[10px] font-bold px-3 py-1.5 rounded border border-slate-600 transition-all shadow-sm"
@@ -1893,7 +2037,6 @@ export default function AdminRadarPortal() {
                         </button>
                     </div>
 
-                    {/* 🔥 FİLTRE KUTUSU (AÇILIR KAPANIR) 🔥 */}
                     {isApiFilterOpen && (
                         <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3 flex flex-col gap-2 shadow-inner animate-fade-in">
                            <div className="text-[10px] font-black tracking-widest text-slate-500 mb-1 flex items-center gap-1">
@@ -1943,7 +2086,6 @@ export default function AdminRadarPortal() {
                                     )
                                  })}
                                  
-                                 {/* 🔥 KULLANICININ KENDİ EKLENDİĞİ BUTONLAR 🔥 */}
                                  {customLeagueFilters.map((lig: any) => {
                                     const isActive = seciliLigFiltreleri.includes(lig.id);
                                     return (
