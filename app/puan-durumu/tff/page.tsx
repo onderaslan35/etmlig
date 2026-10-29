@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import { isTffMatchCheck } from '@/utils/themeEngine'; // TFF filtresini içeri aldık
+import { isTffMatchCheck } from '@/utils/themeEngine'; 
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -84,7 +84,7 @@ export default function TffPuanDurumuPage() {
             trendDiff: r.tff_trend_diff || 0
         }));
 
-        // 5. CANLI PUAN HESAPLAMA (SADECE TFF MAÇLARI)
+        // 5. CANLI PUAN HESAPLAMA (SADECE TFF MAÇLARI İÇİN)
         if (allMatches && predictions && dbBulletin) {
             const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
@@ -97,8 +97,15 @@ export default function TffPuanDurumuPage() {
                 
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
                 
-                // 🔥 EĞER DFO MAÇIYSA (TFF DEĞİLSE) PUAN EKLENMEZ 🔥
-                if (bulletinMatch && !isTffMatchCheck(bulletinMatch.category)) return;
+                // 🔥 KİLİT NOKTASI: Türkiye Kupası ve alt liglerin hepsi TFF olarak sayılmalı 🔥
+                if (bulletinMatch) {
+                    const matchCategory = bulletinMatch.category ? bulletinMatch.category.toUpperCase() : '';
+                    
+                    // Eğer maç bir DFO (Master) maçıysa, işlemi atla. (Türkiye Kupası ve TFF liglerini GEÇİR)
+                    const isDefiniteTFF = isTffMatchCheck(matchCategory) || matchCategory.includes('TÜRKİYE') || matchCategory.includes('TURKIYE') || matchCategory.includes('TURKEY');
+                    
+                    if (!isDefiniteTFF) return; // Maç TFF veya Türkiye Kupası DEĞİLSE puan verme!
+                }
 
                 const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
                 
