@@ -480,7 +480,7 @@ export const localTeamLogos: Record<string, string> = {
   "ST. PAULI": "https://images.fotmob.com/image_resources/logo/teamlogo/10202.png",
   "HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/8295.png",
   "FC HEIDENHEIM": "https://images.fotmob.com/image_resources/logo/teamlogo/156973.png",  
-  "SCHALKE 04": "https://images.fotmob.com/image_resources/logo/teamlogo/10189.png",
+  "FC SCHALKE 04": "https://images.fotmob.com/image_resources/logo/teamlogo/10189.png",
   "HAMBURG": "https://images.fotmob.com/image_resources/logo/teamlogo/9790.png",
   "ELVERSBERG": "https://images.fotmob.com/image_resources/logo/teamlogo/8251.png",
   "VFL OSNABRÜCK": "https://images.fotmob.com/image_resources/logo/teamlogo/9775_large.png",
@@ -557,6 +557,7 @@ export const localTeamLogos: Record<string, string> = {
   "FEYENOORD": "https://images.fotmob.com/image_resources/logo/teamlogo/10235.png",
   "AJAX": "https://images.fotmob.com/image_resources/logo/teamlogo/8593.png",
   "AZ ALKMAAR": "https://images.fotmob.com/image_resources/logo/teamlogo/10229.png",
+  "WILLEM II": "https://images.fotmob.com/image_resources/logo/teamlogo/8525.png",
   "TWENTE": "https://images.fotmob.com/image_resources/logo/teamlogo/8611.png",
   "NEC NIJMEGEN": "https://en.wikipedia.org/wiki/Special:FilePath/NEC_Nijmegen_logo.svg",
 
@@ -575,7 +576,8 @@ export const localTeamLogos: Record<string, string> = {
   // PORTEKİZ
   "SPORTING CP": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
   "SPORTİNG LİZBON": "https://images.fotmob.com/image_resources/logo/teamlogo/9768.png",
-  "FC PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9772.png",
+  "ESTORIL": "https://images.fotmob.com/image_resources/logo/teamlogo/7842.png",
+  "FC PORTO": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
   
   "BENFICA": "https://images.fotmob.com/image_resources/logo/teamlogo/9772_large.png",
   "SC BRAGA": "https://images.fotmob.com/image_resources/logo/teamlogo/10264_large.png",
