@@ -586,6 +586,7 @@ export const localTeamLogos: Record<string, string> = {
   "CELTIC": "https://images.fotmob.com/image_resources/logo/teamlogo/9925_large.png",
   "RANGERS": "https://images.fotmob.com/image_resources/logo/teamlogo/8548.png",
   "HEART": "https://it.wikipedia.org/wiki/Special:FilePath/Hearts_FC.svg",
+  "FALKIRK": "https://images.fotmob.com/image_resources/logo/teamlogo/8596.png",
   "HEARTS": "https://images.fotmob.com/image_resources/logo/teamlogo/8274.png",
   "ABERDEEN": "https://images.fotmob.com/image_resources/logo/teamlogo/8485.png",
   "ST. MİRREN": "https://images.fotmob.com/image_resources/logo/teamlogo/9800_large.png",
