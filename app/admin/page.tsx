@@ -12,7 +12,6 @@ import {
   getEliteTheme
 } from '@/utils/themeEngine';
 
-// 🔥 GECE 02:59'A KADAR OLAN SÜREYİ "BUGÜN" SAYAN ÖZEL FONKSİYON 🔥
 const getCustomTodayDateString = () => {
     const d = new Date();
     if (d.getHours() < 3) {
@@ -24,12 +23,11 @@ const getCustomTodayDateString = () => {
     return `${day}.${month}.${year}`;
 };
 
-// 🔥 YENİ: İLERİYE DÖNÜK TAKVİM GÜNLERİNİ OTOMATİK ÜRETEN MOTOR 🔥
 const generateNextDays = (daysCount: number) => {
     const dates = [];
     const baseDate = new Date();
     if (baseDate.getHours() < 3) {
-        baseDate.setDate(baseDate.getDate() - 1); // Gece 3'ten önceyse bugünü "dün" kabul et
+        baseDate.setDate(baseDate.getDate() - 1); 
     }
     for (let i = 0; i < daysCount; i++) {
         const tempDate = new Date(baseDate);
@@ -138,7 +136,6 @@ export default function AdminRadarPortal() {
 
   const [currentWeekDates, setCurrentWeekDates] = useState<string[]>([]);
   
-  // 🔥 KOMUTANIN EMRİ: DEFAULT TARİH VE SAATLER AYARLANDI 🔥
   const [havuzBaslangicTarihi, setHavuzBaslangicTarihi] = useState<string>('');
   const [havuzBitisTarihi, setHavuzBitisTarihi] = useState<string>('');
   const [havuzBaslangicSaati, setHavuzBaslangicSaati] = useState<string>('00:00'); 
@@ -166,6 +163,9 @@ export default function AdminRadarPortal() {
   const [distributedMatches, setDistributedMatches] = useState<{ [key: number]: boolean }>({});
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
+  
+  // 🔥 YENİ: HAFTANIN GERÇEK VERİTABANI PUANLARI 🔥
+  const [weeklyDbPoints, setWeeklyDbPoints] = useState<any[]>([]);
 
   const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
@@ -190,7 +190,7 @@ export default function AdminRadarPortal() {
   };
 
   const displayedMatches = useMemo(() => {
-    return liveMatchesDB.filter((match: any) => {
+    const filtered = liveMatchesDB.filter((match: any) => {
         const logInfo = liveInfoStateMap[match.match_index];
         const status = logInfo?.status || 'NOT_STARTED';
 
@@ -220,6 +220,17 @@ export default function AdminRadarPortal() {
         }
         return true; 
     });
+
+    return filtered.sort((a: any, b: any) => {
+        const statusA = liveInfoStateMap[a.match_index]?.status || 'NOT_STARTED';
+        const statusB = liveInfoStateMap[b.match_index]?.status || 'NOT_STARTED';
+        
+        if (statusA === 'WAITING_APPROVAL' && statusB !== 'WAITING_APPROVAL') return -1;
+        if (statusA !== 'WAITING_APPROVAL' && statusB === 'WAITING_APPROVAL') return 1;
+        
+        return a.match_index - b.match_index; 
+    });
+
   }, [liveMatchesDB, liveInfoStateMap, now, userRole, showOnlyToday]);
 
   const handleForce1Lig = async (matchIndex: number) => {
@@ -245,16 +256,14 @@ export default function AdminRadarPortal() {
     setLiveInfoStateMap({});
   }, [selectedLiveWeek]);
 
-  // 🔥 YENİ: SAYFA AÇILDIĞINDA TAKVİMİ DOLDUR VE BUGÜNÜ SEÇ 🔥
   useEffect(() => {
-      const nextDays = generateNextDays(14); // Gelecek 14 günü oluştur
+      const nextDays = generateNextDays(14); 
       setCurrentWeekDates(nextDays);
-      setHavuzBaslangicTarihi(nextDays[0]); // Default: Bugün
-      setHavuzBitisTarihi(nextDays[0]);     // Default: Bugün
-      setManuelTarih(nextDays[0]);          // Default: Bugün
+      setHavuzBaslangicTarihi(nextDays[0]); 
+      setHavuzBitisTarihi(nextDays[0]);     
+      setManuelTarih(nextDays[0]);          
   }, []);
 
-  // 🔥 YENİ: GEÇMİŞ BÜLTENLERİ EKRANA (secilenMaclar'a) DİZ 🔥
   useEffect(() => {
       if (bulletinWeek === 0) return;
       
@@ -654,6 +663,10 @@ export default function AdminRadarPortal() {
          const { data } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
          if (data) liveData = data;
       }
+      
+      // 🔥 VERİTABANINDAKİ KESİN PUANLARI ÇEK 🔥
+      const { data: dbPointsData } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('kategori', 'MASTER');
+      setWeeklyDbPoints(dbPointsData || []);
 
       let allPredictions: any[] = [];
       let fetchMore = true;
@@ -807,13 +820,26 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
+  // 🔥 KUSURSUZ CANLI RADAR MOTORU: Veritabanı ve Ekran Puanlarını BİRLEŞTİRİR 🔥
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach((uid: string) => {
          stats[uid] = { points: 0, exactScores: 0 };
      });
 
+     // 1. Veritabanındaki (points tablosu) KESİN puanları ekle (Önder Işık'ın 39 puanı burdan gelecek)
+     weeklyDbPoints.forEach(row => {
+         if (row.ev_sahibi !== 'HAFTANIN' && row.ev_sahibi !== 'SKOR' && stats[row.username]) {
+             stats[row.username].points += row.puan;
+             stats[row.username].exactScores += 1;
+         }
+     });
+
+     // 2. Ekranda puanı girilmiş ama HÂLÂ BİTİRİLMEMİŞ (Canlı) maçların potansiyel puanlarını üstüne ekle
      liveMatchesDB.forEach((match: any) => {
+         const isLocked = distributedMatches[match.match_index];
+         if (isLocked) return; 
+
          const hScore = adminScores[match.match_index]?.home || "-";
          const aScore = adminScores[match.match_index]?.away || "-";
 
@@ -863,7 +889,7 @@ export default function AdminRadarPortal() {
      }
 
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
-  }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek]);
+  }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek, weeklyDbPoints, distributedMatches]);
 
 
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
@@ -898,77 +924,22 @@ export default function AdminRadarPortal() {
 
       const rawCategory = String(matchData.category || '');
       const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
-      
       const homeName = String(matchData.home_team || '').toLocaleLowerCase('tr-TR');
       const awayName = String(matchData.away_team || '').toLocaleLowerCase('tr-TR');
-      
       const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-      const isDefiniteTFF = isTffMatchCheck(matchData.category) || 
-                            catLower.includes('türkiye kupası') || 
-                            catLower.includes('turkiye kupasi') || 
-                            catLower.includes('tff') || 
-                            catLower.includes('süper lig') || 
-                            catLower.includes('1. lig') || 
-                            catLower.includes('amatör') || 
-                            catLower.includes('bal') || 
-                            isTurkishTeam;
+      const isDefiniteTFF = isTffMatchCheck(matchData.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
       
       let leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
 
       let confirmMsg = matchId === 24 
-          ? `DİKKAT: 24. Maç (Son Maç) onaylanacak!\nBu maçın normal puanları dağıtılacak ve haftanın liderlerine +3 Bonus kalıcı olarak eklenecek.\nOnaylıyor musunuz?`
+          ? `DİKKAT: 24. Maç (Haftanın Son Maçı) onaylanacak!\nBu maçın normal puanları dağıtılacak.\nOnaylıyor musunuz?`
           : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?\n(Sistem Bu Maçı ${leagueName} Olarak Algıladı)`;
 
       if (!window.confirm(confirmMsg)) return;
 
       if (matchId === 24) {
-            let bonusInserts: any[] = [];
-            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
-            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
-
-            if (finalPLeader) {
-                bonusInserts.push({
-                    hafta: selectedLiveWeek, 
-                    user_name: mergedPlayers[finalPLeader], 
-                    username: finalPLeader, 
-                    kategori: 'MASTER', 
-                    ev_sahibi: 'HAFTANIN', 
-                    deplasman: 'LİDERİ',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                });
-            }
-
-            if (finalSLeader) {
-                bonusInserts.push({
-                    hafta: selectedLiveWeek, 
-                    user_name: mergedPlayers[finalSLeader], 
-                    username: finalSLeader, 
-                    kategori: 'MASTER', 
-                    ev_sahibi: 'SKOR', 
-                    deplasman: 'KRALI',
-                    gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3
-                });
-            }
-
-            if (bonusInserts.length > 0) {
-                const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
-                if (bInsertError) {
-                    alert(`❌ DİKKAT! Bonuslar veritabanına yazılamadı!\nSebep: ${bInsertError.message}`);
-                } else {
-                    for (const insert of bonusInserts) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', insert.username);
-                        if (stData) {
-                            const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
-                    alert(`🎁 24. MAÇ İŞLEMİ TAMAM! (Haftanın liderlerine +3 puan MASTER kasasına kalıcı eklendi!)`);
-                    fetchBonusHistory();
-                }
-            } else {
-               alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Beraberlik olduğu için kimseye bonus verilmedi)`);
-            }
+          alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Son maç onaylandı. Haftalık puanlar normal şekilde eklenecek)`);
       }
 
       try {
@@ -1035,22 +1006,6 @@ export default function AdminRadarPortal() {
         if (!confirmUndo) return;
 
         try {
-          if (matchId === 24) {
-               const { data: bonusPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
-               if (bonusPoints && bonusPoints.length > 0) {
-                   for (const row of bonusPoints) {
-                       const pts = row.puan; const uid = row.username;
-                       const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
-                       if (stData) {
-                           const mRow = stData.find(r => r.league_type === 'MASTER');
-                           if (mRow) await supabase.from('standings').update({ points: Math.max(0, mRow.points - pts) }).eq('id', mRow.id);
-                       }
-                   }
-                   await supabase.from('points').delete().eq('hafta', selectedLiveWeek).in('ev_sahibi', ['HAFTANIN', 'SKOR']);
-                   fetchBonusHistory(); 
-               }
-          }
-
           const { data: existingPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
           if (existingPoints && existingPoints.length > 0) {
             for (const row of existingPoints) {
@@ -1065,7 +1020,7 @@ export default function AdminRadarPortal() {
             }
             await supabase.from('points').delete().eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
           }
-          alert("✅ GERİ ALMA BAŞARILI! Puanlar ve varsa Bonuslar kasadan düşüldü, fişler silindi.");
+          alert("✅ GERİ ALMA BAŞARILI! Puanlar kasadan düşüldü, fişler silindi.");
         } catch (error: any) { alert("❌ HATA: " + error.message); return; }
       }
 
@@ -1078,150 +1033,6 @@ export default function AdminRadarPortal() {
       setDistributedMatches((prev: any) => ({ ...prev, [matchId]: false })); 
       if(!isLocked) alert("✅ Skor başarıyla sıfırlandı.");
     }
-  };
-
-  const handleBulkApprove = async () => {
-    const matchesToApprove = displayedMatches.filter((m: any) => {
-        const logInfo = liveInfoStateMap[m.match_index];
-        return logInfo?.status === 'WAITING_APPROVAL';
-    });
-
-    if (matchesToApprove.length === 0) {
-        alert("⚠️ Ekranda 'ONAY BEKLİYOR' statüsünde hiçbir maç bulunamadı.");
-        return;
-    }
-
-    if (!window.confirm(`DİKKAT: Tam ${matchesToApprove.length} adet maçın puanları otomatik hesaplanıp kasalara eklenecek ve statüleri BİTTİ (FINISHED) olarak işaretlenecektir.\n\nOnaylıyor musunuz Komutanım?`)) return;
-
-    const nowTime = new Date();
-    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
-
-    let successCount = 0;
-    let skipCount = 0;
-    let finalMatchApproved = false;
-
-    for (const match of matchesToApprove) {
-        const matchId = match.match_index;
-        const homeScore = adminScores[matchId]?.home || "-";
-        const awayScore = adminScores[matchId]?.away || "-";
-        const uniqueId = getUniqueMatchId(selectedLiveWeek, matchId);
-        
-        const rawCategory = String(match.category || '');
-        const catLower = rawCategory.toLocaleLowerCase('tr-TR');
-        
-        const homeName = String(match.home_team || '').toLocaleLowerCase('tr-TR');
-        const awayName = String(match.away_team || '').toLocaleLowerCase('tr-TR');
-        
-        const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
-
-        const isDefiniteTFF = isTffMatchCheck(match.category) || 
-                              catLower.includes('türkiye kupası') || 
-                              catLower.includes('turkiye kupasi') || 
-                              catLower.includes('tff') || 
-                              catLower.includes('süper lig') || 
-                              catLower.includes('1. lig') || 
-                              catLower.includes('amatör') || 
-                              catLower.includes('bal') || 
-                              isTurkishTeam;
-                              
-        const leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
-
-        if (homeScore === "-" || awayScore === "-") {
-            skipCount++;
-            continue;
-        }
-
-        const targetScore = `${homeScore}-${awayScore}`;
-        const currentWinners = Object.keys(predictionsDB)
-            .filter((uid: string) => predictionsDB[uid] && predictionsDB[uid][matchId - 1] === targetScore)
-            .map((uid: string) => mergedPlayers[uid] || "Bilinmeyen");
-
-        let winnersCount = currentWinners.length;
-        let displayPoints = 0;
-        if(winnersCount === 1) displayPoints = 12;
-        else if(winnersCount === 2) displayPoints = 6;
-        else if(winnersCount === 3) displayPoints = 5;
-        else if(winnersCount === 4) displayPoints = 4;
-        else if(winnersCount === 5) displayPoints = 3;
-        else if(winnersCount === 6) displayPoints = 2;
-        else if(winnersCount >= 7) displayPoints = 1;
-
-        if (matchId === 24) {
-            finalMatchApproved = true;
-            let bonusInserts: any[] = [];
-            let finalPLeader = weeklyStats.pLeadersArray.length === 1 ? weeklyStats.pLeadersArray[0] : null;
-            let finalSLeader = weeklyStats.sLeadersArray.length === 1 ? weeklyStats.sLeadersArray[0] : null;
-
-            if (finalPLeader) {
-                bonusInserts.push({ hafta: selectedLiveWeek, user_name: mergedPlayers[finalPLeader], username: finalPLeader, kategori: 'MASTER', ev_sahibi: 'HAFTANIN', deplasman: 'LİDERİ', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
-            }
-            if (finalSLeader) {
-                bonusInserts.push({ hafta: selectedLiveWeek, user_name: mergedPlayers[finalSLeader], username: finalSLeader, kategori: 'MASTER', ev_sahibi: 'SKOR', deplasman: 'KRALI', gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, puan: 3 });
-            }
-
-            if (bonusInserts.length > 0) {
-                const { error: bInsertError } = await supabase.from('points').insert(bonusInserts);
-                if (!bInsertError) {
-                    for (const insert of bonusInserts) {
-                        const { data: stData } = await supabase.from('standings').select('*').eq('user_id', insert.username);
-                        if (stData) {
-                            const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                            if (mRow) await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                        }
-                    }
-                }
-            }
-        }
-
-        const { data: existingPointsCheck } = await supabase.from('points').select('id').eq('hafta', selectedLiveWeek).eq('ev_sahibi', match.home_team).eq('deplasman', match.away_team);
-        
-        if (existingPointsCheck && existingPointsCheck.length > 0) {
-            await supabase.from('live_matches').update({ status: 'FINISHED', updated_by: userRole, updated_at: timeString }).eq('id', uniqueId);
-            setDistributedMatches((prev: any) => ({...prev, [matchId]: true}));
-            successCount++;
-            continue;
-        }
-
-        if (currentWinners.length > 0) {
-            const inserts: any[] = [];
-            currentWinners.forEach((winnerName: string) => {
-                const userId = getPlayerIdByName(winnerName);
-                if(!userId) return;
-                const baseData = {
-                    hafta: selectedLiveWeek, user_name: winnerName, username: userId, ev_sahibi: match.home_team, deplasman: match.away_team,
-                    gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
-                };
-                inserts.push({ ...baseData, kategori: leagueName });
-                inserts.push({ ...baseData, kategori: 'MASTER' });
-            });
-
-            const { error: insertError } = await supabase.from('points').insert(inserts);
-            if (!insertError) {
-                for (const winnerName of currentWinners) {
-                    const userId = getPlayerIdByName(winnerName);
-                    if (!userId) continue;
-                    const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
-                    if (stData) {
-                        const lRow = stData.find((r: any) => r.league_type === leagueName);
-                        if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
-                        else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
-
-                        const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                        if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
-                        else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
-                    }
-                }
-            }
-        }
-        
-        await supabase.from('live_matches').update({ status: 'FINISHED', updated_by: userRole, updated_at: timeString }).eq('id', uniqueId);
-        setDistributedMatches((prev: any) => ({...prev, [matchId]: true}));
-        successCount++;
-    }
-
-    if (finalMatchApproved) fetchBonusHistory(); 
-
-    alert(`✅ TOPLU ONAY TAMAMLANDI!\n${successCount} adet maç başarıyla arşivlendi ve puanları dağıtıldı.${skipCount > 0 ? `\n(Skoru henüz girilmeyen ${skipCount} maç es geçildi)` : ''}`);
   };
 
   const fetchHaftalikHavuz = async () => {
@@ -1619,6 +1430,7 @@ export default function AdminRadarPortal() {
                </div>
             )}
 
+            {/* 🔥 CANLI RADAR VE GEÇMİŞ HAFTA BİLGİLERİ GERİ GELDİ 🔥 */}
             {userRole === 'master' && (
             <div className="mb-8 p-5 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)]">
                 <h2 className="text-center font-black text-blue-400 text-sm tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
@@ -1650,7 +1462,7 @@ export default function AdminRadarPortal() {
                     </div>
                 </div>
                 <p className="text-center text-slate-500 text-[10px] mt-4 italic">
-                    Not: Bu radar sizin girdiğiniz skorlara göre anlık güncellenir.
+                    Not: Bu radar artık veritabanındaki ana puanlar + o anki canlı skorlar toplanarak %100 kusursuz hesaplanmaktadır.
                 </p>
 
                 <div className="mt-6 flex flex-col items-center border-t border-slate-700/50 pt-4">
@@ -1693,24 +1505,16 @@ export default function AdminRadarPortal() {
 
             {(userRole === 'master' || userRole?.startsWith('skorcum')) && (
               <div className="w-full flex flex-col justify-center gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
-                  
                   <div className="flex flex-col sm:flex-row gap-4 w-full">
                       <button 
                           onClick={handleManualApiFetch}
                           disabled={isManualFetching}
-                          className="flex-1 min-w-[200px] bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
+                          className="w-full min-w-[200px] bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(79,70,229,0.6)] border border-blue-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
                       >
                           <span className="flex items-center gap-2">
                               <span className={`text-2xl ${isManualFetching ? 'animate-spin' : 'animate-pulse'}`}>📡</span> 
                               {isManualFetching ? 'UYDUYA BAĞLANILIYOR...' : `ULTRA MOD: BUGÜNÜ ÇEK (KALAN KOTA: ${apiLimitRemaining})`}
                           </span>
-                      </button>
-                      
-                      <button 
-                          onClick={handleBulkApprove}
-                          className="flex-1 min-w-[200px] bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-700 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm px-4 py-4 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.6)] border border-emerald-300/50 transition-all transform hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center gap-1"
-                      >
-                          <span className="flex items-center gap-2"><span className="text-2xl animate-bounce">🏆</span> BİTENLERİ ONAYLA</span>
                       </button>
                   </div>
               </div>
@@ -1799,7 +1603,6 @@ export default function AdminRadarPortal() {
 
                 let theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
                 
-                // 🔥 KOMUTANIN EMRİ: TFF MAÇLARININ RENGİ KESİNLİKLE KIRMIZI OLACAK 🔥
                 if (isTffMatchUI) {
                     theme = {
                         ...theme,
