@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import { isTffMatchCheck } from '@/utils/themeEngine';
+import { isTffMatchCheck } from '@/utils/themeEngine'; 
 
 const formatTurkishDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -20,12 +20,22 @@ export default function DfoPuanDurumuPage() {
   const loadLeaderboard = async () => {
     try {
       const { data: allMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category');
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, home_team, away_team');
       
       let activeWeek = 5, activeDate = '';
+      let liveWeeks: number[] = [];
+
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
-          allMatches.forEach(m => statusMap[m.id] = m.status);
+          
+          allMatches.forEach(m => {
+              statusMap[m.id] = m.status;
+              if (m.status === 'LIVE' || m.status === 'HT') {
+                  const wNum = Math.floor(m.id / 100);
+                  if (!liveWeeks.includes(wNum)) liveWeeks.push(wNum);
+              }
+          });
+
           const weeksData: Record<number, { date: string, hasStartedMatch: boolean }> = {};
           
           dbBulletin.forEach(b => {
@@ -38,6 +48,8 @@ export default function DfoPuanDurumuPage() {
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           activeDate = weeksData[activeWeek]?.date || '';
+          
+          if (!liveWeeks.includes(activeWeek)) liveWeeks.push(activeWeek);
       }
       setDisplayWeekNum(activeWeek);
       setDisplayDate(formatTurkishDate(activeDate));
@@ -52,40 +64,42 @@ export default function DfoPuanDurumuPage() {
       let fetchMore = true;
       let from = 0;
       const step = 1000;
-      while (fetchMore) {
-          const { data: pDataChunk, error } = await supabase
-              .from('player_predictions')
-              .select('*')
-              .eq('week_num', activeWeek)
-              .range(from, from + step - 1);
-          if (error) break;
-          if (pDataChunk && pDataChunk.length > 0) {
-              predictions = [...predictions, ...pDataChunk];
-              if (pDataChunk.length < step) fetchMore = false; 
-              else from += step; 
-          } else {
-              fetchMore = false; 
+      
+      if (liveWeeks.length > 0) {
+          while (fetchMore) {
+              const { data: pDataChunk, error } = await supabase
+                  .from('player_predictions')
+                  .select('*')
+                  .in('week_num', liveWeeks) 
+                  .range(from, from + step - 1);
+              if (error) break;
+              if (pDataChunk && pDataChunk.length > 0) {
+                  predictions = [...predictions, ...pDataChunk];
+                  if (pDataChunk.length < step) fetchMore = false; 
+                  else from += step; 
+              } else {
+                  fetchMore = false; 
+              }
           }
       }
 
+      // DFO için ana puanları çekiyoruz
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, dfo_pts, dfo_trend_direction, dfo_trend_diff');
       
       if (leaderboardData && leaderboardData.length > 0) {
         let updatedList = leaderboardData.map(r => ({
             id: r.id, 
             name: r.name || "", 
-            baseScore: r.dfo_pts || 0, 
+            baseScore: r.dfo_pts || 0,
             liveBonus: 0,
             trend: r.dfo_trend_direction || 'same', 
             trendDiff: r.dfo_trend_diff || 0
         }));
 
         if (allMatches && predictions && dbBulletin) {
+            const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
             
-            // 🔥 KOMUTANIN EMRİ: Çift saymayı önlemek için SADECE anlık oynanan (LIVE/HT) maçları hesapla!
-            const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT'));
-            
-            activeWeekMatches.forEach(match => {
+            liveM.forEach(match => {
                 const currentScore = `${match.home_score}-${match.away_score}`;
                 if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
                 
@@ -93,9 +107,30 @@ export default function DfoPuanDurumuPage() {
                 const matchWeek = Math.floor(match.id / 100);
                 
                 const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
-                if (bulletinMatch && isTffMatchCheck(bulletinMatch.category)) return;
+                
+                if (bulletinMatch) {
+                    const rawCategory = String(bulletinMatch.category || '');
+                    const catLower = rawCategory.toLocaleLowerCase('tr-TR');
+                    const homeName = String(bulletinMatch.home_team || '').toLocaleLowerCase('tr-TR');
+                    const awayName = String(bulletinMatch.away_team || '').toLocaleLowerCase('tr-TR');
+                    
+                    const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
 
-                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                    const isDefiniteTFF = isTffMatchCheck(bulletinMatch.category) || 
+                                          catLower.includes('türkiye kupası') || 
+                                          catLower.includes('turkiye kupasi') || 
+                                          catLower.includes('tff') || 
+                                          catLower.includes('süper lig') || 
+                                          catLower.includes('1. lig') || 
+                                          catLower.includes('amatör') || 
+                                          catLower.includes('bal') ||
+                                          isTurkishTeam;
+                                          
+                    // 🔥 ZIRH BURADA: Eğer maç KESİN TFF ise, DFO sayfasında hesaplama! (Değilse DFO'dur, hesapla!) 🔥
+                    if (isDefiniteTFF) return; 
+                }
+
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
                 
                 let pts = 0;
                 if (winners.length === 1) pts = 12;
@@ -160,43 +195,43 @@ export default function DfoPuanDurumuPage() {
           {tableRows.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs md:text-sm">
-                <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
-                  <tr>
-                    <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
-                    <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
-                    <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
-                    <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
+              <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
+                <tr>
+                  <th className="pl-3 md:pl-4 pr-1 py-3 w-10 md:w-14 text-left">SIRA</th>
+                  <th className="px-1 md:px-2 py-3 text-left">YARIŞMACI</th>
+                  <th className="px-1 py-3 w-16 md:w-24 text-right"></th>
+                  <th className="pr-3 md:pr-4 pl-1 py-3 w-12 md:w-16 text-center">PUAN</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1e293b]">
+                {tableRows.map((row, idx) => (
+                  <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
+                    <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
+                      <div className="flex items-center">
+                        <span className="text-left w-5">{row.currentRank}</span>
+                        {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
+                        {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
+                      </div>
+                    </td>
+                    <td className="px-1 md:px-2 py-3 align-middle">
+                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
+                        <span className="whitespace-nowrap">{row.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-1 py-3 align-middle text-right">
+                      {row.liveBonus > 0 && (
+                        <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
+                          +{row.liveBonus} CANLI
+                        </span>
+                      )}
+                    </td>
+                    <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-blue-500 text-center">
+                      {row.displayScore}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e293b]">
-                  {tableRows.map((row, idx) => (
-                    <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
-                      <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
-                        <div className="flex items-center">
-                          <span className="text-left w-5">{row.currentRank}</span>
-                          {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.trendDiff}</span></span>}
-                          {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.trendDiff}</span></span>}
-                        </div>
-                      </td>
-                      <td className="px-1 md:px-2 py-3 align-middle">
-                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold">
-                          <span className="whitespace-nowrap">{row.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-1 py-3 align-middle text-right">
-                        {row.liveBonus > 0 && (
-                          <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                            +{row.liveBonus} CANLI
-                          </span>
-                        )}
-                      </td>
-                      <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-sm text-blue-400 text-center">
-                        {row.displayScore}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
           ) : (<div className="py-12 text-center text-slate-500 font-medium text-xs sm:text-sm">⏳ Veriler yükleniyor...</div>)}
         </div>
