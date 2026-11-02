@@ -282,6 +282,8 @@ export const localTeamLogos: Record<string, string> = {
   "IBERIA 1999": "https://de.wikipedia.org/wiki/Special:FilePath/Iberia_1999_Tiflis.svg",
   "SLOVAN BRATISLAVA": "https://commons.wikimedia.org/wiki/Special:FilePath/SK_Slovan_Bratislava_logo.svg",
   "SANTA CLARA": "https://images.fotmob.com/image_resources/logo/teamlogo/1567.png",
+  "AFG": "https://images.fotmob.com/image_resources/logo/teamlogo/8071.png",
+  "ST TRUDIEN": "https://images.fotmob.com/image_resources/logo/teamlogo/9997.png",
   "KUPS": "https://en.wikipedia.org/wiki/Special:FilePath/KuPS_logo.svg",
 
 
