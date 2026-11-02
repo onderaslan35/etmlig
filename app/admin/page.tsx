@@ -164,7 +164,6 @@ export default function AdminRadarPortal() {
   const [predictionsDB, setPredictionsDB] = useState<Record<string, string[]>>({}); 
   const [liveInfoStateMap, setLiveInfoStateMap] = useState<Record<number, any>>({}); 
   
-  // 🔥 YENİ: HAFTANIN GERÇEK VERİTABANI PUANLARI 🔥
   const [weeklyDbPoints, setWeeklyDbPoints] = useState<any[]>([]);
 
   const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
@@ -664,7 +663,6 @@ export default function AdminRadarPortal() {
          if (data) liveData = data;
       }
       
-      // 🔥 VERİTABANINDAKİ KESİN PUANLARI ÇEK 🔥
       const { data: dbPointsData } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('kategori', 'MASTER');
       setWeeklyDbPoints(dbPointsData || []);
 
@@ -820,14 +818,12 @@ export default function AdminRadarPortal() {
     return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
-  // 🔥 KUSURSUZ CANLI RADAR MOTORU: Veritabanı ve Ekran Puanlarını BİRLEŞTİRİR 🔥
   const weeklyStats = useMemo(() => {
      const stats: Record<string, { points: number, exactScores: number }> = {};
      Object.keys(mergedPlayers).forEach((uid: string) => {
          stats[uid] = { points: 0, exactScores: 0 };
      });
 
-     // 1. Veritabanındaki (points tablosu) KESİN puanları ekle (Önder Işık'ın 39 puanı burdan gelecek)
      weeklyDbPoints.forEach(row => {
          if (row.ev_sahibi !== 'HAFTANIN' && row.ev_sahibi !== 'SKOR' && stats[row.username]) {
              stats[row.username].points += row.puan;
@@ -835,7 +831,6 @@ export default function AdminRadarPortal() {
          }
      });
 
-     // 2. Ekranda puanı girilmiş ama HÂLÂ BİTİRİLMEMİŞ (Canlı) maçların potansiyel puanlarını üstüne ekle
      liveMatchesDB.forEach((match: any) => {
          const isLocked = distributedMatches[match.match_index];
          if (isLocked) return; 
@@ -1268,6 +1263,17 @@ export default function AdminRadarPortal() {
       }
   };
 
+  // 🔥 YENİ: SEÇİLİ LİGİ KOMPLE SİLME FONKSİYONU 🔥
+  const handleDeleteLeague = (leagueName: string) => {
+      if (window.confirm(`DİKKAT: "${leagueName}" kategorisini ve içindeki TÜM TAKIMLARI tamamen silmek istediğinize emin misiniz?`)) {
+          const updatedHavuz = { ...dynamicLigHavuzu };
+          delete updatedHavuz[leagueName];
+          updateLigHavuzu(updatedHavuz);
+          setSelectedManageLeague(''); 
+          alert(`✅ SİLİNDİ! "${leagueName}" kategorisi ve içindeki tüm takımlar havuzdan kaldırıldı.`);
+      }
+  };
+
   const handleManuelMacEkle = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if(!manuelEv || !manuelDep || !manuelLig || !manuelTarih) {
@@ -1430,7 +1436,6 @@ export default function AdminRadarPortal() {
                </div>
             )}
 
-            {/* 🔥 CANLI RADAR VE GEÇMİŞ HAFTA BİLGİLERİ GERİ GELDİ 🔥 */}
             {userRole === 'master' && (
             <div className="mb-8 p-5 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)]">
                 <h2 className="text-center font-black text-blue-400 text-sm tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
@@ -1994,18 +1999,32 @@ export default function AdminRadarPortal() {
                       
                       <div className="mb-4">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">1. İşlem Yapılacak Ligi Seç (Zorunlu)</label>
-                          <select 
-                              value={selectedManageLeague} 
-                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                  setSelectedManageLeague(e.target.value);
-                                  setNewLeagueNameInput(''); 
-                              }} 
-                              className="w-full bg-slate-950 border border-slate-700 text-cyan-400 font-bold px-3 py-2 rounded-lg outline-none text-xs cursor-pointer mb-2"
-                          >
-                              <option value="">-- LİG SEÇ VEYA YENİ EKLE --</option>
-                              <option value="YENI_LIG">➕ YENİ LİG KATEGORİSİ OLUŞTUR</option>
-                              {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map((l: any) => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`managelig-${c}`} value={c}>{c}</option>)}
-                          </select>
+                          <div className="flex gap-2 mb-2">
+                              <select 
+                                  value={selectedManageLeague} 
+                                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                      setSelectedManageLeague(e.target.value);
+                                      setNewLeagueNameInput(''); 
+                                  }} 
+                                  className="flex-1 bg-slate-950 border border-slate-700 text-cyan-400 font-bold px-3 py-2 rounded-lg outline-none text-xs cursor-pointer"
+                              >
+                                  <option value="">-- LİG SEÇ VEYA YENİ EKLE --</option>
+                                  <option value="YENI_LIG">➕ YENİ LİG KATEGORİSİ OLUŞTUR</option>
+                                  {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map((l: any) => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`managelig-${c}`} value={c}>{c}</option>)}
+                              </select>
+                              
+                              {/* 🔥 İŞTE BURASI! ARTIK KENDİ ELLERİNLE LİGİ KOMPLE SİLEBİLİRSİN 🔥 */}
+                              {selectedManageLeague && selectedManageLeague !== 'YENI_LIG' && dynamicLigHavuzu[selectedManageLeague] && (
+                                  <button
+                                      type="button"
+                                      onClick={() => handleDeleteLeague(selectedManageLeague)}
+                                      className="bg-rose-700 hover:bg-rose-600 text-white font-black px-3 py-2 rounded-lg text-[10px] uppercase shadow-md transition-all flex items-center gap-1"
+                                      title="Bu kategoriyi tamamen sil"
+                                  >
+                                      🗑️ SİL
+                                  </button>
+                              )}
+                          </div>
 
                           {selectedManageLeague === 'YENI_LIG' && (
                               <input 
