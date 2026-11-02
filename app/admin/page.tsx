@@ -1263,7 +1263,6 @@ export default function AdminRadarPortal() {
       }
   };
 
-  // 🔥 YENİ: SEÇİLİ LİGİ KOMPLE SİLME FONKSİYONU 🔥
   const handleDeleteLeague = (leagueName: string) => {
       if (window.confirm(`DİKKAT: "${leagueName}" kategorisini ve içindeki TÜM TAKIMLARI tamamen silmek istediğinize emin misiniz?`)) {
           const updatedHavuz = { ...dynamicLigHavuzu };
@@ -1540,7 +1539,7 @@ export default function AdminRadarPortal() {
                  {userRole === 'master' && (
                      <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2" title="Günlük Kalan API İsteği">
                         <span className="text-slate-400 font-bold text-xs tracking-wider">📡 KOTA:</span>
-                        <span className={`font-black text-sm drop-shadow-md ${Number(apiLimitRemaining) > 20 ? 'text-emerald-400' : 'text-rose-500 animate-pulse'}`}>
+                        <span className={`font-black text-sm drop-shadow-md ${Number(apiLimitRemaining) > 20 ? 'textemerald-400' : 'text-rose-500 animate-pulse'}`}>
                             {apiLimitRemaining} <span className="text-slate-600 text-xs">/ {apiTotalLimit}</span>
                         </span>
                      </div>
@@ -2010,10 +2009,9 @@ export default function AdminRadarPortal() {
                               >
                                   <option value="">-- LİG SEÇ VEYA YENİ EKLE --</option>
                                   <option value="YENI_LIG">➕ YENİ LİG KATEGORİSİ OLUŞTUR</option>
-                                  {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map((l: any) => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`managelig-${c}`} value={c}>{c}</option>)}
+                                  {Array.from(new Set(Object.keys(dynamicLigHavuzu))).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`managelig-${c}`} value={c}>{c}</option>)}
                               </select>
                               
-                              {/* 🔥 İŞTE BURASI! ARTIK KENDİ ELLERİNLE LİGİ KOMPLE SİLEBİLİRSİN 🔥 */}
                               {selectedManageLeague && selectedManageLeague !== 'YENI_LIG' && dynamicLigHavuzu[selectedManageLeague] && (
                                   <button
                                       type="button"
@@ -2104,7 +2102,7 @@ export default function AdminRadarPortal() {
                               className="w-full bg-slate-950 border border-slate-700 text-slate-200 font-bold px-3 py-2 rounded-lg outline-none text-xs cursor-pointer"
                             >
                                <option value="">-- ÖNCE LİG SEÇİN --</option>
-                               {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map((l: any) => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`manlig-${c}`} value={c}>{c}</option>)}
+                               {Array.from(new Set(Object.keys(dynamicLigHavuzu))).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`manlig-${c}`} value={c}>{c}</option>)}
                             </select>
                          </div>
 
@@ -2210,7 +2208,7 @@ export default function AdminRadarPortal() {
                                             className={`bg-slate-900 border text-[9px] px-2 py-1 rounded outline-none font-bold flex-1 ${mac.category ? 'border-emerald-500/50 text-emerald-400' : 'border-rose-500/50 text-rose-400'}`}
                                         >
                                             <option value="">-- KATEGORİ SEÇ (ZORUNLU) --</option>
-                                            {Array.from(new Set([...POPULER_LIG_SECENEKLERI.map((l: any) => l.apiAd.toUpperCase()), ...Object.keys(dynamicLigHavuzu)])).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`hedef-${c}`} value={c}>{c}</option>)}
+                                            {Array.from(new Set(Object.keys(dynamicLigHavuzu))).sort((a: any, b: any) => a.localeCompare(b, 'tr')).map((c: string) => <option key={`hedef-${c}`} value={c}>{c}</option>)}
                                             {mac.league_name && <option value={mac.league_name}>{mac.league_name} (ORİJİNAL)</option>}
                                         </select>
                                     </div>
