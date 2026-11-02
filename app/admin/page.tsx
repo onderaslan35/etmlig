@@ -172,6 +172,18 @@ export default function AdminRadarPortal() {
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
+  // 🔥 YENİ: Bültende seçilen tüm takımları tutan ve açılır listeden gizleyen filtre havuzu 🔥
+  const kullanilanTakimlar = useMemo(() => {
+      const list = new Set<string>();
+      secilenMaclar.forEach((mac: any) => {
+          if (mac) {
+              if (mac.home_team) list.add(String(mac.home_team).trim().toUpperCase());
+              if (mac.away_team) list.add(String(mac.away_team).trim().toUpperCase());
+          }
+      });
+      return list;
+  }, [secilenMaclar]);
+
   const getDynamicElapsed = (logInfo: any) => {
      if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) {
          return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
@@ -1418,8 +1430,8 @@ export default function AdminRadarPortal() {
                         {['skorcum01', 'skorcum06', 'skorcum34', 'skorcumlevent'].map((sk: string) => {
                            const isActive = skorcuStatusMap[sk] !== false; 
                            return (
-                              <button 
-                                 key={sk}
+                              <button
+                              key={sk}
                                  onClick={() => toggleSkorcuAccess(sk, isActive)}
                                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs transition-all shadow-md ${
                                     isActive ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400 hover:bg-emerald-900' : 'bg-rose-950/80 border-rose-500/50 text-rose-400 hover:bg-rose-900'
@@ -1539,7 +1551,7 @@ export default function AdminRadarPortal() {
                  {userRole === 'master' && (
                      <div className="bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2" title="Günlük Kalan API İsteği">
                         <span className="text-slate-400 font-bold text-xs tracking-wider">📡 KOTA:</span>
-                        <span className={`font-black text-sm drop-shadow-md ${Number(apiLimitRemaining) > 20 ? 'textemerald-400' : 'text-rose-500 animate-pulse'}`}>
+                        <span className={`font-black text-sm drop-shadow-md ${Number(apiLimitRemaining) > 20 ? 'text-emerald-400' : 'text-rose-500 animate-pulse'}`}>
                             {apiLimitRemaining} <span className="text-slate-600 text-xs">/ {apiTotalLimit}</span>
                         </span>
                      </div>
