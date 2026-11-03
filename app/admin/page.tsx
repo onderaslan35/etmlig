@@ -906,7 +906,8 @@ export default function AdminRadarPortal() {
          inserts.push({
              hafta: selectedLiveWeek, user_name: pName, username: uid, 
              ev_sahibi: 'HAFTANIN', deplasman: 'BONUSU', 
-             gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', 
+             // Hata Çözümü: 0 değerlerini string "0" yaptık
+             gercek_ev: "0", gercek_dep: "0", tahmin_ev: '-', tahmin_dep: '-', 
              puan: 3, kategori: 'MASTER'
          });
          message += `🏆 Puan Lideri (+3 Puan): ${pName}\n`;
@@ -921,7 +922,8 @@ export default function AdminRadarPortal() {
          inserts.push({
              hafta: selectedLiveWeek, user_name: sName, username: uid, 
              ev_sahibi: 'SKOR', deplasman: 'BONUSU', 
-             gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', 
+             // Hata Çözümü: 0 değerlerini string "0" yaptık
+             gercek_ev: "0", gercek_dep: "0", tahmin_ev: '-', tahmin_dep: '-', 
              puan: 3, kategori: 'MASTER'
          });
          message += `⚽ Skor Kralı (+3 Puan): ${sName}\n`;
