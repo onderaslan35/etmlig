@@ -172,18 +172,6 @@ export default function AdminRadarPortal() {
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
-  // 🔥 YENİ: Bültende seçilen tüm takımları tutan ve açılır listeden gizleyen filtre havuzu 🔥
-  const kullanilanTakimlar = useMemo(() => {
-      const list = new Set<string>();
-      secilenMaclar.forEach((mac: any) => {
-          if (mac) {
-              if (mac.home_team) list.add(String(mac.home_team).trim().toUpperCase());
-              if (mac.away_team) list.add(String(mac.away_team).trim().toUpperCase());
-          }
-      });
-      return list;
-  }, [secilenMaclar]);
-
   const getDynamicElapsed = (logInfo: any) => {
      if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) {
          return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
@@ -898,6 +886,93 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek, weeklyDbPoints, distributedMatches]);
 
+  // 🔥 YENİ: BONUS DAĞITMA MOTORU (TEK TABANCA KURALI: +3 PUAN) 🔥
+  const handleDistributeBonuses = async () => {
+     const pCount = weeklyStats.pLeadersArray.length;
+     const sCount = weeklyStats.sLeadersArray.length;
+
+     if (pCount === 0 && sCount === 0) {
+         alert("Dağıtılacak bonus hak eden kimse bulunamadı!");
+         return;
+     }
+
+     const inserts: any[] = [];
+     let message = "";
+
+     // PUAN LİDERİ KONTROLÜ (TEK TABANCA MI?)
+     if (pCount === 1) {
+         const uid = weeklyStats.pLeadersArray[0];
+         const pName = mergedPlayers[uid];
+         inserts.push({
+             hafta: selectedLiveWeek, user_name: pName, username: uid, 
+             ev_sahibi: 'HAFTANIN', deplasman: 'BONUSU', 
+             gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', 
+             puan: 3, kategori: 'MASTER'
+         });
+         message += `🏆 Puan Lideri (+3 Puan): ${pName}\n`;
+     } else if (pCount > 1) {
+         message += `⚠️ Puan Liderliğinde Eşitlik Var (${pCount} kişi). Bonus İptal!\n`;
+     }
+
+     // SKOR KRALI KONTROLÜ (TEK TABANCA MI?)
+     if (sCount === 1) {
+         const uid = weeklyStats.sLeadersArray[0];
+         const sName = mergedPlayers[uid];
+         inserts.push({
+             hafta: selectedLiveWeek, user_name: sName, username: uid, 
+             ev_sahibi: 'SKOR', deplasman: 'BONUSU', 
+             gercek_ev: 0, gercek_dep: 0, tahmin_ev: '-', tahmin_dep: '-', 
+             puan: 3, kategori: 'MASTER'
+         });
+         message += `⚽ Skor Kralı (+3 Puan): ${sName}\n`;
+     } else if (sCount > 1) {
+         message += `⚠️ Skor Krallığında Eşitlik Var (${sCount} kişi). Bonus İptal!\n`;
+     }
+
+     if (inserts.length === 0) {
+         alert(`DİKKAT: KURALLAR GEREĞİ BONUS DAĞITILMADI!\n\n${message}\n(Liderlikte veya Krallıkta beraberlik olduğu için kimseye bonus verilmedi.)`);
+         return;
+     }
+
+     if (!window.confirm(`DİKKAT! AŞAĞIDAKİ BONUSLAR DAĞITILACAK:\n\n${message}\nBu işlemi onaylıyor musunuz? (Bu işlem sadece bir kez yapılmalıdır!)`)) {
+         return;
+     }
+
+     try {
+         // Çifte dağıtımı engelle (Aynı hafta içinde önceden bonus verilmiş mi kontrol et)
+         const { data: existingBonuses } = await supabase
+            .from('points')
+            .select('id')
+            .eq('hafta', selectedLiveWeek)
+            .in('ev_sahibi', ['HAFTANIN', 'SKOR']);
+
+         if (existingBonuses && existingBonuses.length > 0) {
+             alert(`❌ DUR KOMUTANIM!\n${selectedLiveWeek}. Haftanın bonusları zaten daha önceden dağıtılmış. Çifte puan verilmesi engellendi!`);
+             return;
+         }
+
+         // Fişleri veritabanına ekle
+         const { error: insertError } = await supabase.from('points').insert(inserts);
+         if (insertError) throw insertError;
+
+         // Standings tablosunu güncelle (MASTER kasasına +3 ekle)
+         for (const item of inserts) {
+             const { data: stData } = await supabase.from('standings').select('*').eq('user_id', item.username);
+             if (stData) {
+                 const mRow = stData.find((r: any) => r.league_type === 'MASTER');
+                 if (mRow) {
+                     await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
+                 } else {
+                     await supabase.from('standings').insert({ user_id: item.username, user_name: item.user_name, league_type: 'MASTER', points: 3 });
+                 }
+             }
+         }
+
+         alert(`✅ BAŞARILI! Hak edenlere +3 Puan bonusları kasaya işlendi ve listelere (Haftanın Enleri) eklendi.\n(Puanların ekrana yansıması için sayfayı F5 ile yenileyebilirsiniz.)`);
+     } catch (e: any) {
+         alert("❌ HATA: " + e.message);
+     }
+  };
 
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     const homeScore = adminScores[matchId]?.home || "-";
@@ -1430,8 +1505,8 @@ export default function AdminRadarPortal() {
                         {['skorcum01', 'skorcum06', 'skorcum34', 'skorcumlevent'].map((sk: string) => {
                            const isActive = skorcuStatusMap[sk] !== false; 
                            return (
-                              <button
-                              key={sk}
+                              <button 
+                                 key={sk}
                                  onClick={() => toggleSkorcuAccess(sk, isActive)}
                                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs transition-all shadow-md ${
                                     isActive ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400 hover:bg-emerald-900' : 'bg-rose-950/80 border-rose-500/50 text-rose-400 hover:bg-rose-900'
@@ -1481,7 +1556,15 @@ export default function AdminRadarPortal() {
                     Not: Bu radar artık veritabanındaki ana puanlar + o anki canlı skorlar toplanarak %100 kusursuz hesaplanmaktadır.
                 </p>
 
-                <div className="mt-6 flex flex-col items-center border-t border-slate-700/50 pt-4">
+                <div className="mt-6 flex flex-col items-center border-t border-slate-700/50 pt-4 gap-3">
+                    
+                    <button 
+                        onClick={handleDistributeBonuses}
+                        className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-black text-[11px] sm:text-xs px-8 py-3 rounded-full border border-amber-400 transition-all flex items-center gap-2 tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.5)] transform hover:scale-105"
+                    >
+                        <span>🎁 {selectedLiveWeek}. HAFTANIN BONUSLARINI KESİNLEŞTİR VE DAĞIT (+3 Puan)</span>
+                    </button>
+
                     <button 
                         onClick={() => setShowHistory(!showHistory)}
                         className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] sm:text-xs px-6 py-2 rounded-full border border-slate-600 transition-all flex items-center gap-2 tracking-widest shadow-md"
