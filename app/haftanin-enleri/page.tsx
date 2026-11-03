@@ -18,6 +18,9 @@ export default function HaftaninEnleriPortal() {
   const [isPointsOpen, setIsPointsOpen] = useState(false);
   const [isScoresOpen, setIsScoresOpen] = useState(false);
 
+  // 🔥 YENİ: ŞÖHRETLER MÜZESİ (ALL-TIME BONUS LİDERLERİ)
+  const [bonusHallOfFame, setBonusHallOfFame] = useState<{user_name: string, totalBonus: number, pCount: number, sCount: number}[]>([]);
+
   // Hafta değiştiğinde akordeonları (listeleri) otomatik kapat
   useEffect(() => {
       setIsPointsOpen(false);
@@ -50,7 +53,37 @@ export default function HaftaninEnleriPortal() {
         setIsLoading(false);
       }
     };
+
+    // 🔥 Tüm zamanların bonus fişlerini toplayan motor
+    const fetchHallOfFame = async () => {
+        const { data } = await supabase
+          .from('points')
+          .select('user_name, ev_sahibi, puan')
+          .in('ev_sahibi', ['HAFTANIN', 'SKOR']);
+
+        if (data) {
+            const totals: Record<string, { totalBonus: number, pCount: number, sCount: number }> = {};
+            
+            data.forEach(row => {
+                if (!totals[row.user_name]) {
+                    totals[row.user_name] = { totalBonus: 0, pCount: 0, sCount: 0 };
+                }
+                totals[row.user_name].totalBonus += (row.puan || 0);
+                if (row.ev_sahibi === 'HAFTANIN') totals[row.user_name].pCount += 1;
+                if (row.ev_sahibi === 'SKOR') totals[row.user_name].sCount += 1;
+            });
+            
+            // Puana göre büyükten küçüğe sırala
+            const sorted = Object.entries(totals)
+                .map(([user_name, stats]) => ({ user_name, ...stats }))
+                .sort((a, b) => b.totalBonus - a.totalBonus);
+            
+            setBonusHallOfFame(sorted);
+        }
+    };
+
     fetchWeeks();
+    fetchHallOfFame();
   }, []);
 
   useEffect(() => {
@@ -203,7 +236,7 @@ export default function HaftaninEnleriPortal() {
         ) : (
             <div className="animate-fade-in space-y-8 sm:space-y-12">
                 
-                {/* AÇILIR KAPANIR (AKORDEON) KART SİSTEMİ - items-start eklendi ki biri açılınca diğeri uzamasın */}
+                {/* AÇILIR KAPANIR (AKORDEON) KART SİSTEMİ */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
                     
                     {/* SOL PANEL: PUAN LİDERİ VE SIRALAMASI */}
@@ -281,6 +314,75 @@ export default function HaftaninEnleriPortal() {
                     </div>
 
                 </div>
+
+                {/* 🔥 YENİ: ŞÖHRETLER MÜZESİ (ALL-TIME BONUSLAR) */}
+                <div className="mt-16 sm:mt-24 mb-10 w-full animate-fade-in">
+                    <div className="flex flex-col items-center justify-center mb-8">
+                        <span className="text-4xl sm:text-5xl mb-3 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">👑</span>
+                        <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 tracking-tighter uppercase drop-shadow-md text-center">
+                            ŞÖHRETLER MÜZESİ
+                        </h2>
+                        <p className="text-slate-400 font-bold tracking-widest text-[10px] sm:text-xs text-center mt-2 max-w-lg px-4 uppercase">
+                            SEZON BOYUNCA KESİLEN LİDERLİK VE KRALLIK FİŞLERİ (+3 BONUS PUAN ARŞİVİ)
+                        </p>
+                    </div>
+
+                    <div className="max-w-3xl mx-auto bg-slate-900/80 border border-amber-500/30 rounded-3xl p-4 sm:p-8 shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+                        {bonusHallOfFame.length === 0 ? (
+                            <div className="text-center text-slate-500 text-xs py-10 font-bold uppercase tracking-widest leading-relaxed">
+                                Arşivde henüz kayıtlı bonus fişi bulunmuyor.
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3">
+                                {bonusHallOfFame.map((user, idx) => {
+                                    let rowBg = "bg-slate-950/80";
+                                    let textCol = "text-slate-300";
+                                    let borderCol = "border-slate-800/50";
+                                    let badgeCol = "bg-slate-800 text-slate-400";
+                                    let icon = "";
+
+                                    if (idx === 0) { 
+                                        rowBg = "bg-amber-950/40"; textCol = "text-amber-400"; borderCol = "border-amber-500/40"; badgeCol = "bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.6)]"; icon = "👑";
+                                    } else if (idx === 1) { 
+                                        rowBg = "bg-slate-800/40"; textCol = "text-slate-200"; borderCol = "border-slate-400/40"; badgeCol = "bg-slate-300 text-black shadow-[0_0_10px_rgba(203,213,225,0.6)]"; icon = "🥈";
+                                    } else if (idx === 2) { 
+                                        rowBg = "bg-orange-950/40"; textCol = "text-orange-400"; borderCol = "border-orange-600/40"; badgeCol = "bg-orange-600 text-white shadow-[0_0_10px_rgba(234,88,12,0.6)]"; icon = "🥉";
+                                    }
+
+                                    return (
+                                        <div key={idx} className={`${rowBg} border ${borderCol} rounded-2xl p-4 flex items-center justify-between transition-all hover:bg-slate-800/80 hover:scale-[1.02] shadow-inner`}>
+                                            <div className="flex items-center gap-3 sm:gap-4">
+                                                <div className="relative">
+                                                    <span className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black text-sm sm:text-base ${badgeCol}`}>
+                                                        {idx + 1}
+                                                    </span>
+                                                    {icon && <span className="absolute -top-2 -right-2 text-sm drop-shadow-md">{icon}</span>}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className={`font-black text-xs sm:text-sm uppercase tracking-wider ${textCol} truncate max-w-[120px] sm:max-w-[250px]`}>
+                                                        {user.user_name}
+                                                    </span>
+                                                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold tracking-widest mt-0.5">
+                                                        {user.pCount} LİDERLİK | {user.sCount} KRALLIK
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end justify-center">
+                                                <span className={`font-black text-xl sm:text-2xl leading-none ${textCol}`}>
+                                                    {user.totalBonus} <span className="text-[10px] opacity-70 tracking-widest uppercase">PUAN</span>
+                                                </span>
+                                                <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 bg-black/30 px-2 py-0.5 rounded-md">
+                                                    {(user.pCount + user.sCount)} FİŞ KESİLDİ
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
             </div>
         )}
       </div>
