@@ -234,7 +234,8 @@ export default function MacArsiviPage() {
           setLiveMatchesData(liveMap);
         }
 
-        const { data: bultenData } = await supabase.from('matches_bulletin').select('*');
+        // 🔥 TFF KONTROLÜ İÇİN TAKIM İSİMLERİ SORGUDAN ÇEKİLDİ 🔥
+        const { data: bultenData } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, match_time, home_team, away_team');
         if (bultenData) {
            const bultenMap: Record<number, any[]> = {};
            bultenData.forEach(row => {
@@ -369,10 +370,26 @@ export default function MacArsiviPage() {
             {currentMatches.map((match: any) => {
               const isWinnersOpen = !!openWinnersMap[match.id];
               const isEventsOpen = !!openEventsMap[match.id];
-              const isTffMatch = isTffMatchCheck(match.category);
               
+              const rawCategory = String(match.category || '');
+              const catLower = rawCategory.toLocaleLowerCase('tr-TR');
               const homeUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase() || "";
               const awayUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase() || "";
+              const homeName = homeUpper.toLocaleLowerCase('tr-TR');
+              const awayName = awayUpper.toLocaleLowerCase('tr-TR');
+              
+              // 🔥 YENİ NESİL TFF ZIRHI: Hem kategoriye hem takımlara bakıyor! 🔥
+              const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
+
+              const isTffMatch = isTffMatchCheck(match.category) || 
+                                 catLower.includes('türkiye kupası') || 
+                                 catLower.includes('turkiye kupasi') || 
+                                 catLower.includes('tff') || 
+                                 catLower.includes('süper lig') || 
+                                 catLower.includes('1. lig') || 
+                                 catLower.includes('amatör') || 
+                                 catLower.includes('bal') ||
+                                 isTurkishTeam;
               
               const theme = getEliteTheme(match.category, homeUpper, awayUpper);
 
