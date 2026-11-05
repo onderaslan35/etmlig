@@ -12,6 +12,22 @@ import {
   getUniqueMatchId
 } from '@/utils/themeEngine';
 
+// 🔴 GELİŞMİŞ TFF ZIRHI: Hem kategoriye hem de tüm Türk takımlarına bakar
+const advancedTffCheck = (category: string, home: string, away: string) => {
+  const cat = (category || '').toUpperCase().replace(/İ/g, 'I');
+  const h = (home || '').toUpperCase().replace(/İ/g, 'I');
+  const a = (away || '').toUpperCase().replace(/İ/g, 'I');
+
+  const isTffCat = cat.includes("TURKIYE") || cat.includes("TFF") || cat.includes("AMATOR") ||
+                   cat.includes("SUPER LIG") || cat.includes("1. LIG") || cat.includes("1.LIG") ||
+                   cat.includes("2. LIG") || cat.includes("2.LIG") || cat.includes("3. LIG") ||
+                   cat.includes("3.LIG") || cat.includes("BAL") || cat.includes("KUPASI") || cat.includes("PTT");
+
+  const teamRegex = /(SPOR|GUCU|YURDU|BLD|BELEDIYE|DEMIR|GENCLER|BIRLIGI|KARS|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|ALTAY|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ADANA|HATAY|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
+
+  return isTffCat || teamRegex.test(h) || teamRegex.test(a);
+};
+
 // 1. HAFTA MAÇ VERİLERİ (STATİK DESTEK)
 const week1Matches = [
   { id: 1, weekLabel: "1. Hafta - 1. MAÇ", category: "UEFA ŞAMPİYONLAR LİGİ ÖN ELEME 2.TUR İLK MAÇ", date: "21.07.2026", time: "20:00", homeTeam: "IBERIA 1999", awayTeam: "SLOVAN BRATISLAVA", score: "0 - 2", winnersCount: 13, earnedPoints: 1, winners: ["MUSTAFA GÜMÜŞÇÜ", "CUMALİ SÖKER", "SEDAT SEDAT", "ÖNDER ASLAN", "FATİH AYAN", "MEHMET ALİ KARA", "İSMAİL EKER", "HUDAVER TOPARDIC", "MURAT ALİ", "SAVAŞ ÇAĞLAYAN", "MUSTAFA ELMAS", "UĞUR GÜRBÜZ", "R. İLHAN KARACA"] },
@@ -234,7 +250,6 @@ export default function MacArsiviPage() {
           setLiveMatchesData(liveMap);
         }
 
-        // 🔥 TFF KONTROLÜ İÇİN TAKIM İSİMLERİ SORGUDAN ÇEKİLDİ 🔥
         const { data: bultenData } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, match_time, home_team, away_team');
         if (bultenData) {
            const bultenMap: Record<number, any[]> = {};
@@ -372,26 +387,18 @@ export default function MacArsiviPage() {
               const isEventsOpen = !!openEventsMap[match.id];
               
               const rawCategory = String(match.category || '');
-              const catLower = rawCategory.toLocaleLowerCase('tr-TR');
               const homeUpper = match.homeTeam?.toUpperCase() || match.home_team?.toUpperCase() || "";
               const awayUpper = match.awayTeam?.toUpperCase() || match.away_team?.toUpperCase() || "";
-              const homeName = homeUpper.toLocaleLowerCase('tr-TR');
-              const awayName = awayUpper.toLocaleLowerCase('tr-TR');
               
-              // 🔥 YENİ NESİL TFF ZIRHI: Hem kategoriye hem takımlara bakıyor! 🔥
-              const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
-
-              const isTffMatch = isTffMatchCheck(match.category) || 
-                                 catLower.includes('türkiye kupası') || 
-                                 catLower.includes('turkiye kupasi') || 
-                                 catLower.includes('tff') || 
-                                 catLower.includes('süper lig') || 
-                                 catLower.includes('1. lig') || 
-                                 catLower.includes('amatör') || 
-                                 catLower.includes('bal') ||
-                                 isTurkishTeam;
+              // 🔴 YENİ VE YIKILMAZ TFF KONTROLÜ
+              const isTffMatch = advancedTffCheck(rawCategory, homeUpper, awayUpper);
               
-              const theme = getEliteTheme(match.category, homeUpper, awayUpper);
+              // 🔥 TEMA HİLESİ: Eğer maç TFF ise ama kategoride TFF/Türkiye yazmıyorsa Tema Motorunu Kırmızı Arka Plan vermesi için kandırıyoruz! 🔥
+              const themeCategory = (isTffMatch && !rawCategory.toUpperCase().includes('TÜRKİYE') && !rawCategory.toUpperCase().includes('TFF'))
+                  ? `TÜRKİYE ${rawCategory}`
+                  : rawCategory;
+              
+              const theme = getEliteTheme(themeCategory, homeUpper, awayUpper);
 
               let homeScore = "-";
               let awayScore = "-";
@@ -411,7 +418,6 @@ export default function MacArsiviPage() {
                   awayScore = dbMatch.away_score;
                   isFinished = (matchStatus === 'FINISHED' || matchStatus === 'HT' || matchStatus === 'LIVE' || matchStatus === 'WAITING_APPROVAL');
                   
-                  // 🔥 MAÇ OLAYLARINI (GOL/KART) VERİTABANINDAN ÇEKME 🔥
                   if (Array.isArray(dbMatch.events)) {
                      safeEvents = dbMatch.events;
                   } else if (typeof dbMatch.events === 'string') {
