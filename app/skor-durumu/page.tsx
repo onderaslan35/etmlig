@@ -117,7 +117,7 @@ export default function SkorDurumuPage() {
           };
       });
 
-      // 3. GEÇMİŞ HAFTALARI HESAPLA (ÇİFTE SAYIMI ÖNLER)
+      // 3. GEÇMİŞ HAFTALARI HESAPLA (ÇİFTE SAYIMI VE ENFLASYONU KÖKÜNDEN ÖNLER)
       allPoints.forEach(pt => {
           if (pt.ev_sahibi === 'HAFTANIN' || pt.ev_sahibi === 'SKOR') return; // Bonusları sayma, sadece maç skorlarını say
           if (Number(pt.hafta) >= activeWeek) return; // Aktif haftayı kütükten değil, en taze veriden (aşağıda) sayacağız
@@ -126,9 +126,14 @@ export default function SkorDurumuPage() {
           const targetPlayer = Object.values(userStats).find(p => p.cleanName === ptName || p.cleanName.includes(ptName));
 
           if (targetPlayer) {
-              targetPlayer.masterBase += 1;
-              if (pt.kategori === 'DFO') targetPlayer.dfoBase += 1;
-              else if (pt.kategori === 'TFF') targetPlayer.tffBase += 1;
+              // 🔥 İŞTE KİLİT NOKTA: Satırın kategorisi neyse SADECE oraya +1 ekle 🔥
+              if (pt.kategori === 'MASTER') {
+                  targetPlayer.masterBase += 1;
+              } else if (pt.kategori === 'DFO') {
+                  targetPlayer.dfoBase += 1;
+              } else if (pt.kategori === 'TFF') {
+                  targetPlayer.tffBase += 1;
+              }
           }
       });
 
