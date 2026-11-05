@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import html2canvas from 'html2canvas';
 
-// TFF ZIRHI
+// 🔥 GELİŞMİŞ TFF ZIRHI: TFF, DFO ayrımını kusursuz yapar
 const advancedTffCheck = (category: string, home: string, away: string) => {
   const cat = (category || '').toUpperCase().replace(/İ/g, 'I');
   const h = (home || '').toUpperCase().replace(/İ/g, 'I');
@@ -21,35 +21,29 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
 
 export default function SkorDurumuPage() {
   const [activeTab, setActiveTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
-  const [lists, setLists] = useState<{ MASTER: any[], DFO: any[], TFF: any[] }>({ MASTER: [], DFO: [], TFF: [] });
+  const [allData, setAllData] = useState<any[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const [haftaBittiMi, setHaftaBittiMi] = useState<boolean>(false);
   const tabloRef = useRef<HTMLDivElement>(null);
 
+  // 🔵 TAMAMEN ORİJİNAL İLK KODA GERİ DÖNÜLDÜ
   const loadSkorData = async () => {
     try {
-      const { data: dbPlayers } = await supabase.from('players').select('username, name');
-      const idToNameMap: Record<string, string> = {};
-      if (dbPlayers) dbPlayers.forEach(p => idToNameMap[p.username] = p.name);
+      // 1. Ana Liderlik Tablosunu Çek 
+      const { data: leaderboardData } = await supabase.from('live_leaderboard').select('*');
 
+      // 2. Canlı Maçları ve Bülteni Çek
       const { data: allMatches } = await supabase.from('live_matches').select('*');
       const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, category, home_team, away_team');
 
+      // 3. Aktif Haftayı Bul
       let activeWeek = 6;
-      let liveWeeks: number[] = [];
-
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
-          allMatches.forEach(m => {
-              statusMap[m.id] = m.status;
-              if (m.status === 'LIVE' || m.status === 'HT') {
-                  const wNum = Math.floor(m.id / 100);
-                  if (!liveWeeks.includes(wNum)) liveWeeks.push(wNum);
-              }
-          });
-
+          allMatches.forEach(m => statusMap[m.id] = m.status);
           const weeksData: Record<number, { hasStartedMatch: boolean }> = {};
+          
           dbBulletin.forEach(b => {
               if (!weeksData[b.week_num]) weeksData[b.week_num] = { hasStartedMatch: false };
               const status = statusMap[(b.week_num * 100) + b.match_index];
@@ -59,167 +53,107 @@ export default function SkorDurumuPage() {
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           
-          if (!liveWeeks.includes(activeWeek)) liveWeeks.push(activeWeek);
-
           const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
-          const finishedCount = activeWeekMatches.filter(m => m.status === 'FINISHED' || m.status === 'MS').length;
+          const finishedCount = activeWeekMatches.filter(m => m.status === 'MS' || m.status === 'FINISHED').length;
           setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 1. KASADAN (POINTS) GEÇMİŞ HAFTALARIN KESİNLEŞMİŞ FİŞLERİNİ ÇEK
-      let allPoints: any[] = [];
-      let fetchMorePts = true;
-      let fromPts = 0;
-      const stepPts = 1000;
-      
-      while (fetchMorePts) {
-        const { data: ptsChunk, error } = await supabase.from('points').select('*').range(fromPts, fromPts + stepPts - 1);
-        if (!error && ptsChunk && ptsChunk.length > 0) {
-           allPoints = [...allPoints, ...ptsChunk];
-           if (ptsChunk.length < stepPts) fetchMorePts = false; else fromPts += stepPts;
-        } else { fetchMorePts = false; }
-      }
+      // 🔥 KASADAN (VERİTABANINDAN) KESİNLEŞMİŞ 12 PUANLARI ÇEK
+      const { data: exactMatchesFromPoints } = await supabase
+        .from('points')
+        .select('*')
+        .eq('puan', 12);
 
-      // 2. AKTİF (VE CANLI) HAFTALARIN TAHMİNLERİNİ ÇEK
+      // 4. 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Sadece aktif hafta)
       let predictions: any[] = [];
-      if (liveWeeks.length > 0) {
-          let fetchMore = true; let from = 0;
-          while (fetchMore) {
-            const { data: pDataChunk, error } = await supabase.from('player_predictions').select('*').in('week_num', liveWeeks).range(from, from + stepPts - 1);
-            if (!error && pDataChunk && pDataChunk.length > 0) {
-               predictions = [...predictions, ...pDataChunk];
-               if (pDataChunk.length < stepPts) fetchMore = false; else from += stepPts; 
-            } else { fetchMore = false; }
-          }
+      let fetchMore = true;
+      let from = 0;
+      const step = 1000;
+
+      while (fetchMore) {
+        const { data: pDataChunk, error } = await supabase
+          .from('player_predictions')
+          .select('*')
+          .eq('week_num', activeWeek)
+          .range(from, from + step - 1);
+          
+        if (!error && pDataChunk && pDataChunk.length > 0) {
+           predictions = [...predictions, ...pDataChunk];
+           if (pDataChunk.length < step) fetchMore = false; else from += step; 
+        } else { fetchMore = false; }
       }
 
-      // 🔥 HAYAT KURTARAN DOKUNUŞ: ÇİFT TAHMİN (DUPLICATE) SIZINTISINI ENGELLE 🔥
-      const uniquePredictions: any[] = [];
-      const seenPreds = new Set();
-      predictions.forEach(p => {
-          const key = `${p.user_id}-${p.week_num}-${p.match_index}`;
-          if (!seenPreds.has(key)) {
-              seenPreds.add(key);
-              uniquePredictions.push(p);
-          }
-      });
+      // 5. Oyuncu İsimleri Eşleştirmesi
+      const { data: playersData } = await supabase.from('players').select('username, name');
+      const idToNameMap: Record<string, string> = {};
+      if (playersData) {
+          playersData.forEach(p => idToNameMap[p.username] = p.name);
+      }
 
-      // OYUNCU İSTATİSTİKLERİ KASASI
-      const userStats: Record<string, any> = {};
-      Object.values(idToNameMap).forEach(name => {
-          const cleanName = name.replace(/ 🏆/g, '').trim();
-          userStats[cleanName] = {
-              name: name,
-              cleanName: cleanName,
-              masterBase: 0, dfoBase: 0, tffBase: 0,
-              masterActive: 0, dfoActive: 0, tffActive: 0,
-              masterLive: 0, dfoLive: 0, tffLive: 0
-          };
-      });
+      // 6. KASADAN (VERİTABANINDAN) KESİNLEŞMİŞ SKOR HESABI
+      const dbBaseScores: Record<string, { master: number, dfo: number, tff: number }> = {};
+      if (leaderboardData) {
+          leaderboardData.forEach(r => {
+             const rName = r.name || "";
+             dbBaseScores[rName] = { 
+               master: r.skor_pts || 0, 
+               dfo: r.dfo_skor_pts || 0, 
+               tff: r.tff_skor_pts || 0 
+             };
+          });
+      }
 
-      // 3. GEÇMİŞ HAFTALARI HESAPLA (ÇİFTE SAYIMI VE ENFLASYONU KÖKÜNDEN ÖNLER)
-      allPoints.forEach(pt => {
-          if (pt.ev_sahibi === 'HAFTANIN' || pt.ev_sahibi === 'SKOR') return; // Bonusları sayma, sadece maç skorlarını say
-          if (Number(pt.hafta) >= activeWeek) return; // Aktif haftayı kütükten değil, en taze veriden (aşağıda) sayacağız
+      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI ⚡
+      const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
 
-          const ptName = (pt.user_name || "").replace(/ 🏆/g, '').trim();
-          const targetPlayer = Object.values(userStats).find(p => p.cleanName === ptName || p.cleanName.includes(ptName));
-
-          if (targetPlayer) {
-              // 🔥 İŞTE KİLİT NOKTA: Satırın kategorisi neyse SADECE oraya +1 ekle 🔥
-              if (pt.kategori === 'MASTER') {
-                  targetPlayer.masterBase += 1;
-              } else if (pt.kategori === 'DFO') {
-                  targetPlayer.dfoBase += 1;
-              } else if (pt.kategori === 'TFF') {
-                  targetPlayer.tffBase += 1;
-              }
-          }
-      });
-
-      // 4. AKTİF HAFTAYI HESAPLA (BİTENLER VE CANLILAR BİR ARADA)
-      if (allMatches && dbBulletin) {
-          const matchesToCalculate = allMatches.filter(m => liveWeeks.includes(Math.floor(m.id / 100)));
-
+      if (allMatches && predictions && dbBulletin) {
+          // SADECE anlık oynanan (LIVE/HT) maçları hesapla!
+          const matchesToCalculate = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT'));
+          
           matchesToCalculate.forEach(match => {
-              if (match.status === 'NOT_STARTED' || match.home_score === '-' || match.away_score === '-') return;
-
+              const currentScore = `${match.home_score}-${match.away_score}`;
+              if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
+              
               const mIndex = match.id % 100;
               const matchWeek = Math.floor(match.id / 100);
-              const currentScore = `${match.home_score}-${match.away_score}`;
-
+              
+              // Kategori Tespiti (TFF mi DFO mu?)
               const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
-              let isTff = false;
-              if (bulletinMatch) {
-                  isTff = advancedTffCheck(bulletinMatch.category, bulletinMatch.home_team, bulletinMatch.away_team);
-              }
+              const isTff = bulletinMatch ? advancedTffCheck(bulletinMatch.category, bulletinMatch.home_team, bulletinMatch.away_team) : false;
 
-              // Çift sızıntı önleyici filtreden (uniquePredictions) yararlanıyoruz
-              const exactWinners = uniquePredictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
+              // Sadece TAM isabet (Skoru tam bilenleri) ayıkla
+              const exactWinners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
 
               exactWinners.forEach(w => {
                   const playerName = idToNameMap[w.user_id] || "";
                   if (playerName) {
-                      const cleanPlayerName = playerName.replace(/ 🏆/g, '').trim();
-                      const targetPlayer = Object.values(userStats).find(p => p.cleanName === cleanPlayerName || p.cleanName.includes(cleanPlayerName));
-
-                      if (targetPlayer) {
-                          // Aktif Hafta Toplamı (Biten Maçlar + Canlı Maçlar)
-                          targetPlayer.masterActive += 1;
-                          if (isTff) targetPlayer.tffActive += 1;
-                          else targetPlayer.dfoActive += 1;
-
-                          // Sadece Canlı Olanlar (Rozet İçin - Toplama Eklenmez)
-                          if (match.status === 'LIVE' || match.status === 'HT') {
-                              targetPlayer.masterLive += 1;
-                              if (isTff) targetPlayer.tffLive += 1;
-                              else targetPlayer.dfoLive += 1;
-                          }
-                      }
+                      if (!liveBonuses[playerName]) liveBonuses[playerName] = { master: 0, dfo: 0, tff: 0 };
+                      
+                      liveBonuses[playerName].master += 1; 
+                      if (isTff) liveBonuses[playerName].tff += 1; 
+                      else liveBonuses[playerName].dfo += 1; 
                   }
               });
           });
       }
 
-      // 5. SIRALAMA VE OKLARI (TREND) HESAPLA
-      const finalArray = Object.values(userStats);
+      // 8. Kesinleşmiş Tablo İle Canlı Bonusları Birleştir
+      if (leaderboardData) {
+        const enrichedData = leaderboardData.map(r => {
+            const rName = r.name || "";
+            const matchedKey = Object.keys(liveBonuses).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
+            const bonus = matchedKey ? liveBonuses[matchedKey] : { master: 0, dfo: 0, tff: 0 };
 
-      const calculateRankings = (category: 'master' | 'dfo' | 'tff') => {
-          const baseKey = `${category}Base`;
-          const activeKey = `${category}Active`;
-          const liveKey = `${category}Live`;
-
-          // Önceki Hafta Sıralaması (Oklar için baz alınır)
-          const prevList = [...finalArray].sort((a, b) => b[baseKey] - a[baseKey] || a.name.localeCompare(b.name, 'tr'));
-          const prevRanks: Record<string, number> = {};
-          prevList.forEach((p, idx) => { prevRanks[p.cleanName] = idx + 1; });
-
-          // Güncel Sıralama
-          const currentList = [...finalArray].map(p => ({
-              name: p.name,
-              totalScore: p[baseKey] + p[activeKey], // Kasa + Aktif Hafta
-              liveBonus: p[liveKey], // Sadece rozet için
-              cleanName: p.cleanName
-          })).sort((a, b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name, 'tr'));
-
-          return currentList.map((p, idx) => {
-              const currentRank = idx + 1;
-              const prevRank = prevRanks[p.cleanName];
-              let trend = 'same', diff = 0;
-              if (currentRank < prevRank) { trend = 'up'; diff = prevRank - currentRank; }
-              else if (currentRank > prevRank) { trend = 'down'; diff = currentRank - prevRank; }
-
-              return { ...p, trend, diff, currentRank };
-          });
-      };
-
-      setLists({
-          MASTER: calculateRankings('master'),
-          DFO: calculateRankings('dfo'),
-          TFF: calculateRankings('tff')
-      });
+            return {
+                ...r,
+                masterLiveMatch: bonus.master,
+                dfoLiveMatch: bonus.dfo,
+                tffLiveMatch: bonus.tff
+            };
+        });
+        setAllData(enrichedData);
+      }
       setIsDataLoading(false);
-
     } catch (error) {
       console.error("Skor verileri çekilirken hata:", error);
       setIsDataLoading(false);
@@ -228,10 +162,15 @@ export default function SkorDurumuPage() {
 
   useEffect(() => {
     loadSkorData();
-    const channel1 = supabase.channel('skor_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadSkorData(); }).subscribe();
-    const interval = setInterval(loadSkorData, 30000); 
+    
+    const channel1 = supabase.channel('skor_live_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_leaderboard' }, () => { loadSkorData(); }).subscribe();
+    const channel2 = supabase.channel('skor_matches_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => { loadSkorData(); }).subscribe();
+    
+    const interval = setInterval(loadSkorData, 30000); // 30 Saniye kalkanı
+    
     return () => { 
         supabase.removeChannel(channel1); 
+        supabase.removeChannel(channel2); 
         clearInterval(interval); 
     };
   }, []);
@@ -241,11 +180,42 @@ export default function SkorDurumuPage() {
     const canvas = await html2canvas(tabloRef.current, { backgroundColor: '#0f172a', scale: 2 });
     const image = canvas.toDataURL("image/png");
     const link = document.createElement("a");
-    link.download = `Tam_Isabet_Kralligi_${activeTab}.png`;
+    link.download = `Tam_Isabet_Kralligi_${activeTab}.png`; // Hangi sekmedeyse o adla iner
     link.click();
   };
 
-  const currentList = lists[activeTab] || [];
+  const currentList = allData.map(r => {
+    let baseScore = 0, liveBonus = 0, trend = 'same', diff = 0;
+    
+    if (activeTab === 'DFO') {
+      baseScore = r.dfo_skor_pts || 0; 
+      liveBonus = r.dfoLiveMatch || 0;
+      trend = r.dfo_skor_trend_direction || 'same'; 
+      diff = r.dfo_skor_trend_diff || 0;
+    } else if (activeTab === 'TFF') {
+      baseScore = r.tff_skor_pts || 0; 
+      liveBonus = r.tffLiveMatch || 0;
+      trend = r.tff_skor_trend_direction || 'same'; 
+      diff = r.tff_skor_trend_diff || 0;
+    } else {
+      baseScore = r.skor_pts || 0; 
+      liveBonus = r.masterLiveMatch || 0;
+      trend = r.skor_trend_direction || 'same'; 
+      diff = r.skor_trend_diff || 0;
+    }
+    
+    return { 
+        name: r.name, 
+        // 🔥 KOMUTANIN EMRİ: Toplam skordan canlı bonus kadar eksilt! 🔥
+        // Eski halinde (baseScore + liveBonus) yazıyordu.
+        // liveBonus kadar eksilttiğimizde geriye sadece baseScore kalır!
+        totalScore: baseScore, 
+        baseScore, 
+        liveBonus, 
+        trend, 
+        diff 
+    };
+  }).sort((a,b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name, 'tr'));
 
   return (
     <div className="max-w-5xl mx-auto p-4 text-slate-100 flex flex-col items-center min-h-screen">
@@ -287,7 +257,7 @@ export default function SkorDurumuPage() {
               <span>{activeTab === 'MASTER' ? 'MASTER' : activeTab === 'DFO' ? 'DFO' : 'TFF'} TAM İSABET SAYISI</span>
             </div>
           </div>
-          {!isDataLoading && currentList.length > 0 ? (
+          {!isDataLoading && allData.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs md:text-sm">
               <thead className="text-[#64748b] uppercase text-[10px] bg-[#0f172a]">
@@ -300,14 +270,16 @@ export default function SkorDurumuPage() {
               </thead>
               <tbody className="divide-y divide-[#1e293b]">
                 {currentList.map((row: any, idx: number) => {
+                  const trend = row.trend || 'same';
+                  const trendDiff = row.diff || 0;
                   return (
                   <tr key={idx} className="hover:bg-[#0f172a]/40 transition-colors">
                     
                     <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                       <div className="flex items-center">
                         <span className="text-left w-5">{idx + 1}</span>
-                        {row.trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{row.diff}</span></span>}
-                        {row.trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{row.diff}</span></span>}
+                        {trend === 'up' && <span className="text-emerald-400 text-[10px] font-bold flex items-center">▲<span className="text-[8px]">{trendDiff}</span></span>}
+                        {trend === 'down' && <span className="text-red-500 text-[10px] font-bold flex items-center">▼<span className="text-[8px]">{trendDiff}</span></span>}
                       </div>
                     </td>
                     
@@ -320,7 +292,7 @@ export default function SkorDurumuPage() {
                     <td className="px-1 py-3 align-middle text-right">
                       {row.liveBonus > 0 && (
                         <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                          +{row.liveBonus} SKOR CANLI
+                          +{row.liveBonus} MAÇ CANLI
                         </span>
                       )}
                     </td>
