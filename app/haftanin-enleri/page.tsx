@@ -3,6 +3,114 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
+// 🏛️ İLK 4 HAFTANIN TARİHİ ARŞİVİ (HARDCODED)
+const MANUAL_HOF_BONUSES = [
+  { user_name: "MEHMET ALİ KARA", totalBonus: 3, pCount: 1, sCount: 0 },
+  { user_name: "DOĞAÇ ALKAN", totalBonus: 3, pCount: 0, sCount: 1 },
+  { user_name: "EYÜP KARACAOĞLU", totalBonus: 3, pCount: 1, sCount: 0 },
+  { user_name: "SEDAT SEDAT", totalBonus: 6, pCount: 1, sCount: 1 },
+  { user_name: "İSMAİL EKER 🏆", totalBonus: 3, pCount: 1, sCount: 0 },
+  { user_name: "ŞENOL CAN ÇAKICI", totalBonus: 3, pCount: 0, sCount: 1 },
+];
+
+const HARDCODED_WEEKS: Record<number, any> = {
+  1: {
+    bonuses: { puanLiderleri: ["MEHMET ALİ KARA"], skorKrallari: ["DOĞAÇ ALKAN"] },
+    data: [
+      { user_name: "MEHMET ALİ KARA", points: 31, scores: 4 }, { user_name: "DOĞAÇ ALKAN", points: 21, scores: 6 },
+      { user_name: "UĞUR VARDAR", points: 23, scores: 4 }, { user_name: "EYÜP KARACAOĞLU", points: 17, scores: 4 },
+      { user_name: "OSMAN ALİ AYDIN 🏆", points: 14, scores: 4 }, { user_name: "SEDAT DİŞLİ", points: 12, scores: 3 },
+      { user_name: "FATİH AYAN", points: 11, scores: 3 }, { user_name: "MURAT ALİ", points: 11, scores: 3 },
+      { user_name: "R. İLHAN KARACA 🏆🏆", points: 10, scores: 4 }, { user_name: "HUDAVER TOPARDIC", points: 10, scores: 3 },
+      { user_name: "MAHMUT CBR", points: 9, scores: 2 }, { user_name: "SAVAŞ ÇAĞLAYAN", points: 8, scores: 3 },
+      { user_name: "ULAŞ ADIGÜZEL", points: 8, scores: 2 }, { user_name: "ÖNDER ASLAN", points: 8, scores: 2 },
+      { user_name: "SEDAT SEDAT", points: 7, scores: 2 }, { user_name: "BİROL DEMİREL", points: 7, scores: 2 },
+      { user_name: "CUMALİ SÖKER", points: 7, scores: 2 }, { user_name: "MUHSİN ASİLKAN", points: 7, scores: 2 },
+      { user_name: "SALİH KARACAOĞLU", points: 5, scores: 1 }, { user_name: "YUSUF KIZILTUĞ", points: 4, scores: 2 },
+      { user_name: "KEMAL ERSOY", points: 4, scores: 2 }, { user_name: "ABDULLAH DİK", points: 4, scores: 1 },
+      { user_name: "BEKİR KARADAĞ", points: 3, scores: 3 }, { user_name: "HAKAN AYAN", points: 1, scores: 1 },
+      { user_name: "YUSUF ERBAY", points: 1, scores: 1 }, { user_name: "MURAT KARA", points: 1, scores: 1 },
+      { user_name: "İSMAİL EKER 🏆", points: 1, scores: 1 }, { user_name: "MUSTAFA GÜMÜŞÇÜ", points: 1, scores: 1 },
+      { user_name: "GAZİ AYAN 🏆🏆", points: 1, scores: 1 }, { user_name: "MUSTAFA TUCİ", points: 1, scores: 1 },
+      { user_name: "İLYAS UYGUN", points: 1, scores: 1 }, { user_name: "ŞENOL CAN ÇAKICI", points: 1, scores: 1 },
+      { user_name: "ŞEMSETTİN DÜGER", points: 1, scores: 1 }, { user_name: "AYHAN LUŞOĞLU", points: 1, scores: 1 }
+    ]
+  },
+  2: {
+    bonuses: { puanLiderleri: ["EYÜP KARACAOĞLU"], skorKrallari: [] },
+    data: [
+      { user_name: "EYÜP KARACAOĞLU", points: 16, scores: 3 }, { user_name: "DOĞAÇ ALKAN", points: 13, scores: 2 },
+      { user_name: "SALİH KARACAOĞLU", points: 13, scores: 2 }, { user_name: "CUMALİ SÖKER", points: 12, scores: 4 },
+      { user_name: "CEMAL SİVRİKAYA 🏆", points: 12, scores: 1 }, { user_name: "ÖNDER ASLAN", points: 11, scores: 4 },
+      { user_name: "HUDAVER TOPARDIC", points: 9, scores: 3 }, { user_name: "RIDVAN DOGER", points: 8, scores: 2 },
+      { user_name: "MURAT ALİ", points: 7, scores: 2 }, { user_name: "ŞAHİN GEZGİNCİ", points: 7, scores: 2 },
+      { user_name: "AHMET BİRCAN 🏆", points: 6, scores: 2 }, { user_name: "SEDAT SEDAT", points: 6, scores: 2 },
+      { user_name: "ŞENOL CAN ÇAKICI", points: 6, scores: 1 }, { user_name: "R. İLHAN KARACA 🏆🏆", points: 6, scores: 1 },
+      { user_name: "SEDAT DİŞLİ", points: 6, scores: 1 }, { user_name: "MUSTAFA GÜMÜŞÇÜ", points: 5, scores: 1 },
+      { user_name: "MEVLÜT EVLER", points: 5, scores: 1 }, { user_name: "İSMAİL EKER 🏆", points: 4, scores: 3 },
+      { user_name: "MUSTAFA ELMAS", points: 2, scores: 2 }, { user_name: "MEHMET ALİ KARA", points: 2, scores: 2 },
+      { user_name: "ABDULLAH DİK", points: 2, scores: 1 }, { user_name: "MURAT KARA", points: 2, scores: 1 },
+      { user_name: "CEMALETTİN BELLİ", points: 2, scores: 1 }, { user_name: "ÖNDER IŞIK", points: 2, scores: 1 },
+      { user_name: "ŞEMSETTİN DÜGER", points: 2, scores: 1 }, { user_name: "B.VEYSELOĞLU EROL", points: 2, scores: 1 },
+      { user_name: "İLYAS KAZDAL", points: 1, scores: 1 }, { user_name: "MELİH PINAR", points: 1, scores: 1 },
+      { user_name: "ULAŞ ADIGÜZEL", points: 1, scores: 1 }, { user_name: "OSMAN ALİ AYDIN 🏆", points: 1, scores: 1 },
+      { user_name: "SAVAŞ ÇAĞLAYAN", points: 1, scores: 1 }, { user_name: "BİROL DEMİREL", points: 1, scores: 1 },
+      { user_name: "BAYRAM YILMAZ", points: 1, scores: 1 }, { user_name: "FATİH AYAN", points: 1, scores: 1 },
+      { user_name: "UĞUR GÜRBÜZ", points: 1, scores: 1 }
+    ]
+  },
+  3: {
+    bonuses: { puanLiderleri: ["SEDAT SEDAT"], skorKrallari: ["SEDAT SEDAT"] },
+    data: [
+      { user_name: "SEDAT SEDAT", points: 25, scores: 5 }, { user_name: "MUHSİN ASİLKAN", points: 19, scores: 3 },
+      { user_name: "MUSTAFA GÜMÜŞÇÜ", points: 11, scores: 4 }, { user_name: "HAKAN AYAN", points: 11, scores: 3 },
+      { user_name: "MUSTAFA ELMAS", points: 11, scores: 3 }, { user_name: "ULAŞ ADIGÜZEL", points: 11, scores: 2 },
+      { user_name: "GAZİ AYAN 🏆🏆", points: 11, scores: 2 }, { user_name: "ALİOS GÖZTEPE", points: 9, scores: 4 },
+      { user_name: "LEVENT YILDIRIM", points: 9, scores: 2 }, { user_name: "İLYAS KAZDAL", points: 8, scores: 3 },
+      { user_name: "KEMAL ERSOY", points: 8, scores: 3 }, { user_name: "EYÜP KARACAOĞLU", points: 8, scores: 2 },
+      { user_name: "OSMAN ALİ AYDIN 🏆", points: 7, scores: 4 }, { user_name: "SALİH KARACAOĞLU", points: 7, scores: 3 },
+      { user_name: "ÖNDER IŞIK", points: 7, scores: 3 }, { user_name: "MURAT KARA", points: 7, scores: 3 },
+      { user_name: "RIDVAN DOGER", points: 7, scores: 2 }, { user_name: "SEDAT DİŞLİ", points: 7, scores: 2 },
+      { user_name: "HUDAVER TOPARDIC", points: 6, scores: 2 }, { user_name: "ÖNDER ASLAN", points: 6, scores: 2 },
+      { user_name: "İSMAİL EKER 🏆", points: 5, scores: 2 }, { user_name: "MEVLÜT EVLER", points: 5, scores: 1 },
+      { user_name: "YUSUF KIZILTUĞ", points: 5, scores: 1 }, { user_name: "YUSUF ERBAY", points: 4, scores: 3 },
+      { user_name: "R. İLHAN KARACA 🏆🏆", points: 4, scores: 2 }, { user_name: "FATİH AYAN", points: 4, scores: 2 },
+      { user_name: "AHMET BİRCAN 🏆", points: 4, scores: 2 }, { user_name: "ŞENOL CAN ÇAKICI", points: 4, scores: 1 },
+      { user_name: "ABDULLAH DİK", points: 4, scores: 1 }, { user_name: "AYHAN LUŞOĞLU", points: 3, scores: 2 },
+      { user_name: "CEMAL SİVRİKAYA 🏆", points: 2, scores: 2 }, { user_name: "UĞUR GÜRBÜZ", points: 2, scores: 2 },
+      { user_name: "DOĞAÇ ALKAN", points: 2, scores: 1 }, { user_name: "SAVAŞ ÇAĞLAYAN", points: 2, scores: 1 },
+      { user_name: "B.VEYSELOĞLU EROL", points: 2, scores: 1 }, { user_name: "BİROL DEMİREL", points: 1, scores: 1 },
+      { user_name: "OZKAYA MAZAKALI BAYRAM", points: 1, scores: 1 }
+    ]
+  },
+  4: {
+    bonuses: { puanLiderleri: ["İSMAİL EKER 🏆"], skorKrallari: ["ŞENOL CAN ÇAKICI"] },
+    data: [
+      { user_name: "İSMAİL EKER 🏆", points: 17, scores: 2 }, { user_name: "ŞENOL CAN ÇAKICI", points: 13, scores: 5 },
+      { user_name: "MELİH PINAR", points: 16, scores: 3 }, { user_name: "ÖNDER IŞIK", points: 13, scores: 4 },
+      { user_name: "SEDAT DİŞLİ", points: 13, scores: 2 }, { user_name: "MURAT ALİ", points: 12, scores: 1 },
+      { user_name: "YAPAY ZEKA", points: 11, scores: 4 }, { user_name: "MEHMET ALİ KARA", points: 11, scores: 3 },
+      { user_name: "KEMAL ERSOY", points: 11, scores: 3 }, { user_name: "YUSUF KIZILTUĞ", points: 9, scores: 3 },
+      { user_name: "HAKAN AYAN", points: 9, scores: 3 }, { user_name: "AYHAN LUŞOĞLU", points: 9, scores: 3 },
+      { user_name: "UĞUR VARDAR", points: 8, scores: 4 }, { user_name: "SEDAT SEDAT", points: 8, scores: 2 },
+      { user_name: "LEVENT YILDIRIM", points: 8, scores: 2 }, { user_name: "MURAT KARA", points: 8, scores: 2 },
+      { user_name: "MEVLÜT EVLER", points: 7, scores: 3 }, { user_name: "DOĞAÇ ALKAN", points: 7, scores: 3 },
+      { user_name: "RIDVAN DOGER", points: 7, scores: 3 }, { user_name: "ALİOS GÖZTEPE", points: 6, scores: 2 },
+      { user_name: "YUSUF ERBAY", points: 6, scores: 2 }, { user_name: "MUSTAFA GÜMÜŞÇÜ", points: 5, scores: 2 },
+      { user_name: "OZKAYA MAZAKALI BAYRAM", points: 5, scores: 2 }, { user_name: "MUHSİN ASİLKAN", points: 5, scores: 2 },
+      { user_name: "HUDAVER TOPARDIC", points: 5, scores: 2 }, { user_name: "İLYAS KAZDAL", points: 4, scores: 1 },
+      { user_name: "AHMET BİRCAN 🏆", points: 4, scores: 1 }, { user_name: "BEKİR KARADAĞ", points: 3, scores: 2 },
+      { user_name: "MAHMUT CBR", points: 3, scores: 2 }, { user_name: "B.VEYSELOĞLU EROL", points: 3, scores: 1 },
+      { user_name: "EYÜP KARACAOĞLU", points: 3, scores: 1 }, { user_name: "SALİH KARACAOĞLU", points: 2, scores: 2 },
+      { user_name: "R. İLHAN KARACA 🏆🏆", points: 2, scores: 2 }, { user_name: "MUSTAFA ELMAS", points: 2, scores: 2 },
+      { user_name: "CEMALETTİN BELLİ", points: 2, scores: 2 }, { user_name: "SAVAŞ ÇAĞLAYAN", points: 2, scores: 2 },
+      { user_name: "FATİH AYAN", points: 2, scores: 1 }, { user_name: "GAZİ AYAN 🏆🏆", points: 2, scores: 1 },
+      { user_name: "ULAŞ ADIGÜZEL", points: 1, scores: 1 }, { user_name: "BİROL DEMİREL", points: 1, scores: 1 },
+      { user_name: "CUMALİ SÖKER", points: 1, scores: 1 }
+    ]
+  }
+};
+
 export default function HaftaninEnleriPortal() {
   const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
@@ -14,14 +122,11 @@ export default function HaftaninEnleriPortal() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🚀 GÖRSEL DEVRİM: Açılır/Kapanır menü durumları
   const [isPointsOpen, setIsPointsOpen] = useState(false);
   const [isScoresOpen, setIsScoresOpen] = useState(false);
 
-  // 🔥 YENİ: ŞÖHRETLER MÜZESİ (ALL-TIME BONUS LİDERLERİ)
   const [bonusHallOfFame, setBonusHallOfFame] = useState<{user_name: string, totalBonus: number, pCount: number, sCount: number}[]>([]);
 
-  // Hafta değiştiğinde akordeonları (listeleri) otomatik kapat
   useEffect(() => {
       setIsPointsOpen(false);
       setIsScoresOpen(false);
@@ -29,7 +134,7 @@ export default function HaftaninEnleriPortal() {
 
   useEffect(() => {
     const fetchWeeks = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('matches_bulletin')
         .select('week_num')
         .gte('week_num', 1)
@@ -54,16 +159,16 @@ export default function HaftaninEnleriPortal() {
       }
     };
 
-    // 🔥 Tüm zamanların bonus fişlerini toplayan motor
     const fetchHallOfFame = async () => {
         const { data } = await supabase
           .from('points')
           .select('user_name, ev_sahibi, puan')
           .in('ev_sahibi', ['HAFTANIN', 'SKOR']);
 
+        const totals: Record<string, { totalBonus: number, pCount: number, sCount: number }> = {};
+        
+        // 1. Veritabanından Gelenleri Ekle
         if (data) {
-            const totals: Record<string, { totalBonus: number, pCount: number, sCount: number }> = {};
-            
             data.forEach(row => {
                 if (!totals[row.user_name]) {
                     totals[row.user_name] = { totalBonus: 0, pCount: 0, sCount: 0 };
@@ -72,14 +177,23 @@ export default function HaftaninEnleriPortal() {
                 if (row.ev_sahibi === 'HAFTANIN') totals[row.user_name].pCount += 1;
                 if (row.ev_sahibi === 'SKOR') totals[row.user_name].sCount += 1;
             });
-            
-            // Puana göre büyükten küçüğe sırala
-            const sorted = Object.entries(totals)
-                .map(([user_name, stats]) => ({ user_name, ...stats }))
-                .sort((a, b) => b.totalBonus - a.totalBonus);
-            
-            setBonusHallOfFame(sorted);
         }
+
+        // 2. İlk 4 Haftanın Tarihi (Manuel) Kayıtlarını Kasanın İçine Zerk Et!
+        MANUAL_HOF_BONUSES.forEach(manual => {
+            if (!totals[manual.user_name]) {
+                totals[manual.user_name] = { totalBonus: 0, pCount: 0, sCount: 0 };
+            }
+            totals[manual.user_name].totalBonus += manual.totalBonus;
+            totals[manual.user_name].pCount += manual.pCount;
+            totals[manual.user_name].sCount += manual.sCount;
+        });
+        
+        const sorted = Object.entries(totals)
+            .map(([user_name, stats]) => ({ user_name, ...stats }))
+            .sort((a, b) => b.totalBonus - a.totalBonus || b.sCount - a.sCount);
+        
+        setBonusHallOfFame(sorted);
     };
 
     fetchWeeks();
@@ -91,7 +205,23 @@ export default function HaftaninEnleriPortal() {
     
     const fetchWeekData = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
+
+      // 🏛️ Eğer Seçilen Hafta İlk 4 Haftadan Biri İse Veritabanını Pas Geç, Tarihi Arşivi Yükle!
+      if ([1, 2, 3, 4].includes(selectedWeek)) {
+          const historicalWeek = HARDCODED_WEEKS[selectedWeek];
+          setBonuses(historicalWeek.bonuses);
+          
+          const sortedStandings = {
+              MASTER_POINTS: [...historicalWeek.data].sort((a: any, b: any) => b.points - a.points || b.scores - a.scores),
+              MASTER_SCORES: [...historicalWeek.data].sort((a: any, b: any) => b.scores - a.scores || b.points - a.points)
+          };
+          setStandings(sortedStandings);
+          setIsLoading(false);
+          return;
+      }
+
+      // 5. Hafta ve Sonrası İçin Normal Veritabanı Akışı
+      const { data } = await supabase
         .from('points')
         .select('*')
         .eq('hafta', selectedWeek);
@@ -135,7 +265,6 @@ export default function HaftaninEnleriPortal() {
     fetchWeekData();
   }, [selectedWeek]);
 
-  // Sadece Listelerin Satırlarını (Kartlarını) Çizen Fonksiyon
   const renderListRow = (user: any, idx: number, primaryMode: 'points' | 'scores') => {
     let rowBg = "bg-slate-950";
     let textCol = "text-slate-300";
