@@ -421,7 +421,7 @@ export default function MasterPuanDurumuPage() {
                             </div>
                           )}
                         </div>
-                      </td>s
+                      </td>
 
                       <td className="px-1 py-3 align-middle text-right">
                         {row.liveBonus > 0 && (
