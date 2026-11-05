@@ -27,7 +27,6 @@ export default function DfoPuanDurumuPage() {
 
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
-          
           allMatches.forEach(m => {
               statusMap[m.id] = m.status;
               if (m.status === 'LIVE' || m.status === 'HT') {
@@ -37,7 +36,6 @@ export default function DfoPuanDurumuPage() {
           });
 
           const weeksData: Record<number, { date: string, hasStartedMatch: boolean }> = {};
-          
           dbBulletin.forEach(b => {
               if (!weeksData[b.week_num]) weeksData[b.week_num] = { date: b.match_date, hasStartedMatch: false };
               weeksData[b.week_num].date = b.match_date; 
@@ -83,7 +81,6 @@ export default function DfoPuanDurumuPage() {
           }
       }
 
-      // DFO için ana puanları çekiyoruz
       const { data: leaderboardData } = await supabase.from('live_leaderboard').select('id, name, dfo_pts, dfo_trend_direction, dfo_trend_diff');
       
       if (leaderboardData && leaderboardData.length > 0) {
@@ -126,10 +123,10 @@ export default function DfoPuanDurumuPage() {
                                           catLower.includes('bal') ||
                                           isTurkishTeam;
                                           
-                    // 🔥 ZIRH BURADA: Eğer maç KESİN TFF ise, DFO sayfasında hesaplama! (Değilse DFO'dur, hesapla!) 🔥
                     if (isDefiniteTFF) return; 
                 }
 
+                // 🔥 KRİTİK DÜZELTME: TÜM SİSTEMDEKİ KİŞİ SAYISI BAZ ALINDI 🔥
                 const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
                 
                 let pts = 0;

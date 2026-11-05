@@ -18,7 +18,6 @@ const formatTurkishDate = (dateStr: string) => {
   return dateStr;
 };
 
-// 🔥 ÖNDER KOMUTAN'IN MÜHÜRLÜ 13. HAFTA LİSTESİ (TEMEL KAYA) 🔥
 const mühürlüListe = [
   { id: '1', name: 'DOĞAÇ ALKAN', score: 112, badges: [] as string[] },
   { id: '2', name: 'YUSUF ERBAY', score: 110, badges: [] },
@@ -92,10 +91,17 @@ export default function MasterPuanDurumuPage() {
         
         let activeWeek = 5; 
         let activeDate = '';
+        let liveWeeks: number[] = [];
 
         if (dbBulletin && allMatches) {
             const statusMap: Record<number, string> = {};
-            allMatches.forEach(m => statusMap[m.id] = m.status);
+            allMatches.forEach(m => {
+                statusMap[m.id] = m.status;
+                if (m.status === 'LIVE' || m.status === 'HT') {
+                    const wNum = Math.floor(m.id / 100);
+                    if (!liveWeeks.includes(wNum)) liveWeeks.push(wNum);
+                }
+            });
 
             const weeksData: Record<number, { date: string, hasStartedMatch: boolean }> = {};
             
@@ -119,6 +125,8 @@ export default function MasterPuanDurumuPage() {
                 activeWeek = Math.max(...Object.keys(weeksData).map(Number)); 
             }
             activeDate = weeksData[activeWeek]?.date || '';
+            
+            if (!liveWeeks.includes(activeWeek)) liveWeeks.push(activeWeek);
         }
 
         setDisplayWeekNum(activeWeek);
@@ -156,32 +164,33 @@ export default function MasterPuanDurumuPage() {
         let fetchMore = true;
         let from = 0;
 
-        while (fetchMore) {
-            const { data: pDataChunk, error } = await supabase
-                .from('player_predictions')
-                .select('*')
-                .eq('week_num', activeWeek)
-                .range(from, from + stepPts - 1);
+        if (liveWeeks.length > 0) {
+            while (fetchMore) {
+                const { data: pDataChunk, error } = await supabase
+                    .from('player_predictions')
+                    .select('*')
+                    .in('week_num', liveWeeks)
+                    .range(from, from + stepPts - 1);
 
-            if (error) break;
+                if (error) break;
 
-            if (pDataChunk && pDataChunk.length > 0) {
-                predictions = [...predictions, ...pDataChunk];
-                if (pDataChunk.length < stepPts) fetchMore = false; 
-                else from += stepPts; 
-            } else {
-                fetchMore = false; 
+                if (pDataChunk && pDataChunk.length > 0) {
+                    predictions = [...predictions, ...pDataChunk];
+                    if (pDataChunk.length < stepPts) fetchMore = false; 
+                    else from += stepPts; 
+                } else {
+                    fetchMore = false; 
+                }
             }
         }
 
         const isBonusDistributedInDB = pastAndActivePoints.some(pt => Number(pt.hafta) === activeWeek && (pt.ev_sahibi === 'HAFTANIN' || pt.ev_sahibi === 'SKOR'));
 
-        // 🔥 OKLAR İÇİN EKLENEN YENİ DEĞİŞKENLER 🔥
         let updatedList = mühürlüListe.map(row => ({
             ...row,
             liveBonus: 0,
             finishedBonus: 0,
-            prevFinishedBonus: 0, // Önceki hafta puanı
+            prevFinishedBonus: 0,
             prevRank: 0,
             currentRank: 0,
             rankChange: 0,
@@ -196,7 +205,6 @@ export default function MasterPuanDurumuPage() {
                     const targetPlayer = updatedList.find(p => p.name.includes(userNameStr) || userNameStr.includes(p.name));
                     if (targetPlayer) {
                         targetPlayer.finishedBonus += Number(pt.puan || 0);
-                        // Eğer puan geçmiş haftanınsa, ok hesaplaması için eski puana da ekle
                         if (haftaNum < activeWeek) {
                             targetPlayer.prevFinishedBonus += Number(pt.puan || 0);
                         }
@@ -213,7 +221,10 @@ export default function MasterPuanDurumuPage() {
                 if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
                 
                 const mIndex = match.id % 100;
-                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                const matchWeek = Math.floor(match.id / 100);
+                
+                // 🔥 KRİTİK DÜZELTME: TÜM SİSTEMDEKİ KİŞİ SAYISI BAZ ALINDI 🔥
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
                 
                 let pts = 0;
                 if (winners.length === 1) pts = 12;
@@ -228,7 +239,9 @@ export default function MasterPuanDurumuPage() {
                     const playerName = idToNameMap[w.user_id];
                     if (playerName) {
                         const targetPlayer = updatedList.find(p => p.name === playerName || p.name.includes(playerName) || playerName.includes(p.name.replace(/ 🏆/g, '')));
-                        if (targetPlayer) targetPlayer.liveBonus += pts;
+                        if (targetPlayer) {
+                            targetPlayer.liveBonus += pts;
+                        }
                     }
                 });
             });
@@ -245,7 +258,9 @@ export default function MasterPuanDurumuPage() {
                 if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
                 
                 const mIndex = match.id % 100;
-                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+                const matchWeek = Math.floor(match.id / 100);
+                
+                const winners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
                 
                 let pts = 0;
                 if (winners.length === 1) pts = 12;
@@ -302,7 +317,6 @@ export default function MasterPuanDurumuPage() {
             }
         }
 
-        // 🔥 OKLAR İÇİN: ÖNCEKİ HAFTA SIRALAMASINI BUL 🔥
         const prevList = [...updatedList].map(p => ({
             name: p.name,
             prevScoreTotal: p.score + p.prevFinishedBonus
@@ -313,7 +327,6 @@ export default function MasterPuanDurumuPage() {
             if (target) target.prevRank = index + 1;
         });
 
-        // 🔥 OKLAR İÇİN: GÜNCEL SIRALAMA VE FARK HESABI 🔥
         updatedList = updatedList.map(p => ({
             ...p,
             score: p.score + p.finishedBonus + p.liveBonus
@@ -321,7 +334,7 @@ export default function MasterPuanDurumuPage() {
 
         updatedList.forEach((p, index) => {
             p.currentRank = index + 1;
-            p.rankChange = p.prevRank - p.currentRank; // Pozitifse yükselmiş demektir
+            p.rankChange = p.prevRank - p.currentRank; 
         });
 
         setLiveList(updatedList);
@@ -379,7 +392,6 @@ export default function MasterPuanDurumuPage() {
                   {liveList.map((row, idx) => (
                     <tr key={row.id} className="hover:bg-[#0f172a]/40 transition-colors">
                       
-                      {/* 🔥 SIRA VE OK 🔥 */}
                       <td className="pl-3 md:pl-4 pr-1 py-3 text-[#94a3b8] font-medium align-middle">
                         <div className="flex items-center">
                           <span className="text-left w-5">{row.currentRank}</span>
@@ -388,7 +400,6 @@ export default function MasterPuanDurumuPage() {
                         </div>
                       </td>
 
-                      {/* 🔥 İSİM VE ROZETLER 🔥 */}
                       <td className="px-1 md:px-2 py-3 align-middle">
                         <div className="flex flex-col gap-1">
                           <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-white font-semibold text-[12px] sm:text-sm">
@@ -412,7 +423,6 @@ export default function MasterPuanDurumuPage() {
                         </div>
                       </td>
 
-                      {/* 🔥 CANLI BONUS (Aynı DFO şablonundaki gibi) 🔥 */}
                       <td className="px-1 py-3 align-middle text-right">
                         {row.liveBonus > 0 && (
                           <span className="text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
@@ -421,7 +431,6 @@ export default function MasterPuanDurumuPage() {
                         )}
                       </td>
 
-                      {/* 🔥 TOPLAM PUAN 🔥 */}
                       <td className="pr-3 md:pr-4 pl-1 py-3 align-middle font-bold text-[12px] sm:text-sm text-amber-500 text-center">
                         {row.score}
                       </td>
