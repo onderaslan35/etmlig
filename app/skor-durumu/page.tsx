@@ -24,13 +24,22 @@ export default function SkorDurumuPage() {
 
       // 2. Canlı Maçları ve Bülteni Çek
       const { data: allMatches } = await supabase.from('live_matches').select('*');
-      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, category');
+      const { data: dbBulletin } = await supabase.from('matches_bulletin').select('match_index, week_num, category, home_team, away_team');
 
       // 3. Aktif Haftayı Bul
       let activeWeek = 6;
+      let liveWeeks: number[] = [];
+
       if (dbBulletin && allMatches) {
           const statusMap: Record<number, string> = {};
-          allMatches.forEach(m => statusMap[m.id] = m.status);
+          allMatches.forEach(m => {
+              statusMap[m.id] = m.status;
+              if (m.status === 'LIVE' || m.status === 'HT') {
+                  const wNum = Math.floor(m.id / 100);
+                  if (!liveWeeks.includes(wNum)) liveWeeks.push(wNum);
+              }
+          });
+          
           const weeksData: Record<number, { hasStartedMatch: boolean }> = {};
           
           dbBulletin.forEach(b => {
@@ -42,34 +51,32 @@ export default function SkorDurumuPage() {
           const startedWeeks = Object.keys(weeksData).map(Number).filter(w => weeksData[w].hasStartedMatch);
           activeWeek = startedWeeks.length > 0 ? Math.max(...startedWeeks) : Math.max(...Object.keys(weeksData).map(Number)); 
           
+          if (!liveWeeks.includes(activeWeek)) liveWeeks.push(activeWeek);
+
           const activeWeekMatches = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek);
-          const finishedCount = activeWeekMatches.filter(m => m.status === 'MS').length;
+          const finishedCount = activeWeekMatches.filter(m => m.status === 'FINISHED').length;
           setHaftaBittiMi(finishedCount === 24);
       }
 
-      // 🔥 KASADAN (VERİTABANINDAN) KESİNLEŞMİŞ 12 PUANLARI ÇEK
-      const { data: exactMatchesFromPoints } = await supabase
-        .from('points')
-        .select('*')
-        .eq('puan', 12);
-
-      // 4. 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Sadece aktif hafta)
+      // 4. 1000 LİMİTİNİ AŞAN TAHMİN ÇEKİCİ (Tüm aktif/canlı haftalar)
       let predictions: any[] = [];
       let fetchMore = true;
       let from = 0;
       const step = 1000;
 
-      while (fetchMore) {
-        const { data: pDataChunk, error } = await supabase
-          .from('player_predictions')
-          .select('*')
-          .eq('week_num', activeWeek)
-          .range(from, from + step - 1);
-          
-        if (!error && pDataChunk && pDataChunk.length > 0) {
-           predictions = [...predictions, ...pDataChunk];
-           if (pDataChunk.length < step) fetchMore = false; else from += step; 
-        } else { fetchMore = false; }
+      if (liveWeeks.length > 0) {
+          while (fetchMore) {
+            const { data: pDataChunk, error } = await supabase
+              .from('player_predictions')
+              .select('*')
+              .in('week_num', liveWeeks)
+              .range(from, from + step - 1);
+              
+            if (!error && pDataChunk && pDataChunk.length > 0) {
+               predictions = [...predictions, ...pDataChunk];
+               if (pDataChunk.length < step) fetchMore = false; else from += step; 
+            } else { fetchMore = false; }
+          }
       }
 
       // 5. Oyuncu İsimleri Eşleştirmesi
@@ -79,27 +86,13 @@ export default function SkorDurumuPage() {
           playersData.forEach(p => idToNameMap[p.username] = p.name);
       }
 
-      // 6. KASADAN (VERİTABANINDAN) KESİNLEŞMİŞ SKOR HESABI
-      const dbBaseScores: Record<string, { master: number, dfo: number, tff: number }> = {};
-      if (leaderboardData) {
-          leaderboardData.forEach(r => {
-             const rName = r.name || "";
-             dbBaseScores[rName] = { 
-               master: r.skor_pts || 0, 
-               dfo: r.dfo_skor_pts || 0, 
-               tff: r.tff_skor_pts || 0 
-             };
-          });
-      }
-
-      // 7. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI (ÇİFT SAYMA DÜZELTİLDİ) ⚡
+      // 6. ⚡ CANLI (TAM İSABET) SKOR HESAPLAMASI ⚡
       const liveBonuses: Record<string, { master: number, dfo: number, tff: number }> = {};
 
       if (allMatches && predictions && dbBulletin) {
-          // 🔥 KOMUTANIN EMRİ: Çift saymayı önlemek için SADECE anlık oynanan (LIVE/HT) maçları hesapla!
-          const matchesToCalculate = allMatches.filter(m => Math.floor(m.id / 100) === activeWeek && (m.status === 'LIVE' || m.status === 'HT'));
+          const liveM = allMatches.filter(m => m.status === 'LIVE' || m.status === 'HT');
           
-          matchesToCalculate.forEach(match => {
+          liveM.forEach(match => {
               const currentScore = `${match.home_score}-${match.away_score}`;
               if (currentScore === "-" || match.home_score === "-" || match.away_score === "-") return;
               
@@ -108,29 +101,58 @@ export default function SkorDurumuPage() {
               
               // Kategori Tespiti (TFF mi DFO mu?)
               const bulletinMatch = dbBulletin.find(b => b.week_num === matchWeek && b.match_index === mIndex);
-              const isTff = bulletinMatch ? isTffMatchCheck(bulletinMatch.category) : false;
+              
+              let isTff = false;
+              if (bulletinMatch) {
+                  const rawCategory = String(bulletinMatch.category || '');
+                  const catLower = rawCategory.toLocaleLowerCase('tr-TR');
+                  const homeName = String(bulletinMatch.home_team || '').toLocaleLowerCase('tr-TR');
+                  const awayName = String(bulletinMatch.away_team || '').toLocaleLowerCase('tr-TR');
+                  
+                  const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
+
+                  isTff = isTffMatchCheck(bulletinMatch.category) || 
+                          catLower.includes('türkiye kupası') || 
+                          catLower.includes('turkiye kupasi') || 
+                          catLower.includes('tff') || 
+                          catLower.includes('süper lig') || 
+                          catLower.includes('1. lig') || 
+                          catLower.includes('amatör') || 
+                          catLower.includes('bal') ||
+                          isTurkishTeam;
+              }
 
               // Sadece TAM isabet (Skoru tam bilenleri) ayıkla
-              const exactWinners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore);
+              const exactWinners = predictions.filter(p => p.match_index === mIndex && p.predicted_score === currentScore && p.week_num === matchWeek);
 
               exactWinners.forEach(w => {
                   const playerName = idToNameMap[w.user_id] || "";
                   if (playerName) {
-                      if (!liveBonuses[playerName]) liveBonuses[playerName] = { master: 0, dfo: 0, tff: 0 };
+                      // Anahtar eşleştirme (boşluk ve kupa emojisi düzeltmesi)
+                      const cleanPlayerName = playerName.replace(/ 🏆/g, '').trim();
                       
-                      liveBonuses[playerName].master += 1; 
-                      if (isTff) liveBonuses[playerName].tff += 1; 
-                      else liveBonuses[playerName].dfo += 1; 
+                      let matchKey = Object.keys(liveBonuses).find(k => k.includes(cleanPlayerName) || cleanPlayerName.includes(k));
+                      
+                      if (!matchKey) {
+                          matchKey = playerName;
+                          liveBonuses[matchKey] = { master: 0, dfo: 0, tff: 0 };
+                      }
+                      
+                      liveBonuses[matchKey].master += 1; 
+                      if (isTff) liveBonuses[matchKey].tff += 1; 
+                      else liveBonuses[matchKey].dfo += 1; 
                   }
               });
           });
       }
 
-      // 8. Kesinleşmiş Tablo İle Canlı Bonusları Birleştir
+      // 7. Kesinleşmiş Tablo İle Canlı Bonusları Birleştir
       if (leaderboardData) {
         const enrichedData = leaderboardData.map(r => {
             const rName = r.name || "";
-            const matchedKey = Object.keys(liveBonuses).find(k => k === rName || rName.includes(k) || k.includes(rName.replace(/ 🏆/g, '')));
+            const cleanRName = rName.replace(/ 🏆/g, '').trim();
+            const matchedKey = Object.keys(liveBonuses).find(k => k === rName || rName.includes(k) || k.includes(cleanRName));
+            
             const bonus = matchedKey ? liveBonuses[matchedKey] : { master: 0, dfo: 0, tff: 0 };
 
             return {
