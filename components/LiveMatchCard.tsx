@@ -30,6 +30,22 @@ const sanitizeStr = (s: string) => {
     return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
 };
 
+// 🔴 GELİŞMİŞ TFF ZIRHI: Hem kategoriye hem de tüm Türk takımlarına bakar
+const advancedTffCheck = (category: string, home: string, away: string) => {
+    const cat = (category || '').toUpperCase().replace(/İ/g, 'I');
+    const h = (home || '').toUpperCase().replace(/İ/g, 'I');
+    const a = (away || '').toUpperCase().replace(/İ/g, 'I');
+  
+    const isTffCat = cat.includes("TURKIYE") || cat.includes("TFF") || cat.includes("AMATOR") ||
+                     cat.includes("SUPER LIG") || cat.includes("1. LIG") || cat.includes("1.LIG") ||
+                     cat.includes("2. LIG") || cat.includes("2.LIG") || cat.includes("3. LIG") ||
+                     cat.includes("3.LIG") || cat.includes("BAL") || cat.includes("KUPASI") || cat.includes("PTT");
+  
+    const teamRegex = /(SPOR|GUCU|YURDU|BLD|BELEDIYE|DEMIR|GENCLER|BIRLIGI|KARS|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|ALTAY|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ADANA|HATAY|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
+  
+    return isTffCat || teamRegex.test(h) || teamRegex.test(a);
+};
+
 export default function LiveMatchCard() {
   const [activeWeeks, setActiveWeeks] = useState<number[]>([]);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
@@ -361,7 +377,6 @@ export default function LiveMatchCard() {
       const systemTimeEvent = safeEvents.find((e: any) => e.type === 'SystemTime');
       const safeExtra = systemTimeEvent ? systemTimeEvent.detail : null;
 
-      // 🔥 KRONOMETRE ÇAĞRISI BURAYA ENTEGRE EDİLDİ 🔥
       let displayMinute = '';
       if (isLiveStatus && !isWaitingApproval) {
          displayMinute = getDynamicElapsed(dbMatch);
@@ -373,8 +388,16 @@ export default function LiveMatchCard() {
       }
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
-      const isTffMatch = isTffMatchCheck(match.category);
-      const theme = getEliteTheme(match.category, homeTeamUpper, awayTeamUpper);
+      
+      // 🔴 YENİ NESİL TFF ZIRHI: Hem kategoriye hem takımlara bakıyor!
+      const isTffMatch = advancedTffCheck(match.category, homeTeamUpper, awayTeamUpper);
+      
+      // 🔥 TEMA HİLESİ: Eğer maç TFF ise ama kategoride TFF/Türkiye yazmıyorsa Tema Motorunu kandırıyoruz!
+      const themeCategory = (isTffMatch && !match.category.toUpperCase().includes('TÜRKİYE') && !match.category.toUpperCase().includes('TFF'))
+          ? `TÜRKİYE ${match.category}`
+          : match.category;
+          
+      const theme = getEliteTheme(themeCategory, homeTeamUpper, awayTeamUpper);
 
       const hName = sanitizeStr(homeTeamUpper);
       const aName = sanitizeStr(awayTeamUpper);
