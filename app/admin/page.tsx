@@ -334,7 +334,7 @@ export default function AdminRadarPortal() {
       try {
           const res = await fetch('https://v3.football.api-sports.io/status', {
               headers: {
-                  'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+                  'x-apisports-key': 'ef3a1e2c59e4a76fc94762f23e3074c9',
                   'x-rapidapi-host': 'v3.football.api-sports.io'
               }
           });
@@ -379,7 +379,7 @@ export default function AdminRadarPortal() {
 
         const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
            headers: {
-              'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+              'x-apisports-key': 'ef3a1e2c59e4a76fc94762f23e3074c9',
               'x-rapidapi-host': 'v3.football.api-sports.io'
            }
         });
@@ -1141,7 +1141,7 @@ export default function AdminRadarPortal() {
             }
             const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
                 headers: {
-                    'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+                    'x-apisports-key': 'ef3a1e2c59e4a76fc94762f23e3074c9',
                     'x-rapidapi-host': 'v3.football.api-sports.io'
                 }
             });

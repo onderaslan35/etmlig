@@ -409,7 +409,7 @@ export default function TffPuanDurumuPage() {
                       <td className="px-1 py-4 align-middle text-right">
                         {row.liveExtra > 0 && adminStatus === 'LIVE' && (activeTab === 'total' || activeTab === 'w6') && (
                           <span className="text-[9px] sm:text-[10px] font-black bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/50 animate-pulse whitespace-nowrap shadow-sm">
-                            +{row.liveExtra} CANLI
+                            +{row.liveExtra} CANLI PUAN
                           </span>
                         )}
                       </td>
