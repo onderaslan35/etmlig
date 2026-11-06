@@ -30,7 +30,7 @@ const sanitizeStr = (s: string) => {
     return res.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').replace(/[^A-Z0-9]/g, '');
 };
 
-// 🔴 GELİŞMİŞ TFF ZIRHI: Hem kategoriye hem de tüm Türk takımlarına bakar
+// 🔴 GELİŞMİŞ TFF ZIRHI
 const advancedTffCheck = (category: string, home: string, away: string) => {
     const cat = (category || '').toUpperCase().replace(/İ/g, 'I');
     const h = (home || '').toUpperCase().replace(/İ/g, 'I');
@@ -99,13 +99,12 @@ export default function LiveMatchCard() {
      fetchDbPlayers();
   }, []);
 
-  // 🔥 KRONOMETREYİ BESLEYEN ZAMAN DÖNGÜSÜ 🔥
+  // KRONOMETREYİ BESLEYEN ZAMAN DÖNGÜSÜ
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 🔥 YENİ: OTOMATİK KRONOMETRE MOTORU 🔥
   const getDynamicElapsed = (logInfo: any) => {
      if (!logInfo || logInfo.status !== 'LIVE' || !logInfo.updated_at || !logInfo.elapsed) return logInfo?.elapsed ? `${logInfo.elapsed}'` : 'Canlı';
      const parts = logInfo.updated_at.split(':');
@@ -120,6 +119,7 @@ export default function LiveMatchCard() {
      return `${logInfo.elapsed}'`;
   };
 
+  // 🔥 API SIZINTISI BURADA KAPATILDI 🔥
   useEffect(() => {
     const fetchMatchesAndPredictions = async () => {
       const todayDateStr = getTodayDateString();
@@ -287,9 +287,11 @@ export default function LiveMatchCard() {
     };
 
     fetchMatchesAndPredictions(); 
-    const interval = setInterval(fetchMatchesAndPredictions, 5000); 
-    return () => clearInterval(interval);
-  }, [mergedAccounts, now]);
+    
+    // 🚨 KANAMA DURDURULDU: setInterval Tümüyle Kaldırıldı. Artık sistem kendi kendine saldırmayacak.
+    // Sadece sayfa ilk açıldığında veya veriler (mergedAccounts) değiştiğinde 1 kez çalışacak.
+
+  }, [mergedAccounts]); // 'now' bağımlılığı da kaldırıldı ki kronometre her attığında veritabanını vurmasın.
 
   const toggleEvents = (uniqueId: string) => setOpenEventsMap((prev) => ({ ...prev, [uniqueId]: prev[uniqueId] === false ? true : false })); 
   const toggleWinners = (uniqueId: string) => setOpenWinnersMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] })); 
@@ -389,10 +391,7 @@ export default function LiveMatchCard() {
 
       const isChampionsLeague = match.category.toUpperCase().includes('ŞAMPİYONLAR LİGİ');
       
-      // 🔴 YENİ NESİL TFF ZIRHI: Hem kategoriye hem takımlara bakıyor!
       const isTffMatch = advancedTffCheck(match.category, homeTeamUpper, awayTeamUpper);
-      
-      // 🔥 TEMA HİLESİ: Eğer maç TFF ise ama kategoride TFF/Türkiye yazmıyorsa Tema Motorunu kandırıyoruz!
       const themeCategory = (isTffMatch && !match.category.toUpperCase().includes('TÜRKİYE') && !match.category.toUpperCase().includes('TFF'))
           ? `TÜRKİYE ${match.category}`
           : match.category;
