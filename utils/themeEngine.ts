@@ -165,6 +165,7 @@ export const localTeamLogos: Record<string, string> = {
   "KIBRIS RUM KESİMİ": "https://images.fotmob.com/image_resources/logo/teamlogo/5793_large.png",
   "LİHTENŞTAYN": "https://upload.wikimedia.org/wikipedia/commons/4/47/Flag_of_Liechtenstein.svg",
   "FAROE ADALARI": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Flag_of_the_Faroe_Islands.svg",
+  "UEFA Nations League": "https://images.fotmob.com/image_resources/logo/leaguelogo/dark/9808.png",
   "SAN MARİNO": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Flag_of_San_Marino.svg",
 
   // TÜRKİYE (KULÜPLER)
