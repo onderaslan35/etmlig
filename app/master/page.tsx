@@ -17,7 +17,7 @@ const allPlayersMasterList: Record<string, string> = {
   "351925": "ALİOS GÖZTEPE", "262730": "ÖNDER IŞIK", "262782": "YUSUF ERBAY", "262723": "AYHAN LUŞOĞLU",
   "262749": "B.VEYSELOĞLU EROL", "262718": "BEKİR KARADAĞ", "262715": "ŞEMSETTİN DÜGER", "262739": "UĞUR GÜRBÜZ",
   "262703": "CEMALETTİN BELLİ", "262758": "MELİH PINAR", "262770": "OZKAYA MAZAKALI BAYRAM", "262708": "BAYRAM YILMAZ",
-  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN", "262712": "MURAT AYDEMİR", "262704": "YAPAY ZEKA"
+  "262787": "MUSTAFA TUCİ", "262744": "İLYAS UYGUN",  "262704": "YAPAY ZEKA"
 };
 
 // 1. HAFTA HAM VERİLERİ (DFO 1)
@@ -61,7 +61,6 @@ const masterWeek1Data: Record<string, { name: string; puan: number }> = {
   "262705": { name: "AHMET BİRCAN 🏆", puan: 0 },
   "262708": { name: "BAYRAM YILMAZ", puan: 0 },
   "262711": { name: "RIDVAN DOGER", puan: 0 },
-  "262712": { name: "MURAT AYDEMİR", puan: 0 },
   "262734": { name: "LEVENT YILDIRIM", puan: 0 },
   "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
   "262704": { name: "YAPAY ZEKA", puan: 0 }
@@ -105,7 +104,6 @@ const masterWeek2Data: Record<string, { name: string; puan: number }> = {
   "262731": { name: "FATİH AYAN", puan: 1 },
   "262739": { name: "UĞUR GÜRBÜZ", puan: 1 },
   "262770": { name: "OZKAYA MAZAKALI BAYRAM", puan: 0 },
-  "262712": { name: "MURAT AYDEMİR", puan: 0 },
   "262704": { name: "YAPAY ZEKA", puan: 0 }
 };
 
