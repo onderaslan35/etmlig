@@ -605,29 +605,19 @@ export default function AdminRadarPortal() {
   const fetchBonusHistory = async () => {
      try {
          const { data } = await supabase
-             .from('points')
-             .select('hafta, user_name, ev_sahibi')
-             .in('ev_sahibi', ['HAFTANIN', 'SKOR'])
-             .gte('hafta', 1) 
-             .order('hafta', { ascending: false });
+             .from('etml_official_weeks')
+             .select('week_num, puan_lideri_ids, skor_krali_ids')
+             .eq('is_completed', true)
+             .order('week_num', { ascending: false });
          
          if (data) {
              const grouped: Record<number, { puanLiderleri: string[], skorKrallari: string[] }> = {};
-             
              data.forEach((row: any) => {
-                 if (!grouped[row.hafta]) {
-                     grouped[row.hafta] = { puanLiderleri: [], skorKrallari: [] };
-                 }
-                 
-                 if (row.ev_sahibi === 'HAFTANIN' && !grouped[row.hafta].puanLiderleri.includes(row.user_name)) {
-                     grouped[row.hafta].puanLiderleri.push(row.user_name);
-                 }
-                 
-                 if (row.ev_sahibi === 'SKOR' && !grouped[row.hafta].skorKrallari.includes(row.user_name)) {
-                     grouped[row.hafta].skorKrallari.push(row.user_name);
-                 }
+                 grouped[row.week_num] = {
+                     puanLiderleri: (row.puan_lideri_ids || []).map((uid: string) => mergedPlayers[uid] || uid),
+                     skorKrallari: (row.skor_krali_ids || []).map((uid: string) => mergedPlayers[uid] || uid)
+                 };
              });
-             
              setHistoricalBonuses(grouped);
          }
      } catch (e) {
@@ -663,7 +653,7 @@ export default function AdminRadarPortal() {
          if (data) liveData = data;
       }
       
-      const { data: dbPointsData } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('kategori', 'MASTER');
+      const { data: dbPointsData } = await supabase.from('etml_official_matches').select('match_index, winner_ids, points_awarded').eq('week_num', selectedLiveWeek).eq('status', 'FINISHED');
       setWeeklyDbPoints(dbPointsData || []);
 
       let allPredictions: any[] = [];
@@ -824,11 +814,13 @@ export default function AdminRadarPortal() {
          stats[uid] = { points: 0, exactScores: 0 };
      });
 
-     weeklyDbPoints.forEach(row => {
-         if (row.ev_sahibi !== 'HAFTANIN' && row.ev_sahibi !== 'SKOR' && stats[row.username]) {
-             stats[row.username].points += row.puan;
-             stats[row.username].exactScores += 1;
-         }
+     weeklyDbPoints.forEach((row: any) => {
+         (row.winner_ids || []).forEach((uid: string) => {
+             if (stats[uid]) {
+                 stats[uid].points += Number(row.points_awarded || 0);
+                 stats[uid].exactScores += 1;
+             }
+         });
      });
 
      liveMatchesDB.forEach((match: any) => {
@@ -888,87 +880,19 @@ export default function AdminRadarPortal() {
 
   // 🔥 YENİ: BONUS DAĞITMA MOTORU (TEK TABANCA KURALI: +3 PUAN) 🔥
   const handleDistributeBonuses = async () => {
-     const pCount = weeklyStats.pLeadersArray.length;
-     const sCount = weeklyStats.sLeadersArray.length;
-
-     if (pCount === 0 && sCount === 0) {
-         alert("Dağıtılacak bonus hak eden kimse bulunamadı!");
+     if (selectedLiveWeek <= 40) {
+         alert(`🔒 1-40. Haftalar Resmi Kasada mühürlüdür, değiştirilemez!`);
          return;
      }
-
-     const inserts: any[] = [];
-     let message = "";
-
-     // PUAN LİDERİ KONTROLÜ (TEK TABANCA MI?)
-     if (pCount === 1) {
-         const uid = weeklyStats.pLeadersArray[0];
-         const pName = mergedPlayers[uid];
-         inserts.push({
-             hafta: selectedLiveWeek, user_name: pName, username: uid, 
-             ev_sahibi: 'HAFTANIN', deplasman: 'BONUSU', 
-             gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, 
-             puan: 3, kategori: 'MASTER'
-         });
-         message += `🏆 Puan Lideri (+3 Puan): ${pName}\n`;
-     } else if (pCount > 1) {
-         message += `⚠️ Puan Liderliğinde Eşitlik Var (${pCount} kişi). Bonus İptal!\n`;
-     }
-
-     // SKOR KRALI KONTROLÜ (TEK TABANCA MI?)
-     if (sCount === 1) {
-         const uid = weeklyStats.sLeadersArray[0];
-         const sName = mergedPlayers[uid];
-         inserts.push({
-             hafta: selectedLiveWeek, user_name: sName, username: uid, 
-             ev_sahibi: 'SKOR', deplasman: 'BONUSU', 
-             gercek_ev: 0, gercek_dep: 0, tahmin_ev: 0, tahmin_dep: 0, 
-             puan: 3, kategori: 'MASTER'
-         });
-         message += `⚽ Skor Kralı (+3 Puan): ${sName}\n`;
-     } else if (sCount > 1) {
-         message += `⚠️ Skor Krallığında Eşitlik Var (${sCount} kişi). Bonus İptal!\n`;
-     }
-
-     if (inserts.length === 0) {
-         alert(`DİKKAT: KURALLAR GEREĞİ BONUS DAĞITILMADI!\n\n${message}\n(Liderlikte veya Krallıkta beraberlik olduğu için kimseye bonus verilmedi.)`);
-         return;
-     }
-
-     if (!window.confirm(`DİKKAT! AŞAĞIDAKİ BONUSLAR DAĞITILACAK:\n\n${message}\nBu işlemi onaylıyor musunuz? (Bu işlem sadece bir kez yapılmalıdır!)`)) {
-         return;
-     }
-
      try {
-         // Çifte dağıtımı engelle (Aynı hafta içinde önceden bonus verilmiş mi kontrol et)
-         const { data: existingBonuses } = await supabase
-            .from('points')
-            .select('id')
-            .eq('hafta', selectedLiveWeek)
-            .in('ev_sahibi', ['HAFTANIN', 'SKOR']);
-
-         if (existingBonuses && existingBonuses.length > 0) {
-             alert(`❌ DUR KOMUTANIM!\n${selectedLiveWeek}. Haftanın bonusları zaten daha önceden dağıtılmış. Çifte puan verilmesi engellendi!`);
-             return;
-         }
-
-         // Fişleri veritabanına ekle
-         const { error: insertError } = await supabase.from('points').insert(inserts);
-         if (insertError) throw insertError;
-
-         // Standings tablosunu güncelle (MASTER kasasına +3 ekle)
-         for (const item of inserts) {
-             const { data: stData } = await supabase.from('standings').select('*').eq('user_id', item.username);
-             if (stData) {
-                 const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-                 if (mRow) {
-                     await supabase.from('standings').update({ points: mRow.points + 3 }).eq('id', mRow.id);
-                 } else {
-                     await supabase.from('standings').insert({ user_id: item.username, user_name: item.user_name, league_type: 'MASTER', points: 3 });
-                 }
-             }
-         }
-
-         alert(`✅ BAŞARILI! Hak edenlere +3 Puan bonusları kasaya işlendi ve listelere (Haftanın Enleri) eklendi.\n(Puanların ekrana yansıması için sayfayı F5 ile yenileyebilirsiniz.)`);
+         const { error } = await supabase.rpc('sync_etml_weeks', {
+             p_from_week: selectedLiveWeek,
+             p_to_week: selectedLiveWeek,
+             p_force: false
+         });
+         if (error) throw error;
+         await fetchBonusHistory();
+         alert(`✅ ${selectedLiveWeek}. Hafta liderleri Resmi Kasaya senkronize edildi! (41+ haftalarda +3 bonus kural gereği kapalıdır.)`);
      } catch (e: any) {
          alert("❌ HATA: " + e.message);
      }
@@ -982,6 +906,11 @@ export default function AdminRadarPortal() {
     const nowTime = new Date();
     const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
 
+    if (selectedLiveWeek <= 40) {
+      alert("🔒 1-40. Haftalar Resmi Kasada kilitlidir; geçmiş haftalarda değişiklik yapılamaz!");
+      return;
+    }
+
     if (action === 'Skoru Güncelle') {
       if (isSoundEnabled && audioRef.current) {
          audioRef.current.currentTime = 0;
@@ -994,7 +923,7 @@ export default function AdminRadarPortal() {
       }, { onConflict: 'id' });
       
       if (liveError) alert("Canlı skor tablosu güncellenirken hata: " + liveError.message);
-      else alert(`✅ ${matchId}. Maçın skoru "live_matches" tablosuna işlendi! Artık canlı ekranda görünecek.`);
+      else alert(`✅ ${matchId}. Maçın skoru canlı ekrana yansıtıldı!`);
       return;
     }
 
@@ -1004,116 +933,55 @@ export default function AdminRadarPortal() {
         return;
       }
 
-      const rawCategory = String(matchData.category || '');
-      const catLower = rawCategory.toLocaleLowerCase('tr-TR'); 
-      const homeName = String(matchData.home_team || '').toLocaleLowerCase('tr-TR');
-      const awayName = String(matchData.away_team || '').toLocaleLowerCase('tr-TR');
-      const isTurkishTeam = /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(homeName) || /(spor|gücü|yurdu|bld|belediye|demir|gençler|birliği|kars|ankara|izmir|istanbul|bursa|trabzon|antalya|eskişehir|karşıyaka|altay)/.test(awayName);
-
-      const isDefiniteTFF = isTffMatchCheck(matchData.category) || catLower.includes('türkiye kupası') || catLower.includes('turkiye kupasi') || catLower.includes('tff') || catLower.includes('süper lig') || catLower.includes('1. lig') || catLower.includes('amatör') || catLower.includes('bal') || isTurkishTeam;
-      
-      let leagueName = isDefiniteTFF ? 'TFF' : 'DFO';
-
-      let confirmMsg = matchId === 24 
-          ? `DİKKAT: 24. Maç (Haftanın Son Maçı) onaylanacak!\nBu maçın normal puanları dağıtılacak.\nOnaylıyor musunuz?`
-          : `Bu maçın skorunu onaylayıp puanları dağıtmak istediğinize emin misiniz?\n(Sistem Bu Maçı ${leagueName} Olarak Algıladı)`;
-
-      if (!window.confirm(confirmMsg)) return;
-
-      if (matchId === 24) {
-          alert(`✅ 24. MAÇ İŞLEMİ TAMAM! (Son maç onaylandı. Haftalık puanlar normal şekilde eklenecek)`);
-      }
+      if (!window.confirm(`${matchId}. Maç (${matchData.home_team} ${homeScore}-${awayScore} ${matchData.away_team}) bitirilip Resmi Kasaya işlenecek. Onaylıyor musunuz?`)) return;
 
       try {
-        await supabase.from('live_matches').upsert({ 
+        const { error: liveErr } = await supabase.from('live_matches').upsert({ 
            id: uniqueId, home_score: homeScore, away_score: awayScore, status: 'FINISHED',
            updated_by: userRole, updated_at: timeString 
         }, { onConflict: 'id' });
+        if (liveErr) throw liveErr;
 
-        if (currentWinners.length > 0) {
-          const { data: existingPointsCheck } = await supabase
-            .from('points')
-            .select('id')
-            .eq('hafta', selectedLiveWeek)
-            .eq('ev_sahibi', matchData.home_team)
-            .eq('deplasman', matchData.away_team);
+        await supabase.rpc('sync_etml_weeks', {
+           p_from_week: selectedLiveWeek,
+           p_to_week: selectedLiveWeek,
+           p_force: false
+        });
 
-          if (existingPointsCheck && existingPointsCheck.length > 0) {
-            alert(`⚠️ DUR KOMUTANIM!\nBu maçın (${matchData.home_team} vs ${matchData.away_team}) puanları zaten dağıtılmış!\nÇifte sayım engellendi, puanlar şişirilmedi.`);
-            return;
-          }
-
-          const inserts: any[] = [];
-          currentWinners.forEach((winnerName: string) => {
-            const userId = getPlayerIdByName(winnerName);
-            const baseData = {
-              hafta: selectedLiveWeek, user_name: winnerName, username: userId, ev_sahibi: matchData.home_team, deplasman: matchData.away_team,
-              gercek_ev: parseInt(homeScore, 10), gercek_dep: parseInt(awayScore, 10), tahmin_ev: homeScore, tahmin_dep: awayScore, puan: displayPoints
-            };
-            inserts.push({ ...baseData, kategori: leagueName });
-            inserts.push({ ...baseData, kategori: 'MASTER' });
-          });
-
-          const { error: insertError } = await supabase.from('points').insert(inserts);
-          if (insertError) { alert(`❌ HATA! Fişler eklenemedi.\nMesaj: ${insertError.message}`); return; }
-
-          for (const winnerName of currentWinners) {
-            const userId = getPlayerIdByName(winnerName);
-            if (!userId) continue;
-            const { data: stData } = await supabase.from('standings').select('*').eq('user_id', userId);
-            if (stData) {
-              const lRow = stData.find((r: any) => r.league_type === leagueName);
-              if (lRow) await supabase.from('standings').update({ points: lRow.points + displayPoints }).eq('id', lRow.id);
-              else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: leagueName, points: displayPoints });
-
-              const mRow = stData.find((r: any) => r.league_type === 'MASTER');
-              if (mRow) await supabase.from('standings').update({ points: mRow.points + displayPoints }).eq('id', mRow.id);
-              else await supabase.from('standings').insert({ user_id: userId, user_name: winnerName, league_type: 'MASTER', points: displayPoints });
-            }
-          }
-          if (matchId !== 24) alert(`✅ MAÇ İŞLEMİ BAŞARILI! Çift fiş kesildi ve kasaya eklendi.`);
-        } else {
-          if (matchId !== 24) alert("✅ Maç başarıyla BİTİRİLDİ. Normal skoru bilen çıkmadığı için kasa kapalı.");
-        }
-
-        setDistributedMatches((prev: any) => ({...prev, [matchId]: true})); 
-      } catch (error: any) { alert("❌ BEKLENMEYEN HATA: " + error.message); }
+        setDistributedMatches((prev: any) => ({ ...prev, [matchId]: true }));
+        alert(`✅ ${matchId}. MAÇ ONAYLANDI! Puanlar (${currentWinners.length} bilen, kişi başı ${displayPoints} P) otonom kasaya anında işlendi.`);
+      } catch (error: any) {
+        alert("❌ BEKLENMEYEN HATA: " + error.message);
+      }
       return;
     }
 
     if (action === 'Geri Al' || action === 'Resetle') {
       const isLocked = distributedMatches[matchId];
       if (isLocked) {
-        const confirmUndo = window.confirm(`DİKKAT: Bu maçın puanları daha önce dağıtılmıştı!\n\nEğer onaylarsan; bu maçtan kazanılan puanlar 'standings' (kasa) tablosundan DÜŞÜLECEK, 'points' tablosundaki fişler SİLİNECEK ve maç tekrar MÜDAHALEYE AÇILACAK.\n\nBunu yapmak istediğine emin misin?`);
-        if (!confirmUndo) return;
-
-        try {
-          const { data: existingPoints } = await supabase.from('points').select('*').eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
-          if (existingPoints && existingPoints.length > 0) {
-            for (const row of existingPoints) {
-              const pts = row.puan; const uid = row.username; const rowCategory = row.kategori;
-              const { data: stData } = await supabase.from('standings').select('*').eq('user_id', uid);
-              if (stData) {
-                const targetRow = stData.find(r => r.league_type === rowCategory);
-                if (targetRow) {
-                   await supabase.from('standings').update({ points: Math.max(0, targetRow.points - pts) }).eq('id', targetRow.id);
-                }
-              }
-            }
-            await supabase.from('points').delete().eq('hafta', selectedLiveWeek).eq('ev_sahibi', matchData.home_team).eq('deplasman', matchData.away_team);
-          }
-          alert("✅ GERİ ALMA BAŞARILI! Puanlar kasadan düşüldü, fişler silindi.");
-        } catch (error: any) { alert("❌ HATA: " + error.message); return; }
+        if (!window.confirm(`DİKKAT: Bu maçın onayı kaldırılacak ve Resmi Kasadaki puanları otomatik geri çekilecek. Emin misin?`)) return;
       }
 
-      await supabase.from('live_matches').upsert({ 
-         id: uniqueId, home_score: '-', away_score: '-', status: 'NOT_STARTED',
-         updated_by: userRole, updated_at: timeString 
-      }, { onConflict: 'id' });
-      setAdminScores((prev: any) => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
-      setOpenWinnersMap((prev: any) => ({ ...prev, [matchId]: false })); 
-      setDistributedMatches((prev: any) => ({ ...prev, [matchId]: false })); 
-      if(!isLocked) alert("✅ Skor başarıyla sıfırlandı.");
+      try {
+        const { error: resetErr } = await supabase.from('live_matches').upsert({ 
+           id: uniqueId, home_score: '-', away_score: '-', status: 'NOT_STARTED',
+           updated_by: userRole, updated_at: timeString 
+        }, { onConflict: 'id' });
+        if (resetErr) throw resetErr;
+
+        await supabase.rpc('sync_etml_weeks', {
+           p_from_week: selectedLiveWeek,
+           p_to_week: selectedLiveWeek,
+           p_force: false
+        });
+
+        setAdminScores((prev: any) => ({ ...prev, [matchId]: { home: "-", away: "-" } }));
+        setOpenWinnersMap((prev: any) => ({ ...prev, [matchId]: false }));
+        setDistributedMatches((prev: any) => ({ ...prev, [matchId]: false }));
+        alert(isLocked ? "✅ Maç geri alındı ve puanlar Resmi Kasadan otomatik düşüldü." : "✅ Skor sıfırlandı.");
+      } catch (error: any) {
+        alert("❌ HATA: " + error.message);
+      }
     }
   };
 
@@ -1296,6 +1164,7 @@ export default function AdminRadarPortal() {
       if (liveMatchesPayload.length > 0) {
           await supabase.from('live_matches').upsert(liveMatchesPayload, { onConflict: 'id' });
       }
+      await supabase.rpc('sync_etml_weeks', { p_from_week: bulletinWeek, p_to_week: bulletinWeek, p_force: false });
 
       alert(`✅ MÜKEMMEL! ${bulletinWeek}. Hafta Bülteni mühürlendi!\n\nSeçilen maçlar otomatik olarak Canlı Sisteme kilitlendi!`);
     } catch (e: any) { alert("❌ HATA: Bülten kaydedilemedi! Detay: " + e.message); }
@@ -1397,28 +1266,36 @@ export default function AdminRadarPortal() {
   };
 
   const handleBanishPlayer = async (userId: string, userName: string) => {
-    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEğer bu kişiyi silerseniz Karargah sisteminden çıkacaktır. Emin misiniz?`);
+    const confirmDelete = window.confirm(`DİKKAT: ${userName} (ID: ${userId}) ihraç edilecek.\n\nEmin misiniz?`);
     if (!confirmDelete) return;
     try {
-       const { error } = await supabase.from('players').delete().eq('username', userId);
-       if (error) throw error;
-       alert(`✅ İhraç başarılı. ${userName} sistemden atıldı.`);
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ Hata: " + err.message); }
+      await supabase.from('players').delete().eq('username', userId);
+      await supabase.from('etml_official_players').upsert({ user_id: userId, full_name: userName, is_active: false }, { onConflict: 'user_id' });
+      alert(`✅ İhraç başarılı. ${userName} puan tablolarından gizlendi.`);
+      fetchAllSystemPlayers();
+    } catch (err: any) {
+      alert("❌ Hata: " + err.message);
+    }
   };
-  
+
   const handleAddNewPlayer = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newPlayerId || !newPlayerName || !newPlayerPass) return;
     setIsPlayerLoading(true);
     try {
-       const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
-       const { error } = await supabase.from('players').insert({ username: newPlayerId.trim(), name: cleanName, password: newPlayerPass.trim() });
-       if (error) throw error;
-       alert(`✅ BAŞARILI! ${cleanName} karargaha katıldı!\n(Not: Listelerde hemen görünmesi için sistem otomatik yenilenecek.)`);
-       setNewPlayerId(''); setNewPlayerName(''); setNewPlayerPass('');
-       fetchAllSystemPlayers(); 
-    } catch (err: any) { alert("❌ HATA: " + err.message); }
+      const cleanId = newPlayerId.trim();
+      const cleanName = newPlayerName.trim().toLocaleUpperCase('tr-TR');
+      const { error } = await supabase.from('players').insert({ username: cleanId, name: cleanName, password: newPlayerPass.trim() });
+      if (error) throw error;
+      await supabase.from('etml_official_players').upsert({ user_id: cleanId, full_name: cleanName, is_active: true }, { onConflict: 'user_id' });
+      alert(`✅ BAŞARILI! ${cleanName} hem Karargaha hem Resmi Kasaya eklendi!`);
+      setNewPlayerId('');
+      setNewPlayerName('');
+      setNewPlayerPass('');
+      fetchAllSystemPlayers();
+    } catch (err: any) {
+      alert("❌ HATA: " + err.message);
+    }
     setIsPlayerLoading(false);
   };
 

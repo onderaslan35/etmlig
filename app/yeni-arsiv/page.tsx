@@ -61,6 +61,7 @@ export default function YeniArsivVeKontrolMerkezi() {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'CARDS' | 'WEEK_CHECK' | 'TOTAL_STANDINGS'>('CARDS');
   const [standingsFilter, setStandingsFilter] = useState<'MASTER' | 'CANLI' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
+  const [skorSubFilter, setSkorSubFilter] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [hiddenWinnersMap, setHiddenWinnersMap] = useState<Record<number, boolean>>({});
   const [accounts, setAccounts] = useState<Record<string, { pass: string; name: string }>>(TEST_ACCOUNTS);
   const [inactiveIds, setInactiveIds] = useState<Set<string>>(new Set(EXCLUDED_STANDINGS_IDS));
@@ -236,75 +237,85 @@ export default function YeniArsivVeKontrolMerkezi() {
 
   // Kesinleşmiş Kümülatif Genel Puan Durumu (DFO + TFF + Bonus = Master)
   const cumulativeStandings = useMemo(() => {
-    const map: Record<
-      string,
-      { id: string; name: string; dfo: number; tff: number; bonus: number; master: number; scores: number; pCount: number; sCount: number }
-    > = {};
+  const map: Record<
+    string,
+    { id: string; name: string; dfo: number; tff: number; bonus: number; master: number; scores: number; dfoScores: number; tffScores: number; pCount: number; sCount: number }
+  > = {};
 
-    Object.keys(accounts).forEach((uid) => {
+  Object.keys(accounts).forEach((uid) => {
+    if (inactiveIds.has(uid)) return;
+    map[uid] = {
+      id: uid,
+      name: accounts[uid].name,
+      dfo: 0,
+      tff: 0,
+      bonus: 0,
+      master: 0,
+      scores: 0,
+      dfoScores: 0,
+      tffScores: 0,
+      pCount: 0,
+      sCount: 0
+    };
+  });
+
+  allMatches.forEach((m) => {
+    if (m.status !== 'FINISHED') return;
+    (m.winner_ids || []).forEach((uid) => {
       if (inactiveIds.has(uid)) return;
-      map[uid] = {
-        id: uid,
-        name: accounts[uid].name,
-        dfo: 0,
-        tff: 0,
-        bonus: 0,
-        master: 0,
-        scores: 0,
-        pCount: 0,
-        sCount: 0
-      };
-    });
-
-    allMatches.forEach((m) => {
-      if (m.status !== 'FINISHED') return;
-      (m.winner_ids || []).forEach((uid) => {
-        if (inactiveIds.has(uid)) return;
-        if (!map[uid]) {
-          map[uid] = { id: uid, name: accounts[uid]?.name || uid, dfo: 0, tff: 0, bonus: 0, master: 0, scores: 0, pCount: 0, sCount: 0 };
-        }
-        if (m.pool_type === 'TFF') map[uid].tff += m.points_awarded;
-        else map[uid].dfo += m.points_awarded;
-
-        map[uid].scores += 1;
-      });
-    });
-
-    allWeeks.forEach((w) => {
-      if (!w.is_completed || !w.bonus_enabled) return;
-      if (w.puan_bonus > 0 && w.puan_lideri_ids?.length === 1) {
-        const lid = w.puan_lideri_ids[0];
-        if (!inactiveIds.has(lid) && map[lid]) {
-          map[lid].bonus += w.puan_bonus;
-          map[lid].pCount += 1;
-        }
+      if (!map[uid]) {
+        map[uid] = { id: uid, name: accounts[uid]?.name || uid, dfo: 0, tff: 0, bonus: 0, master: 0, scores: 0, dfoScores: 0, tffScores: 0, pCount: 0, sCount: 0 };
       }
-      if (w.skor_bonus > 0 && w.skor_krali_ids?.length === 1) {
-        const kid = w.skor_krali_ids[0];
-        if (!inactiveIds.has(kid) && map[kid]) {
-          map[kid].bonus += w.skor_bonus;
-          map[kid].sCount += 1;
-        }
+      if (m.pool_type === 'TFF') {
+        map[uid].tff += m.points_awarded;
+        map[uid].tffScores += 1;
+      } else {
+        map[uid].dfo += m.points_awarded;
+        map[uid].dfoScores += 1;
       }
+      map[uid].scores += 1;
     });
+  });
 
-    Object.values(map).forEach((row) => {
-      row.master = row.dfo + row.tff + row.bonus;
-    });
-
-    const list = Object.values(map);
-
-    if (standingsFilter === 'DFO') return list.sort((a, b) => b.dfo - a.dfo || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
-    if (standingsFilter === 'TFF') return list.sort((a, b) => b.tff - a.tff || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
-    if (standingsFilter === 'SKOR') return list.sort((a, b) => b.scores - a.scores || b.master - a.master || a.name.localeCompare(b.name, 'tr'));
-    if (standingsFilter === 'BONUS') {
-      return list
-        .filter((r) => r.bonus > 0)
-        .sort((a, b) => b.bonus - a.bonus || b.sCount - a.sCount || a.name.localeCompare(b.name, 'tr'));
+  allWeeks.forEach((w) => {
+    if (!w.is_completed || !w.bonus_enabled) return;
+    if (w.puan_bonus > 0 && w.puan_lideri_ids?.length === 1) {
+      const lid = w.puan_lideri_ids[0];
+      if (!inactiveIds.has(lid) && map[lid]) {
+        map[lid].bonus += w.puan_bonus;
+        map[lid].pCount += 1;
+      }
     }
+    if (w.skor_bonus > 0 && w.skor_krali_ids?.length === 1) {
+      const kid = w.skor_krali_ids[0];
+      if (!inactiveIds.has(kid) && map[kid]) {
+        map[kid].bonus += w.skor_bonus;
+        map[kid].sCount += 1;
+      }
+    }
+  });
 
-    return list.sort((a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
-  }, [allMatches, allWeeks, accounts, inactiveIds, standingsFilter]);
+  Object.values(map).forEach((row) => {
+    row.master = row.dfo + row.tff + row.bonus;
+  });
+
+  const list = Object.values(map);
+
+  if (standingsFilter === 'DFO') return list.sort((a, b) => b.dfo - a.dfo || b.dfoScores - a.dfoScores || a.name.localeCompare(b.name, 'tr'));
+  if (standingsFilter === 'TFF') return list.sort((a, b) => b.tff - a.tff || b.tffScores - a.tffScores || a.name.localeCompare(b.name, 'tr'));
+  if (standingsFilter === 'SKOR') {
+    if (skorSubFilter === 'DFO') return list.sort((a, b) => b.dfoScores - a.dfoScores || b.dfo - a.dfo || a.name.localeCompare(b.name, 'tr'));
+    if (skorSubFilter === 'TFF') return list.sort((a, b) => b.tffScores - a.tffScores || b.tff - a.tff || a.name.localeCompare(b.name, 'tr'));
+    return list.sort((a, b) => b.scores - a.scores || b.master - a.master || a.name.localeCompare(b.name, 'tr'));
+  }
+  if (standingsFilter === 'BONUS') {
+    return list
+      .filter((r) => r.bonus > 0)
+      .sort((a, b) => b.bonus - a.bonus || b.sCount - a.sCount || a.name.localeCompare(b.name, 'tr'));
+  }
+
+  return list.sort((a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
+}, [allMatches, allWeeks, accounts, inactiveIds, standingsFilter, skorSubFilter]);
 
   // SQL görünümü henüz yoksa bile canlı sekmesinin sorunsuz çalışması için yedek liste
   const effectiveLiveStandings: LiveStandingRow[] = useMemo(() => {
@@ -600,7 +611,7 @@ export default function YeniArsivVeKontrolMerkezi() {
                   </div>
 
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {(['MASTER', 'CANLI', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => (
+                    {(['CANLI', 'MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setStandingsFilter(tab)}
@@ -716,35 +727,86 @@ export default function YeniArsivVeKontrolMerkezi() {
                     </table>
                   </div>
                 ) : (
-                  /* DFO, TFF, SKOR VE BONUS SEKMELERİ */
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <thead>
-                      <tr className="bg-black/60 text-white border-b border-slate-700 text-[10px] sm:text-xs uppercase tracking-wider">
-                        <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
-                        <th className="py-2.5 px-2">Yarışmacı</th>
-                        <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
-                          {standingsFilter === 'DFO' && 'DFO Puanı'}
-                          {standingsFilter === 'TFF' && 'TFF Puanı'}
-                          {standingsFilter === 'SKOR' && 'Tam İsabet'}
-                          {standingsFilter === 'BONUS' && 'Bonus Puanı'}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/80">
-                      {cumulativeStandings.map((row, idx) => (
-                        <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                          <td className="py-2.5 px-2 font-black text-slate-300 text-xs sm:text-sm">{idx + 1}</td>
-                          <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
-                          <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-white">
-                            {standingsFilter === 'DFO' && row.dfo}
-                            {standingsFilter === 'TFF' && row.tff}
-                            {standingsFilter === 'SKOR' && row.scores}
-                            {standingsFilter === 'BONUS' && `+${row.bonus}`}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  /* SKOR (MASTER / DFO / TFF) VE DİĞER SEKMELER */
+                  <div>
+                    {standingsFilter === 'SKOR' && (
+                      <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3 pb-3 border-b border-slate-800/80">
+                        {([
+                          { key: 'MASTER', label: 'MASTER SKOR' },
+                          { key: 'DFO', label: 'DFO SKOR' },
+                          { key: 'TFF', label: 'TFF SKOR' }
+                        ] as const).map((st) => (
+                          <button
+                            key={st.key}
+                            onClick={() => setSkorSubFilter(st.key)}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
+                              skorSubFilter === st.key
+                                ? 'border-2 border-white shadow-[0_0_8px_rgba(255,255,255,0.2)]'
+                                : 'border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600'
+                            }`}
+                          >
+                            {st.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {standingsFilter === 'SKOR' && skorSubFilter === 'MASTER' ? (
+                      <table className="w-full table-fixed text-left tabular-nums">
+                        <thead>
+                          <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                            <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
+                            <th className="py-2.5 px-1">Yarışmacı</th>
+                            <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">DFO</th>
+                            <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">TFF</th>
+                            <th className="py-2.5 px-1 w-[56px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">Master</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/80">
+                          {cumulativeStandings.map((row, idx) => (
+                            <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                              <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{idx + 1}</td>
+                              <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
+                              <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.dfoScores}</td>
+                              <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.tffScores}</td>
+                              <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.scores}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <table className="w-full table-fixed text-left tabular-nums">
+                        <thead>
+                          <tr className="bg-black/60 text-white border-b border-slate-700 text-[10px] sm:text-xs uppercase tracking-wider">
+                            <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                            <th className="py-2.5 px-2">Yarışmacı</th>
+                            <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
+                              {standingsFilter === 'DFO' && 'DFO Puanı'}
+                              {standingsFilter === 'TFF' && 'TFF Puanı'}
+                              {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && 'DFO Skor'}
+                              {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && 'TFF Skor'}
+                              {standingsFilter === 'BONUS' && 'Bonus Puanı'}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/80">
+                          {cumulativeStandings.map((row, idx) => (
+                            <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                              <td className="py-2.5 px-2 font-black text-slate-300 text-xs sm:text-sm">{idx + 1}</td>
+                              <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
+                              <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-white">
+                                {standingsFilter === 'DFO' && row.dfo}
+                                {standingsFilter === 'TFF' && row.tff}
+                                {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && row.dfoScores}
+                                {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && row.tffScores}
+                                {standingsFilter === 'BONUS' && `+${row.bonus}`}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 )}
               </div>
             )}

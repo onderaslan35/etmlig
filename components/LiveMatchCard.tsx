@@ -131,7 +131,8 @@ export default function LiveMatchCard() {
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true);
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   const [isLiveStandingsOpen, setIsLiveStandingsOpen] = useState<boolean>(true);
-  const [liveTableTab, setLiveTableTab] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
+  const [liveTableTab, setLiveTableTab] = useState<'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('CANLI');
+  const [skorSubTab, setSkorSubTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
 
   const [openEventsMap, setOpenEventsMap] = useState<{ [key: string]: boolean }>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: string]: boolean }>({});
@@ -518,15 +519,19 @@ export default function LiveMatchCard() {
         kesinTff: number;
         bonus: number;
         kesinMaster: number;
+        kesinDfoSkor: number;
+        kesinTffSkor: number;
         kesinSkor: number;
         canliDfo: number;
         canliTff: number;
         canliMaster: number;
+        canliDfoSkor: number;
+        canliTffSkor: number;
         canliSkor: number;
       }
     > = {};
 
-    officialSummaryRows.forEach((r) => {
+    officialSummaryRows.forEach((r: any) => {
       if (EXCLUDED_IDS.has(r.user_id)) return;
       baseMap[r.user_id] = {
         id: r.user_id,
@@ -536,10 +541,14 @@ export default function LiveMatchCard() {
         kesinTff: Number(r.tff_puan || 0),
         bonus: Number(r.bonus_puan || 0),
         kesinMaster: Number(r.master_puan || 0),
+        kesinDfoSkor: Number(r.dfo_skor || 0),
+        kesinTffSkor: Number(r.tff_skor || 0),
         kesinSkor: Number(r.tam_isabet || 0),
         canliDfo: 0,
         canliTff: 0,
         canliMaster: 0,
+        canliDfoSkor: 0,
+        canliTffSkor: 0,
         canliSkor: 0
       };
     });
@@ -554,10 +563,14 @@ export default function LiveMatchCard() {
           kesinTff: 0,
           bonus: 0,
           kesinMaster: 0,
+          kesinDfoSkor: 0,
+          kesinTffSkor: 0,
           kesinSkor: 0,
           canliDfo: 0,
           canliTff: 0,
           canliMaster: 0,
+          canliDfoSkor: 0,
+          canliTffSkor: 0,
           canliSkor: 0
         };
       }
@@ -592,8 +605,13 @@ export default function LiveMatchCard() {
 
         winnerIds.forEach((wId) => {
           if (!baseMap[wId]) return;
-          if (isTff) baseMap[wId].canliTff += pts;
-          else baseMap[wId].canliDfo += pts;
+          if (isTff) {
+            baseMap[wId].canliTff += pts;
+            baseMap[wId].canliTffSkor += 1;
+          } else {
+            baseMap[wId].canliDfo += pts;
+            baseMap[wId].canliDfoSkor += 1;
+          }
           baseMap[wId].canliMaster += pts;
           baseMap[wId].canliSkor += 1;
         });
@@ -605,6 +623,8 @@ export default function LiveMatchCard() {
       toplamDfo: row.kesinDfo + row.canliDfo,
       toplamTff: row.kesinTff + row.canliTff,
       toplamMaster: row.kesinMaster + row.canliMaster,
+      toplamDfoSkor: row.kesinDfoSkor + row.canliDfoSkor,
+      toplamTffSkor: row.kesinTffSkor + row.canliTffSkor,
       toplamSkor: row.kesinSkor + row.canliSkor
     }));
 
@@ -613,16 +633,24 @@ export default function LiveMatchCard() {
       .map((r, i) => ({ ...r, rankMaster: i + 1 }));
 
     const sortedDfo = [...combinedList]
-      .sort((a, b) => b.toplamDfo - a.toplamDfo || b.toplamSkor - a.toplamSkor || a.name.localeCompare(b.name, 'tr'))
+      .sort((a, b) => b.toplamDfo - a.toplamDfo || b.toplamDfoSkor - a.toplamDfoSkor || a.name.localeCompare(b.name, 'tr'))
       .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamDfo, liveAdd: r.canliDfo, rank: i + 1 }));
 
     const sortedTff = [...combinedList]
-      .sort((a, b) => b.toplamTff - a.toplamTff || b.toplamSkor - a.toplamSkor || a.name.localeCompare(b.name, 'tr'))
+      .sort((a, b) => b.toplamTff - a.toplamTff || b.toplamTffSkor - a.toplamTffSkor || a.name.localeCompare(b.name, 'tr'))
       .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamTff, liveAdd: r.canliTff, rank: i + 1 }));
 
-    const sortedSkor = [...combinedList]
+    const sortedSkorMaster = [...combinedList]
       .sort((a, b) => b.toplamSkor - a.toplamSkor || b.toplamMaster - a.toplamMaster || a.name.localeCompare(b.name, 'tr'))
-      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamSkor, liveAdd: r.canliSkor, rank: i + 1 }));
+      .map((r, i) => ({ ...r, rankSkor: i + 1 }));
+
+    const sortedSkorDfo = [...combinedList]
+      .sort((a, b) => b.toplamDfoSkor - a.toplamDfoSkor || b.toplamDfo - a.toplamDfo || a.name.localeCompare(b.name, 'tr'))
+      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamDfoSkor, liveAdd: r.canliDfoSkor, rank: i + 1 }));
+
+    const sortedSkorTff = [...combinedList]
+      .sort((a, b) => b.toplamTffSkor - a.toplamTffSkor || b.toplamTff - a.toplamTff || a.name.localeCompare(b.name, 'tr'))
+      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamTffSkor, liveAdd: r.canliTffSkor, rank: i + 1 }));
 
     return {
       todaysMatchesList: todays,
@@ -632,13 +660,15 @@ export default function LiveMatchCard() {
         MASTER: sortedMaster.map((r) => ({ id: r.id, name: r.name, pts: r.toplamMaster, rank: r.rankMaster })),
         DFO: sortedDfo,
         TFF: sortedTff,
-        SKOR: sortedSkor
+        SKOR: sortedSkorMaster.map((r) => ({ id: r.id, name: r.name, pts: r.toplamSkor, rank: r.rankSkor }))
       },
       liveStandingsTable: {
         MASTER: sortedMaster,
         DFO: sortedDfo,
         TFF: sortedTff,
-        SKOR: sortedSkor
+        SKOR_MASTER: sortedSkorMaster,
+        SKOR_DFO: sortedSkorDfo,
+        SKOR_TFF: sortedSkorTff
       },
       activeScoringMatchCount: liveScoringCount
     };
@@ -1336,123 +1366,17 @@ export default function LiveMatchCard() {
         </>
       )}
 
-      {/* 🔥 HAFTALIK CANLI LİDERLİK RADARI 🔥 */}
-      {sortedWeeks.map((week) => {
-        const wStats = weeklySortedStats[week] || [];
-        const maxPts = wStats.length > 0 ? wStats[0].points : 0;
-        const maxScores = wStats.length > 0 ? Math.max(...wStats.map((s) => s.exactScores)) : 0;
-        const ptsLeaders = wStats.filter((s) => s.points === maxPts && maxPts > 0);
-        const scoreLeaders = wStats.filter((s) => s.exactScores === maxScores && maxScores > 0);
-        const is24Finished = is24thMatchFinishedMap[week];
-        const isBonusActive = weekBonusEnabledMap[week] ?? week <= 40;
+      {sortedWeeks && weeklySortedStats && is24thMatchFinishedMap && weekBonusEnabledMap ? null : null}
 
-        const getLeaderBadge = (uid: string, type: 'points' | 'scores') => {
-          if (!is24Finished) return null;
-          if (type === 'points' && ptsLeaders.length === 1 && ptsLeaders[0].id === uid) {
-            return (
-              <span className="ml-2 text-[9px] sm:text-[10px] font-black text-amber-500 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full">
-                {isBonusActive ? '🏆 +3 PUAN KAZANDI' : '🏆 HAFTANIN LİDERİ'}
-              </span>
-            );
-          }
-          if (type === 'scores' && scoreLeaders.length === 1 && scoreLeaders[0].id === uid) {
-            return (
-              <span className="ml-2 text-[9px] sm:text-[10px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-600/50 px-2 py-0.5 rounded-full">
-                {isBonusActive ? '🎯 +3 PUAN KAZANDI' : '🎯 SKOR KRALI'}
-              </span>
-            );
-          }
-          return null;
-        };
-
-        return (
-          <div
-            key={`radar-${week}`}
-            className="mb-2 p-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl shadow-[0_0_30px_rgba(30,58,138,0.3)] animate-fadeIn w-full mx-auto mt-2"
-          >
-            <h2 className="text-center font-black text-blue-400 text-[11px] sm:text-xs tracking-widest uppercase mb-4 flex items-center justify-center gap-2">
-              <span className="text-lg sm:text-xl">📡</span> {week}. HAFTA CANLI LİDERLİK RADARI
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-950/80 border border-emerald-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
-                <div className="bg-emerald-950/60 p-2 border-b border-emerald-500/30 flex justify-center flex-col items-center">
-                  <span className="text-emerald-400 text-[10px] sm:text-[11px] font-bold tracking-widest">🔥 HAFTANIN PUANLARI</span>
-                  {is24Finished && isBonusActive && ptsLeaders.length > 1 && (
-                    <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">
-                      ⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)
-                    </span>
-                  )}
-                </div>
-                <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                  {wStats.length > 0 ? (
-                    <table className="w-full text-left text-xs">
-                      <tbody className="divide-y divide-slate-800/50">
-                        {wStats.map((s, idx) => (
-                          <tr key={s.id} className="hover:bg-slate-900/50">
-                            <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
-                            <td className="py-2 font-bold text-slate-200">
-                              {(mergedAccounts[s.id]?.name || s.id).replace(/🏆/g, '').trim()}
-                              {getLeaderBadge(s.id, 'points')}
-                            </td>
-                            <td className="py-2 pr-2 text-right font-black text-emerald-400">{s.points} P</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="text-center py-4 text-slate-500 text-xs">HENÜZ PUAN ALAN YOK</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-slate-950/80 border border-amber-500/50 rounded-xl overflow-hidden shadow-inner flex flex-col">
-                <div className="bg-amber-950/60 p-2 border-b border-amber-500/30 flex justify-center flex-col items-center">
-                  <span className="text-amber-400 text-[10px] sm:text-[11px] font-bold tracking-widest">⚽ HAFTANIN SKOR (TAM İSABET) SAYISI</span>
-                  {is24Finished && isBonusActive && scoreLeaders.length > 1 && (
-                    <span className="text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded text-[9px] font-black mt-1 border border-rose-500/50">
-                      ⚠️ MÜSTAKİL LİDER YOK (+3 DEVRE DIŞI)
-                    </span>
-                  )}
-                </div>
-                <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                  {wStats.length > 0 && maxScores > 0 ? (
-                    <table className="w-full text-left text-xs">
-                      <tbody className="divide-y divide-slate-800/50">
-                        {wStats
-                          .filter((s) => s.exactScores > 0)
-                          .sort((a, b) => b.exactScores - a.exactScores)
-                          .map((s, idx) => (
-                            <tr key={s.id} className="hover:bg-slate-900/50">
-                              <td className="py-2 pl-2 w-8 text-slate-500 font-medium">{idx + 1}-</td>
-                              <td className="py-2 font-bold text-slate-200">
-                                {(mergedAccounts[s.id]?.name || s.id).replace(/🏆/g, '').trim()}
-                                {getLeaderBadge(s.id, 'scores')}
-                              </td>
-                              <td className="py-2 pr-2 text-right font-black text-amber-500">{s.exactScores} Maç</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="text-center py-4 text-slate-500 text-xs">HENÜZ SKOR BİLEN YOK</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* 🔴 TEMİZ GÖRÜNÜMLÜ CANLI GENEL PUAN DURUMU (DFO + TFF + BONUS = TOPLAM) 🔴 */}
-      <div className="bg-slate-900/85 border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
+      {/* CANLI GENEL PUAN DURUMU (SİYAH-LACİVERT / BEMBEYAZ MİMARİ) */}
+      <div className="bg-[#081020] border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800 px-1">
           <button onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)} className="flex items-center gap-2 text-left">
             <span className="relative flex h-2.5 w-2.5">
               <span className={`absolute inline-flex h-full w-full rounded-full ${activeScoringMatchCount > 0 ? 'animate-ping bg-rose-400 opacity-75' : ''}`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${activeScoringMatchCount > 0 ? 'bg-rose-500' : 'bg-amber-400'}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${activeScoringMatchCount > 0 ? 'bg-rose-500' : 'bg-white'}`} />
             </span>
-            <h2 className="text-xs sm:text-base font-black text-amber-400 uppercase tracking-wider">
+            <h2 className="text-xs sm:text-base font-black text-white uppercase tracking-widest">
               CANLI GENEL PUAN DURUMU
             </h2>
             <span className="text-slate-400 text-xs">{isLiveStandingsOpen ? '▲' : '▼'}</span>
@@ -1460,15 +1384,17 @@ export default function LiveMatchCard() {
 
           {isLiveStandingsOpen && (
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
-              {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => (
+              {(['CANLI', 'MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setLiveTableTab(tab)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                    liveTableTab === tab ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
+                    liveTableTab === tab
+                      ? 'border-2 border-white shadow-[0_0_10px_rgba(255,255,255,0.2)]'
+                      : 'border border-slate-700 hover:border-white'
                   }`}
                 >
-                  {tab}
+                  {tab === 'CANLI' && activeScoringMatchCount > 0 ? `CANLI (${activeScoringMatchCount})` : tab}
                 </button>
               ))}
             </div>
@@ -1477,85 +1403,164 @@ export default function LiveMatchCard() {
 
         {isLiveStandingsOpen && (
           <>
-            {liveTableTab === 'MASTER' ? (
+            {/* SKOR ALT MENÜSÜ: MASTER SKOR | DFO SKOR | TFF SKOR */}
+            {liveTableTab === 'SKOR' && (
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3 pb-3 border-b border-slate-800/80">
+                {([
+                  { key: 'MASTER', label: 'MASTER SKOR' },
+                  { key: 'DFO', label: 'DFO SKOR' },
+                  { key: 'TFF', label: 'TFF SKOR' }
+                ] as const).map((st) => (
+                  <button
+                    key={st.key}
+                    onClick={() => setSkorSubTab(st.key)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
+                      skorSubTab === st.key
+                        ? 'border-2 border-white shadow-[0_0_8px_rgba(255,255,255,0.2)]'
+                        : 'border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 1. CANLI SEKMESİ (VARSAYILAN) */}
+            {liveTableTab === 'CANLI' ? (
               <table className="w-full table-fixed text-left tabular-nums">
                 <thead>
-                  <tr className="text-slate-400 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                    <th className="py-2.5 px-1 w-[26px] sm:w-10">#</th>
+                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                    <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
                     <th className="py-2.5 px-1">Yarışmacı</th>
-                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-teal-400/90">DFO</th>
-                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-rose-400/90">TFF</th>
-                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center text-amber-300/90">Bonus</th>
-                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center text-emerald-400/90">Skor</th>
-                    <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center text-amber-400 bg-amber-500/10 rounded-t-lg">Master</th>
+                    <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center">Kesin</th>
+                    <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center">+Canlı</th>
+                    <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
+                    <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">
+                      <span className="sm:hidden">Toplam</span>
+                      <span className="hidden sm:inline">Canlı Toplam</span>
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-800/80">
                   {liveStandingsTable.MASTER.map((row) => {
                     const diff = row.kesinSira - row.rankMaster;
                     return (
-                      <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-800/40'}>
-                        <td className="py-2 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
+                      <tr key={row.id} className={row.canliMaster > 0 ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'hover:bg-[#0f1d38]'}>
+                        <td className="py-2 px-1 font-black text-slate-300 text-[10px] sm:text-sm">
                           <span>{row.rankMaster}</span>
-                          {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
-                          {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                          {diff > 0 && <span className="ml-0.5 text-[9px] text-white">▲</span>}
+                          {diff < 0 && <span className="ml-0.5 text-[9px] text-slate-400">▼</span>}
                         </td>
-                        <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm" title={row.name}>
-                          <div className="flex items-center gap-1 min-w-0">
-                            <span className="truncate">{row.name}</span>
-                            {row.canliMaster > 0 && (
-                              <span className="shrink-0 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[9px] font-black px-1 py-0.5 rounded leading-none">
-                                +{row.canliMaster}
-                              </span>
-                            )}
-                          </div>
+                        <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                          {row.name}
                         </td>
-                        <td className="py-2 px-0.5 text-center text-teal-400 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
-                        <td className="py-2 px-0.5 text-center text-rose-400 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
-                        <td className="py-2 px-0.5 text-center text-amber-300 font-bold text-[11px] sm:text-sm">
-                          {row.bonus > 0 ? `+${row.bonus}` : '0'}
+                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.kesinMaster}</td>
+                        <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">
+                          {row.canliMaster > 0 ? `+${row.canliMaster}` : '0'}
                         </td>
-                        <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
-                        <td className="py-2 px-1 text-center text-amber-400 font-black text-xs sm:text-base bg-amber-500/5">
-                          {row.toplamMaster}
-                        </td>
+                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                        <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.toplamMaster}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-            ) : (
+            ) : liveTableTab === 'MASTER' ? (
+              /* 2. MASTER SEKMESİ (TÜM SÜTUNLAR BİR ARADA) */
               <table className="w-full table-fixed text-left tabular-nums">
                 <thead>
-                  <tr className="text-slate-400 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                    <th className="py-2.5 px-1 w-[26px] sm:w-10">#</th>
+                    <th className="py-2.5 px-1">Yarışmacı</th>
+                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
+                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
+                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center">Bonus</th>
+                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center">Skor</th>
+                    <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">Master</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/80">
+                  {liveStandingsTable.MASTER.map((row) => (
+                    <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                      <td className="py-2 px-1 font-black text-slate-300 text-[10px] sm:text-sm">{row.rankMaster}</td>
+                      <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                        {row.name}
+                      </td>
+                      <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
+                      <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
+                      <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
+                        {row.bonus > 0 ? `+${row.bonus}` : '0'}
+                      </td>
+                      <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                      <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.toplamMaster}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : liveTableTab === 'SKOR' && skorSubTab === 'MASTER' ? (
+              /* 3. SKOR -> MASTER SKOR (DFO SKOR + TFF SKOR = MASTER SKOR) */
+              <table className="w-full table-fixed text-left tabular-nums">
+                <thead>
+                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                    <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
+                    <th className="py-2.5 px-1">Yarışmacı</th>
+                    <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">DFO</th>
+                    <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">TFF</th>
+                    <th className="py-2.5 px-1 w-[56px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">Master</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/80">
+                  {liveStandingsTable.SKOR_MASTER.map((row) => (
+                    <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                      <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{row.rankSkor}</td>
+                      <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                        {row.name}
+                      </td>
+                      <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                      <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                      <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.toplamSkor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              /* 4. TEKLİ LİSTELER: DFO PUAN, TFF PUAN, DFO SKOR, TFF SKOR */
+              <table className="w-full table-fixed text-left tabular-nums">
+                <thead>
+                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[10px] sm:text-xs uppercase tracking-wider">
                     <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
                     <th className="py-2.5 px-2">Yarışmacı</th>
                     <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
-                      {liveTableTab === 'DFO' && <span className="text-teal-400">DFO Puanı</span>}
-                      {liveTableTab === 'TFF' && <span className="text-rose-400">TFF Puanı</span>}
-                      {liveTableTab === 'SKOR' && <span className="text-emerald-400">Tam İsabet</span>}
+                      {liveTableTab === 'DFO' && 'DFO Puanı'}
+                      {liveTableTab === 'TFF' && 'TFF Puanı'}
+                      {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && 'DFO Skor'}
+                      {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && 'TFF Skor'}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {liveStandingsTable[liveTableTab].map((row) => (
-                    <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-800/40'}>
-                      <td className="py-2.5 px-2 font-black text-slate-500 text-xs sm:text-sm">{row.rank}</td>
+                <tbody className="divide-y divide-slate-800/80">
+                  {(liveTableTab === 'DFO'
+                    ? liveStandingsTable.DFO
+                    : liveTableTab === 'TFF'
+                    ? liveStandingsTable.TFF
+                    : skorSubTab === 'DFO'
+                    ? liveStandingsTable.SKOR_DFO
+                    : liveStandingsTable.SKOR_TFF
+                  ).map((row) => (
+                    <tr key={row.id} className={row.liveAdd > 0 ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'hover:bg-[#0f1d38]'}>
+                      <td className="py-2.5 px-2 font-black text-slate-300 text-xs sm:text-sm">{row.rank}</td>
                       <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="truncate">{row.name}</span>
                           {row.liveAdd > 0 && (
-                            <span className="shrink-0 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                            <span className="shrink-0 bg-black border border-white/60 text-white text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
                               +{row.liveAdd}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base">
-                        {liveTableTab === 'DFO' && <span className="text-teal-400">{row.pts}</span>}
-                        {liveTableTab === 'TFF' && <span className="text-rose-400">{row.pts}</span>}
-                        {liveTableTab === 'SKOR' && <span className="text-emerald-400">{row.pts}</span>}
-                      </td>
+                      <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-white">{row.pts}</td>
                     </tr>
                   ))}
                 </tbody>
