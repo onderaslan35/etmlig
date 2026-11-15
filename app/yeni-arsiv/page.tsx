@@ -338,23 +338,20 @@ export default function YeniArsivVeKontrolMerkezi() {
       <div className="max-w-7xl mx-auto">
         {/* ÜST BAŞLIK VE HAFTA SEÇİCİ */}
         <div className="flex flex-col items-center justify-center mb-6 sm:mb-8">
-          <span className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase mb-3">
-            YENİ OTONOM VERİTABANI KONTROL MERKEZİ
-          </span>
-          <h1 className="text-xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 tracking-tight uppercase text-center mb-4">
-            RESMİ MAÇ ARŞİVİ & PUAN SAĞLAMA KASASI
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-widest uppercase text-center mb-4">
+            PUAN DURUMLARI VE ARŞİV
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-slate-900 border border-slate-800 p-2 sm:p-2.5 rounded-2xl shadow-xl">
-            <span className="text-[11px] font-black tracking-widest text-slate-400 uppercase pl-1 sm:pl-2">HAFTA SEÇ:</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-[#070d19] border border-slate-800 p-2 sm:p-2.5 rounded-2xl shadow-2xl">
+            <span className="text-[11px] font-black tracking-widest text-white uppercase pl-1 sm:pl-2">HAFTA SEÇ:</span>
             <select
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
-              className="bg-amber-500 text-slate-950 font-black text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl outline-none cursor-pointer"
+              className="bg-black text-white border border-slate-700 hover:border-white focus:border-white font-black text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl outline-none cursor-pointer transition-colors"
             >
               {availableWeeks.map((w) => (
-                <option key={w} value={w}>
-                  {w}. HAFTA ARŞİVİ
+                <option key={w} value={w} className="bg-black text-white">
+                  {w}. HAFTA
                 </option>
               ))}
             </select>
@@ -362,47 +359,49 @@ export default function YeniArsivVeKontrolMerkezi() {
             <div className="flex flex-wrap justify-center gap-1.5">
               <button
                 onClick={() => setActiveTab('CARDS')}
-                className={`px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
-                  activeTab === 'CARDS' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
+                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all bg-black text-white ${
+                  activeTab === 'CARDS'
+                    ? 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                    : 'border border-slate-800 hover:border-slate-500'
                 }`}
               >
-                🗂️ Maç Arşivi
+                MAÇ ARŞİVİ
               </button>
               <button
                 onClick={() => setActiveTab('WEEK_CHECK')}
-                className={`px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
-                  activeTab === 'WEEK_CHECK' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
+                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all bg-black text-white ${
+                  activeTab === 'WEEK_CHECK'
+                    ? 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                    : 'border border-slate-800 hover:border-slate-500'
                 }`}
               >
-                📋 {selectedWeek}. Hafta Özeti
+                {selectedWeek}. HAFTA ÖZETİ
               </button>
               <button
                 onClick={() => setActiveTab('TOTAL_STANDINGS')}
-                className={`px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-wider uppercase transition-all flex items-center gap-1.5 ${
-                  activeTab === 'TOTAL_STANDINGS' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
+                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all bg-black text-white ${
+                  activeTab === 'TOTAL_STANDINGS'
+                    ? 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                    : 'border border-slate-800 hover:border-slate-500'
                 }`}
               >
-                <span>🏆 Genel Puan ({availableWeeks.length} Hafta)</span>
-                {activeLiveMatchCount > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                )}
+                GENEL PUAN
               </button>
             </div>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 text-amber-400 font-black tracking-widest animate-pulse">
-            YENİ ARŞİV KASASI YÜKLENİYOR...
+          <div className="text-center py-20 text-white font-black tracking-widest animate-pulse">
+            YÜKLENİYOR...
           </div>
         ) : allMatches.length === 0 ? (
-          <div className="text-center py-16 bg-slate-900/60 border border-slate-800 rounded-2xl">
-            <p className="text-slate-400 font-bold text-sm">
-              Henüz Supabase <code className="text-amber-400">etml_official_matches</code> tablosunda kayıt bulunamadı.
-            </p>
+          <div className="text-center py-16 bg-[#070d19] border border-slate-800 rounded-2xl">
+            <p className="text-white font-bold text-sm">Henüz veritabanında maç kaydı bulunamadı.</p>
           </div>
         ) : (
           <>
+          
             {/* SEKME 1: MAÇ ARŞİVİ */}
             {activeTab === 'CARDS' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -549,40 +548,40 @@ export default function YeniArsivVeKontrolMerkezi() {
 
             {/* SEKME 2: HAFTALIK KESİNLEŞMİŞ ÖZET */}
             {activeTab === 'WEEK_CHECK' && (
-              <div className="max-w-4xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl px-2.5 py-4 sm:p-6 shadow-2xl">
+              <div className="max-w-4xl mx-auto bg-[#081020] border border-slate-800 rounded-2xl px-2.5 py-4 sm:p-6 shadow-2xl">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
-                  <h2 className="text-sm sm:text-lg font-black text-emerald-400 uppercase tracking-wider">
-                    📋 {selectedWeek}. HAFTA PUAN ÖZETİ
+                  <h2 className="text-sm sm:text-lg font-black text-white uppercase tracking-widest">
+                    {selectedWeek}. HAFTA PUAN ÖZETİ
                   </h2>
-                  <span className="text-xs font-bold text-slate-400">
+                  <span className="text-xs font-bold text-slate-300">
                     Puan Alan Oyuncu: <strong className="text-white">{weeklyCheckTable.length}</strong>
                   </span>
                 </div>
 
                 <table className="w-full table-fixed text-left text-xs sm:text-sm tabular-nums">
                   <thead>
-                    <tr className="text-slate-400 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                      <th className="py-2 px-1 w-[26px] sm:w-10">#</th>
-                      <th className="py-2 px-1">Yarışmacı</th>
-                      <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
-                      <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
-                      <th className="py-2 px-0.5 w-[38px] sm:w-20 text-center">Bns</th>
-                      <th className="py-2 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
-                      <th className="py-2 px-1 w-[46px] sm:w-24 text-right">Ham</th>
+                    <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                      <th className="py-2.5 px-1 w-[26px] sm:w-10">#</th>
+                      <th className="py-2.5 px-1">Yarışmacı</th>
+                      <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
+                      <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
+                      <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Bns</th>
+                      <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
+                      <th className="py-2.5 px-1 w-[46px] sm:w-24 text-right">Ham</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-800/80">
                     {weeklyCheckTable.map((row, idx) => (
-                      <tr key={row.id} className="hover:bg-slate-800/40">
-                        <td className="py-2 px-1 font-black text-slate-500 text-[11px] sm:text-sm">{idx + 1}</td>
+                      <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                        <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{idx + 1}</td>
                         <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
-                        <td className="py-2 px-0.5 text-center text-teal-400 font-bold text-[11px] sm:text-sm">{row.dfo}</td>
-                        <td className="py-2 px-0.5 text-center text-rose-400 font-bold text-[11px] sm:text-sm">{row.tff}</td>
-                        <td className="py-2 px-0.5 text-center text-amber-300 font-bold text-[11px] sm:text-sm">
+                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.dfo}</td>
+                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.tff}</td>
+                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
                           {row.bonus > 0 ? `+${row.bonus}` : '0'}
                         </td>
-                        <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[11px] sm:text-sm">{row.scores}</td>
-                        <td className="py-2 px-1 text-right text-amber-400 font-black text-xs sm:text-base">{row.rawTotal}</td>
+                        <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">{row.scores}</td>
+                        <td className="py-2 px-1 text-right text-white font-black text-xs sm:text-base bg-black/40">{row.rawTotal}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -590,17 +589,14 @@ export default function YeniArsivVeKontrolMerkezi() {
               </div>
             )}
 
-            {/* SEKME 3: YENİ GENEL PUAN DURUMU + CANLI PUANLAMA */}
+            {/* SEKME 3: GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER) */}
             {activeTab === 'TOTAL_STANDINGS' && (
-              <div className="max-w-5xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
+              <div className="max-w-5xl mx-auto bg-[#081020] border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-800 px-1">
                   <div>
-                    <h2 className="text-sm sm:text-lg font-black text-amber-400 uppercase tracking-wider">
-                      🏆 YENİ GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER)
+                    <h2 className="text-sm sm:text-lg font-black text-white uppercase tracking-widest">
+                      GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER)
                     </h2>
-                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
-                      Yüklenen {availableWeeks.length} haftanın tamamı tek merkezden sıfır sapmayla hesaplanmaktadır.
-                    </p>
                   </div>
 
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
@@ -608,59 +604,52 @@ export default function YeniArsivVeKontrolMerkezi() {
                       <button
                         key={tab}
                         onClick={() => setStandingsFilter(tab)}
-                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                        className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
                           standingsFilter === tab
-                            ? tab === 'CANLI'
-                              ? 'bg-rose-600 text-white shadow-md'
-                              : 'bg-amber-500 text-slate-950 shadow-md'
-                            : tab === 'CANLI'
-                            ? 'bg-rose-950/70 border border-rose-500/40 text-rose-300 hover:bg-rose-900/80'
-                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            ? 'border-2 border-white shadow-[0_0_10px_rgba(255,255,255,0.2)]'
+                            : 'border border-slate-700 hover:border-white'
                         }`}
                       >
-                        {tab === 'CANLI' && (
-                          <span className={`w-1.5 h-1.5 rounded-full ${activeLiveMatchCount > 0 ? 'bg-emerald-400 animate-ping' : 'bg-rose-400'}`} />
-                        )}
-                        <span>{tab === 'CANLI' ? `CANLI${activeLiveMatchCount > 0 ? ` (${activeLiveMatchCount})` : ''}` : tab}</span>
+                        {tab === 'CANLI' ? `CANLI${activeLiveMatchCount > 0 ? ` (${activeLiveMatchCount})` : ''}` : tab}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* MASTER SEKMESİ: TÜM SÜTUNLAR KAYDIRMASIZ TEK EKRANDA */}
+                {/* MASTER SEKMESİ */}
                 {standingsFilter === 'MASTER' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="text-slate-400 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                      <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
                         <th className="py-2.5 px-1 w-[24px] sm:w-10">#</th>
                         <th className="py-2.5 px-1">Yarışmacı</th>
-                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-teal-400/90">DFO</th>
-                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-rose-400/90">TFF</th>
-                        <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-amber-300/90">Bonus</th>
-                        <th className="py-2.5 px-0.5 w-[38px] sm:w-24 text-center text-emerald-400/90">
+                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
+                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
+                        <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Bonus</th>
+                        <th className="py-2.5 px-0.5 w-[38px] sm:w-24 text-center">
                           <span className="sm:hidden">Skor</span>
                           <span className="hidden sm:inline">Tam İsabet</span>
                         </th>
-                        <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center text-amber-400 bg-amber-500/10 rounded-t-lg">
+                        <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">
                           <span className="sm:hidden">Master</span>
                           <span className="hidden sm:inline">Master Toplam</span>
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-800/80">
                       {cumulativeStandings.map((row, idx) => (
-                        <tr key={row.id} className="hover:bg-slate-800/40">
-                          <td className="py-2 px-1 font-black text-slate-500 text-[11px] sm:text-sm">{idx + 1}</td>
+                        <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                          <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{idx + 1}</td>
                           <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
                             {row.name}
                           </td>
-                          <td className="py-2 px-0.5 text-center text-teal-400 font-bold text-[11px] sm:text-sm">{row.dfo}</td>
-                          <td className="py-2 px-0.5 text-center text-rose-400 font-bold text-[11px] sm:text-sm">{row.tff}</td>
-                          <td className="py-2 px-0.5 text-center text-amber-300 font-bold text-[11px] sm:text-sm">
+                          <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.dfo}</td>
+                          <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.tff}</td>
+                          <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
                             {row.bonus > 0 ? `+${row.bonus}` : '0'}
                           </td>
-                          <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[11px] sm:text-sm">{row.scores}</td>
-                          <td className="py-2 px-1 text-center text-amber-400 font-black text-xs sm:text-base bg-amber-500/5">
+                          <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">{row.scores}</td>
+                          <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">
                             {row.master}
                           </td>
                         </tr>
@@ -668,61 +657,56 @@ export default function YeniArsivVeKontrolMerkezi() {
                     </tbody>
                   </table>
                 ) : standingsFilter === 'CANLI' ? (
-                  /* CANLI SEKMESİ: KESİN KASA + O AN OYNANAN MAÇLARIN ANLIK PUANI (KAYDIRMASIZ) */
+                  /* CANLI SEKMESİ */
                   <div>
-                    <div className="mb-3 px-2.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-[10px] sm:text-xs">
-                      {activeLiveMatchCount > 0 ? (
-                        <span className="text-emerald-400 font-black tracking-wide">
-                          🔴 Şu an {activeLiveMatchCount} maç canlı / onay aşamasında — anlık isabet puanları (+Canlı) dahildir.
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 font-bold">
-                          ⚪ Şu an oynanan canlı maç bulunmuyor; kesinleşmiş resmi puanlar gösteriliyor.
-                        </span>
-                      )}
+                    <div className="mb-3 px-3 py-2 rounded-xl bg-black border border-slate-800 flex items-center justify-between text-[10px] sm:text-xs">
+                      <span className="text-white font-bold tracking-wide">
+                        {activeLiveMatchCount > 0
+                          ? `Şu an ${activeLiveMatchCount} maç canlı / onay aşamasında — anlık puanlar (+Canlı) dahildir.`
+                          : 'Şu an oynanan canlı maç bulunmuyor; kesinleşmiş puanlar gösteriliyor.'}
+                      </span>
                     </div>
 
                     <table className="w-full table-fixed text-left tabular-nums">
                       <thead>
-                        <tr className="text-slate-400 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                        <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
                           <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
                           <th className="py-2.5 px-1">Yarışmacı</th>
-                          <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center text-slate-300">Kesin</th>
-                          <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center text-emerald-400">+Canlı</th>
-                          <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-cyan-400">Skor</th>
-                          <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center text-rose-400 bg-rose-500/10 rounded-t-lg">
-                            <span className="sm:hidden">Canlı</span>
+                          <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center">Kesin</th>
+                          <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center">+Canlı</th>
+                          <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
+                          <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">
+                            <span className="sm:hidden">Toplam</span>
                             <span className="hidden sm:inline">Canlı Toplam</span>
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody className="divide-y divide-slate-800/80">
                         {effectiveLiveStandings.map((row) => {
                           const diff = row.kesin_sira - row.canli_sira;
                           return (
-                            <tr key={row.user_id} className={row.canli_ek_puan > 0 ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-800/40'}>
-                              <td className="py-2 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
+                            <tr
+                              key={row.user_id}
+                              className={row.canli_ek_puan > 0 ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'hover:bg-[#0f1d38]'}
+                            >
+                              <td className="py-2 px-1 font-black text-slate-300 text-[10px] sm:text-sm">
                                 <span>{row.canli_sira}</span>
-                                {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
-                                {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                                {diff > 0 && <span className="ml-0.5 text-[9px] text-white">▲</span>}
+                                {diff < 0 && <span className="ml-0.5 text-[9px] text-slate-400">▼</span>}
                               </td>
                               <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.oyuncu_adi}>
                                 {row.oyuncu_adi}
                               </td>
-                              <td className="py-2 px-0.5 text-center text-slate-300 font-bold text-[11px] sm:text-sm">
+                              <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
                                 {row.kesin_master}
                               </td>
-                              <td className="py-2 px-0.5 text-center font-black text-[11px] sm:text-sm">
-                                {row.canli_ek_puan > 0 ? (
-                                  <span className="text-emerald-400">+{row.canli_ek_puan}</span>
-                                ) : (
-                                  <span className="text-slate-600">0</span>
-                                )}
+                              <td className="py-2 px-0.5 text-center font-black text-[11px] sm:text-sm text-white">
+                                {row.canli_ek_puan > 0 ? `+${row.canli_ek_puan}` : '0'}
                               </td>
-                              <td className="py-2 px-0.5 text-center text-cyan-400 font-bold text-[11px] sm:text-sm">
+                              <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
                                 {row.canli_skor_toplam}
                               </td>
-                              <td className="py-2 px-1 text-center text-amber-400 font-black text-xs sm:text-base bg-rose-500/5">
+                              <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">
                                 {row.canli_master_toplam}
                               </td>
                             </tr>
@@ -732,30 +716,30 @@ export default function YeniArsivVeKontrolMerkezi() {
                     </table>
                   </div>
                 ) : (
-                  /* DFO, TFF, SKOR VE BONUS SEKMELERİ: YALNIZCA KENDİ PUAN SÜTUNU */
+                  /* DFO, TFF, SKOR VE BONUS SEKMELERİ */
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="text-slate-400 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                      <tr className="bg-black/60 text-white border-b border-slate-700 text-[10px] sm:text-xs uppercase tracking-wider">
                         <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
                         <th className="py-2.5 px-2">Yarışmacı</th>
                         <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
-                          {standingsFilter === 'DFO' && <span className="text-teal-400">DFO Puanı</span>}
-                          {standingsFilter === 'TFF' && <span className="text-rose-400">TFF Puanı</span>}
-                          {standingsFilter === 'SKOR' && <span className="text-emerald-400">Tam İsabet</span>}
-                          {standingsFilter === 'BONUS' && <span className="text-amber-300">Bonus Puanı</span>}
+                          {standingsFilter === 'DFO' && 'DFO Puanı'}
+                          {standingsFilter === 'TFF' && 'TFF Puanı'}
+                          {standingsFilter === 'SKOR' && 'Tam İsabet'}
+                          {standingsFilter === 'BONUS' && 'Bonus Puanı'}
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-800/80">
                       {cumulativeStandings.map((row, idx) => (
-                        <tr key={row.id} className="hover:bg-slate-800/40">
-                          <td className="py-2.5 px-2 font-black text-slate-500 text-xs sm:text-sm">{idx + 1}</td>
+                        <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
+                          <td className="py-2.5 px-2 font-black text-slate-300 text-xs sm:text-sm">{idx + 1}</td>
                           <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
-                          <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base">
-                            {standingsFilter === 'DFO' && <span className="text-teal-400">{row.dfo}</span>}
-                            {standingsFilter === 'TFF' && <span className="text-rose-400">{row.tff}</span>}
-                            {standingsFilter === 'SKOR' && <span className="text-emerald-400">{row.scores}</span>}
-                            {standingsFilter === 'BONUS' && <span className="text-amber-300">+{row.bonus}</span>}
+                          <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-white">
+                            {standingsFilter === 'DFO' && row.dfo}
+                            {standingsFilter === 'TFF' && row.tff}
+                            {standingsFilter === 'SKOR' && row.scores}
+                            {standingsFilter === 'BONUS' && `+${row.bonus}`}
                           </td>
                         </tr>
                       ))}
