@@ -9,7 +9,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'RESMİ MAÇ ARŞİVİ & PUAN SAĞLAMA KASASI', path: '/yeni-arsiv', isKasa: true },
+    { name: 'PUAN DURUMLARI VE ARŞİV', path: '/yeni-arsiv' },
     { name: 'TAHMİNLER', path: '/tahmin' },
     { name: '🔴 CANLI', path: '/canli', isCanli: true },
   ];
@@ -21,36 +21,19 @@ export default function Navbar() {
       <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
-          {/* MASAÜSTÜ MENÜ (4 ANA MERKEZ) */}
+          {/* MASAÜSTÜ MENÜ */}
           <div className="hidden lg:flex items-center w-full">
             <div className="flex-1" />
             <div className="flex items-center justify-center gap-2 xl:gap-3">
               {navLinks.map((link) => {
                 const isActive = pathname === link.path;
 
-                if (link.isKasa) {
-                  return (
-                    <Link
-                      key={link.path}
-                      href={link.path}
-                      className={`px-3.5 xl:px-5 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-2 shadow-md hover:scale-105 ${
-                        isActive
-                          ? 'bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.6)] border border-amber-300'
-                          : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                      }`}
-                    >
-                      <span className="text-sm xl:text-base drop-shadow-md">🏆</span>
-                      <span>{link.name}</span>
-                    </Link>
-                  );
-                }
-
                 if (link.isCanli) {
                   return (
                     <Link
                       key={link.path}
                       href={link.path}
-                      className={`px-3 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                      className={`px-3.5 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
                         isActive
                           ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)] scale-105'
                           : 'text-rose-500/80 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30'
@@ -65,10 +48,10 @@ export default function Navbar() {
                   <Link
                     key={link.path}
                     href={link.path}
-                    className={`px-3.5 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap ${
+                    className={`px-4 xl:px-5 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap bg-black text-white ${
                       isActive
-                        ? 'bg-slate-800 text-white shadow-inner border border-slate-600'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800/80'
+                        ? 'border-2 border-white shadow-[0_0_14px_rgba(255,255,255,0.2)]'
+                        : 'border border-slate-700 hover:border-white'
                     }`}
                   >
                     {link.name}
@@ -80,7 +63,7 @@ export default function Navbar() {
             <div className="flex-1 flex justify-end">
               <Link
                 href="/admin"
-                className={`px-3 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3.5 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
                   isAdminActive
                     ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.3)] scale-105'
                     : 'text-rose-500/70 hover:text-rose-400 hover:bg-rose-950/30'
@@ -96,14 +79,13 @@ export default function Navbar() {
             <Link
               href="/yeni-arsiv"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-amber-400 font-black tracking-wider text-xs sm:text-sm uppercase flex items-center gap-1.5 truncate pr-2"
+              className="text-white font-black tracking-widest text-xs sm:text-sm uppercase truncate pr-2"
             >
-              <span>🏆</span>
-              <span className="truncate">ETML RESMİ KASA</span>
+              PUAN DURUMLARI VE ARŞİV
             </Link>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-slate-300 hover:text-white focus:outline-none p-2 rounded-lg bg-slate-800/60 border border-slate-700/60 shrink-0"
+              className="text-white focus:outline-none p-2 rounded-lg bg-black border border-slate-700 shrink-0"
               aria-label="Menüyü Aç/Kapat"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,29 +100,11 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* MOBİL AÇILIR MENÜ (4 ANA MERKEZ) */}
+      {/* MOBİL AÇILIR MENÜ */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-[#050b14] border-b border-slate-800 px-4 pt-2 pb-6 space-y-2.5 shadow-2xl absolute w-full left-0 top-full">
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
-
-            if (link.isKasa) {
-              return (
-                <Link
-                  key={link.path}
-                  href={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`px-4 py-3.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all flex items-center gap-2.5 leading-snug ${
-                    isActive
-                      ? 'bg-amber-500 text-slate-950 border border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
-                      : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950'
-                  }`}
-                >
-                  <span className="text-lg shrink-0">🏆</span>
-                  <span>{link.name}</span>
-                </Link>
-              );
-            }
 
             if (link.isCanli) {
               return (
@@ -164,10 +128,8 @@ export default function Navbar() {
                 key={link.path}
                 href={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${
-                  isActive
-                    ? 'bg-slate-800 text-white border border-slate-600'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all bg-black text-white ${
+                  isActive ? 'border-2 border-white' : 'border border-slate-700'
                 }`}
               >
                 {link.name}
