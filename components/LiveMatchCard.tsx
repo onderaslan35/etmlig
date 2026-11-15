@@ -46,7 +46,6 @@ const sanitizeStr = (s: string) => {
     .replace(/[^A-Z0-9]/g, '');
 };
 
-// 🔴 GELİŞMİŞ TFF / DFO ZIRHI (Veritabanındaki classify_etml_pool ile %100 Uyumlu)
 const advancedTffCheck = (category: string, home: string, away: string) => {
   const cat = (category || '')
     .toUpperCase()
@@ -59,7 +58,6 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
   const h = (home || '').toUpperCase().replace(/İ/g, 'I');
   const a = (away || '').toUpperCase().replace(/İ/g, 'I');
 
-  // 1. UEFA, Milli Maçlar ve Avrupa Ligleri kesin olarak DFO'dur (Türk takımı oynasa bile)
   if (
     cat.includes("UEFA") ||
     cat.includes("SAMPIYONLAR") || cat.includes("CHAMPIONS") || cat.includes("S.L.") ||
@@ -77,7 +75,6 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
     return false;
   }
 
-  // 2. Yerli Lig ve Kupa kategorileri kesin olarak TFF'dir
   const isTffCat =
     cat.includes("TURKIYE") || cat.includes("TFF") || cat.includes("TRENDYOL") || cat.includes("NESINE") ||
     cat.includes("AMATOR") || cat.includes("SUPER LIG") ||
@@ -88,7 +85,6 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
 
   if (isTffCat) return true;
 
-  // 3. Kategorisi eksik iki Türk kulübü eşleşmesi -> TFF
   const teamRegex = /(SPOR|GUCU|YURDU|BLD|BELEDIYE|DEMIR|GENCLER|BIRLIGI|KARS|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|ALTAY|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ADANA|HATAY|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
 
   return teamRegex.test(h) && teamRegex.test(a);
@@ -184,7 +180,6 @@ export default function LiveMatchCard() {
     }, 8000);
   };
 
-  // OYUNCU LİSTESİ (Silinen 272727 ve 262787 kesin olarak filtrelenir)
   useEffect(() => {
     const fetchDbPlayers = async () => {
       const [playersRes, officialPlayersRes] = await Promise.all([
@@ -229,7 +224,6 @@ export default function LiveMatchCard() {
     fetchDbPlayers();
   }, []);
 
-  // KRONOMETREYİ BESLEYEN ZAMAN DÖNGÜSÜ (Veritabanına istek atmaz)
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().getTime()), 1000);
     return () => clearInterval(timer);
@@ -251,9 +245,10 @@ export default function LiveMatchCard() {
     return `${logInfo.elapsed}'`;
   };
 
-  // ANA VERİ YÜKLEME + HAFİF REALTIME DİNLEYİCİSİ (Sıfır Polling, Sıfır Kota Sızıntısı)
+  // ⚡ TURBO VERİ YÜKLEME: Geçmiş 40 haftanın ağır JSON verilerini indirmez, sadece aktif haftayı çeker!
   useEffect(() => {
     let activeWeeksSnapshot: number[] = [];
+    let trackedIdsSet = new Set<string>();
 
     const refreshOfficialKasa = async (weeksToLoad: number[]) => {
       const [summaryRes, offMatchesRes, offWeeksRes] = await Promise.all([
@@ -293,12 +288,15 @@ export default function LiveMatchCard() {
       todayDate.setHours(0, 0, 0, 0);
       const currentMs = new Date().getTime();
 
-      const [allBulletinRes, dbLiveMatchesRes] = await Promise.all([
-        supabase.from('matches_bulletin').select('*').order('week_num', { ascending: true }).order('match_index', { ascending: true }),
-        supabase.from('live_matches').select('*')
-      ]);
+      // 1000 satır limitine asla takılmamak için sadece güncel haftaları (40+) çek
+      const { data: recentBultenData } = await supabase
+        .from('matches_bulletin')
+        .select('*')
+        .gte('week_num', 40)
+        .order('week_num', { ascending: true })
+        .order('match_index', { ascending: true });
 
-      const allBulten = allBulletinRes.data || [];
+      const allBulten = recentBultenData || [];
 
       const relevantMatches = allBulten.filter((m: any) => {
         const matchTimeMs = getMatchTimeMs(m.match_date, m.match_time);
@@ -335,27 +333,41 @@ export default function LiveMatchCard() {
 
       setTargetBulletinMatches(targetBulten);
 
-      // Aktif haftanın tahminlerini yalnızca 1 kez çek
-      let allPredictions: any[] = [];
-      for (const week of relevantWeeksArray) {
-        let from = 0;
-        const step = 1000;
-        let keepFetching = true;
-        while (keepFetching) {
-          const { data } = await supabase
-            .from('player_predictions')
-            .select('*')
-            .eq('week_num', week)
-            .range(from, from + step - 1);
-          if (data && data.length > 0) {
-            allPredictions = [...allPredictions, ...data];
-            if (data.length < step) keepFetching = false;
-            else from += step;
-          } else {
-            keepFetching = false;
+      const targetMatchIds = targetBulten.map((m) => getUniqueMatchId(m.week_num, m.id));
+      trackedIdsSet = new Set(targetMatchIds.map((id) => String(id)));
+
+      // Paralel ve sadece aktif 24 maçın verisini indir (984 maçlık dev JSON yükü sıfırlandı!)
+      const fetchPredictionsPromise = (async () => {
+        let allPreds: any[] = [];
+        for (const week of relevantWeeksArray) {
+          let from = 0;
+          const step = 1000;
+          let keepFetching = true;
+          while (keepFetching) {
+            const { data } = await supabase
+              .from('player_predictions')
+              .select('user_id, week_num, match_index, predicted_score')
+              .eq('week_num', week)
+              .range(from, from + step - 1);
+            if (data && data.length > 0) {
+              allPreds = [...allPreds, ...data];
+              if (data.length < step) keepFetching = false;
+              else from += step;
+            } else {
+              keepFetching = false;
+            }
           }
         }
-      }
+        return allPreds;
+      })();
+
+      const [allPredictions, dbLiveMatchesRes] = await Promise.all([
+        fetchPredictionsPromise,
+        targetMatchIds.length > 0
+          ? supabase.from('live_matches').select('*').in('id', targetMatchIds)
+          : Promise.resolve({ data: [] as any[] }),
+        refreshOfficialKasa(relevantWeeksArray)
+      ]);
 
       const pDict: Record<string, string> = {};
       allPredictions.forEach((pred: any) => {
@@ -378,20 +390,19 @@ export default function LiveMatchCard() {
         }
       });
       setLiveMatchesData(liveMap);
-
-      await refreshOfficialKasa(relevantWeeksArray);
       setIsWeekLoaded(true);
     };
 
     fetchInitialData();
 
-    // Sadece canlı skor satırı değiştiğinde tek satırı hafızada günceller (API sızıntısı yapmaz!)
     const channel = supabase
       .channel('etml-live-card-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, (payload: any) => {
         const row = payload.new;
         if (!row || row.id === undefined) return;
         const key = String(row.id);
+        if (trackedIdsSet.size > 0 && !trackedIdsSet.has(key)) return;
+
         const isActiveOrFin = ['FINISHED', 'FT', 'AET', 'PEN', 'LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(row.status);
         if (isActiveOrFin && row.home_score !== '-' && row.away_score !== '-' && row.home_score !== null && row.away_score !== null) {
           const newScore = `${row.home_score}-${row.away_score}`;
@@ -415,7 +426,6 @@ export default function LiveMatchCard() {
     };
   }, []);
 
-  // YENİ OTONOM KASA + ANLIK CANLI PUAN HESAPLAMA MOTORU (Sıfır Çift Sayım)
   const {
     todaysMatchesList,
     weeklySortedStats,
@@ -427,7 +437,6 @@ export default function LiveMatchCard() {
     const todayDateStr = getTodayDateString();
     const accountIds = Object.keys(mergedAccounts).filter((id) => !EXCLUDED_IDS.has(id));
 
-    // 1. Günün / Aktif Maçların Listesi
     const todays = targetBulletinMatches
       .filter((m) => {
         const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
@@ -438,7 +447,6 @@ export default function LiveMatchCard() {
       })
       .sort((a, b) => getMatchTimeMs(a.date, a.time) - getMatchTimeMs(b.date, b.time));
 
-    // 2. 24. Maç Bitiş Kontrolü
     const fin24Map: Record<number, boolean> = {};
     activeWeeks.forEach((w) => {
       const m24Id = String(getUniqueMatchId(w, 24));
@@ -449,7 +457,6 @@ export default function LiveMatchCard() {
         Boolean(dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status));
     });
 
-    // 3. Haftalık Radar İstatistikleri
     const allWeekly: Record<number, { id: string; points: number; exactScores: number }[]> = {};
     activeWeeks.forEach((week) => {
       const stats: Record<string, { points: number; exactScores: number }> = {};
@@ -464,7 +471,6 @@ export default function LiveMatchCard() {
           const offMatch = officialWeekMatchesMap[uniqueId];
           const dbMatch = liveMatchesData[uniqueId];
 
-          // Kasada kesinleşmişse oradan al, değilse canlı skordan hesapla
           if (offMatch && offMatch.status === 'FINISHED') {
             const pts = Number(offMatch.points_awarded || 0);
             (offMatch.winner_ids || []).forEach((wId: string) => {
@@ -502,7 +508,6 @@ export default function LiveMatchCard() {
         );
     });
 
-    // 4. Kesin Kasa + Henüz Kasaya Girmemiş Canlı Maçların Ek Puanı
     const baseMap: Record<
       string,
       {
@@ -564,7 +569,6 @@ export default function LiveMatchCard() {
       const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
       const offMatch = officialWeekMatchesMap[uniqueId];
 
-      // Kasada zaten FINISHED veya POSTPONED ise etml_standings_summary içindedir -> İkinci kez sayma!
       if (offMatch && (offMatch.status === 'FINISHED' || offMatch.status === 'POSTPONED')) {
         return;
       }
@@ -1440,19 +1444,16 @@ export default function LiveMatchCard() {
         );
       })}
 
-      {/* 🔴 YENİ OTONOM KASA BAĞLANTILI CANLI GENEL PUAN DURUMU (KAYDIRMASIZ TEK EKRAN) 🔴 */}
-      <div className="bg-slate-900/85 border border-slate-800 rounded-2xl px-2.5 py-4 sm:p-6 shadow-2xl">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800">
-          <button
-            onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)}
-            className="flex items-center gap-2 text-left"
-          >
+      {/* 🔴 TEMİZ GÖRÜNÜMLÜ CANLI GENEL PUAN DURUMU (DFO + TFF + BONUS = TOPLAM) 🔴 */}
+      <div className="bg-slate-900/85 border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800 px-1">
+          <button onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)} className="flex items-center gap-2 text-left">
             <span className="relative flex h-2.5 w-2.5">
               <span className={`absolute inline-flex h-full w-full rounded-full ${activeScoringMatchCount > 0 ? 'animate-ping bg-rose-400 opacity-75' : ''}`} />
               <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${activeScoringMatchCount > 0 ? 'bg-rose-500' : 'bg-amber-400'}`} />
             </span>
             <h2 className="text-xs sm:text-base font-black text-amber-400 uppercase tracking-wider">
-              CANLI GENEL PUAN DURUMU {activeScoringMatchCount > 0 ? `(${activeScoringMatchCount} MAÇ AKTİF)` : '(RESMİ KASA)'}
+              CANLI GENEL PUAN DURUMU
             </h2>
             <span className="text-slate-400 text-xs">{isLiveStandingsOpen ? '▲' : '▼'}</span>
           </button>
@@ -1480,12 +1481,13 @@ export default function LiveMatchCard() {
               <table className="w-full table-fixed text-left tabular-nums">
                 <thead>
                   <tr className="text-slate-400 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                    <th className="py-2 px-1 w-[28px] sm:w-12">#</th>
-                    <th className="py-2 px-1">Yarışmacı</th>
-                    <th className="py-2 px-0.5 w-[38px] sm:w-20 text-center">Kesin</th>
-                    <th className="py-2 px-0.5 w-[42px] sm:w-20 text-center text-emerald-400">+Canlı</th>
-                    <th className="py-2 px-0.5 w-[36px] sm:w-20 text-center text-cyan-400">Skor</th>
-                    <th className="py-2 px-1 w-[46px] sm:w-28 text-center text-amber-400 bg-amber-500/10 rounded-t-lg">Toplam</th>
+                    <th className="py-2.5 px-1 w-[26px] sm:w-10">#</th>
+                    <th className="py-2.5 px-1">Yarışmacı</th>
+                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-teal-400/90">DFO</th>
+                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-rose-400/90">TFF</th>
+                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center text-amber-300/90">Bonus</th>
+                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center text-emerald-400/90">Skor</th>
+                    <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center text-amber-400 bg-amber-500/10 rounded-t-lg">Master</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -1498,15 +1500,25 @@ export default function LiveMatchCard() {
                           {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
                           {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
                         </td>
-                        <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                          {row.name}
+                        <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm" title={row.name}>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="truncate">{row.name}</span>
+                            {row.canliMaster > 0 && (
+                              <span className="shrink-0 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[9px] font-black px-1 py-0.5 rounded leading-none">
+                                +{row.canliMaster}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="py-2 px-0.5 text-center text-slate-300 font-bold text-[11px] sm:text-sm">{row.kesinMaster}</td>
-                        <td className="py-2 px-0.5 text-center font-black text-[11px] sm:text-sm">
-                          {row.canliMaster > 0 ? <span className="text-emerald-400">+{row.canliMaster}</span> : <span className="text-slate-600">0</span>}
+                        <td className="py-2 px-0.5 text-center text-teal-400 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
+                        <td className="py-2 px-0.5 text-center text-rose-400 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
+                        <td className="py-2 px-0.5 text-center text-amber-300 font-bold text-[11px] sm:text-sm">
+                          {row.bonus > 0 ? `+${row.bonus}` : '0'}
                         </td>
-                        <td className="py-2 px-0.5 text-center text-cyan-400 font-bold text-[11px] sm:text-sm">{row.toplamSkor}</td>
-                        <td className="py-2 px-1 text-center text-amber-400 font-black text-xs sm:text-base bg-amber-500/5">{row.toplamMaster}</td>
+                        <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                        <td className="py-2 px-1 text-center text-amber-400 font-black text-xs sm:text-base bg-amber-500/5">
+                          {row.toplamMaster}
+                        </td>
                       </tr>
                     );
                   })}
@@ -1516,12 +1528,11 @@ export default function LiveMatchCard() {
               <table className="w-full table-fixed text-left tabular-nums">
                 <thead>
                   <tr className="text-slate-400 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
-                    <th className="py-2 px-2 w-10 sm:w-14">#</th>
-                    <th className="py-2 px-2">Yarışmacı</th>
-                    <th className="py-2 px-2 w-16 sm:w-24 text-center text-emerald-400">+Canlı</th>
-                    <th className="py-2 px-2 w-20 sm:w-32 text-right">
-                      {liveTableTab === 'DFO' && <span className="text-teal-400">DFO</span>}
-                      {liveTableTab === 'TFF' && <span className="text-rose-400">TFF</span>}
+                    <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                    <th className="py-2.5 px-2">Yarışmacı</th>
+                    <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
+                      {liveTableTab === 'DFO' && <span className="text-teal-400">DFO Puanı</span>}
+                      {liveTableTab === 'TFF' && <span className="text-rose-400">TFF Puanı</span>}
                       {liveTableTab === 'SKOR' && <span className="text-emerald-400">Tam İsabet</span>}
                     </th>
                   </tr>
@@ -1529,12 +1540,18 @@ export default function LiveMatchCard() {
                 <tbody className="divide-y divide-slate-800/60">
                   {liveStandingsTable[liveTableTab].map((row) => (
                     <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-800/40'}>
-                      <td className="py-2 px-2 font-black text-slate-500 text-xs sm:text-sm">{row.rank}</td>
-                      <td className="py-2 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
-                      <td className="py-2 px-2 text-center font-black text-xs sm:text-sm">
-                        {row.liveAdd > 0 ? <span className="text-emerald-400">+{row.liveAdd}</span> : <span className="text-slate-600">0</span>}
+                      <td className="py-2.5 px-2 font-black text-slate-500 text-xs sm:text-sm">{row.rank}</td>
+                      <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="truncate">{row.name}</span>
+                          {row.liveAdd > 0 && (
+                            <span className="shrink-0 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                              +{row.liveAdd}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="py-2 px-2 text-right font-black text-sm sm:text-base">
+                      <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base">
                         {liveTableTab === 'DFO' && <span className="text-teal-400">{row.pts}</span>}
                         {liveTableTab === 'TFF' && <span className="text-rose-400">{row.pts}</span>}
                         {liveTableTab === 'SKOR' && <span className="text-emerald-400">{row.pts}</span>}
