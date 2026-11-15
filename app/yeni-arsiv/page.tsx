@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase';
 import { TEST_ACCOUNTS, getEliteTheme } from '@/utils/themeEngine';
 
@@ -32,101 +32,149 @@ interface OfficialWeek {
   skor_bonus: number;
 }
 
-// Puan tablolarından kesin olarak gizlenecek ID'ler (Maç arşivindeki kişi sayısını bozmaz)
+interface LiveStandingRow {
+  canli_sira: number;
+  kesin_sira: number;
+  user_id: string;
+  oyuncu_adi: string;
+  kesin_dfo: number;
+  kesin_tff: number;
+  bonus_puan: number;
+  kesin_master: number;
+  kesin_skor: number;
+  canli_ek_dfo: number;
+  canli_ek_tff: number;
+  canli_ek_puan: number;
+  canli_ek_skor: number;
+  canli_master_toplam: number;
+  canli_skor_toplam: number;
+  aktif_mac_sayisi: number;
+}
+
 const EXCLUDED_STANDINGS_IDS = new Set(['mankoman', '272727', '262787']);
 
 export default function YeniArsivVeKontrolMerkezi() {
   const [allMatches, setAllMatches] = useState<OfficialMatch[]>([]);
   const [allWeeks, setAllWeeks] = useState<OfficialWeek[]>([]);
+  const [liveStandings, setLiveStandings] = useState<LiveStandingRow[]>([]);
+  const [activeLiveMatchCount, setActiveLiveMatchCount] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'CARDS' | 'WEEK_CHECK' | 'TOTAL_STANDINGS'>('CARDS');
-  const [standingsFilter, setStandingsFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
+  const [standingsFilter, setStandingsFilter] = useState<'MASTER' | 'CANLI' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
   const [hiddenWinnersMap, setHiddenWinnersMap] = useState<Record<number, boolean>>({});
   const [accounts, setAccounts] = useState<Record<string, { pass: string; name: string }>>(TEST_ACCOUNTS);
   const [inactiveIds, setInactiveIds] = useState<Set<string>>(new Set(EXCLUDED_STANDINGS_IDS));
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
+  const fetchLiveSummary = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('etml_live_standings_summary')
+      .select('*')
+      .order('canli_sira', { ascending: true });
 
-      const [playersRes, officialPlayersRes, weeksRes] = await Promise.all([
-        supabase.from('players').select('*'),
-        supabase.from('etml_official_players').select('*'),
-        supabase.from('etml_official_weeks').select('*').order('week_num', { ascending: false })
-      ]);
-
-      const merged: Record<string, { pass: string; name: string }> = {
-        ...TEST_ACCOUNTS,
-        '262787': { pass: '', name: 'MUSTAFA TUCİ' },
-        '272727': { pass: '', name: 'ESKİ ÜYE' }
-      };
-      const hiddenSet = new Set<string>(EXCLUDED_STANDINGS_IDS);
-
-      if (officialPlayersRes.data) {
-        officialPlayersRes.data.forEach((op: any) => {
-          const uid = String(op.user_id || '').trim();
-          const fname = String(op.full_name || '').trim();
-          if (!uid) return;
-          if (op.is_active === false) {
-            hiddenSet.add(uid);
-          }
-          if (fname && fname !== uid) {
-            merged[uid] = { pass: merged[uid]?.pass || '', name: fname };
-          }
-        });
-      }
-
-      if (playersRes.data) {
-        playersRes.data.forEach((p: any) => {
-          const pid = String(p.username || p.user_id || p.id || '').trim();
-          const rawName = String(p.name || p.full_name || '').trim();
-          if (pid && pid !== 'mankoman') {
-            merged[pid] = {
-              pass: p.password || merged[pid]?.pass || '',
-              name: rawName || merged[pid]?.name || pid
-            };
-          }
-        });
-      }
-
-      setAccounts(merged);
-      setInactiveIds(hiddenSet);
-
-      let fetchedMatches: OfficialMatch[] = [];
-      let from = 0;
-      const step = 1000;
-      let keepGoing = true;
-
-      while (keepGoing) {
-        const { data } = await supabase
-          .from('etml_official_matches')
-          .select('*')
-          .order('week_num', { ascending: true })
-          .order('match_index', { ascending: true })
-          .range(from, from + step - 1);
-
-        if (data && data.length > 0) {
-          fetchedMatches = [...fetchedMatches, ...(data as OfficialMatch[])];
-          if (data.length < step) keepGoing = false;
-          else from += step;
-        } else {
-          keepGoing = false;
-        }
-      }
-
-      setAllMatches(fetchedMatches);
-      setAllWeeks((weeksRes.data || []) as OfficialWeek[]);
-
-      if (fetchedMatches.length > 0) {
-        const maxW = Math.max(...fetchedMatches.map((m) => m.week_num));
-        setSelectedWeek(maxW);
-      }
-      setIsLoading(false);
-    };
-
-    loadData();
+    if (!error && data) {
+      const rows = data as LiveStandingRow[];
+      setLiveStandings(rows);
+      setActiveLiveMatchCount(rows.length > 0 ? Number(rows[0].aktif_mac_sayisi || 0) : 0);
+    }
   }, []);
+
+  const loadAllData = useCallback(async (keepSelectedWeek = false) => {
+    if (!keepSelectedWeek) setIsLoading(true);
+
+    const [playersRes, officialPlayersRes, weeksRes] = await Promise.all([
+      supabase.from('players').select('*'),
+      supabase.from('etml_official_players').select('*'),
+      supabase.from('etml_official_weeks').select('*').order('week_num', { ascending: false })
+    ]);
+
+    const merged: Record<string, { pass: string; name: string }> = {
+      ...TEST_ACCOUNTS,
+      '262787': { pass: '', name: 'MUSTAFA TUCİ' },
+      '272727': { pass: '', name: 'ESKİ ÜYE' }
+    };
+    const hiddenSet = new Set<string>(EXCLUDED_STANDINGS_IDS);
+
+    if (officialPlayersRes.data) {
+      officialPlayersRes.data.forEach((op: any) => {
+        const uid = String(op.user_id || '').trim();
+        const fname = String(op.full_name || '').trim();
+        if (!uid) return;
+        if (op.is_active === false) hiddenSet.add(uid);
+        if (fname && fname !== uid) {
+          merged[uid] = { pass: merged[uid]?.pass || '', name: fname };
+        }
+      });
+    }
+
+    if (playersRes.data) {
+      playersRes.data.forEach((p: any) => {
+        const pid = String(p.username || p.user_id || p.id || '').trim();
+        const rawName = String(p.name || p.full_name || '').trim();
+        if (pid && pid !== 'mankoman') {
+          merged[pid] = {
+            pass: p.password || merged[pid]?.pass || '',
+            name: rawName || merged[pid]?.name || pid
+          };
+        }
+      });
+    }
+
+    setAccounts(merged);
+    setInactiveIds(hiddenSet);
+
+    let fetchedMatches: OfficialMatch[] = [];
+    let from = 0;
+    const step = 1000;
+    let keepGoing = true;
+
+    while (keepGoing) {
+      const { data } = await supabase
+        .from('etml_official_matches')
+        .select('*')
+        .order('week_num', { ascending: true })
+        .order('match_index', { ascending: true })
+        .range(from, from + step - 1);
+
+      if (data && data.length > 0) {
+        fetchedMatches = [...fetchedMatches, ...(data as OfficialMatch[])];
+        if (data.length < step) keepGoing = false;
+        else from += step;
+      } else {
+        keepGoing = false;
+      }
+    }
+
+    setAllMatches(fetchedMatches);
+    setAllWeeks((weeksRes.data || []) as OfficialWeek[]);
+
+    if (!keepSelectedWeek && fetchedMatches.length > 0) {
+      const maxW = Math.max(...fetchedMatches.map((m) => m.week_num));
+      setSelectedWeek(maxW);
+    }
+
+    await fetchLiveSummary();
+    if (!keepSelectedWeek) setIsLoading(false);
+  }, [fetchLiveSummary]);
+
+  useEffect(() => {
+    loadAllData(false);
+
+    // Canlı skor veya resmi kasa güncellendiğinde tabloyu otomatik tazele
+    const channel = supabase
+      .channel('etml-kasa-live-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => {
+        fetchLiveSummary();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'etml_official_matches' }, () => {
+        loadAllData(true);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadAllData, fetchLiveSummary]);
 
   const availableWeeks = useMemo(() => {
     const setW = new Set<number>(allMatches.map((m) => m.week_num));
@@ -143,7 +191,7 @@ export default function YeniArsivVeKontrolMerkezi() {
     return allWeeks.find((w) => w.week_num === selectedWeek) || null;
   }, [allWeeks, selectedWeek]);
 
-  // Seçili Haftanın Excel Sağlama Tablosu (Gizlenen ID'ler hariç)
+  // Seçili Haftanın Kesinleşmiş Puan Özeti
   const weeklyCheckTable = useMemo(() => {
     const map: Record<string, { id: string; name: string; dfo: number; tff: number; rawTotal: number; scores: number; bonus: number }> = {};
 
@@ -186,7 +234,7 @@ export default function YeniArsivVeKontrolMerkezi() {
     );
   }, [currentWeekMatches, currentWeekMeta, accounts, inactiveIds]);
 
-  // Tüm Yüklü Haftaların Kümülatif Genel Puan Durumu (DFO + TFF + Bonus = Master Garantili)
+  // Kesinleşmiş Kümülatif Genel Puan Durumu (DFO + TFF + Bonus = Master)
   const cumulativeStandings = useMemo(() => {
     const map: Record<
       string,
@@ -258,6 +306,29 @@ export default function YeniArsivVeKontrolMerkezi() {
     return list.sort((a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
   }, [allMatches, allWeeks, accounts, inactiveIds, standingsFilter]);
 
+  // SQL görünümü henüz yoksa bile canlı sekmesinin sorunsuz çalışması için yedek liste
+  const effectiveLiveStandings: LiveStandingRow[] = useMemo(() => {
+    if (liveStandings.length > 0) return liveStandings;
+    return cumulativeStandings.map((r, idx) => ({
+      canli_sira: idx + 1,
+      kesin_sira: idx + 1,
+      user_id: r.id,
+      oyuncu_adi: r.name,
+      kesin_dfo: r.dfo,
+      kesin_tff: r.tff,
+      bonus_puan: r.bonus,
+      kesin_master: r.master,
+      kesin_skor: r.scores,
+      canli_ek_dfo: 0,
+      canli_ek_tff: 0,
+      canli_ek_puan: 0,
+      canli_ek_skor: 0,
+      canli_master_toplam: r.master,
+      canli_skor_toplam: r.scores,
+      aktif_mac_sayisi: 0
+    }));
+  }, [liveStandings, cumulativeStandings]);
+
   const toggleWinners = (matchId: number) => {
     setHiddenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
   };
@@ -295,7 +366,7 @@ export default function YeniArsivVeKontrolMerkezi() {
                   activeTab === 'CARDS' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
-                🗂️ Maç Kartları
+                🗂️ Maç Arşivi
               </button>
               <button
                 onClick={() => setActiveTab('WEEK_CHECK')}
@@ -307,11 +378,14 @@ export default function YeniArsivVeKontrolMerkezi() {
               </button>
               <button
                 onClick={() => setActiveTab('TOTAL_STANDINGS')}
-                className={`px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
+                className={`px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-wider uppercase transition-all flex items-center gap-1.5 ${
                   activeTab === 'TOTAL_STANDINGS' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
-                🏆 Genel Puan ({availableWeeks.length} Hafta)
+                <span>🏆 Genel Puan ({availableWeeks.length} Hafta)</span>
+                {activeLiveMatchCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                )}
               </button>
             </div>
           </div>
@@ -329,7 +403,7 @@ export default function YeniArsivVeKontrolMerkezi() {
           </div>
         ) : (
           <>
-            {/* SEKME 1: MAÇ ARŞİVİ KARTLARI */}
+            {/* SEKME 1: MAÇ ARŞİVİ */}
             {activeTab === 'CARDS' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {currentWeekMatches.map((match) => {
@@ -473,7 +547,7 @@ export default function YeniArsivVeKontrolMerkezi() {
               </div>
             )}
 
-            {/* SEKME 2: HAFTALIK ÖZET SAĞLAMA TABLOSU */}
+            {/* SEKME 2: HAFTALIK KESİNLEŞMİŞ ÖZET */}
             {activeTab === 'WEEK_CHECK' && (
               <div className="max-w-4xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl px-2.5 py-4 sm:p-6 shadow-2xl">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
@@ -516,7 +590,7 @@ export default function YeniArsivVeKontrolMerkezi() {
               </div>
             )}
 
-            {/* SEKME 3: KÜMÜLATİF GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER) */}
+            {/* SEKME 3: YENİ GENEL PUAN DURUMU + CANLI PUANLAMA */}
             {activeTab === 'TOTAL_STANDINGS' && (
               <div className="max-w-5xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-800 px-1">
@@ -530,15 +604,24 @@ export default function YeniArsivVeKontrolMerkezi() {
                   </div>
 
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {(['MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => (
+                    {(['MASTER', 'CANLI', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setStandingsFilter(tab)}
-                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                          standingsFilter === tab ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                          standingsFilter === tab
+                            ? tab === 'CANLI'
+                              ? 'bg-rose-600 text-white shadow-md'
+                              : 'bg-amber-500 text-slate-950 shadow-md'
+                            : tab === 'CANLI'
+                            ? 'bg-rose-950/70 border border-rose-500/40 text-rose-300 hover:bg-rose-900/80'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                         }`}
                       >
-                        {tab}
+                        {tab === 'CANLI' && (
+                          <span className={`w-1.5 h-1.5 rounded-full ${activeLiveMatchCount > 0 ? 'bg-emerald-400 animate-ping' : 'bg-rose-400'}`} />
+                        )}
+                        <span>{tab === 'CANLI' ? `CANLI${activeLiveMatchCount > 0 ? ` (${activeLiveMatchCount})` : ''}` : tab}</span>
                       </button>
                     ))}
                   </div>
@@ -584,6 +667,70 @@ export default function YeniArsivVeKontrolMerkezi() {
                       ))}
                     </tbody>
                   </table>
+                ) : standingsFilter === 'CANLI' ? (
+                  /* CANLI SEKMESİ: KESİN KASA + O AN OYNANAN MAÇLARIN ANLIK PUANI (KAYDIRMASIZ) */
+                  <div>
+                    <div className="mb-3 px-2.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-[10px] sm:text-xs">
+                      {activeLiveMatchCount > 0 ? (
+                        <span className="text-emerald-400 font-black tracking-wide">
+                          🔴 Şu an {activeLiveMatchCount} maç canlı / onay aşamasında — anlık isabet puanları (+Canlı) dahildir.
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-bold">
+                          ⚪ Şu an oynanan canlı maç bulunmuyor; kesinleşmiş resmi puanlar gösteriliyor.
+                        </span>
+                      )}
+                    </div>
+
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="text-slate-400 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                          <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
+                          <th className="py-2.5 px-1">Yarışmacı</th>
+                          <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center text-slate-300">Kesin</th>
+                          <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center text-emerald-400">+Canlı</th>
+                          <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-cyan-400">Skor</th>
+                          <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center text-rose-400 bg-rose-500/10 rounded-t-lg">
+                            <span className="sm:hidden">Canlı</span>
+                            <span className="hidden sm:inline">Canlı Toplam</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {effectiveLiveStandings.map((row) => {
+                          const diff = row.kesin_sira - row.canli_sira;
+                          return (
+                            <tr key={row.user_id} className={row.canli_ek_puan > 0 ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-800/40'}>
+                              <td className="py-2 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
+                                <span>{row.canli_sira}</span>
+                                {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                                {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                              </td>
+                              <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.oyuncu_adi}>
+                                {row.oyuncu_adi}
+                              </td>
+                              <td className="py-2 px-0.5 text-center text-slate-300 font-bold text-[11px] sm:text-sm">
+                                {row.kesin_master}
+                              </td>
+                              <td className="py-2 px-0.5 text-center font-black text-[11px] sm:text-sm">
+                                {row.canli_ek_puan > 0 ? (
+                                  <span className="text-emerald-400">+{row.canli_ek_puan}</span>
+                                ) : (
+                                  <span className="text-slate-600">0</span>
+                                )}
+                              </td>
+                              <td className="py-2 px-0.5 text-center text-cyan-400 font-bold text-[11px] sm:text-sm">
+                                {row.canli_skor_toplam}
+                              </td>
+                              <td className="py-2 px-1 text-center text-amber-400 font-black text-xs sm:text-base bg-rose-500/5">
+                                {row.canli_master_toplam}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
                   /* DFO, TFF, SKOR VE BONUS SEKMELERİ: YALNIZCA KENDİ PUAN SÜTUNU */
                   <table className="w-full table-fixed text-left tabular-nums">

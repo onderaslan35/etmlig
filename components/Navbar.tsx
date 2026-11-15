@@ -8,60 +8,69 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Butonu dizinin içine yerleştirip "isEnler" etiketi verdim, böylece renderlarken özel tasarımını uygulayacağız.
   const navLinks = [
-    { name: 'MAÇ ARŞİVİ', path: '/mac-arsivi' },
-    { name: 'DFO PUAN DURUMU', path: '/puan-durumu/dfo' },
-    { name: 'TFF PUAN DURUMU', path: '/puan-durumu/tff' },
-    { name: 'MASTER PUAN DURUMU', path: '/puan-durumu/master', isMaster: true },
-    { name: 'SKOR DURUMU', path: '/skor-durumu' },
-    { name: 'HAFTANIN ENLERİ', path: '/haftanin-enleri', isEnler: true }, // YENİ BUTON BURADA!
-    { name: 'TAHMİNLER', path: '/tahmin' }, 
-    { name: '🔴 CANLI', path: '/canli', isCanli: true }, 
+    { name: 'RESMİ MAÇ ARŞİVİ & PUAN SAĞLAMA KASASI', path: '/yeni-arsiv', isKasa: true },
+    { name: 'TAHMİNLER', path: '/tahmin' },
+    { name: '🔴 CANLI', path: '/canli', isCanli: true },
   ];
+
+  const isAdminActive = pathname?.startsWith('/admin');
 
   return (
     <nav className="bg-[#050b14]/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 shadow-xl">
       <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
+          {/* MASAÜSTÜ MENÜ (4 ANA MERKEZ) */}
           <div className="hidden lg:flex items-center w-full">
-            <div className="flex-1"></div>
-            <div className="flex items-center justify-center gap-1 xl:gap-2">
+            <div className="flex-1" />
+            <div className="flex items-center justify-center gap-2 xl:gap-3">
               {navLinks.map((link) => {
                 const isActive = pathname === link.path;
-                
+
+                if (link.isKasa) {
+                  return (
+                    <Link
+                      key={link.path}
+                      href={link.path}
+                      className={`px-3.5 xl:px-5 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-2 shadow-md hover:scale-105 ${
+                        isActive
+                          ? 'bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.6)] border border-amber-300'
+                          : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                      }`}
+                    >
+                      <span className="text-sm xl:text-base drop-shadow-md">🏆</span>
+                      <span>{link.name}</span>
+                    </Link>
+                  );
+                }
+
                 if (link.isCanli) {
                   return (
-                    <Link key={link.path} href={link.path} className={`px-2 xl:px-3 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${isActive ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)] scale-105' : 'text-rose-500/80 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30'}`}>
-                      <span className={isActive ? "animate-pulse" : ""}>{link.name}</span>
-                    </Link>
-                  );
-                }
-
-                // YENİ ÖZEL TASARIMLI ENLER BUTONU RENDER EDİLİYOR
-                if (link.isEnler) {
-                  return (
-                    <Link 
-                      key={link.path} 
-                      href={link.path} 
-                      className={`px-3 xl:px-4 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-2 mx-1 shadow-md hover:scale-105 ${isActive ? 'bg-amber-600 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.6)] border border-amber-400' : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.2)]'}`}
+                    <Link
+                      key={link.path}
+                      href={link.path}
+                      className={`px-3 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)] scale-105'
+                          : 'text-rose-500/80 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30'
+                      }`}
                     >
-                      <span className="text-sm xl:text-base drop-shadow-md">🏆</span> {link.name}
+                      <span className={isActive ? 'animate-pulse' : ''}>{link.name}</span>
                     </Link>
                   );
-                }
-
-                if (link.isMaster) {
-                    return (
-                      <Link key={link.path} href={link.path} className={`px-2 xl:px-3 py-2 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap mx-1 ${isActive ? 'bg-blue-900/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] border border-blue-500/50 scale-105' : 'bg-slate-800/40 text-blue-200 hover:text-white hover:bg-blue-900/40 border border-slate-700/50'}`}>
-                        {link.name}
-                      </Link>
-                    );
                 }
 
                 return (
-                  <Link key={link.path} href={link.path} className={`px-2 xl:px-3 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap ${isActive ? 'bg-slate-800 text-white shadow-inner border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}>
+                  <Link
+                    key={link.path}
+                    href={link.path}
+                    className={`px-3.5 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap ${
+                      isActive
+                        ? 'bg-slate-800 text-white shadow-inner border border-slate-600'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800/80'
+                    }`}
+                  >
                     {link.name}
                   </Link>
                 );
@@ -69,52 +78,112 @@ export default function Navbar() {
             </div>
 
             <div className="flex-1 flex justify-end">
-              <Link href="/admin" className={`px-2 xl:px-3 py-2 rounded-xl text-[9px] xl:text-[11px] font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${pathname === '/admin' ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.3)] scale-105' : 'text-rose-500/70 hover:text-rose-400 hover:bg-rose-950/30'}`}>
+              <Link
+                href="/admin"
+                className={`px-3 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                  isAdminActive
+                    ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.3)] scale-105'
+                    : 'text-rose-500/70 hover:text-rose-400 hover:bg-rose-950/30'
+                }`}
+              >
                 <span className="text-sm drop-shadow-md">🛡️</span> YÖNETİM
               </Link>
             </div>
           </div>
 
+          {/* MOBİL ÜST BAR */}
           <div className="lg:hidden flex items-center justify-between w-full px-2">
-            <span className="text-white font-black tracking-widest text-xl">MENÜ ➡️</span>
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-slate-400 hover:text-white focus:outline-none p-2 rounded-lg bg-slate-800/50">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />}
+            <Link
+              href="/yeni-arsiv"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-amber-400 font-black tracking-wider text-xs sm:text-sm uppercase flex items-center gap-1.5 truncate pr-2"
+            >
+              <span>🏆</span>
+              <span className="truncate">ETML RESMİ KASA</span>
+            </Link>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-slate-300 hover:text-white focus:outline-none p-2 rounded-lg bg-slate-800/60 border border-slate-700/60 shrink-0"
+              aria-label="Menüyü Aç/Kapat"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
               </svg>
             </button>
           </div>
         </div>
       </div>
 
+      {/* MOBİL AÇILIR MENÜ (4 ANA MERKEZ) */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-[#050b14] border-b border-slate-800 px-4 pt-2 pb-6 space-y-2 shadow-2xl absolute w-full left-0 top-full">
+        <div className="lg:hidden bg-[#050b14] border-b border-slate-800 px-4 pt-2 pb-6 space-y-2.5 shadow-2xl absolute w-full left-0 top-full">
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
-            
-            if (link.isCanli) {
+
+            if (link.isKasa) {
               return (
-                <Link key={link.path} href={link.path} onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${isActive ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)]' : 'text-rose-500/80 hover:bg-rose-950/40 hover:text-rose-400'}`}>
-                  <span className={isActive ? "animate-pulse" : ""}>{link.name}</span>
+                <Link
+                  key={link.path}
+                  href={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`px-4 py-3.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all flex items-center gap-2.5 leading-snug ${
+                    isActive
+                      ? 'bg-amber-500 text-slate-950 border border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
+                      : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950'
+                  }`}
+                >
+                  <span className="text-lg shrink-0">🏆</span>
+                  <span>{link.name}</span>
                 </Link>
               );
             }
 
-            // MOBİL MENÜDE ENLER BUTONU
-            if (link.isEnler) {
+            if (link.isCanli) {
               return (
-                <Link key={link.path} href={link.path} onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${isActive ? 'bg-amber-600 text-slate-950 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-gradient-to-r from-amber-600/20 to-amber-900/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-slate-950'}`}>
-                  <span className="text-lg">🏆</span> {link.name}
+                <Link
+                  key={link.path}
+                  href={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${
+                    isActive
+                      ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)]'
+                      : 'text-rose-500/80 hover:bg-rose-950/40 hover:text-rose-400'
+                  }`}
+                >
+                  <span className={isActive ? 'animate-pulse' : ''}>{link.name}</span>
                 </Link>
               );
             }
 
             return (
-              <Link key={link.path} href={link.path} onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${isActive ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}>
+              <Link
+                key={link.path}
+                href={link.path}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${
+                  isActive
+                    ? 'bg-slate-800 text-white border border-slate-600'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
                 {link.name}
               </Link>
             );
           })}
-          <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${pathname === '/admin' ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50' : 'text-rose-500/70 hover:bg-rose-950/30 hover:text-rose-400'}`}>
+
+          <Link
+            href="/admin"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${
+              isAdminActive
+                ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50'
+                : 'text-rose-500/70 hover:bg-rose-950/30 hover:text-rose-400'
+            }`}
+          >
             <span className="text-lg">🛡️</span> YÖNETİM
           </Link>
         </div>
