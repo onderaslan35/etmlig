@@ -1,0 +1,558 @@
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '@/utils/supabase';
+import { TEST_ACCOUNTS, getEliteTheme } from '@/utils/themeEngine';
+
+interface OfficialMatch {
+  id: number;
+  week_num: number;
+  match_index: number;
+  category: string;
+  pool_type: 'DFO' | 'TFF';
+  match_date: string;
+  match_time: string;
+  home_team: string;
+  away_team: string;
+  home_score: string;
+  away_score: string;
+  status: string;
+  winner_ids: string[];
+  winner_count: number;
+  points_awarded: number;
+}
+
+interface OfficialWeek {
+  week_num: number;
+  is_completed: boolean;
+  bonus_enabled: boolean;
+  puan_lideri_ids: string[];
+  puan_bonus: number;
+  skor_krali_ids: string[];
+  skor_bonus: number;
+}
+
+export default function YeniArsivVeKontrolMerkezi() {
+  const [allMatches, setAllMatches] = useState<OfficialMatch[]>([]);
+  const [allWeeks, setAllWeeks] = useState<OfficialWeek[]>([]);
+  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<'CARDS' | 'WEEK_CHECK' | 'TOTAL_STANDINGS'>('CARDS');
+  const [standingsFilter, setStandingsFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
+  const [hiddenWinnersMap, setHiddenWinnersMap] = useState<Record<number, boolean>>({});
+  const [accounts, setAccounts] = useState<Record<string, { pass: string; name: string }>>(TEST_ACCOUNTS);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+
+      const [playersRes, weeksRes] = await Promise.all([
+        supabase.from('players').select('*'),
+        supabase.from('etml_official_weeks').select('*').order('week_num', { ascending: false })
+      ]);
+
+      if (playersRes.data) {
+        const merged = { ...TEST_ACCOUNTS };
+        playersRes.data.forEach((p: any) => {
+          const pid = String(p.username || p.id).trim();
+          if (pid && pid !== 'mankoman') {
+            merged[pid] = { pass: p.password || '', name: p.name || p.full_name || pid };
+          }
+        });
+        setAccounts(merged);
+      }
+
+      // 40 hafta (960 maç) sınırı aşmaması için sayfalayarak tüm resmi maçları çek
+      let fetchedMatches: OfficialMatch[] = [];
+      let from = 0;
+      const step = 1000;
+      let keepGoing = true;
+
+      while (keepGoing) {
+        const { data } = await supabase
+          .from('etml_official_matches')
+          .select('*')
+          .order('week_num', { ascending: true })
+          .order('match_index', { ascending: true })
+          .range(from, from + step - 1);
+
+        if (data && data.length > 0) {
+          fetchedMatches = [...fetchedMatches, ...(data as OfficialMatch[])];
+          if (data.length < step) keepGoing = false;
+          else from += step;
+        } else {
+          keepGoing = false;
+        }
+      }
+
+      setAllMatches(fetchedMatches);
+      const weeksData = (weeksRes.data || []) as OfficialWeek[];
+      setAllWeeks(weeksData);
+
+      if (fetchedMatches.length > 0) {
+        const maxW = Math.max(...fetchedMatches.map((m) => m.week_num));
+        setSelectedWeek(maxW);
+      }
+      setIsLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  const availableWeeks = useMemo(() => {
+    const setW = new Set<number>(allMatches.map((m) => m.week_num));
+    return Array.from(setW).sort((a, b) => b - a);
+  }, [allMatches]);
+
+  const currentWeekMatches = useMemo(() => {
+    return allMatches
+      .filter((m) => m.week_num === selectedWeek)
+      .sort((a, b) => a.match_index - b.match_index);
+  }, [allMatches, selectedWeek]);
+
+  const currentWeekMeta = useMemo(() => {
+    return allWeeks.find((w) => w.week_num === selectedWeek) || null;
+  }, [allWeeks, selectedWeek]);
+
+  // Seçili Haftanın Excel Sağlama Tablosu
+  const weeklyCheckTable = useMemo(() => {
+    const map: Record<string, { id: string; name: string; dfo: number; tff: number; rawTotal: number; scores: number; bonus: number }> = {};
+
+    currentWeekMatches.forEach((m) => {
+      (m.winner_ids || []).forEach((uid) => {
+        if (uid === 'mankoman') return;
+        if (!map[uid]) {
+          map[uid] = {
+            id: uid,
+            name: accounts[uid]?.name || uid,
+            dfo: 0,
+            tff: 0,
+            rawTotal: 0,
+            scores: 0,
+            bonus: 0
+          };
+        }
+        if (m.pool_type === 'TFF') map[uid].tff += m.points_awarded;
+        else map[uid].dfo += m.points_awarded;
+
+        map[uid].rawTotal += m.points_awarded;
+        map[uid].scores += 1;
+      });
+    });
+
+    if (currentWeekMeta && currentWeekMeta.bonus_enabled) {
+      if (currentWeekMeta.puan_bonus > 0 && currentWeekMeta.puan_lideri_ids?.length === 1) {
+        const lid = currentWeekMeta.puan_lideri_ids[0];
+        if (map[lid]) map[lid].bonus += currentWeekMeta.puan_bonus;
+      }
+      if (currentWeekMeta.skor_bonus > 0 && currentWeekMeta.skor_krali_ids?.length === 1) {
+        const kid = currentWeekMeta.skor_krali_ids[0];
+        if (map[kid]) map[kid].bonus += currentWeekMeta.skor_bonus;
+      }
+    }
+
+    return Object.values(map).sort(
+      (a, b) => b.rawTotal - a.rawTotal || b.scores - a.scores || a.name.localeCompare(b.name, 'tr')
+    );
+  }, [currentWeekMatches, currentWeekMeta, accounts]);
+
+  // Tüm Yüklü Haftaların Kümülatif Genel Puan Durumu (DFO + TFF + Bonus = Master Garantili)
+  const cumulativeStandings = useMemo(() => {
+    const map: Record<
+      string,
+      { id: string; name: string; dfo: number; tff: number; bonus: number; master: number; scores: number; pCount: number; sCount: number }
+    > = {};
+
+    Object.keys(accounts).forEach((uid) => {
+      if (uid === 'mankoman') return;
+      map[uid] = {
+        id: uid,
+        name: accounts[uid].name,
+        dfo: 0,
+        tff: 0,
+        bonus: 0,
+        master: 0,
+        scores: 0,
+        pCount: 0,
+        sCount: 0
+      };
+    });
+
+    allMatches.forEach((m) => {
+      (m.winner_ids || []).forEach((uid) => {
+        if (uid === 'mankoman') return;
+        if (!map[uid]) {
+          map[uid] = { id: uid, name: accounts[uid]?.name || uid, dfo: 0, tff: 0, bonus: 0, master: 0, scores: 0, pCount: 0, sCount: 0 };
+        }
+        if (m.pool_type === 'TFF') map[uid].tff += m.points_awarded;
+        else map[uid].dfo += m.points_awarded;
+
+        map[uid].scores += 1;
+      });
+    });
+
+    allWeeks.forEach((w) => {
+      if (!w.bonus_enabled) return;
+      if (w.puan_bonus > 0 && w.puan_lideri_ids?.length === 1) {
+        const lid = w.puan_lideri_ids[0];
+        if (map[lid]) {
+          map[lid].bonus += w.puan_bonus;
+          map[lid].pCount += 1;
+        }
+      }
+      if (w.skor_bonus > 0 && w.skor_krali_ids?.length === 1) {
+        const kid = w.skor_krali_ids[0];
+        if (map[kid]) {
+          map[kid].bonus += w.skor_bonus;
+          map[kid].sCount += 1;
+        }
+      }
+    });
+
+    Object.values(map).forEach((row) => {
+      row.master = row.dfo + row.tff + row.bonus;
+    });
+
+    const list = Object.values(map).filter((r) => r.master > 0 || r.scores > 0);
+
+    if (standingsFilter === 'DFO') return list.sort((a, b) => b.dfo - a.dfo || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
+    if (standingsFilter === 'TFF') return list.sort((a, b) => b.tff - a.tff || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
+    if (standingsFilter === 'SKOR') return list.sort((a, b) => b.scores - a.scores || b.master - a.master || a.name.localeCompare(b.name, 'tr'));
+    if (standingsFilter === 'BONUS')
+      return list
+        .filter((r) => r.bonus > 0)
+        .sort((a, b) => b.bonus - a.bonus || b.sCount - a.sCount || a.name.localeCompare(b.name, 'tr'));
+
+    return list.sort((a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
+  }, [allMatches, allWeeks, accounts, standingsFilter]);
+
+  const toggleWinners = (matchId: number) => {
+    setHiddenWinnersMap((prev) => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 pb-24">
+      <div className="max-w-7xl mx-auto">
+        {/* ÜST BAŞLIK VE HAFTA SEÇİCİ */}
+        <div className="flex flex-col items-center justify-center mb-8">
+          <span className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase mb-3">
+            YENİ OTONOM VERİTABANI KONTROL MERKEZİ
+          </span>
+          <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 tracking-tight uppercase text-center mb-4">
+            RESMİ MAÇ ARŞİVİ & PUAN SAĞLAMA KASASI
+          </h1>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 bg-slate-900 border border-slate-800 p-2.5 rounded-2xl shadow-xl">
+            <span className="text-xs font-black tracking-widest text-slate-400 uppercase pl-2">HAFTA SEÇ:</span>
+            <select
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(Number(e.target.value))}
+              className="bg-amber-500 text-slate-950 font-black text-xs sm:text-sm px-4 py-2 rounded-xl outline-none cursor-pointer"
+            >
+              {availableWeeks.map((w) => (
+                <option key={w} value={w}>
+                  {w}. HAFTA ARŞİVİ
+                </option>
+              ))}
+            </select>
+
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setActiveTab('CARDS')}
+                className={`px-3 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all ${
+                  activeTab === 'CARDS' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                🗂️ Maç Kartları (24 Maç)
+              </button>
+              <button
+                onClick={() => setActiveTab('WEEK_CHECK')}
+                className={`px-3 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all ${
+                  activeTab === 'WEEK_CHECK' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                📋 {selectedWeek}. Hafta Excel Sağlaması
+              </button>
+              <button
+                onClick={() => setActiveTab('TOTAL_STANDINGS')}
+                className={`px-3 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all ${
+                  activeTab === 'TOTAL_STANDINGS' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                🏆 Kümülatif Genel Tablo ({availableWeeks.length} Hafta)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-20 text-amber-400 font-black tracking-widest animate-pulse">
+            YENİ ARŞİV KASASI YÜKLENİYOR...
+          </div>
+        ) : allMatches.length === 0 ? (
+          <div className="text-center py-16 bg-slate-900/60 border border-slate-800 rounded-2xl">
+            <p className="text-slate-400 font-bold text-sm">
+              Henüz Supabase <code className="text-amber-400">etml_official_matches</code> tablosunda kayıt bulunamadı. Önce SQL kodunu çalıştırın.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* SEKME 1: MAÇ ARŞİVİ KARTLARI */}
+            {activeTab === 'CARDS' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {currentWeekMatches.map((match) => {
+                  const homeUpper = match.home_team.toUpperCase();
+                  const awayUpper = match.away_team.toUpperCase();
+                  const themeCat =
+                    match.pool_type === 'TFF' && !match.category.toUpperCase().includes('TÜRKİYE') && !match.category.toUpperCase().includes('TFF')
+                      ? `TÜRKİYE ${match.category}`
+                      : match.category;
+                  const theme = getEliteTheme(themeCat, homeUpper, awayUpper);
+
+                  const isOpen = !hiddenWinnersMap[match.id];
+                  const sortedWinnerNames = (match.winner_ids || [])
+                    .map((uid) => (accounts[uid]?.name || uid).replace(/🏆/g, '').trim())
+                    .sort((a, b) => a.localeCompare(b, 'tr'));
+
+                  return (
+                    <div
+                      key={match.id}
+                      className={`w-full border rounded-2xl overflow-hidden flex flex-col relative transition-all ${theme.containerBorder} ${theme.containerShadow} ${theme.containerBg}`}
+                    >
+                      {theme.bgImg && (
+                        <>
+                          <div
+                            className="absolute inset-0 z-0 opacity-100"
+                            style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                          />
+                          <div className="absolute inset-0 z-0 bg-slate-950/65" />
+                        </>
+                      )}
+
+                      <div className="relative z-10 flex flex-col p-4 sm:p-5">
+                        <div className="text-center mb-2">
+                          <span className="text-[10px] font-black tracking-widest uppercase bg-slate-950/80 border border-slate-700/60 px-3 py-1 rounded-full text-slate-200">
+                            {match.week_num}. HAFTA - {match.match_index}. MAÇ
+                          </span>
+                        </div>
+
+                        <div className="text-center mb-2">
+                          <span
+                            className={`inline-block px-3 py-1 rounded-lg border text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}
+                          >
+                            🏆 {match.category}
+                          </span>
+                        </div>
+
+                        <div className="text-center text-[10px] font-bold text-slate-400 tracking-widest mb-3">
+                          {match.match_date} <span className="mx-1 text-slate-600">|</span> {match.match_time}
+                        </div>
+
+                        {/* TAKIMLAR VE SKOR */}
+                        <div className="flex items-center justify-between px-2 sm:px-4 py-2">
+                          <div className="flex flex-col items-center flex-1 gap-2">
+                            <img src={theme.homeLogo} alt={homeUpper} className="w-14 h-14 sm:w-20 sm:h-20 object-contain drop-shadow-lg" />
+                            <span className="text-white font-black text-[10px] sm:text-xs text-center uppercase tracking-wide">{homeUpper}</span>
+                          </div>
+
+                          <div className="flex flex-col items-center justify-center mx-2 sm:mx-4 w-32 sm:w-40">
+                            {theme.leagueLogo && (
+                              <img src={theme.leagueLogo} alt="Lig" className="w-9 h-9 sm:w-11 sm:h-11 object-contain mb-2 drop-shadow-md" />
+                            )}
+                            <div className={`w-full bg-[#080d1a]/90 border ${theme.scoreBorder} py-2 sm:py-2.5 rounded-xl flex items-center justify-center gap-3 shadow-inner`}>
+                              <span className="text-xl sm:text-3xl font-black text-white">{match.home_score}</span>
+                              <span className="text-slate-500 font-bold">:</span>
+                              <span className="text-xl sm:text-3xl font-black text-white">{match.away_score}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-center flex-1 gap-2">
+                            <img src={theme.awayLogo} alt={awayUpper} className="w-14 h-14 sm:w-20 sm:h-20 object-contain drop-shadow-lg" />
+                            <span className="text-white font-black text-[10px] sm:text-xs text-center uppercase tracking-wide">{awayUpper}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ALT BAR VE BİLENLER KUTUSU */}
+                      <div className={`${theme.bottomBar} border-t border-slate-800/80 px-4 py-3 relative z-10`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 text-left">
+                            {match.winner_count > 0 ? (
+                              <span className="text-[11px] text-slate-300 font-bold">
+                                <strong className="text-amber-400">{match.winner_count} kişi</strong> tam isabetli
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-500 italic">Bu skoru bilen yok</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span
+                              className={`text-[9px] font-black tracking-widest px-2.5 py-1 rounded border ${
+                                match.pool_type === 'TFF'
+                                  ? 'bg-rose-950/90 text-rose-300 border-rose-500/60'
+                                  : 'bg-teal-950/90 text-teal-300 border-teal-500/60'
+                              }`}
+                            >
+                              {match.pool_type} MAÇI
+                            </span>
+                          </div>
+
+                          <div className="flex-1 text-right">
+                            {match.winner_count > 0 && (
+                              <button
+                                onClick={() => toggleWinners(match.id)}
+                                className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300"
+                              >
+                                {isOpen ? 'Gizle ▲' : 'Göster ▼'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {match.winner_count > 0 && isOpen && (
+                          <div className="mt-3 bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+                            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-2.5">
+                              <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                                BİLEN YARIŞMACILAR (A-Z)
+                              </span>
+                              <span className="bg-amber-950/90 border border-amber-500/50 text-amber-400 text-[9px] font-black px-2.5 py-0.5 rounded-md">
+                                Kişi Başı: {match.points_awarded} Puan
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {sortedWinnerNames.map((wName, i) => (
+                                <span
+                                  key={i}
+                                  className="bg-slate-900 border border-slate-700/70 text-slate-200 text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded-md tracking-wide"
+                                >
+                                  {wName}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* SEKME 2: HAFTALIK EXCEL SAĞLAMA TABLOSU */}
+            {activeTab === 'WEEK_CHECK' && (
+              <div className="max-w-4xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                  <h2 className="text-base sm:text-lg font-black text-emerald-400 uppercase tracking-wider">
+                    📋 {selectedWeek}. HAFTA EXCEL ÇAPRAZ KONTROL TABLOSU
+                  </h2>
+                  <span className="text-xs font-bold text-slate-400">
+                    Puan Alan Oyuncu: <strong className="text-white">{weeklyCheckTable.length}</strong>
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead>
+                      <tr className="text-slate-400 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-2 text-center">DFO</th>
+                        <th className="py-2.5 px-2 text-center">TFF</th>
+                        <th className="py-2.5 px-2 text-center">Ham Puan</th>
+                        <th className="py-2.5 px-2 text-center">Tam İsabet</th>
+                        <th className="py-2.5 px-2 text-right">Hafta Bonusu</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {weeklyCheckTable.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-slate-800/40">
+                          <td className="py-2.5 px-2 font-black text-slate-500">{idx + 1}</td>
+                          <td className="py-2.5 px-2 font-black text-white">{row.name}</td>
+                          <td className="py-2.5 px-2 text-center text-teal-400 font-bold">{row.dfo}</td>
+                          <td className="py-2.5 px-2 text-center text-rose-400 font-bold">{row.tff}</td>
+                          <td className="py-2.5 px-2 text-center text-amber-400 font-black text-base">{row.rawTotal}</td>
+                          <td className="py-2.5 px-2 text-center text-emerald-400 font-black">{row.scores}</td>
+                          <td className="py-2.5 px-2 text-right font-black">
+                            {row.bonus > 0 ? (
+                              <span className="bg-amber-500/20 border border-amber-500/50 text-amber-300 px-2 py-0.5 rounded-full text-[10px]">
+                                +{row.bonus} BONUS
+                              </span>
+                            ) : (
+                              <span className="text-slate-600">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SEKME 3: KÜMÜLATİF GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER) */}
+            {activeTab === 'TOTAL_STANDINGS' && (
+              <div className="max-w-5xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black text-amber-400 uppercase tracking-wider">
+                      🏆 YENİ GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER)
+                    </h2>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Yüklenen {availableWeeks.length} haftanın tamamı tek merkezden sıfır sapmayla hesaplanmaktadır.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {(['MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setStandingsFilter(tab)}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                          standingsFilter === tab ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead>
+                      <tr className="text-slate-400 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-2 text-center">DFO</th>
+                        <th className="py-2.5 px-2 text-center">TFF</th>
+                        <th className="py-2.5 px-2 text-center">Bonus</th>
+                        <th className="py-2.5 px-2 text-center">MASTER TOPLAM</th>
+                        <th className="py-2.5 px-2 text-right">Tam İsabet (Skor)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {cumulativeStandings.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-slate-800/40">
+                          <td className="py-2.5 px-2 font-black text-slate-500">{idx + 1}</td>
+                          <td className="py-2.5 px-2 font-black text-white">{row.name}</td>
+                          <td className="py-2.5 px-2 text-center text-teal-400 font-bold">{row.dfo}</td>
+                          <td className="py-2.5 px-2 text-center text-rose-400 font-bold">{row.tff}</td>
+                          <td className="py-2.5 px-2 text-center text-amber-300 font-bold">
+                            {row.bonus > 0 ? `+${row.bonus}` : '0'}
+                          </td>
+                          <td className="py-2.5 px-2 text-center text-amber-400 font-black text-base">{row.master}</td>
+                          <td className="py-2.5 px-2 text-right text-emerald-400 font-black">{row.scores}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -31,7 +31,6 @@ const defaultUsers = [
   { id: "262738", name: "MEVLÜT EVLER", master: 0, dfo: 0, tff: 0, trophies: "" },
   { id: "262733", name: "MUHSİN ASİLKAN", master: 0, dfo: 0, tff: 0, trophies: "" },
   { id: "262717", name: "MURAT ALİ", master: 0, dfo: 0, tff: 0, trophies: "" },
-  { id: "262712", name: "MURAT AYDEMİR", master: 0, dfo: 0, tff: 0, trophies: "" },
   { id: "262702", name: "MURAT KARA", master: 0, dfo: 0, tff: 0, trophies: "" },
   { id: "262721", name: "MUSTAFA GÜMÜŞÇÜ", master: 0, dfo: 0, tff: 0, trophies: "" },
   { id: "262763", name: "MUSTAFA ELMAS", master: 0, dfo: 0, tff: 0, trophies: "" },
