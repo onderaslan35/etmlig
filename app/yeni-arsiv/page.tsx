@@ -59,8 +59,9 @@ export default function YeniArsivVeKontrolMerkezi() {
   const [liveStandings, setLiveStandings] = useState<LiveStandingRow[]>([]);
   const [activeLiveMatchCount, setActiveLiveMatchCount] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'CARDS' | 'WEEK_CHECK' | 'TOTAL_STANDINGS'>('CARDS');
+  const [activeTab, setActiveTab] = useState<'CARDS' | 'WEEK_CHECK' | 'TOTAL_STANDINGS'>('TOTAL_STANDINGS');
   const [standingsFilter, setStandingsFilter] = useState<'MASTER' | 'CANLI' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
+  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DUZ');
   const [skorSubFilter, setSkorSubFilter] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
   const [hiddenWinnersMap, setHiddenWinnersMap] = useState<Record<number, boolean>>({});
   const [accounts, setAccounts] = useState<Record<string, { pass: string; name: string }>>(TEST_ACCOUNTS);
@@ -349,19 +350,19 @@ export default function YeniArsivVeKontrolMerkezi() {
       <div className="max-w-7xl mx-auto">
         {/* ÜST BAŞLIK VE HAFTA SEÇİCİ */}
         <div className="flex flex-col items-center justify-center mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-3xl font-black text-white tracking-widest uppercase text-center mb-4">
+          <h1 className="text-xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-white to-indigo-300 tracking-widest uppercase text-center mb-4">
             PUAN DURUMLARI VE ARŞİV
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-[#070d19] border border-slate-800 p-2 sm:p-2.5 rounded-2xl shadow-2xl">
-            <span className="text-[11px] font-black tracking-widest text-white uppercase pl-1 sm:pl-2">HAFTA SEÇ:</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-[#071126] border border-blue-500/30 p-2 sm:p-2.5 rounded-2xl shadow-[0_0_25px_rgba(30,64,175,0.25)]">
+            <span className="text-[11px] font-black tracking-widest text-sky-300 uppercase pl-1 sm:pl-2">HAFTA SEÇ:</span>
             <select
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
-              className="bg-black text-white border border-slate-700 hover:border-white focus:border-white font-black text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl outline-none cursor-pointer transition-colors"
+              className="bg-[#040917] text-white border border-blue-500/50 hover:border-sky-400 font-black text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl outline-none cursor-pointer transition-colors"
             >
               {availableWeeks.map((w) => (
-                <option key={w} value={w} className="bg-black text-white">
+                <option key={w} value={w} className="bg-[#040917] text-white">
                   {w}. HAFTA
                 </option>
               ))}
@@ -369,46 +370,46 @@ export default function YeniArsivVeKontrolMerkezi() {
 
             <div className="flex flex-wrap justify-center gap-1.5">
               <button
+                onClick={() => setActiveTab('TOTAL_STANDINGS')}
+                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all ${
+                  activeTab === 'TOTAL_STANDINGS'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-sky-400/80 shadow-[0_0_15px_rgba(59,130,246,0.45)]'
+                    : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:border-sky-400/50 hover:text-white'
+                }`}
+              >
+                GENEL PUAN
+              </button>
+              <button
                 onClick={() => setActiveTab('CARDS')}
-                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all bg-black text-white ${
+                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all ${
                   activeTab === 'CARDS'
-                    ? 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
-                    : 'border border-slate-800 hover:border-slate-500'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-sky-400/80 shadow-[0_0_15px_rgba(59,130,246,0.45)]'
+                    : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:border-sky-400/50 hover:text-white'
                 }`}
               >
                 MAÇ ARŞİVİ
               </button>
               <button
                 onClick={() => setActiveTab('WEEK_CHECK')}
-                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all bg-black text-white ${
+                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all ${
                   activeTab === 'WEEK_CHECK'
-                    ? 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
-                    : 'border border-slate-800 hover:border-slate-500'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border border-emerald-400/80 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                    : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:border-emerald-400/50 hover:text-white'
                 }`}
               >
                 {selectedWeek}. HAFTA ÖZETİ
-              </button>
-              <button
-                onClick={() => setActiveTab('TOTAL_STANDINGS')}
-                className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all bg-black text-white ${
-                  activeTab === 'TOTAL_STANDINGS'
-                    ? 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
-                    : 'border border-slate-800 hover:border-slate-500'
-                }`}
-              >
-                GENEL PUAN
               </button>
             </div>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 text-white font-black tracking-widest animate-pulse">
+          <div className="text-center py-20 text-sky-300 font-black tracking-widest animate-pulse">
             YÜKLENİYOR...
           </div>
         ) : allMatches.length === 0 ? (
-          <div className="text-center py-16 bg-[#070d19] border border-slate-800 rounded-2xl">
-            <p className="text-white font-bold text-sm">Henüz veritabanında maç kaydı bulunamadı.</p>
+          <div className="text-center py-16 bg-[#071126] border border-blue-900/50 rounded-2xl">
+            <p className="text-slate-300 font-bold text-sm">Henüz veritabanında maç kaydı bulunamadı.</p>
           </div>
         ) : (
           <>
@@ -559,40 +560,40 @@ export default function YeniArsivVeKontrolMerkezi() {
 
             {/* SEKME 2: HAFTALIK KESİNLEŞMİŞ ÖZET */}
             {activeTab === 'WEEK_CHECK' && (
-              <div className="max-w-4xl mx-auto bg-[#081020] border border-slate-800 rounded-2xl px-2.5 py-4 sm:p-6 shadow-2xl">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
-                  <h2 className="text-sm sm:text-lg font-black text-white uppercase tracking-widest">
+              <div className="max-w-4xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-blue-500/30 rounded-2xl px-2.5 py-4 sm:p-6 shadow-[0_0_35px_rgba(30,64,175,0.25)]">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-blue-800/50">
+                  <h2 className="text-sm sm:text-lg font-black text-emerald-400 uppercase tracking-widest">
                     {selectedWeek}. HAFTA PUAN ÖZETİ
                   </h2>
-                  <span className="text-xs font-bold text-slate-300">
+                  <span className="text-xs font-bold text-sky-200/80">
                     Puan Alan Oyuncu: <strong className="text-white">{weeklyCheckTable.length}</strong>
                   </span>
                 </div>
 
                 <table className="w-full table-fixed text-left text-xs sm:text-sm tabular-nums">
                   <thead>
-                    <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                    <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
                       <th className="py-2.5 px-1 w-[26px] sm:w-10">#</th>
                       <th className="py-2.5 px-1">Yarışmacı</th>
-                      <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
-                      <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
-                      <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Bns</th>
-                      <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
-                      <th className="py-2.5 px-1 w-[46px] sm:w-24 text-right">Ham</th>
+                      <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-cyan-300">DFO</th>
+                      <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-indigo-300">TFF</th>
+                      <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-purple-300">Bns</th>
+                      <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-emerald-400">Skor</th>
+                      <th className="py-2.5 px-1 w-[46px] sm:w-24 text-right text-sky-300">Ham</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/80">
+                  <tbody className="divide-y divide-blue-900/40">
                     {weeklyCheckTable.map((row, idx) => (
-                      <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                        <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{idx + 1}</td>
+                      <tr key={row.id} className="hover:bg-blue-900/25 transition-colors">
+                        <td className="py-2 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
                         <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
-                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.dfo}</td>
-                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.tff}</td>
-                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
+                        <td className="py-2 px-0.5 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">{row.dfo}</td>
+                        <td className="py-2 px-0.5 text-center text-indigo-300 font-bold text-[11px] sm:text-sm">{row.tff}</td>
+                        <td className="py-2 px-0.5 text-center text-purple-300 font-bold text-[11px] sm:text-sm">
                           {row.bonus > 0 ? `+${row.bonus}` : '0'}
                         </td>
-                        <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">{row.scores}</td>
-                        <td className="py-2 px-1 text-right text-white font-black text-xs sm:text-base bg-black/40">{row.rawTotal}</td>
+                        <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[11px] sm:text-sm">{row.scores}</td>
+                        <td className="py-2 px-1 text-right text-sky-300 font-black text-xs sm:text-base bg-blue-950/40">{row.rawTotal}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -600,67 +601,147 @@ export default function YeniArsivVeKontrolMerkezi() {
               </div>
             )}
 
-            {/* SEKME 3: GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER) */}
+            {/* SEKME 3: GENEL PUAN DURUMU */}
             {activeTab === 'TOTAL_STANDINGS' && (
-              <div className="max-w-5xl mx-auto bg-[#081020] border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-800 px-1">
+              <div className="max-w-5xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-blue-500/30 rounded-2xl px-2 py-4 sm:p-6 shadow-[0_0_35px_rgba(30,64,175,0.25)]">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-blue-800/50 px-1">
                   <div>
-                    <h2 className="text-sm sm:text-lg font-black text-white uppercase tracking-widest">
-                      GENEL PUAN DURUMU (DFO + TFF + BONUS = MASTER)
+                    <h2 className="text-sm sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-white to-emerald-300 uppercase tracking-widest">
+                      GENEL PUAN DURUMU
                     </h2>
                   </div>
 
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {(['CANLI', 'MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setStandingsFilter(tab)}
-                        className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
-                          standingsFilter === tab
-                            ? 'border-2 border-white shadow-[0_0_10px_rgba(255,255,255,0.2)]'
-                            : 'border border-slate-700 hover:border-white'
-                        }`}
-                      >
-                        {tab === 'CANLI' ? `CANLI${activeLiveMatchCount > 0 ? ` (${activeLiveMatchCount})` : ''}` : tab}
-                      </button>
-                    ))}
+                    {(['CANLI', 'MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((tab) => {
+                      const isTabActive = standingsFilter === tab;
+                      const isLiveGreen = tab === 'CANLI' && activeLiveMatchCount > 0;
+                      return (
+                        <button
+                          key={tab}
+                          onClick={() => {
+                            setStandingsFilter(tab);
+                            if (tab === 'MASTER') setMasterSubFilter('DUZ');
+                          }}
+                          className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                            isTabActive
+                              ? isLiveGreen
+                                ? 'bg-emerald-600 text-white border border-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.5)]'
+                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-sky-400 shadow-[0_0_14px_rgba(59,130,246,0.45)]'
+                              : isLiveGreen
+                              ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/60 hover:bg-emerald-800/60'
+                              : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:border-sky-400/60 hover:text-white'
+                          }`}
+                        >
+                          {tab === 'CANLI' && activeLiveMatchCount > 0 ? `CANLI (${activeLiveMatchCount})` : tab}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* MASTER SEKMESİ */}
-                {standingsFilter === 'MASTER' ? (
+                {/* MASTER ALT SEKMELERİ: DÜZ MASTER (VARSAYILAN) | DETAYLI MASTER */}
+                {standingsFilter === 'MASTER' && (
+                  <div className="flex items-center justify-center gap-2 mb-3 pb-3 border-b border-blue-900/50">
+                    <button
+                      onClick={() => setMasterSubFilter('DUZ')}
+                      className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                        masterSubFilter === 'DUZ'
+                          ? 'bg-sky-500/20 text-sky-200 border border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.3)]'
+                          : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                      }`}
+                    >
+                      MASTER PUAN
+                    </button>
+                    <button
+                      onClick={() => setMasterSubFilter('DETAYLI')}
+                      className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                        masterSubFilter === 'DETAYLI'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                          : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                      }`}
+                    >
+                      DETAYLI MASTER
+                    </button>
+                  </div>
+                )}
+
+                {/* SKOR ALT SEKMELERİ: MASTER SKOR | DFO SKOR | TFF SKOR */}
+                {standingsFilter === 'SKOR' && (
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3 pb-3 border-b border-blue-900/50">
+                    {([
+                      { key: 'MASTER', label: 'MASTER SKOR' },
+                      { key: 'DFO', label: 'DFO SKOR' },
+                      { key: 'TFF', label: 'TFF SKOR' }
+                    ] as const).map((st) => (
+                      <button
+                        key={st.key}
+                        onClick={() => setSkorSubFilter(st.key)}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                          skorSubFilter === st.key
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                            : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                        }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 1A. DÜZ MASTER (VARSAYILAN - SADECE MASTER PUANI) */}
+                {standingsFilter === 'MASTER' && masterSubFilter === 'DUZ' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-3 w-28 sm:w-40 text-right text-sky-300">Master Puanı</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {cumulativeStandings.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-blue-900/25 transition-colors">
+                          <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{idx + 1}</td>
+                          <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
+                          <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-sky-300">{row.master}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI' ? (
+                  /* 1B. DETAYLI MASTER (DFO + TFF + BONUS + SKOR + MASTER TOPLAM) */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
                         <th className="py-2.5 px-1 w-[24px] sm:w-10">#</th>
                         <th className="py-2.5 px-1">Yarışmacı</th>
-                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
-                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
-                        <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Bonus</th>
-                        <th className="py-2.5 px-0.5 w-[38px] sm:w-24 text-center">
+                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-cyan-300">DFO</th>
+                        <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-indigo-300">TFF</th>
+                        <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-purple-300">Bonus</th>
+                        <th className="py-2.5 px-0.5 w-[38px] sm:w-24 text-center text-emerald-400">
                           <span className="sm:hidden">Skor</span>
                           <span className="hidden sm:inline">Tam İsabet</span>
                         </th>
-                        <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">
+                        <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center text-sky-300 bg-blue-600/20 rounded-t-lg">
                           <span className="sm:hidden">Master</span>
                           <span className="hidden sm:inline">Master Toplam</span>
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/80">
+                    <tbody className="divide-y divide-blue-900/40">
                       {cumulativeStandings.map((row, idx) => (
-                        <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                          <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{idx + 1}</td>
+                        <tr key={row.id} className="hover:bg-blue-900/25 transition-colors">
+                          <td className="py-2 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
                           <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
                             {row.name}
                           </td>
-                          <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.dfo}</td>
-                          <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.tff}</td>
-                          <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
+                          <td className="py-2 px-0.5 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">{row.dfo}</td>
+                          <td className="py-2 px-0.5 text-center text-indigo-300 font-bold text-[11px] sm:text-sm">{row.tff}</td>
+                          <td className="py-2 px-0.5 text-center text-purple-300 font-bold text-[11px] sm:text-sm">
                             {row.bonus > 0 ? `+${row.bonus}` : '0'}
                           </td>
-                          <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">{row.scores}</td>
-                          <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">
+                          <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[11px] sm:text-sm">{row.scores}</td>
+                          <td className="py-2 px-1 text-center text-sky-300 font-black text-xs sm:text-base bg-blue-600/10">
                             {row.master}
                           </td>
                         </tr>
@@ -668,56 +749,64 @@ export default function YeniArsivVeKontrolMerkezi() {
                     </tbody>
                   </table>
                 ) : standingsFilter === 'CANLI' ? (
-                  /* CANLI SEKMESİ */
+                  /* 2. CANLI SEKMESİ */
                   <div>
-                    <div className="mb-3 px-3 py-2 rounded-xl bg-black border border-slate-800 flex items-center justify-between text-[10px] sm:text-xs">
-                      <span className="text-white font-bold tracking-wide">
-                        {activeLiveMatchCount > 0
-                          ? `Şu an ${activeLiveMatchCount} maç canlı / onay aşamasında — anlık puanlar (+Canlı) dahildir.`
-                          : 'Şu an oynanan canlı maç bulunmuyor; kesinleşmiş puanlar gösteriliyor.'}
-                      </span>
+                    <div className="mb-3 px-3 py-2 rounded-xl bg-[#040a18] border border-blue-800/50 flex items-center justify-between text-[10px] sm:text-xs">
+                      {activeLiveMatchCount > 0 ? (
+                        <span className="text-emerald-400 font-black tracking-wide">
+                          Şu an {activeLiveMatchCount} maç canlı oynanıyor — anlık puanlar (+Canlı) dahildir.
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 font-bold">
+                          Şu an oynanan canlı maç bulunmuyor; kesinleşmiş resmi puanlar gösteriliyor.
+                        </span>
+                      )}
                     </div>
 
                     <table className="w-full table-fixed text-left tabular-nums">
                       <thead>
-                        <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
                           <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
                           <th className="py-2.5 px-1">Yarışmacı</th>
-                          <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center">Kesin</th>
-                          <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center">+Canlı</th>
-                          <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
-                          <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">
+                          <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center text-slate-300">Kesin</th>
+                          <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center text-emerald-400">+Canlı</th>
+                          <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-cyan-300">Skor</th>
+                          <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center text-sky-300 bg-blue-600/20 rounded-t-lg">
                             <span className="sm:hidden">Toplam</span>
                             <span className="hidden sm:inline">Canlı Toplam</span>
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/80">
+                      <tbody className="divide-y divide-blue-900/40">
                         {effectiveLiveStandings.map((row) => {
                           const diff = row.kesin_sira - row.canli_sira;
                           return (
                             <tr
                               key={row.user_id}
-                              className={row.canli_ek_puan > 0 ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'hover:bg-[#0f1d38]'}
+                              className={row.canli_ek_puan > 0 ? 'bg-emerald-950/25 hover:bg-emerald-950/40' : 'hover:bg-blue-900/25'}
                             >
-                              <td className="py-2 px-1 font-black text-slate-300 text-[10px] sm:text-sm">
+                              <td className="py-2 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
                                 <span>{row.canli_sira}</span>
-                                {diff > 0 && <span className="ml-0.5 text-[9px] text-white">▲</span>}
-                                {diff < 0 && <span className="ml-0.5 text-[9px] text-slate-400">▼</span>}
+                                {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                                {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
                               </td>
                               <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.oyuncu_adi}>
                                 {row.oyuncu_adi}
                               </td>
-                              <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
+                              <td className="py-2 px-0.5 text-center text-slate-300 font-bold text-[11px] sm:text-sm">
                                 {row.kesin_master}
                               </td>
-                              <td className="py-2 px-0.5 text-center font-black text-[11px] sm:text-sm text-white">
-                                {row.canli_ek_puan > 0 ? `+${row.canli_ek_puan}` : '0'}
+                              <td className="py-2 px-0.5 text-center font-black text-[11px] sm:text-sm">
+                                {row.canli_ek_puan > 0 ? (
+                                  <span className="text-emerald-400">+{row.canli_ek_puan}</span>
+                                ) : (
+                                  <span className="text-slate-600">0</span>
+                                )}
                               </td>
-                              <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
+                              <td className="py-2 px-0.5 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">
                                 {row.canli_skor_toplam}
                               </td>
-                              <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">
+                              <td className="py-2 px-1 text-center text-sky-300 font-black text-xs sm:text-base bg-blue-600/10">
                                 {row.canli_master_toplam}
                               </td>
                             </tr>
@@ -726,87 +815,62 @@ export default function YeniArsivVeKontrolMerkezi() {
                       </tbody>
                     </table>
                   </div>
+                ) : standingsFilter === 'SKOR' && skorSubFilter === 'MASTER' ? (
+                  /* 3. DETAYLI MASTER SKOR (DFO + TFF = MASTER) */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                        <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
+                        <th className="py-2.5 px-1">Yarışmacı</th>
+                        <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center text-cyan-300">DFO</th>
+                        <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center text-indigo-300">TFF</th>
+                        <th className="py-2.5 px-1 w-[56px] sm:w-28 text-center text-emerald-400 bg-emerald-600/15 rounded-t-lg">Master</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {cumulativeStandings.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-blue-900/25 transition-colors">
+                          <td className="py-2 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
+                          <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
+                          <td className="py-2 px-1 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">{row.dfoScores}</td>
+                          <td className="py-2 px-1 text-center text-indigo-300 font-bold text-[11px] sm:text-sm">{row.tffScores}</td>
+                          <td className="py-2 px-1 text-center text-emerald-400 font-black text-xs sm:text-base bg-emerald-600/10">{row.scores}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 ) : (
-                  /* SKOR (MASTER / DFO / TFF) VE DİĞER SEKMELER */
-                  <div>
-                    {standingsFilter === 'SKOR' && (
-                      <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3 pb-3 border-b border-slate-800/80">
-                        {([
-                          { key: 'MASTER', label: 'MASTER SKOR' },
-                          { key: 'DFO', label: 'DFO SKOR' },
-                          { key: 'TFF', label: 'TFF SKOR' }
-                        ] as const).map((st) => (
-                          <button
-                            key={st.key}
-                            onClick={() => setSkorSubFilter(st.key)}
-                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
-                              skorSubFilter === st.key
-                                ? 'border-2 border-white shadow-[0_0_8px_rgba(255,255,255,0.2)]'
-                                : 'border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600'
-                            }`}
-                          >
-                            {st.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {standingsFilter === 'SKOR' && skorSubFilter === 'MASTER' ? (
-                      <table className="w-full table-fixed text-left tabular-nums">
-                        <thead>
-                          <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                            <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
-                            <th className="py-2.5 px-1">Yarışmacı</th>
-                            <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">DFO</th>
-                            <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">TFF</th>
-                            <th className="py-2.5 px-1 w-[56px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">Master</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/80">
-                          {cumulativeStandings.map((row, idx) => (
-                            <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                              <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{idx + 1}</td>
-                              <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
-                              <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.dfoScores}</td>
-                              <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.tffScores}</td>
-                              <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.scores}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <table className="w-full table-fixed text-left tabular-nums">
-                        <thead>
-                          <tr className="bg-black/60 text-white border-b border-slate-700 text-[10px] sm:text-xs uppercase tracking-wider">
-                            <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
-                            <th className="py-2.5 px-2">Yarışmacı</th>
-                            <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
-                              {standingsFilter === 'DFO' && 'DFO Puanı'}
-                              {standingsFilter === 'TFF' && 'TFF Puanı'}
-                              {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && 'DFO Skor'}
-                              {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && 'TFF Skor'}
-                              {standingsFilter === 'BONUS' && 'Bonus Puanı'}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/80">
-                          {cumulativeStandings.map((row, idx) => (
-                            <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                              <td className="py-2.5 px-2 font-black text-slate-300 text-xs sm:text-sm">{idx + 1}</td>
-                              <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
-                              <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-white">
-                                {standingsFilter === 'DFO' && row.dfo}
-                                {standingsFilter === 'TFF' && row.tff}
-                                {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && row.dfoScores}
-                                {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && row.tffScores}
-                                {standingsFilter === 'BONUS' && `+${row.bonus}`}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
+                  /* 4. TEKLİ TABLOLAR (DFO, TFF, DFO SKOR, TFF SKOR, BONUS) */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
+                          {standingsFilter === 'DFO' && <span className="text-cyan-300">DFO Puanı</span>}
+                          {standingsFilter === 'TFF' && <span className="text-indigo-300">TFF Puanı</span>}
+                          {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && <span className="text-cyan-300">DFO Skor</span>}
+                          {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && <span className="text-indigo-300">TFF Skor</span>}
+                          {standingsFilter === 'BONUS' && <span className="text-purple-300">Bonus Puanı</span>}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {cumulativeStandings.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-blue-900/25 transition-colors">
+                          <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{idx + 1}</td>
+                          <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
+                          <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base">
+                            {standingsFilter === 'DFO' && <span className="text-cyan-300">{row.dfo}</span>}
+                            {standingsFilter === 'TFF' && <span className="text-indigo-300">{row.tff}</span>}
+                            {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && <span className="text-cyan-300">{row.dfoScores}</span>}
+                            {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && <span className="text-indigo-300">{row.tffScores}</span>}
+                            {standingsFilter === 'BONUS' && <span className="text-purple-300">+{row.bonus}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             )}
