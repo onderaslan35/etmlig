@@ -752,6 +752,7 @@ export default function AdminRadarPortal() {
        setUserRole('master');
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'master');
+       localStorage.setItem('etml_master_commander', 'mankoman');
        setShowOnlyToday(false);
        return;
     } 
@@ -790,6 +791,7 @@ export default function AdminRadarPortal() {
   const handleLogout = () => {
     sessionStorage.removeItem('admin_auth');
     sessionStorage.removeItem('admin_role');
+    localStorage.removeItem('etml_master_commander');
     setIsAuthenticated(false);
     setUserRole(null);
     setUsernameInput('');

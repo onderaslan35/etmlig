@@ -188,6 +188,195 @@ export default function LiveMatchCard() {
     });
     return clean;
   });
+  const [isMankoman, setIsMankoman] = useState<boolean>(false);
+  const [isManualFetching, setIsManualFetching] = useState<boolean>(false);
+  const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
+
+  const checkMasterApiLimit = async () => {
+    try {
+      const res = await fetch('https://v3.football.api-sports.io/status', {
+        headers: {
+          'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+          'x-rapidapi-host': 'v3.football.api-sports.io'
+        }
+      });
+      const data = await res.json();
+      if (data.response && (data.response.subscription || data.response.requests)) {
+        const current = data.response.requests?.current ?? data.response.subscription?.current ?? 0;
+        const limit = data.response.requests?.limit_day ?? data.response.subscription?.limit_day ?? 100;
+        setApiLimitRemaining(limit - current);
+      } else {
+        setApiLimitRemaining('?');
+      }
+    } catch {
+      setApiLimitRemaining('?');
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isMasterSession =
+      localStorage.getItem('etml_master_commander') === 'mankoman' ||
+      (sessionStorage.getItem('admin_auth') === 'true' && sessionStorage.getItem('admin_role') === 'master') ||
+      localStorage.getItem('etml_user') === 'mankoman' ||
+      sessionStorage.getItem('etml_user') === 'mankoman';
+
+    if (isMasterSession) {
+      localStorage.setItem('etml_master_commander', 'mankoman');
+      setIsMankoman(true);
+      checkMasterApiLimit();
+    }
+  }, []);
+
+  const handleLiveUltraFetch = async () => {
+    setIsManualFetching(true);
+    try {
+      const todayStr = getTodayDateString();
+      const todaysBulletinMatches = allRecentBulletinMatches.filter((m: any) => m.date === todayStr);
+
+      if (todaysBulletinMatches.length === 0) {
+        alert(`⚠️ Bültende BUGÜN (${todayStr}) oynanacak hiçbir maç yok!`);
+        setIsManualFetching(false);
+        return;
+      }
+
+      let formattedDate = todayStr;
+      if (formattedDate.includes('.')) {
+        const parts = formattedDate.split('.');
+        formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+
+      const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${formattedDate}`, {
+        headers: {
+          'x-apisports-key': '933e5ccc09194d0db30171e2bca20ca9',
+          'x-rapidapi-host': 'v3.football.api-sports.io'
+        }
+      });
+      const data = await res.json();
+
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        alert('❌ API HATASI: ' + JSON.stringify(data.errors));
+        setIsManualFetching(false);
+        return;
+      }
+
+      if (!data.response || data.response.length === 0) {
+        alert('⚠️ Uydu bugün için boş yanıt verdi. Maç verisine ulaşılamadı.');
+        setIsManualFetching(false);
+        return;
+      }
+
+      const allFixtures = data.response;
+      const nowTime = new Date();
+      const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(nowTime.getMinutes()).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
+
+      const targetWeeks = Array.from(new Set(todaysBulletinMatches.map((m: any) => m.week_num)));
+      const { data: dbBulletinWithApi } = await supabase
+        .from('matches_bulletin')
+        .select('week_num, match_index, home_team, away_team, api_match_id')
+        .in('week_num', targetWeeks);
+
+      const apiIdLookup: Record<string, any> = {};
+      (dbBulletinWithApi || []).forEach((b: any) => {
+        apiIdLookup[`${b.week_num}-${b.match_index}`] = b.api_match_id;
+      });
+
+      const idsToFetch = todaysBulletinMatches.map((m: any) => getUniqueMatchId(m.week_num, m.id));
+      const { data: latestLiveDb } = await supabase.from('live_matches').select('id, status').in('id', idsToFetch);
+      const dbStatusMap: Record<string, string> = {};
+      (latestLiveDb || []).forEach((l: any) => {
+        dbStatusMap[String(l.id)] = l.status;
+      });
+
+      const updates: any[] = [];
+      const bulletinUpdates: any[] = [];
+
+      for (const bMac of todaysBulletinMatches) {
+        const uniqueId = getUniqueMatchId(bMac.week_num, bMac.id);
+        const uidStr = String(uniqueId);
+
+        if (dbStatusMap[uidStr] === 'FINISHED' || officialWeekMatchesMap[uidStr]?.status === 'FINISHED') {
+          continue;
+        }
+
+        let fixtureId = apiIdLookup[`${bMac.week_num}-${bMac.id}`];
+        let fix = null;
+
+        if (fixtureId && !String(fixtureId).startsWith('manuel-')) {
+          fix = allFixtures.find((f: any) => f.fixture.id == fixtureId);
+        } else {
+          const hName = String(bMac.homeTeam).trim().toUpperCase();
+          const aName = String(bMac.awayTeam).trim().toUpperCase();
+          fix = allFixtures.find((f: any) => {
+            const apiHome = String(f.teams.home.name).trim().toUpperCase();
+            const apiAway = String(f.teams.away.name).trim().toUpperCase();
+            return apiHome === hName && apiAway === aName;
+          });
+
+          if (fix) {
+            fixtureId = fix.fixture.id;
+            bulletinUpdates.push({
+              week_num: bMac.week_num,
+              match_index: bMac.id,
+              api_match_id: fixtureId
+            });
+          }
+        }
+
+        if (fix) {
+          const homeScore = fix.goals.home !== null ? String(fix.goals.home) : '-';
+          const awayScore = fix.goals.away !== null ? String(fix.goals.away) : '-';
+          let status = fix.fixture.status.short;
+
+          if (['1H', '2H', 'ET', 'P', 'LIVE'].includes(status)) status = 'LIVE';
+          else if (status === 'HT') status = 'HT';
+          else if (['FT', 'AET', 'PEN', 'FINISHED'].includes(status)) status = 'WAITING_APPROVAL';
+
+          updates.push({
+            id: uniqueId,
+            api_match_id: fixtureId,
+            home_score: homeScore,
+            away_score: awayScore,
+            status,
+            updated_by: 'MASTER_RADAR',
+            updated_at: timeString,
+            events: JSON.stringify(fix.events || []),
+            elapsed: fix.fixture.status.elapsed
+          });
+        }
+      }
+
+      for (const bu of bulletinUpdates) {
+        await supabase
+          .from('matches_bulletin')
+          .update({ api_match_id: bu.api_match_id })
+          .eq('week_num', bu.week_num)
+          .eq('match_index', bu.match_index);
+      }
+
+      if (updates.length > 0) {
+        const { error } = await supabase.from('live_matches').upsert(updates, { onConflict: 'id' });
+        if (error) {
+          alert('❌ Güncelleme hatası: ' + error.message);
+        } else {
+          const nextMap: Record<string, any> = {};
+          updates.forEach((u) => {
+            nextMap[String(u.id)] = u;
+          });
+          setLiveMatchesData((prev) => ({ ...prev, ...nextMap }));
+          setTimeout(() => checkMasterApiLimit(), 1200);
+          alert(`✅ Ultra Ateşleme Başarılı! Bugünün ${updates.length} maçı anında canlı ekrana işlendi.`);
+        }
+      } else {
+        setTimeout(() => checkMasterApiLimit(), 1200);
+        alert('⚠️ Uydu tarandı ancak bugün için güncellenecek aktif/bitmemiş maç bulunamadı.');
+      }
+    } catch (e: any) {
+      alert('❌ Uydu bağlantı hatası: ' + (e?.message || ''));
+    } finally {
+      setIsManualFetching(false);
+    }
+  };
 
   const toggleSound = () => {
     const newState = !soundEnabled;
@@ -1611,12 +1800,26 @@ export default function LiveMatchCard() {
         }}
       />
 
-      <div className="w-full flex justify-end pt-3">
+      <div className="w-full flex flex-wrap items-center justify-end gap-2 pt-3">
+        {isMankoman && (
+          <button
+            onClick={handleLiveUltraFetch}
+            disabled={isManualFetching}
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all shadow-md border bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 text-white border-sky-400/70"
+            title="Sadece Mankoman'a özel canlı API ateşleme butonu"
+          >
+            <span className={isManualFetching ? 'animate-spin' : ''}>📡</span>
+            <span>
+              {isManualFetching ? 'ÇEKİLİYOR...' : `ULTRA ATEŞLE (KOTA: ${apiLimitRemaining})`}
+            </span>
+          </button>
+        )}
+
         <button
           onClick={toggleSound}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
             soundEnabled
-              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60'
               : 'bg-[#071126] text-slate-300 border-blue-900/60 hover:border-sky-400/50 hover:text-white'
           }`}
         >
