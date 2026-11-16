@@ -2028,6 +2028,641 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
           )}
         </>
       )}
+
+      {/* CANLI HAFTALIK BÜLTEN & GENEL PUAN DURUMU PANELİ */}
+      <div className="bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-2xl shadow-xl">
+        <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2 pt-2.5 pb-2 sm:px-6 sm:pt-3.5 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800 px-1">
+            <button onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)} className="flex items-center gap-2 text-left">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className={`absolute inline-flex h-full w-full rounded-full ${totalActiveLiveMatches > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''}`} />
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${totalActiveLiveMatches > 0 ? 'bg-emerald-500' : 'bg-sky-400'}`} />
+              </span>
+              <h2 className="text-xs sm:text-sm font-black text-sky-200 uppercase tracking-wider">
+                CANLI GENEL PUAN DURUMU
+              </h2>
+              <span className="text-slate-400 text-xs">{isLiveStandingsOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {isLiveStandingsOpen && (
+              <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                {activeBulletinWeeks.map((w) => {
+                  const isSelectedWeekTab = liveTableTab === 'WEEK_LIVE' && effectiveBulletinWeek === w;
+                  const wLiveCount = weeklyLiveTables[w]?.liveCount || 0;
+                  return (
+                    <button
+                      key={`week-live-${w}`}
+                      onClick={() => {
+                        setLiveTableTab('WEEK_LIVE');
+                        setSelectedBulletinWeek(w);
+                      }}
+                      className={`px-2 sm:px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${
+                        isSelectedWeekTab
+                          ? 'bg-emerald-700 text-white border-emerald-400/80'
+                          : wLiveCount > 0
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/70 hover:bg-emerald-900/60'
+                          : 'bg-[#040917] text-emerald-300 border-slate-800 hover:border-emerald-600 hover:text-white'
+                      }`}
+                    >
+                      {`CANLI ${w}. HAFTA${wLiveCount > 0 ? ` (${wLiveCount})` : ''}`}
+                    </button>
+                  );
+                })}
+
+                {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => {
+                  const isTabActive = liveTableTab === tab;
+                  let btnCls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
+                  if (isTabActive) {
+                    if (tab === 'TFF') btnCls = 'bg-rose-700 text-white border-rose-400/80';
+                    else if (tab === 'DFO') btnCls = 'bg-blue-700 text-white border-sky-400/80';
+                    else if (tab === 'SKOR') btnCls = 'bg-orange-600 text-white border-orange-300/80';
+                    else btnCls = 'bg-sky-700 text-white border-sky-300/80';
+                  } else if (tab === 'TFF') {
+                    btnCls = 'bg-[#040917] text-rose-400 border-slate-800 hover:border-rose-700';
+                  } else if (tab === 'DFO') {
+                    btnCls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
+                  } else if (tab === 'SKOR') {
+                    btnCls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
+                  }
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setLiveTableTab(tab);
+                        if (tab === 'MASTER') setMasterSubTab('DUZ');
+                        if (tab === 'SKOR') setSkorSubTab('DUZ');
+                      }}
+                      className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${btnCls}`}
+                    >
+                      {tab}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {isLiveStandingsOpen && liveTableTab === 'WEEK_LIVE' && currentWeekBucket && (
+            <div className="pt-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 border-b border-slate-800 px-1">
+                <div className="text-[10px] sm:text-xs font-bold text-sky-200/90">
+                  <span className="text-emerald-400 font-black">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</span>{' '}
+                  <span>
+                    {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
+                  </span>
+                  {currentWeekBucket.liveCount > 0 && (
+                    <span className="ml-1.5 text-emerald-400 font-black">• {currentWeekBucket.liveCount} maç canlı</span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1">
+                  {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wTab) => (
+                    <button
+                      key={`wsub-${wTab}`}
+                      onClick={() => {
+                        setWeekSubTab(wTab);
+                        if (wTab === 'MASTER') setWeekMasterMode('DUZ');
+                        if (wTab === 'SKOR') setWeekSkorMode('DUZ');
+                      }}
+                      className={`px-2 sm:px-2.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                        weekSubTab === wTab
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400/80'
+                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {wTab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {weekSubTab === 'MASTER' && (
+                <div className="flex items-center justify-center gap-1.5 pt-1.5">
+                  <button
+                    onClick={() => setWeekMasterMode('DUZ')}
+                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      weekMasterMode === 'DUZ'
+                        ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    MASTER PUAN
+                  </button>
+                  <button
+                    onClick={() => setWeekMasterMode('DETAYLI')}
+                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      weekMasterMode === 'DETAYLI'
+                        ? 'bg-sky-900/50 text-white border-sky-300/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    DETAYLI MASTER
+                  </button>
+                </div>
+              )}
+
+              {weekSubTab === 'SKOR' && (
+                <div className="flex flex-wrap items-center justify-center gap-1 pt-1.5">
+                  {([
+                    { key: 'DUZ', label: 'MASTER SKOR' },
+                    { key: 'DETAYLI', label: 'DETAYLI' },
+                    { key: 'DFO', label: 'DFO SKOR' },
+                    { key: 'TFF', label: 'TFF SKOR' }
+                  ] as const).map((sm) => (
+                    <button
+                      key={`wskor-${sm.key}`}
+                      onClick={() => setWeekSkorMode(sm.key)}
+                      className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                        weekSkorMode === sm.key
+                          ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
+                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {sm.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {isLiveStandingsOpen && liveTableTab !== 'WEEK_LIVE' && (
+            <>
+              {liveTableTab === 'MASTER' && (
+                <div className="flex items-center justify-center gap-1.5 pt-2">
+                  <button
+                    onClick={() => setMasterSubTab('DUZ')}
+                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      masterSubTab === 'DUZ'
+                        ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    MASTER PUAN
+                  </button>
+                  <button
+                    onClick={() => setMasterSubTab('DETAYLI')}
+                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      masterSubTab === 'DETAYLI'
+                        ? 'bg-sky-900/50 text-white border-sky-300/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    DETAYLI MASTER
+                  </button>
+                </div>
+              )}
+
+              {liveTableTab === 'SKOR' && (
+                <div className="flex flex-wrap items-center justify-center gap-1 pt-2">
+                  {([
+                    { key: 'DUZ', label: 'MASTER SKOR' },
+                    { key: 'DETAYLI', label: 'DETAYLI' },
+                    { key: 'DFO', label: 'DFO SKOR' },
+                    { key: 'TFF', label: 'TFF SKOR' }
+                  ] as const).map((st) => (
+                    <button
+                      key={st.key}
+                      onClick={() => setSkorSubTab(st.key)}
+                      className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                        skorSubTab === st.key
+                          ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
+                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* AKAN PUAN LİSTESİ GÖVDESİ */}
+        {isLiveStandingsOpen && (
+          <div className="px-2 pb-4 sm:px-6 sm:pb-6 pt-2">
+            {liveTableTab === 'WEEK_LIVE' && currentWeekBucket && (
+              <>
+                {weekSubTab === 'MASTER' && weekMasterMode === 'DUZ' ? (
+                  currentWeekBucket.MASTER.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                      {effectiveBulletinWeek}. HAFTADA HENÜZ PUAN ALAN YARIŞMACI BULUNMUYOR
+                    </div>
+                  ) : (
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                          <th className="py-2 px-2 w-10 sm:w-14">#</th>
+                          <th className="py-2 px-2 text-white">Yarışmacı</th>
+                          <th className="py-2 px-3 w-32 sm:w-44 text-right text-sky-300">{effectiveBulletinWeek}. Hafta Puanı</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/70">
+                        {currentWeekBucket.MASTER.map((row) => (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
+                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.canliMaster > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.canliMaster} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                ) : weekSubTab === 'MASTER' && weekMasterMode === 'DETAYLI' ? (
+                  currentWeekBucket.MASTER.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                      {effectiveBulletinWeek}. HAFTADA HENÜZ PUAN ALAN YARIŞMACI BULUNMUYOR
+                    </div>
+                  ) : (
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
+                          <th className="py-2 px-1 w-[24px] sm:w-10">#</th>
+                          <th className="py-2 px-1 text-white">Yarışmacı</th>
+                          <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center text-sky-400">DFO</th>
+                          <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center text-rose-500">TFF</th>
+                          <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center text-orange-400">Skor</th>
+                          <th className="py-2 px-0.5 w-[40px] sm:w-20 text-center text-emerald-400">Canlı</th>
+                          <th className="py-2 px-1 w-[44px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/70">
+                        {currentWeekBucket.MASTER.map((row) => (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-1 font-black text-slate-400 text-[10.5px] sm:text-sm">{row.rank}</td>
+                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                              {row.name}
+                            </td>
+                            <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-1.5 px-0.5 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliMaster > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                  +{row.canliMaster}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
+                              {row.toplamMaster}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                ) : weekSubTab === 'SKOR' && weekSkorMode === 'DETAYLI' ? (
+                  currentWeekBucket.SKOR_MASTER.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                      {effectiveBulletinWeek}. HAFTADA HENÜZ TAM İSABET YAPAN BULUNMUYOR
+                    </div>
+                  ) : (
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
+                          <th className="py-2 px-1 w-[26px] sm:w-12">#</th>
+                          <th className="py-2 px-1 text-white">Yarışmacı</th>
+                          <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-sky-400">DFO</th>
+                          <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-rose-500">TFF</th>
+                          <th className="py-2 px-1 w-[42px] sm:w-20 text-center text-emerald-400">Canlı</th>
+                          <th className="py-2 px-1 w-[48px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t">Master</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/70">
+                        {currentWeekBucket.SKOR_MASTER.map((row) => (
+                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
+                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
+                            <td className="py-1.5 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-1.5 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-1.5 px-1 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliSkor > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                  +{row.canliSkor}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-1.5 px-1 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">
+                              {row.toplamSkor}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                ) : (
+                  (() => {
+                    const list =
+                      weekSubTab === 'DFO'
+                        ? currentWeekBucket.DFO
+                        : weekSubTab === 'TFF'
+                        ? currentWeekBucket.TFF
+                        : weekSkorMode === 'DFO'
+                        ? currentWeekBucket.SKOR_DFO
+                        : weekSkorMode === 'TFF'
+                        ? currentWeekBucket.SKOR_TFF
+                        : currentWeekBucket.SKOR_MASTER.map((r) => ({
+                            id: r.id,
+                            name: r.name,
+                            rank: r.rank,
+                            pts: r.toplamSkor,
+                            liveAdd: r.canliSkor
+                          }));
+
+                    if (list.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                          {effectiveBulletinWeek}. HAFTADA BU KATEGORİDE HENÜZ PUAN / İSABET BULUNMUYOR
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <table className="w-full table-fixed text-left tabular-nums">
+                        <thead>
+                          <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                            <th className="py-2 px-2 w-10 sm:w-14">#</th>
+                            <th className="py-2 px-2 text-white">Yarışmacı</th>
+                            <th className="py-2 px-3 w-32 sm:w-44 text-right">
+                              {weekSubTab === 'DFO' && <span className="text-sky-400">DFO Puanı</span>}
+                              {weekSubTab === 'TFF' && <span className="text-rose-500">TFF Puanı</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-orange-400">Master Skor</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/70">
+                          {list.map((row) => (
+                            <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                              <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
+                              <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="truncate">{row.name}</span>
+                                  {row.liveAdd > 0 && (
+                                    <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                      +{row.liveAdd} CANLI
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base">
+                                {weekSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
+                                {weekSubTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
+                                {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-orange-400">{row.pts}</span>}
+                                {weekSubTab === 'SKOR' && weekSkorMode === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
+                                {weekSubTab === 'SKOR' && weekSkorMode === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    );
+                  })()
+                )}
+              </>
+            )}
+
+            {liveTableTab !== 'WEEK_LIVE' && (
+              <>
+                {liveTableTab === 'MASTER' && masterSubTab === 'DUZ' ? (
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2 px-2 text-white">Yarışmacı</th>
+                        <th className="py-2 px-3 w-28 sm:w-40 text-right text-sky-300">Master Puanı</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {liveStandingsTable.MASTER.map((row) => {
+                        const diff = row.kesinSira - row.rankMaster;
+                        return (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                              <span>{row.rankMaster}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.canliMaster > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.canliMaster} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : liveTableTab === 'MASTER' && masterSubTab === 'DETAYLI' ? (
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
+                        <th className="py-2 px-0.5 w-[24px] sm:w-10">#</th>
+                        <th className="py-2 px-1 text-white">Yarışmacı</th>
+                        <th className="py-2 px-0.5 w-[30px] sm:w-14 text-center text-sky-400">DFO</th>
+                        <th className="py-2 px-0.5 w-[30px] sm:w-14 text-center text-rose-500">TFF</th>
+                        <th className="py-2 px-0.5 w-[28px] sm:w-16 text-center text-emerald-400">Bns</th>
+                        <th className="py-2 px-0.5 w-[30px] sm:w-16 text-center text-orange-400">Skor</th>
+                        <th className="py-2 px-0.5 w-[38px] sm:w-20 text-center text-emerald-300">Canlı</th>
+                        <th className="py-2 px-0.5 w-[42px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {liveStandingsTable.MASTER.map((row) => {
+                        const diff = row.kesinSira - row.rankMaster;
+                        return (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10px] sm:text-sm">
+                              <span>{row.rankMaster}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-1.5 px-1 font-black text-white text-[10.5px] sm:text-sm truncate" title={row.name}>
+                              {row.name}
+                            </td>
+                            <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-1.5 px-0.5 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
+                              {row.bonus > 0 ? `+${row.bonus}` : '0'}
+                            </td>
+                            <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-1.5 px-0.5 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliMaster > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 sm:px-1.5 py-0.5 rounded">
+                                  +{row.canliMaster}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-1.5 px-0.5 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
+                              {row.toplamMaster}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : liveTableTab === 'SKOR' && skorSubTab === 'DUZ' ? (
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2 px-2 text-white">Yarışmacı</th>
+                        <th className="py-2 px-3 w-28 sm:w-40 text-right text-orange-400">Master Skor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {liveStandingsTable.SKOR_MASTER.map((row) => {
+                        const diff = row.prevSkorRank - row.rankSkor;
+                        return (
+                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                              <span>{row.rankSkor}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.canliSkor > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.canliSkor} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base text-orange-400">{row.toplamSkor}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : liveTableTab === 'SKOR' && skorSubTab === 'DETAYLI' ? (
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
+                        <th className="py-2 px-1 w-[26px] sm:w-12">#</th>
+                        <th className="py-2 px-1 text-white">Yarışmacı</th>
+                        <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-sky-400">DFO</th>
+                        <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-rose-500">TFF</th>
+                        <th className="py-2 px-1 w-[42px] sm:w-20 text-center text-emerald-400">Canlı</th>
+                        <th className="py-2 px-1 w-[48px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t">Master</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {liveStandingsTable.SKOR_MASTER.map((row) => {
+                        const diff = row.prevSkorRank - row.rankSkor;
+                        return (
+                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
+                              <span>{row.rankSkor}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                              {row.name}
+                            </td>
+                            <td className="py-1.5 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-1.5 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-1.5 px-1 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliSkor > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                  +{row.canliSkor}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-1.5 px-1 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">
+                              {row.toplamSkor}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2 px-2 text-white">Yarışmacı</th>
+                        <th className="py-2 px-3 w-28 sm:w-40 text-right">
+                          {liveTableTab === 'DFO' && <span className="text-sky-400">DFO Puanı</span>}
+                          {liveTableTab === 'TFF' && <span className="text-rose-500">TFF Puanı</span>}
+                          {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
+                          {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {(liveTableTab === 'DFO'
+                        ? liveStandingsTable.DFO
+                        : liveTableTab === 'TFF'
+                        ? liveStandingsTable.TFF
+                        : skorSubTab === 'DFO'
+                        ? liveStandingsTable.SKOR_DFO
+                        : liveStandingsTable.SKOR_TFF
+                      ).map((row) => {
+                        const diff = row.prevRank - row.rank;
+                        return (
+                          <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                              <span>{row.rank}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.liveAdd > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.liveAdd} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base">
+                              {liveTableTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
+                              {liveTableTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
+                              {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
+                              {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </>
+            )}
+
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
