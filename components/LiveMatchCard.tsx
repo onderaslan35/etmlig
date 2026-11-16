@@ -33,7 +33,7 @@ const engToTr: Record<string, string> = {
 };
 
 const sanitizeStr = (s: string) => {
-  if (!s) return "";
+  if (!s) return '';
   let res = s.toUpperCase().trim();
   res = engToTr[res] || res;
   return res
@@ -59,29 +59,29 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
   const a = (away || '').toUpperCase().replace(/İ/g, 'I');
 
   if (
-    cat.includes("UEFA") ||
-    cat.includes("SAMPIYONLAR") || cat.includes("CHAMPIONS") || cat.includes("S.L.") ||
-    cat.includes("AVRUPA LIGI") || cat.includes("EUROPA") || cat.includes("A.L.") ||
-    cat.includes("KONFERANS") || cat.includes("CONFERENCE") || cat.includes("K.L.") ||
-    cat.includes("ULUSLAR") || cat.includes("NATIONS") || cat.includes("MILLI") ||
-    cat.includes("DUNYA KUPASI") || cat.includes("WORLD CUP") || cat.includes("EURO 20") ||
-    cat.includes("INGILTERE") || cat.includes("PREMIER") ||
-    cat.includes("ISPANYA") || cat.includes("LA LIGA") ||
-    cat.includes("ITALYA") || cat.includes("SERIE A") ||
-    cat.includes("ALMANYA") || cat.includes("BUNDESLIGA") ||
-    cat.includes("FRANSA") || cat.includes("LIGUE 1") ||
-    cat.includes("HOLLANDA") || cat.includes("PORTEKIZ") || cat.includes("BELCIKA") || cat.includes("ISKOCYA")
+    cat.includes('UEFA') ||
+    cat.includes('SAMPIYONLAR') || cat.includes('CHAMPIONS') || cat.includes('S.L.') ||
+    cat.includes('AVRUPA LIGI') || cat.includes('EUROPA') || cat.includes('A.L.') ||
+    cat.includes('KONFERANS') || cat.includes('CONFERENCE') || cat.includes('K.L.') ||
+    cat.includes('ULUSLAR') || cat.includes('NATIONS') || cat.includes('MILLI') ||
+    cat.includes('DUNYA KUPASI') || cat.includes('WORLD CUP') || cat.includes('EURO 20') ||
+    cat.includes('INGILTERE') || cat.includes('PREMIER') ||
+    cat.includes('ISPANYA') || cat.includes('LA LIGA') ||
+    cat.includes('ITALYA') || cat.includes('SERIE A') ||
+    cat.includes('ALMANYA') || cat.includes('BUNDESLIGA') ||
+    cat.includes('FRANSA') || cat.includes('LIGUE 1') ||
+    cat.includes('HOLLANDA') || cat.includes('PORTEKIZ') || cat.includes('BELCIKA') || cat.includes('ISKOCYA')
   ) {
     return false;
   }
 
   const isTffCat =
-    cat.includes("TURKIYE") || cat.includes("TFF") || cat.includes("TRENDYOL") || cat.includes("NESINE") ||
-    cat.includes("AMATOR") || cat.includes("SUPER LIG") ||
-    cat.includes("1. LIG") || cat.includes("1.LIG") ||
-    cat.includes("2. LIG") || cat.includes("2.LIG") ||
-    cat.includes("3. LIG") || cat.includes("3.LIG") ||
-    cat.includes("BAL") || cat.includes("ZIRAAT") || cat.includes("KUPASI") || cat.includes("SUPER KUPA") || cat.includes("PTT");
+    cat.includes('TURKIYE') || cat.includes('TFF') || cat.includes('TRENDYOL') || cat.includes('NESINE') ||
+    cat.includes('AMATOR') || cat.includes('SUPER LIG') ||
+    cat.includes('1. LIG') || cat.includes('1.LIG') ||
+    cat.includes('2. LIG') || cat.includes('2.LIG') ||
+    cat.includes('3. LIG') || cat.includes('3.LIG') ||
+    cat.includes('BAL') || cat.includes('ZIRAAT') || cat.includes('KUPASI') || cat.includes('SUPER KUPA') || cat.includes('PTT');
 
   if (isTffCat) return true;
 
@@ -110,29 +110,69 @@ interface OfficialSummaryRow {
   bonus_puan: number;
   master_puan: number;
   tam_isabet: number;
+  dfo_skor?: number;
+  tff_skor?: number;
+}
+
+interface WeekLiveBucket {
+  totalMatches: number;
+  finishedCount: number;
+  liveCount: number;
+  MASTER: {
+    id: string;
+    name: string;
+    rank: number;
+    toplamDfo: number;
+    toplamTff: number;
+    toplamMaster: number;
+    toplamSkor: number;
+    canliMaster: number;
+  }[];
+  DFO: { id: string; name: string; rank: number; pts: number; liveAdd: number }[];
+  TFF: { id: string; name: string; rank: number; pts: number; liveAdd: number }[];
+  SKOR_MASTER: {
+    id: string;
+    name: string;
+    rank: number;
+    toplamDfoSkor: number;
+    toplamTffSkor: number;
+    toplamSkor: number;
+    canliSkor: number;
+  }[];
+  SKOR_DFO: { id: string; name: string; rank: number; pts: number; liveAdd: number }[];
+  SKOR_TFF: { id: string; name: string; rank: number; pts: number; liveAdd: number }[];
 }
 
 export default function LiveMatchCard() {
-  const [activeWeeks, setActiveWeeks] = useState<number[]>([]);
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevScoresRef = useRef<Record<string, string>>({});
   const [goalFlashes, setGoalFlashes] = useState<Record<string, boolean>>({});
 
-  const [targetBulletinMatches, setTargetBulletinMatches] = useState<any[]>([]);
+  const [allRecentBulletinMatches, setAllRecentBulletinMatches] = useState<any[]>([]);
   const [liveMatchesData, setLiveMatchesData] = useState<Record<string, any>>({});
   const [officialWeekMatchesMap, setOfficialWeekMatchesMap] = useState<Record<string, any>>({});
-  const [weekBonusEnabledMap, setWeekBonusEnabledMap] = useState<Record<number, boolean>>({});
   const [officialSummaryRows, setOfficialSummaryRows] = useState<OfficialSummaryRow[]>([]);
   const [predictionsData, setPredictionsData] = useState<Record<string, string>>({});
-  const [now, setNow] = useState<number>(new Date().getTime());
+  const [now, setNow] = useState<number>(() => Date.now());
 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true);
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   const [isLiveStandingsOpen, setIsLiveStandingsOpen] = useState<boolean>(true);
-  const [liveTableTab, setLiveTableTab] = useState<'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('CANLI');
-  const [skorSubTab, setSkorSubTab] = useState<'MASTER' | 'DFO' | 'TFF'>('MASTER');
+
+  // Ana Sekme: Haftalık Canlı Bülten ('WEEK_LIVE') veya Genel Puan Durumları ('MASTER' | 'DFO' | 'TFF' | 'SKOR')
+  const [liveTableTab, setLiveTableTab] = useState<'WEEK_LIVE' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('WEEK_LIVE');
+  const [selectedBulletinWeek, setSelectedBulletinWeek] = useState<number>(0);
+
+  // Haftalık Canlı Bülten Alt Sekmeleri
+  const [weekSubTab, setWeekSubTab] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
+  const [weekMasterMode, setWeekMasterMode] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [weekSkorMode, setWeekSkorMode] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
+
+  // Genel Tablo Alt Sekmeleri
+  const [masterSubTab, setMasterSubTab] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [skorSubTab, setSkorSubTab] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
 
   const [openEventsMap, setOpenEventsMap] = useState<{ [key: string]: boolean }>({});
   const [openWinnersMap, setOpenWinnersMap] = useState<{ [key: string]: boolean }>({});
@@ -226,7 +266,7 @@ export default function LiveMatchCard() {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date().getTime()), 1000);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -241,30 +281,62 @@ export default function LiveMatchCard() {
       let diffMs = now - upDate.getTime();
       if (diffMs < -43200000) diffMs += 86400000;
       const diffMins = Math.floor(Math.max(0, diffMs) / 60000);
-      return `${parseInt(logInfo.elapsed, 10) + diffMins}'`;
+      return `${parseInt(String(logInfo.elapsed), 10) + diffMins}'`;
     }
     return `${logInfo.elapsed}'`;
   };
 
-  // ⚡ TURBO VERİ YÜKLEME: Geçmiş 40 haftanın ağır JSON verilerini indirmez, sadece aktif haftayı çeker!
   useEffect(() => {
-    let activeWeeksSnapshot: number[] = [];
+    let candidateWeeksSnapshot: number[] = [];
     let trackedIdsSet = new Set<string>();
 
     const refreshOfficialKasa = async (weeksToLoad: number[]) => {
-      const [summaryRes, offMatchesRes, offWeeksRes] = await Promise.all([
+      const [summaryRes, offMatchesRes] = await Promise.all([
         supabase.from('etml_standings_summary').select('*').order('master_sira', { ascending: true }),
         weeksToLoad.length > 0
           ? supabase.from('etml_official_matches').select('*').in('week_num', weeksToLoad)
-          : Promise.resolve({ data: [] as any[] }),
-        weeksToLoad.length > 0
-          ? supabase.from('etml_official_weeks').select('*').in('week_num', weeksToLoad)
           : Promise.resolve({ data: [] as any[] })
       ]);
 
-      if (summaryRes.data) {
-        setOfficialSummaryRows(summaryRes.data as OfficialSummaryRow[]);
+      let rows = (summaryRes.data || []) as OfficialSummaryRow[];
+
+      if (rows.length > 0 && rows[0].dfo_skor === undefined) {
+        let allFinMatches: any[] = [];
+        let from = 0;
+        const step = 1000;
+        let more = true;
+        while (more) {
+          const { data: mChunk } = await supabase
+            .from('etml_official_matches')
+            .select('pool_type, winner_ids')
+            .eq('status', 'FINISHED')
+            .range(from, from + step - 1);
+          if (mChunk && mChunk.length > 0) {
+            allFinMatches = [...allFinMatches, ...mChunk];
+            if (mChunk.length < step) more = false;
+            else from += step;
+          } else {
+            more = false;
+          }
+        }
+
+        const scoreSplitMap: Record<string, { dfo: number; tff: number }> = {};
+        allFinMatches.forEach((m: any) => {
+          (m.winner_ids || []).forEach((uid: string) => {
+            if (!scoreSplitMap[uid]) scoreSplitMap[uid] = { dfo: 0, tff: 0 };
+            if (m.pool_type === 'TFF') scoreSplitMap[uid].tff += 1;
+            else scoreSplitMap[uid].dfo += 1;
+          });
+        });
+
+        rows = rows.map((r) => ({
+          ...r,
+          dfo_skor: scoreSplitMap[r.user_id]?.dfo || 0,
+          tff_skor: scoreSplitMap[r.user_id]?.tff || 0
+        }));
       }
+
+      setOfficialSummaryRows(rows);
 
       if (offMatchesRes.data) {
         const offMap: Record<string, any> = {};
@@ -273,90 +345,67 @@ export default function LiveMatchCard() {
         });
         setOfficialWeekMatchesMap(offMap);
       }
-
-      if (offWeeksRes.data) {
-        const bMap: Record<number, boolean> = {};
-        offWeeksRes.data.forEach((w: any) => {
-          bMap[Number(w.week_num)] = Boolean(w.bonus_enabled);
-        });
-        setWeekBonusEnabledMap(bMap);
-      }
     };
 
     const fetchInitialData = async () => {
-      const todayDateStr = getTodayDateString();
-      const todayDate = parseDateLocal(todayDateStr);
-      todayDate.setHours(0, 0, 0, 0);
-      const currentMs = new Date().getTime();
-
-      // 1000 satır limitine asla takılmamak için sadece güncel haftaları (40+) çek
-      const { data: recentBultenData } = await supabase
+      // 41+ bültenlerin tamamını çek (41-42 veya 43-44 çakışmalarını eksiksiz yakalar)
+      let { data: recentBultenData } = await supabase
         .from('matches_bulletin')
         .select('*')
-        .gte('week_num', 40)
+        .gte('week_num', 41)
         .order('week_num', { ascending: true })
         .order('match_index', { ascending: true });
 
-      const allBulten = recentBultenData || [];
-
-      const relevantMatches = allBulten.filter((m: any) => {
-        const matchTimeMs = getMatchTimeMs(m.match_date, m.match_time);
-        const isWithinLast5Hours = currentMs - matchTimeMs >= 0 && currentMs - matchTimeMs <= 5 * 60 * 60 * 1000;
-        return m.match_date === todayDateStr || isWithinLast5Hours;
-      });
-
-      const relevantWeeksSet = new Set<number>(relevantMatches.map((m: any) => Number(m.week_num)));
-      const relevantWeeksArray = Array.from(relevantWeeksSet);
-
-      if (relevantWeeksArray.length === 0) {
-        const upcomingMatches = allBulten
-          .filter((d: any) => parseDateLocal(d.match_date) >= todayDate)
-          .sort((a: any, b: any) => parseDateLocal(a.match_date).getTime() - parseDateLocal(b.match_date).getTime());
-        if (upcomingMatches.length > 0) relevantWeeksArray.push(Number(upcomingMatches[0].week_num));
-        else if (allBulten.length > 0) relevantWeeksArray.push(Math.max(...allBulten.map((m: any) => Number(m.week_num))));
+      if (!recentBultenData || recentBultenData.length === 0) {
+        const fallbackRes = await supabase
+          .from('matches_bulletin')
+          .select('*')
+          .gte('week_num', 40)
+          .order('week_num', { ascending: true })
+          .order('match_index', { ascending: true });
+        recentBultenData = fallbackRes.data || [];
       }
 
-      activeWeeksSnapshot = relevantWeeksArray;
-      setActiveWeeks([...relevantWeeksArray].sort((a, b) => b - a));
+      const mappedBulten = (recentBultenData || []).map((m: any) => ({
+        id: Number(m.match_index),
+        week_num: Number(m.week_num),
+        weekLabel: `${m.week_num}. HAFTA ${m.match_index}. MAÇ`,
+        category: m.category || '',
+        date: m.match_date || '',
+        time: m.match_time || '',
+        homeTeam: m.home_team || '',
+        awayTeam: m.away_team || ''
+      }));
 
-      const targetBulten = allBulten
-        .filter((m: any) => relevantWeeksArray.includes(Number(m.week_num)))
-        .map((m: any) => ({
-          id: Number(m.match_index),
-          week_num: Number(m.week_num),
-          weekLabel: `${m.week_num}. HAFTA ${m.match_index}. MAÇ`,
-          category: m.category || '',
-          date: m.match_date || '',
-          time: m.match_time || '',
-          homeTeam: m.home_team || '',
-          awayTeam: m.away_team || ''
-        }));
+      setAllRecentBulletinMatches(mappedBulten);
 
-      setTargetBulletinMatches(targetBulten);
+      const distinctWeeks = Array.from(new Set<number>(mappedBulten.map((m) => m.week_num))).sort((a, b) => a - b);
+      // En son 4 bülteni takip et (iç içe geçen haftaları kapsar, geçmiş yük yaratmaz)
+      const candidateWeeks = distinctWeeks.slice(-4);
+      candidateWeeksSnapshot = candidateWeeks;
 
-      const targetMatchIds = targetBulten.map((m) => getUniqueMatchId(m.week_num, m.id));
+      const candidateMatches = mappedBulten.filter((m) => candidateWeeks.includes(m.week_num));
+      const targetMatchIds = candidateMatches.map((m) => getUniqueMatchId(m.week_num, m.id));
       trackedIdsSet = new Set(targetMatchIds.map((id) => String(id)));
 
-      // Paralel ve sadece aktif 24 maçın verisini indir (984 maçlık dev JSON yükü sıfırlandı!)
       const fetchPredictionsPromise = (async () => {
+        if (candidateWeeks.length === 0) return [];
         let allPreds: any[] = [];
-        for (const week of relevantWeeksArray) {
-          let from = 0;
-          const step = 1000;
-          let keepFetching = true;
-          while (keepFetching) {
-            const { data } = await supabase
-              .from('player_predictions')
-              .select('user_id, week_num, match_index, predicted_score')
-              .eq('week_num', week)
-              .range(from, from + step - 1);
-            if (data && data.length > 0) {
-              allPreds = [...allPreds, ...data];
-              if (data.length < step) keepFetching = false;
-              else from += step;
-            } else {
-              keepFetching = false;
-            }
+        let from = 0;
+        const step = 1000;
+        let keepFetching = true;
+        while (keepFetching) {
+          const { data } = await supabase
+            .from('player_predictions')
+            .select('user_id, week_num, match_index, predicted_score')
+            .in('week_num', candidateWeeks)
+            .range(from, from + step - 1);
+          if (data && data.length > 0) {
+            allPreds = [...allPreds, ...data];
+            if (data.length < step) keepFetching = false;
+            else from += step;
+          } else {
+            keepFetching = false;
           }
         }
         return allPreds;
@@ -367,7 +416,7 @@ export default function LiveMatchCard() {
         targetMatchIds.length > 0
           ? supabase.from('live_matches').select('*').in('id', targetMatchIds)
           : Promise.resolve({ data: [] as any[] }),
-        refreshOfficialKasa(relevantWeeksArray)
+        refreshOfficialKasa(candidateWeeks)
       ]);
 
       const pDict: Record<string, string> = {};
@@ -414,10 +463,14 @@ export default function LiveMatchCard() {
           prevScoresRef.current[key] = newScore;
         }
         setLiveMatchesData((prev) => ({ ...prev, [key]: row }));
+
+        if (['FINISHED', 'FT', 'AET', 'PEN', 'NOT_STARTED'].includes(row.status) && candidateWeeksSnapshot.length > 0) {
+          refreshOfficialKasa(candidateWeeksSnapshot);
+        }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'etml_official_matches' }, () => {
-        if (activeWeeksSnapshot.length > 0) {
-          refreshOfficialKasa(activeWeeksSnapshot);
+        if (candidateWeeksSnapshot.length > 0) {
+          refreshOfficialKasa(candidateWeeksSnapshot);
         }
       })
       .subscribe();
@@ -427,94 +480,267 @@ export default function LiveMatchCard() {
     };
   }, []);
 
+  const liveWindowTick = Math.floor(now / 15000);
+
   const {
+    activeBulletinWeeks,
     todaysMatchesList,
-    weeklySortedStats,
-    is24thMatchFinishedMap,
+    weeklyLiveTables,
     globalLiveRanks,
-    liveStandingsTable,
-    activeScoringMatchCount
+    liveStandingsTable
   } = useMemo(() => {
     const todayDateStr = getTodayDateString();
     const accountIds = Object.keys(mergedAccounts).filter((id) => !EXCLUDED_IDS.has(id));
+    const currentCheckMs = liveWindowTick * 15000;
 
-    const todays = targetBulletinMatches
+    const allDistinctWeeks = Array.from(new Set<number>(allRecentBulletinMatches.map((m) => m.week_num))).sort((a, b) => a - b);
+    const maxWeek = allDistinctWeeks.length > 0 ? allDistinctWeeks[allDistinctWeeks.length - 1] : 41;
+
+    // 1. Hangi bültenlerin aktif / iç içe (örn: 41 veya 41-42) olduğunu belirle
+    const openWeeks: number[] = [];
+    allDistinctWeeks.forEach((w) => {
+      const wMatches = allRecentBulletinMatches.filter((m) => m.week_num === w);
+      if (wMatches.length === 0) return;
+
+      const hasActiveUnsettled = wMatches.some((m) => {
+        const uid = String(getUniqueMatchId(w, m.id));
+        const offM = officialWeekMatchesMap[uid];
+        const dbM = liveMatchesData[uid];
+        const isSettled =
+          offM?.status === 'FINISHED' ||
+          offM?.status === 'POSTPONED' ||
+          ['FINISHED', 'FT', 'AET', 'PEN', 'POSTPONED', 'PST'].includes(dbM?.status);
+        if (isSettled) return false;
+        const kMs = getMatchTimeMs(m.date, m.time);
+        // Gelecek maçı olan, son 36 saat içinde oynanan veya en güncel bülten olan hafta açıktır
+        return w === maxWeek || (kMs > 0 && kMs >= currentCheckMs - 36 * 60 * 60 * 1000);
+      });
+
+      const playedRecently = wMatches.some((m) => {
+        if (m.date === todayDateStr) return true;
+        const kMs = getMatchTimeMs(m.date, m.time);
+        return kMs > 0 && currentCheckMs >= kMs && currentCheckMs - kMs <= 18 * 60 * 60 * 1000;
+      });
+
+      if (hasActiveUnsettled || playedRecently) {
+        openWeeks.push(w);
+      }
+    });
+
+    if (openWeeks.length === 0 && allDistinctWeeks.length > 0) {
+      openWeeks.push(maxWeek);
+    }
+
+    const activeMatchesPool = allRecentBulletinMatches.filter((m) => openWeeks.includes(m.week_num));
+
+    // Maçın gerçekten şu an canlı / onay aşamasında olup olmadığını denetleyen yardımcı
+    const checkIsMatchActivelyLive = (m: any) => {
+      const uid = String(getUniqueMatchId(m.week_num, m.id));
+      const offM = officialWeekMatchesMap[uid];
+      if (offM && (offM.status === 'FINISHED' || offM.status === 'POSTPONED')) return false;
+
+      const dbM = liveMatchesData[uid];
+      if (!dbM || ['FINISHED', 'FT', 'AET', 'PEN', 'POSTPONED', 'PST'].includes(dbM.status)) return false;
+      if (!['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbM.status)) return false;
+      if (dbM.home_score === undefined || dbM.home_score === null || String(dbM.home_score) === '-' || String(dbM.away_score) === '-') {
+        return false;
+      }
+
+      const kickoffMs = getMatchTimeMs(m.date, m.time);
+      return kickoffMs > 0 && currentCheckMs >= kickoffMs && currentCheckMs <= kickoffMs + 12 * 60 * 60 * 1000;
+    };
+
+    // 2. Üstteki Maç Kartları Listesi
+    const todays = activeMatchesPool
       .filter((m) => {
         const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
         const dbMatch = liveMatchesData[uniqueId];
+        const offMatch = officialWeekMatchesMap[uniqueId];
         const status = dbMatch ? dbMatch.status : 'NOT_STARTED';
-        const isLiveOrFinished = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(status);
+        const isLiveOrFinished =
+          offMatch?.status === 'FINISHED' ||
+          ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(status);
         return isLiveOrFinished || m.date === todayDateStr;
       })
       .sort((a, b) => getMatchTimeMs(a.date, a.time) - getMatchTimeMs(b.date, b.time));
 
-    const fin24Map: Record<number, boolean> = {};
-    activeWeeks.forEach((w) => {
-      const m24Id = String(getUniqueMatchId(w, 24));
-      const dbMatch24 = liveMatchesData[m24Id];
-      const offMatch24 = officialWeekMatchesMap[m24Id];
-      fin24Map[w] =
-        Boolean(offMatch24 && offMatch24.status === 'FINISHED') ||
-        Boolean(dbMatch24 && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch24.status));
-    });
+    // 3. Her Aktif Bülten İçin Haftalık Canlı Tablolar (CANLI 41. HAFTA, CANLI 42. HAFTA...)
+    const perWeekTables: Record<number, WeekLiveBucket> = {};
 
-    const allWeekly: Record<number, { id: string; points: number; exactScores: number }[]> = {};
-    activeWeeks.forEach((week) => {
-      const stats: Record<string, { points: number; exactScores: number }> = {};
+    openWeeks.forEach((week) => {
+      const wMatches = allRecentBulletinMatches.filter((m) => m.week_num === week);
+      let finCount = 0;
+      let lvCount = 0;
+
+      const wMap: Record<
+        string,
+        {
+          id: string;
+          name: string;
+          kesinDfo: number;
+          kesinTff: number;
+          canliDfo: number;
+          canliTff: number;
+          kesinDfoSkor: number;
+          kesinTffSkor: number;
+          canliDfoSkor: number;
+          canliTffSkor: number;
+        }
+      > = {};
+
       accountIds.forEach((uid) => {
-        stats[uid] = { points: 0, exactScores: 0 };
+        wMap[uid] = {
+          id: uid,
+          name: mergedAccounts[uid]?.name || uid,
+          kesinDfo: 0,
+          kesinTff: 0,
+          canliDfo: 0,
+          canliTff: 0,
+          kesinDfoSkor: 0,
+          kesinTffSkor: 0,
+          canliDfoSkor: 0,
+          canliTffSkor: 0
+        };
       });
 
-      targetBulletinMatches
-        .filter((m) => m.week_num === week)
-        .forEach((m) => {
-          const uniqueId = String(getUniqueMatchId(week, m.id));
-          const offMatch = officialWeekMatchesMap[uniqueId];
-          const dbMatch = liveMatchesData[uniqueId];
+      wMatches.forEach((m) => {
+        const uniqueId = String(getUniqueMatchId(week, m.id));
+        const offMatch = officialWeekMatchesMap[uniqueId];
+        const dbMatch = liveMatchesData[uniqueId];
 
-          if (offMatch && offMatch.status === 'FINISHED') {
-            const pts = Number(offMatch.points_awarded || 0);
-            (offMatch.winner_ids || []).forEach((wId: string) => {
-              if (EXCLUDED_IDS.has(wId)) return;
-              if (!stats[wId]) stats[wId] = { points: 0, exactScores: 0 };
-              stats[wId].points += pts;
-              stats[wId].exactScores += 1;
-            });
-          } else if (
-            dbMatch &&
-            ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(dbMatch.status) &&
-            dbMatch.home_score !== undefined &&
-            dbMatch.home_score !== null &&
-            String(dbMatch.home_score) !== '-' &&
-            String(dbMatch.away_score) !== '-'
-          ) {
-            const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-            const winnerIds = accountIds.filter((id) => predictionsData[`${id}-${week}-${m.id}`] === targetScore);
-            const pts = calcMatchPts(winnerIds.length);
-            winnerIds.forEach((wId) => {
-              stats[wId].points += pts;
-              stats[wId].exactScores += 1;
-            });
-          }
-        });
+        const isOffFin = Boolean(offMatch && offMatch.status === 'FINISHED');
+        const isDbFin =
+          !isOffFin &&
+          offMatch?.status !== 'POSTPONED' &&
+          Boolean(dbMatch && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status)) &&
+          String(dbMatch?.home_score ?? '-') !== '-' &&
+          String(dbMatch?.away_score ?? '-') !== '-';
 
-      allWeekly[week] = Object.keys(stats)
-        .map((uid) => ({ id: uid, points: stats[uid].points, exactScores: stats[uid].exactScores }))
-        .filter((s) => s.points > 0 || s.exactScores > 0)
-        .sort(
-          (a, b) =>
-            b.points - a.points ||
-            b.exactScores - a.exactScores ||
-            (mergedAccounts[a.id]?.name || a.id).localeCompare(mergedAccounts[b.id]?.name || b.id, 'tr')
-        );
+        if (isOffFin) {
+          finCount += 1;
+          const pts = Number(offMatch.points_awarded || 0);
+          const isTff = offMatch.pool_type === 'TFF';
+          (offMatch.winner_ids || []).forEach((wId: string) => {
+            if (EXCLUDED_IDS.has(wId) || !wMap[wId]) return;
+            if (isTff) {
+              wMap[wId].kesinTff += pts;
+              wMap[wId].kesinTffSkor += 1;
+            } else {
+              wMap[wId].kesinDfo += pts;
+              wMap[wId].kesinDfoSkor += 1;
+            }
+          });
+        } else if (isDbFin) {
+          finCount += 1;
+          const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+          const winnerIds = accountIds.filter((id) => predictionsData[`${id}-${week}-${m.id}`] === targetScore);
+          const pts = calcMatchPts(winnerIds.length);
+          const isTff = offMatch?.pool_type ? offMatch.pool_type === 'TFF' : advancedTffCheck(m.category, m.homeTeam, m.awayTeam);
+          winnerIds.forEach((wId) => {
+            if (!wMap[wId]) return;
+            if (isTff) {
+              wMap[wId].kesinTff += pts;
+              wMap[wId].kesinTffSkor += 1;
+            } else {
+              wMap[wId].kesinDfo += pts;
+              wMap[wId].kesinDfoSkor += 1;
+            }
+          });
+        } else if (checkIsMatchActivelyLive(m)) {
+          lvCount += 1;
+          const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+          const winnerIds = accountIds.filter((id) => predictionsData[`${id}-${week}-${m.id}`] === targetScore);
+          const pts = calcMatchPts(winnerIds.length);
+          const isTff = offMatch?.pool_type ? offMatch.pool_type === 'TFF' : advancedTffCheck(m.category, m.homeTeam, m.awayTeam);
+          winnerIds.forEach((wId) => {
+            if (!wMap[wId]) return;
+            if (isTff) {
+              wMap[wId].canliTff += pts;
+              wMap[wId].canliTffSkor += 1;
+            } else {
+              wMap[wId].canliDfo += pts;
+              wMap[wId].canliDfoSkor += 1;
+            }
+          });
+        }
+      });
+
+      const wRows = Object.values(wMap).map((r) => {
+        const toplamDfo = r.kesinDfo + r.canliDfo;
+        const toplamTff = r.kesinTff + r.canliTff;
+        const canliMaster = r.canliDfo + r.canliTff;
+        const toplamMaster = toplamDfo + toplamTff;
+        const toplamDfoSkor = r.kesinDfoSkor + r.canliDfoSkor;
+        const toplamTffSkor = r.kesinTffSkor + r.canliTffSkor;
+        const canliSkor = r.canliDfoSkor + r.canliTffSkor;
+        const toplamSkor = toplamDfoSkor + toplamTffSkor;
+        return {
+          ...r,
+          toplamDfo,
+          toplamTff,
+          canliMaster,
+          toplamMaster,
+          toplamDfoSkor,
+          toplamTffSkor,
+          canliSkor,
+          toplamSkor
+        };
+      });
+
+      perWeekTables[week] = {
+        totalMatches: wMatches.length,
+        finishedCount: finCount,
+        liveCount: lvCount,
+        MASTER: wRows
+          .filter((r) => r.toplamMaster > 0)
+          .sort((a, b) => b.toplamMaster - a.toplamMaster || b.toplamSkor - a.toplamSkor || a.name.localeCompare(b.name, 'tr'))
+          .map((r, i) => ({
+            id: r.id,
+            name: r.name,
+            rank: i + 1,
+            toplamDfo: r.toplamDfo,
+            toplamTff: r.toplamTff,
+            toplamMaster: r.toplamMaster,
+            toplamSkor: r.toplamSkor,
+            canliMaster: r.canliMaster
+          })),
+        DFO: wRows
+          .filter((r) => r.toplamDfo > 0)
+          .sort((a, b) => b.toplamDfo - a.toplamDfo || b.toplamDfoSkor - a.toplamDfoSkor || a.name.localeCompare(b.name, 'tr'))
+          .map((r, i) => ({ id: r.id, name: r.name, rank: i + 1, pts: r.toplamDfo, liveAdd: r.canliDfo })),
+        TFF: wRows
+          .filter((r) => r.toplamTff > 0)
+          .sort((a, b) => b.toplamTff - a.toplamTff || b.toplamTffSkor - a.toplamTffSkor || a.name.localeCompare(b.name, 'tr'))
+          .map((r, i) => ({ id: r.id, name: r.name, rank: i + 1, pts: r.toplamTff, liveAdd: r.canliTff })),
+        SKOR_MASTER: wRows
+          .filter((r) => r.toplamSkor > 0)
+          .sort((a, b) => b.toplamSkor - a.toplamSkor || b.toplamMaster - a.toplamMaster || a.name.localeCompare(b.name, 'tr'))
+          .map((r, i) => ({
+            id: r.id,
+            name: r.name,
+            rank: i + 1,
+            toplamDfoSkor: r.toplamDfoSkor,
+            toplamTffSkor: r.toplamTffSkor,
+            toplamSkor: r.toplamSkor,
+            canliSkor: r.canliSkor
+          })),
+        SKOR_DFO: wRows
+          .filter((r) => r.toplamDfoSkor > 0)
+          .sort((a, b) => b.toplamDfoSkor - a.toplamDfoSkor || b.toplamDfo - a.toplamDfo || a.name.localeCompare(b.name, 'tr'))
+          .map((r, i) => ({ id: r.id, name: r.name, rank: i + 1, pts: r.toplamDfoSkor, liveAdd: r.canliDfoSkor })),
+        SKOR_TFF: wRows
+          .filter((r) => r.toplamTffSkor > 0)
+          .sort((a, b) => b.toplamTffSkor - a.toplamTffSkor || b.toplamTff - a.toplamTff || a.name.localeCompare(b.name, 'tr'))
+          .map((r, i) => ({ id: r.id, name: r.name, rank: i + 1, pts: r.toplamTffSkor, liveAdd: r.canliTffSkor }))
+      };
     });
 
+    // 4. Genel Puan Durumları (1..41+ Tüm Haftalar Kesin Kasa + O Anki Canlı Maçların Artısı)
     const baseMap: Record<
       string,
       {
         id: string;
         name: string;
-        kesinSira: number;
         kesinDfo: number;
         kesinTff: number;
         bonus: number;
@@ -531,12 +757,11 @@ export default function LiveMatchCard() {
       }
     > = {};
 
-    officialSummaryRows.forEach((r: any) => {
+    officialSummaryRows.forEach((r) => {
       if (EXCLUDED_IDS.has(r.user_id)) return;
       baseMap[r.user_id] = {
         id: r.user_id,
         name: mergedAccounts[r.user_id]?.name || r.oyuncu_adi || r.user_id,
-        kesinSira: Number(r.master_sira || 0),
         kesinDfo: Number(r.dfo_puan || 0),
         kesinTff: Number(r.tff_puan || 0),
         bonus: Number(r.bonus_puan || 0),
@@ -558,7 +783,6 @@ export default function LiveMatchCard() {
         baseMap[uid] = {
           id: uid,
           name: mergedAccounts[uid]?.name || uid,
-          kesinSira: 99,
           kesinDfo: 0,
           kesinTff: 0,
           bonus: 0,
@@ -576,32 +800,41 @@ export default function LiveMatchCard() {
       }
     });
 
-    let liveScoringCount = 0;
-
-    targetBulletinMatches.forEach((m) => {
+    activeMatchesPool.forEach((m) => {
       const uniqueId = String(getUniqueMatchId(m.week_num, m.id));
       const offMatch = officialWeekMatchesMap[uniqueId];
-
       if (offMatch && (offMatch.status === 'FINISHED' || offMatch.status === 'POSTPONED')) {
         return;
       }
 
       const dbMatch = liveMatchesData[uniqueId];
-      if (
-        dbMatch &&
-        ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FT', 'AET', 'PEN', 'FINISHED'].includes(dbMatch.status) &&
-        dbMatch.home_score !== undefined &&
-        dbMatch.home_score !== null &&
-        String(dbMatch.home_score) !== '-' &&
-        String(dbMatch.away_score) !== '-'
-      ) {
-        liveScoringCount += 1;
+      const isDbFinNotSynced =
+        Boolean(dbMatch && ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status)) &&
+        String(dbMatch?.home_score ?? '-') !== '-' &&
+        String(dbMatch?.away_score ?? '-') !== '-';
+
+      if (isDbFinNotSynced) {
         const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
         const winnerIds = accountIds.filter((id) => predictionsData[`${id}-${m.week_num}-${m.id}`] === targetScore);
         const pts = calcMatchPts(winnerIds.length);
-        const isTff = offMatch?.pool_type
-          ? offMatch.pool_type === 'TFF'
-          : advancedTffCheck(m.category, m.homeTeam, m.awayTeam);
+        const isTff = offMatch?.pool_type ? offMatch.pool_type === 'TFF' : advancedTffCheck(m.category, m.homeTeam, m.awayTeam);
+        winnerIds.forEach((wId) => {
+          if (!baseMap[wId]) return;
+          if (isTff) {
+            baseMap[wId].kesinTff += pts;
+            baseMap[wId].kesinTffSkor += 1;
+          } else {
+            baseMap[wId].kesinDfo += pts;
+            baseMap[wId].kesinDfoSkor += 1;
+          }
+          baseMap[wId].kesinMaster += pts;
+          baseMap[wId].kesinSkor += 1;
+        });
+      } else if (checkIsMatchActivelyLive(m)) {
+        const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
+        const winnerIds = accountIds.filter((id) => predictionsData[`${id}-${m.week_num}-${m.id}`] === targetScore);
+        const pts = calcMatchPts(winnerIds.length);
+        const isTff = offMatch?.pool_type ? offMatch.pool_type === 'TFF' : advancedTffCheck(m.category, m.homeTeam, m.awayTeam);
 
         winnerIds.forEach((wId) => {
           if (!baseMap[wId]) return;
@@ -618,8 +851,54 @@ export default function LiveMatchCard() {
       }
     });
 
-    const combinedList = Object.values(baseMap).map((row) => ({
+    const baseList = Object.values(baseMap);
+
+    // Kesin sıralamaları aynı kriterlerle hesapla (canlı puan yokken sahte ok çıkmasını %100 önler)
+    const kesinMasterRankMap: Record<string, number> = {};
+    [...baseList]
+      .sort((a, b) => b.kesinMaster - a.kesinMaster || b.kesinSkor - a.kesinSkor || a.name.localeCompare(b.name, 'tr'))
+      .forEach((r, i) => {
+        kesinMasterRankMap[r.id] = i + 1;
+      });
+
+    const kesinDfoRankMap: Record<string, number> = {};
+    [...baseList]
+      .sort((a, b) => b.kesinDfo - a.kesinDfo || b.kesinDfoSkor - a.kesinDfoSkor || a.name.localeCompare(b.name, 'tr'))
+      .forEach((r, i) => {
+        kesinDfoRankMap[r.id] = i + 1;
+      });
+
+    const kesinTffRankMap: Record<string, number> = {};
+    [...baseList]
+      .sort((a, b) => b.kesinTff - a.kesinTff || b.kesinTffSkor - a.kesinTffSkor || a.name.localeCompare(b.name, 'tr'))
+      .forEach((r, i) => {
+        kesinTffRankMap[r.id] = i + 1;
+      });
+
+    const kesinSkorRankMap: Record<string, number> = {};
+    [...baseList]
+      .sort((a, b) => b.kesinSkor - a.kesinSkor || b.kesinMaster - a.kesinMaster || a.name.localeCompare(b.name, 'tr'))
+      .forEach((r, i) => {
+        kesinSkorRankMap[r.id] = i + 1;
+      });
+
+    const kesinDfoSkorRankMap: Record<string, number> = {};
+    [...baseList]
+      .sort((a, b) => b.kesinDfoSkor - a.kesinDfoSkor || b.kesinDfo - a.kesinDfo || a.name.localeCompare(b.name, 'tr'))
+      .forEach((r, i) => {
+        kesinDfoSkorRankMap[r.id] = i + 1;
+      });
+
+    const kesinTffSkorRankMap: Record<string, number> = {};
+    [...baseList]
+      .sort((a, b) => b.kesinTffSkor - a.kesinTffSkor || b.kesinTff - a.kesinTff || a.name.localeCompare(b.name, 'tr'))
+      .forEach((r, i) => {
+        kesinTffSkorRankMap[r.id] = i + 1;
+      });
+
+    const combinedList = baseList.map((row) => ({
       ...row,
+      kesinSira: kesinMasterRankMap[row.id] || 99,
       toplamDfo: row.kesinDfo + row.canliDfo,
       toplamTff: row.kesinTff + row.canliTff,
       toplamMaster: row.kesinMaster + row.canliMaster,
@@ -634,28 +913,56 @@ export default function LiveMatchCard() {
 
     const sortedDfo = [...combinedList]
       .sort((a, b) => b.toplamDfo - a.toplamDfo || b.toplamDfoSkor - a.toplamDfoSkor || a.name.localeCompare(b.name, 'tr'))
-      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamDfo, liveAdd: r.canliDfo, rank: i + 1 }));
+      .map((r, i) => ({
+        id: r.id,
+        name: r.name,
+        pts: r.toplamDfo,
+        liveAdd: r.canliDfo,
+        rank: i + 1,
+        prevRank: kesinDfoRankMap[r.id] || i + 1
+      }));
 
     const sortedTff = [...combinedList]
       .sort((a, b) => b.toplamTff - a.toplamTff || b.toplamTffSkor - a.toplamTffSkor || a.name.localeCompare(b.name, 'tr'))
-      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamTff, liveAdd: r.canliTff, rank: i + 1 }));
+      .map((r, i) => ({
+        id: r.id,
+        name: r.name,
+        pts: r.toplamTff,
+        liveAdd: r.canliTff,
+        rank: i + 1,
+        prevRank: kesinTffRankMap[r.id] || i + 1
+      }));
 
     const sortedSkorMaster = [...combinedList]
       .sort((a, b) => b.toplamSkor - a.toplamSkor || b.toplamMaster - a.toplamMaster || a.name.localeCompare(b.name, 'tr'))
-      .map((r, i) => ({ ...r, rankSkor: i + 1 }));
+      .map((r, i) => ({ ...r, rankSkor: i + 1, prevSkorRank: kesinSkorRankMap[r.id] || i + 1 }));
 
     const sortedSkorDfo = [...combinedList]
       .sort((a, b) => b.toplamDfoSkor - a.toplamDfoSkor || b.toplamDfo - a.toplamDfo || a.name.localeCompare(b.name, 'tr'))
-      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamDfoSkor, liveAdd: r.canliDfoSkor, rank: i + 1 }));
+      .map((r, i) => ({
+        id: r.id,
+        name: r.name,
+        pts: r.toplamDfoSkor,
+        liveAdd: r.canliDfoSkor,
+        rank: i + 1,
+        prevRank: kesinDfoSkorRankMap[r.id] || i + 1
+      }));
 
     const sortedSkorTff = [...combinedList]
       .sort((a, b) => b.toplamTffSkor - a.toplamTffSkor || b.toplamTff - a.toplamTff || a.name.localeCompare(b.name, 'tr'))
-      .map((r, i) => ({ id: r.id, name: r.name, pts: r.toplamTffSkor, liveAdd: r.canliTffSkor, rank: i + 1 }));
+      .map((r, i) => ({
+        id: r.id,
+        name: r.name,
+        pts: r.toplamTffSkor,
+        liveAdd: r.canliTffSkor,
+        rank: i + 1,
+        prevRank: kesinTffSkorRankMap[r.id] || i + 1
+      }));
 
     return {
+      activeBulletinWeeks: openWeeks,
       todaysMatchesList: todays,
-      weeklySortedStats: allWeekly,
-      is24thMatchFinishedMap: fin24Map,
+      weeklyLiveTables: perWeekTables,
       globalLiveRanks: {
         MASTER: sortedMaster.map((r) => ({ id: r.id, name: r.name, pts: r.toplamMaster, rank: r.rankMaster })),
         DFO: sortedDfo,
@@ -669,10 +976,21 @@ export default function LiveMatchCard() {
         SKOR_MASTER: sortedSkorMaster,
         SKOR_DFO: sortedSkorDfo,
         SKOR_TFF: sortedSkorTff
-      },
-      activeScoringMatchCount: liveScoringCount
+      }
     };
-  }, [targetBulletinMatches, liveMatchesData, officialWeekMatchesMap, officialSummaryRows, predictionsData, mergedAccounts, activeWeeks]);
+  }, [allRecentBulletinMatches, liveMatchesData, officialWeekMatchesMap, officialSummaryRows, predictionsData, mergedAccounts, liveWindowTick]);
+
+  // Seçili haftalık canlı bülten (kullanıcı tıklamadıysa canlı maçı olan veya ilk aktif haftayı seçer)
+  const effectiveBulletinWeek = useMemo(() => {
+    if (selectedBulletinWeek && activeBulletinWeeks.includes(selectedBulletinWeek)) {
+      return selectedBulletinWeek;
+    }
+    const weekWithLive = activeBulletinWeeks.find((w) => (weeklyLiveTables[w]?.liveCount || 0) > 0);
+    return weekWithLive || activeBulletinWeeks[0] || 41;
+  }, [selectedBulletinWeek, activeBulletinWeeks, weeklyLiveTables]);
+
+  const currentWeekBucket = weeklyLiveTables[effectiveBulletinWeek];
+  const totalActiveLiveMatches = activeBulletinWeeks.reduce((acc, w) => acc + (weeklyLiveTables[w]?.liveCount || 0), 0);
 
   const toggleEvents = (uniqueId: string) => setOpenEventsMap((prev) => ({ ...prev, [uniqueId]: prev[uniqueId] === false ? true : false }));
   const toggleWinners = (uniqueId: string) => setOpenWinnersMap((prev) => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
@@ -684,7 +1002,7 @@ export default function LiveMatchCard() {
   if (!isWeekLoaded) {
     return (
       <div className="w-full max-w-6xl mx-auto mb-8 flex justify-center py-10">
-        <span className="text-slate-500 text-sm font-medium animate-pulse tracking-widest">📡 Radar Ayarlanıyor...</span>
+        <span className="text-sky-300 text-sm font-bold animate-pulse tracking-widest">📡 Radar Ayarlanıyor...</span>
       </div>
     );
   }
@@ -692,13 +1010,15 @@ export default function LiveMatchCard() {
   const activeMatches = todaysMatchesList.filter((match) => {
     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
     const dbMatch = liveMatchesData[uniqueId] || {};
-    return !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
+    const offMatch = officialWeekMatchesMap[uniqueId];
+    return offMatch?.status !== 'FINISHED' && !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
   const finishedMatches = todaysMatchesList.filter((match) => {
     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
     const dbMatch = liveMatchesData[uniqueId] || {};
-    return ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
+    const offMatch = officialWeekMatchesMap[uniqueId];
+    return offMatch?.status === 'FINISHED' || ['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
 
   const renderMatchCard = (match: any, isFinishedGroup: boolean = false) => {
@@ -745,12 +1065,15 @@ export default function LiveMatchCard() {
       }
     }
 
-    const isFinishedStatus = ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
-    const isLiveStatus = ['LIVE', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus);
-    const isHT = matchStatus === 'HT';
-    const isWaitingApproval = matchStatus === 'WAITING_APPROVAL';
+    const isFinishedStatus = offMatch?.status === 'FINISHED' || ['FINISHED', 'FT', 'AET', 'PEN'].includes(matchStatus);
+    const isLiveStatus = !isFinishedStatus && ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(matchStatus);
+    const isHT = !isFinishedStatus && matchStatus === 'HT';
+    const isWaitingApproval = !isFinishedStatus && matchStatus === 'WAITING_APPROVAL';
 
-    if (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) {
+    if (isFinishedStatus && offMatch?.status === 'FINISHED' && (homeScore === '-' || awayScore === '-')) {
+      homeScore = offMatch.home_score ?? '0';
+      awayScore = offMatch.away_score ?? '0';
+    } else if (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) {
       if (homeScore === '-') homeScore = '0';
       if (awayScore === '-') awayScore = '0';
     }
@@ -906,17 +1229,17 @@ export default function LiveMatchCard() {
               <div className="flex flex-col items-center justify-center mx-1 sm:mx-1.5 min-w-[40px] sm:min-w-[50px]">
                 <div className="mb-0.5 flex items-center justify-center">
                   {isWaitingApproval ? (
-                    <span className="text-[9px] sm:text-[10px] font-black text-blue-400 drop-shadow-md tracking-wider animate-pulse">ONAY BEKLİYOR</span>
+                    <span className="text-[9px] sm:text-[10px] font-black text-sky-400 drop-shadow-md tracking-wider animate-pulse">ONAY BEKLİYOR</span>
                   ) : isHT ? (
-                    <span className="text-[10px] sm:text-[11px] font-black text-amber-400 tracking-wider drop-shadow-md">İLK YARI</span>
+                    <span className="text-[10px] sm:text-[11px] font-black text-cyan-300 tracking-wider drop-shadow-md">İLK YARI</span>
                   ) : isLiveStatus ? (
-                    <span className="text-[10px] sm:text-[11px] font-black text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] animate-pulse tracking-wider">
+                    <span className="text-[10px] sm:text-[11px] font-black text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.8)] animate-pulse tracking-wider">
                       {displayMinute}
                     </span>
                   ) : isFinishedStatus ? (
                     <span className="text-[8px] sm:text-[9px] font-black text-slate-400 tracking-wider">MS</span>
                   ) : (
-                    <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider">{match.time}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-sky-300 tracking-wider">{match.time}</span>
                   )}
                 </div>
                 <div
@@ -924,7 +1247,7 @@ export default function LiveMatchCard() {
                     isGoalFlashing
                       ? 'bg-blue-900/80 border-rose-500 shadow-[0_0_25px_rgba(225,29,72,0.9)] scale-110'
                       : isLiveStatus || isHT || isWaitingApproval
-                      ? 'bg-green-950/60 border-green-500/40'
+                      ? 'bg-emerald-950/60 border-emerald-500/40'
                       : 'bg-[#080d1a]/80 border-slate-700/60'
                   }`}
                 >
@@ -959,7 +1282,7 @@ export default function LiveMatchCard() {
             </button>
             <div className="relative z-10 flex flex-col h-full">
               <div className="w-full text-center pt-3 pb-1">
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase bg-slate-950/50 px-3 py-1 rounded-full shadow-inner">
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 tracking-widest uppercase bg-slate-950/60 px-3 py-1 rounded-full shadow-inner">
                   {match.weekLabel}
                 </span>
               </div>
@@ -986,35 +1309,35 @@ export default function LiveMatchCard() {
                     </div>
                   )}
                   {!isLiveStatus && !isFinishedStatus && !isHT && !isWaitingApproval && (
-                    <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                      <span className="text-amber-400 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
+                    <div className="bg-slate-900/80 border border-blue-500/40 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                      <span className="text-sky-300 text-[10px] sm:text-xs font-bold tracking-widest drop-shadow-md">⏱ {match.time}</span>
                     </div>
                   )}
                   {isWaitingApproval && (
                     <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
-                      <span className="text-blue-400 font-black text-[10px] sm:text-xs border border-blue-500/50 bg-blue-950/80 px-3 py-1 rounded-full drop-shadow-md tracking-widest">
+                      <span className="text-sky-300 font-black text-[10px] sm:text-xs border border-sky-500/50 bg-blue-950/80 px-3 py-1 rounded-full drop-shadow-md tracking-widest">
                         ONAY BEKLİYOR
                       </span>
                     </div>
                   )}
                   {isHT && (
                     <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative">
-                      <span className="text-amber-400 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span>
+                      <span className="text-cyan-300 font-black text-2xl sm:text-3xl leading-none drop-shadow-md">İLK YARI</span>
                     </div>
                   )}
                   {isLiveStatus && !isWaitingApproval && (
                     <div className="flex flex-col items-center justify-center mb-1.5 z-40 relative animate-pulse">
-                      <span className="text-green-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">
+                      <span className="text-emerald-400 font-black text-3xl sm:text-4xl leading-none drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]">
                         {displayMinute}
                       </span>
-                      <span className="text-green-500 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-green-950/80 px-3 py-0.5 rounded-full border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]">
-                        🔴 CANLI
+                      <span className="text-emerald-300 text-[9px] sm:text-[10px] font-black tracking-widest mt-1 bg-emerald-950/80 px-3 py-0.5 rounded-full border border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                        CANLI
                       </span>
                     </div>
                   )}
                   {isFinishedStatus && (
                     <div className="bg-slate-900/80 border border-slate-600/80 px-3 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                      <span className="text-slate-400 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
+                      <span className="text-slate-300 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
                     </div>
                   )}
                   <div
@@ -1126,7 +1449,7 @@ export default function LiveMatchCard() {
                       <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 italic">Maç saatini bekliyor...</span>
                     ) : exactWinners.length === 0 ? (
                       !isFinishedStatus && possibleWinners.length > 0 ? (
-                        <span className="text-[9px] sm:text-[10px] font-medium text-blue-300 italic">
+                        <span className="text-[9px] sm:text-[10px] font-medium text-sky-300 italic">
                           Tam isabet yok, {possibleWinners.length} kişi pusuda!
                         </span>
                       ) : (
@@ -1148,7 +1471,7 @@ export default function LiveMatchCard() {
                       (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) && (
                         <button
                           onClick={() => toggleWinners(uniqueId)}
-                          className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm"
+                          className="text-sky-400 hover:text-sky-300 transition-colors font-medium text-[9px] sm:text-[10px] outline-none whitespace-nowrap drop-shadow-sm"
                         >
                           {isWinnersOpen ? 'Radarı Gizle ▲' : 'Tüm Tahmin Radarı →'}
                         </button>
@@ -1190,19 +1513,19 @@ export default function LiveMatchCard() {
                                 </button>
                                 {isRankOpen && (
                                   <div className="flex flex-wrap justify-center gap-1.5 w-full pb-3 pt-1 px-2 z-10 animate-fadeIn bg-slate-900/40 border-t border-slate-800/50">
-                                    <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-amber-900/30 text-amber-400 border-amber-700/50 tracking-wider whitespace-nowrap">
-                                      CANLI MASTER #{masterData?.rank || '-'} / {masterData?.pts || 0} P
+                                    <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-950/60 text-sky-300 border-sky-500/40 tracking-wider whitespace-nowrap">
+                                      MASTER #{masterData?.rank || '-'} / {masterData?.pts || 0} P
                                     </span>
                                     {isTffMatch ? (
-                                      <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-rose-900/30 text-rose-400 border-rose-700/50 tracking-wider whitespace-nowrap">
+                                      <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-indigo-950/60 text-indigo-300 border-indigo-500/40 tracking-wider whitespace-nowrap">
                                         TFF #{tffData?.rank || '-'} / {tffData?.pts || 0} P
                                       </span>
                                     ) : (
-                                      <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-blue-900/30 text-blue-400 border-blue-700/50 tracking-wider whitespace-nowrap">
+                                      <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-cyan-950/60 text-cyan-300 border-cyan-500/40 tracking-wider whitespace-nowrap">
                                         DFO #{dfoData?.rank || '-'} / {dfoData?.pts || 0} P
                                       </span>
                                     )}
-                                    <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-900/30 text-emerald-400 border-emerald-700/50 tracking-wider whitespace-nowrap">
+                                    <span className="border px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-medium bg-emerald-950/60 text-emerald-300 border-emerald-500/40 tracking-wider whitespace-nowrap">
                                       SKOR #{skorData?.rank || '-'} / {skorData?.pts || 0} İSABET
                                     </span>
                                   </div>
@@ -1220,20 +1543,20 @@ export default function LiveMatchCard() {
                           onClick={() => togglePossible(uniqueId)}
                           className="w-full flex justify-between items-center p-2.5 bg-blue-900/30 hover:bg-blue-800/40 transition-colors"
                         >
-                          <span className="text-blue-400 font-bold text-[9px] sm:text-[10px]">
+                          <span className="text-sky-300 font-bold text-[9px] sm:text-[10px]">
                             ⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length} KİŞİ)
                           </span>
-                          <span className="text-blue-400 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
+                          <span className="text-sky-300 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
                         </button>
                         {isPossibleOpen && (
                           <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-1 border-t border-blue-900/50">
                             {possibleWinners.map((winner, idx) => (
                               <span
                                 key={idx}
-                                className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-300 border-blue-700/50 flex gap-1 items-center"
+                                className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-medium bg-blue-900/30 text-slate-200 border-blue-700/50 flex gap-1 items-center"
                               >
                                 <span>{winner.name}</span>
-                                <span className="text-cyan-400 font-black tracking-widest ml-0.5">[{winner.score}]</span>
+                                <span className="text-cyan-300 font-black tracking-widest ml-0.5">[{winner.score}]</span>
                               </span>
                             ))}
                           </div>
@@ -1277,10 +1600,8 @@ export default function LiveMatchCard() {
     );
   };
 
-  const sortedWeeks = [...activeWeeks].sort((a, b) => b - a);
-
   return (
-    <div className="w-full max-w-6xl mx-auto mb-8 flex flex-col gap-5">
+    <div className="w-full max-w-6xl mx-auto mb-8 px-2 sm:px-4 flex flex-col gap-5">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -1290,45 +1611,45 @@ export default function LiveMatchCard() {
         }}
       />
 
-      <div className="w-full flex justify-end px-2 sm:px-0">
+      <div className="w-full flex justify-end pt-3">
         <button
           onClick={toggleSound}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest transition-all shadow-md border ${
             soundEnabled
-              ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-              : 'bg-slate-900/80 text-slate-500 border-slate-700/80 hover:bg-slate-800'
+              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+              : 'bg-[#071126] text-slate-300 border-blue-900/60 hover:border-sky-400/50 hover:text-white'
           }`}
         >
           {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
         </button>
       </div>
 
-      {/* 🔥 MAÇLAR VİTRİNİ (ÜSTTE) 🔥 */}
+      {/* GÜNÜN BİTEN VE CANLI MAÇLARI */}
       {todaysMatchesList.length === 0 ? (
-        <div className="w-full text-center py-10 bg-slate-900/30 border border-slate-800/50 rounded-2xl mt-2">
-          <span className="text-3xl mb-2 block opacity-50">🗓️</span>
-          <p className="text-slate-400 text-sm font-medium tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
+        <div className="w-full text-center py-10 bg-[#071126]/70 border border-blue-900/40 rounded-2xl">
+          <span className="text-3xl mb-2 block opacity-60">🗓️</span>
+          <p className="text-slate-300 text-sm font-bold tracking-widest">BUGÜN PLANLANAN BİR MAÇ BULUNMUYOR</p>
         </div>
       ) : (
         <>
           {finishedMatches.length > 0 && (
-            <div className="bg-slate-950/40 rounded-2xl border border-slate-800/50 shadow-xl backdrop-blur-xl overflow-hidden mt-2">
+            <div className="bg-[#071126]/80 rounded-2xl border border-blue-900/50 shadow-xl backdrop-blur-xl overflow-hidden">
               <button
                 onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
-                className="w-full flex items-center justify-between px-4 py-2 sm:py-3 bg-slate-900/50 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 group"
+                className="w-full flex items-center justify-between px-4 py-2.5 sm:py-3.5 bg-[#040a18]/80 hover:bg-blue-950/40 transition-colors border-b border-blue-900/40"
               >
                 <div className="flex-1" />
-                <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest text-center flex items-center gap-2">
+                <h2 className="text-[10px] sm:text-xs font-black text-sky-200 uppercase tracking-widest text-center flex items-center gap-2">
                   📅 GÜNÜN BİTEN MAÇLARI ({finishedMatches.length})
                 </h2>
                 <div className="flex-1 flex justify-end">
                   <div className={`p-1 transition-transform duration-300 ${isFinishedAccordionOpen ? 'rotate-180' : ''}`}>
-                    <span className="text-slate-500 text-[10px] sm:text-xs">▼</span>
+                    <span className="text-sky-300 text-[10px] sm:text-xs">▼</span>
                   </div>
                 </div>
               </button>
               {isFinishedAccordionOpen && (
-                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/20">
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
                   {finishedMatches.map((match) => renderMatchCard(match, true))}
                 </div>
               )}
@@ -1336,28 +1657,28 @@ export default function LiveMatchCard() {
           )}
 
           {activeMatches.length > 0 && (
-            <div className="bg-slate-950/60 rounded-2xl border border-slate-800/80 shadow-2xl backdrop-blur-xl overflow-hidden mt-2">
+            <div className="bg-[#071126]/90 rounded-2xl border border-emerald-500/40 shadow-2xl backdrop-blur-xl overflow-hidden">
               <button
                 onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-slate-900/80 hover:bg-slate-800/80 transition-colors border-b border-slate-800/80 group"
+                className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-emerald-950/30 hover:bg-emerald-950/50 transition-colors border-b border-emerald-500/30"
               >
                 <div className="flex-1 flex items-center gap-2">
                   <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
                   </span>
                 </div>
-                <h2 className="text-xs sm:text-sm font-black text-green-500 uppercase tracking-widest drop-shadow-md text-center">
+                <h2 className="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest drop-shadow-md text-center">
                   GÜNÜN CANLI MAÇLARI ({activeMatches.length})
                 </h2>
                 <div className="flex-1 flex justify-end">
                   <div className={`p-1 transition-transform duration-300 ${isLiveAccordionOpen ? 'rotate-180' : ''}`}>
-                    <span className="text-slate-400 text-[10px] sm:text-xs">▼</span>
+                    <span className="text-emerald-300 text-[10px] sm:text-xs">▼</span>
                   </div>
                 </div>
               </button>
               {isLiveAccordionOpen && (
-                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-slate-900/30">
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
                   {activeMatches.map((match) => renderMatchCard(match, false))}
                 </div>
               )}
@@ -1366,17 +1687,16 @@ export default function LiveMatchCard() {
         </>
       )}
 
-      {sortedWeeks && weeklySortedStats && is24thMatchFinishedMap && weekBonusEnabledMap ? null : null}
-
-      {/* CANLI GENEL PUAN DURUMU (SİYAH-LACİVERT / BEMBEYAZ MİMARİ) */}
-      <div className="bg-[#081020] border border-slate-800 rounded-2xl px-2 py-4 sm:p-6 shadow-2xl">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800 px-1">
+      {/* CANLI HAFTALIK BÜLTEN & GENEL PUAN DURUMU PANELİ */}
+      <div className="bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-blue-500/30 rounded-2xl px-2 py-4 sm:p-6 shadow-[0_0_35px_rgba(30,64,175,0.25)]">
+        {/* ÜST ANA SEKMELER: CANLI 41. HAFTA (ve varsa CANLI 42. HAFTA) | MASTER | DFO | TFF | SKOR */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-blue-800/50 px-1">
           <button onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)} className="flex items-center gap-2 text-left">
             <span className="relative flex h-2.5 w-2.5">
-              <span className={`absolute inline-flex h-full w-full rounded-full ${activeScoringMatchCount > 0 ? 'animate-ping bg-rose-400 opacity-75' : ''}`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${activeScoringMatchCount > 0 ? 'bg-rose-500' : 'bg-white'}`} />
+              <span className={`absolute inline-flex h-full w-full rounded-full ${totalActiveLiveMatches > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${totalActiveLiveMatches > 0 ? 'bg-emerald-500' : 'bg-sky-400'}`} />
             </span>
-            <h2 className="text-xs sm:text-base font-black text-white uppercase tracking-widest">
+            <h2 className="text-xs sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-white to-emerald-300 uppercase tracking-widest">
               CANLI GENEL PUAN DURUMU
             </h2>
             <span className="text-slate-400 text-xs">{isLiveStandingsOpen ? '▲' : '▼'}</span>
@@ -1384,187 +1704,618 @@ export default function LiveMatchCard() {
 
           {isLiveStandingsOpen && (
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
-              {(['CANLI', 'MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setLiveTableTab(tab)}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
-                    liveTableTab === tab
-                      ? 'border-2 border-white shadow-[0_0_10px_rgba(255,255,255,0.2)]'
-                      : 'border border-slate-700 hover:border-white'
-                  }`}
-                >
-                  {tab === 'CANLI' && activeScoringMatchCount > 0 ? `CANLI (${activeScoringMatchCount})` : tab}
-                </button>
-              ))}
+              {/* Aktif / İç İçe Geçen Bülten Sekmeleri (Örn: CANLI 41. HAFTA, CANLI 42. HAFTA) */}
+              {activeBulletinWeeks.map((w) => {
+                const isSelectedWeekTab = liveTableTab === 'WEEK_LIVE' && effectiveBulletinWeek === w;
+                const wLiveCount = weeklyLiveTables[w]?.liveCount || 0;
+                return (
+                  <button
+                    key={`week-live-${w}`}
+                    onClick={() => {
+                      setLiveTableTab('WEEK_LIVE');
+                      setSelectedBulletinWeek(w);
+                    }}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      isSelectedWeekTab
+                        ? 'bg-emerald-600 text-white border border-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.55)]'
+                        : wLiveCount > 0
+                        ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/60 hover:bg-emerald-800/60'
+                        : 'bg-[#040917] text-emerald-300 border border-emerald-800/60 hover:border-emerald-400 hover:text-white'
+                    }`}
+                  >
+                    {`CANLI ${w}. HAFTA${wLiveCount > 0 ? ` (${wLiveCount})` : ''}`}
+                  </button>
+                );
+              })}
+
+              {/* Genel Kümülatif Sekmeler */}
+              {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => {
+                const isTabActive = liveTableTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setLiveTableTab(tab);
+                      if (tab === 'MASTER') setMasterSubTab('DUZ');
+                      if (tab === 'SKOR') setSkorSubTab('DUZ');
+                    }}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      isTabActive
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-sky-400 shadow-[0_0_14px_rgba(59,130,246,0.45)]'
+                        : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:border-sky-400/60 hover:text-white'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
         {isLiveStandingsOpen && (
           <>
-            {/* SKOR ALT MENÜSÜ: MASTER SKOR | DFO SKOR | TFF SKOR */}
-            {liveTableTab === 'SKOR' && (
-              <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3 pb-3 border-b border-slate-800/80">
-                {([
-                  { key: 'MASTER', label: 'MASTER SKOR' },
-                  { key: 'DFO', label: 'DFO SKOR' },
-                  { key: 'TFF', label: 'TFF SKOR' }
-                ] as const).map((st) => (
-                  <button
-                    key={st.key}
-                    onClick={() => setSkorSubTab(st.key)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white ${
-                      skorSubTab === st.key
-                        ? 'border-2 border-white shadow-[0_0_8px_rgba(255,255,255,0.2)]'
-                        : 'border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600'
-                    }`}
-                  >
-                    {st.label}
-                  </button>
-                ))}
+            {/* ========================================================================= */}
+            {/* MOD 1: CANLI {effectiveBulletinWeek}. HAFTA VE KENDİ ALT MENÜLERİ         */}
+            {/* ========================================================================= */}
+            {liveTableTab === 'WEEK_LIVE' && currentWeekBucket && (
+              <div>
+                {/* Seçili Haftanın Alt Menüsü: MASTER | DFO | TFF | SKOR */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-3 border-b border-blue-900/50 px-1">
+                  <div className="text-[10px] sm:text-xs font-bold text-sky-200/90">
+                    <span className="text-emerald-400 font-black">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</span>{' '}
+                    <span>
+                      {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
+                    </span>
+                    {currentWeekBucket.liveCount > 0 && (
+                      <span className="ml-1.5 text-emerald-400 font-black">• {currentWeekBucket.liveCount} maç şu an canlı</span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wTab) => (
+                      <button
+                        key={`wsub-${wTab}`}
+                        onClick={() => {
+                          setWeekSubTab(wTab);
+                          if (wTab === 'MASTER') setWeekMasterMode('DUZ');
+                          if (wTab === 'SKOR') setWeekSkorMode('DUZ');
+                        }}
+                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                          weekSubTab === wTab
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                            : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                        }`}
+                      >
+                        {wTab}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Haftanın MASTER Alt Seçicisi: MASTER PUAN | DETAYLI MASTER */}
+                {weekSubTab === 'MASTER' && (
+                  <div className="flex items-center justify-center gap-2 mb-3 pb-2.5 border-b border-blue-900/40">
+                    <button
+                      onClick={() => setWeekMasterMode('DUZ')}
+                      className={`px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                        weekMasterMode === 'DUZ'
+                          ? 'bg-sky-500/20 text-sky-200 border border-sky-400'
+                          : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white'
+                      }`}
+                    >
+                      MASTER PUAN
+                    </button>
+                    <button
+                      onClick={() => setWeekMasterMode('DETAYLI')}
+                      className={`px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                        weekMasterMode === 'DETAYLI'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400'
+                          : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white'
+                      }`}
+                    >
+                      DETAYLI MASTER
+                    </button>
+                  </div>
+                )}
+
+                {/* Haftanın SKOR Alt Seçicisi: MASTER SKOR | DETAYLI MASTER | DFO SKOR | TFF SKOR */}
+                {weekSubTab === 'SKOR' && (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3 pb-2.5 border-b border-blue-900/40">
+                    {([
+                      { key: 'DUZ', label: 'MASTER SKOR' },
+                      { key: 'DETAYLI', label: 'DETAYLI MASTER' },
+                      { key: 'DFO', label: 'DFO SKOR' },
+                      { key: 'TFF', label: 'TFF SKOR' }
+                    ] as const).map((sm) => (
+                      <button
+                        key={`wskor-${sm.key}`}
+                        onClick={() => setWeekSkorMode(sm.key)}
+                        className={`px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                          weekSkorMode === sm.key
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400'
+                            : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white'
+                        }`}
+                      >
+                        {sm.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* HAFTALIK TABLO GÖVDESİ */}
+                {weekSubTab === 'MASTER' && weekMasterMode === 'DUZ' ? (
+                  currentWeekBucket.MASTER.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                      {effectiveBulletinWeek}. HAFTADA HENÜZ PUAN ALAN YARIŞMACI BULUNMUYOR
+                    </div>
+                  ) : (
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                          <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                          <th className="py-2.5 px-2">Yarışmacı</th>
+                          <th className="py-2.5 px-3 w-32 sm:w-44 text-right text-emerald-300">{effectiveBulletinWeek}. Hafta Puanı</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-blue-900/40">
+                        {currentWeekBucket.MASTER.map((row) => (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
+                            <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.canliMaster > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.canliMaster} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-emerald-300">{row.toplamMaster}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                ) : weekSubTab === 'MASTER' && weekMasterMode === 'DETAYLI' ? (
+                  currentWeekBucket.MASTER.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                      {effectiveBulletinWeek}. HAFTADA HENÜZ PUAN ALAN YARIŞMACI BULUNMUYOR
+                    </div>
+                  ) : (
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                          <th className="py-2.5 px-1 w-[24px] sm:w-10">#</th>
+                          <th className="py-2.5 px-1">Yarışmacı</th>
+                          <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-cyan-300">DFO</th>
+                          <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-indigo-300">TFF</th>
+                          <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center text-emerald-400">Skor</th>
+                          <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center text-emerald-300">Canlı</th>
+                          <th className="py-2.5 px-1 w-[44px] sm:w-24 text-center text-sky-300 bg-blue-600/20 rounded-t-lg">Master</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-blue-900/40">
+                        {currentWeekBucket.MASTER.map((row) => (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2 px-1 font-black text-slate-400 text-[10px] sm:text-sm">{row.rank}</td>
+                            <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                              {row.name}
+                            </td>
+                            <td className="py-2 px-0.5 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-2 px-0.5 text-center text-indigo-300 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-2 px-0.5 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-2 px-0.5 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliMaster > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                  +{row.canliMaster}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center text-sky-300 font-black text-xs sm:text-base bg-blue-600/10">
+                              {row.toplamMaster}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                ) : weekSubTab === 'SKOR' && weekSkorMode === 'DETAYLI' ? (
+                  currentWeekBucket.SKOR_MASTER.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                      {effectiveBulletinWeek}. HAFTADA HENÜZ TAM İSABET YAPAN BULUNMUYOR
+                    </div>
+                  ) : (
+                    <table className="w-full table-fixed text-left tabular-nums">
+                      <thead>
+                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                          <th className="py-2.5 px-1 w-[26px] sm:w-12">#</th>
+                          <th className="py-2.5 px-1">Yarışmacı</th>
+                          <th className="py-2.5 px-1 w-[40px] sm:w-20 text-center text-cyan-300">DFO</th>
+                          <th className="py-2.5 px-1 w-[40px] sm:w-20 text-center text-indigo-300">TFF</th>
+                          <th className="py-2.5 px-1 w-[42px] sm:w-20 text-center text-emerald-300">Canlı</th>
+                          <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center text-emerald-400 bg-emerald-600/15 rounded-t-lg">Master</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-blue-900/40">
+                        {currentWeekBucket.SKOR_MASTER.map((row) => (
+                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
+                            <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
+                            <td className="py-2 px-1 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-2 px-1 text-center text-indigo-300 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-2 px-1 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliSkor > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                  +{row.canliSkor}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center text-emerald-400 font-black text-xs sm:text-base bg-emerald-600/10">
+                              {row.toplamSkor}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                ) : (
+                  /* Haftalık Tekli Listeler: DFO, TFF, MASTER SKOR (Düz), DFO SKOR, TFF SKOR */
+                  (() => {
+                    const list =
+                      weekSubTab === 'DFO'
+                        ? currentWeekBucket.DFO
+                        : weekSubTab === 'TFF'
+                        ? currentWeekBucket.TFF
+                        : weekSkorMode === 'DFO'
+                        ? currentWeekBucket.SKOR_DFO
+                        : weekSkorMode === 'TFF'
+                        ? currentWeekBucket.SKOR_TFF
+                        : currentWeekBucket.SKOR_MASTER.map((r) => ({
+                            id: r.id,
+                            name: r.name,
+                            rank: r.rank,
+                            pts: r.toplamSkor,
+                            liveAdd: r.canliSkor
+                          }));
+
+                    if (list.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
+                          {effectiveBulletinWeek}. HAFTADA BU KATEGORİDE HENÜZ PUAN / İSABET BULUNMUYOR
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <table className="w-full table-fixed text-left tabular-nums">
+                        <thead>
+                          <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                            <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                            <th className="py-2.5 px-2">Yarışmacı</th>
+                            <th className="py-2.5 px-3 w-32 sm:w-44 text-right">
+                              {weekSubTab === 'DFO' && <span className="text-cyan-300">DFO Puanı</span>}
+                              {weekSubTab === 'TFF' && <span className="text-indigo-300">TFF Puanı</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-emerald-400">Master Skor</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'DFO' && <span className="text-cyan-300">DFO Skor</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'TFF' && <span className="text-indigo-300">TFF Skor</span>}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-blue-900/40">
+                          {list.map((row) => (
+                            <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                              <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
+                              <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="truncate">{row.name}</span>
+                                  {row.liveAdd > 0 && (
+                                    <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                      +{row.liveAdd} CANLI
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base">
+                                {weekSubTab === 'DFO' && <span className="text-cyan-300">{row.pts}</span>}
+                                {weekSubTab === 'TFF' && <span className="text-indigo-300">{row.pts}</span>}
+                                {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-emerald-400">{row.pts}</span>}
+                                {weekSubTab === 'SKOR' && weekSkorMode === 'DFO' && <span className="text-cyan-300">{row.pts}</span>}
+                                {weekSubTab === 'SKOR' && weekSkorMode === 'TFF' && <span className="text-indigo-300">{row.pts}</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    );
+                  })()
+                )}
               </div>
             )}
 
-            {/* 1. CANLI SEKMESİ (VARSAYILAN) */}
-            {liveTableTab === 'CANLI' ? (
-              <table className="w-full table-fixed text-left tabular-nums">
-                <thead>
-                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                    <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
-                    <th className="py-2.5 px-1">Yarışmacı</th>
-                    <th className="py-2.5 px-0.5 w-[40px] sm:w-20 text-center">Kesin</th>
-                    <th className="py-2.5 px-0.5 w-[44px] sm:w-20 text-center">+Canlı</th>
-                    <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center">Skor</th>
-                    <th className="py-2.5 px-1 w-[48px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">
-                      <span className="sm:hidden">Toplam</span>
-                      <span className="hidden sm:inline">Canlı Toplam</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {liveStandingsTable.MASTER.map((row) => {
-                    const diff = row.kesinSira - row.rankMaster;
-                    return (
-                      <tr key={row.id} className={row.canliMaster > 0 ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'hover:bg-[#0f1d38]'}>
-                        <td className="py-2 px-1 font-black text-slate-300 text-[10px] sm:text-sm">
-                          <span>{row.rankMaster}</span>
-                          {diff > 0 && <span className="ml-0.5 text-[9px] text-white">▲</span>}
-                          {diff < 0 && <span className="ml-0.5 text-[9px] text-slate-400">▼</span>}
-                        </td>
-                        <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                          {row.name}
-                        </td>
-                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.kesinMaster}</td>
-                        <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">
-                          {row.canliMaster > 0 ? `+${row.canliMaster}` : '0'}
-                        </td>
-                        <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamSkor}</td>
-                        <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.toplamMaster}</td>
+            {/* ========================================================================= */}
+            {/* MOD 2: GENEL PUAN DURUMLARI (MASTER | DFO | TFF | SKOR)                   */}
+            {/* ========================================================================= */}
+            {liveTableTab !== 'WEEK_LIVE' && (
+              <>
+                {/* GENEL MASTER ALT SEKMELERİ: MASTER PUAN (DÜZ) | DETAYLI MASTER */}
+                {liveTableTab === 'MASTER' && (
+                  <div className="flex items-center justify-center gap-2 mb-3 pb-3 border-b border-blue-900/50">
+                    <button
+                      onClick={() => setMasterSubTab('DUZ')}
+                      className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                        masterSubTab === 'DUZ'
+                          ? 'bg-sky-500/20 text-sky-200 border border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.3)]'
+                          : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                      }`}
+                    >
+                      MASTER PUAN
+                    </button>
+                    <button
+                      onClick={() => setMasterSubTab('DETAYLI')}
+                      className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                        masterSubTab === 'DETAYLI'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                          : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                      }`}
+                    >
+                      DETAYLI MASTER
+                    </button>
+                  </div>
+                )}
+
+                {/* GENEL SKOR ALT SEKMELERİ: MASTER SKOR (DÜZ) | DETAYLI MASTER | DFO SKOR | TFF SKOR */}
+                {liveTableTab === 'SKOR' && (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mb-3 pb-3 border-b border-blue-900/50">
+                    {([
+                      { key: 'DUZ', label: 'MASTER SKOR' },
+                      { key: 'DETAYLI', label: 'DETAYLI MASTER' },
+                      { key: 'DFO', label: 'DFO SKOR' },
+                      { key: 'TFF', label: 'TFF SKOR' }
+                    ] as const).map((st) => (
+                      <button
+                        key={st.key}
+                        onClick={() => setSkorSubTab(st.key)}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                          skorSubTab === st.key
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                            : 'bg-[#040917] text-slate-400 border border-blue-950 hover:text-white hover:border-blue-700'
+                        }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 1A. GENEL DÜZ MASTER */}
+                {liveTableTab === 'MASTER' && masterSubTab === 'DUZ' ? (
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-3 w-28 sm:w-40 text-right text-sky-300">Master Puanı</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : liveTableTab === 'MASTER' ? (
-              /* 2. MASTER SEKMESİ (TÜM SÜTUNLAR BİR ARADA) */
-              <table className="w-full table-fixed text-left tabular-nums">
-                <thead>
-                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                    <th className="py-2.5 px-1 w-[26px] sm:w-10">#</th>
-                    <th className="py-2.5 px-1">Yarışmacı</th>
-                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">DFO</th>
-                    <th className="py-2.5 px-0.5 w-[34px] sm:w-16 text-center">TFF</th>
-                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center">Bonus</th>
-                    <th className="py-2.5 px-0.5 w-[36px] sm:w-20 text-center">Skor</th>
-                    <th className="py-2.5 px-1 w-[46px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">Master</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {liveStandingsTable.MASTER.map((row) => (
-                    <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                      <td className="py-2 px-1 font-black text-slate-300 text-[10px] sm:text-sm">{row.rankMaster}</td>
-                      <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                        {row.name}
-                      </td>
-                      <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
-                      <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
-                      <td className="py-2 px-0.5 text-center text-white font-bold text-[11px] sm:text-sm">
-                        {row.bonus > 0 ? `+${row.bonus}` : '0'}
-                      </td>
-                      <td className="py-2 px-0.5 text-center text-white font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
-                      <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.toplamMaster}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : liveTableTab === 'SKOR' && skorSubTab === 'MASTER' ? (
-              /* 3. SKOR -> MASTER SKOR (DFO SKOR + TFF SKOR = MASTER SKOR) */
-              <table className="w-full table-fixed text-left tabular-nums">
-                <thead>
-                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
-                    <th className="py-2.5 px-1 w-[28px] sm:w-12">#</th>
-                    <th className="py-2.5 px-1">Yarışmacı</th>
-                    <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">DFO</th>
-                    <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center">TFF</th>
-                    <th className="py-2.5 px-1 w-[56px] sm:w-28 text-center bg-black border-x border-t border-slate-700 rounded-t-lg">Master</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {liveStandingsTable.SKOR_MASTER.map((row) => (
-                    <tr key={row.id} className="hover:bg-[#0f1d38] transition-colors">
-                      <td className="py-2 px-1 font-black text-slate-300 text-[11px] sm:text-sm">{row.rankSkor}</td>
-                      <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                        {row.name}
-                      </td>
-                      <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
-                      <td className="py-2 px-1 text-center text-white font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
-                      <td className="py-2 px-1 text-center text-white font-black text-xs sm:text-base bg-black/50">{row.toplamSkor}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              /* 4. TEKLİ LİSTELER: DFO PUAN, TFF PUAN, DFO SKOR, TFF SKOR */
-              <table className="w-full table-fixed text-left tabular-nums">
-                <thead>
-                  <tr className="bg-black/60 text-white border-b border-slate-700 text-[10px] sm:text-xs uppercase tracking-wider">
-                    <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
-                    <th className="py-2.5 px-2">Yarışmacı</th>
-                    <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
-                      {liveTableTab === 'DFO' && 'DFO Puanı'}
-                      {liveTableTab === 'TFF' && 'TFF Puanı'}
-                      {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && 'DFO Skor'}
-                      {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && 'TFF Skor'}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {(liveTableTab === 'DFO'
-                    ? liveStandingsTable.DFO
-                    : liveTableTab === 'TFF'
-                    ? liveStandingsTable.TFF
-                    : skorSubTab === 'DFO'
-                    ? liveStandingsTable.SKOR_DFO
-                    : liveStandingsTable.SKOR_TFF
-                  ).map((row) => (
-                    <tr key={row.id} className={row.liveAdd > 0 ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'hover:bg-[#0f1d38]'}>
-                      <td className="py-2.5 px-2 font-black text-slate-300 text-xs sm:text-sm">{row.rank}</td>
-                      <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="truncate">{row.name}</span>
-                          {row.liveAdd > 0 && (
-                            <span className="shrink-0 bg-black border border-white/60 text-white text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-                              +{row.liveAdd}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-white">{row.pts}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {liveStandingsTable.MASTER.map((row) => {
+                        const diff = row.kesinSira - row.rankMaster;
+                        return (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                              <span>{row.rankMaster}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.canliMaster > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.canliMaster} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-sky-300">{row.toplamMaster}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : liveTableTab === 'MASTER' && masterSubTab === 'DETAYLI' ? (
+                  /* 1B. GENEL DETAYLI MASTER (CANLI +X VE MASTER PUANI YAN YANA) */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                        <th className="py-2.5 px-0.5 w-[24px] sm:w-10">#</th>
+                        <th className="py-2.5 px-1">Yarışmacı</th>
+                        <th className="py-2.5 px-0.5 w-[30px] sm:w-14 text-center text-cyan-300">DFO</th>
+                        <th className="py-2.5 px-0.5 w-[30px] sm:w-14 text-center text-indigo-300">TFF</th>
+                        <th className="py-2.5 px-0.5 w-[28px] sm:w-16 text-center text-purple-300">Bns</th>
+                        <th className="py-2.5 px-0.5 w-[30px] sm:w-16 text-center text-emerald-400">Skor</th>
+                        <th className="py-2.5 px-0.5 w-[38px] sm:w-20 text-center text-emerald-300">Canlı</th>
+                        <th className="py-2.5 px-0.5 w-[42px] sm:w-24 text-center text-sky-300 bg-blue-600/20 rounded-t-lg">Master</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {liveStandingsTable.MASTER.map((row) => {
+                        const diff = row.kesinSira - row.rankMaster;
+                        return (
+                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2 px-0.5 font-black text-slate-400 text-[10px] sm:text-sm">
+                              <span>{row.rankMaster}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-2 px-1 font-black text-white text-[10.5px] sm:text-sm truncate" title={row.name}>
+                              {row.name}
+                            </td>
+                            <td className="py-2 px-0.5 text-center text-cyan-300 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-2 px-0.5 text-center text-indigo-300 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-2 px-0.5 text-center text-purple-300 font-bold text-[10.5px] sm:text-sm">
+                              {row.bonus > 0 ? `+${row.bonus}` : '0'}
+                            </td>
+                            <td className="py-2 px-0.5 text-center text-emerald-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-2 px-0.5 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliMaster > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 sm:px-1.5 py-0.5 rounded">
+                                  +{row.canliMaster}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-0.5 text-center text-sky-300 font-black text-xs sm:text-base bg-blue-600/10">
+                              {row.toplamMaster}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : liveTableTab === 'SKOR' && skorSubTab === 'DUZ' ? (
+                  /* 2A. GENEL DÜZ MASTER SKOR */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-3 w-28 sm:w-40 text-right text-emerald-400">Master Skor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {liveStandingsTable.SKOR_MASTER.map((row) => {
+                        const diff = row.prevSkorRank - row.rankSkor;
+                        return (
+                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                              <span>{row.rankSkor}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.canliSkor > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.canliSkor} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base text-emerald-400">{row.toplamSkor}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : liveTableTab === 'SKOR' && skorSubTab === 'DETAYLI' ? (
+                  /* 2B. GENEL DETAYLI MASTER SKOR (DFO + TFF + CANLI + MASTER) */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider">
+                        <th className="py-2.5 px-1 w-[26px] sm:w-12">#</th>
+                        <th className="py-2.5 px-1">Yarışmacı</th>
+                        <th className="py-2.5 px-1 w-[40px] sm:w-20 text-center text-cyan-300">DFO</th>
+                        <th className="py-2.5 px-1 w-[40px] sm:w-20 text-center text-indigo-300">TFF</th>
+                        <th className="py-2.5 px-1 w-[42px] sm:w-20 text-center text-emerald-300">Canlı</th>
+                        <th className="py-2.5 px-1 w-[48px] sm:w-24 text-center text-emerald-400 bg-emerald-600/15 rounded-t-lg">Master</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {liveStandingsTable.SKOR_MASTER.map((row) => {
+                        const diff = row.prevSkorRank - row.rankSkor;
+                        return (
+                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
+                              <span>{row.rankSkor}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-2 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
+                              {row.name}
+                            </td>
+                            <td className="py-2 px-1 text-center text-cyan-300 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-2 px-1 text-center text-indigo-300 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-2 px-1 text-center font-black text-[10px] sm:text-xs">
+                              {row.canliSkor > 0 ? (
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                  +{row.canliSkor}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center text-emerald-400 font-black text-xs sm:text-base bg-emerald-600/10">
+                              {row.toplamSkor}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  /* 3. GENEL TEKLİ LİSTELER: DFO PUAN, TFF PUAN, DFO SKOR, TFF SKOR (+X CANLI ROZETLİ) */
+                  <table className="w-full table-fixed text-left tabular-nums">
+                    <thead>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-blue-500/30 text-[10px] sm:text-xs uppercase tracking-wider">
+                        <th className="py-2.5 px-2 w-10 sm:w-14">#</th>
+                        <th className="py-2.5 px-2">Yarışmacı</th>
+                        <th className="py-2.5 px-3 w-28 sm:w-40 text-right">
+                          {liveTableTab === 'DFO' && <span className="text-cyan-300">DFO Puanı</span>}
+                          {liveTableTab === 'TFF' && <span className="text-indigo-300">TFF Puanı</span>}
+                          {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-cyan-300">DFO Skor</span>}
+                          {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-indigo-300">TFF Skor</span>}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-900/40">
+                      {(liveTableTab === 'DFO'
+                        ? liveStandingsTable.DFO
+                        : liveTableTab === 'TFF'
+                        ? liveStandingsTable.TFF
+                        : skorSubTab === 'DFO'
+                        ? liveStandingsTable.SKOR_DFO
+                        : liveStandingsTable.SKOR_TFF
+                      ).map((row) => {
+                        const diff = row.prevRank - row.rank;
+                        return (
+                          <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/25'}>
+                            <td className="py-2.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                              <span>{row.rank}</span>
+                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                            </td>
+                            <td className="py-2.5 px-2 font-black text-white text-xs sm:text-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{row.name}</span>
+                                {row.liveAdd > 0 && (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+                                    +{row.liveAdd} CANLI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-sm sm:text-base">
+                              {liveTableTab === 'DFO' && <span className="text-cyan-300">{row.pts}</span>}
+                              {liveTableTab === 'TFF' && <span className="text-indigo-300">{row.pts}</span>}
+                              {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-cyan-300">{row.pts}</span>}
+                              {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-indigo-300">{row.pts}</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </>
             )}
           </>
         )}
