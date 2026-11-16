@@ -406,6 +406,7 @@ export const localTeamLogos: Record<string, string> = {
   "KOPENHAG": "https://tr.wikipedia.org/wiki/Special:FilePath/FC_K%C3%B8benhavn.png",
   "SANTA COLOMA FC": "https://en.wikipedia.org/wiki/Special:FilePath/FC_Santa_Coloma_logo.svg",
   "RAPID WIEN": "https://en.wikipedia.org/wiki/Special:FilePath/SK_Rapid_Wien_Logo.svg",
+  "TORPEDO KUTAISI": "https://images.fotmob.com/image_resources/logo/teamlogo/2216.png",
   "FCSB": "https://tr.wikipedia.org/wiki/Special:FilePath/Fcsb-logo.svg",
   "AUDA RIGA": "https://en.wikipedia.org/wiki/Special:FilePath/FK_Auda_logo.png",
   "BRANN": "https://en.wikipedia.org/wiki/Special:FilePath/Brann_logo.svg",
