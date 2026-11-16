@@ -84,7 +84,7 @@ export default function PredictionPortal() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      const { data: bultenData } = await supabase.from('matches_bulletin').select('*').limit(1000);
+      const { data: bultenData } = await supabase.from('matches_bulletin').select('*').gte('week_num', 41).limit(10000);
       if (bultenData) {
          const newMap: Record<number, any[]> = {};
          let maxWeek = 0;
