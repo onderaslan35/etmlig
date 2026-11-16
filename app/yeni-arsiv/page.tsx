@@ -491,12 +491,12 @@ export default function YeniArsivPage() {
     <div className="min-h-screen bg-[#050a14] text-slate-100 pb-20">
       <div className="max-w-6xl mx-auto px-2 sm:px-6 pt-3 sm:pt-5">
         
-        {/* ÜST KOMPAKT KUMANDA CETVELİ (TELEFONDA EKRANI BOĞMAZ) */}
+        {/* ÜST KOMPAKT KUMANDA CETVELİ */}
         <div className="flex flex-col items-center justify-center mb-3 sm:mb-5">
-          <div className="w-full max-w-5xl bg-[#071126] border border-blue-500/30 p-1.5 sm:p-2 rounded-xl shadow-lg flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
+          <div className="w-full max-w-5xl bg-[#071126] border border-slate-800 p-1.5 sm:p-2 rounded-xl shadow-md flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
             
             {/* Hafta Seçici */}
-            <div className="flex items-center gap-1 bg-[#040917] border border-blue-800/70 rounded-lg px-2 py-1">
+            <div className="flex items-center gap-1 bg-[#040917] border border-slate-700 rounded-lg px-2 py-1">
               <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-sky-300 uppercase">HAFTA:</span>
               <select
                 value={selectedWeek}
@@ -511,61 +511,61 @@ export default function YeniArsivPage() {
               </select>
             </div>
 
-            {/* 1. Her Zaman Güncel Genel Puan */}
+            {/* 1. Genel Puan */}
             <button
               onClick={() => setActiveTab('TOTAL_STANDINGS')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
                 activeTab === 'TOTAL_STANDINGS'
-                  ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white border border-sky-300 shadow-[0_0_10px_rgba(56,189,248,0.4)]'
-                  : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:text-white'
+                  ? 'bg-blue-700 text-white border border-sky-400/70'
+                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
               }`}
             >
               GENEL PUAN
             </button>
 
-            {/* 2. Seçilen Haftanın Maç Arşivi */}
+            {/* 2. Maç Arşivi */}
             <button
               onClick={() => setActiveTab('CARDS')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
                 activeTab === 'CARDS'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-sky-300 shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                  : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:text-white'
+                  ? 'bg-blue-700 text-white border border-sky-400/70'
+                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
               }`}
             >
               MAÇ ARŞİVİ
             </button>
 
-            {/* 3. Seçilen Haftanın Tekil Özeti */}
+            {/* 3. Hafta Özeti */}
             <button
               onClick={() => setActiveTab('WEEK_CHECK')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
                 activeTab === 'WEEK_CHECK'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border border-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.4)]'
-                  : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:text-white'
+                  ? 'bg-blue-700 text-white border border-sky-400/70'
+                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
               }`}
             >
               {selectedWeek}. HAFTA ÖZETİ
             </button>
 
-            {/* 4. YENİ: Seçilen Haftanın Kümülatif Genel Puanı (1..selectedWeek Toplamı) */}
+            {/* 4. Hafta Genel */}
             <button
               onClick={() => setActiveTab('WEEK_CUMULATIVE')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
                 activeTab === 'WEEK_CUMULATIVE'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border border-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.45)]'
-                  : 'bg-[#040917] text-slate-300 border border-blue-900/60 hover:text-white'
+                  ? 'bg-blue-700 text-white border border-sky-400/70'
+                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
               }`}
             >
               {selectedWeek}. HAFTA GENEL
             </button>
 
-            {/* 5. YENİ: 1. Haftadan Bugüne Kümülatif Liderler Kronolojisi */}
+            {/* 5. Liderler */}
             <button
               onClick={() => setActiveTab('LEADERS_TIMELINE')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
                 activeTab === 'LEADERS_TIMELINE'
-                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border border-orange-300 shadow-[0_0_10px_rgba(249,115,22,0.45)]'
-                  : 'bg-[#040917] text-orange-300 border border-orange-900/50 hover:text-white'
+                  ? 'bg-blue-700 text-white border border-sky-400/70'
+                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
               }`}
             >
               LİDERLER
@@ -843,17 +843,17 @@ export default function YeniArsivPage() {
             {/* SEKME 3 & 4: GENEL PUAN DURUMU VE SEÇİLEN HAFTANIN KÜMÜLATİF GENELİ     */}
             {/* ======================================================================= */}
             {(activeTab === 'TOTAL_STANDINGS' || activeTab === 'WEEK_CUMULATIVE') && (
-              <div className="max-w-5xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-blue-500/30 rounded-xl shadow-[0_0_30px_rgba(30,64,175,0.25)]">
+              <div className="max-w-5xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-xl shadow-xl">
                 
-                {/* 📌 ULTRA KOMPAKT DONDURULMUŞ PENCERE (EKRANI BOĞMAZ, ALTINDAN LİSTE AKAR) */}
-                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-blue-500/40 px-1.5 pt-1.5 sm:px-5 sm:pt-3 shadow-[0_8px_22px_rgba(0,0,0,0.75)]">
+                {/* DONDURULMUŞ ÜST PENCERE */}
+                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-slate-700/80 px-1.5 pt-1.5 sm:px-5 sm:pt-3 shadow-md">
                   
-                  {/* Mod Başlığı + Tek Sıra Kompakt Sekme Cetveli */}
-                  <div className="flex flex-wrap items-center justify-between gap-1 pb-1.5 border-b border-blue-900/60">
+                  {/* Başlık + Sekme Cetveli */}
+                  <div className="flex flex-wrap items-center justify-between gap-1 pb-1.5 border-b border-slate-800">
                     <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase px-1 text-sky-200">
                       {activeTab === 'WEEK_CUMULATIVE'
-                        ? `📊 1 – ${selectedWeek}. HAFTA KÜMÜLATİF GENEL`
-                        : '🏆 GENEL PUAN DURUMU'}
+                        ? `${selectedWeek}. HAFTA GENEL PUAN DURUMU`
+                        : 'GENEL PUAN DURUMU'}
                     </span>
 
                     {/* Sıralama: CANLI -> MASTER -> DFO -> TFF -> SKOR -> BONUS */}
@@ -865,24 +865,24 @@ export default function YeniArsivPage() {
                         const isTabActive = standingsFilter === tab;
                         const isLiveGreen = tab === 'CANLI' && activeLiveMatchCount > 0;
 
-                        let btnCls = 'bg-[#040917] text-slate-300 border-blue-900/60 hover:text-white';
+                        let btnCls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
                         if (isTabActive) {
-                          if (tab === 'TFF') btnCls = 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-rose-300 shadow-[0_0_12px_rgba(225,29,72,0.6)]';
-                          else if (tab === 'DFO') btnCls = 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-sky-300 shadow-[0_0_12px_rgba(59,130,246,0.55)]';
-                          else if (tab === 'BONUS') btnCls = 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.5)]';
-                          else if (tab === 'SKOR') btnCls = 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-300 shadow-[0_0_12px_rgba(249,115,22,0.5)]';
-                          else if (tab === 'CANLI' && isLiveGreen) btnCls = 'bg-emerald-600 text-white border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.5)]';
-                          else btnCls = 'bg-gradient-to-r from-sky-500 to-blue-600 text-white border-sky-200 shadow-[0_0_12px_rgba(56,189,248,0.45)]';
+                          if (tab === 'TFF') btnCls = 'bg-rose-700 text-white border-rose-400/80';
+                          else if (tab === 'DFO') btnCls = 'bg-blue-700 text-white border-sky-400/80';
+                          else if (tab === 'BONUS') btnCls = 'bg-emerald-700 text-white border-emerald-400/80';
+                          else if (tab === 'SKOR') btnCls = 'bg-orange-600 text-white border-orange-300/80';
+                          else if (tab === 'CANLI' && isLiveGreen) btnCls = 'bg-emerald-700 text-white border-emerald-400/80';
+                          else btnCls = 'bg-sky-700 text-white border-sky-300/80';
                         } else if (tab === 'CANLI' && isLiveGreen) {
-                          btnCls = 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60';
+                          btnCls = 'bg-emerald-950/80 text-emerald-300 border-emerald-700';
                         } else if (tab === 'TFF') {
-                          btnCls = 'bg-[#040917] text-rose-400 border-rose-900/60';
+                          btnCls = 'bg-[#040917] text-rose-400 border-slate-800 hover:border-rose-700';
                         } else if (tab === 'DFO') {
-                          btnCls = 'bg-[#040917] text-sky-400 border-blue-900/60';
+                          btnCls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
                         } else if (tab === 'BONUS') {
-                          btnCls = 'bg-[#040917] text-emerald-400 border-emerald-900/60';
+                          btnCls = 'bg-[#040917] text-emerald-400 border-slate-800 hover:border-emerald-700';
                         } else if (tab === 'SKOR') {
-                          btnCls = 'bg-[#040917] text-orange-400 border-orange-900/60';
+                          btnCls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
                         }
 
                         return (
@@ -893,7 +893,7 @@ export default function YeniArsivPage() {
                               if (tab === 'MASTER') setMasterSubFilter('DUZ');
                               if (tab === 'SKOR') setSkorSubFilter('DUZ');
                             }}
-                            className={`px-2 sm:px-3 py-1 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-all ${btnCls}`}
+                            className={`px-2 sm:px-3 py-1 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${btnCls}`}
                           >
                             {tab === 'CANLI' && activeLiveMatchCount > 0 ? `CANLI (${activeLiveMatchCount})` : tab}
                           </button>
@@ -902,25 +902,25 @@ export default function YeniArsivPage() {
                     </div>
                   </div>
 
-                  {/* MASTER Hemen Alt Satırı: MASTER PUAN | DETAYLI MASTER (İnce Şerit) */}
+                  {/* MASTER Alt Satırı: MASTER PUAN | DETAYLI MASTER */}
                   {standingsFilter === 'MASTER' && (
-                    <div className="flex items-center justify-center gap-1.5 py-1 border-b border-blue-900/50">
+                    <div className="flex items-center justify-center gap-1.5 py-1 border-b border-slate-800">
                       <button
                         onClick={() => setMasterSubFilter('DUZ')}
-                        className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-all ${
+                        className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
                           masterSubFilter === 'DUZ'
-                            ? 'bg-sky-500/20 text-sky-200 border-sky-400'
-                            : 'bg-[#040917] text-slate-400 border-blue-950 hover:text-white'
+                            ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                            : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
                         }`}
                       >
                         MASTER PUAN
                       </button>
                       <button
                         onClick={() => setMasterSubFilter('DETAYLI')}
-                        className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-all ${
+                        className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
                           masterSubFilter === 'DETAYLI'
-                            ? 'bg-sky-500/25 text-white border-sky-300'
-                            : 'bg-[#040917] text-slate-400 border-blue-950 hover:text-white'
+                            ? 'bg-sky-900/50 text-white border-sky-300/70'
+                            : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
                         }`}
                       >
                         DETAYLI MASTER
@@ -928,20 +928,20 @@ export default function YeniArsivPage() {
                     </div>
                   )}
 
-                  {/* SKOR Hemen Alt Satırı: MASTER SKOR | DETAYLI | DFO SKOR | TFF SKOR */}
+                  {/* SKOR Alt Satırı: MASTER SKOR | DETAYLI | DFO SKOR | TFF SKOR */}
                   {standingsFilter === 'SKOR' && (
-                    <div className="flex items-center justify-center gap-1 py-1 border-b border-blue-900/50">
+                    <div className="flex items-center justify-center gap-1 py-1 border-b border-slate-800">
                       {([
-                        { key: 'DUZ', label: 'MASTER SKOR', cls: 'bg-orange-500/20 text-orange-300 border-orange-400' },
-                        { key: 'DETAYLI', label: 'DETAYLI', cls: 'bg-orange-500/25 text-white border-orange-300' },
-                        { key: 'DFO', label: 'DFO SKOR', cls: 'bg-blue-600/25 text-sky-300 border-sky-400' },
-                        { key: 'TFF', label: 'TFF SKOR', cls: 'bg-rose-600/25 text-rose-300 border-rose-400' }
+                        { key: 'DUZ', label: 'MASTER SKOR', cls: 'bg-orange-950/60 text-orange-300 border-orange-400/70' },
+                        { key: 'DETAYLI', label: 'DETAYLI', cls: 'bg-orange-950/60 text-white border-orange-300/70' },
+                        { key: 'DFO', label: 'DFO SKOR', cls: 'bg-blue-950/60 text-sky-300 border-sky-400/70' },
+                        { key: 'TFF', label: 'TFF SKOR', cls: 'bg-rose-950/60 text-rose-300 border-rose-400/70' }
                       ] as const).map((st) => (
                         <button
                           key={st.key}
                           onClick={() => setSkorSubFilter(st.key)}
-                          className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-all ${
-                            skorSubFilter === st.key ? st.cls : 'bg-[#040917] text-slate-400 border-blue-950 hover:text-white'
+                          className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                            skorSubFilter === st.key ? st.cls : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
                           }`}
                         >
                           {st.label}
@@ -950,9 +950,9 @@ export default function YeniArsivPage() {
                     </div>
                   )}
 
-                  {/* Canlı Bilgi Satırı (İnce Tek Satır) */}
+                  {/* Canlı Bilgi Satırı */}
                   {standingsFilter === 'CANLI' && (
-                    <div className="py-1 border-b border-blue-900/50 text-center text-[9.5px] sm:text-[11px]">
+                    <div className="py-1 border-b border-slate-800 text-center text-[9.5px] sm:text-[11px]">
                       {activeLiveMatchCount > 0 ? (
                         <span className="text-emerald-400 font-black">
                           🔴 {activeLiveMatchCount} maç canlı oynanıyor — anlık puanlar (+Canlı) dahildir.
@@ -965,7 +965,7 @@ export default function YeniArsivPage() {
                     </div>
                   )}
 
-                  {/* 📌 DONDURULMUŞ SÜTUN BAŞLIKLARI */}
+                  {/* DONDURULMUŞ SÜTUN BAŞLIKLARI */}
                   {standingsFilter === 'MASTER' && masterSubFilter === 'DUZ' ? (
                     <table className="w-full table-fixed text-left tabular-nums">
                       <colgroup>
@@ -1069,7 +1069,7 @@ export default function YeniArsivPage() {
                   )}
                 </div>
 
-                {/* 📜 AKAN LİSTE GÖVDESİ (DARALTILMIŞ TEMİZ SATIRLAR) */}
+                {/* AKAN LİSTE GÖVDESİ */}
                 <div className="px-1.5 pb-3 sm:px-5 sm:pb-5">
                   {standingsFilter === 'MASTER' && masterSubFilter === 'DUZ' ? (
                     <table className="w-full table-fixed text-left tabular-nums">
@@ -1078,13 +1078,13 @@ export default function YeniArsivPage() {
                         <col />
                         <col className="w-24 sm:w-36" />
                       </colgroup>
-                      <tbody className="divide-y divide-blue-900/35">
+                      <tbody className="divide-y divide-slate-800/70">
                         {cumulativeStandings.map((row, idx) => {
                           const currentRank = idx + 1;
                           const prevRank = prevWeekRankMap[row.id];
                           const diff = activeTab === 'WEEK_CUMULATIVE' && prevRank ? prevRank - currentRank : 0;
                           return (
-                            <tr key={row.id} className="hover:bg-blue-900/25">
+                            <tr key={row.id} className="hover:bg-blue-900/20">
                               <td className="py-1.5 px-1.5 font-black text-slate-400 text-[11px] sm:text-sm">
                                 <span>{currentRank}</span>
                                 {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
@@ -1108,13 +1108,13 @@ export default function YeniArsivPage() {
                         <col className="w-[34px] sm:w-20" />
                         <col className="w-[44px] sm:w-24" />
                       </colgroup>
-                      <tbody className="divide-y divide-blue-900/35">
+                      <tbody className="divide-y divide-slate-800/70">
                         {cumulativeStandings.map((row, idx) => {
                           const currentRank = idx + 1;
                           const prevRank = prevWeekRankMap[row.id];
                           const diff = activeTab === 'WEEK_CUMULATIVE' && prevRank ? prevRank - currentRank : 0;
                           return (
-                            <tr key={row.id} className="hover:bg-blue-900/25">
+                            <tr key={row.id} className="hover:bg-blue-900/20">
                               <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10.5px] sm:text-sm">
                                 <span>{currentRank}</span>
                                 {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
@@ -1147,13 +1147,13 @@ export default function YeniArsivPage() {
                         <col className="w-[36px] sm:w-20" />
                         <col className="w-[46px] sm:w-24" />
                       </colgroup>
-                      <tbody className="divide-y divide-blue-900/35">
+                      <tbody className="divide-y divide-slate-800/70">
                         {effectiveLiveStandings.map((row) => {
                           const diff = row.kesin_sira - row.canli_sira;
                           return (
                             <tr
                               key={row.user_id}
-                              className={row.canli_ek_puan > 0 ? 'bg-emerald-950/25 hover:bg-emerald-950/40' : 'hover:bg-blue-900/25'}
+                              className={row.canli_ek_puan > 0 ? 'bg-emerald-950/25 hover:bg-emerald-950/40' : 'hover:bg-blue-900/20'}
                             >
                               <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10px] sm:text-sm">
                                 <span>{row.canli_sira}</span>
@@ -1193,9 +1193,9 @@ export default function YeniArsivPage() {
                         <col className="w-[44px] sm:w-24" />
                         <col className="w-[52px] sm:w-28" />
                       </colgroup>
-                      <tbody className="divide-y divide-blue-900/35">
+                      <tbody className="divide-y divide-slate-800/70">
                         {cumulativeStandings.map((row, idx) => (
-                          <tr key={row.id} className="hover:bg-blue-900/25">
+                          <tr key={row.id} className="hover:bg-blue-900/20">
                             <td className="py-1.5 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
                             <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
                             <td className="py-1.5 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.dfoScores}</td>
@@ -1212,9 +1212,9 @@ export default function YeniArsivPage() {
                         <col />
                         <col className="w-24 sm:w-36" />
                       </colgroup>
-                      <tbody className="divide-y divide-blue-900/35">
+                      <tbody className="divide-y divide-slate-800/70">
                         {cumulativeStandings.map((row, idx) => (
-                          <tr key={row.id} className="hover:bg-blue-900/25">
+                          <tr key={row.id} className="hover:bg-blue-900/20">
                             <td className="py-1.5 px-1.5 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
                             <td className="py-1.5 px-1.5 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
                             <td className="py-1.5 px-2 text-right font-black text-xs sm:text-base">
@@ -1235,87 +1235,92 @@ export default function YeniArsivPage() {
             )}
 
             {/* ======================================================================= */}
-            {/* SEKME 5: HAFTA HAFTA KÜMÜLATİF LİDERLER KRONOLOJİSİ (1. HAFTA -> SON)   */}
+            {/* SEKME 5: LİDERLER TABLOSU (DETAYLI MASTER İLE BİREBİR AYNI SÜTUN ORANI) */}
             {/* ======================================================================= */}
             {activeTab === 'LEADERS_TIMELINE' && (
-              <div className="max-w-4xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-blue-500/30 rounded-xl shadow-2xl">
-                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-blue-500/40 px-2 pt-2 sm:px-5 sm:pt-3 shadow-[0_8px_20px_rgba(0,0,0,0.7)]">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-blue-800/50">
-                    <h2 className="text-[11px] sm:text-sm font-black text-orange-400 uppercase tracking-wider">
-                      👑 HAFTA HAFTA KÜMÜLATİF LİDERLER TABLOSU
+              <div className="max-w-5xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-xl shadow-xl">
+                
+                {/* DONDURULMUŞ BAŞLIK */}
+                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-slate-700/80 px-1.5 pt-1.5 sm:px-5 sm:pt-3 shadow-md">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 px-1">
+                    <h2 className="text-[10px] sm:text-xs font-black text-sky-200 uppercase tracking-wider">
+                      LİDERLER TABLOSU
                     </h2>
                     <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">
-                      Satıra tıklayarak o haftanın kümülatif sıralamasını açabilirsin
+                      Satıra tıklayarak o haftanın genel puan durumunu açabilirsin
                     </span>
                   </div>
 
                   <table className="w-full table-fixed text-left tabular-nums">
                     <colgroup>
-                      <col className="w-[54px] sm:w-24" />
+                      <col className="w-[34px] sm:w-14" />
                       <col />
-                      <col className="w-[42px] sm:w-20" />
-                      <col className="w-[46px] sm:w-24" />
-                      <col className="w-[92px] sm:w-48" />
+                      <col className="w-[34px] sm:w-16" />
+                      <col className="w-[34px] sm:w-16" />
+                      <col className="w-[34px] sm:w-18" />
+                      <col className="w-[34px] sm:w-20" />
+                      <col className="w-[44px] sm:w-24" />
                     </colgroup>
                     <thead>
                       <tr className="text-slate-200 text-[9px] sm:text-xs uppercase tracking-tight">
-                        <th className="py-1.5 px-1">Hafta</th>
-                        <th className="py-1.5 px-1 text-white">Kümülatif Lider</th>
+                        <th className="py-1.5 px-0.5 text-center">Hafta</th>
+                        <th className="py-1.5 px-1 text-white">Lider</th>
+                        <th className="py-1.5 px-0.5 text-center text-sky-400">DFO</th>
+                        <th className="py-1.5 px-0.5 text-center text-rose-500">TFF</th>
+                        <th className="py-1.5 px-0.5 text-center text-emerald-400">Bns</th>
                         <th className="py-1.5 px-0.5 text-center text-orange-400">Skor</th>
-                        <th className="py-1.5 px-1 text-center text-sky-300">Toplam</th>
-                        <th className="py-1.5 px-1 text-right text-slate-400">En Yakın / Fark</th>
+                        <th className="py-1.5 px-1 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
                       </tr>
                     </thead>
                   </table>
                 </div>
 
-                <div className="px-2 pb-3 sm:px-5 sm:pb-5">
+                {/* AKAN LİDERLER LİSTESİ (1, 2, 3... DİYE İNER; DFO, TFF, BONUS, SKOR, MASTER YAZAR) */}
+                <div className="px-1.5 pb-3 sm:px-5 sm:pb-5">
                   <table className="w-full table-fixed text-left tabular-nums">
                     <colgroup>
-                      <col className="w-[54px] sm:w-24" />
+                      <col className="w-[34px] sm:w-14" />
                       <col />
-                      <col className="w-[42px] sm:w-20" />
-                      <col className="w-[46px] sm:w-24" />
-                      <col className="w-[92px] sm:w-48" />
+                      <col className="w-[34px] sm:w-16" />
+                      <col className="w-[34px] sm:w-16" />
+                      <col className="w-[34px] sm:w-18" />
+                      <col className="w-[34px] sm:w-20" />
+                      <col className="w-[44px] sm:w-24" />
                     </colgroup>
-                    <tbody className="divide-y divide-blue-900/35">
-                      {cumulativeLeadersHistory.map((item, idx) => {
-                        const prevLeaderId = idx > 0 ? cumulativeLeadersHistory[idx - 1].leaderId : item.leaderId;
-                        const isNewLeader = idx > 0 && prevLeaderId !== item.leaderId;
-                        return (
-                          <tr
-                            key={item.week}
-                            onClick={() => {
-                              setSelectedWeek(item.week);
-                              setActiveTab('WEEK_CUMULATIVE');
-                            }}
-                            className="cursor-pointer hover:bg-blue-900/35 transition-colors"
-                            title={`${item.week}. Hafta kümülatif genel puan durumunu aç`}
-                          >
-                            <td className="py-1.5 px-1 font-black text-sky-300 text-[10.5px] sm:text-xs">
-                              {item.week}. Hafta
-                            </td>
-                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate">
-                              <span>{item.leaderName}</span>
-                              {isNewLeader && (
-                                <span className="ml-1 text-[8px] bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 px-1 py-0.5 rounded uppercase">
-                                  YENİ
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-1.5 px-0.5 text-center text-orange-400 font-bold text-[11px] sm:text-xs">
-                              {item.leaderScores}
-                            </td>
-                            <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-sm bg-sky-500/10">
-                              {item.leaderMaster}
-                            </td>
-                            <td className="py-1.5 px-1 text-right text-[9.5px] sm:text-xs text-slate-400 truncate">
-                              <span className="text-emerald-400 font-black">+{item.pointGap}</span>{' '}
-                              <span className="hidden sm:inline">({item.runnerUpName})</span>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                    <tbody className="divide-y divide-slate-800/70">
+                      {cumulativeLeadersHistory.map((item) => (
+                        <tr
+                          key={item.week}
+                          onClick={() => {
+                            setSelectedWeek(item.week);
+                            setActiveTab('WEEK_CUMULATIVE');
+                          }}
+                          className="cursor-pointer hover:bg-blue-900/25 transition-colors"
+                          title={`${item.week}. Hafta genel puan durumunu aç`}
+                        >
+                          <td className="py-1.5 px-0.5 text-center font-black text-slate-400 text-[10.5px] sm:text-sm">
+                            {item.week}
+                          </td>
+                          <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={item.leaderName}>
+                            {item.leaderName}
+                          </td>
+                          <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[11px] sm:text-sm">
+                            {item.leaderDfo}
+                          </td>
+                          <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[11px] sm:text-sm">
+                            {item.leaderTff}
+                          </td>
+                          <td className="py-1.5 px-0.5 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">
+                            {item.leaderBonus > 0 ? `+${item.leaderBonus}` : '0'}
+                          </td>
+                          <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[11px] sm:text-sm">
+                            {item.leaderScores}
+                          </td>
+                          <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
+                            {item.leaderMaster}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
