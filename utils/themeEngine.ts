@@ -227,7 +227,7 @@ export const localTeamLogos: Record<string, string> = {
   "SAN MARİNO": "https://images.fotmob.com/image_resources/logo/teamlogo/6035.png",
 
   // TÜRKİYE (KULÜPLER)
-  "BEŞIKTAŞ": "https://images.fotmob.com/image_resources/logo/teamlogo/10188_large.png",
+  "BEŞIKTAŞ": "https://images.fotmob.com/image_resources/logo/teamlogo/10188.png",
   "GALATASARAY": "https://images.fotmob.com/image_resources/logo/teamlogo/8637_large.png",
   "FENERBAHÇE": "https://images.fotmob.com/image_resources/logo/teamlogo/8695_large.png",
   "TRABZONSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/9752_large.png",
