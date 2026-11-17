@@ -463,31 +463,38 @@ export default function LiveMatchCard() {
 
       const fetchPredictionsPromise = (async () => {
         if (candidateWeeks.length === 0) return [];
-        let allPreds: any[] = [];
-        let from = 0;
-        const step = 1000;
-        let keepFetching = true;
-        while (keepFetching) {
-          const { data } = await supabase
-            .from('player_predictions')
-            .select('user_id, week_num, match_index, predicted_score')
-            .in('week_num', candidateWeeks)
-            .range(from, from + step - 1);
-          if (data && data.length > 0) {
-            allPreds = [...allPreds, ...data];
-            if (data.length < step) keepFetching = false;
-            else from += step;
-          } else {
-            keepFetching = false;
-          }
-        }
-        return allPreds;
+        const perWeekChunks = await Promise.all(
+          candidateWeeks.map(async (w) => {
+            let weekPreds: any[] = [];
+            let from = 0;
+            const step = 500;
+            let keepFetching = true;
+            while (keepFetching) {
+              const { data, error } = await supabase
+                .from('player_predictions')
+                .select('user_id, week_num, match_index, predicted_score')
+                .eq('week_num', w)
+                .order('match_index', { ascending: true })
+                .order('user_id', { ascending: true })
+                .range(from, from + step - 1);
+              if (error || !data || data.length === 0) {
+                keepFetching = false;
+              } else {
+                weekPreds = [...weekPreds, ...data];
+                if (data.length < step) keepFetching = false;
+                else from += step;
+              }
+            }
+            return weekPreds;
+          })
+        );
+        return perWeekChunks.flat();
       })();
 
       const [allPredictions, dbLiveMatchesRes] = await Promise.all([
         fetchPredictionsPromise,
         targetMatchIds.length > 0
-          ? supabase.from('live_matches').select('*').in('id', targetMatchIds).limit(2000)
+          ? supabase.from('live_matches').select('*').in('id', targetMatchIds)
           : Promise.resolve({ data: [] as any[] }),
         refreshOfficialKasa(candidateWeeks)
       ]);
@@ -496,7 +503,9 @@ export default function LiveMatchCard() {
       allPredictions.forEach((pred: any) => {
         const uid = String(pred.user_id || '').trim();
         if (!uid || EXCLUDED_IDS.has(uid)) return;
-        const cleanScore = String(pred.predicted_score || '').replace(/\s+/g, '');
+        const cleanScore = String(pred.predicted_score || '')
+          .replace(/\s+/g, '')
+          .replace(':', '-');
         if (cleanScore) {
           pDict[`${uid}-${pred.week_num}-${pred.match_index}`] = cleanScore;
         }
@@ -1496,19 +1505,36 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
       const currentH = parseInt(String(homeScore), 10);
       const currentA = parseInt(String(awayScore), 10);
 
+      const playerNameLookup: Record<string, string> = {};
       Object.keys(mergedAccounts).forEach((id) => {
-        if (EXCLUDED_IDS.has(id)) return;
+        if (!EXCLUDED_IDS.has(id) && mergedAccounts[id]?.name) {
+          playerNameLookup[id] = mergedAccounts[id].name;
+        }
+      });
+      officialSummaryRows.forEach((r) => {
+        const uid = String(r.user_id || '').trim();
+        if (uid && !EXCLUDED_IDS.has(uid) && !playerNameLookup[uid] && r.oyuncu_adi) {
+          playerNameLookup[uid] = r.oyuncu_adi;
+        }
+      });
+
+      const seenExactIds = new Set<string>();
+
+      Object.keys(playerNameLookup).forEach((id) => {
         const predStr = predictionsData[`${id}-${match.week_num}-${match.id}`];
         if (!predStr || predStr === '-' || predStr === 'PAS') return;
-        const name = mergedAccounts[id]?.name;
+        const name = playerNameLookup[id];
         if (!name) return;
 
-        const [pHStr, pAStr] = predStr.split('-');
-        const pH = parseInt(pHStr, 10);
-        const pA = parseInt(pAStr, 10);
+        const parts = predStr.split(/[-:]/);
+        if (parts.length < 2) return;
+        const pH = parseInt(parts[0], 10);
+        const pA = parseInt(parts[1], 10);
+        if (isNaN(pH) || isNaN(pA)) return;
 
         if (pH === currentH && pA === currentA) {
-          exactWinners.push({ id, name, score: predStr });
+          seenExactIds.add(id);
+          exactWinners.push({ id, name, score: `${currentH}-${currentA}` });
         } else if (pH >= currentH && pA >= currentA && !isFinishedStatus) {
           possibleWinners.push({ name, score: predStr });
         } else {
@@ -1516,12 +1542,25 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
         }
       });
 
+      if (isFinishedStatus && offMatch?.status === 'FINISHED' && Array.isArray(offMatch.winner_ids)) {
+        offMatch.winner_ids.forEach((wIdRaw: any) => {
+          const wId = String(wIdRaw || '').trim();
+          if (!wId || EXCLUDED_IDS.has(wId) || seenExactIds.has(wId)) return;
+          const wName = playerNameLookup[wId] || wId;
+          seenExactIds.add(wId);
+          exactWinners.push({ id: wId, name: wName, score: `${currentH}-${currentA}` });
+        });
+      }
+
       exactWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
       possibleWinners.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
       eliminatedPlayers.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
     }
 
-    const displayPoints = calcMatchPts(exactWinners.length);
+    const displayPoints =
+      isFinishedStatus && offMatch?.status === 'FINISHED' && Number(offMatch.points_awarded) > 0
+        ? Number(offMatch.points_awarded)
+        : calcMatchPts(exactWinners.length);
 
     let countdownText = '';
     if (now < matchTimeMs && (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD')) {
