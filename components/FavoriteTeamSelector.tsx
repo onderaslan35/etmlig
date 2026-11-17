@@ -9,7 +9,7 @@ export const AVAILABLE_FAVORITE_CLUBS = [
   'GÖZTEPE',
   'GALATASARAY',
   'FENERBAHÇE',
-  'BEŞİKTAŞ',
+  'BEŞIKTAŞ',
   'TRABZONSPOR',
   'KARŞIYAKA',
   'ALTAY',
