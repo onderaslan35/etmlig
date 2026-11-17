@@ -12,10 +12,12 @@ import {
 const EXCLUDED_IDS = new Set(['mankoman', '272727', '262787']);
 
 // Eski Şampiyonlar Kupa Rozeti (🏆) Kontrolü
-const PAST_CHAMPION_NAMES = new Set([
-  'ISMAIL EKER',
-  'OSMAN ALI AYDIN'
-]);
+// Şampiyonluk Kupası Sayıları (İstediğin ismi ekleyip karşısına kupa adedini yazabilirsin)
+const CHAMPION_CUPS: Record<string, number> = {
+  'ISMAIL EKER': 1,
+  'OSMAN ALI AYDIN': 2,
+  'MURAT KARA': 1
+};
 
 const normalizeTrName = (s: string) =>
   (s || '')
@@ -28,9 +30,14 @@ const normalizeTrName = (s: string) =>
     .replace(/Ö/g, 'O')
     .replace(/Ç/g, 'C');
 
+const getChampionCupCount = (name: string, isChampFlag?: boolean) => {
+  const count = CHAMPION_CUPS[normalizeTrName(name)] || 0;
+  if (count > 0) return count;
+  return isChampFlag ? 1 : 0;
+};
+
 const hasChampionCup = (name: string, isChampFlag?: boolean) => {
-  if (isChampFlag) return true;
-  return PAST_CHAMPION_NAMES.has(normalizeTrName(name));
+  return getChampionCupCount(name, isChampFlag) > 0;
 };
 
 const calcMatchPts = (winnerCount: number) => {
@@ -879,21 +886,27 @@ export default function YeniArsivPage() {
           a.name.localeCompare(b.name, 'tr')
       );
 
-  const renderPlayerNameWithCup = (name: string, isChamp: boolean, liveAdd: number = 0) => (
-    <div className="flex items-center gap-1.5 min-w-0">
-      <span className="truncate uppercase">{name}</span>
-      {isChamp && (
-        <span className="shrink-0 text-[11px] sm:text-xs leading-none" title="Lig Şampiyonu">
-          🏆
-        </span>
-      )}
-      {liveAdd > 0 && (
-        <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-          +{liveAdd} CANLI
-        </span>
-      )}
-    </div>
-  );
+  const renderPlayerNameWithCup = (name: string, isChamp: boolean, liveAdd: number = 0) => {
+    const cupCount = getChampionCupCount(name, isChamp);
+    return (
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="truncate uppercase">{name}</span>
+        {cupCount > 0 && (
+          <span
+            className="shrink-0 text-[11px] sm:text-xs leading-none tracking-tight"
+            title={`${cupCount} Kez Lig Şampiyonu`}
+          >
+            {'🏆'.repeat(cupCount)}
+          </span>
+        )}
+        {liveAdd > 0 && (
+          <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+            +{liveAdd} CANLI
+          </span>
+        )}
+      </div>
+    );
+  };
 
   // DETAYLI MASTER TABLO BİLEŞENİ (Genel Puan, Hafta Genel ve Canlı için ortak hiza)
   const renderDetailedMasterTable = (
