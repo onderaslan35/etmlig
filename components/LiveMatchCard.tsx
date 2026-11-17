@@ -1,5 +1,5 @@
 'use client';
-
+import { getClubLogoUrl } from '@/components/FavoriteTeamSelector';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
@@ -45,8 +45,11 @@ const formatNameWithCups = (rawName: string) => {
   return cups > 0 ? `${clean} ${'🏆'.repeat(cups)}` : clean;
 };
 
-const renderLiveNameWithFlag = (formattedName: string) => {
-  const norm = formattedName
+const LIVE_FAV_TEAMS: Record<string, string> = {};
+
+const normLiveKey = (s: string) =>
+  (s || '')
+    .replace(/(🏆|🇹🇷)+/g, '')
     .toUpperCase()
     .replace(/İ/g, 'I')
     .replace(/İ/g, 'I')
@@ -54,14 +57,28 @@ const renderLiveNameWithFlag = (formattedName: string) => {
     .replace(/Ğ/g, 'G')
     .replace(/Ü/g, 'U')
     .replace(/Ö/g, 'O')
-    .replace(/Ç/g, 'C');
+    .replace(/Ç/g, 'C')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const renderLiveNameWithFlag = (formattedName: string) => {
+  const norm = normLiveKey(formattedName);
+  const clubLogo = getClubLogoUrl(LIVE_FAV_TEAMS[norm] || '');
   const hasFlag =
     norm.includes('ISMAIL EKER') ||
     norm.includes('ISMAIL PEKER') ||
     norm.includes('OSMAN ALI AYDIN');
 
   return (
-    <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
+    <span className="inline-flex items-center gap-1 sm:gap-1.5 min-w-0 truncate">
+      {clubLogo && (
+        <img
+          src={clubLogo}
+          alt=""
+          className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0"
+        />
+      )}
       <span className="truncate">{formattedName}</span>
       {hasFlag && (
         <span
@@ -243,6 +260,7 @@ interface WeekLiveBucket {
 }
 
 export default function LiveMatchCard() {
+  const [favoriteTeamsMap, setFavoriteTeamsMap] = useState<Record<string, string>>({});
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
@@ -380,8 +398,16 @@ export default function LiveMatchCard() {
           if (op.is_active === false) {
             disabledSet.add(uid);
             delete newAccounts[uid];
-          } else if (!disabledSet.has(uid) && op.full_name) {
-            newAccounts[uid] = { pass: newAccounts[uid]?.pass || '', name: op.full_name };
+          } else if (!disabledSet.has(uid)) {
+            if (op.full_name) {
+              newAccounts[uid] = { pass: newAccounts[uid]?.pass || '', name: op.full_name };
+            }
+            if (op.favorite_team) {
+              const tName1 = op.full_name || '';
+              const tName2 = newAccounts[uid]?.name || '';
+              if (tName1) LIVE_FAV_TEAMS[normLiveKey(tName1)] = String(op.favorite_team).trim();
+              if (tName2) LIVE_FAV_TEAMS[normLiveKey(tName2)] = String(op.favorite_team).trim();
+            }
           }
         });
       }

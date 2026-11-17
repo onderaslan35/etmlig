@@ -199,6 +199,7 @@ export const localTeamLogos: Record<string, string> = {
   "KARADAĞ": "https://images.fotmob.com/image_resources/logo/teamlogo/49437.png",
   "BOSNIA & HERZEGOVINA": "https://images.fotmob.com/image_resources/logo/teamlogo/10106.png",
   "BOSNIA AND HERZEGOVINA": "https://images.fotmob.com/image_resources/logo/teamlogo/10106.png",
+  "REP. OF IRELAND": "https://images.fotmob.com/image_resources/logo/teamlogo/5791.png",
   "BOSNA-HERSEK": "https://images.fotmob.com/image_resources/logo/teamlogo/10106.png",
   "KAZAKHSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8265.png",
   "KAZAKİSTAN": "https://images.fotmob.com/image_resources/logo/teamlogo/8265.png",
