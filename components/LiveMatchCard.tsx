@@ -12,7 +12,73 @@ import {
 } from '@/utils/themeEngine';
 
 const EXCLUDED_IDS = new Set(['mankoman', '272727', '262787']);
+const formatNameWithCups = (rawName: string) => {
+  if (!rawName) return '';
+  const existing = (rawName.match(/🏆/g) || []).length;
+  const clean = rawName.replace(/(🏆|🇹🇷)+/g, '').trim();
+  const norm = clean
+    .toUpperCase()
+    .replace(/İ/g, 'I')
+    .replace(/İ/g, 'I')
+    .replace(/Ş/g, 'S')
+    .replace(/Ğ/g, 'G')
+    .replace(/Ü/g, 'U')
+    .replace(/Ö/g, 'O')
+    .replace(/Ç/g, 'C')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
+  let cups = existing;
+  if (norm.includes('OSMAN ALI AYDIN') || norm.includes('GAZI AYAN') || norm.includes('ILHAN KARACA')) {
+    cups = 2;
+  } else if (
+    norm === 'MURAT KARA' ||
+    norm === 'MURAT KARAOGLU' ||
+    norm.includes('ISMAIL EKER') ||
+    norm.includes('ISMAIL PEKER') ||
+    norm.includes('TOPARDIC')
+  ) {
+    cups = Math.max(existing, 1);
+  }
+
+  return cups > 0 ? `${clean} ${'🏆'.repeat(cups)}` : clean;
+};
+
+const renderLiveNameWithFlag = (formattedName: string) => {
+  const norm = formattedName
+    .toUpperCase()
+    .replace(/İ/g, 'I')
+    .replace(/İ/g, 'I')
+    .replace(/Ş/g, 'S')
+    .replace(/Ğ/g, 'G')
+    .replace(/Ü/g, 'U')
+    .replace(/Ö/g, 'O')
+    .replace(/Ç/g, 'C');
+  const hasFlag =
+    norm.includes('ISMAIL EKER') ||
+    norm.includes('ISMAIL PEKER') ||
+    norm.includes('OSMAN ALI AYDIN');
+
+  return (
+    <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
+      <span className="truncate">{formattedName}</span>
+      {hasFlag && (
+        <span
+          className="inline-flex items-center shrink-0 rounded-[2px] overflow-hidden border border-white/25 shadow-sm"
+          title="Son Şampiyon"
+        >
+          <svg viewBox="0 0 30 20" className="w-4 h-[11px] sm:w-[18px] sm:h-3 block">
+            <rect width="30" height="20" fill="#E30A17" />
+            <circle cx="10.5" cy="10" r="5" fill="#FFFFFF" />
+            <circle cx="11.8" cy="10" r="4" fill="#E30A17" />
+            <polygon points="16.2,10 19.3,11 17.4,8.4 17.4,11.6 19.3,9" fill="#FFFFFF" />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+};
 const TR_MONTHS = [
   '',
   'OCAK',
@@ -2303,7 +2369,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                             <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
                             <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="truncate">{row.name}</span>
+                                <span className="truncate">{renderLiveNameWithFlag(row.name)}</span>
                                 {row.canliMaster > 0 && (
                                   <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
                                     +{row.canliMaster} CANLI

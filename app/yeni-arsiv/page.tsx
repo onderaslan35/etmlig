@@ -11,30 +11,79 @@ import {
 
 const EXCLUDED_IDS = new Set(['mankoman', '272727', '262787']);
 
-// Eski Şampiyonlar Kupa Rozeti (🏆) Kontrolü
-// Şampiyonluk Kupası Sayıları (İstediğin ismi ekleyip karşısına kupa adedini yazabilirsin)
+// Şampiyonluk Kupası Sayıları ve Son Şampiyon Türk Bayrağı Arması
 const CHAMPION_CUPS: Record<string, number> = {
-  'ISMAIL EKER': 1,
+  'GAZI AYAN': 2,
+  'R ILHAN KARACA': 2,
+  'RECEP ILHAN KARACA': 2,
   'OSMAN ALI AYDIN': 2,
-  'MURAT KARA': 1
+  'ISMAIL EKER': 1,
+  'ISMAIL PEKER': 1,
+  'MURAT KARA': 1,
+  'MURAT KARAOGLU': 1,
+  'HUDAVER TOPARDIC': 1,
+  'HUDAVERDI TOPARDIC': 1
 };
 
+const stripTrophies = (s: string) => (s || '').replace(/(🏆|🇹🇷)+/g, '').trim();
+
 const normalizeTrName = (s: string) =>
-  (s || '')
+  stripTrophies(s)
     .toUpperCase()
-    .trim()
     .replace(/İ/g, 'I')
+    .replace(/İ/g, 'I')
     .replace(/Ş/g, 'S')
     .replace(/Ğ/g, 'G')
     .replace(/Ü/g, 'U')
     .replace(/Ö/g, 'O')
-    .replace(/Ç/g, 'C');
+    .replace(/Ç/g, 'C')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-const getChampionCupCount = (name: string, isChampFlag?: boolean) => {
-  const count = CHAMPION_CUPS[normalizeTrName(name)] || 0;
-  if (count > 0) return count;
+const getChampionCupCount = (rawName: string, isChampFlag?: boolean) => {
+  const existingInText = ((rawName || '').match(/🏆/g) || []).length;
+  const norm = normalizeTrName(rawName);
+  if (CHAMPION_CUPS[norm] !== undefined) return CHAMPION_CUPS[norm];
+  if (norm.includes('OSMAN ALI AYDIN') || norm.includes('GAZI AYAN') || norm.includes('ILHAN KARACA')) return 2;
+  if (
+    norm.includes('ISMAIL EKER') ||
+    norm.includes('ISMAIL PEKER') ||
+    norm === 'MURAT KARA' ||
+    norm === 'MURAT KARAOGLU' ||
+    norm.includes('TOPARDIC')
+  ) {
+    return Math.max(existingInText, 1);
+  }
+  if (existingInText > 0) return existingInText;
   return isChampFlag ? 1 : 0;
 };
+
+const hasReigningTurkishFlag = (rawName: string) => {
+  const norm = normalizeTrName(rawName);
+  return (
+    norm.includes('ISMAIL EKER') ||
+    norm.includes('ISMAIL PEKER') ||
+    norm.includes('OSMAN ALI AYDIN')
+  );
+};
+
+const TurkishChampionBadge = ({ title }: { title: string }) => (
+  <span
+    className="inline-flex items-center shrink-0 rounded-[2px] overflow-hidden border border-white/25 shadow-sm"
+    title={title}
+  >
+    <svg viewBox="0 0 30 20" className="w-4 h-[11px] sm:w-[18px] sm:h-3 block">
+      <rect width="30" height="20" fill="#E30A17" />
+      <circle cx="10.5" cy="10" r="5" fill="#FFFFFF" />
+      <circle cx="11.8" cy="10" r="4" fill="#E30A17" />
+      <polygon
+        points="16.2,10 19.3,11 17.4,8.4 17.4,11.6 19.3,9"
+        fill="#FFFFFF"
+      />
+    </svg>
+  </span>
+);
 
 const hasChampionCup = (name: string, isChampFlag?: boolean) => {
   return getChampionCupCount(name, isChampFlag) > 0;
@@ -887,18 +936,21 @@ export default function YeniArsivPage() {
       );
 
   const renderPlayerNameWithCup = (name: string, isChamp: boolean, liveAdd: number = 0) => {
+    const cleanDisplay = stripTrophies(name);
     const cupCount = getChampionCupCount(name, isChamp);
+    const showTrFlag = hasReigningTurkishFlag(name);
     return (
       <div className="flex items-center gap-1.5 min-w-0">
-        <span className="truncate uppercase">{name}</span>
+        <span className="truncate uppercase">{cleanDisplay}</span>
         {cupCount > 0 && (
           <span
             className="shrink-0 text-[11px] sm:text-xs leading-none tracking-tight"
-            title={`${cupCount} Kez Lig Şampiyonu`}
+            title={`${cupCount} Kez Şampiyon`}
           >
             {'🏆'.repeat(cupCount)}
           </span>
         )}
+        {showTrFlag && <TurkishChampionBadge title="Son Şampiyon Göğüs Arması" />}
         {liveAdd > 0 && (
           <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
             +{liveAdd} CANLI
@@ -907,7 +959,6 @@ export default function YeniArsivPage() {
       </div>
     );
   };
-
   // DETAYLI MASTER TABLO BİLEŞENİ (Genel Puan, Hafta Genel ve Canlı için ortak hiza)
   const renderDetailedMasterTable = (
     rows: PlayerStatRow[],
