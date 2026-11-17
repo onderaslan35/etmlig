@@ -182,7 +182,7 @@ export default function PredictionPortal() {
 
       const submittedUserIds = new Set((preds || []).map((p) => String(p.user_id)));
       const allUserIds = Object.keys(mergedAccounts).filter(
-        (id) => id !== 'mankoman' && id !== '272727' && id !== '262787'
+        (id) => id !== 'mankoman' && id !== 'mankoman' && id !== 'mankoman'
       );
 
       const missingIds = allUserIds.filter((id) => !submittedUserIds.has(id));
