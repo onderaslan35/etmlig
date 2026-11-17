@@ -2,1333 +2,1757 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
-import { TEST_ACCOUNTS, getEliteTheme } from '@/utils/themeEngine';
+import {
+  TEST_ACCOUNTS,
+  getEliteTheme,
+  getMatchTimeMs,
+  getUniqueMatchId
+} from '@/utils/themeEngine';
 
 const EXCLUDED_IDS = new Set(['mankoman', '272727', '262787']);
 
-interface OfficialMatch {
-  id: number;
+// Eski Şampiyonlar Kupa Rozeti (🏆) Kontrolü
+const PAST_CHAMPION_NAMES = new Set([
+  'ISMAIL EKER',
+  'OSMAN ALI AYDIN'
+]);
+
+const normalizeTrName = (s: string) =>
+  (s || '')
+    .toUpperCase()
+    .trim()
+    .replace(/İ/g, 'I')
+    .replace(/Ş/g, 'S')
+    .replace(/Ğ/g, 'G')
+    .replace(/Ü/g, 'U')
+    .replace(/Ö/g, 'O')
+    .replace(/Ç/g, 'C');
+
+const hasChampionCup = (name: string, isChampFlag?: boolean) => {
+  if (isChampFlag) return true;
+  return PAST_CHAMPION_NAMES.has(normalizeTrName(name));
+};
+
+const calcMatchPts = (winnerCount: number) => {
+  if (winnerCount === 1) return 12;
+  if (winnerCount === 2) return 6;
+  if (winnerCount === 3) return 5;
+  if (winnerCount === 4) return 4;
+  if (winnerCount === 5) return 3;
+  if (winnerCount === 6) return 2;
+  if (winnerCount >= 7) return 1;
+  return 0;
+};
+
+const advancedTffCheck = (category: string, home: string, away: string) => {
+  const cat = normalizeTrName(category);
+  const h = normalizeTrName(home);
+  const a = normalizeTrName(away);
+
+  if (
+    cat.includes('UEFA') ||
+    cat.includes('SAMPIYONLAR') ||
+    cat.includes('CHAMPIONS') ||
+    cat.includes('AVRUPA LIGI') ||
+    cat.includes('EUROPA') ||
+    cat.includes('KONFERANS') ||
+    cat.includes('CONFERENCE') ||
+    cat.includes('ULUSLAR') ||
+    cat.includes('NATIONS') ||
+    cat.includes('MILLI') ||
+    cat.includes('DUNYA KUPASI') ||
+    cat.includes('WORLD CUP') ||
+    cat.includes('INGILTERE') ||
+    cat.includes('PREMIER') ||
+    cat.includes('ISPANYA') ||
+    cat.includes('LA LIGA') ||
+    cat.includes('ITALYA') ||
+    cat.includes('SERIE A') ||
+    cat.includes('ALMANYA') ||
+    cat.includes('BUNDESLIGA') ||
+    cat.includes('FRANSA') ||
+    cat.includes('LIGUE 1') ||
+    cat.includes('HOLLANDA') ||
+    cat.includes('PORTEKIZ') ||
+    cat.includes('BELCIKA') ||
+    cat.includes('ISKOCYA') ||
+    cat.includes('DANIMARKA')
+  ) {
+    return false;
+  }
+
+  if (
+    cat.includes('TURKIYE') ||
+    cat.includes('TFF') ||
+    cat.includes('TRENDYOL') ||
+    cat.includes('NESINE') ||
+    cat.includes('SUPER LIG') ||
+    cat.includes('1. LIG') ||
+    cat.includes('1.LIG') ||
+    cat.includes('2. LIG') ||
+    cat.includes('3. LIG') ||
+    cat.includes('ZIRAAT')
+  ) {
+    return true;
+  }
+
+  const teamRegex =
+    /(SPOR|GUCU|GENCLER|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
+  return teamRegex.test(h) && teamRegex.test(a);
+};
+
+interface OfficialMatchRow {
+  id: number | string;
   week_num: number;
   match_index: number;
   category: string;
+  pool_type: 'DFO' | 'TFF' | string;
   match_date: string;
   match_time: string;
   home_team: string;
   away_team: string;
-  pool_type: 'DFO' | 'TFF';
+  home_score: string | number | null;
+  away_score: string | number | null;
   status: string;
-  home_score: number | null;
-  away_score: number | null;
-  winner_ids: string[];
-  winner_count: number;
-  points_awarded: number;
+  winner_ids: string[] | null;
+  points_awarded: number | null;
 }
 
-interface OfficialWeek {
+interface OfficialWeekRow {
   week_num: number;
   is_completed: boolean;
   bonus_enabled: boolean;
-  puan_lideri_ids: string[];
-  puan_bonus: number;
-  skor_krali_ids: string[];
-  skor_bonus: number;
+  puan_lideri_ids: string[] | null;
+  puan_bonus: number | null;
+  skor_krali_ids: string[] | null;
+  skor_bonus: number | null;
 }
 
-interface LiveStandingRow {
-  canli_sira: number;
-  kesin_sira: number;
-  user_id: string;
-  oyuncu_adi: string;
-  kesin_dfo: number;
-  kesin_tff: number;
-  bonus_puan: number;
-  kesin_master: number;
-  kesin_skor: number;
-  canli_ek_dfo: number;
-  canli_ek_tff: number;
-  canli_ek_puan: number;
-  canli_ek_skor: number;
-  canli_master_toplam: number;
-  canli_skor_toplam: number;
-  aktif_mac_sayisi: number;
+interface PlayerStatRow {
+  id: string;
+  name: string;
+  isChampion: boolean;
+  dfoPts: number;
+  tffPts: number;
+  bonusPts: number;
+  masterPts: number;
+  dfoSkor: number;
+  tffSkor: number;
+  totalSkor: number;
+  liveAddPts: number;
+  liveAddSkor: number;
+  puanLiderWeeks: number[];
+  skorKralWeeks: number[];
 }
-
-type MainTabType = 'TOTAL_STANDINGS' | 'CARDS' | 'WEEK_CHECK' | 'WEEK_CUMULATIVE' | 'LEADERS_TIMELINE';
-type StandingsFilterType = 'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS';
 
 export default function YeniArsivPage() {
-  const [allMatches, setAllMatches] = useState<OfficialMatch[]>([]);
-  const [allWeeks, setAllWeeks] = useState<OfficialWeek[]>([]);
-  const [liveStandings, setLiveStandings] = useState<LiveStandingRow[]>([]);
-  const [accounts, setAccounts] = useState<Record<string, { name: string }>>({});
-  const [inactiveIds, setInactiveIds] = useState<Set<string>>(new Set(EXCLUDED_IDS));
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [selectedWeek, setSelectedWeek] = useState<number>(41);
-  const [activeTab, setActiveTab] = useState<MainTabType>('TOTAL_STANDINGS');
-
-  const [standingsFilter, setStandingsFilter] = useState<StandingsFilterType>('MASTER');
-  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  // VARSAYILAN (DEFAULT) EKRAN DURUMLARI:
+  // HAFTA: Takvim & saat senkronlu aktif hafta (şu an 41. Hafta)
+  // SEKME: GENEL PUAN -> MASTER -> DETAYLI MASTER
+  const [activeTab, setActiveTab] = useState<
+    'TOTAL_STANDINGS' | 'CARDS' | 'WEEK_CHECK' | 'WEEK_CUMULATIVE' | 'LEADERS_TIMELINE'
+  >('TOTAL_STANDINGS');
+  const [standingsFilter, setStandingsFilter] = useState<
+    'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'
+  >('MASTER');
+  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
   const [skorSubFilter, setSkorSubFilter] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
 
-  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
-  const [openWinnerLists, setOpenWinnerLists] = useState<Record<number, boolean>>({});
+  const [weekSummaryFilter, setWeekSummaryFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
+  const [weekSummaryMasterMode, setWeekSummaryMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
+
+  const [weekGenelFilter, setWeekGenelFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
+  const [weekGenelMasterMode, setWeekGenelMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
+
+  const [archivePoolFilter, setArchivePoolFilter] = useState<'ALL' | 'DFO' | 'TFF'>('ALL');
+  const [expandedArchiveCards, setExpandedArchiveCards] = useState<Record<string, boolean>>({});
+
+  const [availableWeeks, setAvailableWeeks] = useState<number[]>([41]);
+  const [selectedWeek, setSelectedWeek] = useState<number>(41);
+  const [activeRealTimeWeeks, setActiveRealTimeWeeks] = useState<number[]>([41]);
+
+  const [playersMap, setPlayersMap] = useState<
+    Record<string, { name: string; isChampion: boolean }>
+  >({});
+  const [officialMatches, setOfficialMatches] = useState<OfficialMatchRow[]>([]);
+  const [officialWeeks, setOfficialWeeks] = useState<OfficialWeekRow[]>([]);
+  const [recentBulletins, setRecentBulletins] = useState<any[]>([]);
+  const [liveMatchesMap, setLiveMatchesMap] = useState<Record<string, any>>({});
+  const [activePredictionsMap, setActivePredictionsMap] = useState<Record<string, string>>({});
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    let isMounted = true;
+    const t = setInterval(() => setNowMs(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
 
-    const fetchAllOfficialData = async () => {
-      setIsLoading(true);
+  useEffect(() => {
+    let mounted = true;
 
-      const fetchAllOfficialMatches = async () => {
-        let collected: OfficialMatch[] = [];
-        let from = 0;
-        const step = 1000;
-        let keepGoing = true;
-        while (keepGoing) {
-          const { data, error } = await supabase
-            .from('etml_official_matches')
-            .select('*')
-            .order('week_num', { ascending: true })
-            .order('match_index', { ascending: true })
-            .range(from, from + step - 1);
-
-          if (error || !data || data.length === 0) {
-            keepGoing = false;
-          } else {
-            collected = [...collected, ...(data as OfficialMatch[])];
-            if (data.length < step) keepGoing = false;
-            else from += step;
-          }
+    const fetchAllOfficialMatchesPaged = async () => {
+      let allRows: OfficialMatchRow[] = [];
+      let from = 0;
+      const step = 500;
+      let keepGoing = true;
+      while (keepGoing) {
+        const { data, error } = await supabase
+          .from('etml_official_matches')
+          .select('*')
+          .order('week_num', { ascending: true })
+          .order('match_index', { ascending: true })
+          .range(from, from + step - 1);
+        if (error || !data || data.length === 0) {
+          keepGoing = false;
+        } else {
+          allRows = [...allRows, ...(data as OfficialMatchRow[])];
+          if (data.length < step) keepGoing = false;
+          else from += step;
         }
-        return collected;
-      };
-
-      const [matchesList, weeksRes, playersRes, offPlayersRes, liveViewRes] = await Promise.all([
-        fetchAllOfficialMatches(),
-        supabase.from('etml_official_weeks').select('*').order('week_num', { ascending: true }),
-        supabase.from('players').select('*'),
-        supabase.from('etml_official_players').select('*'),
-        supabase.from('etml_live_standings_summary').select('*').order('canli_sira', { ascending: true })
-      ]);
-
-      if (!isMounted) return;
-
-      const disabled = new Set<string>(EXCLUDED_IDS);
-      const accMap: Record<string, { name: string }> = {};
-
-      Object.keys(TEST_ACCOUNTS).forEach((uid) => {
-        if (!disabled.has(uid)) {
-          accMap[uid] = { name: TEST_ACCOUNTS[uid].name };
-        }
-      });
-
-      if (offPlayersRes.data) {
-        offPlayersRes.data.forEach((op: any) => {
-          const uid = String(op.user_id || '').trim();
-          if (!uid) return;
-          if (op.is_active === false) {
-            disabled.add(uid);
-            delete accMap[uid];
-          } else if (!disabled.has(uid) && op.full_name) {
-            accMap[uid] = { name: op.full_name };
-          }
-        });
       }
-
-      if (playersRes.data) {
-        playersRes.data.forEach((p: any) => {
-          const uid = String(p.username || p.user_id || p.id || '').trim();
-          if (uid && !disabled.has(uid)) {
-            accMap[uid] = { name: p.name || p.full_name || accMap[uid]?.name || uid };
-          }
-        });
-      }
-
-      setInactiveIds(disabled);
-      setAccounts(accMap);
-      setAllMatches(matchesList);
-      setAllWeeks((weeksRes.data || []) as OfficialWeek[]);
-      setLiveStandings((liveViewRes.data || []) as LiveStandingRow[]);
-
-      if (matchesList.length > 0) {
-        const maxW = Math.max(...matchesList.map((m) => Number(m.week_num)));
-        setSelectedWeek(maxW);
-      }
-
-      setIsLoading(false);
+      return allRows;
     };
 
-    fetchAllOfficialData();
+    const loadArchiveSystem = async () => {
+      try {
+        const [offPlayersRes, legacyPlayersRes, offWeeksRes, offMatchesAll, recentBulRes] =
+          await Promise.all([
+            supabase.from('etml_official_players').select('*'),
+            supabase.from('players').select('*'),
+            supabase
+              .from('etml_official_weeks')
+              .select('*')
+              .order('week_num', { ascending: true }),
+            fetchAllOfficialMatchesPaged(),
+            supabase
+              .from('matches_bulletin')
+              .select('*')
+              .gte('week_num', 40)
+              .order('week_num', { ascending: true })
+              .order('match_index', { ascending: true })
+          ]);
+
+        if (!mounted) return;
+
+        // 1. Oyuncu İsim & Şampiyonluk Havuzu
+        const pMap: Record<string, { name: string; isChampion: boolean }> = {};
+        const disabledIds = new Set<string>(EXCLUDED_IDS);
+
+        Object.keys(TEST_ACCOUNTS).forEach((uid) => {
+          if (!disabledIds.has(uid)) {
+            const nm = TEST_ACCOUNTS[uid]?.name || uid;
+            pMap[uid] = { name: nm, isChampion: hasChampionCup(nm) };
+          }
+        });
+
+        (offPlayersRes.data || []).forEach((op: any) => {
+          const uid = String(op.user_id || '').trim();
+          if (!uid) return;
+          if (op.is_active === false || EXCLUDED_IDS.has(uid)) {
+            disabledIds.add(uid);
+            delete pMap[uid];
+          } else {
+            const nm = String(op.full_name || pMap[uid]?.name || uid).trim();
+            const champ = Boolean(op.is_champion || op.has_cup || hasChampionCup(nm));
+            pMap[uid] = { name: nm, isChampion: champ };
+          }
+        });
+
+        (legacyPlayersRes.data || []).forEach((lp: any) => {
+          const uid = String(lp.username || lp.user_id || lp.id || '').trim();
+          if (!uid || disabledIds.has(uid)) return;
+          const nm = String(lp.name || lp.full_name || pMap[uid]?.name || uid).trim();
+          const champ = Boolean(lp.is_champion || pMap[uid]?.isChampion || hasChampionCup(nm));
+          pMap[uid] = { name: nm, isChampion: champ };
+        });
+
+        setPlayersMap(pMap);
+
+        const weeksRows = (offWeeksRes.data || []) as OfficialWeekRow[];
+        setOfficialWeeks(weeksRows);
+        setOfficialMatches(offMatchesAll);
+
+        const recentBul = recentBulRes.data || [];
+        setRecentBulletins(recentBul);
+
+        // 2. Gerçek Zamanlı (Takvim ve Saat Senkronlu) Aktif Hafta Tespiti
+        const currentNow = Date.now();
+        const weekSet = new Set<number>();
+        offMatchesAll.forEach((m) => weekSet.add(Number(m.week_num)));
+        weeksRows.forEach((w) => weekSet.add(Number(w.week_num)));
+        recentBul.forEach((b: any) => weekSet.add(Number(b.week_num)));
+
+        const allDistinctWeeks = Array.from(weekSet)
+          .filter((w) => w > 0)
+          .sort((a, b) => a - b);
+
+        // Yalnızca ilk maçının başlama saniyesi gelmiş olan (veya geçmişte tamamlanmış) haftaları al:
+        // Böylece henüz başlamamış 42, 43, 44, 45, 46. haftalar zamanı gelene kadar gizli kalır.
+        const startedWeeks = allDistinctWeeks.filter((w) => {
+          const bulForW = recentBul.filter((b: any) => Number(b.week_num) === w);
+          const offForW = offMatchesAll.filter((m) => Number(m.week_num) === w);
+
+          // Geçmişte bitmiş maçı olan arşiv haftaları her zaman dahildir
+          if (offForW.some((m) => m.status === 'FINISHED')) return true;
+
+          const sourceMatches = bulForW.length > 0 ? bulForW : offForW;
+          if (sourceMatches.length === 0) return w <= 41;
+
+          const kickoffs = sourceMatches
+            .map((m: any) =>
+              getMatchTimeMs(String(m.match_date || '').trim(), String(m.match_time || '').trim())
+            )
+            .filter((ms: number) => ms > 0);
+
+          if (kickoffs.length === 0) return w <= 41;
+          const firstKickoffMs = Math.min(...kickoffs);
+          return currentNow >= firstKickoffMs;
+        });
+
+        const effectiveWeeks = startedWeeks.length > 0 ? startedWeeks : [41];
+        setAvailableWeeks(effectiveWeeks);
+
+        // Başlamış haftalar içinde henüz oynanmamış / tamamlanmamış maçı olan geçerli haftayı bul (örn: 41. Hafta)
+        const ongoingStartedWeeks = effectiveWeeks.filter((w) => {
+          const offForW = offMatchesAll.filter((m) => Number(m.week_num) === w);
+          const bulForW = recentBul.filter((b: any) => Number(b.week_num) === w);
+          if (offForW.length > 0) {
+            return offForW.some((m) => m.status !== 'FINISHED' && m.status !== 'POSTPONED');
+          }
+          if (bulForW.length > 0) {
+            return true;
+          }
+          return false;
+        });
+
+        const defaultSyncedWeek =
+          ongoingStartedWeeks.length > 0
+            ? ongoingStartedWeeks[0]
+            : effectiveWeeks[effectiveWeeks.length - 1];
+
+        setSelectedWeek(defaultSyncedWeek);
+
+        // Canlı sekmesi için takip edilecek aktif haftalar
+        const liveTargetWeeks =
+          ongoingStartedWeeks.length > 0
+            ? ongoingStartedWeeks
+            : [effectiveWeeks[effectiveWeeks.length - 1]];
+        setActiveRealTimeWeeks(liveTargetWeeks);
+
+        // 3. Aktif haftaların canlı maçlarını ve tahminlerini (500'erli dilimlerle 1000 sınırına takılmadan) çek
+        const targetLiveIds: number[] = [];
+        liveTargetWeeks.forEach((w) => {
+          for (let idx = 1; idx <= 24; idx++) {
+            targetLiveIds.push(Number(getUniqueMatchId(w, idx)));
+          }
+        });
+
+        const fetchActivePreds = async () => {
+          const chunks = await Promise.all(
+            liveTargetWeeks.map(async (w) => {
+              let rows: any[] = [];
+              let from = 0;
+              const step = 500;
+              let more = true;
+              while (more) {
+                const { data, error } = await supabase
+                  .from('player_predictions')
+                  .select('user_id, week_num, match_index, predicted_score')
+                  .eq('week_num', w)
+                  .order('match_index', { ascending: true })
+                  .order('user_id', { ascending: true })
+                  .range(from, from + step - 1);
+                if (error || !data || data.length === 0) {
+                  more = false;
+                } else {
+                  rows = [...rows, ...data];
+                  if (data.length < step) more = false;
+                  else from += step;
+                }
+              }
+              return rows;
+            })
+          );
+          return chunks.flat();
+        };
+
+        const [liveDbRes, activePredRows] = await Promise.all([
+          targetLiveIds.length > 0
+            ? supabase.from('live_matches').select('*').in('id', targetLiveIds)
+            : Promise.resolve({ data: [] as any[] }),
+          fetchActivePreds()
+        ]);
+
+        if (!mounted) return;
+
+        const lMap: Record<string, any> = {};
+        (liveDbRes.data || []).forEach((r: any) => {
+          lMap[String(r.id)] = r;
+        });
+        setLiveMatchesMap(lMap);
+
+        const predMap: Record<string, string> = {};
+        activePredRows.forEach((pr: any) => {
+          const uid = String(pr.user_id || '').trim();
+          if (!uid || EXCLUDED_IDS.has(uid)) return;
+          const sc = String(pr.predicted_score || '')
+            .replace(/\s+/g, '')
+            .replace(':', '-');
+          if (sc) {
+            predMap[`${uid}-${pr.week_num}-${pr.match_index}`] = sc;
+          }
+        });
+        setActivePredictionsMap(predMap);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadArchiveSystem();
 
     const channel = supabase
-      .channel('yeni-arsiv-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, async () => {
-        const { data } = await supabase
-          .from('etml_live_standings_summary')
-          .select('*')
-          .order('canli_sira', { ascending: true });
-        if (isMounted && data) setLiveStandings(data as LiveStandingRow[]);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'etml_official_matches' }, async () => {
-        const { data: liveData } = await supabase
-          .from('etml_live_standings_summary')
-          .select('*')
-          .order('canli_sira', { ascending: true });
-        if (isMounted && liveData) setLiveStandings(liveData as LiveStandingRow[]);
+      .channel('yeni-arsiv-live-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, (payload: any) => {
+        const row = payload.new;
+        if (!row || row.id === undefined) return;
+        setLiveMatchesMap((prev) => ({ ...prev, [String(row.id)]: row }));
       })
       .subscribe();
 
     return () => {
-      isMounted = false;
+      mounted = false;
       supabase.removeChannel(channel);
     };
   }, []);
 
-  const availableWeeks = useMemo(() => {
-    const wSet = new Set<number>(allMatches.map((m) => Number(m.week_num)));
-    const arr = Array.from(wSet).sort((a, b) => b - a);
-    return arr.length > 0 ? arr : [41];
-  }, [allMatches]);
+  // HESAPLAMA MOTORU:
+  // 1) Genel Puan Durumu (Kesin + Canlı)
+  // 2) Seçili Hafta Özeti (Sadece o haftanın puanları)
+  // 3) Seçili Hafta Genel (1. haftadan seçili haftaya kadar toplam)
+  // 4) Liderler Kronolojisi (1. haftadan bugüne Detaylı Master formatında hafta liderleri)
+  const {
+    totalStandings,
+    weekSummaryRows,
+    weekGenelRows,
+    leadersTimeline,
+    selectedWeekMatches,
+    selectedWeekBonusInfo,
+    liveActiveMatchCount
+  } = useMemo(() => {
+    const playerIds = Object.keys(playersMap).filter((id) => !EXCLUDED_IDS.has(id));
 
-  const maxAvailableWeek = availableWeeks[0] || 41;
-
-  // Canlı sekmesi yalnızca Genel Puan modundayken anlamlıdır; geçmiş kümülatife geçilirse MASTER'a al
-  useEffect(() => {
-    if (activeTab === 'WEEK_CUMULATIVE' && standingsFilter === 'CANLI') {
-      setStandingsFilter('MASTER');
-    }
-  }, [activeTab, standingsFilter]);
-
-  const weekMatches = useMemo(() => {
-    return allMatches
-      .filter((m) => Number(m.week_num) === Number(selectedWeek))
-      .sort((a, b) => Number(a.match_index) - Number(b.match_index));
-  }, [allMatches, selectedWeek]);
-
-  const selectedWeekMeta = useMemo(() => {
-    return allWeeks.find((w) => Number(w.week_num) === Number(selectedWeek)) || null;
-  }, [allWeeks, selectedWeek]);
-
-  // SEÇİLEN HAFTANIN TEKİL ÖZETİ (Sadece o hafta alınan puanlar)
-  const weeklyCheckTable = useMemo(() => {
-    const map: Record<
-      string,
-      { id: string; name: string; dfo: number; tff: number; bonus: number; scores: number; rawTotal: number; totalWithBonus: number }
-    > = {};
-
-    weekMatches.forEach((m) => {
-      if (m.status !== 'FINISHED') return;
-      (m.winner_ids || []).forEach((uid) => {
-        if (inactiveIds.has(uid)) return;
-        if (!map[uid]) {
-          map[uid] = {
-            id: uid,
-            name: accounts[uid]?.name || uid,
-            dfo: 0,
-            tff: 0,
-            bonus: 0,
-            scores: 0,
-            rawTotal: 0,
-            totalWithBonus: 0
-          };
-        }
-        if (m.pool_type === 'TFF') map[uid].tff += Number(m.points_awarded || 0);
-        else map[uid].dfo += Number(m.points_awarded || 0);
-        map[uid].scores += 1;
-      });
+    const weeksByNum: Record<number, OfficialWeekRow> = {};
+    officialWeeks.forEach((w) => {
+      weeksByNum[Number(w.week_num)] = w;
     });
 
-    if (selectedWeekMeta && selectedWeekMeta.is_completed && selectedWeekMeta.bonus_enabled) {
-      if (selectedWeekMeta.puan_bonus > 0 && selectedWeekMeta.puan_lideri_ids?.length === 1) {
-        const lid = selectedWeekMeta.puan_lideri_ids[0];
-        if (!inactiveIds.has(lid)) {
-          if (!map[lid]) {
-            map[lid] = { id: lid, name: accounts[lid]?.name || lid, dfo: 0, tff: 0, bonus: 0, scores: 0, rawTotal: 0, totalWithBonus: 0 };
-          }
-          map[lid].bonus += Number(selectedWeekMeta.puan_bonus);
-        }
-      }
-      if (selectedWeekMeta.skor_bonus > 0 && selectedWeekMeta.skor_krali_ids?.length === 1) {
-        const kid = selectedWeekMeta.skor_krali_ids[0];
-        if (!inactiveIds.has(kid)) {
-          if (!map[kid]) {
-            map[kid] = { id: kid, name: accounts[kid]?.name || kid, dfo: 0, tff: 0, bonus: 0, scores: 0, rawTotal: 0, totalWithBonus: 0 };
-          }
-          map[kid].bonus += Number(selectedWeekMeta.skor_bonus);
-        }
-      }
-    }
-
-    return Object.values(map)
-      .map((r) => ({
-        ...r,
-        rawTotal: r.dfo + r.tff,
-        totalWithBonus: r.dfo + r.tff + r.bonus
-      }))
-      .filter((r) => r.totalWithBonus > 0 || r.scores > 0)
-      .sort((a, b) => b.totalWithBonus - a.totalWithBonus || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
-  }, [weekMatches, selectedWeekMeta, accounts, inactiveIds]);
-
-  // HERHANGİ BİR HAFTAYA KADAR (1..upToWeek) KÜMÜLATİF HESAPLAMA MOTORU
-  const buildStandingsUpToWeek = useMemo(() => {
-    return (upToWeek: number) => {
-      const map: Record<
-        string,
-        {
-          id: string;
-          name: string;
-          dfo: number;
-          tff: number;
-          bonus: number;
-          master: number;
-          scores: number;
-          dfoScores: number;
-          tffScores: number;
-          pCount: number;
-          sCount: number;
-        }
-      > = {};
-
-      Object.keys(accounts).forEach((uid) => {
-        if (inactiveIds.has(uid)) return;
-        map[uid] = {
+    const createBlankMap = () => {
+      const m: Record<string, PlayerStatRow> = {};
+      playerIds.forEach((uid) => {
+        m[uid] = {
           id: uid,
-          name: accounts[uid].name,
-          dfo: 0,
-          tff: 0,
-          bonus: 0,
-          master: 0,
-          scores: 0,
-          dfoScores: 0,
-          tffScores: 0,
-          pCount: 0,
-          sCount: 0
+          name: playersMap[uid]?.name || uid,
+          isChampion: Boolean(playersMap[uid]?.isChampion),
+          dfoPts: 0,
+          tffPts: 0,
+          bonusPts: 0,
+          masterPts: 0,
+          dfoSkor: 0,
+          tffSkor: 0,
+          totalSkor: 0,
+          liveAddPts: 0,
+          liveAddSkor: 0,
+          puanLiderWeeks: [],
+          skorKralWeeks: []
         };
       });
+      return m;
+    };
 
-      allMatches.forEach((m) => {
-        if (m.status !== 'FINISHED' || Number(m.week_num) > upToWeek) return;
-        (m.winner_ids || []).forEach((uid) => {
-          if (inactiveIds.has(uid)) return;
-          if (!map[uid]) {
-            map[uid] = {
-              id: uid,
-              name: accounts[uid]?.name || uid,
-              dfo: 0,
-              tff: 0,
-              bonus: 0,
-              master: 0,
-              scores: 0,
-              dfoScores: 0,
-              tffScores: 0,
-              pCount: 0,
-              sCount: 0
-            };
+    const ensurePlayer = (mapObj: Record<string, PlayerStatRow>, uid: string) => {
+      if (EXCLUDED_IDS.has(uid)) return null;
+      if (!mapObj[uid]) {
+        const nm = playersMap[uid]?.name || TEST_ACCOUNTS[uid]?.name || uid;
+        mapObj[uid] = {
+          id: uid,
+          name: nm,
+          isChampion: hasChampionCup(nm, playersMap[uid]?.isChampion),
+          dfoPts: 0,
+          tffPts: 0,
+          bonusPts: 0,
+          masterPts: 0,
+          dfoSkor: 0,
+          tffSkor: 0,
+          totalSkor: 0,
+          liveAddPts: 0,
+          liveAddSkor: 0,
+          puanLiderWeeks: [],
+          skorKralWeeks: []
+        };
+      }
+      return mapObj[uid];
+    };
+
+    const maxStartedWeek =
+      availableWeeks.length > 0 ? availableWeeks[availableWeeks.length - 1] : 41;
+
+    // A) TÜM ZAMANLAR GENEL PUAN + LİDERLER KRONOLOJİSİ + SEÇİLİ HAFTA GENEL
+    const cumulativeMap = createBlankMap();
+    const weekOnlyMap = createBlankMap();
+    const upToSelectedMap = createBlankMap();
+
+    const matchesByWeek: Record<number, OfficialMatchRow[]> = {};
+    officialMatches.forEach((m) => {
+      const wn = Number(m.week_num);
+      if (!matchesByWeek[wn]) matchesByWeek[wn] = [];
+      matchesByWeek[wn].push(m);
+    });
+
+    const timelineRows: {
+      weekNum: number;
+      leaderId: string;
+      leaderName: string;
+      isChampion: boolean;
+      dfoPts: number;
+      tffPts: number;
+      bonusPts: number;
+      totalSkor: number;
+      masterPts: number;
+      isCompleted: boolean;
+    }[] = [];
+
+    availableWeeks.forEach((wn) => {
+      const wMatches = matchesByWeek[wn] || [];
+      let finishedInWeek = 0;
+
+      wMatches.forEach((m) => {
+        if (m.status !== 'FINISHED') return;
+        finishedInWeek += 1;
+        const winners = (m.winner_ids || []).filter((id) => !EXCLUDED_IDS.has(String(id).trim()));
+        const pts =
+          m.points_awarded !== null && m.points_awarded !== undefined
+            ? Number(m.points_awarded)
+            : calcMatchPts(winners.length);
+        const isTff =
+          m.pool_type === 'TFF' ||
+          (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
+
+        winners.forEach((rawId) => {
+          const uid = String(rawId).trim();
+          const pCum = ensurePlayer(cumulativeMap, uid);
+          if (pCum) {
+            if (isTff) {
+              pCum.tffPts += pts;
+              pCum.tffSkor += 1;
+            } else {
+              pCum.dfoPts += pts;
+              pCum.dfoSkor += 1;
+            }
+            pCum.masterPts += pts;
+            pCum.totalSkor += 1;
           }
-          if (m.pool_type === 'TFF') {
-            map[uid].tff += Number(m.points_awarded || 0);
-            map[uid].tffScores += 1;
-          } else {
-            map[uid].dfo += Number(m.points_awarded || 0);
-            map[uid].dfoScores += 1;
+
+          if (wn === selectedWeek) {
+            const pWk = ensurePlayer(weekOnlyMap, uid);
+            if (pWk) {
+              if (isTff) {
+                pWk.tffPts += pts;
+                pWk.tffSkor += 1;
+              } else {
+                pWk.dfoPts += pts;
+                pWk.dfoSkor += 1;
+              }
+              pWk.masterPts += pts;
+              pWk.totalSkor += 1;
+            }
           }
-          map[uid].scores += 1;
+
+          if (wn <= selectedWeek) {
+            const pUp = ensurePlayer(upToSelectedMap, uid);
+            if (pUp) {
+              if (isTff) {
+                pUp.tffPts += pts;
+                pUp.tffSkor += 1;
+              } else {
+                pUp.dfoPts += pts;
+                pUp.dfoSkor += 1;
+              }
+              pUp.masterPts += pts;
+              pUp.totalSkor += 1;
+            }
+          }
         });
       });
 
-      allWeeks.forEach((w) => {
-        if (!w.is_completed || !w.bonus_enabled || Number(w.week_num) > upToWeek) return;
-        if (w.puan_bonus > 0 && w.puan_lideri_ids?.length === 1) {
-          const lid = w.puan_lideri_ids[0];
-          if (!inactiveIds.has(lid) && map[lid]) {
-            map[lid].bonus += Number(w.puan_bonus);
-            map[lid].pCount += 1;
-          }
+      // Hafta Bonuslarını İşle
+      const wBonusRow = weeksByNum[wn];
+      if (wBonusRow && wBonusRow.bonus_enabled !== false && wBonusRow.is_completed) {
+        const pBonus = Number(wBonusRow.puan_bonus || 0);
+        const sBonus = Number(wBonusRow.skor_bonus || 0);
+
+        if (pBonus > 0 && Array.isArray(wBonusRow.puan_lideri_ids)) {
+          wBonusRow.puan_lideri_ids.forEach((rawId) => {
+            const uid = String(rawId).trim();
+            const pCum = ensurePlayer(cumulativeMap, uid);
+            if (pCum) {
+              pCum.bonusPts += pBonus;
+              pCum.masterPts += pBonus;
+              pCum.puanLiderWeeks.push(wn);
+            }
+            if (wn === selectedWeek) {
+              const pWk = ensurePlayer(weekOnlyMap, uid);
+              if (pWk) {
+                pWk.bonusPts += pBonus;
+                pWk.masterPts += pBonus;
+                pWk.puanLiderWeeks.push(wn);
+              }
+            }
+            if (wn <= selectedWeek) {
+              const pUp = ensurePlayer(upToSelectedMap, uid);
+              if (pUp) {
+                pUp.bonusPts += pBonus;
+                pUp.masterPts += pBonus;
+                pUp.puanLiderWeeks.push(wn);
+              }
+            }
+          });
         }
-        if (w.skor_bonus > 0 && w.skor_krali_ids?.length === 1) {
-          const kid = w.skor_krali_ids[0];
-          if (!inactiveIds.has(kid) && map[kid]) {
-            map[kid].bonus += Number(w.skor_bonus);
-            map[kid].sCount += 1;
-          }
+
+        if (sBonus > 0 && Array.isArray(wBonusRow.skor_krali_ids)) {
+          wBonusRow.skor_krali_ids.forEach((rawId) => {
+            const uid = String(rawId).trim();
+            const pCum = ensurePlayer(cumulativeMap, uid);
+            if (pCum) {
+              pCum.bonusPts += sBonus;
+              pCum.masterPts += sBonus;
+              pCum.skorKralWeeks.push(wn);
+            }
+            if (wn === selectedWeek) {
+              const pWk = ensurePlayer(weekOnlyMap, uid);
+              if (pWk) {
+                pWk.bonusPts += sBonus;
+                pWk.masterPts += sBonus;
+                pWk.skorKralWeeks.push(wn);
+              }
+            }
+            if (wn <= selectedWeek) {
+              const pUp = ensurePlayer(upToSelectedMap, uid);
+              if (pUp) {
+                pUp.bonusPts += sBonus;
+                pUp.masterPts += sBonus;
+                pUp.skorKralWeeks.push(wn);
+              }
+            }
+          });
         }
-      });
+      }
 
-      Object.values(map).forEach((row) => {
-        row.master = row.dfo + row.tff + row.bonus;
-      });
-
-      return Object.values(map);
-    };
-  }, [allMatches, allWeeks, accounts, inactiveIds]);
-
-  // AKTİF HEDEF HAFTA: 'TOTAL_STANDINGS' ise tüm haftalar, 'WEEK_CUMULATIVE' ise 1..selectedWeek arası!
-  const targetCumulativeWeek = activeTab === 'WEEK_CUMULATIVE' ? selectedWeek : maxAvailableWeek;
-
-  // Bir önceki haftanın sıralaması (22. Hafta Genel seçildiğinde 21. haftaya göre ▲/▼ değişimini gösterir)
-  const prevWeekRankMap = useMemo(() => {
-    if (targetCumulativeWeek <= 1) return {};
-    const prevList = buildStandingsUpToWeek(targetCumulativeWeek - 1);
-    prevList.sort((a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
-    const rMap: Record<string, number> = {};
-    prevList.forEach((r, idx) => {
-      rMap[r.id] = idx + 1;
-    });
-    return rMap;
-  }, [buildStandingsUpToWeek, targetCumulativeWeek]);
-
-  // Gösterilecek Kümülatif Puan Tablosu
-  const cumulativeStandings = useMemo(() => {
-    const list = buildStandingsUpToWeek(targetCumulativeWeek);
-
-    if (standingsFilter === 'DFO') {
-      return list.sort((a, b) => b.dfo - a.dfo || b.dfoScores - a.dfoScores || a.name.localeCompare(b.name, 'tr'));
-    }
-    if (standingsFilter === 'TFF') {
-      return list.sort((a, b) => b.tff - a.tff || b.tffScores - a.tffScores || a.name.localeCompare(b.name, 'tr'));
-    }
-    if (standingsFilter === 'SKOR') {
-      if (skorSubFilter === 'DFO') return list.sort((a, b) => b.dfoScores - a.dfoScores || b.dfo - a.dfo || a.name.localeCompare(b.name, 'tr'));
-      if (skorSubFilter === 'TFF') return list.sort((a, b) => b.tffScores - a.tffScores || b.tff - a.tff || a.name.localeCompare(b.name, 'tr'));
-      return list.sort((a, b) => b.scores - a.scores || b.master - a.master || a.name.localeCompare(b.name, 'tr'));
-    }
-    if (standingsFilter === 'BONUS') {
-      return list
-        .filter((r) => r.bonus > 0)
-        .sort((a, b) => b.bonus - a.bonus || b.sCount - a.sCount || a.name.localeCompare(b.name, 'tr'));
-    }
-
-    return list.sort((a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr'));
-  }, [buildStandingsUpToWeek, targetCumulativeWeek, standingsFilter, skorSubFilter]);
-
-  // 1. HAFTADAN SON HAFTAYA KÜMÜLATİF LİDERLER KRONOLOJİSİ ("1. Hafta Mehmet Ali Karay, 2. Hafta Doğa Çalkan...")
-  const cumulativeLeadersHistory = useMemo(() => {
-    const ascWeeks = [...availableWeeks].sort((a, b) => a - b);
-    return ascWeeks
-      .map((w) => {
-        const hasFinishedMatch = allMatches.some((m) => Number(m.week_num) === w && m.status === 'FINISHED');
-        if (!hasFinishedMatch) return null;
-
-        const st = buildStandingsUpToWeek(w).sort(
-          (a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr')
+      // Liderler Kronolojisi Satırı (En az 1 maç bitmişse o haftanın genel liderini al)
+      if (finishedInWeek > 0 && wn <= maxStartedWeek) {
+        const snapshotSorted = Object.values(cumulativeMap).sort(
+          (a, b) =>
+            b.masterPts - a.masterPts ||
+            b.totalSkor - a.totalSkor ||
+            a.name.localeCompare(b.name, 'tr')
         );
-        if (st.length === 0 || st[0].master === 0) return null;
+        const topLeader = snapshotSorted[0];
+        if (topLeader && topLeader.masterPts > 0) {
+          timelineRows.push({
+            weekNum: wn,
+            leaderId: topLeader.id,
+            leaderName: topLeader.name,
+            isChampion: topLeader.isChampion,
+            dfoPts: topLeader.dfoPts,
+            tffPts: topLeader.tffPts,
+            bonusPts: topLeader.bonusPts,
+            totalSkor: topLeader.totalSkor,
+            masterPts: topLeader.masterPts,
+            isCompleted: Boolean(wBonusRow?.is_completed || finishedInWeek >= 24)
+          });
+        }
+      }
+    });
 
-        const leader = st[0];
-        const runnerUp = st[1];
-        const diff = runnerUp ? leader.master - runnerUp.master : leader.master;
+    // B) CANLI MAÇ KATKISI (CANLI Sekmesi İçin)
+    let liveCount = 0;
+    const liveMapClone: Record<string, PlayerStatRow> = {};
+    Object.keys(cumulativeMap).forEach((uid) => {
+      liveMapClone[uid] = {
+        ...cumulativeMap[uid],
+        puanLiderWeeks: [...cumulativeMap[uid].puanLiderWeeks],
+        skorKralWeeks: [...cumulativeMap[uid].skorKralWeeks]
+      };
+    });
 
-        // O haftanın kendi içindeki en yüksek puanlısını da bilgi olarak bul
-        const wMeta = allWeeks.find((wm) => Number(wm.week_num) === w);
-        const weekStarNames = (wMeta?.puan_lideri_ids || []).map((id) => accounts[id]?.name || id);
+    activeRealTimeWeeks.forEach((aw) => {
+      const bulMatches = recentBulletins.filter((b: any) => Number(b.week_num) === aw);
+      const offForAw = matchesByWeek[aw] || [];
+      const offByIdx: Record<number, OfficialMatchRow> = {};
+      offForAw.forEach((om) => {
+        offByIdx[Number(om.match_index)] = om;
+      });
 
-        return {
-          week: w,
-          leaderId: leader.id,
-          leaderName: leader.name,
-          leaderMaster: leader.master,
-          leaderDfo: leader.dfo,
-          leaderTff: leader.tff,
-          leaderBonus: leader.bonus,
-          leaderScores: leader.scores,
-          runnerUpName: runnerUp?.name || '-',
-          runnerUpMaster: runnerUp?.master || 0,
-          pointGap: diff,
-          weekTopNames: weekStarNames
-        };
-      })
-      .filter(Boolean) as {
-      week: number;
-      leaderId: string;
-      leaderName: string;
-      leaderMaster: number;
-      leaderDfo: number;
-      leaderTff: number;
-      leaderBonus: number;
-      leaderScores: number;
-      runnerUpName: string;
-      runnerUpMaster: number;
-      pointGap: number;
-      weekTopNames: string[];
-    }[];
-  }, [availableWeeks, allMatches, allWeeks, buildStandingsUpToWeek, accounts]);
+      const matchList =
+        bulMatches.length > 0
+          ? bulMatches.map((b: any) => ({
+              week_num: Number(b.week_num),
+              match_index: Number(b.match_index),
+              category: b.category || '',
+              match_date: String(b.match_date || '').trim(),
+              match_time: String(b.match_time || '').trim(),
+              home_team: b.home_team || '',
+              away_team: b.away_team || ''
+            }))
+          : offForAw.map((om) => ({
+              week_num: Number(om.week_num),
+              match_index: Number(om.match_index),
+              category: om.category || '',
+              match_date: String(om.match_date || '').trim(),
+              match_time: String(om.match_time || '').trim(),
+              home_team: om.home_team || '',
+              away_team: om.away_team || ''
+            }));
 
-  const activeLiveMatchCount = liveStandings.length > 0 ? Number(liveStandings[0].aktif_mac_sayisi || 0) : 0;
+      matchList.forEach((m) => {
+        const offM = offByIdx[m.match_index];
+        if (offM && (offM.status === 'FINISHED' || offM.status === 'POSTPONED')) return;
 
-  const effectiveLiveStandings = useMemo(() => {
-    const filtered = liveStandings.filter((r) => !inactiveIds.has(r.user_id));
-    if (filtered.length > 0) return filtered;
+        const uidStr = String(getUniqueMatchId(m.week_num, m.match_index));
+        const dbLive = liveMatchesMap[uidStr];
+        if (!dbLive) return;
 
-    const fullList = buildStandingsUpToWeek(maxAvailableWeek).sort(
-      (a, b) => b.master - a.master || b.scores - a.scores || a.name.localeCompare(b.name, 'tr')
+        const st = String(dbLive.status || '');
+        const hSc = String(dbLive.home_score ?? '-');
+        const aSc = String(dbLive.away_score ?? '-');
+        if (hSc === '-' || aSc === '-') return;
+
+        const kMs = getMatchTimeMs(m.match_date, m.match_time);
+        const isLiveActive =
+          ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FINISHED', 'FT', 'AET', 'PEN'].includes(
+            st
+          ) &&
+          (kMs === 0 || (nowMs >= kMs && nowMs <= kMs + 14 * 3600 * 1000));
+
+        if (!isLiveActive) return;
+
+        if (['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(st)) {
+          liveCount += 1;
+        }
+
+        const targetScore = `${hSc}-${aSc}`.replace(/\s+/g, '');
+        const allKnownIds = Object.keys(liveMapClone);
+        const winners = allKnownIds.filter(
+          (pid) => activePredictionsMap[`${pid}-${m.week_num}-${m.match_index}`] === targetScore
+        );
+        const pts = calcMatchPts(winners.length);
+        const isTff = offM?.pool_type
+          ? offM.pool_type === 'TFF'
+          : advancedTffCheck(m.category, m.home_team, m.away_team);
+
+        winners.forEach((wId) => {
+          const row = liveMapClone[wId];
+          if (!row) return;
+          if (isTff) {
+            row.tffPts += pts;
+            row.tffSkor += 1;
+          } else {
+            row.dfoPts += pts;
+            row.dfoSkor += 1;
+          }
+          row.masterPts += pts;
+          row.totalSkor += 1;
+          row.liveAddPts += pts;
+          row.liveAddSkor += 1;
+        });
+      });
+    });
+
+    // Seçili Haftanın Maç Arşivi Kartları (Resmi Kasa + Henüz Oynanmamış Bülten Maçları Birleşimi)
+    const offSelected = [...(matchesByWeek[selectedWeek] || [])].sort(
+      (a, b) => Number(a.match_index) - Number(b.match_index)
+    );
+    const bulSelected = recentBulletins
+      .filter((b: any) => Number(b.week_num) === selectedWeek)
+      .sort((a: any, b: any) => Number(a.match_index) - Number(b.match_index));
+
+    const mergedWeekMatches: OfficialMatchRow[] =
+      offSelected.length >= bulSelected.length && offSelected.length > 0
+        ? offSelected
+        : bulSelected.map((b: any) => {
+            const existing = offSelected.find(
+              (o) => Number(o.match_index) === Number(b.match_index)
+            );
+            if (existing) return existing;
+            const isTff = advancedTffCheck(b.category || '', b.home_team || '', b.away_team || '');
+            return {
+              id: getUniqueMatchId(Number(b.week_num), Number(b.match_index)),
+              week_num: Number(b.week_num),
+              match_index: Number(b.match_index),
+              category: b.category || '',
+              pool_type: isTff ? 'TFF' : 'DFO',
+              match_date: String(b.match_date || '').trim(),
+              match_time: String(b.match_time || '').trim(),
+              home_team: b.home_team || '',
+              away_team: b.away_team || '',
+              home_score: null,
+              away_score: null,
+              status: 'NOT_STARTED',
+              winner_ids: [],
+              points_awarded: 0
+            };
+          });
+
+    return {
+      totalStandings: {
+        kesin: Object.values(cumulativeMap),
+        canli: Object.values(liveMapClone)
+      },
+      weekSummaryRows: Object.values(weekOnlyMap),
+      weekGenelRows: Object.values(upToSelectedMap),
+      leadersTimeline: timelineRows,
+      selectedWeekMatches: mergedWeekMatches,
+      selectedWeekBonusInfo: weeksByNum[selectedWeek] || null,
+      liveActiveMatchCount: liveCount
+    };
+  }, [
+    playersMap,
+    officialMatches,
+    officialWeeks,
+    availableWeeks,
+    selectedWeek,
+    activeRealTimeWeeks,
+    recentBulletins,
+    liveMatchesMap,
+    activePredictionsMap,
+    nowMs
+  ]);
+
+  // SIRALAMA YARDIMCILARI
+  const sortMaster = (list: PlayerStatRow[]) =>
+    [...list].sort(
+      (a, b) =>
+        b.masterPts - a.masterPts ||
+        b.totalSkor - a.totalSkor ||
+        a.name.localeCompare(b.name, 'tr')
     );
 
-    return fullList.map((r, idx) => ({
-      canli_sira: idx + 1,
-      kesin_sira: idx + 1,
-      user_id: r.id,
-      oyuncu_adi: r.name,
-      kesin_dfo: r.dfo,
-      kesin_tff: r.tff,
-      bonus_puan: r.bonus,
-      kesin_master: r.master,
-      kesin_skor: r.scores,
-      canli_ek_dfo: 0,
-      canli_ek_tff: 0,
-      canli_ek_puan: 0,
-      canli_ek_skor: 0,
-      canli_master_toplam: r.master,
-      canli_skor_toplam: r.scores,
-      aktif_mac_sayisi: 0
-    }));
-  }, [liveStandings, inactiveIds, buildStandingsUpToWeek, maxAvailableWeek]);
+  const sortDfo = (list: PlayerStatRow[]) =>
+    [...list].sort(
+      (a, b) =>
+        b.dfoPts - a.dfoPts || b.dfoSkor - a.dfoSkor || a.name.localeCompare(b.name, 'tr')
+    );
 
-  const toggleCardExpand = (id: number) => setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
-  const toggleWinners = (id: number) => setOpenWinnerLists((prev) => ({ ...prev, [id]: !prev[id] }));
+  const sortTff = (list: PlayerStatRow[]) =>
+    [...list].sort(
+      (a, b) =>
+        b.tffPts - a.tffPts || b.tffSkor - a.tffSkor || a.name.localeCompare(b.name, 'tr')
+    );
+
+  const sortSkorMaster = (list: PlayerStatRow[]) =>
+    [...list].sort(
+      (a, b) =>
+        b.totalSkor - a.totalSkor ||
+        b.masterPts - a.masterPts ||
+        a.name.localeCompare(b.name, 'tr')
+    );
+
+  const sortSkorDfo = (list: PlayerStatRow[]) =>
+    [...list].sort(
+      (a, b) =>
+        b.dfoSkor - a.dfoSkor || b.dfoPts - a.dfoPts || a.name.localeCompare(b.name, 'tr')
+    );
+
+  const sortSkorTff = (list: PlayerStatRow[]) =>
+    [...list].sort(
+      (a, b) =>
+        b.tffSkor - a.tffSkor || b.tffPts - a.tffPts || a.name.localeCompare(b.name, 'tr')
+    );
+
+  const sortBonus = (list: PlayerStatRow[]) =>
+    [...list]
+      .filter((r) => r.bonusPts > 0)
+      .sort(
+        (a, b) =>
+          b.bonusPts - a.bonusPts ||
+          b.masterPts - a.masterPts ||
+          a.name.localeCompare(b.name, 'tr')
+      );
+
+  const renderPlayerNameWithCup = (name: string, isChamp: boolean, liveAdd: number = 0) => (
+    <div className="flex items-center gap-1.5 min-w-0">
+      <span className="truncate uppercase">{name}</span>
+      {isChamp && (
+        <span className="shrink-0 text-[11px] sm:text-xs leading-none" title="Lig Şampiyonu">
+          🏆
+        </span>
+      )}
+      {liveAdd > 0 && (
+        <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
+          +{liveAdd} CANLI
+        </span>
+      )}
+    </div>
+  );
+
+  // DETAYLI MASTER TABLO BİLEŞENİ (Genel Puan, Hafta Genel ve Canlı için ortak hiza)
+  const renderDetailedMasterTable = (
+    rows: PlayerStatRow[],
+    showLiveBadge: boolean = false,
+    emptyText: string = 'VERİ BULUNAMADI'
+  ) => {
+    const sorted = sortMaster(rows);
+    if (sorted.length === 0) {
+      return (
+        <div className="text-center py-10 text-slate-400 text-xs font-bold tracking-widest uppercase">
+          {emptyText}
+        </div>
+      );
+    }
+
+    return (
+      <table className="w-full table-fixed text-left tabular-nums">
+        <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+          <tr className="text-[9.5px] sm:text-xs uppercase tracking-wider font-black">
+            <th className="py-2.5 px-1.5 sm:px-3 w-[28px] sm:w-12 text-slate-400">#</th>
+            <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
+            <th className="py-2.5 px-1 w-[38px] sm:w-20 text-center text-sky-400">DFO</th>
+            <th className="py-2.5 px-1 w-[38px] sm:w-20 text-center text-rose-500">TFF</th>
+            <th className="py-2.5 px-1 w-[38px] sm:w-20 text-center text-emerald-400">BNS</th>
+            <th className="py-2.5 px-1 w-[40px] sm:w-20 text-center text-orange-400">SKOR</th>
+            <th className="py-2.5 px-1.5 sm:px-3 w-[52px] sm:w-28 text-center text-sky-100 bg-sky-500/15">
+              MASTER
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800/70">
+          {sorted.map((row, idx) => (
+            <tr
+              key={row.id}
+              className={
+                showLiveBadge && row.liveAddPts > 0
+                  ? 'bg-emerald-950/25 hover:bg-emerald-950/40 transition-colors'
+                  : 'hover:bg-slate-800/35 transition-colors'
+              }
+            >
+              <td className="py-2 px-1.5 sm:px-3 font-bold text-slate-400 text-[11px] sm:text-sm">
+                {idx + 1}
+              </td>
+              <td
+                className="py-2 px-1.5 sm:px-3 font-black text-white text-[11px] sm:text-sm"
+                title={row.name}
+              >
+                {renderPlayerNameWithCup(
+                  row.name,
+                  row.isChampion,
+                  showLiveBadge ? row.liveAddPts : 0
+                )}
+              </td>
+              <td className="py-2 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">
+                {row.dfoPts}
+              </td>
+              <td className="py-2 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">
+                {row.tffPts}
+              </td>
+              <td className="py-2 px-1 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">
+                {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
+              </td>
+              <td className="py-2 px-1 text-center text-orange-400 font-black text-[11px] sm:text-sm">
+                {row.totalSkor}
+              </td>
+              <td className="py-2 px-1.5 sm:px-3 text-center text-white font-black text-xs sm:text-base bg-sky-500/10">
+                {row.masterPts}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  // TEK SÜTUNLU STANDART TABLO BİLEŞENİ (MASTER PUAN, DFO, TFF, SKOR)
+  const renderSingleMetricTable = (
+    rows: PlayerStatRow[],
+    metric: 'MASTER' | 'DFO' | 'TFF' | 'SKOR_MASTER' | 'SKOR_DFO' | 'SKOR_TFF',
+    emptyText: string = 'VERİ BULUNAMADI'
+  ) => {
+    const sorted =
+      metric === 'MASTER'
+        ? sortMaster(rows)
+        : metric === 'DFO'
+        ? sortDfo(rows)
+        : metric === 'TFF'
+        ? sortTff(rows)
+        : metric === 'SKOR_DFO'
+        ? sortSkorDfo(rows)
+        : metric === 'SKOR_TFF'
+        ? sortSkorTff(rows)
+        : sortSkorMaster(rows);
+
+    if (sorted.length === 0) {
+      return (
+        <div className="text-center py-10 text-slate-400 text-xs font-bold tracking-widest uppercase">
+          {emptyText}
+        </div>
+      );
+    }
+
+    const colTitle =
+      metric === 'MASTER'
+        ? 'MASTER PUAN'
+        : metric === 'DFO'
+        ? 'DFO PUAN'
+        : metric === 'TFF'
+        ? 'TFF PUAN'
+        : metric === 'SKOR_DFO'
+        ? 'DFO SKOR'
+        : metric === 'SKOR_TFF'
+        ? 'TFF SKOR'
+        : 'TOPLAM SKOR';
+
+    const colColor =
+      metric === 'DFO' || metric === 'SKOR_DFO'
+        ? 'text-sky-400'
+        : metric === 'TFF' || metric === 'SKOR_TFF'
+        ? 'text-rose-500'
+        : metric.startsWith('SKOR')
+        ? 'text-orange-400'
+        : 'text-sky-200';
+
+    return (
+      <table className="w-full table-fixed text-left tabular-nums">
+        <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+          <tr className="text-[10px] sm:text-xs uppercase tracking-wider font-black">
+            <th className="py-2.5 px-2 sm:px-3 w-10 sm:w-14 text-slate-400">#</th>
+            <th className="py-2.5 px-2 sm:px-3 text-slate-200">YARIŞMACI</th>
+            <th className={`py-2.5 px-3 w-28 sm:w-40 text-right ${colColor}`}>{colTitle}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800/70">
+          {sorted.map((row, idx) => {
+            const val =
+              metric === 'MASTER'
+                ? row.masterPts
+                : metric === 'DFO'
+                ? row.dfoPts
+                : metric === 'TFF'
+                ? row.tffPts
+                : metric === 'SKOR_DFO'
+                ? row.dfoSkor
+                : metric === 'SKOR_TFF'
+                ? row.tffSkor
+                : row.totalSkor;
+
+            return (
+              <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
+                <td className="py-2 px-2 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
+                  {idx + 1}
+                </td>
+                <td className="py-2 px-2 sm:px-3 font-black text-white text-xs sm:text-sm">
+                  {renderPlayerNameWithCup(row.name, row.isChampion)}
+                </td>
+                <td className={`py-2 px-3 text-right font-black text-xs sm:text-base ${colColor}`}>
+                  {val}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  };
+
+  // BONUS TABLOSU BİLEŞENİ
+  const renderBonusTable = (rows: PlayerStatRow[], emptyText: string = 'HENÜZ BONUS KAZANAN YOK') => {
+    const sorted = sortBonus(rows);
+    if (sorted.length === 0) {
+      return (
+        <div className="text-center py-10 text-slate-400 text-xs font-bold tracking-widest uppercase">
+          {emptyText}
+        </div>
+      );
+    }
+
+    return (
+      <table className="w-full table-fixed text-left tabular-nums">
+        <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+          <tr className="text-[9.5px] sm:text-xs uppercase tracking-wider font-black">
+            <th className="py-2.5 px-1.5 sm:px-3 w-8 sm:w-12 text-slate-400">#</th>
+            <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
+            <th className="py-2.5 px-1 w-24 sm:w-44 text-center text-sky-300">PUAN LİDERİ</th>
+            <th className="py-2.5 px-1 w-24 sm:w-44 text-center text-orange-400">SKOR KRALI</th>
+            <th className="py-2.5 px-2 sm:px-3 w-16 sm:w-28 text-right text-emerald-400">BONUS</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800/70">
+          {sorted.map((row, idx) => (
+            <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
+              <td className="py-2 px-1.5 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
+                {idx + 1}
+              </td>
+              <td className="py-2 px-1.5 sm:px-3 font-black text-white text-xs sm:text-sm">
+                {renderPlayerNameWithCup(row.name, row.isChampion)}
+              </td>
+              <td className="py-2 px-1 text-center text-[10px] sm:text-xs text-sky-300 font-bold">
+                {row.puanLiderWeeks.length > 0
+                  ? row.puanLiderWeeks.map((w) => `${w}.H`).join(', ')
+                  : '-'}
+              </td>
+              <td className="py-2 px-1 text-center text-[10px] sm:text-xs text-orange-400 font-bold">
+                {row.skorKralWeeks.length > 0
+                  ? row.skorKralWeeks.map((w) => `${w}.H`).join(', ')
+                  : '-'}
+              </td>
+              <td className="py-2 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-emerald-400">
+                +{row.bonusPts}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto py-16 flex justify-center">
+        <span className="text-sky-300 text-xs sm:text-sm font-black tracking-widest uppercase animate-pulse">
+          Arşiv ve Puan Tablosu Yükleniyor...
+        </span>
+      </div>
+    );
+  }
+
+  const filteredArchiveMatches = selectedWeekMatches.filter((m) => {
+    if (archivePoolFilter === 'ALL') return true;
+    const isTff =
+      m.pool_type === 'TFF' ||
+      (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
+    return archivePoolFilter === 'TFF' ? isTff : !isTff;
+  });
 
   return (
-    <div className="min-h-screen bg-[#050a14] text-slate-100 pb-20">
-      <div className="max-w-6xl mx-auto px-2 sm:px-6 pt-3 sm:pt-5">
-        
-        {/* ÜST KOMPAKT KUMANDA CETVELİ */}
-        <div className="flex flex-col items-center justify-center mb-3 sm:mb-5">
-          <div className="w-full max-w-5xl bg-[#071126] border border-slate-800 p-1.5 sm:p-2 rounded-xl shadow-md flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
-            
-            {/* Hafta Seçici */}
-            <div className="flex items-center gap-1 bg-[#040917] border border-slate-700 rounded-lg px-2 py-1">
-              <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-sky-300 uppercase">HAFTA:</span>
-              <select
-                value={selectedWeek}
-                onChange={(e) => setSelectedWeek(Number(e.target.value))}
-                className="bg-transparent text-white font-black text-[11px] sm:text-xs outline-none cursor-pointer"
-              >
-                {availableWeeks.map((w) => (
-                  <option key={w} value={w} className="bg-[#040917] text-white">
-                    {w}. Hafta
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 1. Genel Puan */}
-            <button
-              onClick={() => setActiveTab('TOTAL_STANDINGS')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
-                activeTab === 'TOTAL_STANDINGS'
-                  ? 'bg-blue-700 text-white border border-sky-400/70'
-                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
-              }`}
-            >
-              GENEL PUAN
-            </button>
-
-            {/* 2. Maç Arşivi */}
-            <button
-              onClick={() => setActiveTab('CARDS')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
-                activeTab === 'CARDS'
-                  ? 'bg-blue-700 text-white border border-sky-400/70'
-                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
-              }`}
-            >
-              MAÇ ARŞİVİ
-            </button>
-
-            {/* 3. Hafta Özeti */}
-            <button
-              onClick={() => setActiveTab('WEEK_CHECK')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
-                activeTab === 'WEEK_CHECK'
-                  ? 'bg-blue-700 text-white border border-sky-400/70'
-                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
-              }`}
-            >
-              {selectedWeek}. HAFTA ÖZETİ
-            </button>
-
-            {/* 4. Hafta Genel */}
-            <button
-              onClick={() => setActiveTab('WEEK_CUMULATIVE')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
-                activeTab === 'WEEK_CUMULATIVE'
-                  ? 'bg-blue-700 text-white border border-sky-400/70'
-                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
-              }`}
-            >
-              {selectedWeek}. HAFTA GENEL
-            </button>
-
-            {/* 5. Liderler */}
-            <button
-              onClick={() => setActiveTab('LEADERS_TIMELINE')}
-              className={`px-2.5 py-1.5 rounded-lg text-[9.5px] sm:text-[11px] font-black tracking-wider uppercase transition-colors ${
-                activeTab === 'LEADERS_TIMELINE'
-                  ? 'bg-blue-700 text-white border border-sky-400/70'
-                  : 'bg-[#040917] text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white'
-              }`}
-            >
-              LİDERLER
-            </button>
-          </div>
+    <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 pt-3 pb-12 flex flex-col gap-3">
+      {/* ÜST HAFTA SEÇİCİ VE ANA SEKMELER BARI */}
+      <div className="bg-[#071126] border border-slate-800 rounded-2xl px-2.5 py-2.5 sm:px-4 sm:py-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 shadow-md">
+        <div className="flex items-center gap-1.5 bg-[#040917] border border-slate-800 rounded-xl px-2.5 py-1.5">
+          <span className="text-[10px] sm:text-[11px] font-black text-sky-400 uppercase tracking-wider">
+            HAFTA:
+          </span>
+          <select
+            value={selectedWeek}
+            onChange={(e) => setSelectedWeek(Number(e.target.value))}
+            className="bg-transparent text-white text-[11px] sm:text-xs font-black outline-none cursor-pointer pr-1"
+          >
+            {[...availableWeeks]
+              .sort((a, b) => b - a)
+              .map((w) => (
+                <option key={w} value={w} className="bg-[#071126] text-white">
+                  {w}. Hafta
+                </option>
+              ))}
+          </select>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-20 text-sky-300 font-black tracking-widest animate-pulse text-sm">
-            YÜKLENİYOR...
-          </div>
-        ) : allMatches.length === 0 ? (
-          <div className="text-center py-16 bg-[#071126] border border-blue-900/50 rounded-2xl">
-            <p className="text-slate-300 font-bold text-sm">Henüz veritabanında maç kaydı bulunamadı.</p>
-          </div>
-        ) : (
-          <>
-            {/* ======================================================================= */}
-            {/* SEKME 1: MAÇ ARŞİVİ KARTLARI (DOKUNULMADI - ORİJİNAL GÖRÜNÜM)          */}
-            {/* ======================================================================= */}
-            {activeTab === 'CARDS' && (
-              <div>
-                {selectedWeekMeta && selectedWeekMeta.is_completed && (
-                  <div className="max-w-4xl mx-auto mb-4 p-3 rounded-xl bg-[#071126] border border-blue-800/50 flex flex-wrap items-center justify-center gap-3 text-[11px]">
-                    <span className="text-emerald-400 font-black uppercase">
-                      🔥 Haftanın Lideri:{' '}
-                      <strong className="text-white">
-                        {selectedWeekMeta.puan_lideri_ids?.length > 0
-                          ? selectedWeekMeta.puan_lideri_ids.map((id) => accounts[id]?.name || id).join(' & ')
-                          : '-'}
-                      </strong>
-                      {selectedWeekMeta.bonus_enabled && selectedWeekMeta.puan_bonus > 0 && ' (+3 Bonus)'}
-                    </span>
-                    <span className="text-slate-600">|</span>
-                    <span className="text-orange-400 font-black uppercase">
-                      ⚽ Skor Kralı:{' '}
-                      <strong className="text-white">
-                        {selectedWeekMeta.skor_krali_ids?.length > 0
-                          ? selectedWeekMeta.skor_krali_ids.map((id) => accounts[id]?.name || id).join(' & ')
-                          : '-'}
-                      </strong>
-                      {selectedWeekMeta.bonus_enabled && selectedWeekMeta.skor_bonus > 0 && ' (+3 Bonus)'}
-                    </span>
-                  </div>
-                )}
+        {(
+          [
+            { key: 'TOTAL_STANDINGS', label: 'GENEL PUAN' },
+            { key: 'CARDS', label: 'MAÇ ARŞİVİ' },
+            { key: 'WEEK_CHECK', label: `${selectedWeek}. HAFTA ÖZETİ` },
+            { key: 'WEEK_CUMULATIVE', label: `${selectedWeek}. HAFTA GENEL` },
+            { key: 'LEADERS_TIMELINE', label: 'LİDERLER' }
+          ] as const
+        ).map((tab) => {
+          const isAct = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-colors border ${
+                isAct
+                  ? 'bg-blue-600 text-white border-sky-400/70'
+                  : 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">
-                  {weekMatches.map((m) => {
-                    const homeUpper = (m.home_team || '').toUpperCase();
-                    const awayUpper = (m.away_team || '').toUpperCase();
-                    const isTff = m.pool_type === 'TFF';
-                    const themeCat =
-                      isTff && !m.category.toUpperCase().includes('TÜRKİYE') && !m.category.toUpperCase().includes('TFF')
-                        ? `TÜRKİYE ${m.category}`
-                        : m.category;
-                    const theme = getEliteTheme(themeCat, homeUpper, awayUpper);
-                    const isExpanded = !!expandedCards[m.id];
-                    const isWinnersOpen = openWinnerLists[m.id] !== false;
-                    const isFin = m.status === 'FINISHED';
-                    const isPostponed = m.status === 'POSTPONED';
-                    const winnerNames = (m.winner_ids || [])
-                      .filter((uid) => !inactiveIds.has(uid))
-                      .map((uid) => accounts[uid]?.name || uid)
-                      .sort((a, b) => a.localeCompare(b, 'tr'));
+      {/* ===================== 1. SEKME: GENEL PUAN DURUMU (DEFAULT) ===================== */}
+      {activeTab === 'TOTAL_STANDINGS' && (
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          {/* DONDURULMUŞ (STICKY) BAŞLIK VE KATEGORİ SEÇİCİ */}
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 pt-2.5 pb-2 sm:px-5 sm:pt-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+              <h1 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+                {standingsFilter === 'CANLI' ? 'CANLI GENEL PUAN DURUMU' : 'GENEL PUAN DURUMU'}
+              </h1>
 
-                    return (
-                      <div
-                        key={m.id}
-                        className={`w-full border rounded-xl overflow-hidden transition-all duration-300 relative ${theme.containerBorder} ${
-                          isExpanded ? `${theme.containerShadow} ${theme.containerBg}` : 'bg-slate-950/90 shadow-md'
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+                {(
+                  [
+                    { key: 'CANLI', label: liveActiveMatchCount > 0 ? `CANLI (${liveActiveMatchCount})` : 'CANLI' },
+                    { key: 'MASTER', label: 'MASTER' },
+                    { key: 'DFO', label: 'DFO' },
+                    { key: 'TFF', label: 'TFF' },
+                    { key: 'SKOR', label: 'SKOR' },
+                    { key: 'BONUS', label: 'BONUS' }
+                  ] as const
+                ).map((f) => {
+                  const isSelected = standingsFilter === f.key;
+                  let cls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
+
+                  if (isSelected) {
+                    if (f.key === 'MASTER') cls = 'bg-sky-600 text-white border-sky-300/80';
+                    else if (f.key === 'DFO') cls = 'bg-blue-700 text-white border-sky-400/80';
+                    else if (f.key === 'TFF') cls = 'bg-rose-700 text-white border-rose-400/80';
+                    else if (f.key === 'SKOR') cls = 'bg-orange-600 text-white border-orange-300/80';
+                    else if (f.key === 'BONUS') cls = 'bg-emerald-700 text-white border-emerald-400/80';
+                    else cls = 'bg-emerald-700 text-white border-emerald-400/80';
+                  } else {
+                    if (f.key === 'DFO') cls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
+                    else if (f.key === 'TFF') cls = 'bg-[#040917] text-rose-500 border-slate-800 hover:border-rose-700';
+                    else if (f.key === 'SKOR') cls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
+                    else if (f.key === 'BONUS') cls = 'bg-[#040917] text-emerald-400 border-slate-800 hover:border-emerald-700';
+                    else if (f.key === 'CANLI') cls = 'bg-[#040917] text-slate-200 border-slate-800 hover:border-emerald-700';
+                  }
+
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => setStandingsFilter(f.key)}
+                      className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${cls}`}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ALT KIRILIM: MASTER PUAN | DETAYLI MASTER (DEFAULT: DETAYLI MASTER) */}
+            {(standingsFilter === 'MASTER' || standingsFilter === 'CANLI') && (
+              <div className="flex items-center justify-center gap-1.5 pt-2">
+                <button
+                  onClick={() => setMasterSubFilter('DUZ')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                    masterSubFilter === 'DUZ'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER PUAN
+                </button>
+                <button
+                  onClick={() => setMasterSubFilter('DETAYLI')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                    masterSubFilter === 'DETAYLI'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  DETAYLI MASTER
+                </button>
+              </div>
+            )}
+
+            {/* ALT KIRILIM: SKOR */}
+            {standingsFilter === 'SKOR' && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
+                {(
+                  [
+                    { key: 'DUZ', label: 'MASTER SKOR' },
+                    { key: 'DETAYLI', label: 'DETAYLI SKOR' },
+                    { key: 'DFO', label: 'DFO SKOR' },
+                    { key: 'TFF', label: 'TFF SKOR' }
+                  ] as const
+                ).map((sf) => (
+                  <button
+                    key={sf.key}
+                    onClick={() => setSkorSubFilter(sf.key)}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                      skorSubFilter === sf.key
+                        ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {sf.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* TABLO GÖVDESİ */}
+          <div className="px-1.5 pb-4 sm:px-4 sm:pb-6">
+            {standingsFilter === 'CANLI' &&
+              (masterSubFilter === 'DETAYLI'
+                ? renderDetailedMasterTable(totalStandings.canli, true)
+                : renderSingleMetricTable(totalStandings.canli, 'MASTER'))}
+
+            {standingsFilter === 'MASTER' &&
+              (masterSubFilter === 'DETAYLI'
+                ? renderDetailedMasterTable(totalStandings.kesin, false)
+                : renderSingleMetricTable(totalStandings.kesin, 'MASTER'))}
+
+            {standingsFilter === 'DFO' && renderSingleMetricTable(totalStandings.kesin, 'DFO')}
+            {standingsFilter === 'TFF' && renderSingleMetricTable(totalStandings.kesin, 'TFF')}
+
+            {standingsFilter === 'SKOR' &&
+              (skorSubFilter === 'DETAYLI' ? (
+                <table className="w-full table-fixed text-left tabular-nums">
+                  <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+                    <tr className="text-[9.5px] sm:text-xs uppercase tracking-wider font-black">
+                      <th className="py-2.5 px-1.5 sm:px-3 w-8 sm:w-12 text-slate-400">#</th>
+                      <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
+                      <th className="py-2.5 px-1 w-14 sm:w-24 text-center text-sky-400">DFO</th>
+                      <th className="py-2.5 px-1 w-14 sm:w-24 text-center text-rose-500">TFF</th>
+                      <th className="py-2.5 px-2 sm:px-3 w-16 sm:w-28 text-center text-orange-400 bg-orange-500/10">
+                        SKOR
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {sortSkorMaster(totalStandings.kesin).map((row, idx) => (
+                      <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
+                        <td className="py-2 px-1.5 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2 px-1.5 sm:px-3 font-black text-white text-xs sm:text-sm">
+                          {renderPlayerNameWithCup(row.name, row.isChampion)}
+                        </td>
+                        <td className="py-2 px-1 text-center text-sky-400 font-bold text-xs sm:text-sm">
+                          {row.dfoSkor}
+                        </td>
+                        <td className="py-2 px-1 text-center text-rose-500 font-bold text-xs sm:text-sm">
+                          {row.tffSkor}
+                        </td>
+                        <td className="py-2 px-2 sm:px-3 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">
+                          {row.totalSkor}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : skorSubFilter === 'DFO' ? (
+                renderSingleMetricTable(totalStandings.kesin, 'SKOR_DFO')
+              ) : skorSubFilter === 'TFF' ? (
+                renderSingleMetricTable(totalStandings.kesin, 'SKOR_TFF')
+              ) : (
+                renderSingleMetricTable(totalStandings.kesin, 'SKOR_MASTER')
+              ))}
+
+            {standingsFilter === 'BONUS' && renderBonusTable(totalStandings.kesin)}
+          </div>
+        </div>
+      )}
+
+      {/* ===================== 2. SEKME: SEÇİLİ HAFTA MAÇ ARŞİVİ ===================== */}
+      {activeTab === 'CARDS' && (
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl p-3 sm:p-5 flex flex-col gap-3 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
+            <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+              {selectedWeek}. HAFTA MAÇ ARŞİVİ ({filteredArchiveMatches.length} MAÇ)
+            </h2>
+            <div className="flex items-center gap-1">
+              {(
+                [
+                  { key: 'ALL', label: 'TÜMÜ' },
+                  { key: 'DFO', label: 'DFO' },
+                  { key: 'TFF', label: 'TFF' }
+                ] as const
+              ).map((pf) => (
+                <button
+                  key={pf.key}
+                  onClick={() => setArchivePoolFilter(pf.key)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                    archivePoolFilter === pf.key
+                      ? pf.key === 'TFF'
+                        ? 'bg-rose-700 text-white border-rose-400/80'
+                        : 'bg-sky-600 text-white border-sky-300/80'
+                      : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  {pf.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredArchiveMatches.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-widest">
+              {selectedWeek}. HAFTA İÇİN KAYITLI MAÇ BULUNAMADI
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {filteredArchiveMatches.map((m) => {
+                const key = `${m.week_num}-${m.match_index}`;
+                const isOpen = Boolean(expandedArchiveCards[key]);
+                const isFin = m.status === 'FINISHED';
+                const isPost = m.status === 'POSTPONED';
+                const isTff =
+                  m.pool_type === 'TFF' ||
+                  (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
+                const theme = getEliteTheme(
+                  isTff && !m.category.toUpperCase().includes('TÜRKİYE')
+                    ? `TÜRKİYE ${m.category}`
+                    : m.category,
+                  m.home_team?.toUpperCase(),
+                  m.away_team?.toUpperCase()
+                );
+
+                const winnerIds = (m.winner_ids || []).filter(
+                  (id) => !EXCLUDED_IDS.has(String(id).trim())
+                );
+                const pts =
+                  m.points_awarded !== null && m.points_awarded !== undefined
+                    ? Number(m.points_awarded)
+                    : calcMatchPts(winnerIds.length);
+                const winnerNames = winnerIds
+                  .map((uid) => playersMap[String(uid).trim()]?.name || String(uid).trim())
+                  .sort((a, b) => a.localeCompare(b, 'tr'));
+
+                return (
+                  <div
+                    key={key}
+                    className="bg-[#040a18] border border-slate-800 rounded-xl overflow-hidden flex flex-col"
+                  >
+                    <div className="px-3 py-1.5 bg-[#071126] border-b border-slate-800/80 flex items-center justify-between text-[9.5px] font-bold">
+                      <span className="text-slate-400 uppercase tracking-wider">
+                        {m.week_num}. HAFTA • {m.match_index}. MAÇ • {m.match_date} {m.match_time}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded font-black uppercase ${
+                          isTff
+                            ? 'bg-rose-950/70 text-rose-400 border border-rose-800/70'
+                            : 'bg-sky-950/70 text-sky-400 border border-sky-800/70'
                         }`}
                       >
-                        {theme.bgImg && (
-                          <>
-                            <div
-                              className="absolute inset-0 z-0 opacity-100"
-                              style={{ backgroundImage: theme.bgImg, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                            />
-                            <div className={`absolute inset-0 z-0 ${isExpanded ? 'bg-slate-900/65' : 'bg-slate-950/75 hover:bg-slate-900/65'}`} />
-                          </>
-                        )}
+                        {isTff ? 'TFF' : 'DFO'}
+                      </span>
+                    </div>
 
-                        {!isExpanded ? (
-                          <div
-                            onClick={() => toggleCardExpand(m.id)}
-                            className="cursor-pointer px-2.5 sm:px-4 py-2.5 flex items-center justify-between relative z-10 group"
-                          >
-                            <div className="flex-1 flex items-center justify-end pr-2 overflow-hidden">
-                              <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase truncate text-right group-hover:text-white">
-                                {homeUpper}
-                              </span>
-                            </div>
+                    <div className="px-3 py-2.5 flex items-center justify-between gap-2">
+                      <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
+                        <span className="text-[11px] sm:text-xs font-black text-white uppercase truncate text-right">
+                          {m.home_team}
+                        </span>
+                        <img
+                          src={theme.homeLogo}
+                          alt={m.home_team}
+                          className="w-7 h-7 object-contain shrink-0"
+                        />
+                      </div>
 
-                            <div className="flex items-center justify-center shrink-0">
-                              <img src={theme.homeLogo} alt={homeUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md" />
-                              <div className="flex flex-col items-center mx-1.5 min-w-[46px]">
-                                <span className="text-[8px] font-black tracking-wider text-slate-400 mb-0.5">
-                                  {isPostponed ? 'ERT' : isFin ? `${m.match_index}. MAÇ` : m.match_time}
-                                </span>
-                                <div className="px-2 py-0.5 rounded bg-[#080d1a]/90 border border-slate-700/70 text-center w-full">
-                                  <span className="font-black text-xs sm:text-sm text-white tracking-widest">
-                                    {isFin ? `${m.home_score}-${m.away_score}` : isPostponed ? 'ERT' : 'v'}
-                                  </span>
-                                </div>
-                              </div>
-                              <img src={theme.awayLogo} alt={awayUpper} className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md" />
-                            </div>
-
-                            <div className="flex-1 flex items-center justify-start pl-2 overflow-hidden">
-                              <span className="text-[10px] sm:text-xs font-bold text-slate-200 uppercase truncate text-left group-hover:text-white">
-                                {awayUpper}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative z-10 p-3 sm:p-4">
-                            <button
-                              onClick={() => toggleCardExpand(m.id)}
-                              className="absolute top-2 right-2 bg-slate-950/70 text-slate-300 hover:text-white border border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                            >
-                              ✕
-                            </button>
-
-                            <div className="text-center mb-2">
-                              <span className="text-[9px] font-bold text-slate-300 bg-slate-950/70 px-2.5 py-0.5 rounded-full uppercase tracking-widest">
-                                {m.week_num}. HAFTA • {m.match_index}. MAÇ • {m.match_date} {m.match_time}
-                              </span>
-                            </div>
-
-                            <div className="text-center mb-3">
-                              <span className={`inline-block px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-                                {m.category}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center justify-between px-2 py-2">
-                              <div className="flex-1 flex flex-col items-center gap-2">
-                                <img src={theme.homeLogo} alt={homeUpper} className="w-14 h-14 sm:w-20 sm:h-20 object-contain drop-shadow-lg" />
-                                <span className="text-[10px] sm:text-xs font-black text-white text-center uppercase">{homeUpper}</span>
-                              </div>
-
-                              <div className="mx-2 px-4 py-2 rounded-xl bg-[#080d1a]/90 border border-slate-700 text-center">
-                                <span className="text-xl sm:text-2xl font-black text-white tracking-widest">
-                                  {isFin ? `${m.home_score} : ${m.away_score}` : isPostponed ? 'ERT' : '- : -'}
-                                </span>
-                              </div>
-
-                              <div className="flex-1 flex flex-col items-center gap-2">
-                                <img src={theme.awayLogo} alt={awayUpper} className="w-14 h-14 sm:w-20 sm:h-20 object-contain drop-shadow-lg" />
-                                <span className="text-[10px] sm:text-xs font-black text-white text-center uppercase">{awayUpper}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className={`${theme.bottomBar} border-t px-3 py-1.5 relative z-10 flex items-center justify-between text-[9.5px] sm:text-[10px]`}>
-                          <div>
-                            {!isFin ? (
-                              <span className="text-slate-400 italic">{isPostponed ? 'Ertelendi' : 'Sonuç bekleniyor'}</span>
-                            ) : winnerNames.length > 0 ? (
-                              <span className="text-emerald-300 font-bold">
-                                🎯 {winnerNames.length} bilen (+{m.points_awarded} P)
-                              </span>
-                            ) : (
-                              <span className="text-slate-400 italic">Skoru bilen çıkmadı</span>
-                            )}
-                          </div>
-
-                          <span className={`text-[8px] font-black px-2 py-0.5 rounded border uppercase tracking-widest ${theme.tagText} ${theme.tagBg} ${theme.tagBorder}`}>
-                            {isTff ? 'TFF' : 'DFO'}
+                      <div className="px-2.5 py-1 rounded-lg bg-[#091328] border border-slate-700/70 min-w-[58px] text-center shrink-0">
+                        {isFin ? (
+                          <span className="text-xs sm:text-sm font-black text-white tracking-widest">
+                            {m.home_score}-{m.away_score}
                           </span>
-
-                          {isFin && winnerNames.length > 0 && (
-                            <button onClick={() => toggleWinners(m.id)} className="text-sky-400 hover:text-sky-300 font-bold">
-                              {isWinnersOpen ? 'Gizle ▲' : 'Bilenler ▼'}
-                            </button>
-                          )}
-                        </div>
-
-                        {isFin && winnerNames.length > 0 && isWinnersOpen && (
-                          <div className="bg-slate-950/90 border-t border-slate-800/80 px-2.5 py-2 relative z-10 flex flex-wrap gap-1">
-                            {winnerNames.map((wName, i) => (
-                              <span key={i} className="bg-slate-900 border border-slate-700/80 text-slate-200 text-[9px] font-bold px-2 py-0.5 rounded">
-                                {wName}
-                              </span>
-                            ))}
-                          </div>
+                        ) : isPost ? (
+                          <span className="text-[10px] font-black text-amber-400">ERT</span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-sky-300">{m.match_time || 'v'}</span>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
-            {/* ======================================================================= */}
-            {/* SEKME 2: SEÇİLEN HAFTANIN TEKİL ÖZETİ (İNCE DONDURULMUŞ CETVEL)         */}
-            {/* ======================================================================= */}
-            {activeTab === 'WEEK_CHECK' && (
-              <div className="max-w-4xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-blue-500/30 rounded-xl shadow-2xl">
-                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-blue-500/40 px-2 pt-2 sm:px-5 sm:pt-3 shadow-[0_8px_20px_rgba(0,0,0,0.65)]">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-blue-800/50">
-                    <h2 className="text-[11px] sm:text-sm font-black text-emerald-400 uppercase tracking-wider">
-                      {selectedWeek}. HAFTA TEKİL PUAN ÖZETİ
-                    </h2>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-300">
-                      Puan Alan: <strong className="text-white">{weeklyCheckTable.length}</strong>
-                    </span>
-                  </div>
-
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <colgroup>
-                      <col className="w-[24px] sm:w-10" />
-                      <col />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[42px] sm:w-20" />
-                    </colgroup>
-                    <thead>
-                      <tr className="text-slate-200 text-[9px] sm:text-[11px] uppercase tracking-tight">
-                        <th className="py-1.5 px-0.5">#</th>
-                        <th className="py-1.5 px-1 text-white">Yarışmacı</th>
-                        <th className="py-1.5 px-0.5 text-center text-sky-400">DFO</th>
-                        <th className="py-1.5 px-0.5 text-center text-rose-500">TFF</th>
-                        <th className="py-1.5 px-0.5 text-center text-emerald-400">Bns</th>
-                        <th className="py-1.5 px-0.5 text-center text-orange-400">Skor</th>
-                        <th className="py-1.5 px-1 text-right text-sky-200">Toplam</th>
-                      </tr>
-                    </thead>
-                  </table>
-                </div>
-
-                <div className="px-2 pb-3 sm:px-5 sm:pb-5">
-                  {weeklyCheckTable.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 text-xs font-bold">
-                      Bu haftada henüz kesinleşmiş puan bulunmuyor.
-                    </div>
-                  ) : (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[24px] sm:w-10" />
-                        <col />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[42px] sm:w-20" />
-                      </colgroup>
-                      <tbody className="divide-y divide-blue-900/35">
-                        {weeklyCheckTable.map((row, idx) => (
-                          <tr key={row.id} className="hover:bg-blue-900/25">
-                            <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10.5px] sm:text-xs">{idx + 1}</td>
-                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
-                            <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[11px] sm:text-xs">{row.dfo}</td>
-                            <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[11px] sm:text-xs">{row.tff}</td>
-                            <td className="py-1.5 px-0.5 text-center text-emerald-400 font-bold text-[11px] sm:text-xs">
-                              {row.bonus > 0 ? `+${row.bonus}` : '0'}
-                            </td>
-                            <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[11px] sm:text-xs">{row.scores}</td>
-                            <td className="py-1.5 px-1 text-right text-sky-200 font-black text-xs sm:text-sm bg-sky-500/10">
-                              {row.totalWithBonus}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ======================================================================= */}
-            {/* SEKME 3 & 4: GENEL PUAN DURUMU VE SEÇİLEN HAFTANIN KÜMÜLATİF GENELİ     */}
-            {/* ======================================================================= */}
-            {(activeTab === 'TOTAL_STANDINGS' || activeTab === 'WEEK_CUMULATIVE') && (
-              <div className="max-w-5xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-xl shadow-xl">
-                
-                {/* DONDURULMUŞ ÜST PENCERE */}
-                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-slate-700/80 px-1.5 pt-1.5 sm:px-5 sm:pt-3 shadow-md">
-                  
-                  {/* Başlık + Sekme Cetveli */}
-                  <div className="flex flex-wrap items-center justify-between gap-1 pb-1.5 border-b border-slate-800">
-                    <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase px-1 text-sky-200">
-                      {activeTab === 'WEEK_CUMULATIVE'
-                        ? `${selectedWeek}. HAFTA GENEL PUAN DURUMU`
-                        : 'GENEL PUAN DURUMU'}
-                    </span>
-
-                    {/* Sıralama: CANLI -> MASTER -> DFO -> TFF -> SKOR -> BONUS */}
-                    <div className="flex flex-wrap items-center gap-1">
-                      {(activeTab === 'WEEK_CUMULATIVE'
-                        ? (['MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const)
-                        : (['CANLI', 'MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const)
-                      ).map((tab) => {
-                        const isTabActive = standingsFilter === tab;
-                        const isLiveGreen = tab === 'CANLI' && activeLiveMatchCount > 0;
-
-                        let btnCls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
-                        if (isTabActive) {
-                          if (tab === 'TFF') btnCls = 'bg-rose-700 text-white border-rose-400/80';
-                          else if (tab === 'DFO') btnCls = 'bg-blue-700 text-white border-sky-400/80';
-                          else if (tab === 'BONUS') btnCls = 'bg-emerald-700 text-white border-emerald-400/80';
-                          else if (tab === 'SKOR') btnCls = 'bg-orange-600 text-white border-orange-300/80';
-                          else if (tab === 'CANLI' && isLiveGreen) btnCls = 'bg-emerald-700 text-white border-emerald-400/80';
-                          else btnCls = 'bg-sky-700 text-white border-sky-300/80';
-                        } else if (tab === 'CANLI' && isLiveGreen) {
-                          btnCls = 'bg-emerald-950/80 text-emerald-300 border-emerald-700';
-                        } else if (tab === 'TFF') {
-                          btnCls = 'bg-[#040917] text-rose-400 border-slate-800 hover:border-rose-700';
-                        } else if (tab === 'DFO') {
-                          btnCls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
-                        } else if (tab === 'BONUS') {
-                          btnCls = 'bg-[#040917] text-emerald-400 border-slate-800 hover:border-emerald-700';
-                        } else if (tab === 'SKOR') {
-                          btnCls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
-                        }
-
-                        return (
-                          <button
-                            key={tab}
-                            onClick={() => {
-                              setStandingsFilter(tab);
-                              if (tab === 'MASTER') setMasterSubFilter('DUZ');
-                              if (tab === 'SKOR') setSkorSubFilter('DUZ');
-                            }}
-                            className={`px-2 sm:px-3 py-1 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${btnCls}`}
-                          >
-                            {tab === 'CANLI' && activeLiveMatchCount > 0 ? `CANLI (${activeLiveMatchCount})` : tab}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* MASTER Alt Satırı: MASTER PUAN | DETAYLI MASTER */}
-                  {standingsFilter === 'MASTER' && (
-                    <div className="flex items-center justify-center gap-1.5 py-1 border-b border-slate-800">
-                      <button
-                        onClick={() => setMasterSubFilter('DUZ')}
-                        className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                          masterSubFilter === 'DUZ'
-                            ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                            : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                        }`}
-                      >
-                        MASTER PUAN
-                      </button>
-                      <button
-                        onClick={() => setMasterSubFilter('DETAYLI')}
-                        className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                          masterSubFilter === 'DETAYLI'
-                            ? 'bg-sky-900/50 text-white border-sky-300/70'
-                            : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                        }`}
-                      >
-                        DETAYLI MASTER
-                      </button>
-                    </div>
-                  )}
-
-                  {/* SKOR Alt Satırı: MASTER SKOR | DETAYLI | DFO SKOR | TFF SKOR */}
-                  {standingsFilter === 'SKOR' && (
-                    <div className="flex items-center justify-center gap-1 py-1 border-b border-slate-800">
-                      {([
-                        { key: 'DUZ', label: 'MASTER SKOR', cls: 'bg-orange-950/60 text-orange-300 border-orange-400/70' },
-                        { key: 'DETAYLI', label: 'DETAYLI', cls: 'bg-orange-950/60 text-white border-orange-300/70' },
-                        { key: 'DFO', label: 'DFO SKOR', cls: 'bg-blue-950/60 text-sky-300 border-sky-400/70' },
-                        { key: 'TFF', label: 'TFF SKOR', cls: 'bg-rose-950/60 text-rose-300 border-rose-400/70' }
-                      ] as const).map((st) => (
-                        <button
-                          key={st.key}
-                          onClick={() => setSkorSubFilter(st.key)}
-                          className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                            skorSubFilter === st.key ? st.cls : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                          }`}
-                        >
-                          {st.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Canlı Bilgi Satırı */}
-                  {standingsFilter === 'CANLI' && (
-                    <div className="py-1 border-b border-slate-800 text-center text-[9.5px] sm:text-[11px]">
-                      {activeLiveMatchCount > 0 ? (
-                        <span className="text-emerald-400 font-black">
-                          🔴 {activeLiveMatchCount} maç canlı oynanıyor — anlık puanlar (+Canlı) dahildir.
+                      <div className="flex-1 flex items-center justify-start gap-2 min-w-0">
+                        <img
+                          src={theme.awayLogo}
+                          alt={m.away_team}
+                          className="w-7 h-7 object-contain shrink-0"
+                        />
+                        <span className="text-[11px] sm:text-xs font-black text-white uppercase truncate text-left">
+                          {m.away_team}
                         </span>
+                      </div>
+                    </div>
+
+                    <div className="px-3 py-1.5 bg-[#060d1f] border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                      {isFin ? (
+                        winnerNames.length > 0 ? (
+                          <span className="text-emerald-400 font-bold">
+                            {winnerNames.length} kişi bildi (+{pts} P)
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 italic">Tam isabet çıkmadı</span>
+                        )
+                      ) : isPost ? (
+                        <span className="text-amber-400 font-bold">Ertelendi</span>
                       ) : (
-                        <span className="text-slate-300 font-bold">
-                          Şu an canlı maç yok; kesinleşmiş resmi puanlar gösteriliyor.
-                        </span>
+                        <span className="text-slate-500 italic">Oynanmadı</span>
+                      )}
+
+                      {isFin && winnerNames.length > 0 && (
+                        <button
+                          onClick={() =>
+                            setExpandedArchiveCards((prev) => ({ ...prev, [key]: !prev[key] }))
+                          }
+                          className="text-sky-400 hover:text-sky-300 font-black uppercase tracking-wider"
+                        >
+                          {isOpen ? 'Gizle ▲' : 'Bilenler ▼'}
+                        </button>
                       )}
                     </div>
-                  )}
 
-                  {/* DONDURULMUŞ SÜTUN BAŞLIKLARI */}
-                  {standingsFilter === 'MASTER' && masterSubFilter === 'DUZ' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-10 sm:w-14" />
-                        <col />
-                        <col className="w-24 sm:w-36" />
-                      </colgroup>
-                      <thead>
-                        <tr className="text-sky-200 text-[9.5px] sm:text-xs uppercase tracking-wider">
-                          <th className="py-1.5 px-1.5">#</th>
-                          <th className="py-1.5 px-1.5 text-white">Yarışmacı</th>
-                          <th className="py-1.5 px-2 text-right text-sky-300">Master Puanı</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  ) : standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[26px] sm:w-11" />
-                        <col />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-18" />
-                        <col className="w-[34px] sm:w-20" />
-                        <col className="w-[44px] sm:w-24" />
-                      </colgroup>
-                      <thead>
-                        <tr className="text-slate-200 text-[9px] sm:text-xs uppercase tracking-tight">
-                          <th className="py-1.5 px-0.5">#</th>
-                          <th className="py-1.5 px-1 text-white">Yarışmacı</th>
-                          <th className="py-1.5 px-0.5 text-center text-sky-400">DFO</th>
-                          <th className="py-1.5 px-0.5 text-center text-rose-500">TFF</th>
-                          <th className="py-1.5 px-0.5 text-center text-emerald-400">Bns</th>
-                          <th className="py-1.5 px-0.5 text-center text-orange-400">Skor</th>
-                          <th className="py-1.5 px-1 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  ) : standingsFilter === 'CANLI' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[28px] sm:w-12" />
-                        <col />
-                        <col className="w-[38px] sm:w-20" />
-                        <col className="w-[42px] sm:w-20" />
-                        <col className="w-[36px] sm:w-20" />
-                        <col className="w-[46px] sm:w-24" />
-                      </colgroup>
-                      <thead>
-                        <tr className="text-slate-200 text-[9px] sm:text-xs uppercase tracking-tight">
-                          <th className="py-1.5 px-0.5">#</th>
-                          <th className="py-1.5 px-1 text-white">Yarışmacı</th>
-                          <th className="py-1.5 px-0.5 text-center text-slate-300">Kesin</th>
-                          <th className="py-1.5 px-0.5 text-center text-emerald-400">+Canlı</th>
-                          <th className="py-1.5 px-0.5 text-center text-orange-400">Skor</th>
-                          <th className="py-1.5 px-1 text-center text-sky-200 bg-sky-500/15 rounded-t">Toplam</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  ) : standingsFilter === 'SKOR' && skorSubFilter === 'DETAYLI' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[28px] sm:w-12" />
-                        <col />
-                        <col className="w-[44px] sm:w-24" />
-                        <col className="w-[44px] sm:w-24" />
-                        <col className="w-[52px] sm:w-28" />
-                      </colgroup>
-                      <thead>
-                        <tr className="text-slate-200 text-[9px] sm:text-xs uppercase tracking-tight">
-                          <th className="py-1.5 px-1">#</th>
-                          <th className="py-1.5 px-1 text-white">Yarışmacı</th>
-                          <th className="py-1.5 px-1 text-center text-sky-400">DFO</th>
-                          <th className="py-1.5 px-1 text-center text-rose-500">TFF</th>
-                          <th className="py-1.5 px-1 text-center text-orange-400 bg-orange-500/15 rounded-t">Master</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  ) : (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-10 sm:w-14" />
-                        <col />
-                        <col className="w-24 sm:w-36" />
-                      </colgroup>
-                      <thead>
-                        <tr className="text-slate-200 text-[9.5px] sm:text-xs uppercase tracking-wider">
-                          <th className="py-1.5 px-1.5">#</th>
-                          <th className="py-1.5 px-1.5 text-white">Yarışmacı</th>
-                          <th className="py-1.5 px-2 text-right">
-                            {standingsFilter === 'DFO' && <span className="text-sky-400">DFO Puanı</span>}
-                            {standingsFilter === 'TFF' && <span className="text-rose-500">TFF Puanı</span>}
-                            {standingsFilter === 'SKOR' && skorSubFilter === 'DUZ' && <span className="text-orange-400">Master Skor</span>}
-                            {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
-                            {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
-                            {standingsFilter === 'BONUS' && <span className="text-emerald-400">Bonus Puanı</span>}
-                          </th>
-                        </tr>
-                      </thead>
-                    </table>
-                  )}
-                </div>
-
-                {/* AKAN LİSTE GÖVDESİ */}
-                <div className="px-1.5 pb-3 sm:px-5 sm:pb-5">
-                  {standingsFilter === 'MASTER' && masterSubFilter === 'DUZ' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-10 sm:w-14" />
-                        <col />
-                        <col className="w-24 sm:w-36" />
-                      </colgroup>
-                      <tbody className="divide-y divide-slate-800/70">
-                        {cumulativeStandings.map((row, idx) => {
-                          const currentRank = idx + 1;
-                          const prevRank = prevWeekRankMap[row.id];
-                          const diff = activeTab === 'WEEK_CUMULATIVE' && prevRank ? prevRank - currentRank : 0;
-                          return (
-                            <tr key={row.id} className="hover:bg-blue-900/20">
-                              <td className="py-1.5 px-1.5 font-black text-slate-400 text-[11px] sm:text-sm">
-                                <span>{currentRank}</span>
-                                {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
-                                {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
-                              </td>
-                              <td className="py-1.5 px-1.5 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
-                              <td className="py-1.5 px-2 text-right font-black text-xs sm:text-base text-sky-300">{row.master}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  ) : standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[26px] sm:w-11" />
-                        <col />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-16" />
-                        <col className="w-[34px] sm:w-18" />
-                        <col className="w-[34px] sm:w-20" />
-                        <col className="w-[44px] sm:w-24" />
-                      </colgroup>
-                      <tbody className="divide-y divide-slate-800/70">
-                        {cumulativeStandings.map((row, idx) => {
-                          const currentRank = idx + 1;
-                          const prevRank = prevWeekRankMap[row.id];
-                          const diff = activeTab === 'WEEK_CUMULATIVE' && prevRank ? prevRank - currentRank : 0;
-                          return (
-                            <tr key={row.id} className="hover:bg-blue-900/20">
-                              <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10.5px] sm:text-sm">
-                                <span>{currentRank}</span>
-                                {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
-                                {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
-                              </td>
-                              <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                                {row.name}
-                              </td>
-                              <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.dfo}</td>
-                              <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.tff}</td>
-                              <td className="py-1.5 px-0.5 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">
-                                {row.bonus > 0 ? `+${row.bonus}` : '0'}
-                              </td>
-                              <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[11px] sm:text-sm">{row.scores}</td>
-                              <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
-                                {row.master}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  ) : standingsFilter === 'CANLI' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[28px] sm:w-12" />
-                        <col />
-                        <col className="w-[38px] sm:w-20" />
-                        <col className="w-[42px] sm:w-20" />
-                        <col className="w-[36px] sm:w-20" />
-                        <col className="w-[46px] sm:w-24" />
-                      </colgroup>
-                      <tbody className="divide-y divide-slate-800/70">
-                        {effectiveLiveStandings.map((row) => {
-                          const diff = row.kesin_sira - row.canli_sira;
-                          return (
-                            <tr
-                              key={row.user_id}
-                              className={row.canli_ek_puan > 0 ? 'bg-emerald-950/25 hover:bg-emerald-950/40' : 'hover:bg-blue-900/20'}
-                            >
-                              <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10px] sm:text-sm">
-                                <span>{row.canli_sira}</span>
-                                {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
-                                {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
-                              </td>
-                              <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.oyuncu_adi}>
-                                {row.oyuncu_adi}
-                              </td>
-                              <td className="py-1.5 px-0.5 text-center text-slate-300 font-bold text-[11px] sm:text-sm">
-                                {row.kesin_master}
-                              </td>
-                              <td className="py-1.5 px-0.5 text-center font-black text-[11px] sm:text-sm">
-                                {row.canli_ek_puan > 0 ? (
-                                  <span className="text-emerald-400">+{row.canli_ek_puan}</span>
-                                ) : (
-                                  <span className="text-slate-600">0</span>
-                                )}
-                              </td>
-                              <td className="py-1.5 px-0.5 text-center text-orange-400 font-bold text-[11px] sm:text-sm">
-                                {row.canli_skor_toplam}
-                              </td>
-                              <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
-                                {row.canli_master_toplam}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  ) : standingsFilter === 'SKOR' && skorSubFilter === 'DETAYLI' ? (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-[28px] sm:w-12" />
-                        <col />
-                        <col className="w-[44px] sm:w-24" />
-                        <col className="w-[44px] sm:w-24" />
-                        <col className="w-[52px] sm:w-28" />
-                      </colgroup>
-                      <tbody className="divide-y divide-slate-800/70">
-                        {cumulativeStandings.map((row, idx) => (
-                          <tr key={row.id} className="hover:bg-blue-900/20">
-                            <td className="py-1.5 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
-                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
-                            <td className="py-1.5 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.dfoScores}</td>
-                            <td className="py-1.5 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.tffScores}</td>
-                            <td className="py-1.5 px-1 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">{row.scores}</td>
-                          </tr>
+                    {isOpen && winnerNames.length > 0 && (
+                      <div className="px-3 py-2 bg-[#030712] border-t border-slate-800 flex flex-wrap gap-1.5">
+                        {winnerNames.map((nm, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 text-[10px] font-bold uppercase"
+                          >
+                            {nm}
+                          </span>
                         ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <table className="w-full table-fixed text-left tabular-nums">
-                      <colgroup>
-                        <col className="w-10 sm:w-14" />
-                        <col />
-                        <col className="w-24 sm:w-36" />
-                      </colgroup>
-                      <tbody className="divide-y divide-slate-800/70">
-                        {cumulativeStandings.map((row, idx) => (
-                          <tr key={row.id} className="hover:bg-blue-900/20">
-                            <td className="py-1.5 px-1.5 font-black text-slate-400 text-[11px] sm:text-sm">{idx + 1}</td>
-                            <td className="py-1.5 px-1.5 font-black text-white text-xs sm:text-sm truncate">{row.name}</td>
-                            <td className="py-1.5 px-2 text-right font-black text-xs sm:text-base">
-                              {standingsFilter === 'DFO' && <span className="text-sky-400">{row.dfo}</span>}
-                              {standingsFilter === 'TFF' && <span className="text-rose-500">{row.tff}</span>}
-                              {standingsFilter === 'SKOR' && skorSubFilter === 'DUZ' && <span className="text-orange-400">{row.scores}</span>}
-                              {standingsFilter === 'SKOR' && skorSubFilter === 'DFO' && <span className="text-sky-400">{row.dfoScores}</span>}
-                              {standingsFilter === 'SKOR' && skorSubFilter === 'TFF' && <span className="text-rose-500">{row.tffScores}</span>}
-                              {standingsFilter === 'BONUS' && <span className="text-emerald-400">+{row.bonus}</span>}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ======================================================================= */}
-            {/* SEKME 5: LİDERLER TABLOSU (DETAYLI MASTER İLE BİREBİR AYNI SÜTUN ORANI) */}
-            {/* ======================================================================= */}
-            {activeTab === 'LEADERS_TIMELINE' && (
-              <div className="max-w-5xl mx-auto bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-xl shadow-xl">
-                
-                {/* DONDURULMUŞ BAŞLIK */}
-                <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-xl border-b border-slate-700/80 px-1.5 pt-1.5 sm:px-5 sm:pt-3 shadow-md">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 px-1">
-                    <h2 className="text-[10px] sm:text-xs font-black text-sky-200 uppercase tracking-wider">
-                      LİDERLER TABLOSU
-                    </h2>
-                    <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">
-                      Satıra tıklayarak o haftanın genel puan durumunu açabilirsin
-                    </span>
+                      </div>
+                    )}
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <colgroup>
-                      <col className="w-[34px] sm:w-14" />
-                      <col />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-18" />
-                      <col className="w-[34px] sm:w-20" />
-                      <col className="w-[44px] sm:w-24" />
-                    </colgroup>
-                    <thead>
-                      <tr className="text-slate-200 text-[9px] sm:text-xs uppercase tracking-tight">
-                        <th className="py-1.5 px-0.5 text-center">Hafta</th>
-                        <th className="py-1.5 px-1 text-white">Lider</th>
-                        <th className="py-1.5 px-0.5 text-center text-sky-400">DFO</th>
-                        <th className="py-1.5 px-0.5 text-center text-rose-500">TFF</th>
-                        <th className="py-1.5 px-0.5 text-center text-emerald-400">Bns</th>
-                        <th className="py-1.5 px-0.5 text-center text-orange-400">Skor</th>
-                        <th className="py-1.5 px-1 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
-                      </tr>
-                    </thead>
-                  </table>
-                </div>
+      {/* ===================== 3. SEKME: SEÇİLİ HAFTA ÖZETİ ===================== */}
+      {activeTab === 'WEEK_CHECK' && (
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 pt-3 pb-2 sm:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
+              <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+                {selectedWeek}. HAFTA ÖZETİ
+              </h2>
+              <div className="flex items-center gap-1">
+                {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wf) => (
+                  <button
+                    key={wf}
+                    onClick={() => setWeekSummaryFilter(wf)}
+                    className={`px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                      weekSummaryFilter === wf
+                        ? wf === 'TFF'
+                          ? 'bg-rose-700 text-white border-rose-400/80'
+                          : wf === 'SKOR'
+                          ? 'bg-orange-600 text-white border-orange-300/80'
+                          : 'bg-sky-600 text-white border-sky-300/80'
+                        : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {wf}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                {/* AKAN LİDERLER LİSTESİ (1, 2, 3... DİYE İNER; DFO, TFF, BONUS, SKOR, MASTER YAZAR) */}
-                <div className="px-1.5 pb-3 sm:px-5 sm:pb-5">
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <colgroup>
-                      <col className="w-[34px] sm:w-14" />
-                      <col />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-16" />
-                      <col className="w-[34px] sm:w-18" />
-                      <col className="w-[34px] sm:w-20" />
-                      <col className="w-[44px] sm:w-24" />
-                    </colgroup>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {cumulativeLeadersHistory.map((item) => (
-                        <tr
-                          key={item.week}
-                          onClick={() => {
-                            setSelectedWeek(item.week);
-                            setActiveTab('WEEK_CUMULATIVE');
-                          }}
-                          className="cursor-pointer hover:bg-blue-900/25 transition-colors"
-                          title={`${item.week}. Hafta genel puan durumunu aç`}
-                        >
-                          <td className="py-1.5 px-0.5 text-center font-black text-slate-400 text-[10.5px] sm:text-sm">
-                            {item.week}
-                          </td>
-                          <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={item.leaderName}>
-                            {item.leaderName}
-                          </td>
-                          <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[11px] sm:text-sm">
-                            {item.leaderDfo}
-                          </td>
-                          <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[11px] sm:text-sm">
-                            {item.leaderTff}
-                          </td>
-                          <td className="py-1.5 px-0.5 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">
-                            {item.leaderBonus > 0 ? `+${item.leaderBonus}` : '0'}
-                          </td>
-                          <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[11px] sm:text-sm">
-                            {item.leaderScores}
-                          </td>
-                          <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
-                            {item.leaderMaster}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            {selectedWeekBonusInfo && selectedWeekBonusInfo.is_completed && (
+              <div className="flex flex-wrap items-center gap-2 pt-2 text-[10px] font-bold">
+                {(selectedWeekBonusInfo.puan_lideri_ids || []).length > 0 && (
+                  <span className="bg-sky-950/60 border border-sky-800/70 text-sky-300 px-2.5 py-0.5 rounded">
+                    Puan Lideri (+{selectedWeekBonusInfo.puan_bonus || 0}):{' '}
+                    {(selectedWeekBonusInfo.puan_lideri_ids || [])
+                      .map((id) => playersMap[id]?.name || id)
+                      .join(', ')}
+                  </span>
+                )}
+                {(selectedWeekBonusInfo.skor_krali_ids || []).length > 0 && (
+                  <span className="bg-orange-950/60 border border-orange-800/70 text-orange-300 px-2.5 py-0.5 rounded">
+                    Skor Kralı (+{selectedWeekBonusInfo.skor_bonus || 0}):{' '}
+                    {(selectedWeekBonusInfo.skor_krali_ids || [])
+                      .map((id) => playersMap[id]?.name || id)
+                      .join(', ')}
+                  </span>
+                )}
               </div>
             )}
-          </>
-        )}
-      </div>
+
+            {weekSummaryFilter === 'MASTER' && (
+              <div className="flex items-center justify-center gap-1.5 pt-2">
+                <button
+                  onClick={() => setWeekSummaryMasterMode('DUZ')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                    weekSummaryMasterMode === 'DUZ'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER PUAN
+                </button>
+                <button
+                  onClick={() => setWeekSummaryMasterMode('DETAYLI')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                    weekSummaryMasterMode === 'DETAYLI'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  DETAYLI MASTER
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="px-1.5 pb-4 sm:px-4 sm:pb-6">
+            {weekSummaryFilter === 'MASTER' &&
+              (weekSummaryMasterMode === 'DETAYLI'
+                ? renderDetailedMasterTable(
+                    weekSummaryRows.filter((r) => r.masterPts > 0),
+                    false,
+                    `${selectedWeek}. HAFTADA HENÜZ PUAN KAYDI BULUNMUYOR`
+                  )
+                : renderSingleMetricTable(
+                    weekSummaryRows.filter((r) => r.masterPts > 0),
+                    'MASTER',
+                    `${selectedWeek}. HAFTADA HENÜZ PUAN KAYDI BULUNMUYOR`
+                  ))}
+            {weekSummaryFilter === 'DFO' &&
+              renderSingleMetricTable(
+                weekSummaryRows.filter((r) => r.dfoPts > 0),
+                'DFO',
+                `${selectedWeek}. HAFTADA DFO PUANI BULUNMUYOR`
+              )}
+            {weekSummaryFilter === 'TFF' &&
+              renderSingleMetricTable(
+                weekSummaryRows.filter((r) => r.tffPts > 0),
+                'TFF',
+                `${selectedWeek}. HAFTADA TFF PUANI BULUNMUYOR`
+              )}
+            {weekSummaryFilter === 'SKOR' &&
+              renderSingleMetricTable(
+                weekSummaryRows.filter((r) => r.totalSkor > 0),
+                'SKOR_MASTER',
+                `${selectedWeek}. HAFTADA SKOR İSABETİ BULUNMUYOR`
+              )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================== 4. SEKME: SEÇİLİ HAFTA GENEL (1..SEÇİLİ HAFTA TOPLAMI) ===================== */}
+      {activeTab === 'WEEK_CUMULATIVE' && (
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 pt-3 pb-2 sm:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
+              <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+                {selectedWeek}. HAFTA SONU GENEL PUAN DURUMU
+              </h2>
+              <div className="flex items-center gap-1">
+                {(['MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((gf) => (
+                  <button
+                    key={gf}
+                    onClick={() => setWeekGenelFilter(gf)}
+                    className={`px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                      weekGenelFilter === gf
+                        ? gf === 'TFF'
+                          ? 'bg-rose-700 text-white border-rose-400/80'
+                          : gf === 'SKOR'
+                          ? 'bg-orange-600 text-white border-orange-300/80'
+                          : gf === 'BONUS'
+                          ? 'bg-emerald-700 text-white border-emerald-400/80'
+                          : 'bg-sky-600 text-white border-sky-300/80'
+                        : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {gf}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {weekGenelFilter === 'MASTER' && (
+              <div className="flex items-center justify-center gap-1.5 pt-2">
+                <button
+                  onClick={() => setWeekGenelMasterMode('DUZ')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                    weekGenelMasterMode === 'DUZ'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER PUAN
+                </button>
+                <button
+                  onClick={() => setWeekGenelMasterMode('DETAYLI')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                    weekGenelMasterMode === 'DETAYLI'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  DETAYLI MASTER
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="px-1.5 pb-4 sm:px-4 sm:pb-6">
+            {weekGenelFilter === 'MASTER' &&
+              (weekGenelMasterMode === 'DETAYLI'
+                ? renderDetailedMasterTable(weekGenelRows, false)
+                : renderSingleMetricTable(weekGenelRows, 'MASTER'))}
+            {weekGenelFilter === 'DFO' && renderSingleMetricTable(weekGenelRows, 'DFO')}
+            {weekGenelFilter === 'TFF' && renderSingleMetricTable(weekGenelRows, 'TFF')}
+            {weekGenelFilter === 'SKOR' && renderSingleMetricTable(weekGenelRows, 'SKOR_MASTER')}
+            {weekGenelFilter === 'BONUS' && renderBonusTable(weekGenelRows)}
+          </div>
+        </div>
+      )}
+
+      {/* ===================== 5. SEKME: LİDERLER (DETAYLI MASTER İLE BİREBİR HİZALI) ===================== */}
+      {activeTab === 'LEADERS_TIMELINE' && (
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 py-3 sm:px-5">
+            <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+              HAFTALARA GÖRE GENEL LİDERLER
+            </h2>
+          </div>
+
+          <div className="px-1.5 pb-4 sm:px-4 sm:pb-6">
+            <table className="w-full table-fixed text-left tabular-nums">
+              <thead className="sticky top-[92px] sm:top-[98px] z-20 bg-[#050c1d] border-b border-slate-800">
+                <tr className="text-[9.5px] sm:text-xs uppercase tracking-wider font-black">
+                  <th className="py-2.5 px-1.5 sm:px-3 w-[46px] sm:w-20 text-slate-400">HAFTA</th>
+                  <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">LİDER YARIŞMACI</th>
+                  <th className="py-2.5 px-1 w-[38px] sm:w-20 text-center text-sky-400">DFO</th>
+                  <th className="py-2.5 px-1 w-[38px] sm:w-20 text-center text-rose-500">TFF</th>
+                  <th className="py-2.5 px-1 w-[38px] sm:w-20 text-center text-emerald-400">BNS</th>
+                  <th className="py-2.5 px-1 w-[40px] sm:w-20 text-center text-orange-400">SKOR</th>
+                  <th className="py-2.5 px-1.5 sm:px-3 w-[52px] sm:w-28 text-center text-sky-100 bg-sky-500/15">
+                    MASTER
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/70">
+                {[...leadersTimeline].reverse().map((row) => (
+                  <tr key={row.weekNum} className="hover:bg-slate-800/35 transition-colors">
+                    <td className="py-2 px-1.5 sm:px-3 font-black text-sky-300 text-[11px] sm:text-sm">
+                      {row.weekNum}.H
+                    </td>
+                    <td className="py-2 px-1.5 sm:px-3 font-black text-white text-[11px] sm:text-sm">
+                      {renderPlayerNameWithCup(row.leaderName, row.isChampion)}
+                    </td>
+                    <td className="py-2 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">
+                      {row.dfoPts}
+                    </td>
+                    <td className="py-2 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">
+                      {row.tffPts}
+                    </td>
+                    <td className="py-2 px-1 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">
+                      {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
+                    </td>
+                    <td className="py-2 px-1 text-center text-orange-400 font-black text-[11px] sm:text-sm">
+                      {row.totalSkor}
+                    </td>
+                    <td className="py-2 px-1.5 sm:px-3 text-center text-white font-black text-xs sm:text-base bg-sky-500/10">
+                      {row.masterPts}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
