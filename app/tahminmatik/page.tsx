@@ -88,7 +88,7 @@ const week4Matches = [
   { id: 16, title: "4. HAFTA 16. MAÇ", category: "TÜRKİYE SÜPER LİG", homeTeam: "BAŞAKŞEHİR", awayTeam: "KOCAELİSPOR" },
   { id: 17, title: "4. HAFTA 17. MAÇ", category: "TÜRKİYE 1.LİG", homeTeam: "KAYSERİSPOR", awayTeam: "SİVASSPOR" },
   { id: 18, title: "4. HAFTA 18. MAÇ", category: "TÜRKİYE SÜPER LİG", homeTeam: "AMED SPOR", awayTeam: "ERZURUMSPOR" },
-  { id: 19, title: "4. HAFTA 19. MAÇ", category: "TÜRKİYE SÜPER LİG", homeTeam: "BEŞİKTAŞ", awayTeam: "EYÜPSPOR" },
+  { id: 19, title: "4. HAFTA 19. MAÇ", category: "TÜRKİYE SÜPER LİG", homeTeam: "BEŞIKTAŞ", awayTeam: "EYÜPSPOR" },
   { id: 20, title: "4. HAFTA 20. MAÇ", category: "TÜRKİYE 1.LİG", homeTeam: "KEÇİÖRENGÜCÜ", awayTeam: "PENDİKSPOR" },
   { id: 21, title: "4. HAFTA 21. MAÇ", category: "TÜRKİYE 1.LİG", homeTeam: "MARDİN 1969", awayTeam: "ANTALYASPOR" },
   { id: 22, title: "4. HAFTA 22. MAÇ", category: "TÜRKİYE 1.LİG", homeTeam: "MUĞLASPOR", awayTeam: "BANDIRMASPOR" },
