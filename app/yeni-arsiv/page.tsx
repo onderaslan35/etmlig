@@ -10,7 +10,7 @@ import {
 } from '@/utils/themeEngine';
 import { getClubLogoUrl } from '@/components/FavoriteTeamSelector';
 
-const EXCLUDED_IDS = new Set(['mankoman', '272727', '262787']);
+const EXCLUDED_IDS = new Set(['mankoman']);
 
 // Şampiyonluk Kupası Sayıları ve Son Şampiyon Türk Bayrağı Arması
 const CHAMPION_CUPS: Record<string, number> = {
@@ -1177,34 +1177,24 @@ export default function YeniArsivPage() {
     return (
       <table className="w-full table-fixed text-left tabular-nums">
         <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
-          <tr className="text-[9.5px] sm:text-xs uppercase tracking-wider font-black">
-            <th className="py-2.5 px-1 sm:px-3 w-7 sm:w-12 text-slate-400">#</th>
-            <th className="py-2.5 px-1 sm:px-3 text-slate-200">YARIŞMACI</th>
-            <th className="py-2.5 px-1 w-20 sm:w-44 text-center text-sky-300">PUAN LİDERİ</th>
-            <th className="py-2.5 px-1 w-20 sm:w-44 text-center text-orange-400">SKOR KRALI</th>
-            <th className="py-2.5 px-1.5 sm:px-3 w-14 sm:w-28 text-right text-emerald-400">BONUS</th>
+          <tr className="text-[10px] sm:text-xs uppercase tracking-wider font-black">
+            <th className="py-2.5 px-2 sm:px-3 w-8 sm:w-14 text-slate-400">#</th>
+            <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
+            <th className="py-2.5 px-2.5 sm:px-3 w-24 sm:w-40 text-right text-emerald-400">
+              BONUS PUAN
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/70">
           {sorted.map((row, idx) => (
             <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
-              <td className="py-2 px-1 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
+              <td className="py-2 px-2 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
                 {idx + 1}
               </td>
-              <td className="py-2 px-1 sm:px-3 font-black text-white text-xs sm:text-sm">
+              <td className="py-2 px-1.5 sm:px-3 font-black text-white text-xs sm:text-sm">
                 {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
               </td>
-              <td className="py-2 px-1 text-center text-[10px] sm:text-xs text-sky-300 font-bold">
-                {row.puanLiderWeeks.length > 0
-                  ? row.puanLiderWeeks.map((w) => `${w}.H`).join(', ')
-                  : '-'}
-              </td>
-              <td className="py-2 px-1 text-center text-[10px] sm:text-xs text-orange-400 font-bold">
-                {row.skorKralWeeks.length > 0
-                  ? row.skorKralWeeks.map((w) => `${w}.H`).join(', ')
-                  : '-'}
-              </td>
-              <td className="py-2 px-1.5 sm:px-3 text-right font-black text-xs sm:text-base text-emerald-400">
+              <td className="py-2 px-2.5 sm:px-3 text-right font-black text-xs sm:text-base text-emerald-400">
                 +{row.bonusPts}
               </td>
             </tr>
