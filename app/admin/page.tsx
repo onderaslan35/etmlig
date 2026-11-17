@@ -880,7 +880,7 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek, weeklyDbPoints, distributedMatches]);
 
-  // 🔥 YENİ: BONUS DAĞITMA MOTORU (TEK TABANCA KURALI: +3 PUAN) 🔥
+// 🔥 YENİ: BONUS DAĞITMA MOTORU (TEK TABANCA KURALI: +3 PUAN) 🔥
   const handleDistributeBonuses = async () => {
      if (selectedLiveWeek <= 40) {
          alert(`🔒 1-40. Haftalar Resmi Kasada mühürlüdür, değiştirilemez!`);
@@ -890,16 +890,15 @@ export default function AdminRadarPortal() {
          const { error } = await supabase.rpc('sync_etml_weeks', {
              p_from_week: selectedLiveWeek,
              p_to_week: selectedLiveWeek,
-             p_force: false
+             p_force: true
          });
          if (error) throw error;
          await fetchBonusHistory();
-         alert(`✅ ${selectedLiveWeek}. Hafta liderleri Resmi Kasaya senkronize edildi! (41+ haftalarda +3 bonus kural gereği kapalıdır.)`);
+         alert(`✅ ${selectedLiveWeek}. Hafta liderleri ve +3 Bonus puanları Resmi Kasaya işlendi!`);
      } catch (e: any) {
          alert("❌ HATA: " + e.message);
      }
   };
-
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     const homeScore = adminScores[matchId]?.home || "-";
     const awayScore = adminScores[matchId]?.away || "-";
