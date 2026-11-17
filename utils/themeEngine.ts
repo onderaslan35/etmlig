@@ -304,7 +304,7 @@ export const localTeamLogos: Record<string, string> = {
   "BURSA YILDIRIMSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/1088447.png",
   "BITLIS ÖZGÜZELDERESPOR": "https://www.fotmob.com/img/team-fallback-dark.png",
   "KARAKÖPRÜ BELEDIYESPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/888878.png",
-  "ESKİŞEHIRSPOR": "https://upload.wikimedia.org/wikipedia/tr/2/25/Eski%C5%9Fehirspor.png?utm_source=tr.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+  "ESKİŞEHIRSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/7966.png",
   "ÇORLUSPOR 1947": "https://images.fotmob.com/image_resources/logo/teamlogo/1559131.png",
   "YENI ORDUSPOR": "https://images.fotmob.com/image_resources/logo/teamlogo/863845.png",
   "1461 TRABZON FK": "https://images.fotmob.com/image_resources/logo/teamlogo/468166.png",
