@@ -11,7 +11,7 @@ import {
   getTodayDateString
 } from '@/utils/themeEngine';
 
-const EXCLUDED_IDS = new Set(['mankoman', '272727', '262787']);
+const EXCLUDED_IDS = new Set(['mankoman']);
 const formatNameWithCups = (rawName: string) => {
   if (!rawName) return '';
   const existing = (rawName.match(/🏆/g) || []).length;
@@ -2220,7 +2220,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                       key={tab}
                       onClick={() => {
                         setLiveTableTab(tab);
-                        if (tab === 'MASTER') setMasterSubTab('DUZ');
+                        if (tab === 'MASTER') setMasterSubTab('DETAYLI');
                         if (tab === 'SKOR') setSkorSubTab('DUZ');
                       }}
                       className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${btnCls}`}
@@ -2252,7 +2252,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                       key={`wsub-${wTab}`}
                       onClick={() => {
                         setWeekSubTab(wTab);
-                        if (wTab === 'MASTER') setWeekMasterMode('DUZ');
+                        if (wTab === 'MASTER') setWeekMasterMode('DETAYLI');
                         if (wTab === 'SKOR') setWeekSkorMode('DUZ');
                       }}
                       className={`px-2 sm:px-2.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
@@ -2372,7 +2372,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
 
         {/* AKAN PUAN LİSTESİ GÖVDESİ */}
         {isLiveStandingsOpen && (
-          <div className="px-2 pb-4 sm:px-6 sm:pb-6 pt-2">
+          <div className="px-1 pb-4 sm:px-6 sm:pb-6 pt-2">
             {liveTableTab === 'WEEK_LIVE' && currentWeekBucket && (
               <>
                 {weekSubTab === 'MASTER' && weekMasterMode === 'DUZ' ? (
@@ -2383,27 +2383,27 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                   ) : (
                     <table className="w-full table-fixed text-left tabular-nums">
                       <thead>
-                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
-                          <th className="py-2 px-2 w-10 sm:w-14">#</th>
-                          <th className="py-2 px-2 text-white">Yarışmacı</th>
-                          <th className="py-2 px-3 w-32 sm:w-44 text-right text-sky-300">{effectiveBulletinWeek}. Hafta Puanı</th>
+                        <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                          <th className="py-2 px-1.5 sm:px-2 w-[28px] sm:w-14">#</th>
+                          <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                          <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-44 text-right text-sky-300">{effectiveBulletinWeek}.H Puan</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/70">
                         {currentWeekBucket.MASTER.map((row) => (
                           <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
-                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="truncate">{renderLiveNameWithFlag(row.name)}</span>
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
+                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
                                 {row.canliMaster > 0 && (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-                                    +{row.canliMaster} CANLI
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                                    +{row.canliMaster}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2417,36 +2417,48 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                   ) : (
                     <table className="w-full table-fixed text-left tabular-nums">
                       <thead>
-                        <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
-                          <th className="py-2 px-1 w-[24px] sm:w-10">#</th>
-                          <th className="py-2 px-1 text-white">Yarışmacı</th>
-                          <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center text-sky-400">DFO</th>
-                          <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center text-rose-500">TFF</th>
-                          <th className="py-2 px-0.5 w-[34px] sm:w-16 text-center text-orange-400">Skor</th>
-                          <th className="py-2 px-0.5 w-[40px] sm:w-20 text-center text-emerald-400">Canlı</th>
-                          <th className="py-2 px-1 w-[44px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
+                        <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                          <th className="py-2 px-1 sm:px-2 w-[22px] sm:w-10 align-bottom">#</th>
+                          <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
+                          <th className="py-1.5 px-0 w-[24px] sm:w-16 text-center text-sky-400 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
+                          </th>
+                          <th className="py-1.5 px-0 w-[24px] sm:w-16 text-center text-rose-500 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
+                          </th>
+                          <th className="py-1.5 px-0 w-[24px] sm:w-16 text-center text-orange-400 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
+                          </th>
+                          <th className="py-1.5 px-0 w-[26px] sm:w-20 text-center text-emerald-400 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
+                          </th>
+                          <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">MASTER</span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/70">
                         {currentWeekBucket.MASTER.map((row) => (
                           <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1 font-black text-slate-400 text-[10.5px] sm:text-sm">{row.rank}</td>
-                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                              {row.name}
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-slate-400 text-[10.5px] sm:text-sm">{row.rank}</td>
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
+                              <div className="flex items-center min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
+                              </div>
                             </td>
-                            <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
-                            <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
-                            <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
-                            <td className="py-1.5 px-0.5 text-center font-black text-[10px] sm:text-xs">
+                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-1.5 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
                               {row.canliMaster > 0 ? (
-                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
                                   +{row.canliMaster}
                                 </span>
                               ) : (
                                 <span className="text-slate-600">-</span>
                               )}
                             </td>
-                            <td className="py-1.5 px-1 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
+                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-sky-200 font-black text-[11.5px] sm:text-base bg-sky-500/10">
                               {row.toplamMaster}
                             </td>
                           </tr>
@@ -2462,32 +2474,44 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                   ) : (
                     <table className="w-full table-fixed text-left tabular-nums">
                       <thead>
-                        <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
-                          <th className="py-2 px-1 w-[26px] sm:w-12">#</th>
-                          <th className="py-2 px-1 text-white">Yarışmacı</th>
-                          <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-sky-400">DFO</th>
-                          <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-rose-500">TFF</th>
-                          <th className="py-2 px-1 w-[42px] sm:w-20 text-center text-emerald-400">Canlı</th>
-                          <th className="py-2 px-1 w-[48px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t">Master</th>
+                        <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                          <th className="py-2 px-1 sm:px-2 w-[22px] sm:w-12 align-bottom">#</th>
+                          <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
+                          <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-sky-400 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
+                          </th>
+                          <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-rose-500 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
+                          </th>
+                          <th className="py-1.5 px-0 w-[26px] sm:w-20 text-center text-emerald-400 align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
+                          </th>
+                          <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t align-bottom">
+                            <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/70">
                         {currentWeekBucket.SKOR_MASTER.map((row) => (
                           <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
-                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate">{row.name}</td>
-                            <td className="py-1.5 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
-                            <td className="py-1.5 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
-                            <td className="py-1.5 px-1 text-center font-black text-[10px] sm:text-xs">
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-slate-400 text-[10.5px] sm:text-sm">{row.rank}</td>
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
+                              <div className="flex items-center min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
+                              </div>
+                            </td>
+                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
                               {row.canliSkor > 0 ? (
-                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
                                   +{row.canliSkor}
                                 </span>
                               ) : (
                                 <span className="text-slate-600">-</span>
                               )}
                             </td>
-                            <td className="py-1.5 px-1 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">
+                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-orange-400 font-black text-[11.5px] sm:text-base bg-orange-500/10">
                               {row.toplamSkor}
                             </td>
                           </tr>
@@ -2525,13 +2549,13 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                     return (
                       <table className="w-full table-fixed text-left tabular-nums">
                         <thead>
-                          <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
-                            <th className="py-2 px-2 w-10 sm:w-14">#</th>
-                            <th className="py-2 px-2 text-white">Yarışmacı</th>
-                            <th className="py-2 px-3 w-32 sm:w-44 text-right">
-                              {weekSubTab === 'DFO' && <span className="text-sky-400">DFO Puanı</span>}
-                              {weekSubTab === 'TFF' && <span className="text-rose-500">TFF Puanı</span>}
-                              {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-orange-400">Master Skor</span>}
+                          <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                            <th className="py-2 px-1.5 sm:px-2 w-[28px] sm:w-14">#</th>
+                            <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                            <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-44 text-right">
+                              {weekSubTab === 'DFO' && <span className="text-sky-400">DFO Puan</span>}
+                              {weekSubTab === 'TFF' && <span className="text-rose-500">TFF Puan</span>}
+                              {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-orange-400">Skor</span>}
                               {weekSubTab === 'SKOR' && weekSkorMode === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
                               {weekSubTab === 'SKOR' && weekSkorMode === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
                             </th>
@@ -2540,18 +2564,18 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         <tbody className="divide-y divide-slate-800/70">
                           {list.map((row) => (
                             <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                              <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">{row.rank}</td>
-                              <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className="truncate">{row.name}</span>
+                              <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
+                              <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
+                                <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                                  {renderLiveNameWithFlag(row.name)}
                                   {row.liveAdd > 0 && (
-                                    <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-                                      +{row.liveAdd} CANLI
+                                    <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                                      +{row.liveAdd}
                                     </span>
                                   )}
                                 </div>
                               </td>
-                              <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base">
+                              <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base">
                                 {weekSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
                                 {weekSubTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
                                 {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-orange-400">{row.pts}</span>}
@@ -2573,10 +2597,10 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                 {liveTableTab === 'MASTER' && masterSubTab === 'DUZ' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
-                        <th className="py-2 px-2 w-10 sm:w-14">#</th>
-                        <th className="py-2 px-2 text-white">Yarışmacı</th>
-                        <th className="py-2 px-3 w-28 sm:w-40 text-right text-sky-300">Master Puanı</th>
+                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                        <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
+                        <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                        <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right text-sky-300">Master</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/70">
@@ -2584,22 +2608,22 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         const diff = row.kesinSira - row.rankMaster;
                         return (
                           <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">
                               <span>{row.rankMaster}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                              {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
                             </td>
-                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="truncate">{row.name}</span>
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
+                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
                                 {row.canliMaster > 0 && (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-                                    +{row.canliMaster} CANLI
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                                    +{row.canliMaster}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
                           </tr>
                         );
                       })}
@@ -2608,15 +2632,27 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                 ) : liveTableTab === 'MASTER' && masterSubTab === 'DETAYLI' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
-                        <th className="py-2 px-0.5 w-[24px] sm:w-10">#</th>
-                        <th className="py-2 px-1 text-white">Yarışmacı</th>
-                        <th className="py-2 px-0.5 w-[30px] sm:w-14 text-center text-sky-400">DFO</th>
-                        <th className="py-2 px-0.5 w-[30px] sm:w-14 text-center text-rose-500">TFF</th>
-                        <th className="py-2 px-0.5 w-[28px] sm:w-16 text-center text-emerald-400">Bns</th>
-                        <th className="py-2 px-0.5 w-[30px] sm:w-16 text-center text-orange-400">Skor</th>
-                        <th className="py-2 px-0.5 w-[38px] sm:w-20 text-center text-emerald-300">Canlı</th>
-                        <th className="py-2 px-0.5 w-[42px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t">Master</th>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                        <th className="py-2 px-0.5 sm:px-2 w-[24px] sm:w-10 align-bottom">#</th>
+                        <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
+                        <th className="py-1.5 px-0 w-[23px] sm:w-14 text-center text-sky-400 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
+                        </th>
+                        <th className="py-1.5 px-0 w-[23px] sm:w-14 text-center text-rose-500 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
+                        </th>
+                        <th className="py-1.5 px-0 w-[22px] sm:w-16 text-center text-emerald-400 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">BNS</span>
+                        </th>
+                        <th className="py-1.5 px-0 w-[23px] sm:w-16 text-center text-orange-400 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
+                        </th>
+                        <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-emerald-300 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
+                        </th>
+                        <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">MASTER</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/70">
@@ -2624,30 +2660,32 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         const diff = row.kesinSira - row.rankMaster;
                         return (
                           <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-0.5 font-black text-slate-400 text-[10px] sm:text-sm">
+                            <td className="py-1.5 px-0.5 sm:px-2 font-black text-slate-400 text-[10px] sm:text-sm whitespace-nowrap">
                               <span>{row.rankMaster}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
+                              {diff > 0 && <span className="text-[7.5px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="text-[7.5px] text-rose-400">▼</span>}
                             </td>
-                            <td className="py-1.5 px-1 font-black text-white text-[10.5px] sm:text-sm truncate" title={row.name}>
-                              {row.name}
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
+                              <div className="flex items-center min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
+                              </div>
                             </td>
-                            <td className="py-1.5 px-0.5 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
-                            <td className="py-1.5 px-0.5 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
-                            <td className="py-1.5 px-0.5 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
+                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-1.5 px-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
                               {row.bonus > 0 ? `+${row.bonus}` : '0'}
                             </td>
-                            <td className="py-1.5 px-0.5 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
-                            <td className="py-1.5 px-0.5 text-center font-black text-[10px] sm:text-xs">
+                            <td className="py-1.5 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
                               {row.canliMaster > 0 ? (
-                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 sm:px-1.5 py-0.5 rounded">
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
                                   +{row.canliMaster}
                                 </span>
                               ) : (
                                 <span className="text-slate-600">-</span>
                               )}
                             </td>
-                            <td className="py-1.5 px-0.5 text-center text-sky-200 font-black text-xs sm:text-base bg-sky-500/10">
+                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-sky-200 font-black text-[11.5px] sm:text-base bg-sky-500/10">
                               {row.toplamMaster}
                             </td>
                           </tr>
@@ -2658,10 +2696,10 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                 ) : liveTableTab === 'SKOR' && skorSubTab === 'DUZ' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
-                        <th className="py-2 px-2 w-10 sm:w-14">#</th>
-                        <th className="py-2 px-2 text-white">Yarışmacı</th>
-                        <th className="py-2 px-3 w-28 sm:w-40 text-right text-orange-400">Master Skor</th>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                        <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
+                        <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                        <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right text-orange-400">Skor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/70">
@@ -2669,22 +2707,22 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         const diff = row.prevSkorRank - row.rankSkor;
                         return (
                           <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">
                               <span>{row.rankSkor}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                              {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
                             </td>
-                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="truncate">{row.name}</span>
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
+                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
                                 {row.canliSkor > 0 && (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-                                    +{row.canliSkor} CANLI
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                                    +{row.canliSkor}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base text-orange-400">{row.toplamSkor}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-orange-400">{row.toplamSkor}</td>
                           </tr>
                         );
                       })}
@@ -2693,13 +2731,21 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                 ) : liveTableTab === 'SKOR' && skorSubTab === 'DETAYLI' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight">
-                        <th className="py-2 px-1 w-[26px] sm:w-12">#</th>
-                        <th className="py-2 px-1 text-white">Yarışmacı</th>
-                        <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-sky-400">DFO</th>
-                        <th className="py-2 px-1 w-[40px] sm:w-20 text-center text-rose-500">TFF</th>
-                        <th className="py-2 px-1 w-[42px] sm:w-20 text-center text-emerald-400">Canlı</th>
-                        <th className="py-2 px-1 w-[48px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t">Master</th>
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                        <th className="py-2 px-1 sm:px-2 w-[24px] sm:w-12 align-bottom">#</th>
+                        <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
+                        <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-sky-400 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
+                        </th>
+                        <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-rose-500 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
+                        </th>
+                        <th className="py-1.5 px-0 w-[26px] sm:w-20 text-center text-emerald-400 align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
+                        </th>
+                        <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t align-bottom">
+                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/70">
@@ -2707,26 +2753,28 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         const diff = row.prevSkorRank - row.rankSkor;
                         return (
                           <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1 font-black text-slate-400 text-[10px] sm:text-sm">
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-slate-400 text-[10px] sm:text-sm whitespace-nowrap">
                               <span>{row.rankSkor}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[8px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[8px] text-rose-400">▼</span>}
+                              {diff > 0 && <span className="text-[7.5px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="text-[7.5px] text-rose-400">▼</span>}
                             </td>
-                            <td className="py-1.5 px-1 font-black text-white text-[11px] sm:text-sm truncate" title={row.name}>
-                              {row.name}
+                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
+                              <div className="flex items-center min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
+                              </div>
                             </td>
-                            <td className="py-1.5 px-1 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
-                            <td className="py-1.5 px-1 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
-                            <td className="py-1.5 px-1 text-center font-black text-[10px] sm:text-xs">
+                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
                               {row.canliSkor > 0 ? (
-                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1.5 py-0.5 rounded">
+                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
                                   +{row.canliSkor}
                                 </span>
                               ) : (
                                 <span className="text-slate-600">-</span>
                               )}
                             </td>
-                            <td className="py-1.5 px-1 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">
+                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-orange-400 font-black text-[11.5px] sm:text-base bg-orange-500/10">
                               {row.toplamSkor}
                             </td>
                           </tr>
@@ -2737,12 +2785,12 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                 ) : (
                   <table className="w-full table-fixed text-left tabular-nums">
                     <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider">
-                        <th className="py-2 px-2 w-10 sm:w-14">#</th>
-                        <th className="py-2 px-2 text-white">Yarışmacı</th>
-                        <th className="py-2 px-3 w-28 sm:w-40 text-right">
-                          {liveTableTab === 'DFO' && <span className="text-sky-400">DFO Puanı</span>}
-                          {liveTableTab === 'TFF' && <span className="text-rose-500">TFF Puanı</span>}
+                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                        <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
+                        <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                        <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right">
+                          {liveTableTab === 'DFO' && <span className="text-sky-400">DFO Puan</span>}
+                          {liveTableTab === 'TFF' && <span className="text-rose-500">TFF Puan</span>}
                           {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
                           {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
                         </th>
@@ -2760,22 +2808,22 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         const diff = row.prevRank - row.rank;
                         return (
                           <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-2 font-black text-slate-400 text-xs sm:text-sm">
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">
                               <span>{row.rank}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[9px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[9px] text-rose-400">▼</span>}
+                              {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
+                              {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
                             </td>
-                            <td className="py-1.5 px-2 font-black text-white text-xs sm:text-sm">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="truncate">{row.name}</span>
-                                {row.liveAdd > 0 && (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded leading-none">
-                                    +{row.liveAdd} CANLI
+                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
+                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name)}
+                                {row.liveAdd > 0 || row.liveAdd > 0 ? (
+                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                                    +{row.liveAdd}
                                   </span>
-                                )}
+                                ) : null}
                               </div>
                             </td>
-                            <td className="py-1.5 px-3 text-right font-black text-xs sm:text-base">
+                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base">
                               {liveTableTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
                               {liveTableTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
                               {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
