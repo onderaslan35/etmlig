@@ -25,7 +25,7 @@ export const USER_LIST = [
   { id: "262747", name: "SAVAŞ ÇAĞLAYAN" },
   { id: "262774", name: "ŞENOL CAN ÇAKICI" },
   { id: "262714", name: "İSMAİL EKER 🏆" },
-  { id: "262702", name: "MURAT KARA" },
+  { id: "262702", name: "MURAT KARA 🏆" },
   { id: "262705", name: "AHMET BİRCAN 🏆" },
   { id: "262740", name: "ABDULLAH DİK" },
   { id: "262738", name: "MEVLÜT EVLER" },
