@@ -1448,10 +1448,13 @@ export default function YeniArsivPage() {
 
       {/* ===================== 2. SEKME: SEÇİLİ HAFTA MAÇ ARŞİVİ ===================== */}
       {activeTab === 'CARDS' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl p-3 sm:p-5 flex flex-col gap-3 shadow-lg">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl p-3 sm:p-5 flex flex-col gap-3.5 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
-            <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
-              {selectedWeek}. HAFTA MAÇ ARŞİVİ ({filteredArchiveMatches.length} MAÇ)
+            <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" />
+              <span>
+                {selectedWeek}. HAFTA MAÇ ARŞİVİ ({filteredArchiveMatches.length} MAÇ)
+              </span>
             </h2>
             <div className="flex items-center gap-1">
               {(
@@ -1483,22 +1486,83 @@ export default function YeniArsivPage() {
               {selectedWeek}. HAFTA İÇİN KAYITLI MAÇ BULUNAMADI
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredArchiveMatches.map((m) => {
                 const key = `${m.week_num}-${m.match_index}`;
-                const isOpen = Boolean(expandedArchiveCards[key]);
+                // Live karttaki gibi bilenler radarı varsayılan AÇIK gelsin; tıklayınca gizlensin
+                const isRadarOpen = expandedArchiveCards[key] !== false;
                 const isFin = m.status === 'FINISHED';
                 const isPost = m.status === 'POSTPONED';
                 const isTff =
                   m.pool_type === 'TFF' ||
                   (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
-                const theme = getEliteTheme(
-                  isTff && !m.category.toUpperCase().includes('TÜRKİYE')
-                    ? `TÜRKİYE ${m.category}`
-                    : m.category,
-                  m.home_team?.toUpperCase(),
-                  m.away_team?.toUpperCase()
+
+                // Bültende daha detaylı kategori adı varsa yakala
+                const bulMatch = recentBulletins.find(
+                  (b: any) =>
+                    Number(b.week_num) === Number(m.week_num) &&
+                    Number(b.match_index) === Number(m.match_index)
                 );
+                const rawCat = String(
+                  (m.category && m.category !== 'GENEL' ? m.category : '') ||
+                    bulMatch?.category ||
+                    (isTff ? 'TÜRKİYE SÜPER LİG' : 'AVRUPA FUTBOLU')
+                ).trim();
+
+                const theme: any = getEliteTheme(
+                  isTff && !normalizeTrName(rawCat).includes('TURKIYE') && !normalizeTrName(rawCat).includes('TFF')
+                    ? `TÜRKİYE ${rawCat}`
+                    : rawCat,
+                  String(m.home_team || '').toUpperCase(),
+                  String(m.away_team || '').toUpperCase()
+                );
+
+                const leagueTitle = String(
+                  theme?.leagueName || theme?.title || rawCat || (isTff ? 'TÜRKİYE TFF' : 'DFO AVRUPA')
+                ).toUpperCase();
+
+                const leagueLogo = String(
+                  theme?.leagueLogo || theme?.catLogo || theme?.tournamentLogo || ''
+                ).trim();
+
+                const catNorm = normalizeTrName(leagueTitle);
+
+                // Kart Tema Renkleri: TFF Kıpkırmızı, Şampiyonlar Ligi İndigo, Avrupa Ligi Turuncu, Konferans Yeşil, DFO/Uluslar Ligi Canlı Kart Mavisi
+                let cardOuterCls =
+                  theme?.cardBg ||
+                  'bg-gradient-to-b from-[#081529] via-[#061020] to-[#040a15] border-sky-500/35 shadow-[0_8px_26px_rgba(2,132,199,0.14)]';
+                let bannerCls =
+                  'bg-[#071d36]/90 border-sky-400/45 text-sky-200 shadow-[0_0_16px_rgba(56,189,248,0.22)]';
+                let poolPillCls = 'bg-sky-950/90 border-sky-500/50 text-sky-300';
+                let scoreBoxCls = 'bg-[#040914] border-slate-700/80 text-white';
+
+                if (isTff) {
+                  cardOuterCls =
+                    'bg-gradient-to-b from-[#4c0714] via-[#2f050d] to-[#170206] border-rose-500/75 shadow-[0_8px_28px_rgba(225,29,72,0.28)]';
+                  bannerCls =
+                    'bg-rose-950/90 border-rose-400/65 text-rose-100 shadow-[0_0_18px_rgba(244,63,94,0.32)]';
+                  poolPillCls = 'bg-rose-950 border-rose-400/70 text-rose-200';
+                  scoreBoxCls = 'bg-[#1c0308] border-rose-500/60 text-white';
+                } else if (
+                  catNorm.includes('SAMPIYONLAR') ||
+                  catNorm.includes('CHAMPIONS')
+                ) {
+                  cardOuterCls =
+                    'bg-gradient-to-b from-[#0f1a48] via-[#09102e] to-[#040818] border-indigo-400/60 shadow-[0_8px_26px_rgba(99,102,241,0.22)]';
+                  bannerCls =
+                    'bg-indigo-950/90 border-indigo-400/55 text-indigo-100 shadow-[0_0_16px_rgba(129,140,248,0.28)]';
+                  poolPillCls = 'bg-indigo-950/90 border-indigo-400/60 text-indigo-200';
+                } else if (catNorm.includes('AVRUPA LIGI') || catNorm.includes('EUROPA')) {
+                  cardOuterCls =
+                    'bg-gradient-to-b from-[#3b1906] via-[#240f04] to-[#110702] border-orange-500/60 shadow-[0_8px_26px_rgba(249,115,22,0.2)]';
+                  bannerCls =
+                    'bg-orange-950/90 border-orange-400/55 text-orange-100 shadow-[0_0_16px_rgba(251,146,60,0.25)]';
+                } else if (catNorm.includes('KONFERANS') || catNorm.includes('CONFERENCE')) {
+                  cardOuterCls =
+                    'bg-gradient-to-b from-[#063322] via-[#042015] to-[#02100b] border-emerald-500/60 shadow-[0_8px_26px_rgba(16,185,129,0.2)]';
+                  bannerCls =
+                    'bg-emerald-950/90 border-emerald-400/55 text-emerald-100 shadow-[0_0_16px_rgba(52,211,153,0.25)]';
+                }
 
                 const winnerIds = (m.winner_ids || []).filter(
                   (id) => !EXCLUDED_IDS.has(String(id).trim())
@@ -1507,13 +1571,16 @@ export default function YeniArsivPage() {
                   m.points_awarded !== null && m.points_awarded !== undefined
                     ? Number(m.points_awarded)
                     : calcMatchPts(winnerIds.length);
+
                 const winnerEntries = winnerIds
                   .map((uid) => {
                     const cleanId = String(uid).trim();
+                    const pObj = playersMap[cleanId];
                     return {
                       id: cleanId,
-                      name: playersMap[cleanId]?.name || cleanId,
-                      favTeam: playersMap[cleanId]?.favoriteTeam || ''
+                      name: pObj?.name || cleanId,
+                      isChamp: Boolean(pObj?.isChampion),
+                      favTeam: pObj?.favoriteTeam || ''
                     };
                   })
                   .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
@@ -1521,106 +1588,187 @@ export default function YeniArsivPage() {
                 return (
                   <div
                     key={key}
-                    className="bg-[#040a18] border border-slate-800 rounded-xl overflow-hidden flex flex-col"
+                    className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-3 transition-all ${cardOuterCls}`}
                   >
-                    <div className="px-3 py-1.5 bg-[#071126] border-b border-slate-800/80 flex items-center justify-between text-[9.5px] font-bold">
-                      <span className="text-slate-400 uppercase tracking-wider">
-                        {m.week_num}. HAFTA • {m.match_index}. MAÇ • {m.match_date} {m.match_time}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded font-black uppercase ${
-                          isTff
-                            ? 'bg-rose-950/70 text-rose-400 border border-rose-800/70'
-                            : 'bg-sky-950/70 text-sky-400 border border-sky-800/70'
-                        }`}
-                      >
-                        {isTff ? 'TFF' : 'DFO'}
+                    {/* 1. ÜST BİLGİ SATIRI: 41. HAFTA 8. MAÇ • TARİH SAAT */}
+                    <div className="flex items-center justify-center relative text-[10px] sm:text-[10.5px] font-black tracking-wider text-slate-300 uppercase">
+                      <span>
+                        {m.week_num}. HAFTA {m.match_index}. MAÇ
+                        {m.match_date ? ` • ${m.match_date}` : ''}
+                        {m.match_time ? ` ${m.match_time}` : ''}
                       </span>
                     </div>
 
-                    <div className="px-3 py-2.5 flex items-center justify-between gap-2">
-                      <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-                        <span className="text-[11px] sm:text-xs font-black text-white uppercase truncate text-right">
+                    {/* 2. PARLAYAN TURNUVA / KATEGORİ BANDI */}
+                    <div
+                      className={`w-full py-1.5 px-3 rounded-xl border text-center text-[10px] sm:text-[11px] font-black uppercase tracking-widest truncate ${bannerCls}`}
+                    >
+                      {leagueTitle}
+                    </div>
+
+                    {/* 3. TAKIM ARMALARI + ORTA LİG LOGOSU + DURUM + SKOR KUTUSU */}
+                    <div className="grid grid-cols-3 items-center gap-2 pt-1 pb-1">
+                      {/* Ev Sahibi */}
+                      <div className="flex flex-col items-center gap-2 min-w-0">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/35 border border-white/15 p-2 flex items-center justify-center shadow-md">
+                          <img
+                            src={theme.homeLogo}
+                            alt={m.home_team}
+                            className="w-full h-full object-contain drop-shadow"
+                            loading="lazy"
+                          />
+                        </div>
+                        <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {m.home_team}
                         </span>
-                        <img
-                          src={theme.homeLogo}
-                          alt={m.home_team}
-                          className="w-7 h-7 object-contain shrink-0"
-                        />
                       </div>
 
-                      <div className="px-2.5 py-1 rounded-lg bg-[#091328] border border-slate-700/70 min-w-[58px] text-center shrink-0">
-                        {isFin ? (
-                          <span className="text-xs sm:text-sm font-black text-white tracking-widest">
-                            {m.home_score}-{m.away_score}
-                          </span>
-                        ) : isPost ? (
-                          <span className="text-[10px] font-black text-amber-400">ERT</span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-sky-300">{m.match_time || 'v'}</span>
+                      {/* Orta: Lig Logosu + MS (BİTTİ) + Büyük Skor */}
+                      <div className="flex flex-col items-center justify-center gap-1.5">
+                        {leagueLogo && (
+                          <img
+                            src={leagueLogo}
+                            alt={leagueTitle}
+                            className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow"
+                            loading="lazy"
+                          />
                         )}
+
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                            isFin
+                              ? 'bg-slate-900/90 text-slate-200 border-slate-600/80'
+                              : isPost
+                              ? 'bg-amber-950/90 text-amber-300 border-amber-500/70'
+                              : 'bg-sky-950/90 text-sky-300 border-sky-500/60'
+                          }`}
+                        >
+                          {isFin ? 'MS (BİTTİ)' : isPost ? 'ERTELENDİ' : m.match_time || 'BAŞLAMADI'}
+                        </span>
+
+                        <div
+                          className={`px-3.5 py-1.5 rounded-xl border min-w-[84px] sm:min-w-[96px] text-center shadow-inner ${scoreBoxCls}`}
+                        >
+                          {isFin ? (
+                            <span className="text-lg sm:text-xl font-black tracking-wider tabular-nums">
+                              {m.home_score} <span className="text-slate-400 mx-0.5">:</span> {m.away_score}
+                            </span>
+                          ) : isPost ? (
+                            <span className="text-xs sm:text-sm font-black text-amber-400">ERT</span>
+                          ) : (
+                            <span className="text-sm sm:text-base font-black text-slate-400">- : -</span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex-1 flex items-center justify-start gap-2 min-w-0">
-                        <img
-                          src={theme.awayLogo}
-                          alt={m.away_team}
-                          className="w-7 h-7 object-contain shrink-0"
-                        />
-                        <span className="text-[11px] sm:text-xs font-black text-white uppercase truncate text-left">
+                      {/* Deplasman */}
+                      <div className="flex flex-col items-center gap-2 min-w-0">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/35 border border-white/15 p-2 flex items-center justify-center shadow-md">
+                          <img
+                            src={theme.awayLogo}
+                            alt={m.away_team}
+                            className="w-full h-full object-contain drop-shadow"
+                            loading="lazy"
+                          />
+                        </div>
+                        <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {m.away_team}
                         </span>
                       </div>
                     </div>
 
-                    <div className="px-3 py-1.5 bg-[#060d1f] border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                      {isFin ? (
-                        winnerEntries.length > 0 ? (
-                          <span className="text-emerald-400 font-bold">
-                            {winnerEntries.length} kişi bildi (+{pts} P)
-                          </span>
-                        ) : (
-                          <span className="text-slate-500 italic">Tam isabet çıkmadı</span>
-                        )
-                      ) : isPost ? (
-                        <span className="text-amber-400 font-bold">Ertelendi</span>
-                      ) : (
-                        <span className="text-slate-500 italic">Oynanmadı</span>
-                      )}
+                    {/* 4. İSABET SAYISI • DFO/TFF MAÇI ROZETİ • RADAR AÇ/GİZLE */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] font-black">
+                      <span
+                        className={
+                          isFin && winnerEntries.length > 0
+                            ? 'text-emerald-400'
+                            : isPost
+                            ? 'text-amber-400'
+                            : 'text-slate-400'
+                        }
+                      >
+                        {isPost
+                          ? 'Maç ertelendi'
+                          : isFin
+                          ? winnerEntries.length > 0
+                            ? `${winnerEntries.length} kişi tam isabetli`
+                            : '0 kişi tam isabetli'
+                          : 'Henüz sonuçlanmadı'}
+                      </span>
 
-                      {isFin && winnerEntries.length > 0 && (
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider ${poolPillCls}`}
+                      >
+                        {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
+                      </span>
+
+                      {isFin && winnerEntries.length > 0 ? (
                         <button
+                          type="button"
                           onClick={() =>
-                            setExpandedArchiveCards((prev) => ({ ...prev, [key]: !prev[key] }))
+                            setExpandedArchiveCards((prev) => ({
+                              ...prev,
+                              [key]: !isRadarOpen
+                            }))
                           }
-                          className="text-sky-400 hover:text-sky-300 font-black uppercase tracking-wider"
+                          className="text-sky-400 hover:text-sky-300 text-[10px] font-black"
                         >
-                          {isOpen ? 'Gizle ▲' : 'Bilenler ▼'}
+                          {isRadarOpen ? 'Radar Gizle ▲' : 'Radar Aç ▼'}
                         </button>
+                      ) : (
+                        <span className="text-slate-600 text-[10px]">—</span>
                       )}
                     </div>
 
-                    {isOpen && winnerEntries.length > 0 && (
-                      <div className="px-3 py-2 bg-[#030712] border-t border-slate-800 flex flex-wrap gap-1.5">
-                        {winnerEntries.map((wEntry) => {
-                          const cLogo = getClubLogoUrl(wEntry.favTeam);
-                          return (
-                            <span
-                              key={wEntry.id}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 text-[10px] font-bold uppercase"
-                            >
-                              {cLogo && (
-                                <img
-                                  src={cLogo}
-                                  alt={wEntry.favTeam}
-                                  className="w-3.5 h-3.5 object-contain shrink-0"
-                                />
-                              )}
-                              <span>{wEntry.name}</span>
-                            </span>
-                          );
-                        })}
+                    {/* 5. CANLI KART GÖRÜNÜMLÜ YEŞİL PUAN VE KAZANANLAR RADARI */}
+                    {isFin && winnerEntries.length > 0 && isRadarOpen && (
+                      <div className="rounded-xl border border-emerald-500/35 bg-[#031214]/85 p-2.5 flex flex-col gap-2">
+                        <div className="flex justify-center">
+                          <span className="px-3.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow">
+                            +{pts} PUAN YAZILDI
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          {winnerEntries.map((wEntry) => {
+                            const cLogo = getClubLogoUrl(wEntry.favTeam);
+                            const cups = getChampionCupCount(wEntry.name, wEntry.isChamp);
+                            const showFlag = hasReigningTurkishFlag(wEntry.name);
+                            const cleanNm = stripTrophies(wEntry.name);
+
+                            return (
+                              <div
+                                key={wEntry.id}
+                                className="w-full py-1.5 px-3 rounded-lg bg-[#050b18]/95 border border-slate-800/90 flex items-center justify-center gap-1.5 text-white text-[11px] sm:text-xs font-black uppercase"
+                              >
+                                {cLogo && (
+                                  <img
+                                    src={cLogo}
+                                    alt={wEntry.favTeam}
+                                    className="w-4 h-4 object-contain shrink-0"
+                                    loading="lazy"
+                                  />
+                                )}
+                                <span className="truncate">{cleanNm}</span>
+                                {cups > 0 && (
+                                  <span className="shrink-0 text-[10.5px] leading-none">
+                                    {'🏆'.repeat(cups)}
+                                  </span>
+                                )}
+                                {showFlag && (
+                                  <TurkishChampionBadge title="Son Şampiyon Göğüs Arması" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {isFin && winnerEntries.length === 0 && (
+                      <div className="rounded-xl border border-rose-900/50 bg-rose-950/20 py-2 px-3 text-center text-[10px] font-bold text-rose-300/80 uppercase tracking-wider">
+                        ✕ Bu maçta tam skor isabeti çıkmadı
                       </div>
                     )}
                   </div>
