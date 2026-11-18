@@ -9,7 +9,7 @@ export const AVAILABLE_FAVORITE_CLUBS = [
   'GÖZTEPE',
   'GALATASARAY',
   'FENERBAHÇE',
-  'BEŞIKTAŞ',
+  'BEŞİKTAŞ',
   'TRABZONSPOR',
   'KARŞIYAKA',
   'ALTAY',
@@ -81,9 +81,83 @@ export const AVAILABLE_FAVORITE_CLUBS = [
   'RANGERS'
 ];
 
+export const normalizeClubKey = (s?: string | null) =>
+  String(s || '')
+    .trim()
+    .toLocaleUpperCase('tr-TR')
+    .replace(/İ/g, 'I')
+    .replace(/Ş/g, 'S')
+    .replace(/Ğ/g, 'G')
+    .replace(/Ü/g, 'U')
+    .replace(/Ö/g, 'O')
+    .replace(/Ç/g, 'C')
+    .replace(/\s+/g, ' ');
+
+const STORAGE_CACHE_KEY = 'etml_custom_clubs_cache_v1';
+const customClubLogoMap: Record<string, string> = {};
+let customClubListCache: { club_name: string; logo_url: string }[] = [];
+let initializedCustomClubs = false;
+
+const applyCustomClubsToMemory = (rows: { club_name: string; logo_url: string }[]) => {
+  customClubListCache = rows || [];
+  Object.keys(customClubLogoMap).forEach((k) => delete customClubLogoMap[k]);
+
+  (rows || []).forEach((r) => {
+    const raw = String(r.club_name || '').trim().toLocaleUpperCase('tr-TR');
+    const url = String(r.logo_url || '').trim();
+    if (!raw || !url) return;
+    customClubLogoMap[raw] = url;
+    customClubLogoMap[normalizeClubKey(raw)] = url;
+  });
+
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(rows || []));
+      window.dispatchEvent(new CustomEvent('etml-custom-clubs-updated'));
+    } catch {
+      // localStorage kapalıysa sessiz geç
+    }
+  }
+};
+
+export const refreshCustomClubsCache = async () => {
+  const { data, error } = await supabase
+    .from('etml_custom_clubs')
+    .select('club_name, logo_url')
+    .order('club_name', { ascending: true });
+
+  if (!error && data) {
+    applyCustomClubsToMemory(data as { club_name: string; logo_url: string }[]);
+  }
+  return customClubListCache;
+};
+
+// Tarayıcı açılır açılmaz önbelleği ve Supabase'deki özel kulüpleri yükle
+if (typeof window !== 'undefined' && !initializedCustomClubs) {
+  initializedCustomClubs = true;
+  try {
+    const cached = window.localStorage.getItem(STORAGE_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) applyCustomClubsToMemory(parsed);
+    }
+  } catch {
+    // ignore
+  }
+  refreshCustomClubsCache();
+}
+
 export const getClubLogoUrl = (teamName?: string | null) => {
   if (!teamName || !teamName.trim()) return '';
-  return getEliteTheme('', teamName.trim().toUpperCase(), '').homeLogo || '';
+  const upperTr = teamName.trim().toLocaleUpperCase('tr-TR');
+  const norm = normalizeClubKey(upperTr);
+
+  // 1. Öncelik: Admin'den eklenen özel kulüp arması (Örn: GAZİANTEP KALESPOR)
+  if (customClubLogoMap[upperTr]) return customClubLogoMap[upperTr];
+  if (customClubLogoMap[norm]) return customClubLogoMap[norm];
+
+  // 2. Öncelik: Sistemin yerleşik themeEngine arması
+  return getEliteTheme('', upperTr, '').homeLogo || getEliteTheme('', norm, '').homeLogo || '';
 };
 
 interface FavoriteTeamSelectorProps {
@@ -93,25 +167,40 @@ interface FavoriteTeamSelectorProps {
 
 export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTeamSelectorProps) {
   const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [customClubs, setCustomClubs] = useState<{ club_name: string; logo_url: string }[]>(
+    customClubListCache
+  );
   const [saving, setSaving] = useState<boolean>(false);
   const [savedNotice, setSavedNotice] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!userId) return;
     let active = true;
-    const loadCurrentTeam = async () => {
-      const { data } = await supabase
+
+    refreshCustomClubsCache().then((rows) => {
+      if (active) setCustomClubs([...rows]);
+    });
+
+    const onUpdated = () => {
+      if (active) setCustomClubs([...customClubListCache]);
+    };
+    window.addEventListener('etml-custom-clubs-updated', onUpdated);
+
+    if (userId) {
+      supabase
         .from('etml_official_players')
         .select('favorite_team')
         .eq('user_id', String(userId).trim())
-        .maybeSingle();
-      if (active && data?.favorite_team) {
-        setSelectedTeam(String(data.favorite_team).trim());
-      }
-    };
-    loadCurrentTeam();
+        .maybeSingle()
+        .then(({ data }) => {
+          if (active && data?.favorite_team) {
+            setSelectedTeam(String(data.favorite_team).trim());
+          }
+        });
+    }
+
     return () => {
       active = false;
+      window.removeEventListener('etml-custom-clubs-updated', onUpdated);
     };
   }, [userId]);
 
@@ -141,6 +230,18 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
 
   if (!userId || userId === 'mankoman') return null;
 
+  const extraClubNames = customClubs
+    .map((c) => c.club_name)
+    .filter(
+      (cn) => !AVAILABLE_FAVORITE_CLUBS.some((base) => normalizeClubKey(base) === normalizeClubKey(cn))
+    );
+
+  // Kullanıcının veritabanındaki mevcut seçimi (örn. BESIKTAS) listedeki Türkçe yazımla eşleşsin
+  const matchedOptionValue =
+    [...extraClubNames, ...AVAILABLE_FAVORITE_CLUBS].find(
+      (c) => normalizeClubKey(c) === normalizeClubKey(selectedTeam)
+    ) || selectedTeam;
+
   const logoUrl = getClubLogoUrl(selectedTeam);
 
   return (
@@ -160,17 +261,30 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
       </span>
 
       <select
-        value={selectedTeam}
+        value={matchedOptionValue}
         onChange={(e) => handleTeamChange(e.target.value)}
         disabled={saving}
         className="bg-[#071126] border border-slate-700 hover:border-sky-400 text-white text-[10.5px] sm:text-xs font-black rounded-lg px-2 py-1 outline-none cursor-pointer"
       >
         <option value="">-- Kulüp Seçiniz --</option>
-        {AVAILABLE_FAVORITE_CLUBS.map((club) => (
-          <option key={club} value={club} className="bg-[#071126] text-white">
-            {club}
-          </option>
-        ))}
+
+        {extraClubNames.length > 0 && (
+          <optgroup label="ÖZEL EKLENEN KULÜPLER" className="bg-[#071126] text-amber-300">
+            {extraClubNames.map((club) => (
+              <option key={club} value={club} className="bg-[#071126] text-white">
+                {club}
+              </option>
+            ))}
+          </optgroup>
+        )}
+
+        <optgroup label="TÜRKİYE VE AVRUPA KULÜPLERİ" className="bg-[#071126] text-sky-300">
+          {AVAILABLE_FAVORITE_CLUBS.map((club) => (
+            <option key={club} value={club} className="bg-[#071126] text-white">
+              {club}
+            </option>
+          ))}
+        </optgroup>
       </select>
 
       {saving && (

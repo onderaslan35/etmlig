@@ -1,5 +1,5 @@
 'use client';
-
+import CustomClubFactory from '@/components/CustomClubFactory';
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 import {
@@ -1355,6 +1355,7 @@ export default function AdminRadarPortal() {
                  onClick={() => setActiveTab('bulletin')}
                  className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
+                <CustomClubFactory />
                  🛠️ BÜLTEN FABRİKASI
                </button>
                <button 
