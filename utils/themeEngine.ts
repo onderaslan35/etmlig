@@ -1,7 +1,7 @@
 // ============================================================================
 // 🏭 ETM LİGİ MERKEZ LOJİSTİK DEPOSU (THEME & LOGO ENGINE) 🏭
 // ============================================================================
-
+import { supabase } from '@/utils/supabase';
 // 🔴 1. ANA YARIŞMACI LİSTESİ (ORJİNAL ŞİFRELER GERİ GELDİ)
 export const TEST_ACCOUNTS: Record<string, { pass: string, name: string }> = {
   "mankoman": { pass: "123456", name: "MANKOMAN (ADMİN)" },
@@ -790,7 +790,96 @@ export const getUniqueMatchId = (week: number, index: number) => {
   return (week * 100) + index;
 };
 
-// 🔴 5. DEV TEMA MOTORU 🔴
+// 🔴 5. DEV TEMA MOTORU + SUPABASE DİNAMİK ARMA KÖPRÜSÜ 🔴
+const THEME_CUSTOM_CLUBS_KEY = 'etml_custom_clubs_cache_v1';
+const dynamicClubLogos: Record<string, string> = {};
+let dynamicClubsInitialized = false;
+
+const toAsciiClubKey = (s: string) =>
+  String(s || '')
+    .trim()
+    .toLocaleUpperCase('tr-TR')
+    .replace(/İ/g, 'I')
+    .replace(/Ş/g, 'S')
+    .replace(/Ğ/g, 'G')
+    .replace(/Ü/g, 'U')
+    .replace(/Ö/g, 'O')
+    .replace(/Ç/g, 'C')
+    .replace(/\s+/g, ' ');
+
+export const syncThemeCustomClubs = (rows: { club_name: string; logo_url: string }[]) => {
+  Object.keys(dynamicClubLogos).forEach((k) => delete dynamicClubLogos[k]);
+  (rows || []).forEach((r) => {
+    const raw = String(r?.club_name || '').trim();
+    const url = String(r?.logo_url || '').trim();
+    if (!raw || !url) return;
+    dynamicClubLogos[raw] = url;
+    dynamicClubLogos[raw.toUpperCase()] = url;
+    dynamicClubLogos[raw.toLocaleUpperCase('tr-TR')] = url;
+    dynamicClubLogos[toAsciiClubKey(raw)] = url;
+  });
+};
+
+const initDynamicLogosOnce = () => {
+  if (typeof window === 'undefined' || dynamicClubsInitialized) return;
+  dynamicClubsInitialized = true;
+
+  const loadFromStorage = () => {
+    try {
+      const cached = window.localStorage.getItem(THEME_CUSTOM_CLUBS_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) syncThemeCustomClubs(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  loadFromStorage();
+  window.addEventListener('etml-custom-clubs-updated', loadFromStorage);
+
+  // Doğrudan Canlı veya Arşiv sayfasına girildiğinde de Supabase'den taze çek
+  supabase
+    .from('etml_custom_clubs')
+    .select('club_name, logo_url')
+    .then(({ data, error }) => {
+      if (!error && data) {
+        syncThemeCustomClubs(data as { club_name: string; logo_url: string }[]);
+        try {
+          window.localStorage.setItem(THEME_CUSTOM_CLUBS_KEY, JSON.stringify(data));
+        } catch {
+          // ignore
+        }
+      }
+    });
+};
+
+const resolveTeamLogoWithOverride = (rawTeam: string) => {
+  initDynamicLogosOnce();
+  const clean = rawTeam ? rawTeam.trim() : '';
+  if (!clean) return '/logos/default.png';
+
+  const upEn = clean.toUpperCase();
+  const upTr = clean.toLocaleUpperCase('tr-TR');
+  const ascii = toAsciiClubKey(clean);
+
+  // 1. ÖNCELİK: Admin "Kulüp ve Arma Fabrikası"ndan eklenen / düzeltilen logolar (Kırık linkleri anında ezer!)
+  if (dynamicClubLogos[clean]) return dynamicClubLogos[clean];
+  if (dynamicClubLogos[upTr]) return dynamicClubLogos[upTr];
+  if (dynamicClubLogos[upEn]) return dynamicClubLogos[upEn];
+  if (dynamicClubLogos[ascii]) return dynamicClubLogos[ascii];
+
+  // 2. ÖNCELİK: Yerleşik localTeamLogos sözlüğü + Türkçe/ASCII esnek eşleşme
+  return (
+    localTeamLogos[clean] ||
+    localTeamLogos[upEn] ||
+    localTeamLogos[upTr] ||
+    localTeamLogos[ascii] ||
+    getLocalLogoUrl(clean)
+  );
+};
+
 export const getEliteTheme = (category: string, homeTeam: string, awayTeam: string) => {
   const upCat = category ? category.toUpperCase() : '';
   const trCat = category ? category.toLocaleUpperCase('tr-TR') : '';
@@ -798,17 +887,8 @@ export const getEliteTheme = (category: string, homeTeam: string, awayTeam: stri
   const homeClean = homeTeam ? homeTeam.trim() : '';
   const awayClean = awayTeam ? awayTeam.trim() : '';
 
-  const homeLogoUrl =
-    localTeamLogos[homeClean] ||
-    localTeamLogos[homeClean.toUpperCase()] ||
-    localTeamLogos[homeClean.toLocaleUpperCase('tr-TR')] ||
-    getLocalLogoUrl(homeClean);
-
-  const awayLogoUrl =
-    localTeamLogos[awayClean] ||
-    localTeamLogos[awayClean.toUpperCase()] ||
-    localTeamLogos[awayClean.toLocaleUpperCase('tr-TR')] ||
-    getLocalLogoUrl(awayClean);
+  const homeLogoUrl = resolveTeamLogoWithOverride(homeClean);
+  const awayLogoUrl = resolveTeamLogoWithOverride(awayClean);
 
   const isNationsLeague =
     upCat.includes("ULUSLAR") ||
