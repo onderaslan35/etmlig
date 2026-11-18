@@ -123,7 +123,7 @@ const applyCustomClubsToMemory = (rows: { club_name: string; logo_url: string }[
 export const refreshCustomClubsCache = async () => {
   const { data, error } = await supabase
     .from('etml_custom_clubs')
-    .select('club_name, logo_url')
+    .select('club_name, logo_url, is_selectable')
     .order('club_name', { ascending: true });
 
   if (!error && data) {
@@ -231,6 +231,7 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
   if (!userId || userId === 'mankoman') return null;
 
   const extraClubNames = customClubs
+    .filter((c: any) => c.is_selectable !== false)
     .map((c) => c.club_name)
     .filter(
       (cn) => !AVAILABLE_FAVORITE_CLUBS.some((base) => normalizeClubKey(base) === normalizeClubKey(cn))
