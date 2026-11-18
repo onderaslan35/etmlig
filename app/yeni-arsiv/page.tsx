@@ -1956,13 +1956,16 @@ export default function YeniArsivPage() {
         </div>
       )}
 
-      {/* ===================== 5. SEKME: LİDERLER (DİKEY MOBİL BAŞLIKLAR + KULÜP ARMASI) ===================== */}
+      {/* ===================== 5. SEKME: LİDERLER (DİKEY MOBİL BAŞLIKLAR + KULÜP ARMASI + HAFTAYA GİT LİNKİ) ===================== */}
       {activeTab === 'LEADERS_TIMELINE' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 py-3 sm:px-5">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 py-3 sm:px-5 flex items-center justify-between gap-2">
             <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
               HAFTALARA GÖRE GENEL LİDERLER
             </h2>
+            <span className="text-[9.5px] sm:text-[10.5px] font-bold text-sky-400 shrink-0">
+              Tablo için satıra dokunun ↗
+            </span>
           </div>
 
           <div className="px-1 pb-4 sm:px-4 sm:pb-6">
@@ -1999,36 +2002,61 @@ export default function YeniArsivPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/70">
-                {[...leadersTimeline].reverse().map((row) => (
-                  <tr key={row.weekNum} className="hover:bg-slate-800/35 transition-colors">
-                    <td className="py-2 px-1 sm:px-3 font-black text-sky-300 text-[10.5px] sm:text-sm">
-                      {row.weekNum}.H
-                    </td>
-                    <td className="py-2 px-1 sm:px-3 font-black text-white text-[10.5px] sm:text-sm">
-                      {renderPlayerNameWithCup(
-                        row.leaderName,
-                        row.isChampion,
-                        0,
-                        row.favoriteTeam
-                      )}
-                    </td>
-                    <td className="py-2 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">
-                      {row.dfoPts}
-                    </td>
-                    <td className="py-2 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">
-                      {row.tffPts}
-                    </td>
-                    <td className="py-2 px-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
-                      {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
-                    </td>
-                    <td className="py-2 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">
-                      {row.totalSkor}
-                    </td>
-                    <td className="py-2 px-0.5 sm:px-3 text-center text-white font-black text-[11.5px] sm:text-base bg-sky-500/10">
-                      {row.masterPts}
-                    </td>
-                  </tr>
-                ))}
+                {[...leadersTimeline].reverse().map((row) => {
+                  const goToWeekStandings = () => {
+                    setSelectedWeek(row.weekNum);
+                    setWeekGenelFilter('MASTER');
+                    setWeekGenelMasterMode('DETAYLI');
+                    setActiveTab('WEEK_CUMULATIVE');
+                    if (typeof window !== 'undefined') {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  };
+
+                  return (
+                    <tr
+                      key={row.weekNum}
+                      role="button"
+                      tabIndex={0}
+                      onClick={goToWeekStandings}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          goToWeekStandings();
+                        }
+                      }}
+                      title={`${row.weekNum}. Hafta Genel Puan Durumunu Aç`}
+                      className="group cursor-pointer hover:bg-sky-900/30 active:bg-sky-800/40 transition-colors"
+                    >
+                      <td className="py-2 px-1 sm:px-3 font-black text-sky-300 group-hover:text-sky-200 text-[10.5px] sm:text-sm underline decoration-sky-500/50 underline-offset-2">
+                        {row.weekNum}.H
+                      </td>
+                      <td className="py-2 px-1 sm:px-3 font-black text-white group-hover:text-sky-200 text-[10.5px] sm:text-sm transition-colors">
+                        {renderPlayerNameWithCup(
+                          row.leaderName,
+                          row.isChampion,
+                          0,
+                          row.favoriteTeam
+                        )}
+                      </td>
+                      <td className="py-2 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">
+                        {row.dfoPts}
+                      </td>
+                      <td className="py-2 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">
+                        {row.tffPts}
+                      </td>
+                      <td className="py-2 px-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
+                        {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
+                      </td>
+                      <td className="py-2 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">
+                        {row.totalSkor}
+                      </td>
+                      <td className="py-2 px-0.5 sm:px-3 text-center text-white font-black text-[11.5px] sm:text-base bg-sky-500/10 group-hover:bg-sky-500/20">
+                        {row.masterPts}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
