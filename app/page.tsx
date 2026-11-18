@@ -958,7 +958,10 @@ export default function LandingShowcasePage() {
                                   <img
                                     src={cLogo}
                                     alt={wEntry.favTeam}
-                                    className="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0 drop-shadow"
+                                    width={18}
+                                    height={18}
+                                    style={{ width: '18px', height: '18px', minWidth: '18px', maxWidth: '18px' }}
+                                    className="w-[18px] h-[18px] object-contain shrink-0"
                                     loading="lazy"
                                   />
                                 )}
