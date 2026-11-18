@@ -209,14 +209,17 @@ export default function YeniArsivPage() {
   const [standingsFilter, setStandingsFilter] = useState<
     'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'
   >('MASTER');
-  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
+  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DUZ');
   const [skorSubFilter, setSkorSubFilter] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
+  const [isStandingsMenuOpen, setIsStandingsMenuOpen] = useState<boolean>(false);
 
   const [weekSummaryFilter, setWeekSummaryFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
-  const [weekSummaryMasterMode, setWeekSummaryMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
+  const [weekSummaryMasterMode, setWeekSummaryMasterMode] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [isWeekSummaryMenuOpen, setIsWeekSummaryMenuOpen] = useState<boolean>(false);
 
   const [weekGenelFilter, setWeekGenelFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
-  const [weekGenelMasterMode, setWeekGenelMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
+  const [weekGenelMasterMode, setWeekGenelMasterMode] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [isWeekGenelMenuOpen, setIsWeekGenelMenuOpen] = useState<boolean>(false);
 
   const [archivePoolFilter, setArchivePoolFilter] = useState<'ALL' | 'DFO' | 'TFF'>('ALL');
   const [expandedArchiveCards, setExpandedArchiveCards] = useState<Record<string, boolean>>({});
@@ -978,8 +981,11 @@ export default function YeniArsivPage() {
   };
 
   // DETAYLI MASTER TABLO BİLEŞENİ (Büyütülmüş Mobil ve Web Puntoları)
-  const renderDetailedMasterTable = (
+  // SAĞDAN SOLA KAYARAK AÇILIP DARALAN (AKORDEON) MASTER & DETAYLI MASTER TABLOSU
+  const renderSlidingMasterTable = (
     rows: PlayerStatRow[],
+    isDetailOpen: boolean,
+    onToggleDetail?: () => void,
     showLiveBadge: boolean = false,
     emptyText: string = 'VERİ BULUNAMADI'
   ) => {
@@ -993,53 +999,102 @@ export default function YeniArsivPage() {
     }
 
     return (
-      <table className="w-full table-fixed text-left tabular-nums">
-        <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
-          <tr className="text-[10px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
-            <th className="py-2.5 px-1 sm:px-3 w-[24px] sm:w-12 text-slate-400 align-bottom">#</th>
-            <th className="py-2.5 px-1 sm:px-3 text-slate-200 align-bottom">YARIŞMACI</th>
-            <th className="py-2 px-0 w-[28px] sm:w-20 text-center text-sky-400 align-bottom">
+      <div className="w-full text-left tabular-nums select-none">
+        {/* ÜSTTE DONDURULMUŞ SÜTUN BAŞLIĞI */}
+        <div
+          className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800 flex items-end w-full uppercase font-black transition-all duration-300 ${
+            isDetailOpen ? 'h-12 sm:h-11 text-[10px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
+          }`}
+        >
+          <div
+            className={`shrink-0 py-2 pl-2 sm:pl-3 text-slate-400 transition-all duration-300 ${
+              isDetailOpen ? 'w-[24px] sm:w-12' : 'w-9 sm:w-14'
+            }`}
+          >
+            #
+          </div>
+
+          <div className="flex-1 min-w-0 py-2 px-1.5 sm:px-3 text-slate-200 tracking-wider transition-all duration-300">
+            YARIŞMACI
+          </div>
+
+          {/* SAĞDAN SOLA AÇILAN 4'LÜ DETAY ÇEKMECESİ (DFO - TFF - BNS - SKOR) */}
+          <div
+            className={`flex items-end shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
+              isDetailOpen
+                ? 'w-[108px] sm:w-[304px] opacity-100 translate-x-0 py-1.5 sm:py-2'
+                : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
+            }`}
+          >
+            <div className="w-[28px] sm:w-[76px] shrink-0 text-center text-sky-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 DFO
               </span>
-            </th>
-            <th className="py-2 px-0 w-[27px] sm:w-20 text-center text-rose-500 align-bottom">
+            </div>
+            <div className="w-[27px] sm:w-[76px] shrink-0 text-center text-rose-500">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 TFF
               </span>
-            </th>
-            <th className="py-2 px-0 w-[25px] sm:w-20 text-center text-emerald-400 align-bottom">
+            </div>
+            <div className="w-[26px] sm:w-[76px] shrink-0 text-center text-emerald-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 BNS
               </span>
-            </th>
-            <th className="py-2 px-0 w-[26px] sm:w-20 text-center text-orange-400 align-bottom">
+            </div>
+            <div className="w-[27px] sm:w-[76px] shrink-0 text-center text-orange-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 SKOR
               </span>
-            </th>
-            <th className="py-2 px-0.5 sm:px-3 w-[36px] sm:w-28 text-center text-sky-100 bg-sky-500/15 align-bottom">
+            </div>
+          </div>
+
+          {/* EN SAĞDA SABİT MASTER SÜTUNU (TIKLAYINCA DA AÇAR / KAPATIR) */}
+          <button
+            type="button"
+            onClick={onToggleDetail}
+            title={isDetailOpen ? 'Sadece Master Göster' : 'Detaylı Sütunları Sağdan Sola Aç'}
+            className={`shrink-0 self-stretch flex items-end justify-center bg-sky-500/15 hover:bg-sky-500/25 text-sky-100 transition-all duration-300 cursor-pointer ${
+              isDetailOpen
+                ? 'w-[38px] sm:w-28 py-1.5 sm:py-2'
+                : 'w-24 sm:w-36 py-2 px-2 justify-end sm:justify-center'
+            }`}
+          >
+            {isDetailOpen ? (
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
-                MASTER
+                MASTER <span className="hidden sm:inline text-sky-300">▶</span>
               </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/70">
+            ) : (
+              <span className="inline-flex items-center gap-1 leading-none tracking-wider">
+                <span className="text-amber-300 text-[9px] sm:text-[10px]">◀</span>
+                <span>MASTER</span>
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* YARIŞMACI SATIRLARI */}
+        <div className="divide-y divide-slate-800/70">
           {sorted.map((row, idx) => (
-            <tr
+            <div
               key={row.id}
-              className={
+              className={`flex items-center w-full transition-colors ${
                 showLiveBadge && row.liveAddPts > 0
-                  ? 'bg-emerald-950/25 hover:bg-emerald-950/40 transition-colors'
-                  : 'hover:bg-slate-800/35 transition-colors'
-              }
+                  ? 'bg-emerald-950/25 hover:bg-emerald-950/40'
+                  : 'hover:bg-slate-800/35'
+              }`}
             >
-              <td className="py-2.5 sm:py-3 px-1 sm:px-3 font-bold text-slate-400 text-[11.5px] sm:text-[15px]">
+              <div
+                className={`shrink-0 py-2.5 sm:py-3 pl-2 sm:pl-3 font-bold text-slate-400 transition-all duration-300 ${
+                  isDetailOpen ? 'w-[24px] sm:w-12 text-[11.5px] sm:text-[15px]' : 'w-9 sm:w-14 text-[12.5px] sm:text-[15px]'
+                }`}
+              >
                 {idx + 1}
-              </td>
-              <td
-                className="py-2.5 sm:py-3 px-1 sm:px-3 font-black text-white text-[12px] sm:text-[15px]"
+              </div>
+
+              <div
+                className={`flex-1 min-w-0 py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white transition-all duration-300 ${
+                  isDetailOpen ? 'text-[12px] sm:text-[15px]' : 'text-[13px] sm:text-base'
+                }`}
                 title={row.name}
               >
                 {renderPlayerNameWithCup(
@@ -1048,28 +1103,53 @@ export default function YeniArsivPage() {
                   showLiveBadge ? row.liveAddPts : 0,
                   row.favoriteTeam
                 )}
-              </td>
-              <td className="py-2.5 sm:py-3 px-0 text-center text-sky-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
-                {row.dfoPts}
-              </td>
-              <td className="py-2.5 sm:py-3 px-0 text-center text-rose-500 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
-                {row.tffPts}
-              </td>
-              <td className="py-2.5 sm:py-3 px-0 text-center text-emerald-400 font-bold text-[11.5px] sm:text-[15px] tracking-tighter sm:tracking-normal">
-                {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
-              </td>
-              <td className="py-2.5 sm:py-3 px-0 text-center text-orange-400 font-black text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
-                {row.totalSkor}
-              </td>
-              <td className="py-2.5 sm:py-3 px-0.5 sm:px-3 text-center text-white font-black text-[13px] sm:text-base bg-sky-500/10 tracking-tighter sm:tracking-normal">
+              </div>
+
+              {/* SAĞDAN SOLA KAYARAK AÇILAN PUAN HÜCRELERİ */}
+              <div
+                className={`flex items-center shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
+                  isDetailOpen
+                    ? 'w-[108px] sm:w-[304px] opacity-100 translate-x-0 py-2.5 sm:py-3'
+                    : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
+                }`}
+              >
+                <div className="w-[28px] sm:w-[76px] shrink-0 text-center text-sky-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                  {row.dfoPts}
+                </div>
+                <div className="w-[27px] sm:w-[76px] shrink-0 text-center text-rose-500 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                  {row.tffPts}
+                </div>
+                <div className="w-[26px] sm:w-[76px] shrink-0 text-center text-emerald-400 font-bold text-[11.5px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                  {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
+                </div>
+                <div className="w-[27px] sm:w-[76px] shrink-0 text-center text-orange-400 font-black text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                  {row.totalSkor}
+                </div>
+              </div>
+
+              {/* EN SAĞDA SABİT MASTER PUAN HÜCRESİ */}
+              <div
+                className={`shrink-0 self-stretch flex items-center bg-sky-500/10 font-black text-white transition-all duration-300 ${
+                  isDetailOpen
+                    ? 'w-[38px] sm:w-28 justify-center text-[13px] sm:text-base'
+                    : 'w-24 sm:w-36 pr-2.5 sm:pr-0 justify-end sm:justify-center text-sm sm:text-lg'
+                }`}
+              >
                 {row.masterPts}
-              </td>
-            </tr>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
     );
   };
+
+  // Geriye dönük uyumluluk sarmalayıcısı
+  const renderDetailedMasterTable = (
+    rows: PlayerStatRow[],
+    showLiveBadge: boolean = false,
+    emptyText: string = 'VERİ BULUNAMADI'
+  ) => renderSlidingMasterTable(rows, true, undefined, showLiveBadge, emptyText);
 
   // TEK SÜTUNLU STANDART TABLO BİLEŞENİ (Ferah 3 Sütun - Daha İri Punto)
   const renderSingleMetricTable = (
@@ -1274,115 +1354,236 @@ export default function YeniArsivPage() {
       {/* ===================== 1. SEKME: GENEL PUAN DURUMU (DEFAULT) ===================== */}
       {activeTab === 'TOTAL_STANDINGS' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 pt-2.5 pb-2 sm:px-5 sm:pt-3.5">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
-              <h1 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
-                {standingsFilter === 'CANLI' ? 'CANLI GENEL PUAN DURUMU' : 'GENEL PUAN DURUMU'}
+          {/* TEK SATIRLIK DONDURULMUŞ VE AÇILIR/KAPANIR KATEGORİ BARI */}
+          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
+            {/* SOL: Açılır/Kapanır Genel Puan Durumu Başlığı */}
+            <button
+              type="button"
+              onClick={() => setIsStandingsMenuOpen((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
+            >
+              <h1 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
+                {standingsFilter === 'CANLI'
+                  ? 'CANLI PUAN DURUMU'
+                  : standingsFilter === 'DFO'
+                  ? 'DFO PUAN DURUMU'
+                  : standingsFilter === 'TFF'
+                  ? 'TFF PUAN DURUMU'
+                  : standingsFilter === 'SKOR'
+                  ? 'SKOR SIRALAMASI'
+                  : standingsFilter === 'BONUS'
+                  ? 'BONUS PUANLARI'
+                  : 'GENEL PUAN DURUMU'}
               </h1>
+              <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 group-hover:border-sky-400 text-[9.5px] sm:text-[10px] font-black text-amber-300">
+                {isStandingsMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
+              </span>
+            </button>
 
-              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-                {(
-                  [
-                    { key: 'CANLI', label: liveActiveMatchCount > 0 ? `CANLI (${liveActiveMatchCount})` : 'CANLI' },
-                    { key: 'MASTER', label: 'MASTER' },
-                    { key: 'DFO', label: 'DFO' },
-                    { key: 'TFF', label: 'TFF' },
-                    { key: 'SKOR', label: 'SKOR' },
-                    { key: 'BONUS', label: 'BONUS' }
-                  ] as const
-                ).map((f) => {
-                  const isSelected = standingsFilter === f.key;
-                  let cls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
+            {/* SAĞ: MASTER ve Hemen Yanında DETAYLI MASTER (Tıklayınca Sağdan Sola Açar/Kapatır) */}
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  if (standingsFilter !== 'CANLI') setStandingsFilter('MASTER');
+                  setMasterSubFilter('DUZ');
+                  setIsStandingsMenuOpen(false);
+                }}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors ${
+                  (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
+                  masterSubFilter === 'DUZ'
+                    ? 'bg-sky-600 text-white border-sky-300/80'
+                    : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                }`}
+              >
+                MASTER
+              </button>
 
-                  if (isSelected) {
-                    if (f.key === 'MASTER') cls = 'bg-sky-600 text-white border-sky-300/80';
-                    else if (f.key === 'DFO') cls = 'bg-blue-700 text-white border-sky-400/80';
-                    else if (f.key === 'TFF') cls = 'bg-rose-700 text-white border-rose-400/80';
-                    else if (f.key === 'SKOR') cls = 'bg-orange-600 text-white border-orange-300/80';
-                    else if (f.key === 'BONUS') cls = 'bg-emerald-700 text-white border-emerald-400/80';
-                    else cls = 'bg-emerald-700 text-white border-emerald-400/80';
+              <button
+                type="button"
+                onClick={() => {
+                  const isCurrentlyMasterOrLive =
+                    standingsFilter === 'MASTER' || standingsFilter === 'CANLI';
+                  if (!isCurrentlyMasterOrLive) {
+                    setStandingsFilter('MASTER');
+                    setMasterSubFilter('DETAYLI');
                   } else {
-                    if (f.key === 'DFO') cls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
-                    else if (f.key === 'TFF') cls = 'bg-[#040917] text-rose-500 border-slate-800 hover:border-rose-700';
-                    else if (f.key === 'SKOR') cls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
-                    else if (f.key === 'BONUS') cls = 'bg-[#040917] text-emerald-400 border-slate-800 hover:border-emerald-700';
-                    else if (f.key === 'CANLI') cls = 'bg-[#040917] text-slate-200 border-slate-800 hover:border-emerald-700';
+                    setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
                   }
-
-                  return (
-                    <button
-                      key={f.key}
-                      onClick={() => setStandingsFilter(f.key)}
-                      className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${cls}`}
-                    >
-                      {f.label}
-                    </button>
-                  );
-                })}
-              </div>
+                  setIsStandingsMenuOpen(false);
+                }}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors ${
+                  (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
+                  masterSubFilter === 'DETAYLI'
+                    ? 'bg-indigo-600 text-white border-indigo-300/80 shadow-[0_0_12px_rgba(99,102,241,0.35)]'
+                    : 'bg-[#040917] text-sky-300 border-slate-800 hover:border-sky-500 hover:text-white'
+                }`}
+              >
+                {masterSubFilter === 'DETAYLI' &&
+                (standingsFilter === 'MASTER' || standingsFilter === 'CANLI')
+                  ? 'DETAYLI MASTER ▶'
+                  : '◀ DETAYLI MASTER'}
+              </button>
             </div>
 
-            {(standingsFilter === 'MASTER' || standingsFilter === 'CANLI') && (
-              <div className="flex items-center justify-center gap-1.5 pt-2">
-                <button
-                  onClick={() => setMasterSubFilter('DUZ')}
-                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                    masterSubFilter === 'DUZ'
-                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  MASTER PUAN
-                </button>
-                <button
-                  onClick={() => setMasterSubFilter('DETAYLI')}
-                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                    masterSubFilter === 'DETAYLI'
-                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  DETAYLI MASTER
-                </button>
-              </div>
-            )}
-
-            {standingsFilter === 'SKOR' && (
-              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
-                {(
-                  [
-                    { key: 'DUZ', label: 'MASTER SKOR' },
-                    { key: 'DETAYLI', label: 'DETAYLI SKOR' },
-                    { key: 'DFO', label: 'DFO SKOR' },
-                    { key: 'TFF', label: 'TFF SKOR' }
-                  ] as const
-                ).map((sf) => (
+            {/* AÇILIR/KAPANIR KATEGORİ ÇEKMECESİ (CANLI, MASTER, DETAYLI MASTER, DFO, TFF, SKOR, BONUS) */}
+            {isStandingsMenuOpen && (
+              <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-col gap-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <button
-                    key={sf.key}
-                    onClick={() => setSkorSubFilter(sf.key)}
-                    className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                      skorSubFilter === sf.key
-                        ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
-                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    type="button"
+                    onClick={() => {
+                      setStandingsFilter('CANLI');
+                      setIsStandingsMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'CANLI'
+                        ? 'bg-emerald-700 text-white border-emerald-400/80'
+                        : 'bg-[#071126] text-emerald-300 border-slate-800 hover:border-emerald-600'
                     }`}
                   >
-                    {sf.label}
+                    {liveActiveMatchCount > 0 ? `CANLI (${liveActiveMatchCount})` : 'CANLI'}
                   </button>
-                ))}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStandingsFilter('MASTER');
+                      setMasterSubFilter('DUZ');
+                      setIsStandingsMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'MASTER' && masterSubFilter === 'DUZ'
+                        ? 'bg-sky-600 text-white border-sky-300/80'
+                        : 'bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-500'
+                    }`}
+                  >
+                    MASTER
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStandingsFilter('MASTER');
+                      setMasterSubFilter('DETAYLI');
+                      setIsStandingsMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI'
+                        ? 'bg-indigo-600 text-white border-indigo-300/80'
+                        : 'bg-[#071126] text-sky-300 border-slate-800 hover:border-indigo-400'
+                    }`}
+                  >
+                    ◀ DETAYLI MASTER
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStandingsFilter('DFO');
+                      setIsStandingsMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'DFO'
+                        ? 'bg-blue-700 text-white border-sky-400/80'
+                        : 'bg-[#071126] text-sky-400 border-slate-800 hover:border-sky-600'
+                    }`}
+                  >
+                    DFO
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStandingsFilter('TFF');
+                      setIsStandingsMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'TFF'
+                        ? 'bg-rose-700 text-white border-rose-400/80'
+                        : 'bg-[#071126] text-rose-500 border-slate-800 hover:border-rose-600'
+                    }`}
+                  >
+                    TFF
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStandingsFilter('SKOR')}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'SKOR'
+                        ? 'bg-orange-600 text-white border-orange-300/80'
+                        : 'bg-[#071126] text-orange-400 border-slate-800 hover:border-orange-600'
+                    }`}
+                  >
+                    SKOR
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStandingsFilter('BONUS');
+                      setIsStandingsMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      standingsFilter === 'BONUS'
+                        ? 'bg-emerald-700 text-white border-emerald-400/80'
+                        : 'bg-[#071126] text-emerald-400 border-slate-800 hover:border-emerald-600'
+                    }`}
+                  >
+                    BONUS
+                  </button>
+                </div>
+
+                {standingsFilter === 'SKOR' && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800">
+                    {(
+                      [
+                        { key: 'DUZ', label: 'MASTER SKOR' },
+                        { key: 'DETAYLI', label: 'DETAYLI SKOR' },
+                        { key: 'DFO', label: 'DFO SKOR' },
+                        { key: 'TFF', label: 'TFF SKOR' }
+                      ] as const
+                    ).map((sf) => (
+                      <button
+                        key={sf.key}
+                        type="button"
+                        onClick={() => {
+                          setSkorSubFilter(sf.key);
+                          setIsStandingsMenuOpen(false);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase tracking-wider border ${
+                          skorSubFilter === sf.key
+                            ? 'bg-orange-950/80 text-orange-300 border-orange-400/80'
+                            : 'bg-[#071126] text-slate-300 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        {sf.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
 
+          {/* TABLO GÖVDESİ */}
           <div className="px-1 pb-4 sm:px-4 sm:pb-6">
             {standingsFilter === 'CANLI' &&
-              (masterSubFilter === 'DETAYLI'
-                ? renderDetailedMasterTable(totalStandings.canli, true)
-                : renderSingleMetricTable(totalStandings.canli, 'MASTER'))}
+              renderSlidingMasterTable(
+                totalStandings.canli,
+                masterSubFilter === 'DETAYLI',
+                () => setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI')),
+                true
+              )}
 
             {standingsFilter === 'MASTER' &&
-              (masterSubFilter === 'DETAYLI'
-                ? renderDetailedMasterTable(totalStandings.kesin, false)
-                : renderSingleMetricTable(totalStandings.kesin, 'MASTER'))}
+              renderSlidingMasterTable(
+                totalStandings.kesin,
+                masterSubFilter === 'DETAYLI',
+                () => setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI')),
+                false
+              )}
 
             {standingsFilter === 'DFO' && renderSingleMetricTable(totalStandings.kesin, 'DFO')}
             {standingsFilter === 'TFF' && renderSingleMetricTable(totalStandings.kesin, 'TFF')}
@@ -1391,7 +1592,7 @@ export default function YeniArsivPage() {
               (skorSubFilter === 'DETAYLI' ? (
                 <table className="w-full table-fixed text-left tabular-nums">
                   <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
-                    <tr className="text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                    <tr className="text-[10px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
                       <th className="py-2 px-1 sm:px-3 w-[24px] sm:w-12 text-slate-400 align-bottom">#</th>
                       <th className="py-2 px-1 sm:px-3 text-slate-200 align-bottom">YARIŞMACI</th>
                       <th className="py-1.5 px-0 w-[28px] sm:w-24 text-center text-sky-400 align-bottom">
@@ -1414,19 +1615,19 @@ export default function YeniArsivPage() {
                   <tbody className="divide-y divide-slate-800/70">
                     {sortSkorMaster(totalStandings.kesin).map((row, idx) => (
                       <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
-                        <td className="py-2 px-1 sm:px-3 font-bold text-slate-400 text-[10.5px] sm:text-sm">
+                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 font-bold text-slate-400 text-[11.5px] sm:text-[15px]">
                           {idx + 1}
                         </td>
-                        <td className="py-2 px-1 sm:px-3 font-black text-white text-[10.5px] sm:text-sm">
+                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 font-black text-white text-[12px] sm:text-[15px]">
                           {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
                         </td>
-                        <td className="py-2 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">
+                        <td className="py-2.5 sm:py-3 px-0 text-center text-sky-400 font-bold text-[12px] sm:text-[15px]">
                           {row.dfoSkor}
                         </td>
-                        <td className="py-2 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">
+                        <td className="py-2.5 sm:py-3 px-0 text-center text-rose-500 font-bold text-[12px] sm:text-[15px]">
                           {row.tffSkor}
                         </td>
-                        <td className="py-2 px-1 sm:px-3 text-center text-orange-400 font-black text-xs sm:text-base bg-orange-500/10">
+                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 text-center text-orange-400 font-black text-[13px] sm:text-base bg-orange-500/10">
                           {row.totalSkor}
                         </td>
                       </tr>
@@ -1777,92 +1978,116 @@ export default function YeniArsivPage() {
       {/* ===================== 3. SEKME: SEÇİLİ HAFTA ÖZETİ ===================== */}
       {activeTab === 'WEEK_CHECK' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 pt-3 pb-2 sm:px-5">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
-              <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+          {selectedWeekBonusInfo && selectedWeekBonusInfo.is_completed && (
+            <div className="px-3 pt-2.5 pb-1 sm:px-5 flex flex-wrap items-center gap-2 text-[10px] font-bold border-b border-slate-800/60">
+              {(selectedWeekBonusInfo.puan_lideri_ids || []).length > 0 && (
+                <span className="bg-sky-950/60 border border-sky-800/70 text-sky-300 px-2.5 py-0.5 rounded">
+                  Puan Lideri (+{selectedWeekBonusInfo.puan_bonus || 0}):{' '}
+                  {(selectedWeekBonusInfo.puan_lideri_ids || [])
+                    .map((id) => playersMap[id]?.name || id)
+                    .join(', ')}
+                </span>
+              )}
+              {(selectedWeekBonusInfo.skor_krali_ids || []).length > 0 && (
+                <span className="bg-orange-950/60 border border-orange-800/70 text-orange-300 px-2.5 py-0.5 rounded">
+                  Skor Kralı (+{selectedWeekBonusInfo.skor_bonus || 0}):{' '}
+                  {(selectedWeekBonusInfo.skor_krali_ids || [])
+                    .map((id) => playersMap[id]?.name || id)
+                    .join(', ')}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
+            <button
+              type="button"
+              onClick={() => setIsWeekSummaryMenuOpen((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
+            >
+              <h2 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
                 {selectedWeek}. HAFTA ÖZETİ
               </h2>
-              <div className="flex items-center gap-1">
-                {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wf) => (
-                  <button
-                    key={wf}
-                    onClick={() => setWeekSummaryFilter(wf)}
-                    className={`px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                      weekSummaryFilter === wf
-                        ? wf === 'TFF'
-                          ? 'bg-rose-700 text-white border-rose-400/80'
-                          : wf === 'SKOR'
-                          ? 'bg-orange-600 text-white border-orange-300/80'
-                          : 'bg-sky-600 text-white border-sky-300/80'
-                        : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    {wf}
-                  </button>
-                ))}
-              </div>
+              <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 text-[9.5px] sm:text-[10px] font-black text-amber-300">
+                {isWeekSummaryMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setWeekSummaryFilter('MASTER');
+                  setWeekSummaryMasterMode('DUZ');
+                  setIsWeekSummaryMenuOpen(false);
+                }}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
+                  weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DUZ'
+                    ? 'bg-sky-600 text-white border-sky-300/80'
+                    : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                }`}
+              >
+                MASTER
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (weekSummaryFilter !== 'MASTER') {
+                    setWeekSummaryFilter('MASTER');
+                    setWeekSummaryMasterMode('DETAYLI');
+                  } else {
+                    setWeekSummaryMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                  }
+                  setIsWeekSummaryMenuOpen(false);
+                }}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
+                  weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
+                    ? 'bg-indigo-600 text-white border-indigo-300/80'
+                    : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
+                }`}
+              >
+                {weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
+                  ? 'DETAYLI MASTER ▶'
+                  : '◀ DETAYLI MASTER'}
+              </button>
             </div>
 
-            {selectedWeekBonusInfo && selectedWeekBonusInfo.is_completed && (
-              <div className="flex flex-wrap items-center gap-2 pt-2 text-[10px] font-bold">
-                {(selectedWeekBonusInfo.puan_lideri_ids || []).length > 0 && (
-                  <span className="bg-sky-950/60 border border-sky-800/70 text-sky-300 px-2.5 py-0.5 rounded">
-                    Puan Lideri (+{selectedWeekBonusInfo.puan_bonus || 0}):{' '}
-                    {(selectedWeekBonusInfo.puan_lideri_ids || [])
-                      .map((id) => playersMap[id]?.name || id)
-                      .join(', ')}
-                  </span>
-                )}
-                {(selectedWeekBonusInfo.skor_krali_ids || []).length > 0 && (
-                  <span className="bg-orange-950/60 border border-orange-800/70 text-orange-300 px-2.5 py-0.5 rounded">
-                    Skor Kralı (+{selectedWeekBonusInfo.skor_bonus || 0}):{' '}
-                    {(selectedWeekBonusInfo.skor_krali_ids || [])
-                      .map((id) => playersMap[id]?.name || id)
-                      .join(', ')}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {weekSummaryFilter === 'MASTER' && (
-              <div className="flex items-center justify-center gap-1.5 pt-2">
-                <button
-                  onClick={() => setWeekSummaryMasterMode('DUZ')}
-                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                    weekSummaryMasterMode === 'DUZ'
-                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  MASTER PUAN
-                </button>
-                <button
-                  onClick={() => setWeekSummaryMasterMode('DETAYLI')}
-                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                    weekSummaryMasterMode === 'DETAYLI'
-                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  DETAYLI MASTER
-                </button>
+            {isWeekSummaryMenuOpen && (
+              <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-wrap items-center gap-1.5">
+                {(['MASTER', 'DETAYLI_MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wf) => (
+                  <button
+                    key={wf}
+                    type="button"
+                    onClick={() => {
+                      if (wf === 'MASTER') {
+                        setWeekSummaryFilter('MASTER');
+                        setWeekSummaryMasterMode('DUZ');
+                      } else if (wf === 'DETAYLI_MASTER') {
+                        setWeekSummaryFilter('MASTER');
+                        setWeekSummaryMasterMode('DETAYLI');
+                      } else {
+                        setWeekSummaryFilter(wf);
+                      }
+                      setIsWeekSummaryMenuOpen(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400"
+                  >
+                    {wf === 'DETAYLI_MASTER' ? '◀ DETAYLI MASTER' : wf}
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
           <div className="px-1 pb-4 sm:px-4 sm:pb-6">
             {weekSummaryFilter === 'MASTER' &&
-              (weekSummaryMasterMode === 'DETAYLI'
-                ? renderDetailedMasterTable(
-                    weekSummaryRows.filter((r) => r.masterPts > 0),
-                    false,
-                    `${selectedWeek}. HAFTADA HENÜZ PUAN KAYDI BULUNMUYOR`
-                  )
-                : renderSingleMetricTable(
-                    weekSummaryRows.filter((r) => r.masterPts > 0),
-                    'MASTER',
-                    `${selectedWeek}. HAFTADA HENÜZ PUAN KAYDI BULUNMUYOR`
-                  ))}
+              renderSlidingMasterTable(
+                weekSummaryRows.filter((r) => r.masterPts > 0),
+                weekSummaryMasterMode === 'DETAYLI',
+                () => setWeekSummaryMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI')),
+                false,
+                `${selectedWeek}. HAFTADA HENÜZ PUAN KAYDI BULUNMUYOR`
+              )}
             {weekSummaryFilter === 'DFO' &&
               renderSingleMetricTable(
                 weekSummaryRows.filter((r) => r.dfoPts > 0),
@@ -1888,65 +2113,94 @@ export default function YeniArsivPage() {
       {/* ===================== 4. SEKME: SEÇİLİ HAFTA GENEL ===================== */}
       {activeTab === 'WEEK_CUMULATIVE' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 pt-3 pb-2 sm:px-5">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
-              <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
-                {selectedWeek}. HAFTA SONU GENEL PUAN DURUMU
+          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
+            <button
+              type="button"
+              onClick={() => setIsWeekGenelMenuOpen((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
+            >
+              <h2 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
+                {selectedWeek}. HAFTA GENEL
               </h2>
-              <div className="flex items-center gap-1">
-                {(['MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((gf) => (
-                  <button
-                    key={gf}
-                    onClick={() => setWeekGenelFilter(gf)}
-                    className={`px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                      weekGenelFilter === gf
-                        ? gf === 'TFF'
-                          ? 'bg-rose-700 text-white border-rose-400/80'
-                          : gf === 'SKOR'
-                          ? 'bg-orange-600 text-white border-orange-300/80'
-                          : gf === 'BONUS'
-                          ? 'bg-emerald-700 text-white border-emerald-400/80'
-                          : 'bg-sky-600 text-white border-sky-300/80'
-                        : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    {gf}
-                  </button>
-                ))}
-              </div>
+              <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 text-[9.5px] sm:text-[10px] font-black text-amber-300">
+                {isWeekGenelMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setWeekGenelFilter('MASTER');
+                  setWeekGenelMasterMode('DUZ');
+                  setIsWeekGenelMenuOpen(false);
+                }}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
+                  weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DUZ'
+                    ? 'bg-sky-600 text-white border-sky-300/80'
+                    : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                }`}
+              >
+                MASTER
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (weekGenelFilter !== 'MASTER') {
+                    setWeekGenelFilter('MASTER');
+                    setWeekGenelMasterMode('DETAYLI');
+                  } else {
+                    setWeekGenelMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                  }
+                  setIsWeekGenelMenuOpen(false);
+                }}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
+                  weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
+                    ? 'bg-indigo-600 text-white border-indigo-300/80'
+                    : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
+                }`}
+              >
+                {weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
+                  ? 'DETAYLI MASTER ▶'
+                  : '◀ DETAYLI MASTER'}
+              </button>
             </div>
 
-            {weekGenelFilter === 'MASTER' && (
-              <div className="flex items-center justify-center gap-1.5 pt-2">
-                <button
-                  onClick={() => setWeekGenelMasterMode('DUZ')}
-                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                    weekGenelMasterMode === 'DUZ'
-                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  MASTER PUAN
-                </button>
-                <button
-                  onClick={() => setWeekGenelMasterMode('DETAYLI')}
-                  className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                    weekGenelMasterMode === 'DETAYLI'
-                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  DETAYLI MASTER
-                </button>
+            {isWeekGenelMenuOpen && (
+              <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-wrap items-center gap-1.5">
+                {(['MASTER', 'DETAYLI_MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((gf) => (
+                  <button
+                    key={gf}
+                    type="button"
+                    onClick={() => {
+                      if (gf === 'MASTER') {
+                        setWeekGenelFilter('MASTER');
+                        setWeekGenelMasterMode('DUZ');
+                      } else if (gf === 'DETAYLI_MASTER') {
+                        setWeekGenelFilter('MASTER');
+                        setWeekGenelMasterMode('DETAYLI');
+                      } else {
+                        setWeekGenelFilter(gf);
+                      }
+                      setIsWeekGenelMenuOpen(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400"
+                  >
+                    {gf === 'DETAYLI_MASTER' ? '◀ DETAYLI MASTER' : gf}
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
           <div className="px-1 pb-4 sm:px-4 sm:pb-6">
             {weekGenelFilter === 'MASTER' &&
-              (weekGenelMasterMode === 'DETAYLI'
-                ? renderDetailedMasterTable(weekGenelRows, false)
-                : renderSingleMetricTable(weekGenelRows, 'MASTER'))}
+              renderSlidingMasterTable(
+                weekGenelRows,
+                weekGenelMasterMode === 'DETAYLI',
+                () => setWeekGenelMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI')),
+                false
+              )}
             {weekGenelFilter === 'DFO' && renderSingleMetricTable(weekGenelRows, 'DFO')}
             {weekGenelFilter === 'TFF' && renderSingleMetricTable(weekGenelRows, 'TFF')}
             {weekGenelFilter === 'SKOR' && renderSingleMetricTable(weekGenelRows, 'SKOR_MASTER')}
