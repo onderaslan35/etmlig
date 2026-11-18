@@ -1,5 +1,5 @@
 'use client';
-import { getClubLogoUrl } from '@/components/FavoriteTeamSelector';
+import { getClubLogoUrl, refreshCustomClubsCache } from '@/components/FavoriteTeamSelector';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/utils/themeEngine';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
+
 const formatNameWithCups = (rawName: string) => {
   if (!rawName) return '';
   const existing = (rawName.match(/🏆/g) || []).length;
@@ -19,7 +20,6 @@ const formatNameWithCups = (rawName: string) => {
   const norm = clean
     .toUpperCase()
     .replace(/İ/g, 'I')
-    .replace(/İ/g, 'I')
     .replace(/Ş/g, 'S')
     .replace(/Ğ/g, 'G')
     .replace(/Ü/g, 'U')
@@ -52,7 +52,6 @@ const normLiveKey = (s: string) =>
     .replace(/(🏆|🇹🇷)+/g, '')
     .toUpperCase()
     .replace(/İ/g, 'I')
-    .replace(/İ/g, 'I')
     .replace(/Ş/g, 'S')
     .replace(/Ğ/g, 'G')
     .replace(/Ü/g, 'U')
@@ -62,24 +61,42 @@ const normLiveKey = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const renderLiveNameWithFlag = (formattedName: string) => {
-  const norm = normLiveKey(formattedName);
-  const clubLogo = getClubLogoUrl(LIVE_FAV_TEAMS[norm] || '');
+const renderLiveNameWithFlag = (
+  rawOrFormattedName: string,
+  userId?: string,
+  iconPx: number = 18
+) => {
+  const displayWithCups = formatNameWithCups(rawOrFormattedName);
+  const norm = normLiveKey(rawOrFormattedName);
+  const favTeam =
+    (userId ? LIVE_FAV_TEAMS[`id:${String(userId).trim()}`] : '') ||
+    LIVE_FAV_TEAMS[norm] ||
+    '';
+  const clubLogo = getClubLogoUrl(favTeam);
   const hasFlag =
     norm.includes('ISMAIL EKER') ||
     norm.includes('ISMAIL PEKER') ||
     norm.includes('OSMAN ALI AYDIN');
 
   return (
-    <span className="inline-flex items-center gap-1 sm:gap-1.5 min-w-0 truncate">
+    <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
       {clubLogo && (
         <img
           src={clubLogo}
-          alt=""
-          className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0"
+          alt={favTeam}
+          width={iconPx}
+          height={iconPx}
+          style={{
+            width: `${iconPx}px`,
+            height: `${iconPx}px`,
+            minWidth: `${iconPx}px`,
+            maxWidth: `${iconPx}px`
+          }}
+          className="object-contain shrink-0"
+          loading="lazy"
         />
       )}
-      <span className="truncate">{formattedName}</span>
+      <span className="truncate">{displayWithCups}</span>
       {hasFlag && (
         <span
           className="inline-flex items-center shrink-0 rounded-[2px] overflow-hidden border border-white/25 shadow-sm"
@@ -381,7 +398,8 @@ export default function LiveMatchCard() {
     const fetchDbPlayers = async () => {
       const [playersRes, officialPlayersRes] = await Promise.all([
         supabase.from('players').select('*'),
-        supabase.from('etml_official_players').select('*')
+        supabase.from('etml_official_players').select('*'),
+        refreshCustomClubsCache()
       ]);
 
       const disabledSet = new Set<string>(EXCLUDED_IDS);
@@ -403,10 +421,12 @@ export default function LiveMatchCard() {
               newAccounts[uid] = { pass: newAccounts[uid]?.pass || '', name: op.full_name };
             }
             if (op.favorite_team) {
+              const fav = String(op.favorite_team).trim();
+              LIVE_FAV_TEAMS[`id:${uid}`] = fav;
               const tName1 = op.full_name || '';
               const tName2 = newAccounts[uid]?.name || '';
-              if (tName1) LIVE_FAV_TEAMS[normLiveKey(tName1)] = String(op.favorite_team).trim();
-              if (tName2) LIVE_FAV_TEAMS[normLiveKey(tName2)] = String(op.favorite_team).trim();
+              if (tName1) LIVE_FAV_TEAMS[normLiveKey(tName1)] = fav;
+              if (tName2) LIVE_FAV_TEAMS[normLiveKey(tName2)] = fav;
             }
           }
         });
@@ -416,17 +436,35 @@ export default function LiveMatchCard() {
         playersRes.data.forEach((p: any) => {
           const pid = String(p.username || p.user_id || p.id || '').trim();
           if (pid && !disabledSet.has(pid)) {
+            const pName = p.name || p.full_name || newAccounts[pid]?.name || pid;
             newAccounts[pid] = {
               pass: p.password || newAccounts[pid]?.pass || '',
-              name: p.name || p.full_name || newAccounts[pid]?.name || pid
+              name: pName
             };
+            if (p.favorite_team && !LIVE_FAV_TEAMS[`id:${pid}`]) {
+              const fav = String(p.favorite_team).trim();
+              LIVE_FAV_TEAMS[`id:${pid}`] = fav;
+              LIVE_FAV_TEAMS[normLiveKey(pName)] = fav;
+            }
           }
         });
       }
 
       setMergedAccounts(newAccounts);
+      setFavoriteTeamsMap({ ...LIVE_FAV_TEAMS });
     };
+
     fetchDbPlayers();
+
+    const onCustomClubsUpdated = () => setFavoriteTeamsMap((prev) => ({ ...prev }));
+    if (typeof window !== 'undefined') {
+      window.addEventListener('etml-custom-clubs-updated', onCustomClubsUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('etml-custom-clubs-updated', onCustomClubsUpdated);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -2002,12 +2040,16 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         >
                           <span className="text-sky-300 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length})</span>
                           <span className="text-sky-300 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
-                        </button>
+            </button>
                         {isPossibleOpen && (
-                          <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto border-t border-blue-900/50">
+                          <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto border-t border-blue-900/50">
                             {possibleWinners.map((winner, idx) => (
-                              <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] bg-blue-900/30 text-slate-200 border-blue-700/50">
-                                {winner.name} <strong className="text-cyan-300">[{winner.score}]</strong>
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 border px-1.5 py-0.5 rounded text-[8.5px] sm:text-[9.5px] bg-blue-900/30 text-slate-200 border-blue-700/50 font-bold uppercase"
+                              >
+                                {renderLiveNameWithFlag(winner.name, undefined, 14)}
+                                <strong className="text-cyan-300 shrink-0">[{winner.score}]</strong>
                               </span>
                             ))}
                           </div>
@@ -2025,12 +2067,30 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                           <span className="text-red-400 text-[10px]">{isEliminatedOpen ? '▲' : '▼'}</span>
                         </button>
                         {isEliminatedOpen && (
-                          <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto border-t border-red-900/30">
-                            {eliminatedPlayers.map((winner, idx) => (
-                              <span key={idx} className="border px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] bg-red-950/40 text-slate-400 border-red-900/50 opacity-70">
-                                <span className="line-through">{winner.name}</span> <strong className="text-red-500">[{winner.score}]</strong>
-                              </span>
-                            ))}
+                          <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto border-t border-red-900/30">
+                            {eliminatedPlayers.map((winner, idx) => {
+                              const elimLogo = getClubLogoUrl(LIVE_FAV_TEAMS[normLiveKey(winner.name)] || '');
+                              return (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center gap-1 border px-1.5 py-0.5 rounded text-[8.5px] sm:text-[9.5px] bg-red-950/40 text-slate-400 border-red-900/50 opacity-75 uppercase"
+                                >
+                                  {elimLogo && (
+                                    <img
+                                      src={elimLogo}
+                                      alt=""
+                                      width={13}
+                                      height={13}
+                                      style={{ width: '13px', height: '13px', minWidth: '13px', maxWidth: '13px' }}
+                                      className="object-contain shrink-0"
+                                      loading="lazy"
+                                    />
+                                  )}
+                                  <span className="line-through">{formatNameWithCups(winner.name)}</span>
+                                  <strong className="text-red-500 shrink-0">[{winner.score}]</strong>
+                                </span>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
