@@ -952,13 +952,13 @@ export default function LandingShowcasePage() {
                             return (
                               <div
                                 key={wEntry.id}
-                                className="w-full py-1.5 px-3 rounded-lg bg-[#050b18]/95 border border-slate-800/90 flex items-center justify-center gap-1.5 text-white text-[11px] sm:text-xs font-black uppercase"
+                                className="w-full py-2 px-3 rounded-lg bg-[#050b18]/95 border border-slate-800/90 flex items-center justify-center gap-2 text-white text-[12.5px] sm:text-sm font-black uppercase"
                               >
                                 {cLogo && (
                                   <img
                                     src={cLogo}
                                     alt={wEntry.favTeam}
-                                    className="w-4 h-4 object-contain shrink-0"
+                                    className="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0 drop-shadow"
                                     loading="lazy"
                                   />
                                 )}

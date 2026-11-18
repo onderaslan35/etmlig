@@ -936,7 +936,7 @@ export default function YeniArsivPage() {
           a.name.localeCompare(b.name, 'tr')
       );
 
-  // SOL BAŞTA TAKIM ARMASI + YARIŞMACI ADI + ŞAMPİYONLUK KUPALARI + TÜRK BAYRAĞI
+  // SOL BAŞTA BÜYÜTÜLMÜŞ TAKIM ARMASI + YARIŞMACI ADI + ŞAMPİYONLUK KUPALARI + TÜRK BAYRAĞI
   const renderPlayerNameWithCup = (
     name: string,
     isChamp: boolean,
@@ -949,19 +949,19 @@ export default function YeniArsivPage() {
     const clubLogo = getClubLogoUrl(favoriteTeam);
 
     return (
-      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
         {clubLogo && (
           <img
             src={clubLogo}
             alt={favoriteTeam}
             title={favoriteTeam}
-            className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0"
+            className="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
           />
         )}
-        <span className="truncate uppercase">{cleanDisplay}</span>
+        <span className="truncate uppercase tracking-tight sm:tracking-normal">{cleanDisplay}</span>
         {cupCount > 0 && (
           <span
-            className="shrink-0 text-[10px] sm:text-xs leading-none tracking-tighter"
+            className="shrink-0 text-[11px] sm:text-sm leading-none tracking-tighter"
             title={`${cupCount} Kez Şampiyon`}
           >
             {'🏆'.repeat(cupCount)}
@@ -969,7 +969,7 @@ export default function YeniArsivPage() {
         )}
         {showTrFlag && <TurkishChampionBadge title="Son Şampiyon Göğüs Arması" />}
         {liveAdd > 0 && (
-          <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+          <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[9.5px] sm:text-[10.5px] font-black px-1.5 py-0.5 rounded leading-none">
             +{liveAdd}
           </span>
         )}
@@ -977,7 +977,7 @@ export default function YeniArsivPage() {
     );
   };
 
-  // DETAYLI MASTER TABLO BİLEŞENİ (Cepte dikey sütun başlıkları + geniş yarışmacı alanı)
+  // DETAYLI MASTER TABLO BİLEŞENİ (Büyütülmüş Mobil ve Web Puntoları)
   const renderDetailedMasterTable = (
     rows: PlayerStatRow[],
     showLiveBadge: boolean = false,
@@ -995,30 +995,30 @@ export default function YeniArsivPage() {
     return (
       <table className="w-full table-fixed text-left tabular-nums">
         <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
-          <tr className="text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
-            <th className="py-2 px-1 sm:px-3 w-[22px] sm:w-12 text-slate-400 align-bottom">#</th>
-            <th className="py-2 px-1 sm:px-3 text-slate-200 align-bottom">YARIŞMACI</th>
-            <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-sky-400 align-bottom">
+          <tr className="text-[10px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+            <th className="py-2.5 px-1 sm:px-3 w-[24px] sm:w-12 text-slate-400 align-bottom">#</th>
+            <th className="py-2.5 px-1 sm:px-3 text-slate-200 align-bottom">YARIŞMACI</th>
+            <th className="py-2 px-0 w-[28px] sm:w-20 text-center text-sky-400 align-bottom">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 DFO
               </span>
             </th>
-            <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-rose-500 align-bottom">
+            <th className="py-2 px-0 w-[27px] sm:w-20 text-center text-rose-500 align-bottom">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 TFF
               </span>
             </th>
-            <th className="py-1.5 px-0 w-[24px] sm:w-20 text-center text-emerald-400 align-bottom">
+            <th className="py-2 px-0 w-[25px] sm:w-20 text-center text-emerald-400 align-bottom">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 BNS
               </span>
             </th>
-            <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-orange-400 align-bottom">
+            <th className="py-2 px-0 w-[26px] sm:w-20 text-center text-orange-400 align-bottom">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 SKOR
               </span>
             </th>
-            <th className="py-1.5 px-0.5 sm:px-3 w-[34px] sm:w-28 text-center text-sky-100 bg-sky-500/15 align-bottom">
+            <th className="py-2 px-0.5 sm:px-3 w-[36px] sm:w-28 text-center text-sky-100 bg-sky-500/15 align-bottom">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 MASTER
               </span>
@@ -1035,11 +1035,11 @@ export default function YeniArsivPage() {
                   : 'hover:bg-slate-800/35 transition-colors'
               }
             >
-              <td className="py-2 px-1 sm:px-3 font-bold text-slate-400 text-[10.5px] sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-1 sm:px-3 font-bold text-slate-400 text-[11.5px] sm:text-[15px]">
                 {idx + 1}
               </td>
               <td
-                className="py-2 px-1 sm:px-3 font-black text-white text-[10.5px] sm:text-sm"
+                className="py-2.5 sm:py-3 px-1 sm:px-3 font-black text-white text-[12px] sm:text-[15px]"
                 title={row.name}
               >
                 {renderPlayerNameWithCup(
@@ -1049,19 +1049,19 @@ export default function YeniArsivPage() {
                   row.favoriteTeam
                 )}
               </td>
-              <td className="py-2 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-0 text-center text-sky-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
                 {row.dfoPts}
               </td>
-              <td className="py-2 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-0 text-center text-rose-500 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
                 {row.tffPts}
               </td>
-              <td className="py-2 px-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-0 text-center text-emerald-400 font-bold text-[11.5px] sm:text-[15px] tracking-tighter sm:tracking-normal">
                 {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
               </td>
-              <td className="py-2 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-0 text-center text-orange-400 font-black text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal">
                 {row.totalSkor}
               </td>
-              <td className="py-2 px-0.5 sm:px-3 text-center text-white font-black text-[11.5px] sm:text-base bg-sky-500/10">
+              <td className="py-2.5 sm:py-3 px-0.5 sm:px-3 text-center text-white font-black text-[13px] sm:text-base bg-sky-500/10 tracking-tighter sm:tracking-normal">
                 {row.masterPts}
               </td>
             </tr>
@@ -1071,7 +1071,7 @@ export default function YeniArsivPage() {
     );
   };
 
-  // TEK SÜTUNLU STANDART TABLO BİLEŞENİ
+  // TEK SÜTUNLU STANDART TABLO BİLEŞENİ (Ferah 3 Sütun - Daha İri Punto)
   const renderSingleMetricTable = (
     rows: PlayerStatRow[],
     metric: 'MASTER' | 'DFO' | 'TFF' | 'SKOR_MASTER' | 'SKOR_DFO' | 'SKOR_TFF',
@@ -1123,10 +1123,10 @@ export default function YeniArsivPage() {
     return (
       <table className="w-full table-fixed text-left tabular-nums">
         <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
-          <tr className="text-[10px] sm:text-xs uppercase tracking-wider font-black">
-            <th className="py-2.5 px-2 sm:px-3 w-8 sm:w-14 text-slate-400">#</th>
+          <tr className="text-[11px] sm:text-xs uppercase tracking-wider font-black">
+            <th className="py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">#</th>
             <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
-            <th className={`py-2.5 px-2.5 sm:px-3 w-24 sm:w-40 text-right ${colColor}`}>{colTitle}</th>
+            <th className={`py-2.5 px-2.5 sm:px-3 w-28 sm:w-40 text-right ${colColor}`}>{colTitle}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/70">
@@ -1146,13 +1146,13 @@ export default function YeniArsivPage() {
 
             return (
               <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
-                <td className="py-2 px-2 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
+                <td className="py-2.5 sm:py-3 px-2 sm:px-3 font-bold text-slate-400 text-[12.5px] sm:text-[15px]">
                   {idx + 1}
                 </td>
-                <td className="py-2 px-1.5 sm:px-3 font-black text-white text-xs sm:text-sm">
+                <td className="py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white text-[13px] sm:text-base">
                   {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
                 </td>
-                <td className={`py-2 px-2.5 sm:px-3 text-right font-black text-xs sm:text-base ${colColor}`}>
+                <td className={`py-2.5 sm:py-3 px-2.5 sm:px-3 text-right font-black text-sm sm:text-lg ${colColor}`}>
                   {val}
                 </td>
               </tr>
@@ -1163,7 +1163,7 @@ export default function YeniArsivPage() {
     );
   };
 
-  // BONUS TABLOSU BİLEŞENİ
+  // BONUS TABLOSU BİLEŞENİ (Büyütülmüş Arma ve Punto)
   const renderBonusTable = (rows: PlayerStatRow[], emptyText: string = 'HENÜZ BONUS KAZANAN YOK') => {
     const sorted = sortBonus(rows);
     if (sorted.length === 0) {
@@ -1177,10 +1177,10 @@ export default function YeniArsivPage() {
     return (
       <table className="w-full table-fixed text-left tabular-nums">
         <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
-          <tr className="text-[10px] sm:text-xs uppercase tracking-wider font-black">
-            <th className="py-2.5 px-2 sm:px-3 w-8 sm:w-14 text-slate-400">#</th>
+          <tr className="text-[11px] sm:text-xs uppercase tracking-wider font-black">
+            <th className="py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">#</th>
             <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
-            <th className="py-2.5 px-2.5 sm:px-3 w-24 sm:w-40 text-right text-emerald-400">
+            <th className="py-2.5 px-2.5 sm:px-3 w-28 sm:w-40 text-right text-emerald-400">
               BONUS PUAN
             </th>
           </tr>
@@ -1188,13 +1188,13 @@ export default function YeniArsivPage() {
         <tbody className="divide-y divide-slate-800/70">
           {sorted.map((row, idx) => (
             <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
-              <td className="py-2 px-2 sm:px-3 font-bold text-slate-400 text-xs sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-2 sm:px-3 font-bold text-slate-400 text-[12.5px] sm:text-[15px]">
                 {idx + 1}
               </td>
-              <td className="py-2 px-1.5 sm:px-3 font-black text-white text-xs sm:text-sm">
+              <td className="py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white text-[13px] sm:text-base">
                 {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
               </td>
-              <td className="py-2 px-2.5 sm:px-3 text-right font-black text-xs sm:text-base text-emerald-400">
+              <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 text-right font-black text-sm sm:text-lg text-emerald-400">
                 +{row.bonusPts}
               </td>
             </tr>
@@ -1736,13 +1736,12 @@ export default function YeniArsivPage() {
                             return (
                               <div
                                 key={wEntry.id}
-                                className="w-full py-1.5 px-3 rounded-lg bg-[#050b18]/95 border border-slate-800/90 flex items-center justify-center gap-1.5 text-white text-[11px] sm:text-xs font-black uppercase"
+                                className="w-full py-2 px-3 rounded-lg bg-[#050b18]/95 border border-slate-800/90 flex items-center justify-center gap-2 text-white text-[12.5px] sm:text-sm font-black uppercase"
                               >
                                 {cLogo && (
                                   <img
                                     src={cLogo}
-                                    alt={wEntry.favTeam}
-                                    className="w-4 h-4 object-contain shrink-0"
+                                    className="w-full py-2 px-3 rounded-lg bg-[#050b18]/95 border border-slate-800/90 flex items-center justify-center gap-2 text-white text-[12.5px] sm:text-sm font-black uppercase"
                                     loading="lazy"
                                   />
                                 )}
