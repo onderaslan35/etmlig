@@ -1607,17 +1607,15 @@ export default function YeniArsivPage() {
                     </div>
 
                     {/* 3. TAKIM ARMALARI + ORTA LİG LOGOSU + DURUM + SKOR KUTUSU */}
-                    <div className="grid grid-cols-3 items-center gap-2 pt-1 pb-1">
-                      {/* Ev Sahibi */}
+                    <div className="grid grid-cols-3 items-center gap-2 py-1.5">
+                      {/* Ev Sahibi (Şeffaf & %20 Daha Büyük Müstakil Arma) */}
                       <div className="flex flex-col items-center gap-2 min-w-0">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/35 border border-white/15 p-2 flex items-center justify-center shadow-md">
-                          <img
-                            src={theme.homeLogo}
-                            alt={m.home_team}
-                            className="w-full h-full object-contain drop-shadow"
-                            loading="lazy"
-                          />
-                        </div>
+                        <img
+                          src={theme.homeLogo}
+                          alt={m.home_team}
+                          className="w-[68px] h-[68px] sm:w-[78px] sm:h-[78px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
+                          loading="lazy"
+                        />
                         <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {m.home_team}
                         </span>
@@ -1629,7 +1627,7 @@ export default function YeniArsivPage() {
                           <img
                             src={leagueLogo}
                             alt={leagueTitle}
-                            className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow"
+                            className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow"
                             loading="lazy"
                           />
                         )}
@@ -1661,16 +1659,14 @@ export default function YeniArsivPage() {
                         </div>
                       </div>
 
-                      {/* Deplasman */}
+                      {/* Deplasman (Şeffaf & %20 Daha Büyük Müstakil Arma) */}
                       <div className="flex flex-col items-center gap-2 min-w-0">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/35 border border-white/15 p-2 flex items-center justify-center shadow-md">
-                          <img
-                            src={theme.awayLogo}
-                            alt={m.away_team}
-                            className="w-full h-full object-contain drop-shadow"
-                            loading="lazy"
-                          />
-                        </div>
+                        <img
+                          src={theme.awayLogo}
+                          alt={m.away_team}
+                          className="w-[68px] h-[68px] sm:w-[78px] sm:h-[78px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
+                          loading="lazy"
+                        />
                         <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {m.away_team}
                         </span>
