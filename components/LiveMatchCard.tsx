@@ -2003,7 +2003,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                   className="w-full flex items-center justify-center py-2.5 px-4 bg-slate-950 hover:bg-slate-900/50"
                                 >
                                   <span className="text-slate-100 font-black text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2">
-                                    {winner.name} <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
+                                    {renderLiveNameWithFlag(formatNameWithCups(winner.name))} <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
                                   </span>
                                 </button>
                                 {isRankOpen && (
