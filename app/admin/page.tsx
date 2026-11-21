@@ -166,7 +166,8 @@ export default function AdminRadarPortal() {
   
   const [weeklyDbPoints, setWeeklyDbPoints] = useState<any[]>([]);
 
-  const [bulletinWeek, setBulletinWeek] = useState<number>(0); 
+  const [bulletinWeek, setBulletinWeek] = useState<number>(0);
+  const [mobileFactoryTab, setMobileFactoryTab] = useState<'uydu' | 'manuel' | 'hedef'>('uydu'); 
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
@@ -524,14 +525,51 @@ export default function AdminRadarPortal() {
           if (role.startsWith('skorcum')) setShowOnlyToday(true);
        }
 
-       const savedHavuz = localStorage.getItem('ekmel_lig_havuzu');
-       if (savedHavuz) setDynamicLigHavuzu(JSON.parse(savedHavuz));
-       else setDynamicLigHavuzu({}); 
+       const localRaw = localStorage.getItem('ekmel_lig_havuzu');
+       const localParsed: Record<string, string[]> = localRaw ? JSON.parse(localRaw) : {};
+       setDynamicLigHavuzu(localParsed);
 
        const savedCustomFilters = localStorage.getItem('etml_custom_league_filters');
        if (savedCustomFilters) {
            setCustomLeagueFilters(JSON.parse(savedCustomFilters));
        }
+
+       // PC <-> Mobil Bulut Havuz Senkronizasyonu (Mevcut bültenlerden ve bulut kaydından otomatik doldurur)
+       (async () => {
+         try {
+           const merged: Record<string, Set<string>> = {};
+           Object.keys(localParsed).forEach((cat) => {
+             merged[cat] = new Set(localParsed[cat] || []);
+           });
+
+           const { data: pastRows } = await supabase
+             .from('matches_bulletin')
+             .select('category, home_team, away_team')
+             .limit(2000);
+
+           (pastRows || []).forEach((r: any) => {
+             const cat = String(r.category || '').trim().toUpperCase();
+             const h = String(r.home_team || '').trim().toUpperCase();
+             const a = String(r.away_team || '').trim().toUpperCase();
+             if (!cat) return;
+             if (!merged[cat]) merged[cat] = new Set();
+             if (h) merged[cat].add(h);
+             if (a) merged[cat].add(a);
+           });
+
+           const finalPool: Record<string, string[]> = {};
+           Object.keys(merged).forEach((cat) => {
+             finalPool[cat] = Array.from(merged[cat]).sort((x, y) => x.localeCompare(y, 'tr'));
+           });
+
+           if (Object.keys(finalPool).length > 0) {
+             setDynamicLigHavuzu(finalPool);
+             localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(finalPool));
+           }
+         } catch (err) {
+           console.log('Mobil havuz senkronu:', err);
+         }
+       })();
     }
   }, []);
 
@@ -1352,18 +1390,22 @@ export default function AdminRadarPortal() {
            {userRole === 'master' && (
              <>
                <button 
+                 type="button"
                  onClick={() => setActiveTab('bulletin')}
-                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[140px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'bulletin' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
-                <CustomClubFactory />
                  🛠️ BÜLTEN FABRİKASI
                </button>
                <button 
+                 type="button"
                  onClick={() => setActiveTab('players')}
-                 className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+                 className={`flex-1 min-w-[140px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
                  👥 YARIŞMACILAR
                </button>
+               <div className="flex items-center justify-center">
+                 <CustomClubFactory />
+               </div>
              </>
            )}
         </div>
@@ -1785,20 +1827,57 @@ export default function AdminRadarPortal() {
 
         {activeTab === 'bulletin' && userRole === 'master' && (
           <div className="animate-fade-in">
-             <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
-                <h2 className="text-xl font-black text-indigo-400 flex items-center gap-2">
+             <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b border-slate-800 pb-3">
+                <h2 className="text-lg sm:text-xl font-black text-indigo-400 flex items-center gap-2">
                     <span className="text-2xl">🏭</span> BÜLTEN FABRİKASI
                 </h2>
-                <div className="flex items-center gap-3">
-                   <select value={bulletinWeek} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1 rounded outline-none border border-indigo-700/50 cursor-pointer">
+                <div className="flex items-center gap-2">
+                   <select value={bulletinWeek} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setBulletinWeek(Number(e.target.value))} className="bg-indigo-950 text-indigo-300 font-bold px-3 py-1.5 rounded-lg text-xs sm:text-sm outline-none border border-indigo-700/50 cursor-pointer">
                       {[...Array(100)].map((_: any, i: number) => <option key={`bw-${i+1}`} value={i+1}>{i+1}. HAFTA</option>)}
                    </select>
                 </div>
              </div>
 
+             {/* SADECE MOBİL/TABLETTE GÖRÜNEN HIZLI GEÇİŞ ÇUBUĞU (PC'DE GİZLİDİR) */}
+             <div className="grid grid-cols-3 gap-1.5 mb-4 xl:hidden sticky top-2 z-40 bg-slate-950/95 p-1.5 rounded-xl border border-slate-800 shadow-lg backdrop-blur-md">
+                <button
+                  type="button"
+                  onClick={() => setMobileFactoryTab('uydu')}
+                  className={`py-2.5 px-2 rounded-lg text-[10.5px] font-black uppercase tracking-wider border ${
+                    mobileFactoryTab === 'uydu'
+                      ? 'bg-cyan-700 text-white border-cyan-400'
+                      : 'bg-slate-900 text-slate-400 border-slate-800'
+                  }`}
+                >
+                  📡 UYDU ({apiHavuz.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileFactoryTab('manuel')}
+                  className={`py-2.5 px-2 rounded-lg text-[10.5px] font-black uppercase tracking-wider border ${
+                    mobileFactoryTab === 'manuel'
+                      ? 'bg-fuchsia-700 text-white border-fuchsia-400'
+                      : 'bg-slate-900 text-slate-400 border-slate-800'
+                  }`}
+                >
+                  ⏳ MANUEL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileFactoryTab('hedef')}
+                  className={`py-2.5 px-2 rounded-lg text-[10.5px] font-black uppercase tracking-wider border ${
+                    mobileFactoryTab === 'hedef'
+                      ? 'bg-emerald-700 text-white border-emerald-400'
+                      : 'bg-slate-900 text-emerald-400 border-slate-800'
+                  }`}
+                >
+                  📝 BÜLTEN ({secilenMaclar.filter((m: any) => m !== null).length}/24)
+                </button>
+             </div>
+
              <div className="flex flex-col xl:flex-row gap-6">
                 
-                <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
+                <div className={`${mobileFactoryTab === 'uydu' ? 'flex' : 'hidden xl:flex'} flex-1 bg-slate-900 border border-slate-700 rounded-xl p-3 sm:p-4 shadow-xl flex-col min-h-[70vh] xl:h-[85vh]`}>
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
                         <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
                         <button 
@@ -1963,7 +2042,7 @@ export default function AdminRadarPortal() {
                     </div>
                 </div>
 
-                <div className="w-full xl:w-[320px] flex flex-col gap-6 h-[85vh] overflow-y-auto custom-scrollbar pr-2">
+                <div className={`${mobileFactoryTab === 'manuel' ? 'flex' : 'hidden xl:flex'} w-full xl:w-[320px] flex-col gap-6 xl:h-[85vh] xl:overflow-y-auto custom-scrollbar pr-0 xl:pr-2`}>
                    
                    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl shrink-0">
                       <h3 className="font-black text-cyan-400 flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
@@ -2127,7 +2206,7 @@ export default function AdminRadarPortal() {
                    </div>
                 </div>
 
-                <div className="w-full xl:w-[400px] bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl flex flex-col h-[85vh]">
+                <div className={`${mobileFactoryTab === 'hedef' ? 'flex' : 'hidden xl:flex'} w-full xl:w-[400px] bg-slate-900 border border-slate-700 rounded-xl p-3 sm:p-4 shadow-xl flex-col min-h-[70vh] xl:h-[85vh]`}>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-black text-indigo-400 flex items-center gap-2"><span className="text-lg">📝</span> HEDEF BÜLTEN</h3>
                         <div className="text-xl font-black bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
@@ -2159,7 +2238,7 @@ export default function AdminRadarPortal() {
                                             newSecilen[idx] = null; 
                                             setSecilenMaclar(newSecilen);
                                         }}
-                                        className="absolute top-1 right-1 text-rose-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity bg-rose-950/50 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]"
+                                        className="absolute top-1 right-1 text-rose-600 hover:text-rose-400 opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity bg-rose-950/50 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]"
                                         title="Listeden Çıkar"
                                     >
                                         ✖
