@@ -296,6 +296,9 @@ export default function LiveMatchCard() {
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true);
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
   const [isLiveStandingsOpen, setIsLiveStandingsOpen] = useState<boolean>(true);
+  const [isLiveFocusMode, setIsLiveFocusMode] = useState<boolean>(false);
+  const [onlyLiveCardsFilter, setOnlyLiveCardsFilter] = useState<boolean>(false);
+  const [isTopQuickStandingsOpen, setIsTopQuickStandingsOpen] = useState<boolean>(false);
 
   const [liveTableTab, setLiveTableTab] = useState<'WEEK_LIVE' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('WEEK_LIVE');
   const [selectedBulletinWeek, setSelectedBulletinWeek] = useState<number>(0);
@@ -1492,12 +1495,26 @@ export default function LiveMatchCard() {
     );
   }
 
+  const isCardActivelyPlayingNow = (match: any) => {
+    const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
+    const dbMatch = liveMatchesData[uniqueId] || {};
+    const offMatch = officialWeekMatchesMap[uniqueId];
+    if (offMatch?.status === 'FINISHED' || offMatch?.status === 'POSTPONED') return false;
+    if (['FINISHED', 'FT', 'AET', 'PEN', 'POSTPONED', 'PST'].includes(dbMatch.status)) return false;
+    if (['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(dbMatch.status)) return true;
+    const matchTimeMs = getMatchTimeMs(match.date, match.time);
+    return matchTimeMs > 0 && now >= matchTimeMs && now < matchTimeMs + 8 * 60 * 60 * 1000;
+  };
+
   const activeMatches = selectedDayMatches.filter((match) => {
     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
     const dbMatch = liveMatchesData[uniqueId] || {};
     const offMatch = officialWeekMatchesMap[uniqueId];
     return offMatch?.status !== 'FINISHED' && !['FINISHED', 'FT', 'AET', 'PEN'].includes(dbMatch.status);
   });
+
+  const currentlyPlayingMatches = activeMatches.filter((match) => isCardActivelyPlayingNow(match));
+  const displayedActiveMatches = onlyLiveCardsFilter ? currentlyPlayingMatches : activeMatches;
 
   const finishedMatches = selectedDayMatches.filter((match) => {
     const uniqueId = String(getUniqueMatchId(match.week_num, match.id));
@@ -2116,7 +2133,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
         }}
       />
 
-      <div className="w-full flex flex-wrap items-center justify-end gap-2 pt-3">
+      <div className="w-full flex flex-wrap items-center justify-center sm:justify-end gap-2 pt-3">
         {isMankoman && (
           <button
             onClick={handleLiveUltraFetch}
@@ -2129,6 +2146,28 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
         )}
 
         <button
+          type="button"
+          onClick={() => {
+            const nextMode = !isLiveFocusMode;
+            setIsLiveFocusMode(nextMode);
+            setOnlyLiveCardsFilter(nextMode);
+            setIsTopQuickStandingsOpen(nextMode);
+            if (nextMode) {
+              setLiveTableTab('WEEK_LIVE');
+              setIsLiveAccordionOpen(true);
+            }
+          }}
+          className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md border transition-all ${
+            isLiveFocusMode
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-300'
+              : 'bg-[#071126] text-emerald-300 border-emerald-500/50 hover:border-emerald-400 hover:text-white'
+          }`}
+        >
+          <span>⚡</span>
+          <span>{isLiveFocusMode ? 'CANLI MODU: AKTİF' : 'CANLIYA GÖRE AYARLA'}</span>
+        </button>
+
+        <button
           onClick={toggleSound}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-widest shadow-md border ${
             soundEnabled ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60' : 'bg-[#071126] text-slate-300 border-blue-900/60'
@@ -2136,6 +2175,112 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
         >
           {soundEnabled ? '🔊 CANLI GOL SESİ: AÇIK' : '🔇 GOL SESİNİ AÇ'}
         </button>
+      </div>
+
+      {/* ÜSTTE MÜSTAKİL AÇILIR/KAPANIR CANLI PUAN & BÜLTEN KUTUSU */}
+      <div className="bg-[#071126] border border-emerald-500/45 rounded-2xl shadow-xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setIsTopQuickStandingsOpen((prev) => !prev)}
+          className="w-full px-3.5 py-3 flex flex-wrap items-center justify-between gap-2 bg-[#07152e]/95 hover:bg-[#0a1c3c] text-left"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
+            <span className="text-[11px] sm:text-xs font-black text-sky-100 uppercase tracking-wider">
+              🟢 CANLI GENEL PUAN DURUMU & HAFTA BÜLTENİ
+            </span>
+            {currentWeekBucket && (
+              <span className="text-[10px] sm:text-[11px] font-bold text-sky-300">
+                <strong className="text-emerald-400">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</strong>{' '}
+                {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
+                {currentlyPlayingMatches.length > 0 && (
+                  <strong className="text-emerald-300"> • {currentlyPlayingMatches.length} maç canlı</strong>
+                )}
+              </span>
+            )}
+          </div>
+          <span className="px-2.5 py-1 rounded-lg bg-[#040917] border border-emerald-500/40 text-[9.5px] font-black text-emerald-300">
+            {isTopQuickStandingsOpen ? 'KAPAT ▲' : 'TABLOYU AÇ ▼'}
+          </span>
+        </button>
+
+        {isTopQuickStandingsOpen && (
+          <div className="border-t border-slate-800 px-2.5 py-2.5 sm:px-4 bg-[#050b18]/95 flex flex-col gap-2">
+            <div className="flex flex-wrap gap-1 pb-2 border-b border-slate-800">
+              {activeBulletinWeeks.map((w) => (
+                <button
+                  key={`top-wk-btn-${w}`}
+                  type="button"
+                  onClick={() => {
+                    setLiveTableTab('WEEK_LIVE');
+                    setSelectedBulletinWeek(w);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase border ${
+                    liveTableTab === 'WEEK_LIVE' && effectiveBulletinWeek === w
+                      ? 'bg-emerald-700 text-white border-emerald-400'
+                      : 'bg-[#040917] text-emerald-300 border-slate-800'
+                  }`}
+                >
+                  CANLI {w}. HAFTA
+                </button>
+              ))}
+              {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => (
+                <button
+                  key={`top-tb-${tab}`}
+                  type="button"
+                  onClick={() => setLiveTableTab(tab)}
+                  className={`px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase border ${
+                    liveTableTab === tab
+                      ? 'bg-sky-700 text-white border-sky-300'
+                      : 'bg-[#040917] text-slate-300 border-slate-800'
+                  }`}
+                >
+                  GENEL {tab}
+                </button>
+              ))}
+            </div>
+
+            <div className="max-h-72 overflow-y-auto pr-1">
+              <table className="w-full table-fixed text-left tabular-nums">
+                <thead>
+                  <tr className="bg-[#040a18] text-sky-200 border-b border-slate-800 text-[10px] uppercase font-black">
+                    <th className="py-1.5 px-1.5 w-[32px]">#</th>
+                    <th className="py-1.5 px-1.5 text-white">Yarışmacı</th>
+                    <th className="py-1.5 px-2 w-[84px] text-right text-sky-300">
+                      {liveTableTab === 'WEEK_LIVE' ? `${effectiveBulletinWeek}.H Puan` : liveTableTab}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/70">
+                  {(liveTableTab === 'WEEK_LIVE'
+                    ? (currentWeekBucket?.MASTER || []).map((r) => ({ id: r.id, rank: r.rank, name: r.name, val: r.toplamMaster, liveAdd: r.canliMaster }))
+                    : liveTableTab === 'DFO'
+                    ? liveStandingsTable.DFO.map((r) => ({ id: r.id, rank: r.rank, name: r.name, val: r.pts, liveAdd: r.liveAdd }))
+                    : liveTableTab === 'TFF'
+                    ? liveStandingsTable.TFF.map((r) => ({ id: r.id, rank: r.rank, name: r.name, val: r.pts, liveAdd: r.liveAdd }))
+                    : liveTableTab === 'SKOR'
+                    ? liveStandingsTable.SKOR_MASTER.map((r) => ({ id: r.id, rank: r.rankSkor, name: r.name, val: r.toplamSkor, liveAdd: r.canliSkor }))
+                    : liveStandingsTable.MASTER.map((r) => ({ id: r.id, rank: r.rankMaster, name: r.name, val: r.toplamMaster, liveAdd: r.canliMaster }))
+                  ).map((row) => (
+                    <tr key={`top-row-${row.id}`} className={row.liveAdd > 0 ? 'bg-emerald-950/30' : ''}>
+                      <td className="py-1.5 px-1.5 font-black text-slate-400 text-[11px]">{row.rank}</td>
+                      <td className="py-1.5 px-1.5 font-black text-white text-[11px]">
+                        <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                          {renderLiveNameWithFlag(row.name, row.id, 16)}
+                          {row.liveAdd > 0 && (
+                            <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                              +{row.liveAdd}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-1.5 px-2 text-right font-black text-xs text-sky-300">{row.val}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {availableDateTabs.length > 0 && (
@@ -2200,19 +2345,53 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
 
           {activeMatches.length > 0 && (
             <div className="bg-[#071126]/90 rounded-2xl border border-emerald-500/40 shadow-2xl overflow-hidden">
-              <button
-                onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
-                className="w-full flex items-center justify-between px-4 py-3.5 bg-emerald-950/30 border-b border-emerald-500/30"
-              >
-                <div className="flex-1" />
-                <h2 className="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest text-center">
-                  {isSelectedDayToday ? `GÜNÜN CANLI MAÇLARI (${activeMatches.length})` : `${selectedDayLabel} MAÇLARI (${activeMatches.length})`}
-                </h2>
-                <div className="flex-1 flex justify-end text-emerald-300 text-xs">{isLiveAccordionOpen ? '▲' : '▼'}</div>
-              </button>
+              <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 bg-emerald-950/30 border-b border-emerald-500/30">
+                <button
+                  type="button"
+                  onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
+                  className="flex items-center gap-2 text-left"
+                >
+                  <h2 className="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">
+                    {onlyLiveCardsFilter
+                      ? `🔴 SADECE CANLI OYNANANLAR (${currentlyPlayingMatches.length})`
+                      : isSelectedDayToday
+                      ? `GÜNÜN CANLI MAÇLARI (${activeMatches.length})`
+                      : `${selectedDayLabel} MAÇLARI (${activeMatches.length})`}
+                  </h2>
+                  <span className="text-emerald-300 text-xs">{isLiveAccordionOpen ? '▲' : '▼'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOnlyLiveCardsFilter((prev) => {
+                      const next = !prev;
+                      if (!next) setIsLiveFocusMode(false);
+                      return next;
+                    });
+                    setIsLiveAccordionOpen(true);
+                  }}
+                  className={`px-2.5 py-1 rounded-xl text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
+                    onlyLiveCardsFilter
+                      ? 'bg-rose-600 text-white border-rose-300'
+                      : 'bg-[#040917] text-emerald-300 border-emerald-500/50 hover:text-white'
+                  }`}
+                >
+                  {onlyLiveCardsFilter
+                    ? `TÜMÜNÜ GÖSTER (${activeMatches.length})`
+                    : `🔴 SADECE CANLILARI GÖSTER (${currentlyPlayingMatches.length})`}
+                </button>
+              </div>
+
               {isLiveAccordionOpen && (
                 <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
-                  {activeMatches.map((match) => renderMatchCard(match, false))}
+                  {displayedActiveMatches.length === 0 ? (
+                    <div className="col-span-full py-6 text-center text-xs font-black text-slate-300 uppercase">
+                      ŞU AN OYNANAN AKTİF CANLI MAÇ YOK
+                    </div>
+                  ) : (
+                    displayedActiveMatches.map((match) => renderMatchCard(match, false))
+                  )}
                 </div>
               )}
             </div>
