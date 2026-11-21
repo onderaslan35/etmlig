@@ -295,12 +295,12 @@ export default function LiveMatchCard() {
 
   const [isLiveAccordionOpen, setIsLiveAccordionOpen] = useState<boolean>(true);
   const [isFinishedAccordionOpen, setIsFinishedAccordionOpen] = useState<boolean>(false);
-  const [isLiveStandingsOpen, setIsLiveStandingsOpen] = useState<boolean>(true);
+  const [isLiveStandingsOpen, setIsLiveStandingsOpen] = useState<boolean>(false);
+  const [isWeekLiveOpen, setIsWeekLiveOpen] = useState<boolean>(true);
   const [isLiveFocusMode, setIsLiveFocusMode] = useState<boolean>(false);
   const [onlyLiveCardsFilter, setOnlyLiveCardsFilter] = useState<boolean>(false);
-  
 
-  const [liveTableTab, setLiveTableTab] = useState<'WEEK_LIVE' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('WEEK_LIVE');
+  const [liveTableTab, setLiveTableTab] = useState<'WEEK_LIVE' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
   const [selectedBulletinWeek, setSelectedBulletinWeek] = useState<number>(0);
 
   const [weekSubTab, setWeekSubTab] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
@@ -2123,7 +2123,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto mb-8 px-2 sm:px-4 flex flex-col gap-4">
+    <div className="w-full max-w-6xl mx-auto mb-8 px-2 sm:px-4 flex flex-col gap-2">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -2152,7 +2152,8 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
             setIsLiveFocusMode(nextMode);
             setOnlyLiveCardsFilter(nextMode);
             if (nextMode) {
-              setLiveTableTab('WEEK_LIVE');
+              setIsLiveStandingsOpen(false);
+              setIsWeekLiveOpen(true);
               setIsLiveAccordionOpen(true);
             }
           }}
@@ -2293,8 +2294,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
       )}
 
       {/* CANLI HAFTALIK BÜLTEN & GENEL PUAN DURUMU PANELİ */}
-      <div className="bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-2xl shadow-xl">
-        <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2 pt-2.5 pb-2 sm:px-6 sm:pt-3.5 shadow-md">
+              <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2 pt-2.5 pb-2 sm:px-6 sm:pt-3.5 shadow-md">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800 px-1">
             <button onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)} className="flex items-center gap-2 text-left">
               <span className="relative flex h-2.5 w-2.5">
@@ -2502,11 +2502,129 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
           )}
         </div>
 
-        {/* AKAN PUAN LİSTESİ GÖVDESİ */}
-        {isLiveStandingsOpen && (
-          <div className="px-1 pb-4 sm:px-6 sm:pb-6 pt-2">
-            {liveTableTab === 'WEEK_LIVE' && currentWeekBucket && (
-              <>
+        {/* İKİ MÜSTAKİL PUAN BLOĞU SARMALAYICISI (SIKI ARALIK: gap-2) */}
+      <div className="flex flex-col gap-2">
+        {/* MÜSTAKİL BLOK 2 (ALTTA - AKTİF HAFTA BÜLTENİ & CANLI PUAN ALANLAR) */}
+        {currentWeekBucket && (
+          <div className="order-2 bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-emerald-500/40 rounded-2xl shadow-xl">
+            <div
+              className={`${
+                isWeekLiveOpen
+                  ? 'sticky top-16 sm:top-20 z-30 rounded-t-2xl border-b border-slate-800'
+                  : 'rounded-2xl'
+              } bg-[#071126]/95 backdrop-blur-md px-2.5 py-2.5 sm:px-5 shadow-md`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsWeekLiveOpen(!isWeekLiveOpen)}
+                  className="flex flex-wrap items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span
+                      className={`absolute inline-flex h-full w-full rounded-full ${
+                        currentWeekBucket.liveCount > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''
+                      }`}
+                    />
+                    <span
+                      className={`relative inline-flex rounded-full h-2 w-2 ${
+                        currentWeekBucket.liveCount > 0 ? 'bg-emerald-500' : 'bg-sky-400'
+                      }`}
+                    />
+                  </span>
+                  <span className="text-[10.5px] sm:text-xs font-bold text-sky-200/95">
+                    <span className="text-emerald-400 font-black">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</span>{' '}
+                    <span>
+                      {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
+                    </span>
+                    {currentWeekBucket.liveCount > 0 && (
+                      <span className="ml-1.5 text-emerald-400 font-black">• {currentWeekBucket.liveCount} maç canlı</span>
+                    )}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-[#040917] border border-slate-700 text-[9px] font-black text-slate-300">
+                    {isWeekLiveOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isWeekLiveOpen && (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wTab) => (
+                      <button
+                        key={`wsub-${wTab}`}
+                        type="button"
+                        onClick={() => {
+                          setWeekSubTab(wTab);
+                          if (wTab === 'MASTER') setWeekMasterMode('DUZ');
+                          if (wTab === 'SKOR') setWeekSkorMode('DUZ');
+                        }}
+                        className={`px-2 sm:px-2.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                          weekSubTab === wTab
+                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400/80'
+                            : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        {wTab}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {isWeekLiveOpen && weekSubTab === 'MASTER' && (
+                <div className="flex items-center justify-center gap-1.5 pt-2 mt-1.5 border-t border-slate-800/80">
+                  <button
+                    type="button"
+                    onClick={() => setWeekMasterMode('DUZ')}
+                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      weekMasterMode === 'DUZ'
+                        ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    MASTER PUAN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWeekMasterMode('DETAYLI')}
+                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      weekMasterMode === 'DETAYLI'
+                        ? 'bg-sky-900/50 text-white border-sky-300/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    DETAYLI MASTER
+                  </button>
+                </div>
+              )}
+
+              {isWeekLiveOpen && weekSubTab === 'SKOR' && (
+                <div className="flex flex-wrap items-center justify-center gap-1 pt-2 mt-1.5 border-t border-slate-800/80">
+                  {([
+                    { key: 'DUZ', label: 'MASTER SKOR' },
+                    { key: 'DETAYLI', label: 'DETAYLI' },
+                    { key: 'DFO', label: 'DFO SKOR' },
+                    { key: 'TFF', label: 'TFF SKOR' }
+                  ] as const).map((sm) => (
+                    <button
+                      key={`wskor-${sm.key}`}
+                      type="button"
+                      onClick={() => setWeekSkorMode(sm.key)}
+                      className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                        weekSkorMode === sm.key
+                          ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
+                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {sm.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {isWeekLiveOpen && (
+              <div className="px-1 pb-3 sm:px-6 sm:pb-5 pt-1.5">
+                <>
                 {weekSubTab === 'MASTER' && weekMasterMode === 'DUZ' ? (
                   currentWeekBucket.MASTER.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
@@ -2722,9 +2840,136 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                   })()
                 )}
               </>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MÜSTAKİL BLOK 1 (ÜSTTE - SADECE MASTER / DFO / TFF / TURUNCU SKOR) */}
+        <div className="order-1 bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-2xl shadow-xl">
+          <div
+            className={`${
+              isLiveStandingsOpen
+                ? 'sticky top-16 sm:top-20 z-30 rounded-t-2xl border-b border-slate-800'
+                : 'rounded-2xl'
+            } bg-[#071126]/95 backdrop-blur-md px-2.5 py-2.5 sm:px-5 shadow-md`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)}
+                className="flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span
+                    className={`absolute inline-flex h-full w-full rounded-full ${
+                      totalActiveLiveMatches > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''
+                    }`}
+                  />
+                  <span
+                    className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                      totalActiveLiveMatches > 0 ? 'bg-emerald-500' : 'bg-sky-400'
+                    }`}
+                  />
+                </span>
+                <h2 className="text-xs sm:text-sm font-black text-sky-200 uppercase tracking-wider">
+                  CANLI GENEL PUAN DURUMU
+                </h2>
+                <span className="px-2 py-0.5 rounded bg-[#040917] border border-slate-700 text-[9px] font-black text-slate-300">
+                  {isLiveStandingsOpen ? '▲' : '▼'}
+                </span>
+              </button>
+
+              {isLiveStandingsOpen && (
+                <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                  {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => {
+                    const isTabActive = liveTableTab === tab;
+                    let btnCls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
+                    if (isTabActive) {
+                      if (tab === 'TFF') btnCls = 'bg-rose-700 text-white border-rose-400/80';
+                      else if (tab === 'DFO') btnCls = 'bg-blue-700 text-white border-sky-400/80';
+                      else if (tab === 'SKOR') btnCls = 'bg-orange-600 text-white border-orange-300/80';
+                      else btnCls = 'bg-sky-700 text-white border-sky-300/80';
+                    } else if (tab === 'TFF') {
+                      btnCls = 'bg-[#040917] text-rose-400 border-slate-800 hover:border-rose-700';
+                    } else if (tab === 'DFO') {
+                      btnCls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
+                    } else if (tab === 'SKOR') {
+                      btnCls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
+                    }
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => {
+                          setLiveTableTab(tab);
+                          if (tab === 'MASTER') setMasterSubTab('DETAYLI');
+                          if (tab === 'SKOR') setSkorSubTab('DUZ');
+                        }}
+                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${btnCls}`}
+                      >
+                        {tab}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {isLiveStandingsOpen && liveTableTab === 'MASTER' && (
+              <div className="flex items-center justify-center gap-1.5 pt-2 mt-2 border-t border-slate-800/80">
+                <button
+                  type="button"
+                  onClick={() => setMasterSubTab('DUZ')}
+                  className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                    masterSubTab === 'DUZ'
+                      ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER PUAN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMasterSubTab('DETAYLI')}
+                  className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                    masterSubTab === 'DETAYLI'
+                      ? 'bg-sky-900/50 text-white border-sky-300/70'
+                      : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  DETAYLI MASTER
+                </button>
+              </div>
             )}
 
-            {liveTableTab !== 'WEEK_LIVE' && (
+            {isLiveStandingsOpen && liveTableTab === 'SKOR' && (
+              <div className="flex flex-wrap items-center justify-center gap-1 pt-2 mt-2 border-t border-slate-800/80">
+                {([
+                  { key: 'DUZ', label: 'MASTER SKOR' },
+                  { key: 'DETAYLI', label: 'DETAYLI' },
+                  { key: 'DFO', label: 'DFO SKOR' },
+                  { key: 'TFF', label: 'TFF SKOR' }
+                ] as const).map((st) => (
+                  <button
+                    key={st.key}
+                    type="button"
+                    onClick={() => setSkorSubTab(st.key)}
+                    className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
+                      skorSubTab === st.key
+                        ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
+                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {isLiveStandingsOpen && (
+            <div className="px-1 pb-4 sm:px-6 sm:pb-6 pt-2">
               <>
                 {liveTableTab === 'MASTER' && masterSubTab === 'DUZ' ? (
                   <table className="w-full table-fixed text-left tabular-nums">
@@ -2963,16 +3208,14 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                             </td>
                           </tr>
                         );
-                      })}
+                     })}
                     </tbody>
                   </table>
                 )}
               </>
-            )}
-
-          </div>
-        )}
-
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
