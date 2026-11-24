@@ -8,15 +8,18 @@ import {
   getMatchTimeMs,
   getUniqueMatchId
 } from '@/utils/themeEngine';
-import { getClubLogoUrl } from '@/components/FavoriteTeamSelector';
+import {
+  getClubLogoUrl,
+  isNationalTeamName,
+  refreshCustomClubsCache
+} from '@/components/FavoriteTeamSelector';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
 const SEALED_MATCHES_CACHE_KEY = 'etml_sealed_matches_w1_40_v2';
 const SEALED_WEEKS_CACHE_KEY = 'etml_sealed_weeks_v2';
 const SEALED_CACHE_TS_KEY = 'etml_sealed_cache_ts_v2';
-const SEALED_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // Mühürlü 1-40. haftalar 12 saat boyunca 0 Byte Egress
+const SEALED_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
-// Şampiyonluk Kupası Sayıları ve Son Şampiyon Türk Bayrağı Arması
 const CHAMPION_CUPS: Record<string, number> = {
   'GAZI AYAN': 2,
   'R ILHAN KARACA': 2,
@@ -210,12 +213,12 @@ interface PlayerStatRow {
 
 export default function YeniArsivPage() {
   const [loading, setLoading] = useState<boolean>(true);
+  const [, setClubLogosVersion] = useState<number>(0);
 
   const [activeTab, setActiveTab] = useState<
     'TOTAL_STANDINGS' | 'CARDS' | 'WEEK_CHECK' | 'WEEK_CUMULATIVE' | 'LEADERS_TIMELINE'
   >('TOTAL_STANDINGS');
 
-  // VARSAYILAN AÇILIŞ KURALI: Her zaman DETAYLI MASTER açık gelir; canlı maç varsa otomatik CANLI'ya geçer!
   const [standingsFilter, setStandingsFilter] = useState<
     'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'
   >('MASTER');
@@ -243,6 +246,7 @@ export default function YeniArsivPage() {
   const [playersMap, setPlayersMap] = useState<
     Record<string, { name: string; isChampion: boolean; favoriteTeam: string }>
   >({});
+  const [favTeamByNormName, setFavTeamByNormName] = useState<Record<string, string>>({});
   const [officialMatches, setOfficialMatches] = useState<OfficialMatchRow[]>([]);
   const [officialWeeks, setOfficialWeeks] = useState<OfficialWeekRow[]>([]);
   const [recentBulletins, setRecentBulletins] = useState<any[]>([]);
@@ -254,6 +258,14 @@ export default function YeniArsivPage() {
   useEffect(() => {
     const t = setInterval(() => setNowMs(Date.now()), 30000);
     return () => clearInterval(t);
+  }, []);
+
+  // Özel kulüp armaları yüklendiği anda tabloyu yeniden çiz ki hiçbir rozet eksik kalmasın
+  useEffect(() => {
+    const onCustomClubsReady = () => setClubLogosVersion((v) => v + 1);
+    window.addEventListener('etml-custom-clubs-updated', onCustomClubsReady);
+    refreshCustomClubsCache(false).then(() => setClubLogosVersion((v) => v + 1));
+    return () => window.removeEventListener('etml-custom-clubs-updated', onCustomClubsReady);
   }, []);
 
   const ensurePredictionsLoadedForWeeks = async (weeks: number[]) => {
@@ -308,7 +320,6 @@ export default function YeniArsivPage() {
   useEffect(() => {
     let mounted = true;
 
-    // 1-40. mühürlü haftaları localStorage önbelleğinden oku; sadece 41+ aktif haftaları Supabase'den taze çek!
     const fetchOptimizedOfficialData = async (): Promise<{
       allMatches: OfficialMatchRow[];
       allWeeks: OfficialWeekRow[];
@@ -361,7 +372,6 @@ export default function YeniArsivPage() {
         };
       }
 
-      // İlk kez açılıyorsa hepsini seçici sütunlarla çek ve 1-40. haftaları tarayıcıya mühürle
       let allRows: OfficialMatchRow[] = [];
       let from = 0;
       const step = 1000;
@@ -404,13 +414,10 @@ export default function YeniArsivPage() {
 
     const loadArchiveSystem = async () => {
       try {
+        // Oyuncu tablolarını .select('*') ile hatasız çekiyoruz (~3 KB)
         const [offPlayersRes, legacyPlayersRes, officialBundle, recentBulRes] = await Promise.all([
-          supabase
-            .from('etml_official_players')
-            .select('user_id, full_name, is_active, is_champion, favorite_team'),
-          supabase
-            .from('players')
-            .select('username, name, full_name, is_champion, favorite_team'),
+          supabase.from('etml_official_players').select('*'),
+          supabase.from('players').select('*'),
           fetchOptimizedOfficialData(),
           supabase
             .from('matches_bulletin')
@@ -418,13 +425,14 @@ export default function YeniArsivPage() {
             .gte('week_num', 41)
             .order('week_num', { ascending: true })
             .order('match_index', { ascending: true })
-            .limit(400)
+            .limit(400),
+          refreshCustomClubsCache(false)
         ]);
 
         if (!mounted) return;
 
-        // 1. Oyuncu İsim, Şampiyonluk & Favori Kulüp Arması Havuzu
         const pMap: Record<string, { name: string; isChampion: boolean; favoriteTeam: string }> = {};
+        const nameToFav: Record<string, string> = {};
         const disabledIds = new Set<string>(EXCLUDED_IDS);
 
         Object.keys(TEST_ACCOUNTS).forEach((uid) => {
@@ -435,28 +443,41 @@ export default function YeniArsivPage() {
         });
 
         (legacyPlayersRes.data || []).forEach((lp: any) => {
-          const uid = String(lp.username || '').trim();
+          const uid = String(lp.username || lp.user_id || lp.id || '').trim();
           if (!uid || disabledIds.has(uid)) return;
           const nm = String(lp.name || lp.full_name || pMap[uid]?.name || uid).trim();
           const champ = Boolean(lp.is_champion || pMap[uid]?.isChampion || hasChampionCup(nm));
-          const favTeam = String(lp.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
+          const rawFav = String(lp.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
+          const favTeam = isNationalTeamName(rawFav) ? '' : rawFav;
           pMap[uid] = { name: nm, isChampion: champ, favoriteTeam: favTeam };
+          if (nm && favTeam) nameToFav[normalizeTrName(nm)] = favTeam;
         });
 
         (offPlayersRes.data || []).forEach((op: any) => {
-          const uid = String(op.user_id || '').trim();
+          const uid = String(op.user_id || op.username || op.id || '').trim();
           if (!uid) return;
           if (op.is_active === false || EXCLUDED_IDS.has(uid)) {
             disabledIds.add(uid);
             delete pMap[uid];
           } else {
-            const nm = String(op.full_name || pMap[uid]?.name || uid).trim();
-            const champ = Boolean(op.is_champion || hasChampionCup(nm));
-            const favTeam = String(op.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
+            const nm = String(op.full_name || op.name || pMap[uid]?.name || uid).trim();
+            const champ = Boolean(op.is_champion || op.has_cup || pMap[uid]?.isChampion || hasChampionCup(nm));
+            const rawFav = String(op.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
+            const favTeam = isNationalTeamName(rawFav) ? '' : rawFav;
             pMap[uid] = { name: nm, isChampion: champ, favoriteTeam: favTeam };
+            if (nm && favTeam) nameToFav[normalizeTrName(nm)] = favTeam;
           }
         });
 
+        // İsim üzerinden yedek eşleştirme (farklı ID formatı olsa bile kulüp rozeti kaybolmaz)
+        Object.keys(pMap).forEach((uid) => {
+          if (!pMap[uid].favoriteTeam) {
+            const fallbackFav = nameToFav[normalizeTrName(pMap[uid].name)];
+            if (fallbackFav) pMap[uid].favoriteTeam = fallbackFav;
+          }
+        });
+
+        setFavTeamByNormName(nameToFav);
         setPlayersMap(pMap);
 
         const offMatchesAll = officialBundle.allMatches;
@@ -467,7 +488,6 @@ export default function YeniArsivPage() {
         const recentBul = recentBulRes.data || [];
         setRecentBulletins(recentBul);
 
-        // 2. Gerçek Zamanlı Aktif Hafta Tespiti
         const currentNow = Date.now();
         const weekSet = new Set<number>();
         offMatchesAll.forEach((m) => weekSet.add(Number(m.week_num)));
@@ -531,7 +551,6 @@ export default function YeniArsivPage() {
           }
         });
 
-        // Sadece hafif kolonları çek (ağır 'events' JSON sütununu ÇEKME!)
         const liveDbRes =
           targetLiveIds.length > 0
             ? await supabase
@@ -568,7 +587,6 @@ export default function YeniArsivPage() {
 
         setLiveMatchesMap(lMap);
 
-        // Tahminleri SADECE canlı veya resmi kasaya henüz işlenmemiş skorlu maç varsa çek!
         if (weeksNeedingPreds.size > 0) {
           await ensurePredictionsLoadedForWeeks(Array.from(weeksNeedingPreds));
         }
@@ -598,12 +616,18 @@ export default function YeniArsivPage() {
           const row = payload.new;
           if (!row || !row.user_id) return;
           const uid = String(row.user_id).trim();
+          const rawFav = String(row.favorite_team || '').trim();
+          const safeFav = isNationalTeamName(rawFav) ? '' : rawFav;
+          const nm = String(row.full_name || '').trim();
+          if (nm && safeFav) {
+            setFavTeamByNormName((prev) => ({ ...prev, [normalizeTrName(nm)]: safeFav }));
+          }
           setPlayersMap((prev) => ({
             ...prev,
             [uid]: {
               name: String(row.full_name || prev[uid]?.name || uid).trim(),
               isChampion: Boolean(prev[uid]?.isChampion || hasChampionCup(row.full_name || '')),
-              favoriteTeam: String(row.favorite_team || '').trim()
+              favoriteTeam: safeFav
             }
           }));
         }
@@ -615,6 +639,13 @@ export default function YeniArsivPage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const resolvePlayerFavTeam = (uid: string, name: string) => {
+    const direct = playersMap[uid]?.favoriteTeam || '';
+    if (direct && !isNationalTeamName(direct)) return direct;
+    const byName = favTeamByNormName[normalizeTrName(name)] || '';
+    return !isNationalTeamName(byName) ? byName : '';
+  };
 
   const {
     totalStandings,
@@ -635,11 +666,12 @@ export default function YeniArsivPage() {
     const createBlankMap = () => {
       const m: Record<string, PlayerStatRow> = {};
       playerIds.forEach((uid) => {
+        const nm = playersMap[uid]?.name || uid;
         m[uid] = {
           id: uid,
-          name: playersMap[uid]?.name || uid,
+          name: nm,
           isChampion: Boolean(playersMap[uid]?.isChampion),
-          favoriteTeam: playersMap[uid]?.favoriteTeam || '',
+          favoriteTeam: resolvePlayerFavTeam(uid, nm),
           dfoPts: 0,
           tffPts: 0,
           bonusPts: 0,
@@ -664,7 +696,7 @@ export default function YeniArsivPage() {
           id: uid,
           name: nm,
           isChampion: hasChampionCup(nm, playersMap[uid]?.isChampion),
-          favoriteTeam: playersMap[uid]?.favoriteTeam || '',
+          favoriteTeam: resolvePlayerFavTeam(uid, nm),
           dfoPts: 0,
           tffPts: 0,
           bonusPts: 0,
@@ -860,7 +892,6 @@ export default function YeniArsivPage() {
       }
     });
 
-    // B) CANLI MAÇ KATKISI
     let liveCount = 0;
     const liveMapClone: Record<string, PlayerStatRow> = {};
     Object.keys(cumulativeMap).forEach((uid) => {
@@ -1003,6 +1034,7 @@ export default function YeniArsivPage() {
     };
   }, [
     playersMap,
+    favTeamByNormName,
     officialMatches,
     officialWeeks,
     availableWeeks,
@@ -1014,9 +1046,6 @@ export default function YeniArsivPage() {
     nowMs
   ]);
 
-  // OTOMATİK CANLI / KESİNLEŞMİŞ DETAYLI MASTER KURALI:
-  // Kullanıcı elle başka bir filtreye basmadığı sürece, o an canlı maç varsa anında CANLI + DETAYLI MASTER'a geçer;
-  // canlı maç yoksa veya tüm canlı maçlar bitip kasaya mühürlendiyse MASTER + DETAYLI MASTER'da kalır!
   useEffect(() => {
     if (loading) return;
     if (userManuallyChangedFilterRef.current) return;
@@ -1089,15 +1118,17 @@ export default function YeniArsivPage() {
     const cleanDisplay = stripTrophies(name);
     const cupCount = getChampionCupCount(name, isChamp);
     const showTrFlag = hasReigningTurkishFlag(name);
-    const clubLogo = getClubLogoUrl(favoriteTeam);
+    const effectiveFav =
+      favoriteTeam || favTeamByNormName[normalizeTrName(name)] || '';
+    const clubLogo = getClubLogoUrl(effectiveFav);
 
     return (
       <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
         {clubLogo && (
           <img
             src={clubLogo}
-            alt={favoriteTeam}
-            title={favoriteTeam}
+            alt={effectiveFav}
+            title={effectiveFav}
             className="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
           />
         )}
@@ -1427,7 +1458,6 @@ export default function YeniArsivPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 pt-3 pb-12 flex flex-col gap-3">
-      {/* ÜST HAFTA SEÇİCİ VE ANA SEKMELER BARI */}
       <div className="bg-[#071126] border border-slate-800 rounded-2xl px-2.5 py-2.5 sm:px-4 sm:py-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 shadow-md">
         <div className="flex items-center gap-1.5 bg-[#040917] border border-slate-800 rounded-xl px-2.5 py-1.5">
           <span className="text-[10px] sm:text-[11px] font-black text-sky-400 uppercase tracking-wider">
@@ -1474,7 +1504,7 @@ export default function YeniArsivPage() {
         })}
       </div>
 
-      {/* ===================== 1. SEKME: GENEL PUAN DURUMU (DEFAULT) ===================== */}
+      {/* ===================== 1. SEKME: GENEL PUAN DURUMU ===================== */}
       {activeTab === 'TOTAL_STANDINGS' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
           <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
@@ -1914,11 +1944,12 @@ export default function YeniArsivPage() {
                   .map((uid) => {
                     const cleanId = String(uid).trim();
                     const pObj = playersMap[cleanId];
+                    const nm = pObj?.name || cleanId;
                     return {
                       id: cleanId,
-                      name: pObj?.name || cleanId,
+                      name: nm,
                       isChamp: Boolean(pObj?.isChampion),
-                      favTeam: pObj?.favoriteTeam || ''
+                      favTeam: resolvePlayerFavTeam(cleanId, nm)
                     };
                   })
                   .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
