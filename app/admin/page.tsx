@@ -1,5 +1,6 @@
 'use client';
 import CustomClubFactory from '@/components/CustomClubFactory';
+import { OnlineVisitorsAdminModule, OnlineCountPill } from '@/components/OnlineVisitorsRadar';
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from '@/utils/supabase';
 import {
@@ -104,7 +105,7 @@ export default function AdminRadarPortal() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
 
-  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'players'>('live');
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'players' | 'visitors'>('live');
   const [mergedPlayers, setMergedPlayers] = useState<Record<string, string>>(staticPlayersList);
 
   const [dbPlayersList, setDbPlayersList] = useState<any[]>([]);
@@ -167,7 +168,7 @@ export default function AdminRadarPortal() {
   const [weeklyDbPoints, setWeeklyDbPoints] = useState<any[]>([]);
 
   const [bulletinWeek, setBulletinWeek] = useState<number>(0);
-  const [mobileFactoryTab, setMobileFactoryTab] = useState<'uydu' | 'manuel' | 'hedef'>('uydu'); 
+  const [mobileFactoryTab, setMobileFactoryTab] = useState<'uydu' | 'manuel' | 'hedef'>('uydu');
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
   const [historicalBonuses, setHistoricalBonuses] = useState<Record<number, { puanLiderleri: string[], skorKrallari: string[] }>>({});
@@ -270,7 +271,7 @@ export default function AdminRadarPortal() {
       const fetchBulletinForWeek = async () => {
           const { data } = await supabase
               .from('matches_bulletin')
-              .select('*')
+              .select('week_num, match_index, category, match_date, match_time, home_team, away_team, api_match_id')
               .eq('week_num', bulletinWeek)
               .order('match_index', { ascending: true });
           
@@ -543,7 +544,6 @@ export default function AdminRadarPortal() {
            setCustomLeagueFilters(JSON.parse(savedCustomFilters));
        }
 
-       // PC <-> Mobil Bulut Havuz Senkronizasyonu (Mevcut bültenlerden ve bulut kaydından otomatik doldurur)
        (async () => {
          try {
            const lastSync = Number(localStorage.getItem('ekmel_lig_havuzu_sync_ts') || '0');
@@ -596,7 +596,7 @@ export default function AdminRadarPortal() {
 
   const fetchSkorcuStatus = async () => {
      try {
-       const { data } = await supabase.from('skorcu_auth').select('*');
+       const { data } = await supabase.from('skorcu_auth').select('username, is_active');
        if (data) {
           const newMap: Record<string, boolean> = {};
           data.forEach((row: any) => { newMap[row.username] = row.is_active; });
@@ -612,7 +612,7 @@ export default function AdminRadarPortal() {
   }, [isAuthenticated, userRole]);
 
   const fetchAllSystemPlayers = async () => {
-    const { data } = await supabase.from('players').select('*').order('name');
+    const { data } = await supabase.from('players').select('id, username, name, password').order('name');
     if (data) {
        setDbPlayersList(data);
        const newMergedMap = { ...staticPlayersList };
@@ -627,7 +627,7 @@ export default function AdminRadarPortal() {
     if (isAuthenticated) {
         fetchAllSystemPlayers();
         const fetchAvailableWeeks = async () => {
-            const { data } = await supabase.from('matches_bulletin').select('week_num, match_date');
+            const { data } = await supabase.from('matches_bulletin').select('week_num, match_date').gte('week_num', 40);
             if (data) {
                 const todayDate = new Date();
                 todayDate.setHours(0,0,0,0);
@@ -695,7 +695,11 @@ export default function AdminRadarPortal() {
 
       fetchBonusHistory();
 
-      const { data: bultenData } = await supabase.from('matches_bulletin').select('*').eq('week_num', selectedLiveWeek).order('match_index', { ascending: true });
+      const { data: bultenData } = await supabase
+        .from('matches_bulletin')
+        .select('week_num, match_index, category, match_date, match_time, home_team, away_team, api_match_id')
+        .eq('week_num', selectedLiveWeek)
+        .order('match_index', { ascending: true });
 
       let currentBulten = bultenData || [];
       setLiveMatchesDB(currentBulten);
@@ -703,7 +707,10 @@ export default function AdminRadarPortal() {
       const idsToFetch = currentBulten.map((m: any) => getUniqueMatchId(selectedLiveWeek, m.match_index));
       let liveData: any[] = [];
       if (idsToFetch.length > 0) {
-         const { data } = await supabase.from('live_matches').select('*').in('id', idsToFetch);
+         const { data } = await supabase
+           .from('live_matches')
+           .select('id, api_match_id, home_score, away_score, status, updated_by, updated_at, elapsed')
+           .in('id', idsToFetch);
          if (data) liveData = data;
       }
       
@@ -718,7 +725,7 @@ export default function AdminRadarPortal() {
       while (fetchMore) {
         const { data: pDataChunk, error } = await supabase
           .from('player_predictions')
-          .select('*')
+          .select('user_id, match_index, predicted_score')
           .eq('week_num', selectedLiveWeek)
           .order('user_id', { ascending: true })
           .order('match_index', { ascending: true })
@@ -789,7 +796,6 @@ export default function AdminRadarPortal() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, (payload: any) => {
                 const row = payload.new;
                 if (!row || row.id === undefined) return;
-                // Sadece seçili haftanın maçıysa hafızada anında güncelle (Veritabanından tüm tabloları tekrar çekmez!)
                 const weekPrefix = selectedLiveWeek * 100;
                 const numId = Number(row.id);
                 const mIdx = numId - weekPrefix;
@@ -823,6 +829,7 @@ export default function AdminRadarPortal() {
        sessionStorage.setItem('admin_auth', 'true');
        sessionStorage.setItem('admin_role', 'master');
        localStorage.setItem('etml_master_commander', 'mankoman');
+       window.dispatchEvent(new CustomEvent('etml-identity-updated'));
        setShowOnlyToday(false);
        return;
     } 
@@ -862,6 +869,7 @@ export default function AdminRadarPortal() {
     sessionStorage.removeItem('admin_auth');
     sessionStorage.removeItem('admin_role');
     localStorage.removeItem('etml_master_commander');
+    window.dispatchEvent(new CustomEvent('etml-identity-updated'));
     setIsAuthenticated(false);
     setUserRole(null);
     setUsernameInput('');
@@ -874,10 +882,6 @@ export default function AdminRadarPortal() {
      try {
         await supabase.from('skorcu_auth').upsert({ username: skorcuName, is_active: newStatus }, { onConflict: 'username' });
      } catch (e) {}
-  };
-
-  const getPlayerIdByName = (name: string) => {
-    return Object.keys(mergedPlayers).find(key => mergedPlayers[key] === name) || null;
   };
 
   const weeklyStats = useMemo(() => {
@@ -950,7 +954,6 @@ export default function AdminRadarPortal() {
      return { stats, maxPts, maxScores, pLeadersArray, sLeadersArray };
   }, [adminScores, predictionsDB, liveMatchesDB, mergedPlayers, selectedLiveWeek, weeklyDbPoints, distributedMatches]);
 
-// 🔥 YENİ: BONUS DAĞITMA MOTORU (TEK TABANCA KURALI: +3 PUAN) 🔥
   const handleDistributeBonuses = async () => {
      if (selectedLiveWeek <= 40) {
          alert(`🔒 1-40. Haftalar Resmi Kasada mühürlüdür, değiştirilemez!`);
@@ -969,6 +972,7 @@ export default function AdminRadarPortal() {
          alert("❌ HATA: " + e.message);
      }
   };
+
   const handleAction = async (action: string, matchId: number, matchData: any, currentWinners: string[], displayPoints: number) => {
     const homeScore = adminScores[matchId]?.home || "-";
     const awayScore = adminScores[matchId]?.away || "-";
@@ -1411,10 +1415,11 @@ export default function AdminRadarPortal() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6 font-sans pb-24 relative">
       <div className="max-w-7xl mx-auto pt-6">
 
-        <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto custom-scrollbar flex-wrap">
+        <div className="flex flex-col lg:flex-row gap-3 mb-8 bg-slate-900/50 p-3 rounded-2xl border border-slate-800 shadow-xl flex-wrap">
            <button 
+             type="button"
              onClick={() => setActiveTab('live')}
-             className={`flex-1 min-w-[160px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+             className={`flex-1 min-w-[140px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'live' ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
            >
              🔴 CANLI YÖNETİM
            </button>
@@ -1434,6 +1439,14 @@ export default function AdminRadarPortal() {
                  className={`flex-1 min-w-[140px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all ${activeTab === 'players' ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
                >
                  👥 YARIŞMACILAR
+               </button>
+               <button 
+                 type="button"
+                 onClick={() => setActiveTab('visitors')}
+                 className={`flex-1 min-w-[140px] py-3 lg:py-4 rounded-xl font-black text-xs lg:text-sm tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'visitors' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-[1.02]' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'}`}
+               >
+                 <span>🟢 SİTEDEKİLER</span>
+                 <OnlineCountPill />
                </button>
                <div className="flex items-center justify-center">
                  <CustomClubFactory />
@@ -1762,11 +1775,11 @@ export default function AdminRadarPortal() {
                           <div className="flex flex-col items-center justify-center mx-1.5 sm:mx-4 w-24 sm:w-36 z-30">
                             <div className={`w-full bg-[#080d1a]/80 border ${theme.scoreBorder} py-2.5 sm:py-3.5 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-md`}>
                               <select disabled={isLocked} value={homeScore} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleScoreChange(match.match_index, 'home', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
-                                {timeOptionsArr.map((_: any, i: number) => <option key={`h-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
+                                {scoreOptions.map((sc: string, i: number) => <option key={`h-${i}`} value={sc}>{sc}</option>)}
                               </select>
                               <span className={`text-base sm:text-xl font-bold ${theme.colonText}`}>:</span>
                               <select disabled={isLocked} value={awayScore} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleScoreChange(match.match_index, 'away', e.target.value)} className="bg-transparent text-xl sm:text-3xl font-black text-amber-400 outline-none appearance-none text-center cursor-pointer drop-shadow-md disabled:opacity-80" style={{textAlignLast: 'center'}}>
-                                {timeOptionsArr.map((_: any, i: number) => <option key={`a-${i}`} value={scoreOptions[i]}>{scoreOptions[i]}</option>)}
+                                {scoreOptions.map((sc: string, i: number) => <option key={`a-${i}`} value={sc}>{sc}</option>)}
                               </select>
                             </div>
                           </div>
@@ -1913,6 +1926,7 @@ export default function AdminRadarPortal() {
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
                         <h3 className="font-black text-cyan-400 flex items-center gap-2"><span className="text-lg">📡</span> UYDU MAÇ HAVUZU</h3>
                         <button 
+                            type="button"
                             onClick={() => setIsApiFilterOpen(!isApiFilterOpen)}
                             className="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[10px] font-bold px-3 py-1.5 rounded border border-slate-600 transition-all shadow-sm"
                         >
@@ -1957,6 +1971,7 @@ export default function AdminRadarPortal() {
                                     return (
                                        <button
                                           key={lig.id}
+                                          type="button"
                                           onClick={() => toggleLigFiltresi(lig.id)}
                                           className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider transition-all border ${
                                              isActive 
@@ -1974,6 +1989,7 @@ export default function AdminRadarPortal() {
                                     return (
                                        <div key={lig.id} className="relative group flex">
                                          <button
+                                            type="button"
                                             onClick={() => toggleLigFiltresi(lig.id)}
                                             className={`px-3 py-1.5 rounded-l-lg text-[10px] font-black tracking-wider transition-all border-y border-l ${
                                                isActive 
@@ -1984,6 +2000,7 @@ export default function AdminRadarPortal() {
                                             {lig.ad}
                                          </button>
                                          <button 
+                                            type="button"
                                             onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleRemoveCustomFilter(lig.id, e)}
                                             className={`px-2 py-1.5 rounded-r-lg border-y border-r transition-all flex items-center justify-center ${
                                                 isActive
@@ -2024,6 +2041,7 @@ export default function AdminRadarPortal() {
                     )}
 
                     <button
+                        type="button"
                         onClick={fetchHaftalikHavuz}
                         disabled={isHavuzLoading}
                         className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white font-black tracking-widest text-xs px-5 py-3 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all flex items-center gap-2 w-full justify-center mb-3"
@@ -2156,7 +2174,7 @@ export default function AdminRadarPortal() {
                                           <button 
                                               type="button"
                                               onClick={() => handleDeleteLocalTeam(selectedManageLeague, tName)}
-                                              className="text-rose-500 hover:text-white hover:bg-rose-600 w-5 h-5 rounded flex items-center justify-center text-[10px] font-black transition-all opacity-50 group-hover:opacity-100"
+                                              className="text-rose-500 hover:text-white hover:bg-rose-600 w-5 h-5 rounded flex items-center justify-center text-[10px] font-black transition-all opacity-100 xl:opacity-50 xl:group-hover:opacity-100"
                                               title="Takımı Sil"
                                           >
                                               ✖
@@ -2265,19 +2283,20 @@ export default function AdminRadarPortal() {
                             return (
                                 <div key={`secilen-${idx}`} className={`bg-slate-950 p-2 rounded-lg border flex flex-col gap-2 relative group transition-colors ${isManuel ? 'border-fuchsia-900/50 hover:border-fuchsia-500' : 'border-indigo-900/50 hover:border-indigo-500'}`}>
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             const newSecilen = [...secilenMaclar];
                                             newSecilen[idx] = null; 
                                             setSecilenMaclar(newSecilen);
                                         }}
-                                        className="absolute top-1 right-1 text-rose-600 hover:text-rose-400 opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity bg-rose-950/50 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]"
+                                        className="absolute top-1 right-1 text-rose-500 hover:text-rose-300 opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity bg-rose-950/70 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]"
                                         title="Listeden Çıkar"
                                     >
                                         ✖
                                     </button>
                                     <div className="flex items-center gap-2 pr-6">
                                         <span className={`font-black text-[10px] w-5 h-5 flex items-center justify-center rounded border ${isManuel ? 'bg-fuchsia-950 text-fuchsia-400 border-fuchsia-500/50' : 'bg-indigo-950 text-indigo-400 border-indigo-500/50'}`}>{idx + 1}</span>
-                                        <div className="flex flex-col">
+                                        <div className="flex flex-col min-w-0">
                                            <span className="text-white font-bold text-[10px] uppercase truncate">{mac.home_team} - {mac.away_team}</span>
                                            <span className="text-[8px] text-slate-400 tracking-widest">{mac.date} {mac.time} {isManuel && <span className="text-fuchsia-500 ml-1">(MANUEL)</span>}</span>
                                         </div>
@@ -2303,6 +2322,7 @@ export default function AdminRadarPortal() {
                     </div>
 
                     <button
+                        type="button"
                         onClick={bulteniPatlat}
                         disabled={isPublishing}
                         className={`w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase transition-all flex justify-center items-center gap-2 ${
@@ -2430,6 +2450,10 @@ export default function AdminRadarPortal() {
 
             </div>
           </div>
+        )}
+
+        {activeTab === 'visitors' && userRole === 'master' && (
+          <OnlineVisitorsAdminModule />
         )}
 
       </div>
