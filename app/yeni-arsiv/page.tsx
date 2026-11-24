@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
   TEST_ACCOUNTS,
@@ -11,6 +11,10 @@ import {
 import { getClubLogoUrl } from '@/components/FavoriteTeamSelector';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
+const SEALED_MATCHES_CACHE_KEY = 'etml_sealed_matches_w1_40_v2';
+const SEALED_WEEKS_CACHE_KEY = 'etml_sealed_weeks_v2';
+const SEALED_CACHE_TS_KEY = 'etml_sealed_cache_ts_v2';
+const SEALED_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // Mühürlü 1-40. haftalar 12 saat boyunca 0 Byte Egress
 
 // Şampiyonluk Kupası Sayıları ve Son Şampiyon Türk Bayrağı Arması
 const CHAMPION_CUPS: Record<string, number> = {
@@ -32,7 +36,6 @@ const normalizeTrName = (s: string) =>
   stripTrophies(s)
     .toUpperCase()
     .replace(/İ/g, 'I')
-    .replace(/İ/g, 'I')
     .replace(/Ş/g, 'S')
     .replace(/Ğ/g, 'G')
     .replace(/Ü/g, 'U')
@@ -155,6 +158,11 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
   return teamRegex.test(h) && teamRegex.test(a);
 };
 
+const isLiveMatchStatus = (st?: string | null) =>
+  ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'BT', 'WAITING_APPROVAL'].includes(
+    String(st || '').toUpperCase()
+  );
+
 interface OfficialMatchRow {
   id: number | string;
   week_num: number;
@@ -206,19 +214,23 @@ export default function YeniArsivPage() {
   const [activeTab, setActiveTab] = useState<
     'TOTAL_STANDINGS' | 'CARDS' | 'WEEK_CHECK' | 'WEEK_CUMULATIVE' | 'LEADERS_TIMELINE'
   >('TOTAL_STANDINGS');
+
+  // VARSAYILAN AÇILIŞ KURALI: Her zaman DETAYLI MASTER açık gelir; canlı maç varsa otomatik CANLI'ya geçer!
   const [standingsFilter, setStandingsFilter] = useState<
     'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'
   >('MASTER');
-  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [masterSubFilter, setMasterSubFilter] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
+  const userManuallyChangedFilterRef = useRef<boolean>(false);
+
   const [skorSubFilter, setSkorSubFilter] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
   const [isStandingsMenuOpen, setIsStandingsMenuOpen] = useState<boolean>(false);
 
   const [weekSummaryFilter, setWeekSummaryFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
-  const [weekSummaryMasterMode, setWeekSummaryMasterMode] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [weekSummaryMasterMode, setWeekSummaryMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
   const [isWeekSummaryMenuOpen, setIsWeekSummaryMenuOpen] = useState<boolean>(false);
 
   const [weekGenelFilter, setWeekGenelFilter] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'>('MASTER');
-  const [weekGenelMasterMode, setWeekGenelMasterMode] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [weekGenelMasterMode, setWeekGenelMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
   const [isWeekGenelMenuOpen, setIsWeekGenelMenuOpen] = useState<boolean>(false);
 
   const [archivePoolFilter, setArchivePoolFilter] = useState<'ALL' | 'DFO' | 'TFF'>('ALL');
@@ -236,6 +248,7 @@ export default function YeniArsivPage() {
   const [recentBulletins, setRecentBulletins] = useState<any[]>([]);
   const [liveMatchesMap, setLiveMatchesMap] = useState<Record<string, any>>({});
   const [activePredictionsMap, setActivePredictionsMap] = useState<Record<string, string>>({});
+  const fetchedPredWeeksRef = useRef<Set<number>>(new Set());
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -243,18 +256,120 @@ export default function YeniArsivPage() {
     return () => clearInterval(t);
   }, []);
 
+  const ensurePredictionsLoadedForWeeks = async (weeks: number[]) => {
+    const missing = weeks.filter((w) => w > 0 && !fetchedPredWeeksRef.current.has(w));
+    if (missing.length === 0) return;
+
+    missing.forEach((w) => fetchedPredWeeksRef.current.add(w));
+
+    const chunks = await Promise.all(
+      missing.map(async (w) => {
+        let rows: any[] = [];
+        let from = 0;
+        const step = 1000;
+        let more = true;
+        while (more) {
+          const { data, error } = await supabase
+            .from('player_predictions')
+            .select('user_id, week_num, match_index, predicted_score')
+            .eq('week_num', w)
+            .range(from, from + step - 1);
+          if (error || !data || data.length === 0) {
+            more = false;
+          } else {
+            rows = [...rows, ...data];
+            if (data.length < step) more = false;
+            else from += step;
+          }
+        }
+        return rows;
+      })
+    );
+
+    const flatRows = chunks.flat();
+    if (flatRows.length > 0) {
+      setActivePredictionsMap((prev) => {
+        const next = { ...prev };
+        flatRows.forEach((pr: any) => {
+          const uid = String(pr.user_id || '').trim();
+          if (!uid || EXCLUDED_IDS.has(uid)) return;
+          const sc = String(pr.predicted_score || '')
+            .replace(/\s+/g, '')
+            .replace(':', '-');
+          if (sc) {
+            next[`${uid}-${pr.week_num}-${pr.match_index}`] = sc;
+          }
+        });
+        return next;
+      });
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
 
-    const fetchAllOfficialMatchesPaged = async () => {
+    // 1-40. mühürlü haftaları localStorage önbelleğinden oku; sadece 41+ aktif haftaları Supabase'den taze çek!
+    const fetchOptimizedOfficialData = async (): Promise<{
+      allMatches: OfficialMatchRow[];
+      allWeeks: OfficialWeekRow[];
+    }> => {
+      const matchCols =
+        'id, week_num, match_index, category, pool_type, match_date, match_time, home_team, away_team, home_score, away_score, status, winner_ids, points_awarded';
+      const weekCols =
+        'week_num, is_completed, bonus_enabled, puan_lideri_ids, puan_bonus, skor_krali_ids, skor_bonus';
+
+      let cachedSealedMatches: OfficialMatchRow[] | null = null;
+      let cachedSealedWeeks: OfficialWeekRow[] | null = null;
+
+      if (typeof window !== 'undefined') {
+        try {
+          const ts = Number(localStorage.getItem(SEALED_CACHE_TS_KEY) || '0');
+          if (Date.now() - ts < SEALED_CACHE_TTL_MS) {
+            const rawM = localStorage.getItem(SEALED_MATCHES_CACHE_KEY);
+            const rawW = localStorage.getItem(SEALED_WEEKS_CACHE_KEY);
+            if (rawM && rawW) {
+              const parsedM = JSON.parse(rawM);
+              const parsedW = JSON.parse(rawW);
+              if (Array.isArray(parsedM) && parsedM.length >= 500 && Array.isArray(parsedW)) {
+                cachedSealedMatches = parsedM;
+                cachedSealedWeeks = parsedW;
+              }
+            }
+          }
+        } catch {}
+      }
+
+      if (cachedSealedMatches && cachedSealedWeeks) {
+        const [recentMatchesRes, recentWeeksRes] = await Promise.all([
+          supabase
+            .from('etml_official_matches')
+            .select(matchCols)
+            .gt('week_num', 40)
+            .order('week_num', { ascending: true })
+            .order('match_index', { ascending: true })
+            .limit(500),
+          supabase
+            .from('etml_official_weeks')
+            .select(weekCols)
+            .gt('week_num', 40)
+            .order('week_num', { ascending: true })
+        ]);
+
+        return {
+          allMatches: [...cachedSealedMatches, ...((recentMatchesRes.data || []) as OfficialMatchRow[])],
+          allWeeks: [...cachedSealedWeeks, ...((recentWeeksRes.data || []) as OfficialWeekRow[])]
+        };
+      }
+
+      // İlk kez açılıyorsa hepsini seçici sütunlarla çek ve 1-40. haftaları tarayıcıya mühürle
       let allRows: OfficialMatchRow[] = [];
       let from = 0;
-      const step = 500;
+      const step = 1000;
       let keepGoing = true;
       while (keepGoing) {
         const { data, error } = await supabase
           .from('etml_official_matches')
-          .select('*')
+          .select(matchCols)
           .order('week_num', { ascending: true })
           .order('match_index', { ascending: true })
           .range(from, from + step - 1);
@@ -266,27 +381,45 @@ export default function YeniArsivPage() {
           else from += step;
         }
       }
-      return allRows;
+
+      const { data: weeksData } = await supabase
+        .from('etml_official_weeks')
+        .select(weekCols)
+        .order('week_num', { ascending: true });
+
+      const allW = (weeksData || []) as OfficialWeekRow[];
+
+      if (typeof window !== 'undefined' && allRows.length > 0) {
+        try {
+          const sealedM = allRows.filter((m) => Number(m.week_num) <= 40);
+          const sealedW = allW.filter((w) => Number(w.week_num) <= 40);
+          localStorage.setItem(SEALED_MATCHES_CACHE_KEY, JSON.stringify(sealedM));
+          localStorage.setItem(SEALED_WEEKS_CACHE_KEY, JSON.stringify(sealedW));
+          localStorage.setItem(SEALED_CACHE_TS_KEY, String(Date.now()));
+        } catch {}
+      }
+
+      return { allMatches: allRows, allWeeks: allW };
     };
 
     const loadArchiveSystem = async () => {
       try {
-        const [offPlayersRes, legacyPlayersRes, offWeeksRes, offMatchesAll, recentBulRes] =
-          await Promise.all([
-            supabase.from('etml_official_players').select('*'),
-            supabase.from('players').select('*'),
-            supabase
-              .from('etml_official_weeks')
-              .select('*')
-              .order('week_num', { ascending: true }),
-            fetchAllOfficialMatchesPaged(),
-            supabase
-              .from('matches_bulletin')
-              .select('*')
-              .gte('week_num', 40)
-              .order('week_num', { ascending: true })
-              .order('match_index', { ascending: true })
-          ]);
+        const [offPlayersRes, legacyPlayersRes, officialBundle, recentBulRes] = await Promise.all([
+          supabase
+            .from('etml_official_players')
+            .select('user_id, full_name, is_active, is_champion, favorite_team'),
+          supabase
+            .from('players')
+            .select('username, name, full_name, is_champion, favorite_team'),
+          fetchOptimizedOfficialData(),
+          supabase
+            .from('matches_bulletin')
+            .select('week_num, match_index, category, match_date, match_time, home_team, away_team')
+            .gte('week_num', 41)
+            .order('week_num', { ascending: true })
+            .order('match_index', { ascending: true })
+            .limit(400)
+        ]);
 
         if (!mounted) return;
 
@@ -301,6 +434,15 @@ export default function YeniArsivPage() {
           }
         });
 
+        (legacyPlayersRes.data || []).forEach((lp: any) => {
+          const uid = String(lp.username || '').trim();
+          if (!uid || disabledIds.has(uid)) return;
+          const nm = String(lp.name || lp.full_name || pMap[uid]?.name || uid).trim();
+          const champ = Boolean(lp.is_champion || pMap[uid]?.isChampion || hasChampionCup(nm));
+          const favTeam = String(lp.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
+          pMap[uid] = { name: nm, isChampion: champ, favoriteTeam: favTeam };
+        });
+
         (offPlayersRes.data || []).forEach((op: any) => {
           const uid = String(op.user_id || '').trim();
           if (!uid) return;
@@ -309,24 +451,16 @@ export default function YeniArsivPage() {
             delete pMap[uid];
           } else {
             const nm = String(op.full_name || pMap[uid]?.name || uid).trim();
-            const champ = Boolean(op.is_champion || op.has_cup || hasChampionCup(nm));
+            const champ = Boolean(op.is_champion || hasChampionCup(nm));
             const favTeam = String(op.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
             pMap[uid] = { name: nm, isChampion: champ, favoriteTeam: favTeam };
           }
         });
 
-        (legacyPlayersRes.data || []).forEach((lp: any) => {
-          const uid = String(lp.username || lp.user_id || lp.id || '').trim();
-          if (!uid || disabledIds.has(uid)) return;
-          const nm = String(lp.name || lp.full_name || pMap[uid]?.name || uid).trim();
-          const champ = Boolean(lp.is_champion || pMap[uid]?.isChampion || hasChampionCup(nm));
-          const favTeam = String(lp.favorite_team || pMap[uid]?.favoriteTeam || '').trim();
-          pMap[uid] = { name: nm, isChampion: champ, favoriteTeam: favTeam };
-        });
-
         setPlayersMap(pMap);
 
-        const weeksRows = (offWeeksRes.data || []) as OfficialWeekRow[];
+        const offMatchesAll = officialBundle.allMatches;
+        const weeksRows = officialBundle.allWeeks;
         setOfficialWeeks(weeksRows);
         setOfficialMatches(offMatchesAll);
 
@@ -397,62 +531,47 @@ export default function YeniArsivPage() {
           }
         });
 
-        const fetchActivePreds = async () => {
-          const chunks = await Promise.all(
-            liveTargetWeeks.map(async (w) => {
-              let rows: any[] = [];
-              let from = 0;
-              const step = 500;
-              let more = true;
-              while (more) {
-                const { data, error } = await supabase
-                  .from('player_predictions')
-                  .select('user_id, week_num, match_index, predicted_score')
-                  .eq('week_num', w)
-                  .order('match_index', { ascending: true })
-                  .order('user_id', { ascending: true })
-                  .range(from, from + step - 1);
-                if (error || !data || data.length === 0) {
-                  more = false;
-                } else {
-                  rows = [...rows, ...data];
-                  if (data.length < step) more = false;
-                  else from += step;
-                }
-              }
-              return rows;
-            })
-          );
-          return chunks.flat();
-        };
-
-        const [liveDbRes, activePredRows] = await Promise.all([
+        // Sadece hafif kolonları çek (ağır 'events' JSON sütununu ÇEKME!)
+        const liveDbRes =
           targetLiveIds.length > 0
-            ? supabase.from('live_matches').select('*').in('id', targetLiveIds)
-            : Promise.resolve({ data: [] as any[] }),
-          fetchActivePreds()
-        ]);
+            ? await supabase
+                .from('live_matches')
+                .select('id, home_score, away_score, status')
+                .in('id', targetLiveIds)
+            : { data: [] as any[] };
 
         if (!mounted) return;
 
         const lMap: Record<string, any> = {};
+        const weeksNeedingPreds = new Set<number>();
+
         (liveDbRes.data || []).forEach((r: any) => {
           lMap[String(r.id)] = r;
-        });
-        setLiveMatchesMap(lMap);
-
-        const predMap: Record<string, string> = {};
-        activePredRows.forEach((pr: any) => {
-          const uid = String(pr.user_id || '').trim();
-          if (!uid || EXCLUDED_IDS.has(uid)) return;
-          const sc = String(pr.predicted_score || '')
-            .replace(/\s+/g, '')
-            .replace(':', '-');
-          if (sc) {
-            predMap[`${uid}-${pr.week_num}-${pr.match_index}`] = sc;
+          const st = String(r.status || '').toUpperCase();
+          if (
+            ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'BT', 'WAITING_APPROVAL', 'FINISHED', 'FT', 'AET', 'PEN'].includes(
+              st
+            ) &&
+            r.home_score !== null &&
+            r.home_score !== '-'
+          ) {
+            const wk = Math.floor(Number(r.id) / 100);
+            const mIdx = Number(r.id) % 100;
+            const alreadyFinInOff = offMatchesAll.some(
+              (om) => Number(om.week_num) === wk && Number(om.match_index) === mIdx && om.status === 'FINISHED'
+            );
+            if (!alreadyFinInOff) {
+              weeksNeedingPreds.add(wk);
+            }
           }
         });
-        setActivePredictionsMap(predMap);
+
+        setLiveMatchesMap(lMap);
+
+        // Tahminleri SADECE canlı veya resmi kasaya henüz işlenmemiş skorlu maç varsa çek!
+        if (weeksNeedingPreds.size > 0) {
+          await ensurePredictionsLoadedForWeeks(Array.from(weeksNeedingPreds));
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -466,6 +585,11 @@ export default function YeniArsivPage() {
         const row = payload.new;
         if (!row || row.id === undefined) return;
         setLiveMatchesMap((prev) => ({ ...prev, [String(row.id)]: row }));
+
+        if (isLiveMatchStatus(row.status)) {
+          const wk = Math.floor(Number(row.id) / 100);
+          ensurePredictionsLoadedForWeeks([wk]);
+        }
       })
       .on(
         'postgres_changes',
@@ -784,23 +908,24 @@ export default function YeniArsivPage() {
         const dbLive = liveMatchesMap[uidStr];
         if (!dbLive) return;
 
-        const st = String(dbLive.status || '');
+        const st = String(dbLive.status || '').toUpperCase();
+        const kMs = getMatchTimeMs(m.match_date, m.match_time);
+        const withinMatchWindow = kMs === 0 || (nowMs >= kMs - 10 * 60 * 1000 && nowMs <= kMs + 14 * 3600 * 1000);
+
+        if (isLiveMatchStatus(st) && withinMatchWindow) {
+          liveCount += 1;
+        }
+
         const hSc = String(dbLive.home_score ?? '-');
         const aSc = String(dbLive.away_score ?? '-');
         if (hSc === '-' || aSc === '-') return;
 
-        const kMs = getMatchTimeMs(m.match_date, m.match_time);
-        const isLiveActive =
-          ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL', 'FINISHED', 'FT', 'AET', 'PEN'].includes(
+        const isLiveOrPendingFinish =
+          ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'BT', 'WAITING_APPROVAL', 'FINISHED', 'FT', 'AET', 'PEN'].includes(
             st
-          ) &&
-          (kMs === 0 || (nowMs >= kMs && nowMs <= kMs + 14 * 3600 * 1000));
+          ) && withinMatchWindow;
 
-        if (!isLiveActive) return;
-
-        if (['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'WAITING_APPROVAL'].includes(st)) {
-          liveCount += 1;
-        }
+        if (!isLiveOrPendingFinish) return;
 
         const targetScore = `${hSc}-${aSc}`.replace(/\s+/g, '');
         const allKnownIds = Object.keys(liveMapClone);
@@ -889,6 +1014,22 @@ export default function YeniArsivPage() {
     nowMs
   ]);
 
+  // OTOMATİK CANLI / KESİNLEŞMİŞ DETAYLI MASTER KURALI:
+  // Kullanıcı elle başka bir filtreye basmadığı sürece, o an canlı maç varsa anında CANLI + DETAYLI MASTER'a geçer;
+  // canlı maç yoksa veya tüm canlı maçlar bitip kasaya mühürlendiyse MASTER + DETAYLI MASTER'da kalır!
+  useEffect(() => {
+    if (loading) return;
+    if (userManuallyChangedFilterRef.current) return;
+
+    if (liveActiveMatchCount > 0) {
+      setStandingsFilter('CANLI');
+      setMasterSubFilter('DETAYLI');
+    } else {
+      setStandingsFilter('MASTER');
+      setMasterSubFilter('DETAYLI');
+    }
+  }, [loading, liveActiveMatchCount]);
+
   const sortMaster = (list: PlayerStatRow[]) =>
     [...list].sort(
       (a, b) =>
@@ -939,7 +1080,6 @@ export default function YeniArsivPage() {
           a.name.localeCompare(b.name, 'tr')
       );
 
-  // SOL BAŞTA BÜYÜTÜLMÜŞ TAKIM ARMASI + YARIŞMACI ADI + ŞAMPİYONLUK KUPALARI + TÜRK BAYRAĞI
   const renderPlayerNameWithCup = (
     name: string,
     isChamp: boolean,
@@ -980,8 +1120,6 @@ export default function YeniArsivPage() {
     );
   };
 
-  // DETAYLI MASTER TABLO BİLEŞENİ (Büyütülmüş Mobil ve Web Puntoları)
-  // SAĞDAN SOLA KAYARAK AÇILIP DARALAN (AKORDEON) MASTER & DETAYLI MASTER TABLOSU
   const renderSlidingMasterTable = (
     rows: PlayerStatRow[],
     isDetailOpen: boolean,
@@ -1000,7 +1138,6 @@ export default function YeniArsivPage() {
 
     return (
       <div className="w-full text-left tabular-nums select-none">
-        {/* ÜSTTE DONDURULMUŞ SÜTUN BAŞLIĞI */}
         <div
           className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800 flex items-end w-full uppercase font-black transition-all duration-300 ${
             isDetailOpen ? 'h-12 sm:h-11 text-[10px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
@@ -1018,7 +1155,6 @@ export default function YeniArsivPage() {
             YARIŞMACI
           </div>
 
-          {/* SAĞDAN SOLA AÇILAN 4'LÜ DETAY ÇEKMECESİ (DFO - TFF - BNS - SKOR) */}
           <div
             className={`flex items-end shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
               isDetailOpen
@@ -1048,7 +1184,6 @@ export default function YeniArsivPage() {
             </div>
           </div>
 
-          {/* EN SAĞDA SABİT MASTER SÜTUNU (TIKLAYINCA DA AÇAR / KAPATIR) */}
           <button
             type="button"
             onClick={onToggleDetail}
@@ -1072,7 +1207,6 @@ export default function YeniArsivPage() {
           </button>
         </div>
 
-        {/* YARIŞMACI SATIRLARI */}
         <div className="divide-y divide-slate-800/70">
           {sorted.map((row, idx) => (
             <div
@@ -1105,7 +1239,6 @@ export default function YeniArsivPage() {
                 )}
               </div>
 
-              {/* SAĞDAN SOLA KAYARAK AÇILAN PUAN HÜCRELERİ */}
               <div
                 className={`flex items-center shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
                   isDetailOpen
@@ -1127,7 +1260,6 @@ export default function YeniArsivPage() {
                 </div>
               </div>
 
-              {/* EN SAĞDA SABİT MASTER PUAN HÜCRESİ */}
               <div
                 className={`shrink-0 self-stretch flex items-center bg-sky-500/10 font-black text-white transition-all duration-300 ${
                   isDetailOpen
@@ -1144,14 +1276,6 @@ export default function YeniArsivPage() {
     );
   };
 
-  // Geriye dönük uyumluluk sarmalayıcısı
-  const renderDetailedMasterTable = (
-    rows: PlayerStatRow[],
-    showLiveBadge: boolean = false,
-    emptyText: string = 'VERİ BULUNAMADI'
-  ) => renderSlidingMasterTable(rows, true, undefined, showLiveBadge, emptyText);
-
-  // TEK SÜTUNLU STANDART TABLO BİLEŞENİ (Ferah 3 Sütun - Daha İri Punto)
   const renderSingleMetricTable = (
     rows: PlayerStatRow[],
     metric: 'MASTER' | 'DFO' | 'TFF' | 'SKOR_MASTER' | 'SKOR_DFO' | 'SKOR_TFF',
@@ -1243,7 +1367,6 @@ export default function YeniArsivPage() {
     );
   };
 
-  // BONUS TABLOSU BİLEŞENİ (Büyütülmüş Arma ve Punto)
   const renderBonusTable = (rows: PlayerStatRow[], emptyText: string = 'HENÜZ BONUS KAZANAN YOK') => {
     const sorted = sortBonus(rows);
     if (sorted.length === 0) {
@@ -1354,17 +1477,20 @@ export default function YeniArsivPage() {
       {/* ===================== 1. SEKME: GENEL PUAN DURUMU (DEFAULT) ===================== */}
       {activeTab === 'TOTAL_STANDINGS' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          {/* TEK SATIRLIK DONDURULMUŞ VE AÇILIR/KAPANIR KATEGORİ BARI */}
           <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
-            {/* SOL: Açılır/Kapanır Genel Puan Durumu Başlığı */}
             <button
               type="button"
               onClick={() => setIsStandingsMenuOpen((prev) => !prev)}
               className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
             >
+              {standingsFilter === 'CANLI' && liveActiveMatchCount > 0 && (
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+              )}
               <h1 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
                 {standingsFilter === 'CANLI'
-                  ? 'CANLI PUAN DURUMU'
+                  ? liveActiveMatchCount > 0
+                    ? `CANLI PUAN DURUMU (${liveActiveMatchCount} MAÇ)`
+                    : 'CANLI PUAN DURUMU'
                   : standingsFilter === 'DFO'
                   ? 'DFO PUAN DURUMU'
                   : standingsFilter === 'TFF'
@@ -1380,11 +1506,11 @@ export default function YeniArsivPage() {
               </span>
             </button>
 
-            {/* SAĞ: MASTER ve Hemen Yanında DETAYLI MASTER (Tıklayınca Sağdan Sola Açar/Kapatır) */}
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => {
+                  userManuallyChangedFilterRef.current = true;
                   if (standingsFilter !== 'CANLI') setStandingsFilter('MASTER');
                   setMasterSubFilter('DUZ');
                   setIsStandingsMenuOpen(false);
@@ -1402,10 +1528,11 @@ export default function YeniArsivPage() {
               <button
                 type="button"
                 onClick={() => {
+                  userManuallyChangedFilterRef.current = true;
                   const isCurrentlyMasterOrLive =
                     standingsFilter === 'MASTER' || standingsFilter === 'CANLI';
                   if (!isCurrentlyMasterOrLive) {
-                    setStandingsFilter('MASTER');
+                    setStandingsFilter(liveActiveMatchCount > 0 ? 'CANLI' : 'MASTER');
                     setMasterSubFilter('DETAYLI');
                   } else {
                     setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
@@ -1426,14 +1553,16 @@ export default function YeniArsivPage() {
               </button>
             </div>
 
-            {/* AÇILIR/KAPANIR KATEGORİ ÇEKMECESİ (CANLI, MASTER, DETAYLI MASTER, DFO, TFF, SKOR, BONUS) */}
             {isStandingsMenuOpen && (
               <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-col gap-2.5">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
+                      ensurePredictionsLoadedForWeeks(activeRealTimeWeeks);
                       setStandingsFilter('CANLI');
+                      setMasterSubFilter('DETAYLI');
                       setIsStandingsMenuOpen(false);
                     }}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
@@ -1448,6 +1577,7 @@ export default function YeniArsivPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
                       setStandingsFilter('MASTER');
                       setMasterSubFilter('DUZ');
                       setIsStandingsMenuOpen(false);
@@ -1464,6 +1594,7 @@ export default function YeniArsivPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
                       setStandingsFilter('MASTER');
                       setMasterSubFilter('DETAYLI');
                       setIsStandingsMenuOpen(false);
@@ -1480,6 +1611,7 @@ export default function YeniArsivPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
                       setStandingsFilter('DFO');
                       setIsStandingsMenuOpen(false);
                     }}
@@ -1495,6 +1627,7 @@ export default function YeniArsivPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
                       setStandingsFilter('TFF');
                       setIsStandingsMenuOpen(false);
                     }}
@@ -1509,7 +1642,10 @@ export default function YeniArsivPage() {
 
                   <button
                     type="button"
-                    onClick={() => setStandingsFilter('SKOR')}
+                    onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
+                      setStandingsFilter('SKOR');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
                       standingsFilter === 'SKOR'
                         ? 'bg-orange-600 text-white border-orange-300/80'
@@ -1522,6 +1658,7 @@ export default function YeniArsivPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      userManuallyChangedFilterRef.current = true;
                       setStandingsFilter('BONUS');
                       setIsStandingsMenuOpen(false);
                     }}
@@ -1549,6 +1686,7 @@ export default function YeniArsivPage() {
                         key={sf.key}
                         type="button"
                         onClick={() => {
+                          userManuallyChangedFilterRef.current = true;
                           setSkorSubFilter(sf.key);
                           setIsStandingsMenuOpen(false);
                         }}
@@ -1567,13 +1705,15 @@ export default function YeniArsivPage() {
             )}
           </div>
 
-          {/* TABLO GÖVDESİ */}
           <div className="px-1 pb-4 sm:px-4 sm:pb-6">
             {standingsFilter === 'CANLI' &&
               renderSlidingMasterTable(
                 totalStandings.canli,
                 masterSubFilter === 'DETAYLI',
-                () => setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI')),
+                () => {
+                  userManuallyChangedFilterRef.current = true;
+                  setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                },
                 true
               )}
 
@@ -1581,7 +1721,10 @@ export default function YeniArsivPage() {
               renderSlidingMasterTable(
                 totalStandings.kesin,
                 masterSubFilter === 'DETAYLI',
-                () => setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI')),
+                () => {
+                  userManuallyChangedFilterRef.current = true;
+                  setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                },
                 false
               )}
 
@@ -1690,7 +1833,6 @@ export default function YeniArsivPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredArchiveMatches.map((m) => {
                 const key = `${m.week_num}-${m.match_index}`;
-                // Live karttaki gibi bilenler radarı varsayılan AÇIK gelsin; tıklayınca gizlensin
                 const isRadarOpen = expandedArchiveCards[key] !== false;
                 const isFin = m.status === 'FINISHED';
                 const isPost = m.status === 'POSTPONED';
@@ -1698,7 +1840,6 @@ export default function YeniArsivPage() {
                   m.pool_type === 'TFF' ||
                   (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
 
-                // Bültende daha detaylı kategori adı varsa yakala
                 const bulMatch = recentBulletins.find(
                   (b: any) =>
                     Number(b.week_num) === Number(m.week_num) &&
@@ -1728,7 +1869,6 @@ export default function YeniArsivPage() {
 
                 const catNorm = normalizeTrName(leagueTitle);
 
-                // Kart Tema Renkleri: TFF Kıpkırmızı, Şampiyonlar Ligi İndigo, Avrupa Ligi Turuncu, Konferans Yeşil, DFO/Uluslar Ligi Canlı Kart Mavisi
                 let cardOuterCls =
                   theme?.cardBg ||
                   'bg-gradient-to-b from-[#081529] via-[#061020] to-[#040a15] border-sky-500/35 shadow-[0_8px_26px_rgba(2,132,199,0.14)]';
@@ -1744,10 +1884,7 @@ export default function YeniArsivPage() {
                     'bg-rose-950/90 border-rose-400/65 text-rose-100 shadow-[0_0_18px_rgba(244,63,94,0.32)]';
                   poolPillCls = 'bg-rose-950 border-rose-400/70 text-rose-200';
                   scoreBoxCls = 'bg-[#1c0308] border-rose-500/60 text-white';
-                } else if (
-                  catNorm.includes('SAMPIYONLAR') ||
-                  catNorm.includes('CHAMPIONS')
-                ) {
+                } else if (catNorm.includes('SAMPIYONLAR') || catNorm.includes('CHAMPIONS')) {
                   cardOuterCls =
                     'bg-gradient-to-b from-[#0f1a48] via-[#09102e] to-[#040818] border-indigo-400/60 shadow-[0_8px_26px_rgba(99,102,241,0.22)]';
                   bannerCls =
@@ -1791,7 +1928,6 @@ export default function YeniArsivPage() {
                     key={key}
                     className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-3 transition-all ${cardOuterCls}`}
                   >
-                    {/* 1. ÜST BİLGİ SATIRI: 41. HAFTA 8. MAÇ • TARİH SAAT */}
                     <div className="flex items-center justify-center relative text-[10px] sm:text-[10.5px] font-black tracking-wider text-slate-300 uppercase">
                       <span>
                         {m.week_num}. HAFTA {m.match_index}. MAÇ
@@ -1800,16 +1936,13 @@ export default function YeniArsivPage() {
                       </span>
                     </div>
 
-                    {/* 2. PARLAYAN TURNUVA / KATEGORİ BANDI */}
                     <div
                       className={`w-full py-1.5 px-3 rounded-xl border text-center text-[10px] sm:text-[11px] font-black uppercase tracking-widest truncate ${bannerCls}`}
                     >
                       {leagueTitle}
                     </div>
 
-                    {/* 3. TAKIM ARMALARI + ORTA LİG LOGOSU + DURUM + SKOR KUTUSU */}
                     <div className="grid grid-cols-3 items-center gap-2 py-1.5">
-                      {/* Ev Sahibi (Şeffaf & %20 Daha Büyük Müstakil Arma) */}
                       <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.homeLogo}
@@ -1822,7 +1955,6 @@ export default function YeniArsivPage() {
                         </span>
                       </div>
 
-                      {/* Orta: Lig Logosu + MS (BİTTİ) + Büyük Skor */}
                       <div className="flex flex-col items-center justify-center gap-1.5">
                         {leagueLogo && (
                           <img
@@ -1860,7 +1992,6 @@ export default function YeniArsivPage() {
                         </div>
                       </div>
 
-                      {/* Deplasman (Şeffaf & %20 Daha Büyük Müstakil Arma) */}
                       <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.awayLogo}
@@ -1874,7 +2005,6 @@ export default function YeniArsivPage() {
                       </div>
                     </div>
 
-                    {/* 4. İSABET SAYISI • DFO/TFF MAÇI ROZETİ • RADAR AÇ/GİZLE */}
                     <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] font-black">
                       <span
                         className={
@@ -1918,7 +2048,6 @@ export default function YeniArsivPage() {
                       )}
                     </div>
 
-                    {/* 5. CANLI KART GÖRÜNÜMLÜ YEŞİL PUAN VE KAZANANLAR RADARI */}
                     {isFin && winnerEntries.length > 0 && isRadarOpen && (
                       <div className="rounded-xl border border-emerald-500/35 bg-[#031214]/85 p-2.5 flex flex-col gap-2">
                         <div className="flex justify-center">
@@ -2213,7 +2342,7 @@ export default function YeniArsivPage() {
         </div>
       )}
 
-      {/* ===================== 5. SEKME: LİDERLER (DİKEY MOBİL BAŞLIKLAR + KULÜP ARMASI + HAFTAYA GİT LİNKİ) ===================== */}
+      {/* ===================== 5. SEKME: LİDERLER ===================== */}
       {activeTab === 'LEADERS_TIMELINE' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
           <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 py-3 sm:px-5 flex items-center justify-between gap-2">
