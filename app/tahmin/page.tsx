@@ -58,12 +58,29 @@ export default function PredictionPortal() {
   useEffect(() => {
     const fetchDbPlayers = async () => {
       const [playersRes, officialRes] = await Promise.all([
-        supabase.from('players').select('*'),
-        supabase.from('etml_official_players').select('*')
+        supabase.from('players').select('username, name, full_name, password'),
+        supabase.from('etml_official_players').select('user_id, full_name, is_active')
       ]);
 
       const newAccounts: Record<string, { pass: string; name: string }> = { ...TEST_ACCOUNTS };
 
+      // Önce eski players tablosundan şifre ve isimleri al
+      if (playersRes.data) {
+        playersRes.data.forEach((p: any) => {
+          const pid = String(p.username || '').trim();
+          if (!pid) return;
+          if (newAccounts[pid]) {
+            newAccounts[pid] = {
+              pass: p.password || newAccounts[pid].pass,
+              name: p.name || p.full_name || newAccounts[pid].name
+            };
+          } else {
+            newAccounts[pid] = { pass: p.password || '', name: p.name || p.full_name || pid };
+          }
+        });
+      }
+
+      // Sonra resmi tablodan aktiflik ve güncel isimleri baskın olarak uygula
       if (officialRes.data) {
         officialRes.data.forEach((op: any) => {
           const pid = String(op.user_id || '').trim();
@@ -75,21 +92,6 @@ export default function PredictionPortal() {
               pass: newAccounts[pid]?.pass || '',
               name: op.full_name
             };
-          }
-        });
-      }
-
-      if (playersRes.data) {
-        playersRes.data.forEach((p: any) => {
-          const pid = String(p.username || p.id || '').trim();
-          if (!pid) return;
-          if (newAccounts[pid]) {
-            newAccounts[pid] = {
-              pass: newAccounts[pid].pass || p.password || p.pass,
-              name: p.name || p.full_name || newAccounts[pid].name
-            };
-          } else {
-            newAccounts[pid] = { pass: p.password || p.pass, name: p.name || p.full_name };
           }
         });
       }
@@ -110,9 +112,9 @@ export default function PredictionPortal() {
     const fetchInitialData = async () => {
       const { data: bultenData } = await supabase
         .from('matches_bulletin')
-        .select('*')
+        .select('week_num, match_index, category, match_date, match_time, home_team, away_team')
         .gte('week_num', 41)
-        .limit(10000);
+        .limit(500);
       if (bultenData) {
         const newMap: Record<number, any[]> = {};
         let maxWeek = 0;
@@ -145,8 +147,10 @@ export default function PredictionPortal() {
   }, []);
 
   useEffect(() => {
+    // Sadece Tahminmatik ekranında canlı skorlara ihtiyaç var (entry ve declaration ekranlarında boşuna çekme!)
+    if (view !== 'tahminmatik' || !selectedTahminWeek) return;
+
     const fetchLiveMatchStatuses = async () => {
-      if (!selectedTahminWeek) return;
       const { data } = await supabase
         .from('live_matches')
         .select('id, status, home_score, away_score')
@@ -166,23 +170,37 @@ export default function PredictionPortal() {
       }
     };
 
-    if (view === 'declaration' || view === 'tahminmatik' || view === 'entry') {
-      fetchLiveMatchStatuses();
-    }
+    fetchLiveMatchStatuses();
   }, [selectedTahminWeek, view]);
 
   useEffect(() => {
-    if (activeBulletinWeek === 0 || Object.keys(mergedAccounts).length === 0) return;
+    // Sadece Lobi ekranındayken Yapanlar / Eksikler panosunu güncelle
+    if (view !== 'lobby' || activeBulletinWeek === 0 || Object.keys(mergedAccounts).length === 0) return;
 
     const fetchPlayerStatus = async () => {
+      // 1.300 satırı çekmek yerine ilk 3 maçtan herhangi birine tahmin girmiş olanları çek (~54-150 satır = %90 Egress tasarrufu + 1000 satır limitine takılmaz!)
       const { data: preds } = await supabase
         .from('player_predictions')
         .select('user_id')
-        .eq('week_num', activeBulletinWeek);
+        .eq('week_num', activeBulletinWeek)
+        .lte('match_index', 6)
+        .limit(500);
 
       const submittedUserIds = new Set((preds || []).map((p) => String(p.user_id)));
+      // Parça kayıt ihtimaline karşı son maçlara girmiş olan varsa ve sayı 54'ten azsa tek hafif kontrol daha yap
+      if (submittedUserIds.size < 45) {
+        const { data: latePreds } = await supabase
+          .from('player_predictions')
+          .select('user_id')
+          .eq('week_num', activeBulletinWeek)
+          .gt('match_index', 6)
+          .lte('match_index', 15)
+          .limit(500);
+        (latePreds || []).forEach((p) => submittedUserIds.add(String(p.user_id)));
+      }
+
       const allUserIds = Object.keys(mergedAccounts).filter(
-        (id) => id !== 'mankoman' && id !== 'mankoman' && id !== 'mankoman'
+        (id) => id !== 'mankoman' && id !== '272727' && id !== '262787'
       );
 
       const missingIds = allUserIds.filter((id) => !submittedUserIds.has(id));
@@ -203,20 +221,23 @@ export default function PredictionPortal() {
   }, [activeBulletinWeek, mergedAccounts, view]);
 
   useEffect(() => {
-    const fetchLivePreds = async () => {
-      if (!selectedTahminWeek) return;
+    if ((view !== 'declaration' && view !== 'tahminmatik') || !selectedTahminWeek) return;
 
+    // Aynı haftanın deklarasyon verisi zaten hafızadaysa ve son 2 dakikada çekildiyse tekrar 1.300 satır indirme!
+    if (livePredictionsData[selectedTahminWeek] && Object.keys(livePredictionsData[selectedTahminWeek]).length > 0) {
+      return;
+    }
+
+    const fetchLivePreds = async () => {
       let allData: any[] = [];
       let from = 0;
-      const step = 500;
+      const step = 1000;
       let keepFetching = true;
       while (keepFetching) {
         const { data } = await supabase
           .from('player_predictions')
-          .select('*')
+          .select('user_id, week_num, match_index, predicted_score')
           .eq('week_num', selectedTahminWeek)
-          .order('match_index', { ascending: true })
-          .order('user_id', { ascending: true })
           .range(from, from + step - 1);
         if (data && data.length > 0) {
           allData = [...allData, ...data];
@@ -227,25 +248,18 @@ export default function PredictionPortal() {
         }
       }
       if (allData.length > 0) {
-        const newData: Record<number, Record<string, string[]>> = {};
+        const weekMap: Record<string, string[]> = {};
         allData.forEach((row) => {
-          const wk = row.week_num;
           const uid = String(row.user_id);
           if (uid === 'mankoman' || uid === '272727' || uid === '262787') return;
-
-          if (!newData[wk]) newData[wk] = {};
-          if (!newData[wk][uid]) newData[wk][uid] = Array(24).fill('PAS');
-          newData[wk][uid][row.match_index - 1] = row.predicted_score;
+          if (!weekMap[uid]) weekMap[uid] = Array(24).fill('PAS');
+          weekMap[uid][row.match_index - 1] = row.predicted_score;
         });
-        setLivePredictionsData(newData);
-      } else {
-        setLivePredictionsData({});
+        setLivePredictionsData((prev) => ({ ...prev, [selectedTahminWeek]: weekMap }));
       }
     };
 
-    if (view === 'declaration' || view === 'tahminmatik') {
-      fetchLivePreds();
-    }
+    fetchLivePreds();
   }, [selectedTahminWeek, view]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -279,7 +293,7 @@ export default function PredictionPortal() {
     const bData = bulletinMap[activeBulletinWeek] || [];
     const { data: pData } = await supabase
       .from('player_predictions')
-      .select('*')
+      .select('match_index, predicted_score')
       .eq('week_num', activeBulletinWeek)
       .eq('user_id', currentUsername);
     if (bData && bData.length > 0) {
@@ -441,6 +455,12 @@ export default function PredictionPortal() {
           .upsert(payload, { onConflict: 'user_id,week_num,match_index' });
         if (error) throw error;
       }
+      setLivePredictionsData((prev) => {
+        const next = { ...prev };
+        delete next[activeBulletinWeek];
+        return next;
+      });
+      setShowSuccessModal(true);
 
       setShowSuccessModal(true);
     } catch {

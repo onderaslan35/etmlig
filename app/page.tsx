@@ -306,27 +306,32 @@ export default function LandingShowcasePage() {
 
     const loadLandingData = async () => {
       try {
-        const [offPlayersRes, legacyPlayersRes, bulRes, offMatchesRes, liveRes] = await Promise.all([
-          supabase.from('etml_official_players').select('*'),
-          supabase.from('players').select('*'),
+        const [offPlayersRes, legacyPlayersRes, bulRes, offMatchesRes] = await Promise.all([
+          supabase
+            .from('etml_official_players')
+            .select('user_id, full_name, is_active, is_champion, favorite_team'),
+          supabase
+            .from('players')
+            .select('username, name, full_name, is_champion, favorite_team'),
           supabase
             .from('matches_bulletin')
-            .select('*')
-            .gte('week_num', 40)
+            .select('week_num, match_index, category, match_date, match_time, home_team, away_team')
+            .gte('week_num', 41)
             .order('week_num', { ascending: true })
-            .order('match_index', { ascending: true }),
+            .order('match_index', { ascending: true })
+            .limit(300),
           supabase
             .from('etml_official_matches')
-            .select('*')
-            .gte('week_num', 40)
+            .select('week_num, match_index, category, pool_type, match_date, match_time, home_team, away_team, home_score, away_score, status, winner_ids, points_awarded')
+            .gte('week_num', 41)
             .order('week_num', { ascending: true })
-            .order('match_index', { ascending: true }),
-          supabase.from('live_matches').select('*')
+            .order('match_index', { ascending: true })
+            .limit(300)
         ]);
 
         if (!mounted) return;
 
-        // Oyuncu ve Kulüp Arması Havuzu
+        // Oyuncu ve Kulüp Arması Havuzu (Önce eski tablo, sonra güncel resmi tablo baskın)
         const pMap: Record<string, { name: string; isChampion: boolean; favoriteTeam: string }> = {};
         const disabledIds = new Set<string>(EXCLUDED_IDS);
 
@@ -339,6 +344,17 @@ export default function LandingShowcasePage() {
               favoriteTeam: ''
             };
           }
+        });
+
+        (legacyPlayersRes.data || []).forEach((lp: any) => {
+          const uid = String(lp.username || '').trim();
+          if (!uid || disabledIds.has(uid)) return;
+          const nm = String(lp.name || lp.full_name || pMap[uid]?.name || uid).trim();
+          pMap[uid] = {
+            name: nm,
+            isChampion: Boolean(lp.is_champion || pMap[uid]?.isChampion || getChampionCupCount(nm) > 0),
+            favoriteTeam: String(lp.favorite_team || pMap[uid]?.favoriteTeam || '').trim()
+          };
         });
 
         (offPlayersRes.data || []).forEach((op: any) => {
@@ -357,17 +373,6 @@ export default function LandingShowcasePage() {
           }
         });
 
-        (legacyPlayersRes.data || []).forEach((lp: any) => {
-          const uid = String(lp.username || lp.user_id || lp.id || '').trim();
-          if (!uid || disabledIds.has(uid)) return;
-          const nm = String(lp.name || lp.full_name || pMap[uid]?.name || uid).trim();
-          pMap[uid] = {
-            name: nm,
-            isChampion: Boolean(lp.is_champion || pMap[uid]?.isChampion || getChampionCupCount(nm) > 0),
-            favoriteTeam: String(lp.favorite_team || pMap[uid]?.favoriteTeam || '').trim()
-          };
-        });
-
         setPlayersMap(pMap);
 
         const bulRows = bulRes.data || [];
@@ -375,27 +380,73 @@ export default function LandingShowcasePage() {
         setBulletins(bulRows);
         setOfficialMatches(offRows);
 
+        // Vitrinde gösterilecek hedef günü bul ve SADECE o günün live_matches + tahmin verisini çek!
+        const { todayKey, todayStartMs } = getTodayTurkeyDayKey();
+        const dayWeeksMap = new Map<string, { dayStartMs: number; weeks: Set<number>; matchIds: number[] }>();
+
+        const registerMatchForDay = (wNum: number, mIdx: number, rawDate: string) => {
+          const parsed = parseDayKeyAndLabel(rawDate);
+          if (!parsed) return;
+          let entry = dayWeeksMap.get(parsed.dayKey);
+          if (!entry) {
+            entry = { dayStartMs: parsed.dayStartMs, weeks: new Set<number>(), matchIds: [] };
+            dayWeeksMap.set(parsed.dayKey, entry);
+          }
+          entry.weeks.add(wNum);
+          const uid = Number(getUniqueMatchId(wNum, mIdx));
+          if (!entry.matchIds.includes(uid)) entry.matchIds.push(uid);
+        };
+
+        offRows.forEach((o: any) => registerMatchForDay(Number(o.week_num), Number(o.match_index), o.match_date));
+        bulRows.forEach((b: any) => registerMatchForDay(Number(b.week_num), Number(b.match_index), b.match_date));
+
+        const sortedDayEntries = Array.from(dayWeeksMap.entries()).sort((a, b) => a[1].dayStartMs - b[1].dayStartMs);
+        let chosenDayEntry = dayWeeksMap.get(todayKey);
+        if (!chosenDayEntry) {
+          chosenDayEntry = sortedDayEntries.find(([, val]) => val.dayStartMs > todayStartMs)?.[1];
+        }
+        if (!chosenDayEntry && sortedDayEntries.length > 0) {
+          chosenDayEntry = sortedDayEntries[sortedDayEntries.length - 1][1];
+        }
+
+        const targetMatchIds = chosenDayEntry ? chosenDayEntry.matchIds : [];
+        const targetWeeks = chosenDayEntry ? Array.from(chosenDayEntry.weeks) : [];
+
+        // Sadece vitrindeki maçların canlı skorunu çek (ağır 'events' sütununu ÇEKME!)
         const lMap: Record<string, any> = {};
-        (liveRes.data || []).forEach((lr: any) => {
-          lMap[String(lr.id)] = lr;
-        });
+        if (targetMatchIds.length > 0) {
+          const { data: liveData } = await supabase
+            .from('live_matches')
+            .select('id, home_score, away_score, status, elapsed')
+            .in('id', targetMatchIds);
+
+          (liveData || []).forEach((lr: any) => {
+            lMap[String(lr.id)] = lr;
+          });
+        }
         setLiveMatchesMap(lMap);
 
-        // Aktif bülten haftalarının tahminlerini çek (Canlı / biten maçlarda bilenleri göstermek için)
-        const weekSet = new Set<number>();
-        bulRows.forEach((b: any) => weekSet.add(Number(b.week_num)));
-        offRows.forEach((o: any) => weekSet.add(Number(o.week_num)));
-        const recentWeeks = Array.from(weekSet)
-          .filter((w) => w >= 40)
-          .sort((a, b) => b - a)
-          .slice(0, 3);
+        // Tahminleri SADECE vitrinde canlı / onay bekleyen (henüz resmi kasaya işlenmemiş ama skoru olan) maç varsa çek!
+        const offFinishedSet = new Set<number>(
+          offRows
+            .filter((o: any) => String(o.status || '').toUpperCase() === 'FINISHED' && Array.isArray(o.winner_ids) && o.winner_ids.length > 0)
+            .map((o: any) => Number(getUniqueMatchId(Number(o.week_num), Number(o.match_index))))
+        );
 
-        if (recentWeeks.length > 0) {
+        const needsPredictions = targetMatchIds.some((id) => {
+          if (offFinishedSet.has(id)) return false;
+          const lr = lMap[String(id)];
+          if (!lr) return false;
+          const st = String(lr.status || '').toUpperCase();
+          return ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'BT', 'FT', 'FINISHED', 'AET', 'PEN', 'WAITING_APPROVAL'].includes(st);
+        });
+
+        if (needsPredictions && targetWeeks.length > 0) {
           const predChunks = await Promise.all(
-            recentWeeks.map(async (w) => {
+            targetWeeks.map(async (w) => {
               let rows: any[] = [];
               let from = 0;
-              const step = 500;
+              const step = 1000;
               let more = true;
               while (more) {
                 const { data, error } = await supabase
