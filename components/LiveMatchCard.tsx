@@ -400,8 +400,8 @@ export default function LiveMatchCard() {
   useEffect(() => {
     const fetchDbPlayers = async () => {
       const [playersRes, officialPlayersRes] = await Promise.all([
-        supabase.from('players').select('*'),
-        supabase.from('etml_official_players').select('*'),
+        supabase.from('players').select('username, name, full_name, favorite_team'),
+        supabase.from('etml_official_players').select('user_id, full_name, is_active, favorite_team'),
         refreshCustomClubsCache()
       ]);
 
@@ -494,18 +494,27 @@ export default function LiveMatchCard() {
   useEffect(() => {
     let candidateWeeksSnapshot: number[] = [];
     let trackedIdsSet = new Set<string>();
+    let cachedHistoricalSplit: Record<string, { dfo: number; tff: number }> | null = null;
 
     const refreshOfficialKasa = async (weeksToLoad: number[]) => {
       const [summaryRes, offMatchesRes] = await Promise.all([
-        supabase.from('etml_standings_summary').select('*').order('master_sira', { ascending: true }),
+        supabase
+          .from('etml_standings_summary')
+          .select('master_sira, user_id, oyuncu_adi, dfo_puan, tff_puan, bonus_puan, master_puan, tam_isabet')
+          .order('master_sira', { ascending: true }),
         weeksToLoad.length > 0
-          ? supabase.from('etml_official_matches').select('*').in('week_num', weeksToLoad).limit(2000)
+          ? supabase
+              .from('etml_official_matches')
+              .select('id, week_num, match_index, status, pool_type, home_score, away_score, points_awarded, winner_ids')
+              .in('week_num', weeksToLoad)
+              .limit(500)
           : Promise.resolve({ data: [] as any[] })
       ]);
 
       let rows = (summaryRes.data || []) as OfficialSummaryRow[];
 
-      if (rows.length > 0 && rows[0].dfo_skor === undefined) {
+      // Tüm sezonun bitmiş maçlarını her Realtime tetiklemesinde değil, oturumda SADECE 1 KEZ çek!
+      if (rows.length > 0 && !cachedHistoricalSplit) {
         let allFinMatches: any[] = [];
         let from = 0;
         const step = 1000;
@@ -533,11 +542,15 @@ export default function LiveMatchCard() {
             else scoreSplitMap[uid].dfo += 1;
           });
         });
+        cachedHistoricalSplit = scoreSplitMap;
+      }
 
+      if (cachedHistoricalSplit) {
+        const splitRef = cachedHistoricalSplit;
         rows = rows.map((r) => ({
           ...r,
-          dfo_skor: scoreSplitMap[r.user_id]?.dfo || 0,
-          tff_skor: scoreSplitMap[r.user_id]?.tff || 0
+          dfo_skor: splitRef[r.user_id]?.dfo || 0,
+          tff_skor: splitRef[r.user_id]?.tff || 0
         }));
       }
 
@@ -553,23 +566,22 @@ export default function LiveMatchCard() {
     };
 
     const fetchInitialData = async () => {
-      // 41 ve sonrası TÜM bültenleri çek (slice kesintisi yok: 41, 42, 43, 44, 45, 46 tamamı gelir!)
       let { data: recentBultenData } = await supabase
         .from('matches_bulletin')
-        .select('*')
+        .select('week_num, match_index, category, match_date, match_time, home_team, away_team')
         .gte('week_num', 41)
         .order('week_num', { ascending: true })
         .order('match_index', { ascending: true })
-        .limit(2000);
+        .limit(500);
 
       if (!recentBultenData || recentBultenData.length === 0) {
         const fallbackRes = await supabase
           .from('matches_bulletin')
-          .select('*')
+          .select('week_num, match_index, category, match_date, match_time, home_team, away_team')
           .gte('week_num', 40)
           .order('week_num', { ascending: true })
           .order('match_index', { ascending: true })
-          .limit(2000);
+          .limit(500);
         recentBultenData = fallbackRes.data || [];
       }
 
@@ -587,28 +599,39 @@ export default function LiveMatchCard() {
       setAllRecentBulletinMatches(mappedBulten);
 
       const distinctWeeks = Array.from(new Set<number>(mappedBulten.map((m) => m.week_num))).sort((a, b) => a - b);
-      // KESİNTİ YOK: 41..46 tüm aktif ve gelecek bültenleri takip et!
       const candidateWeeks = distinctWeeks;
       candidateWeeksSnapshot = candidateWeeks;
 
-      const targetMatchIds = mappedBulten.map((m) => getUniqueMatchId(m.week_num, m.id));
-      trackedIdsSet = new Set(targetMatchIds.map((id) => String(id)));
+      // Sadece son 72 saatte oynanmış veya önümüzdeki 36 saat içinde başlayacak haftaların tahminlerini çek (Henüz başlamamış 43-46. haftalar için boşuna binlerce satır çekmez!)
+      const nowMs = Date.now();
+      const predictionWeeks = distinctWeeks.filter((w) => {
+        const wMatches = mappedBulten.filter((m) => m.week_num === w);
+        const hasRecentOrUpcoming = wMatches.some((m) => {
+          const kMs = getMatchTimeMs(m.date, m.time);
+          return kMs > 0 && kMs <= nowMs + 36 * 60 * 60 * 1000 && nowMs - kMs <= 96 * 60 * 60 * 1000;
+        });
+        return hasRecentOrUpcoming;
+      });
+      const targetPredWeeks = predictionWeeks.length > 0 ? predictionWeeks : distinctWeeks.slice(0, 2);
+
+      const targetMatchIds = mappedBulten
+        .filter((m) => targetPredWeeks.includes(m.week_num))
+        .map((m) => getUniqueMatchId(m.week_num, m.id));
+      trackedIdsSet = new Set(mappedBulten.map((m) => String(getUniqueMatchId(m.week_num, m.id))));
 
       const fetchPredictionsPromise = (async () => {
-        if (candidateWeeks.length === 0) return [];
+        if (targetPredWeeks.length === 0) return [];
         const perWeekChunks = await Promise.all(
-          candidateWeeks.map(async (w) => {
+          targetPredWeeks.map(async (w) => {
             let weekPreds: any[] = [];
             let from = 0;
-            const step = 500;
+            const step = 1000;
             let keepFetching = true;
             while (keepFetching) {
               const { data, error } = await supabase
                 .from('player_predictions')
                 .select('user_id, week_num, match_index, predicted_score')
                 .eq('week_num', w)
-                .order('match_index', { ascending: true })
-                .order('user_id', { ascending: true })
                 .range(from, from + step - 1);
               if (error || !data || data.length === 0) {
                 keepFetching = false;
@@ -627,9 +650,12 @@ export default function LiveMatchCard() {
       const [allPredictions, dbLiveMatchesRes] = await Promise.all([
         fetchPredictionsPromise,
         targetMatchIds.length > 0
-          ? supabase.from('live_matches').select('*').in('id', targetMatchIds)
+          ? supabase
+              .from('live_matches')
+              .select('id, home_score, away_score, status, updated_at, elapsed, events')
+              .in('id', targetMatchIds)
           : Promise.resolve({ data: [] as any[] }),
-        refreshOfficialKasa(candidateWeeks)
+        refreshOfficialKasa(targetPredWeeks)
       ]);
 
       const pDict: Record<string, string> = {};
@@ -1442,7 +1468,16 @@ export default function LiveMatchCard() {
             status,
             updated_by: 'MASTER_RADAR',
             updated_at: timeString,
-            events: JSON.stringify(fix.events || []),
+            events: JSON.stringify(
+              (fix.events || []).map((ev: any) => ({
+                type: ev.type,
+                detail: ev.detail,
+                time: { elapsed: ev.time?.elapsed },
+                team: { id: ev.team?.id, name: ev.team?.name },
+                player: { name: ev.player?.name },
+                assist: ev.assist?.name ? { name: ev.assist.name } : undefined
+              }))
+            ),
             elapsed: fix.fixture.status.elapsed
           });
         }

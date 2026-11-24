@@ -1,5 +1,5 @@
 'use client';
-
+import { OnlineVisitorsAdminModule, OnlineCountPill } from '@/components/OnlineVisitorsRadar';
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
@@ -32,6 +32,7 @@ export default function PredictionPortal() {
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string; away: string }>>({});
 
   const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<'live' | 'bulletin' | 'players' | 'visitors'>('live');
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
 
   const [mergedAccounts, setMergedAccounts] = useState<Record<string, { pass: string; name: string }>>(TEST_ACCOUNTS);
@@ -282,6 +283,10 @@ export default function PredictionPortal() {
 
     if (account && String(passKey) === String(account.pass)) {
       setDisplayName(account.name);
+      try {
+     localStorage.setItem('etml_visitor_identity', JSON.stringify({ userId: userKey, name: account.name }));
+     window.dispatchEvent(new CustomEvent('etml-identity-updated'));
+   } catch {}
       await fetchBulletinAndPredictions(userKey);
       setView('entry');
     } else {

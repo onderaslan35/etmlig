@@ -1,3 +1,4 @@
+import { OnlinePresenceTracker } from '@/components/OnlineVisitorsRadar';
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
+        <OnlinePresenceTracker />
         
         {/* 🔴 SİTENİN TEPESİNDEKİ MENÜ BURADA DEVREYE GİRİYOR 🔴 */}
         <Navbar />
