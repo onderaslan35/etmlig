@@ -1,372 +1,389 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const revalidate = 0; 
-export const maxDuration = 60; 
+export const revalidate = 0;
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-const API_KEY = "933e5ccc09194d0db30171e2bca20ca9"; 
+const API_KEY = '933e5ccc09194d0db30171e2bca20ca9';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const teamDict: Record<string, string> = {
-    "TÜRKİYE": "Turkey", "ALMANYA": "Germany", "İNGİLTERE": "England", 
-    "FRANSA": "France", "İSPANYA": "Spain", "İTALYA": "Italy",
-    "GÜRCİSTAN": "Georgia", "KUZEY İRLANDA": "Northern Ireland", "HOLLANDA": "Netherlands",
-    "BELÇİKA": "Belgium", "İSVEÇ": "Sweden", "UKRAYNA": "Ukraine", 
-    "POLONYA": "Poland", "MACARİSTAN": "Hungary", "GALLER": "Wales",
-    "İZLANDA": "Iceland", "KARADAĞ": "Montenegro", "ÇEKYA": "Czech Republic",
-    "HIRVATİSTAN": "Croatia", "İSVİÇRE": "Switzerland", "DANİMARKA": "Denmark",
-    "SIRBİSTAN": "Serbia", "PORTEKİZ": "Portugal", "İSKOÇYA": "Scotland",
-    "ANDORRA": "Andorra", "MALTA": "Malta", "NORVEÇ": "Norway", "KOSOVA": "Kosovo",
-    "İRLANDA": "Republic of Ireland", "LİHTENŞTAYN": "Liechtenstein", "LİTVANYA": "Lithuania",
-    "BOSNA-HERSEK": "Bosnia & Herzegovina", "ROMANYA": "Romania", "KIBRIS": "Cyprus",
-    "SLOVENYA": "Slovenia", "SAN MARİNO": "San Marino", "FİNLANDİYA": "Finland",
-    "FAROE ADALARI": "Faroe Islands", "KAZAKİSTAN": "Kazakhstan", "BULGARİSTAN": "Bulgaria",
-    "AVUSTURYA": "Austria", "LETONYA": "Latvia", "CEBELİTARIK": "Gibraltar",
-    "LÜKSEMBURG": "Luxembourg", "ESTONYA": "Estonia", "KUZEY MAKEDONYA": "North Macedonia",
-    "ARNAVUTLUK": "Albania", "BELARUS": "Belarus", "SLOVAKYA": "Slovakia", "MOLDOVA": "Moldova"
+  'TÜRKİYE': 'Turkey', 'ALMANYA': 'Germany', 'İNGİLTERE': 'England',
+  'FRANSA': 'France', 'İSPANYA': 'Spain', 'İTALYA': 'Italy',
+  'GÜRCİSTAN': 'Georgia', 'KUZEY İRLANDA': 'Northern Ireland', 'HOLLANDA': 'Netherlands',
+  'BELÇİKA': 'Belgium', 'İSVEÇ': 'Sweden', 'UKRAYNA': 'Ukraine',
+  'POLONYA': 'Poland', 'MACARİSTAN': 'Hungary', 'GALLER': 'Wales',
+  'İZLANDA': 'Iceland', 'KARADAĞ': 'Montenegro', 'ÇEKYA': 'Czech Republic',
+  'HIRVATİSTAN': 'Croatia', 'İSVİÇRE': 'Switzerland', 'DANİMARKA': 'Denmark',
+  'SIRBİSTAN': 'Serbia', 'PORTEKİZ': 'Portugal', 'İSKOÇYA': 'Scotland',
+  'ANDORRA': 'Andorra', 'MALTA': 'Malta', 'NORVEÇ': 'Norway', 'KOSOVA': 'Kosovo',
+  'İRLANDA': 'Republic of Ireland', 'LİHTENŞTAYN': 'Liechtenstein', 'LİTVANYA': 'Lithuania',
+  'BOSNA-HERSEK': 'Bosnia & Herzegovina', 'ROMANYA': 'Romania', 'KIBRIS': 'Cyprus',
+  'SLOVENYA': 'Slovenia', 'SAN MARİNO': 'San Marino', 'FİNLANDİYA': 'Finland',
+  'FAROE ADALARI': 'Faroe Islands', 'KAZAKİSTAN': 'Kazakhstan', 'BULGARİSTAN': 'Bulgaria',
+  'AVUSTURYA': 'Austria', 'LETONYA': 'Latvia', 'CEBELİTARIK': 'Gibraltar',
+  'LÜKSEMBURG': 'Luxembourg', 'ESTONYA': 'Estonia', 'KUZEY MAKEDONYA': 'North Macedonia',
+  'ARNAVUTLUK': 'Albania', 'BELARUS': 'Belarus', 'SLOVAKYA': 'Slovakia', 'MOLDOVA': 'Moldova'
 };
 
 function isTffMatchCheck(category: string) {
-    if(!category) return false;
-    const uppercaseCat = category.toUpperCase();
-    return ( 
-      uppercaseCat.includes("TÜRKİYE") || 
-      uppercaseCat.includes("TURKİYE") || 
-      uppercaseCat.includes("TURKIYE") || 
-      uppercaseCat.includes("TFF") || 
-      uppercaseCat.includes("SÜPER LİG") || 
-      uppercaseCat.includes("SÜPER LIG") || 
-      uppercaseCat.includes("SUPER LİG") || 
-      uppercaseCat.includes("SUPER LIG") || 
-      uppercaseCat.includes("1. LİG") || 
-      uppercaseCat.includes("1. LIG") || 
-      uppercaseCat.includes("1.LİG") || 
-      uppercaseCat.includes("1.LIG") || 
-      uppercaseCat.includes("AMATÖR") || 
-      uppercaseCat.includes("PTT") || 
-      uppercaseCat.includes("2.LİG") || 
-      uppercaseCat.includes("3.LİG") 
-    );
+  if (!category) return false;
+  const c = category.toUpperCase();
+  return (
+    c.includes('TÜRKİYE') || c.includes('TURKİYE') || c.includes('TURKIYE') ||
+    c.includes('TFF') || c.includes('SÜPER LİG') || c.includes('SÜPER LIG') ||
+    c.includes('SUPER LİG') || c.includes('SUPER LIG') || c.includes('1. LİG') ||
+    c.includes('1. LIG') || c.includes('1.LİG') || c.includes('1.LIG') ||
+    c.includes('AMATÖR') || c.includes('PTT') || c.includes('2.LİG') || c.includes('3.LİG')
+  );
 }
 
-export async function GET(request: Request) {
-    const nowUTC = new Date();
-    const todayTurkey = new Date(nowUTC.getTime() + (3 * 60 * 60 * 1000));
-    const d = String(todayTurkey.getUTCDate()).padStart(2, '0');
-    const m = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
-    const y = todayTurkey.getUTCFullYear();
-    const todayStr = `${d}.${m}.${y}`; 
-    const apiDateStr = `${y}-${m}-${d}`; 
+function parseTurkeyKickoffMs(dateStr: string, timeStr: string): number {
+  const dParts = String(dateStr || '').trim().split('.');
+  const tParts = String(timeStr || '20:00').trim().split(':');
+  if (dParts.length !== 3) return 0;
+  const day = parseInt(dParts[0], 10);
+  const month = parseInt(dParts[1], 10);
+  const year = parseInt(dParts[2], 10);
+  const hour = parseInt(tParts[0] || '20', 10);
+  const minute = parseInt(tParts[1] || '0', 10);
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return 0;
+  // Türkiye UTC+3 saatini UTC milisaniyesine çevir
+  return Date.UTC(year, month - 1, day, hour - 3, minute, 0);
+}
 
-    const { data: dbPlayers } = await supabase.from('players').select('*');
-    const { data: bulten } = await supabase.from('matches_bulletin').select('match_index, week_num, match_date, category, home_team, away_team');
-    
-    if (bulten) {
-        const todaysMatches = bulten.filter(match => match.match_date === todayStr);
-        if (todaysMatches.length > 0) {
-            const matchIds = todaysMatches.map(match => (match.week_num * 100) + match.match_index);
-            
-            const { data: existingLive } = await supabase.from('live_matches').select('id').in('id', matchIds);
-            const existingIds = existingLive?.map(l => l.id) || [];
-            const missingIds = matchIds.filter(id => !existingIds.includes(id));
-            
-            if (missingIds.length > 0) {
-                const inserts = missingIds.map(id => ({ 
-                    id, 
-                    api_match_id: null, 
-                    status: 'NOT_STARTED', 
-                    home_score: '-', 
-                    away_score: '-',
-                    elapsed: 0
-                }));
-                await supabase.from('live_matches').insert(inserts);
-            }
+function calcMatchPts(winnerCount: number): number {
+  if (winnerCount === 1) return 12;
+  if (winnerCount === 2) return 6;
+  if (winnerCount === 3) return 5;
+  if (winnerCount === 4) return 4;
+  if (winnerCount === 5) return 3;
+  if (winnerCount === 6) return 2;
+  if (winnerCount >= 7) return 1;
+  return 0;
+}
 
-            const { data: liveData } = await supabase.from('live_matches').select('id, api_match_id, status').in('id', matchIds).neq('status', 'FINISHED');
+export async function GET() {
+  const nowUTC = new Date();
+  const nowMs = nowUTC.getTime();
+  const todayTurkey = new Date(nowMs + 3 * 60 * 60 * 1000);
+  const yesterdayTurkey = new Date(todayTurkey.getTime() - 24 * 60 * 60 * 1000);
 
-            if (liveData && liveData.length > 0) {
-                const missingIdMatches = liveData.filter(l => !l.api_match_id);
-                if (missingIdMatches.length > 0) {
-                    try {
-                        const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${apiDateStr}`, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }, cache: 'no-store' });
-                        const json = await res.json();
-                        const apiFixtures = json.response || [];
-                        for (const missing of missingIdMatches) {
-                            const bultenMatch = todaysMatches.find(tm => (tm.week_num * 100) + tm.match_index === missing.id);
-                            if (bultenMatch && bultenMatch.home_team) {
-                                const homeTr = bultenMatch.home_team.toUpperCase();
-                                const homeEn = teamDict[homeTr] || homeTr;
-                                const foundApiMatch = apiFixtures.find((f: any) => 
-                                    f.teams.home.name.toUpperCase().includes(homeEn.toUpperCase()) ||
-                                    f.teams.home.name.toUpperCase().includes(homeTr)
-                                );
-                                if (foundApiMatch) {
-                                    await supabase.from('live_matches').update({ api_match_id: foundApiMatch.fixture.id }).eq('id', missing.id);
-                                    missing.api_match_id = foundApiMatch.fixture.id; 
-                                }
-                            }
-                        }
-                    } catch (err) {}
-                }
+  const d = String(todayTurkey.getUTCDate()).padStart(2, '0');
+  const m = String(todayTurkey.getUTCMonth() + 1).padStart(2, '0');
+  const y = todayTurkey.getUTCFullYear();
+  const todayStr = `${d}.${m}.${y}`;
+  const apiDateStr = `${y}-${m}-${d}`;
 
-                const validLiveData = liveData.filter(l => l.api_match_id);
-                if (validLiveData.length > 0) {
-                    const apiIds = validLiveData.map(l => l.api_match_id).join('-');
-                    const HEDEF = `https://v3.football.api-sports.io/fixtures?ids=${apiIds}`;
-                    try {
-                        const res = await fetch(HEDEF, { method: 'GET', headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }, cache: 'no-store' });
-                        if (res.ok) {
-                            const sonuc = await res.json();
-                            const maclar = sonuc.response || [];
-                            
-                            for (const mac of maclar) {
-                                const macId = mac.fixture.id; 
-                                const durum = mac.fixture.status.short; 
-                                const dakika = mac.fixture.status.elapsed ?? null; 
-                                const olaylar = mac.events ?? []; 
-                                
-                                let statu = 'NOT_STARTED';
-                                
-                                if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum) || dakika >= 90) {
-                                    statu = 'WAITING_APPROVAL'; 
-                                }
-                                else if (['HT', 'Halftime'].includes(durum)) {
-                                    statu = 'HT';
-                                }
-                                else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum) || (dakika !== null && dakika < 90)) {
-                                    statu = 'LIVE';
-                                }
+  const yd = String(yesterdayTurkey.getUTCDate()).padStart(2, '0');
+  const ym = String(yesterdayTurkey.getUTCMonth() + 1).padStart(2, '0');
+  const yy = yesterdayTurkey.getUTCFullYear();
+  const yesterdayStr = `${yd}.${ym}.${yy}`;
 
-                                const dbMatchInfo = validLiveData.find(l => l.api_match_id === macId);
-                                if (dbMatchInfo && (dbMatchInfo.status === 'LIVE' || dbMatchInfo.status === 'HT') && statu === 'NOT_STARTED') {
-                                    statu = dbMatchInfo.status;
-                                }
+  const hh = String(todayTurkey.getUTCHours()).padStart(2, '0');
+  const mm = String(todayTurkey.getUTCMinutes()).padStart(2, '0');
+  const ss = String(todayTurkey.getUTCSeconds()).padStart(2, '0');
+  const timeString = `${hh}:${mm}:${ss}`;
 
-                                let evSkorStr = '-';
-                                let depSkorStr = '-';
-                                if (statu !== 'NOT_STARTED') {
-                                    evSkorStr = (mac.goals.home ?? 0).toString();
-                                    depSkorStr = (mac.goals.away ?? 0).toString();
-                                }
+  // 1. SADECE dün (gece sarkan maçlar için) ve bugünün bülten maçlarını çek (~0-40 satır)
+  const { data: dayBulten } = await supabase
+    .from('matches_bulletin')
+    .select('match_index, week_num, match_date, match_time, category, home_team, away_team, api_match_id')
+    .in('match_date', [yesterdayStr, todayStr]);
 
-                                await supabase.from('live_matches').update({ 
-                                    home_score: evSkorStr, 
-                                    away_score: depSkorStr, 
-                                    status: statu,
-                                    elapsed: dakika,
-                                    events: JSON.stringify(olaylar) 
-                                }).eq('api_match_id', macId);
-                            }
-                        }
-                    } catch (e) {}
-                }
-            }
-        }
-    }
+  if (!dayBulten || dayBulten.length === 0) {
+    return NextResponse.json({ message: 'Bugun bultende mac yok, sifir Egress ile cikildi.' });
+  }
 
+  // Sadece başlama saatine 10 dk kalmış ve üzerinden 6 saatten fazla geçmemiş maçları aday al
+  const candidateMatches = dayBulten.filter((bm: any) => {
+    const kMs = parseTurkeyKickoffMs(bm.match_date, bm.match_time);
+    if (!kMs) return bm.match_date === todayStr;
+    return nowMs >= kMs - 10 * 60 * 1000 && nowMs <= kMs + 6 * 60 * 60 * 1000;
+  });
+
+  if (candidateMatches.length === 0) {
+    return NextResponse.json({ message: 'Su an aktif mac penceresinde oynanan mac yok, kota korundu.' });
+  }
+
+  const candidateIds = candidateMatches.map((bm: any) => bm.week_num * 100 + bm.match_index);
+
+  const { data: existingLive } = await supabase
+    .from('live_matches')
+    .select('id, api_match_id, status, home_score, away_score, elapsed')
+    .in('id', candidateIds);
+
+  const existingMap = new Map<number, any>();
+  (existingLive || []).forEach((l: any) => existingMap.set(Number(l.id), l));
+
+  // Eksik satırları tek seferde oluştur (bültende api_match_id varsa doğrudan bağla)
+  const missingRows = candidateMatches
+    .filter((bm: any) => !existingMap.has(bm.week_num * 100 + bm.match_index))
+    .map((bm: any) => {
+      const id = bm.week_num * 100 + bm.match_index;
+      const validApiId =
+        bm.api_match_id && !String(bm.api_match_id).startsWith('manuel-')
+          ? Number(bm.api_match_id)
+          : null;
+      const row = {
+        id,
+        api_match_id: validApiId,
+        status: 'NOT_STARTED',
+        home_score: '-',
+        away_score: '-',
+        elapsed: 0
+      };
+      existingMap.set(id, row);
+      return row;
+    });
+
+  if (missingRows.length > 0) {
+    await supabase.from('live_matches').insert(missingRows);
+  }
+
+  // FINISHED veya WAITING_APPROVAL (zaten FT olmuş) maçları tekrar API'den sorgulama!
+  const activeToPoll = Array.from(existingMap.values()).filter(
+    (l: any) => !['FINISHED', 'WAITING_APPROVAL', 'POSTPONED'].includes(String(l.status || ''))
+  );
+
+  if (activeToPoll.length === 0) {
+    return NextResponse.json({ message: 'Aktif penceredeki tum maclar tamamlandi, sorgu yapilmadi.' });
+  }
+
+  // api_match_id eksik olan bugünkü maçlar varsa eşleştir ve bültene de kaydet
+  const missingApiMatches = activeToPoll.filter((l: any) => !l.api_match_id);
+  if (missingApiMatches.length > 0) {
     try {
-        const playersList: Record<string, string> = {};
-        if (dbPlayers) dbPlayers.forEach(p => { const pid = p.username || String(p.id); if (pid !== 'mankoman') playersList[pid] = p.name || p.full_name; });
+      const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${apiDateStr}`, {
+        method: 'GET',
+        headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' },
+        cache: 'no-store'
+      });
+      const json = await res.json();
+      const apiFixtures = json.response || [];
 
-        const fetchTable = async (t: string) => { const { data } = await supabase.from(t).select('*'); return data || []; };
-        const [masterData, dfoData, tffPointsData, skorDfoData, skorTffData, manualPointsData, dbLiveMatches] = await Promise.all([
-            fetchTable('master_weekly_points'), fetchTable('dfo_weekly_points'), fetchTable('tff_weekly_points'),
-            fetchTable('dfo_weekly_scores'), fetchTable('tff_weekly_scores'), fetchTable('points'), fetchTable('live_matches')
-        ]);
-
-        const dynamicBonuses: Record<number, Record<string, number>> = {};
-        manualPointsData.forEach(b => {
-            const evSahibi = String(b.ev_sahibi).toUpperCase().trim();
-            if (String(b.kategori).toUpperCase().trim() === 'MASTER' && ['HAFTANIN', 'SKOR'].includes(evSahibi)) {
-                if (!dynamicBonuses[b.hafta]) dynamicBonuses[b.hafta] = {};
-                if (!dynamicBonuses[b.hafta][b.username]) dynamicBonuses[b.hafta][b.username] = 0;
-                dynamicBonuses[b.hafta][b.username] += b.puan;
-            }
-        });
-
-        let allPredictions: any[] = [];
-        let from = 0; let step = 1000; let keepFetching = true;
-        while(keepFetching) {
-            const { data } = await supabase.from('player_predictions').select('*').gte('week_num', 5).order('id', { ascending: true }).range(from, from + step - 1);
-            if (data && data.length > 0) { allPredictions = [...allPredictions, ...data]; if (data.length < step) keepFetching = false; else from += step; } 
-            else keepFetching = false;
+      for (const missing of missingApiMatches) {
+        const bm = candidateMatches.find((m: any) => m.week_num * 100 + m.match_index === missing.id);
+        if (bm && bm.home_team) {
+          const homeTr = String(bm.home_team).toUpperCase().trim();
+          const homeEn = teamDict[homeTr] || homeTr;
+          const found = apiFixtures.find(
+            (f: any) =>
+              String(f.teams?.home?.name || '').toUpperCase().includes(homeEn.toUpperCase()) ||
+              String(f.teams?.home?.name || '').toUpperCase().includes(homeTr)
+          );
+          if (found) {
+            const fixId = found.fixture.id;
+            missing.api_match_id = fixId;
+            await supabase.from('live_matches').update({ api_match_id: fixId }).eq('id', missing.id);
+            await supabase
+              .from('matches_bulletin')
+              .update({ api_match_id: fixId })
+              .eq('week_num', bm.week_num)
+              .eq('match_index', bm.match_index);
+          }
         }
+      }
+    } catch {}
+  }
+
+  const validPollList = activeToPoll.filter((l: any) => l.api_match_id);
+  let updatedMatchCount = 0;
+
+  // API-Sports ?ids= parametresi en fazla 20 ID kabul ettiği için 20'li paketlerle çek
+  for (let i = 0; i < validPollList.length; i += 20) {
+    const chunk = validPollList.slice(i, i + 20);
+    const apiIds = chunk.map((l: any) => l.api_match_id).join('-');
+    try {
+      const res = await fetch(`https://v3.football.api-sports.io/fixtures?ids=${apiIds}`, {
+        method: 'GET',
+        headers: { 'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const sonuc = await res.json();
+        const maclar = sonuc.response || [];
+
+        for (const mac of maclar) {
+          const macId = mac.fixture.id;
+          const durum = String(mac.fixture.status.short || '');
+          const dakika = mac.fixture.status.elapsed ?? null;
+          const rawEvents = Array.isArray(mac.events) ? mac.events : [];
+
+          let statu = 'NOT_STARTED';
+          if (['FT', 'AET', 'PEN', 'Match Finished', 'Finished'].includes(durum)) {
+            statu = 'WAITING_APPROVAL';
+          } else if (['HT', 'Halftime'].includes(durum)) {
+            statu = 'HT';
+          } else if (['1H', '2H', 'ET', 'P', 'LIVE', 'IN PLAY'].includes(durum)) {
+            statu = 'LIVE';
+          }
+
+          const prevInfo = chunk.find((l: any) => Number(l.api_match_id) === Number(macId));
+          if (prevInfo && (prevInfo.status === 'LIVE' || prevInfo.status === 'HT') && statu === 'NOT_STARTED') {
+            statu = prevInfo.status;
+          }
+
+          let evSkorStr = '-';
+          let depSkorStr = '-';
+          if (statu !== 'NOT_STARTED') {
+            evSkorStr = String(mac.goals.home ?? 0);
+            depSkorStr = String(mac.goals.away ?? 0);
+          }
+
+          // Hiçbir şey değişmediyse veritabanına boşuna yazma!
+          const isUnchanged =
+            prevInfo &&
+            String(prevInfo.status) === statu &&
+            String(prevInfo.home_score) === evSkorStr &&
+            String(prevInfo.away_score) === depSkorStr &&
+            Number(prevInfo.elapsed || 0) === Number(dakika || 0);
+
+          if (isUnchanged) continue;
+
+          // Events JSON boyutunu %85 küçült
+          const slimEvents = rawEvents.map((ev: any) => ({
+            type: ev.type,
+            detail: ev.detail,
+            time: { elapsed: ev.time?.elapsed },
+            team: { id: ev.team?.id, name: ev.team?.name },
+            player: { name: ev.player?.name },
+            assist: ev.assist?.name ? { name: ev.assist.name } : undefined
+          }));
+
+          await supabase
+            .from('live_matches')
+            .update({
+              home_score: evSkorStr,
+              away_score: depSkorStr,
+              status: statu,
+              elapsed: dakika,
+              updated_at: timeString,
+              updated_by: 'OTONOM_RADAR',
+              events: JSON.stringify(slimEvents)
+            })
+            .eq('api_match_id', macId);
+
+          if (prevInfo) {
+            prevInfo.status = statu;
+            prevInfo.home_score = evSkorStr;
+            prevInfo.away_score = depSkorStr;
+          }
+          updatedMatchCount++;
+        }
+      }
+    } catch {}
+  }
+
+  // 2. SADECE skor/durum güncellendiyse Resmi Kasa (54 satır) üzerinden live_leaderboard güncelle!
+  if (updatedMatchCount > 0) {
+    try {
+      const { data: summaryRows } = await supabase
+        .from('etml_standings_summary')
+        .select('master_sira, user_id, oyuncu_adi, dfo_puan, tff_puan, master_puan, tam_isabet')
+        .order('master_sira', { ascending: true });
+
+      if (summaryRows && summaryRows.length > 0) {
+        const activeWeeks = Array.from(new Set<number>(candidateMatches.map((m: any) => Number(m.week_num))));
+        const { data: liveNowRows } = await supabase
+          .from('live_matches')
+          .select('id, status, home_score, away_score')
+          .in('id', candidateIds)
+          .in('status', ['LIVE', 'HT', 'WAITING_APPROVAL']);
 
         const pDict: Record<string, string> = {};
-        allPredictions.forEach(pred => pDict[`${String(pred.user_id)}-${pred.week_num}-${pred.match_index}`] = pred.predicted_score.replace(/\s+/g, ''));
-
-        const catDict: Record<string, string> = {};
-        if (bulten) bulten.forEach((m: any) => catDict[`${m.week_num}-${m.match_index}`] = m.category || "");
-
-        let st: Record<string, any> = {};
-        Object.keys(playersList).forEach(uid => {
-            const md = masterData.find((r:any) => String(r.id||r.username||r.user_id) === uid) || {w1:0, w2:0, w3:0, w4:0};
-            const dd = dfoData.find((r:any) => String(r.id||r.username||r.user_id) === uid) || {w1:0, w2:0, w3:0, w4:0};
-            const td = tffPointsData.find((r:any) => String(r.id||r.username||r.user_id) === uid) || {w1:0, w2:0, w3:0, w4:0};
-            const sd = skorDfoData.find((r:any) => String(r.id||r.username||r.user_id) === uid) || {w1:0, w2:0, w3:0, w4:0};
-            const stff = skorTffData.find((r:any) => String(r.id||r.username||r.user_id) === uid) || {w1:0, w2:0, w3:0, w4:0};
-
-            const w1W4SkorDfo = Number(sd.w1||0) + Number(sd.w2||0) + Number(sd.w3||0) + Number(sd.w4||0);
-            const w1W4SkorTff = Number(stff.w1||0) + Number(stff.w2||0) + Number(stff.w3||0) + Number(stff.w4||0);
-
-            st[uid] = { 
-                masterW1W4: Number(md.w1||0) + Number(md.w2||0) + Number(md.w3||0) + Number(md.w4||0),
-                dfoPts: Number(dd.w1||0) + Number(dd.w2||0) + Number(dd.w3||0) + Number(dd.w4||0),
-                tffPts: Number(td.w1||0) + Number(td.w2||0) + Number(td.w3||0) + Number(td.w4||0),
-                
-                skorPts: w1W4SkorDfo + w1W4SkorTff,
-                dfoSkorBase: w1W4SkorDfo,
-                tffSkorBase: w1W4SkorTff,
-                
-                masterBaseAll: 0, masterBasePrev: 0, masterLive: 0,
-                dfoBaseAll: 0, dfoBasePrev: 0, dfoLive: 0,
-                tffBaseAll: 0, tffBasePrev: 0, tffLive: 0,
-                
-                skorAll: 0, skorPrev: 0, skorLive: 0,
-                dfoSkorAll: 0, dfoSkorPrev: 0, dfoSkorLive: 0,
-                tffSkorAll: 0, tffSkorPrev: 0, tffSkorLive: 0
-            };
-        });
-
-        let highestWeekFound = 6; 
-        dbLiveMatches.forEach((m: any) => {
-             const weekNum = Math.floor(m.id / 100);
-             if (weekNum >= 5 && weekNum <= 38 && m.home_score && m.home_score !== '-' && m.away_score && m.away_score !== '-') {
-                 if (weekNum > highestWeekFound) highestWeekFound = weekNum;
-             }
-        });
-
-        dbLiveMatches.forEach((dbMatch: any) => {
-            const weekNum = Math.floor(dbMatch.id / 100);
-            const matchIndex = dbMatch.id % 100;
-            
-            if (weekNum >= 5 && weekNum <= 38 && dbMatch.home_score && dbMatch.home_score !== '-' && dbMatch.away_score && dbMatch.away_score !== '-') {
-                const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
-                const winnerIds = Object.keys(playersList).filter(id => pDict[`${id}-${weekNum}-${matchIndex}`] === targetScore);
-                
-                let pts = 1;
-                if(winnerIds.length === 1) pts = 12; else if(winnerIds.length === 2) pts = 6;
-                else if(winnerIds.length === 3) pts = 5; else if(winnerIds.length === 4) pts = 4;
-                else if(winnerIds.length === 5) pts = 3; else if(winnerIds.length === 6) pts = 2;
-                else if(winnerIds.length >= 7) pts = 1; else pts = 0;
-
-                const isFinished = dbMatch.status === 'FINISHED' || dbMatch.status === 'FT';
-                const isLive = ['LIVE', '1H', '2H', 'HT', 'IN PLAY', 'WAITING_APPROVAL'].includes(dbMatch.status);
-                const isTff = isTffMatchCheck(catDict[`${weekNum}-${matchIndex}`] || "");
-
-                winnerIds.forEach(wId => {
-                    if (st[wId]) {
-                        if (isFinished) {
-                            st[wId].masterBaseAll += pts;
-                            st[wId].skorAll += 1; 
-                            if (weekNum < highestWeekFound) { st[wId].masterBasePrev += pts; st[wId].skorPrev += 1; } 
-                            if (isTff) {
-                                st[wId].tffPts += pts;
-                                st[wId].tffBaseAll += pts;
-                                st[wId].tffSkorAll += 1; 
-                                if (weekNum < highestWeekFound) { st[wId].tffBasePrev += pts; st[wId].tffSkorPrev += 1; } 
-                            } else {
-                                st[wId].dfoPts += pts;
-                                st[wId].dfoBaseAll += pts;
-                                st[wId].dfoSkorAll += 1; 
-                                if (weekNum < highestWeekFound) { st[wId].dfoBasePrev += pts; st[wId].dfoSkorPrev += 1; }
-                            }
-                        } else if (isLive) {
-                            // 🔥 ARTIK CANLI MAÇLARIN PUANI DA ANINDA LİDERLİK TABLOSUNA YANSIYACAK 🔥
-                            st[wId].masterLive += pts;
-                            st[wId].skorLive += 1;
-                            if (isTff) {
-                                st[wId].tffLive += pts;
-                                st[wId].tffSkorLive += 1;
-                            } else {
-                                st[wId].dfoLive += pts;
-                                st[wId].dfoSkorLive += 1;
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-        const getAdminBonus = (uid: string, maxW: number) => {
-            let t = 0; for (let w = 5; w <= maxW; w++) if (dynamicBonuses[w] && dynamicBonuses[w][uid]) t += dynamicBonuses[w][uid]; return t;
-        };
-        
-        const sortFunc = (a:any, b:any) => b.score - a.score || (playersList[a.id]||"").localeCompare(playersList[b.id]||"", 'tr');
-        const makePrevRanks = (list: any[]) => { const r:Record<string,number>={}; list.forEach((p,i)=>r[p.id]=i+1); return r; };
-
-        // LİDERLİK SIRALAMALARINA (CANLI) PUANLAR DAHİL EDİLDİ
-        const currList = Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBaseAll + st[id].masterLive + getAdminBonus(id, highestWeekFound) })).sort(sortFunc);
-        const prevRanks = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].masterW1W4 + st[id].masterBasePrev + getAdminBonus(id, highestWeekFound - 1) })).sort(sortFunc));
-        
-        const currListDfo = Object.keys(st).map(id => ({ id, score: st[id].dfoPts + st[id].dfoLive })).sort(sortFunc);
-        const prevRanksDfo = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].dfoPts - st[id].dfoBaseAll + st[id].dfoBasePrev })).sort(sortFunc));
-        
-        const currListTff = Object.keys(st).map(id => ({ id, score: st[id].tffPts + st[id].tffLive })).sort(sortFunc);
-        const prevRanksTff = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffPts - st[id].tffBaseAll + st[id].tffBasePrev })).sort(sortFunc));
-
-        const currSkor = Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorAll + st[id].skorLive })).sort(sortFunc);
-        const prevRanksSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].skorPts + st[id].skorPrev })).sort(sortFunc));
-        
-        const currDfoSkor = Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorAll + st[id].dfoSkorLive })).sort(sortFunc);
-        const prevRanksDfoSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].dfoSkorBase + st[id].dfoSkorPrev })).sort(sortFunc));
-        
-        const currTffSkor = Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorAll + st[id].tffSkorLive })).sort(sortFunc);
-        const prevRanksTffSkor = makePrevRanks(Object.keys(st).map(id => ({ id, score: st[id].tffSkorBase + st[id].tffSkorPrev })).sort(sortFunc));
-
-        const getTrend = (currListArr:any[], prevRanksObj:Record<string,number>, pId:string) => {
-            const currRank = currListArr.findIndex(p => p.id === pId) + 1;
-            const prevRank = prevRanksObj[pId] || currRank;
-            if (currRank < prevRank) return { dir: 'up', diff: prevRank - currRank };
-            if (currRank > prevRank) return { dir: 'down', diff: currRank - prevRank };
-            return { dir: 'same', diff: 0 };
-        };
-
-        const upsertData = currList.map((player) => {
-            const pTrend = getTrend(currList, prevRanks, player.id);
-            const dfoTrend = getTrend(currListDfo, prevRanksDfo, player.id);
-            const tffTrend = getTrend(currListTff, prevRanksTff, player.id);
-            const skorTr = getTrend(currSkor, prevRanksSkor, player.id);
-            const dfoSkorTr = getTrend(currDfoSkor, prevRanksDfoSkor, player.id);
-            const tffSkorTr = getTrend(currTffSkor, prevRanksTffSkor, player.id);
-
-            return {
-                id: player.id,
-                name: playersList[player.id] || "Bilinmiyor",
-                master_pts: player.score,
-                master_rank: currList.findIndex(p => p.id === player.id) + 1,
-                trend_direction: pTrend.dir,
-                trend_diff: pTrend.diff,
-                dfo_pts: currListDfo.find(p => p.id === player.id)?.score || 0,
-                dfo_trend_direction: dfoTrend.dir,
-                dfo_trend_diff: dfoTrend.diff,
-                tff_pts: currListTff.find(p => p.id === player.id)?.score || 0,
-                tff_trend_direction: tffTrend.dir,
-                tff_trend_diff: tffTrend.diff,
-                
-                skor_pts: currSkor.find(p => p.id === player.id)?.score || 0,
-                skor_trend_direction: skorTr.dir,
-                skor_trend_diff: skorTr.diff,
-                dfo_skor_pts: currDfoSkor.find(p => p.id === player.id)?.score || 0,
-                dfo_skor_trend_direction: dfoSkorTr.dir,
-                dfo_skor_trend_diff: dfoSkorTr.diff,
-                tff_skor_pts: currTffSkor.find(p => p.id === player.id)?.score || 0,
-                tff_skor_trend_direction: tffSkorTr.dir,
-                tff_skor_trend_diff: tffSkorTr.diff,
-                updated_at: new Date().toISOString()
-            };
-        });
-
-        if (upsertData.length > 0) {
-            await supabase.from('live_leaderboard').upsert(upsertData, { onConflict: 'id' });
+        if (liveNowRows && liveNowRows.length > 0 && activeWeeks.length > 0) {
+          for (const wk of activeWeeks) {
+            const { data: preds } = await supabase
+              .from('player_predictions')
+              .select('user_id, week_num, match_index, predicted_score')
+              .eq('week_num', wk)
+              .limit(1500);
+            (preds || []).forEach((pr: any) => {
+              pDict[`${pr.user_id}-${pr.week_num}-${pr.match_index}`] = String(pr.predicted_score || '').replace(/\s+/g, '');
+            });
+          }
         }
-    
-    } catch (e) {
-        return NextResponse.json({ message: 'Mutfak Coktu', error: e });
-    }
 
-    return NextResponse.json({ message: 'API BAGLANTISI VE OTONOM RADAR BASARIYLA CALISTI. CANLI PUAN GUNCELLEMESI AKTIF!' });
+        const liveAddMap: Record<string, { m: number; dfo: number; tff: number; sk: number }> = {};
+        const playerIds = summaryRows.map((r: any) => String(r.user_id));
+        playerIds.forEach((uid: string) => {
+          liveAddMap[uid] = { m: 0, dfo: 0, tff: 0, sk: 0 };
+        });
+
+        (liveNowRows || []).forEach((lm: any) => {
+          if (!lm.home_score || lm.home_score === '-' || !lm.away_score || lm.away_score === '-') return;
+          const wk = Math.floor(Number(lm.id) / 100);
+          const idx = Number(lm.id) % 100;
+          const bm = candidateMatches.find((m: any) => m.week_num === wk && m.match_index === idx);
+          const isTff = isTffMatchCheck(bm?.category || '');
+          const targetSc = `${lm.home_score}-${lm.away_score}`.replace(/\s+/g, '');
+
+          const winners = playerIds.filter((uid: string) => pDict[`${uid}-${wk}-${idx}`] === targetSc);
+          const pts = calcMatchPts(winners.length);
+          winners.forEach((uid: string) => {
+            liveAddMap[uid].m += pts;
+            liveAddMap[uid].sk += 1;
+            if (isTff) liveAddMap[uid].tff += pts;
+            else liveAddMap[uid].dfo += pts;
+          });
+        });
+
+        const enriched = summaryRows.map((r: any) => {
+          const uid = String(r.user_id);
+          const add = liveAddMap[uid] || { m: 0, dfo: 0, tff: 0, sk: 0 };
+          return {
+            id: uid,
+            name: String(r.oyuncu_adi || uid),
+            prevRank: Number(r.master_sira || 99),
+            master_pts: Number(r.master_puan || 0) + add.m,
+            dfo_pts: Number(r.dfo_puan || 0) + add.dfo,
+            tff_pts: Number(r.tff_puan || 0) + add.tff,
+            skor_pts: Number(r.tam_isabet || 0) + add.sk
+          };
+        });
+
+        enriched.sort((a: any, b: any) => b.master_pts - a.master_pts || b.skor_pts - a.skor_pts || a.name.localeCompare(b.name, 'tr'));
+
+        const upsertData = enriched.map((p: any, idx: number) => {
+          const newRank = idx + 1;
+          const diff = p.prevRank - newRank;
+          return {
+            id: p.id,
+            name: p.name,
+            master_pts: p.master_pts,
+            master_rank: newRank,
+            trend_direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'same',
+            trend_diff: Math.abs(diff),
+            dfo_pts: p.dfo_pts,
+            dfo_trend_direction: 'same',
+            dfo_trend_diff: 0,
+            tff_pts: p.tff_pts,
+            tff_trend_direction: 'same',
+            tff_trend_diff: 0,
+            skor_pts: p.skor_pts,
+            skor_trend_direction: 'same',
+            skor_trend_diff: 0,
+            dfo_skor_pts: 0,
+            dfo_skor_trend_direction: 'same',
+            dfo_skor_trend_diff: 0,
+            tff_skor_pts: 0,
+            tff_skor_trend_direction: 'same',
+            tff_skor_trend_diff: 0,
+            updated_at: new Date().toISOString()
+          };
+        });
+
+        await supabase.from('live_leaderboard').upsert(upsertData, { onConflict: 'id' });
+      }
+    } catch {}
+  }
+
+  return NextResponse.json({
+    message: 'Otonom radar hafifletilmis Egress kalkanıyla basariyla calisti.',
+    updatedMatches: updatedMatchCount
+  });
 }
