@@ -93,12 +93,19 @@ export const normalizeClubKey = (s?: string | null) =>
     .replace(/Ç/g, 'C')
     .replace(/\s+/g, ' ');
 
-const STORAGE_CACHE_KEY = 'etml_custom_clubs_cache_v1';
-const customClubLogoMap: Record<string, string> = {};
-let customClubListCache: { club_name: string; logo_url: string }[] = [];
-let initializedCustomClubs = false;
+type CustomClubRow = { club_name: string; logo_url: string; is_selectable?: boolean };
 
-const applyCustomClubsToMemory = (rows: { club_name: string; logo_url: string }[]) => {
+const STORAGE_CACHE_KEY = 'etml_custom_clubs_cache_v1';
+const STORAGE_CACHE_TS_KEY = 'etml_custom_clubs_ts_v1';
+const CACHE_TTL_MS = 60 * 60 * 1000; // 60 dakika boyunca 0 Egress
+
+const customClubLogoMap: Record<string, string> = {};
+let customClubListCache: CustomClubRow[] = [];
+let initializedCustomClubs = false;
+let lastMemorySyncTs = 0;
+let inFlightRefresh: Promise<CustomClubRow[]> | null = null;
+
+const applyCustomClubsToMemory = (rows: CustomClubRow[], persistToStorage = true) => {
   customClubListCache = rows || [];
   Object.keys(customClubLogoMap).forEach((k) => delete customClubLogoMap[k]);
 
@@ -111,40 +118,127 @@ const applyCustomClubsToMemory = (rows: { club_name: string; logo_url: string }[
   });
 
   if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(rows || []));
-      window.dispatchEvent(new CustomEvent('etml-custom-clubs-updated'));
-    } catch {
-      // localStorage kapalıysa sessiz geç
+    if (persistToStorage) {
+      try {
+        window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(rows || []));
+        window.localStorage.setItem(STORAGE_CACHE_TS_KEY, String(Date.now()));
+      } catch {
+        // localStorage dolu veya kapalıysa bellekte devam et
+      }
     }
+    window.dispatchEvent(new CustomEvent('etml-custom-clubs-updated'));
   }
 };
 
-export const refreshCustomClubsCache = async () => {
-  const { data, error } = await supabase
-    .from('etml_custom_clubs')
-    .select('club_name, logo_url, is_selectable')
-    .order('club_name', { ascending: true });
+export const refreshCustomClubsCache = async (force = false): Promise<CustomClubRow[]> => {
+  const isAdminPage =
+    typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
-  if (!error && data) {
-    applyCustomClubsToMemory(data as { club_name: string; logo_url: string }[]);
+  const now = Date.now();
+  let cachedTs = lastMemorySyncTs;
+  if (typeof window !== 'undefined' && !cachedTs) {
+    cachedTs = Number(window.localStorage.getItem(STORAGE_CACHE_TS_KEY) || '0');
   }
-  return customClubListCache;
+
+  // Önbellek tazeyse ve admin sayfasında zorunlu yenileme değilse 0 Egress ile bellekteki veriyi döndür
+  if (!force && !isAdminPage && customClubListCache.length > 0 && now - cachedTs < CACHE_TTL_MS) {
+    return customClubListCache;
+  }
+
+  if (inFlightRefresh) return inFlightRefresh;
+
+  inFlightRefresh = (async () => {
+    try {
+      // Bellekte zaten logolar varsa önce SADECE kulüp adlarını çek (~150 byte), Base64 logoları boşuna indirme!
+      if (!force && !isAdminPage && customClubListCache.length > 0) {
+        const { data: metaRows, error: metaErr } = await supabase
+          .from('etml_custom_clubs')
+          .select('club_name, is_selectable')
+          .order('club_name', { ascending: true });
+
+        if (!metaErr && metaRows) {
+          const existingMap = new Map<string, CustomClubRow>();
+          customClubListCache.forEach((c) => existingMap.set(normalizeClubKey(c.club_name), c));
+
+          const missingNames = metaRows
+            .map((m: any) => String(m.club_name || '').trim())
+            .filter((name: string) => name && !existingMap.get(normalizeClubKey(name))?.logo_url);
+
+          if (missingNames.length === 0) {
+            // Hiç yeni kulüp yok -> Base64 indirmeden sadece aktiflik bilgisini ve süreyi tazele!
+            const updatedList: CustomClubRow[] = metaRows
+              .map((m: any) => {
+                const old = existingMap.get(normalizeClubKey(m.club_name));
+                if (!old) return null;
+                return {
+                  club_name: m.club_name,
+                  logo_url: old.logo_url,
+                  is_selectable: m.is_selectable
+                };
+              })
+              .filter(Boolean) as CustomClubRow[];
+
+            lastMemorySyncTs = Date.now();
+            applyCustomClubsToMemory(updatedList, true);
+            return customClubListCache;
+          }
+
+          // Sadece yeni eklenen kulübün logosunu indir
+          const { data: newClubs } = await supabase
+            .from('etml_custom_clubs')
+            .select('club_name, logo_url, is_selectable')
+            .in('club_name', missingNames);
+
+          (newClubs || []).forEach((nc: any) => {
+            existingMap.set(normalizeClubKey(nc.club_name), nc as CustomClubRow);
+          });
+
+          const mergedList = metaRows
+            .map((m: any) => existingMap.get(normalizeClubKey(m.club_name)))
+            .filter(Boolean) as CustomClubRow[];
+
+          lastMemorySyncTs = Date.now();
+          applyCustomClubsToMemory(mergedList, true);
+          return customClubListCache;
+        }
+      }
+
+      // İlk kez giren ziyaretçi veya Admin panelinden yapılan güncelleme
+      const { data, error } = await supabase
+        .from('etml_custom_clubs')
+        .select('club_name, logo_url, is_selectable')
+        .order('club_name', { ascending: true });
+
+      if (!error && data) {
+        lastMemorySyncTs = Date.now();
+        applyCustomClubsToMemory(data as CustomClubRow[], true);
+      }
+    } finally {
+      inFlightRefresh = null;
+    }
+    return customClubListCache;
+  })();
+
+  return inFlightRefresh;
 };
 
-// Tarayıcı açılır açılmaz önbelleği ve Supabase'deki özel kulüpleri yükle
+// Tarayıcı açılır açılmaz önce localStorage önbelleğini yükle, sadece süresi dolduysa arka planda kontrol et
 if (typeof window !== 'undefined' && !initializedCustomClubs) {
   initializedCustomClubs = true;
   try {
     const cached = window.localStorage.getItem(STORAGE_CACHE_KEY);
+    const cachedTs = Number(window.localStorage.getItem(STORAGE_CACHE_TS_KEY) || '0');
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed)) applyCustomClubsToMemory(parsed);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        lastMemorySyncTs = cachedTs;
+        applyCustomClubsToMemory(parsed, false);
+      }
     }
   } catch {
     // ignore
   }
-  refreshCustomClubsCache();
+  refreshCustomClubsCache(false);
 }
 
 export const getClubLogoUrl = (teamName?: string | null) => {
