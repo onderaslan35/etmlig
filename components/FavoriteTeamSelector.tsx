@@ -41,7 +41,7 @@ export const AVAILABLE_FAVORITE_CLUBS = [
   'IĞDIR FK',
   'ÜMRANİYESPOR',
   'VANSPOR FK',
-  // Avrupa Devleri
+  // Avrupa Kulüpleri
   'REAL MADRID',
   'BARCELONA',
   'ATLETICO MADRID',
@@ -93,11 +93,51 @@ export const normalizeClubKey = (s?: string | null) =>
     .replace(/Ç/g, 'C')
     .replace(/\s+/g, ' ');
 
+// KESİN KARA LİSTE: Hiçbir Milli Takım / Ülke adı favori kulüp olarak seçilemez ve gösterilemez!
+const NATIONAL_TEAMS_BLACKLIST = new Set<string>([
+  'TURKIYE', 'TURKEY', 'ALMANYA', 'GERMANY', 'INGILTERE', 'ENGLAND', 'FRANSA', 'FRANCE',
+  'ISPANYA', 'SPAIN', 'ITALYA', 'ITALY', 'HOLLANDA', 'NETHERLANDS', 'PORTEKIZ', 'PORTUGAL',
+  'BELCIKA', 'BELGIUM', 'HIRVATISTAN', 'CROATIA', 'ISVICRE', 'SWITZERLAND', 'DANIMARKA', 'DENMARK',
+  'AVUSTURYA', 'AUSTRIA', 'MACARISTAN', 'HUNGARY', 'SIRBISTAN', 'SERBIA', 'POLONYA', 'POLAND',
+  'UKRAYNA', 'UKRAINE', 'CEKYA', 'CEK CUMHURIYETI', 'CZECHIA', 'CZECH REPUBLIC',
+  'ISKOCYA', 'SCOTLAND', 'GALLER', 'WALES', 'IRLANDA', 'IRLANDA CUMHURIYETI', 'IRELAND', 'REPUBLIC OF IRELAND',
+  'KUZEY IRLANDA', 'NORTHERN IRELAND', 'ISVEC', 'SWEDEN', 'NORVEC', 'NORWAY', 'FINLANDIYA', 'FINLAND',
+  'IZLANDA', 'ICELAND', 'ROMANYA', 'ROMANIA', 'YUNANISTAN', 'GREECE', 'SLOVAKYA', 'SLOVAKIA',
+  'SLOVENYA', 'SLOVENIA', 'GURCISTAN', 'GEORGIA', 'ARNAVUTLUK', 'ALBANIA',
+  'KUZEY MAKEDONYA', 'MAKEDONYA', 'NORTH MACEDONIA', 'KARADAG', 'MONTENEGRO',
+  'BOSNA HERSEK', 'BOSNA-HERSEK', 'BOSNIA', 'BOSNIA AND HERZEGOVINA', 'BOSNIA & HERZEGOVINA',
+  'KOSOVA', 'KOSOVO', 'BULGARISTAN', 'BULGARIA', 'KAZAKISTAN', 'KAZAKHSTAN',
+  'AZERBAYCAN', 'AZERBAIJAN', 'ERMENISTAN', 'ARMENIA', 'BELARUS', 'BEYAZ RUSYA',
+  'RUSYA', 'RUSSIA', 'ISRAIL', 'ISRAEL', 'KIBRIS', 'GUNEY KIBRIS', 'KKTC', 'CYPRUS',
+  'ESTONYA', 'ESTONIA', 'LETONYA', 'LATVIA', 'LITVANYA', 'LITHUANIA',
+  'LUKSEMBURG', 'LUXEMBOURG', 'FAROE ADALARI', 'FAROE ISLANDS', 'MOLDOVA', 'MALTA',
+  'ANDORRA', 'SAN MARINO', 'LIHTENSTAYN', 'LIECHTENSTEIN', 'CEBELITARIK', 'GIBRALTAR',
+  'BREZILYA', 'BRAZIL', 'ARJANTIN', 'ARGENTINA', 'URUGUAY', 'KOLOMBIYA', 'COLOMBIA',
+  'SILI', 'CHILE', 'PERU', 'EKVADOR', 'ECUADOR', 'PARAGUAY', 'VENEZUELA', 'BOLIVYA', 'BOLIVIA',
+  'MEKSIKA', 'MEXICO', 'ABD', 'AMERIKA', 'USA', 'UNITED STATES', 'KANADA', 'CANADA',
+  'KOSTA RIKA', 'COSTA RICA', 'PANAMA', 'JAMAIKA', 'JAMAICA', 'HONDURAS',
+  'FAS', 'MOROCCO', 'SENEGAL', 'MISIR', 'EGYPT', 'NIJERYA', 'NIGERIA', 'CEZAYIR', 'ALGERIA',
+  'TUNUS', 'TUNISIA', 'KAMERUN', 'CAMEROON', 'GANA', 'GHANA', 'FILDISI SAHILI', 'IVORY COAST',
+  'MALI', 'GUNEY AFRIKA', 'SOUTH AFRICA', 'KONGO', 'JAPONYA', 'JAPAN',
+  'GUNEY KORE', 'KORE', 'SOUTH KOREA', 'IRAN', 'SUUDI ARABISTAN', 'SAUDI ARABIA',
+  'KATAR', 'QATAR', 'IRAK', 'IRAQ', 'OZBEKISTAN', 'UZBEKISTAN', 'URDUN', 'JORDAN',
+  'CIN', 'CHINA', 'AVUSTRALYA', 'AUSTRALIA', 'YENI ZELANDA', 'NEW ZEALAND'
+]);
+
+export const isNationalTeamName = (name?: string | null): boolean => {
+  if (!name || !name.trim()) return false;
+  const norm = normalizeClubKey(name).replace(/[^A-Z0-9\s&-]/g, '').trim();
+  if (!norm) return false;
+  if (NATIONAL_TEAMS_BLACKLIST.has(norm)) return true;
+  if (/\b(MILLI|NATIONAL|U21|U20|U19|U17)\b/.test(norm)) return true;
+  return false;
+};
+
 type CustomClubRow = { club_name: string; logo_url: string; is_selectable?: boolean };
 
 const STORAGE_CACHE_KEY = 'etml_custom_clubs_cache_v1';
 const STORAGE_CACHE_TS_KEY = 'etml_custom_clubs_ts_v1';
-const CACHE_TTL_MS = 60 * 60 * 1000; // 60 dakika boyunca 0 Egress
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 const customClubLogoMap: Record<string, string> = {};
 let customClubListCache: CustomClubRow[] = [];
@@ -123,7 +163,7 @@ const applyCustomClubsToMemory = (rows: CustomClubRow[], persistToStorage = true
         window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(rows || []));
         window.localStorage.setItem(STORAGE_CACHE_TS_KEY, String(Date.now()));
       } catch {
-        // localStorage dolu veya kapalıysa bellekte devam et
+        // Base64 boyutu localStorage sınırını aşarsa bellek içi önbellekle devam et
       }
     }
     window.dispatchEvent(new CustomEvent('etml-custom-clubs-updated'));
@@ -140,7 +180,6 @@ export const refreshCustomClubsCache = async (force = false): Promise<CustomClub
     cachedTs = Number(window.localStorage.getItem(STORAGE_CACHE_TS_KEY) || '0');
   }
 
-  // Önbellek tazeyse ve admin sayfasında zorunlu yenileme değilse 0 Egress ile bellekteki veriyi döndür
   if (!force && !isAdminPage && customClubListCache.length > 0 && now - cachedTs < CACHE_TTL_MS) {
     return customClubListCache;
   }
@@ -149,64 +188,9 @@ export const refreshCustomClubsCache = async (force = false): Promise<CustomClub
 
   inFlightRefresh = (async () => {
     try {
-      // Bellekte zaten logolar varsa önce SADECE kulüp adlarını çek (~150 byte), Base64 logoları boşuna indirme!
-      if (!force && !isAdminPage && customClubListCache.length > 0) {
-        const { data: metaRows, error: metaErr } = await supabase
-          .from('etml_custom_clubs')
-          .select('club_name, is_selectable')
-          .order('club_name', { ascending: true });
-
-        if (!metaErr && metaRows) {
-          const existingMap = new Map<string, CustomClubRow>();
-          customClubListCache.forEach((c) => existingMap.set(normalizeClubKey(c.club_name), c));
-
-          const missingNames = metaRows
-            .map((m: any) => String(m.club_name || '').trim())
-            .filter((name: string) => name && !existingMap.get(normalizeClubKey(name))?.logo_url);
-
-          if (missingNames.length === 0) {
-            // Hiç yeni kulüp yok -> Base64 indirmeden sadece aktiflik bilgisini ve süreyi tazele!
-            const updatedList: CustomClubRow[] = metaRows
-              .map((m: any) => {
-                const old = existingMap.get(normalizeClubKey(m.club_name));
-                if (!old) return null;
-                return {
-                  club_name: m.club_name,
-                  logo_url: old.logo_url,
-                  is_selectable: m.is_selectable
-                };
-              })
-              .filter(Boolean) as CustomClubRow[];
-
-            lastMemorySyncTs = Date.now();
-            applyCustomClubsToMemory(updatedList, true);
-            return customClubListCache;
-          }
-
-          // Sadece yeni eklenen kulübün logosunu indir
-          const { data: newClubs } = await supabase
-            .from('etml_custom_clubs')
-            .select('club_name, logo_url, is_selectable')
-            .in('club_name', missingNames);
-
-          (newClubs || []).forEach((nc: any) => {
-            existingMap.set(normalizeClubKey(nc.club_name), nc as CustomClubRow);
-          });
-
-          const mergedList = metaRows
-            .map((m: any) => existingMap.get(normalizeClubKey(m.club_name)))
-            .filter(Boolean) as CustomClubRow[];
-
-          lastMemorySyncTs = Date.now();
-          applyCustomClubsToMemory(mergedList, true);
-          return customClubListCache;
-        }
-      }
-
-      // İlk kez giren ziyaretçi veya Admin panelinden yapılan güncelleme
       const { data, error } = await supabase
         .from('etml_custom_clubs')
-        .select('club_name, logo_url, is_selectable')
+        .select('*')
         .order('club_name', { ascending: true });
 
       if (!error && data) {
@@ -222,7 +206,6 @@ export const refreshCustomClubsCache = async (force = false): Promise<CustomClub
   return inFlightRefresh;
 };
 
-// Tarayıcı açılır açılmaz önce localStorage önbelleğini yükle, sadece süresi dolduysa arka planda kontrol et
 if (typeof window !== 'undefined' && !initializedCustomClubs) {
   initializedCustomClubs = true;
   try {
@@ -243,14 +226,15 @@ if (typeof window !== 'undefined' && !initializedCustomClubs) {
 
 export const getClubLogoUrl = (teamName?: string | null) => {
   if (!teamName || !teamName.trim()) return '';
+  // Yarışmacı rozeti olarak milli takım bayrağı kesinlikle gösterilmez
+  if (isNationalTeamName(teamName)) return '';
+
   const upperTr = teamName.trim().toLocaleUpperCase('tr-TR');
   const norm = normalizeClubKey(upperTr);
 
-  // 1. Öncelik: Admin'den eklenen özel kulüp arması (Örn: GAZİANTEP KALESPOR)
   if (customClubLogoMap[upperTr]) return customClubLogoMap[upperTr];
   if (customClubLogoMap[norm]) return customClubLogoMap[norm];
 
-  // 2. Öncelik: Sistemin yerleşik themeEngine arması
   return getEliteTheme('', upperTr, '').homeLogo || getEliteTheme('', norm, '').homeLogo || '';
 };
 
@@ -261,16 +245,14 @@ interface FavoriteTeamSelectorProps {
 
 export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTeamSelectorProps) {
   const [selectedTeam, setSelectedTeam] = useState<string>('');
-  const [customClubs, setCustomClubs] = useState<{ club_name: string; logo_url: string }[]>(
-    customClubListCache
-  );
+  const [customClubs, setCustomClubs] = useState<CustomClubRow[]>(customClubListCache);
   const [saving, setSaving] = useState<boolean>(false);
   const [savedNotice, setSavedNotice] = useState<boolean>(false);
 
   useEffect(() => {
     let active = true;
 
-    refreshCustomClubsCache().then((rows) => {
+    refreshCustomClubsCache(false).then((rows) => {
       if (active) setCustomClubs([...rows]);
     });
 
@@ -287,7 +269,10 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
         .maybeSingle()
         .then(({ data }) => {
           if (active && data?.favorite_team) {
-            setSelectedTeam(String(data.favorite_team).trim());
+            const fav = String(data.favorite_team).trim();
+            if (!isNationalTeamName(fav)) {
+              setSelectedTeam(fav);
+            }
           }
         });
     }
@@ -299,6 +284,7 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
   }, [userId]);
 
   const handleTeamChange = async (newTeam: string) => {
+    if (isNationalTeamName(newTeam)) return;
     setSelectedTeam(newTeam);
     setSaving(true);
     setSavedNotice(false);
@@ -324,27 +310,29 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
 
   if (!userId || userId === 'mankoman') return null;
 
+  // SADECE KULÜP TAKIMLARI: Milli takımlar kesin olarak filtrelenir!
   const extraClubNames = customClubs
-    .filter((c: any) => c.is_selectable !== false)
+    .filter((c: any) => c.is_selectable !== false && !isNationalTeamName(c.club_name))
     .map((c) => c.club_name)
     .filter(
       (cn) => !AVAILABLE_FAVORITE_CLUBS.some((base) => normalizeClubKey(base) === normalizeClubKey(cn))
     );
 
-  // Kullanıcının veritabanındaki mevcut seçimi (örn. BESIKTAS) listedeki Türkçe yazımla eşleşsin
+  const safeSelectedTeam = isNationalTeamName(selectedTeam) ? '' : selectedTeam;
+
   const matchedOptionValue =
     [...extraClubNames, ...AVAILABLE_FAVORITE_CLUBS].find(
-      (c) => normalizeClubKey(c) === normalizeClubKey(selectedTeam)
-    ) || selectedTeam;
+      (c) => normalizeClubKey(c) === normalizeClubKey(safeSelectedTeam)
+    ) || safeSelectedTeam;
 
-  const logoUrl = getClubLogoUrl(selectedTeam);
+  const logoUrl = getClubLogoUrl(safeSelectedTeam);
 
   return (
     <div className="inline-flex flex-wrap items-center gap-2 bg-[#040a18] border border-sky-500/40 rounded-xl px-2.5 py-1.5 shadow-sm">
       {logoUrl ? (
         <img
           src={logoUrl}
-          alt={selectedTeam}
+          alt={safeSelectedTeam}
           className="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0"
         />
       ) : (
@@ -352,7 +340,7 @@ export default function FavoriteTeamSelector({ userId, playerName }: FavoriteTea
       )}
 
       <span className="text-[10px] sm:text-[11px] font-black text-sky-300 uppercase tracking-wider">
-        TAKIM ARMAM:
+        KULÜP ARMAM:
       </span>
 
       <select

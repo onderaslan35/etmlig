@@ -9,7 +9,7 @@ import {
   getMatchTimeMs,
   getUniqueMatchId
 } from '@/utils/themeEngine';
-import { getClubLogoUrl } from '@/components/FavoriteTeamSelector';
+import { getClubLogoUrl, refreshCustomClubsCache } from '@/components/FavoriteTeamSelector';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
 
@@ -307,12 +307,8 @@ export default function LandingShowcasePage() {
     const loadLandingData = async () => {
       try {
         const [offPlayersRes, legacyPlayersRes, bulRes, offMatchesRes] = await Promise.all([
-          supabase
-            .from('etml_official_players')
-            .select('user_id, full_name, is_active, is_champion, favorite_team'),
-          supabase
-            .from('players')
-            .select('username, name, full_name, is_champion, favorite_team'),
+          supabase.from('etml_official_players').select('*'),
+          supabase.from('players').select('*'),
           supabase
             .from('matches_bulletin')
             .select('week_num, match_index, category, match_date, match_time, home_team, away_team')

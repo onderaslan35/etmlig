@@ -59,8 +59,8 @@ export default function PredictionPortal() {
   useEffect(() => {
     const fetchDbPlayers = async () => {
       const [playersRes, officialRes] = await Promise.all([
-        supabase.from('players').select('username, name, full_name, password'),
-        supabase.from('etml_official_players').select('user_id, full_name, is_active')
+        supabase.from('players').select('*'),
+        supabase.from('etml_official_players').select('*')
       ]);
 
       const newAccounts: Record<string, { pass: string; name: string }> = { ...TEST_ACCOUNTS };
