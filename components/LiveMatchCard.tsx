@@ -400,8 +400,8 @@ export default function LiveMatchCard() {
   useEffect(() => {
     const fetchDbPlayers = async () => {
       const [playersRes, officialPlayersRes] = await Promise.all([
-        supabase.from('players').select('username, name, full_name, favorite_team'),
-        supabase.from('etml_official_players').select('user_id, full_name, is_active, favorite_team'),
+        supabase.from('players').select('*'),
+        supabase.from('etml_official_players').select('*'),
         refreshCustomClubsCache()
       ]);
 
