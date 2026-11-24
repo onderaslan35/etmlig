@@ -462,7 +462,16 @@ export default function AdminRadarPortal() {
                    status: status,
                    updated_by: 'MASTER_RADAR',
                    updated_at: timeString,
-                   events: JSON.stringify(fix.events || []),
+                   events: JSON.stringify(
+                     (fix.events || []).map((ev: any) => ({
+                       type: ev.type,
+                       detail: ev.detail,
+                       time: { elapsed: ev.time?.elapsed },
+                       team: { id: ev.team?.id, name: ev.team?.name },
+                       player: { name: ev.player?.name },
+                       assist: ev.assist?.name ? { name: ev.assist.name } : undefined
+                     }))
+                   ),
                    elapsed: fix.fixture.status.elapsed
                 });
             }
@@ -537,6 +546,11 @@ export default function AdminRadarPortal() {
        // PC <-> Mobil Bulut Havuz Senkronizasyonu (Mevcut bültenlerden ve bulut kaydından otomatik doldurur)
        (async () => {
          try {
+           const lastSync = Number(localStorage.getItem('ekmel_lig_havuzu_sync_ts') || '0');
+           if (Object.keys(localParsed).length > 0 && Date.now() - lastSync < 24 * 60 * 60 * 1000) {
+             return;
+           }
+
            const merged: Record<string, Set<string>> = {};
            Object.keys(localParsed).forEach((cat) => {
              merged[cat] = new Set(localParsed[cat] || []);
@@ -545,7 +559,8 @@ export default function AdminRadarPortal() {
            const { data: pastRows } = await supabase
              .from('matches_bulletin')
              .select('category, home_team, away_team')
-             .limit(2000);
+             .gte('week_num', 35)
+             .limit(500);
 
            (pastRows || []).forEach((r: any) => {
              const cat = String(r.category || '').trim().toUpperCase();
@@ -565,6 +580,7 @@ export default function AdminRadarPortal() {
            if (Object.keys(finalPool).length > 0) {
              setDynamicLigHavuzu(finalPool);
              localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(finalPool));
+             localStorage.setItem('ekmel_lig_havuzu_sync_ts', String(Date.now()));
            }
          } catch (err) {
            console.log('Mobil havuz senkronu:', err);
@@ -770,14 +786,30 @@ export default function AdminRadarPortal() {
     if (activeTab === 'live') {
         fetchLiveAdminData();
         const channel = supabase.channel('public:live_matches')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, payload => {
-                fetchLiveAdminData();
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, (payload: any) => {
+                const row = payload.new;
+                if (!row || row.id === undefined) return;
+                // Sadece seçili haftanın maçıysa hafızada anında güncelle (Veritabanından tüm tabloları tekrar çekmez!)
+                const weekPrefix = selectedLiveWeek * 100;
+                const numId = Number(row.id);
+                const mIdx = numId - weekPrefix;
+                if (mIdx >= 1 && mIdx <= 24) {
+                    setLiveInfoStateMap((prev) => ({ ...prev, [mIdx]: row }));
+                    setAdminScores((prev) => ({
+                        ...prev,
+                        [mIdx]: { home: row.home_score ?? '-', away: row.away_score ?? '-' }
+                    }));
+                    setDistributedMatches((prev) => ({
+                        ...prev,
+                        [mIdx]: row.status === 'FINISHED'
+                    }));
+                }
             })
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
     }
-  }, [activeTab, selectedLiveWeek, isAuthenticated, isSoundEnabled, userRole]);
+  }, [activeTab, selectedLiveWeek, isAuthenticated, userRole]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
