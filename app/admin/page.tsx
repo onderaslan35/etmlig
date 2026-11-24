@@ -546,14 +546,34 @@ export default function AdminRadarPortal() {
 
        (async () => {
          try {
+           const deletedLeagues = new Set<string>(
+             JSON.parse(localStorage.getItem('etml_deleted_leagues') || '[]')
+           );
+           const deletedTeams = new Set<string>(
+             JSON.parse(localStorage.getItem('etml_deleted_teams') || '[]')
+           );
+
+           // Sayfa açılışında bile kara listedeki lig ve takımları anında temizle
+           const cleanedLocal: Record<string, string[]> = {};
+           Object.keys(localParsed).forEach((cat) => {
+             if (!deletedLeagues.has(cat)) {
+               const validTeams = (localParsed[cat] || []).filter(
+                 (t) => !deletedTeams.has(`${cat}::${t}`)
+               );
+               if (validTeams.length > 0) cleanedLocal[cat] = validTeams;
+             }
+           });
+           setDynamicLigHavuzu(cleanedLocal);
+           localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(cleanedLocal));
+
            const lastSync = Number(localStorage.getItem('ekmel_lig_havuzu_sync_ts') || '0');
-           if (Object.keys(localParsed).length > 0 && Date.now() - lastSync < 24 * 60 * 60 * 1000) {
+           if (Object.keys(cleanedLocal).length > 0 && Date.now() - lastSync < 24 * 60 * 60 * 1000) {
              return;
            }
 
            const merged: Record<string, Set<string>> = {};
-           Object.keys(localParsed).forEach((cat) => {
-             merged[cat] = new Set(localParsed[cat] || []);
+           Object.keys(cleanedLocal).forEach((cat) => {
+             merged[cat] = new Set(cleanedLocal[cat] || []);
            });
 
            const { data: pastRows } = await supabase
@@ -566,10 +586,13 @@ export default function AdminRadarPortal() {
              const cat = String(r.category || '').trim().toUpperCase();
              const h = String(r.home_team || '').trim().toUpperCase();
              const a = String(r.away_team || '').trim().toUpperCase();
-             if (!cat) return;
+             if (!cat || deletedLeagues.has(cat)) return;
+
              if (!merged[cat]) merged[cat] = new Set();
-             if (h) merged[cat].add(h);
-             if (a) merged[cat].add(a);
+             if (h && !deletedTeams.has(`${cat}::${h}`)) merged[cat].add(h);
+             if (a && !deletedTeams.has(`${cat}::${a}`)) merged[cat].add(a);
+
+             if (merged[cat].size === 0) delete merged[cat];
            });
 
            const finalPool: Record<string, string[]> = {};
@@ -577,11 +600,9 @@ export default function AdminRadarPortal() {
              finalPool[cat] = Array.from(merged[cat]).sort((x, y) => x.localeCompare(y, 'tr'));
            });
 
-           if (Object.keys(finalPool).length > 0) {
-             setDynamicLigHavuzu(finalPool);
-             localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(finalPool));
-             localStorage.setItem('ekmel_lig_havuzu_sync_ts', String(Date.now()));
-           }
+           setDynamicLigHavuzu(finalPool);
+           localStorage.setItem('ekmel_lig_havuzu', JSON.stringify(finalPool));
+           localStorage.setItem('ekmel_lig_havuzu_sync_ts', String(Date.now()));
          } catch (err) {
            console.log('Mobil havuz senkronu:', err);
          }
@@ -1258,6 +1279,22 @@ export default function AdminRadarPortal() {
     
     const tName = newTeamName.trim().toUpperCase();
 
+    const delLeagues: string[] = JSON.parse(localStorage.getItem('etml_deleted_leagues') || '[]');
+    if (delLeagues.includes(targetLeague)) {
+      localStorage.setItem(
+        'etml_deleted_leagues',
+        JSON.stringify(delLeagues.filter((l) => l !== targetLeague))
+      );
+    }
+    const delTeams: string[] = JSON.parse(localStorage.getItem('etml_deleted_teams') || '[]');
+    const teamKey = `${targetLeague}::${tName}`;
+    if (delTeams.includes(teamKey)) {
+      localStorage.setItem(
+        'etml_deleted_teams',
+        JSON.stringify(delTeams.filter((tk) => tk !== teamKey))
+      );
+    }
+
     const updatedHavuz = { ...dynamicLigHavuzu };
     if (!updatedHavuz[targetLeague]) updatedHavuz[targetLeague] = [];
 
@@ -1282,11 +1319,23 @@ export default function AdminRadarPortal() {
 
   const handleDeleteLocalTeam = (leagueName: string, teamName: string) => {
       if (window.confirm(`DİKKAT: ${teamName} takımını ${leagueName} havuzundan kalıcı olarak silmek istediğinize emin misiniz?`)) {
+          const delTeams: string[] = JSON.parse(localStorage.getItem('etml_deleted_teams') || '[]');
+          const teamKey = `${leagueName}::${teamName}`;
+          if (!delTeams.includes(teamKey)) {
+              delTeams.push(teamKey);
+              localStorage.setItem('etml_deleted_teams', JSON.stringify(delTeams));
+          }
+
           const updatedHavuz = { ...dynamicLigHavuzu };
           if (updatedHavuz[leagueName]) {
               updatedHavuz[leagueName] = updatedHavuz[leagueName].filter((t: string) => t !== teamName);
               if (updatedHavuz[leagueName].length === 0) {
                   delete updatedHavuz[leagueName]; 
+                  const delLeagues: string[] = JSON.parse(localStorage.getItem('etml_deleted_leagues') || '[]');
+                  if (!delLeagues.includes(leagueName)) {
+                      delLeagues.push(leagueName);
+                      localStorage.setItem('etml_deleted_leagues', JSON.stringify(delLeagues));
+                  }
                   setSelectedManageLeague(''); 
               }
               updateLigHavuzu(updatedHavuz);
@@ -1296,11 +1345,17 @@ export default function AdminRadarPortal() {
 
   const handleDeleteLeague = (leagueName: string) => {
       if (window.confirm(`DİKKAT: "${leagueName}" kategorisini ve içindeki TÜM TAKIMLARI tamamen silmek istediğinize emin misiniz?`)) {
+          const delLeagues: string[] = JSON.parse(localStorage.getItem('etml_deleted_leagues') || '[]');
+          if (!delLeagues.includes(leagueName)) {
+              delLeagues.push(leagueName);
+              localStorage.setItem('etml_deleted_leagues', JSON.stringify(delLeagues));
+          }
+
           const updatedHavuz = { ...dynamicLigHavuzu };
           delete updatedHavuz[leagueName];
           updateLigHavuzu(updatedHavuz);
           setSelectedManageLeague(''); 
-          alert(`✅ SİLİNDİ! "${leagueName}" kategorisi ve içindeki tüm takımlar havuzdan kaldırıldı.`);
+          alert(`✅ KALICI OLARAK SİLİNDİ! "${leagueName}" kara listeye alındı, bir daha asla geri gelmeyecek.`);
       }
   };
 
