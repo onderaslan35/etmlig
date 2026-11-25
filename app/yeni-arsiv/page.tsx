@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
   TEST_ACCOUNTS,
@@ -20,24 +20,15 @@ const SEALED_WEEKS_CACHE_KEY = 'etml_sealed_weeks_v2';
 const SEALED_CACHE_TS_KEY = 'etml_sealed_cache_ts_v2';
 const SEALED_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
-const CHAMPION_CUPS: Record<string, number> = {
-  'GAZI AYAN': 2,
-  'R ILHAN KARACA': 2,
-  'RECEP ILHAN KARACA': 2,
-  'OSMAN ALI AYDIN': 2,
-  'ISMAIL EKER': 1,
-  'ISMAIL PEKER': 1,
-  'MURAT KARA': 1,
-  'MURAT KARAOGLU': 1,
-  'HUDAVER TOPARDIC': 1,
-  'HUDAVERDI TOPARDIC': 1
-};
-
-const stripTrophies = (s: string) => (s || '').replace(/(🏆|🇹🇷)+/g, '').trim();
+const stripTrophies = (s: string) =>
+  (s || '')
+    .replace(/(🏆|🇹🇷)+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const normalizeTrName = (s: string) =>
   stripTrophies(s)
-    .toUpperCase()
+    .toLocaleUpperCase('tr-TR')
     .replace(/İ/g, 'I')
     .replace(/Ş/g, 'S')
     .replace(/Ğ/g, 'G')
@@ -48,50 +39,207 @@ const normalizeTrName = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const getChampionCupCount = (rawName: string, isChampFlag?: boolean) => {
-  const existingInText = ((rawName || '').match(/🏆/g) || []).length;
-  const norm = normalizeTrName(rawName);
-  if (CHAMPION_CUPS[norm] !== undefined) return CHAMPION_CUPS[norm];
-  if (norm.includes('OSMAN ALI AYDIN') || norm.includes('GAZI AYAN') || norm.includes('ILHAN KARACA')) return 2;
-  if (
-    norm.includes('ISMAIL EKER') ||
-    norm.includes('ISMAIL PEKER') ||
-    norm === 'MURAT KARA' ||
-    norm === 'MURAT KARAOGLU' ||
-    norm.includes('TOPARDIC')
-  ) {
-    return Math.max(existingInText, 1);
-  }
-  if (existingInText > 0) return existingInText;
-  return isChampFlag ? 1 : 0;
+// 10 RESMİ ŞAMPİYON KÜNYESİ (Gerçek Yarışmacı İsimleri)
+const OFFICIAL_CHAMPIONS: Record<string, { stars: number; reigning: boolean }> = {
+  // 2 Yıldız + Türk Bayraklı Son Şampiyon
+  'OSMAN ALI AYDIN': { stars: 2, reigning: true },
+
+  // 1 Yıldız + Türk Bayraklı Son Şampiyon
+  'ISMAIL EKER': { stars: 1, reigning: true },
+
+  // 2 Yıldız + Türk Bayraksız Şampiyonlar
+  'GAZI AYAN': { stars: 2, reigning: false },
+  'RECEP ILHAN KARACA': { stars: 2, reigning: false },
+  'RECEP ILAN KARACA': { stars: 2, reigning: false },
+  'R ILHAN KARACA': { stars: 2, reigning: false },
+
+  // 1 Yıldız + Türk Bayraksız Şampiyonlar (60. Yarışmacı METE BÜYÜKGÖL dahil)
+  'YAHSI ERKAN': { stars: 1, reigning: false },
+  'AHMET BIRCAN': { stars: 1, reigning: false },
+  'CEMAL SIVRIKAYA': { stars: 1, reigning: false },
+  'HUDAVERDI TOPARDIC': { stars: 1, reigning: false },
+  'HUDAVER TOPARDIC': { stars: 1, reigning: false },
+  'MURAT KARA': { stars: 1, reigning: false },
+  'METE BUYUKGOL': { stars: 1, reigning: false }
 };
 
-const hasReigningTurkishFlag = (rawName: string) => {
+const getChampionInfo = (rawName: string) => {
   const norm = normalizeTrName(rawName);
-  return (
-    norm.includes('ISMAIL EKER') ||
-    norm.includes('ISMAIL PEKER') ||
-    norm.includes('OSMAN ALI AYDIN')
-  );
+  if (OFFICIAL_CHAMPIONS[norm]) return OFFICIAL_CHAMPIONS[norm];
+  return { stars: 0, reigning: false };
 };
 
 const hasChampionCup = (name: string, isChampFlag?: boolean) => {
-  return getChampionCupCount(name, isChampFlag) > 0;
+  if (getChampionInfo(name).stars > 0) return true;
+  return Boolean(isChampFlag);
 };
 
-const TurkishChampionBadge = ({ title }: { title: string }) => (
-  <span
-    className="inline-flex items-center shrink-0 rounded-[2px] overflow-hidden border border-white/25 shadow-sm"
-    title={title}
-  >
-    <svg viewBox="0 0 30 20" className="w-4 h-[11px] sm:w-[18px] sm:h-3 block">
-      <rect width="30" height="20" fill="#E30A17" />
-      <circle cx="10.5" cy="10" r="5" fill="#FFFFFF" />
-      <circle cx="11.8" cy="10" r="4" fill="#E30A17" />
-      <polygon points="16.2,10 19.3,11 17.4,8.4 17.4,11.6 19.3,9" fill="#FFFFFF" />
-    </svg>
-  </span>
-);
+// YILDIZLI ALTIN KUPA + BURSASPOR ARMASI TARZINDA TOK KALKAN TÜRK BAYRAĞI (0 Byte Egress SVG)
+const ChampionTrophyCrest = ({
+  name,
+  compact = false
+}: {
+  name: string;
+  compact?: boolean;
+}) => {
+  const gradId = useId().replace(/:/g, '');
+  const { stars, reigning } = getChampionInfo(name);
+
+  if (stars <= 0) return null;
+
+  const sizeClass = compact
+    ? 'w-6 h-6 sm:w-7 sm:h-7'
+    : 'w-7 h-7 sm:w-8 sm:h-8';
+
+  const makeStarPoints = (cx: number, cy: number, rOut: number, rIn: number) => {
+    const pts: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? rOut : rIn;
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
+    }
+    return pts.join(' ');
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center shrink-0 select-none ${sizeClass} drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)]`}
+      title={
+        reigning
+          ? `${stars} Şampiyonluk • Son Şampiyon`
+          : `${stars} Şampiyonluk`
+      }
+    >
+      <svg viewBox="0 0 64 68" className="w-full h-full overflow-visible block">
+        <defs>
+          <linearGradient id={`goldCup-${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FEF08A" />
+            <stop offset="45%" stopColor="#FACC15" />
+            <stop offset="100%" stopColor="#CA8A04" />
+          </linearGradient>
+          <linearGradient id={`goldStar-${gradId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFFBEB" />
+            <stop offset="55%" stopColor="#FDE047" />
+            <stop offset="100%" stopColor="#D97706" />
+          </linearGradient>
+        </defs>
+
+        {/* ÜSTTEKİ ŞAMPİYONLUK YILDIZLARI */}
+        {stars === 1 ? (
+          <polygon
+            points={makeStarPoints(32, 9, 8.3, 3.6)}
+            fill={`url(#goldStar-${gradId})`}
+            stroke="#92400E"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        ) : (
+          <>
+            <polygon
+              points={makeStarPoints(22, 9.5, 7.6, 3.3)}
+              fill={`url(#goldStar-${gradId})`}
+              stroke="#92400E"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+            <polygon
+              points={makeStarPoints(42, 9.5, 7.6, 3.3)}
+              fill={`url(#goldStar-${gradId})`}
+              stroke="#92400E"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+          </>
+        )}
+
+        {/* KUPA KULPLARI */}
+        <path
+          d="M17 24 H8.5 C6.5 24 5.5 25.5 6 28 C7.2 35.5 11.5 40.5 19.5 42"
+          fill="none"
+          stroke={`url(#goldCup-${gradId})`}
+          strokeWidth="4.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M47 24 H55.5 C57.5 24 58.5 25.5 58 28 C56.8 35.5 52.5 40.5 44.5 42"
+          fill="none"
+          stroke={`url(#goldCup-${gradId})`}
+          strokeWidth="4.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* KUPA ANA GÖVDESİ */}
+        <path
+          d="M15 20 H49 L46 39 C44.5 48.5 38.8 53 32 53 C25.2 53 19.5 48.5 18 39 Z"
+          fill={`url(#goldCup-${gradId})`}
+          stroke="#854D0E"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+
+        {/* KUPA ÜST AĞIZ BANDI */}
+        <rect
+          x="13.5"
+          y="18"
+          width="37"
+          height="4.5"
+          rx="2.2"
+          fill="#FEF08A"
+          stroke="#854D0E"
+          strokeWidth="1.3"
+        />
+
+        {/* KUPA AYAĞI VE ALT KAİDE */}
+        <path
+          d="M28.5 52.5 H35.5 L37 60 H27 Z"
+          fill={`url(#goldCup-${gradId})`}
+          stroke="#854D0E"
+          strokeWidth="1.4"
+        />
+        <rect
+          x="20"
+          y="59.5"
+          width="24"
+          height="5.5"
+          rx="2.5"
+          fill={`url(#goldCup-${gradId})`}
+          stroke="#854D0E"
+          strokeWidth="1.5"
+        />
+
+        {/* BURSASPOR ARMASI FORMUNDA TOK KALKAN TÜRK BAYRAĞI (SON ŞAMPİYONLARDA) */}
+        {reigning ? (
+          <g>
+            <path
+              d="M32 22.8 C36.2 24.4 40.5 24.6 44 24 V36 C44 43.8 38.6 49 32 51.4 C25.4 49 20 43.8 20 36 V24 C23.5 24.6 27.8 24.4 32 22.8 Z"
+              fill="#E30A17"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <circle cx="30.1" cy="36.6" r="5.7" fill="#FFFFFF" />
+            <circle cx="31.7" cy="36.6" r="4.5" fill="#E30A17" />
+            <polygon
+              points="35.3,36.6 39.2,37.9 36.8,34.5 36.8,38.7 39.2,35.3"
+              fill="#FFFFFF"
+            />
+          </g>
+        ) : (
+          <path
+            d="M21.5 25 L23 38 C23.6 42.5 25.8 45.8 28.5 47.5"
+            fill="none"
+            stroke="#FEF9C3"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
+        )}
+      </svg>
+    </span>
+  );
+};
 
 const calcMatchPts = (winnerCount: number) => {
   if (winnerCount === 1) return 12;
@@ -151,7 +299,8 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
     cat.includes('1.LIG') ||
     cat.includes('2. LIG') ||
     cat.includes('3. LIG') ||
-    cat.includes('ZIRAAT')
+    cat.includes('ZIRAAT') ||
+    cat.includes('KUPA')
   ) {
     return true;
   }
@@ -260,7 +409,6 @@ export default function YeniArsivPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Özel kulüp armaları yüklendiği anda tabloyu yeniden çiz ki hiçbir rozet eksik kalmasın
   useEffect(() => {
     const onCustomClubsReady = () => setClubLogosVersion((v) => v + 1);
     window.addEventListener('etml-custom-clubs-updated', onCustomClubsReady);
@@ -414,7 +562,6 @@ export default function YeniArsivPage() {
 
     const loadArchiveSystem = async () => {
       try {
-        // Oyuncu tablolarını .select('*') ile hatasız çekiyoruz (~3 KB)
         const [offPlayersRes, legacyPlayersRes, officialBundle, recentBulRes] = await Promise.all([
           supabase.from('etml_official_players').select('*'),
           supabase.from('players').select('*'),
@@ -441,6 +588,13 @@ export default function YeniArsivPage() {
             pMap[uid] = { name: nm, isChampion: hasChampionCup(nm), favoriteTeam: '' };
           }
         });
+
+        // 60. Yarışmacı METE BÜYÜKGÖL her koşulda tabloda yer alır
+        pMap['600060'] = {
+          name: 'METE BÜYÜKGÖL',
+          isChampion: true,
+          favoriteTeam: pMap['600060']?.favoriteTeam || ''
+        };
 
         (legacyPlayersRes.data || []).forEach((lp: any) => {
           const uid = String(lp.username || lp.user_id || lp.id || '').trim();
@@ -469,7 +623,6 @@ export default function YeniArsivPage() {
           }
         });
 
-        // İsim üzerinden yedek eşleştirme (farklı ID formatı olsa bile kulüp rozeti kaybolmaz)
         Object.keys(pMap).forEach((uid) => {
           if (!pMap[uid].favoriteTeam) {
             const fallbackFav = nameToFav[normalizeTrName(pMap[uid].name)];
@@ -1111,19 +1264,17 @@ export default function YeniArsivPage() {
 
   const renderPlayerNameWithCup = (
     name: string,
-    isChamp: boolean,
+    _isChamp: boolean,
     liveAdd: number = 0,
     favoriteTeam: string = ''
   ) => {
     const cleanDisplay = stripTrophies(name);
-    const cupCount = getChampionCupCount(name, isChamp);
-    const showTrFlag = hasReigningTurkishFlag(name);
     const effectiveFav =
       favoriteTeam || favTeamByNormName[normalizeTrName(name)] || '';
     const clubLogo = getClubLogoUrl(effectiveFav);
 
     return (
-      <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
         {clubLogo && (
           <img
             src={clubLogo}
@@ -1133,15 +1284,7 @@ export default function YeniArsivPage() {
           />
         )}
         <span className="truncate uppercase tracking-tight sm:tracking-normal">{cleanDisplay}</span>
-        {cupCount > 0 && (
-          <span
-            className="shrink-0 text-[11px] sm:text-sm leading-none tracking-tighter"
-            title={`${cupCount} Kez Şampiyon`}
-          >
-            {'🏆'.repeat(cupCount)}
-          </span>
-        )}
-        {showTrFlag && <TurkishChampionBadge title="Son Şampiyon Göğüs Arması" />}
+        <ChampionTrophyCrest name={cleanDisplay} />
         {liveAdd > 0 && (
           <span className="shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 text-[9.5px] sm:text-[10.5px] font-black px-1.5 py-0.5 rounded leading-none">
             +{liveAdd}
@@ -1948,7 +2091,6 @@ export default function YeniArsivPage() {
                     return {
                       id: cleanId,
                       name: nm,
-                      isChamp: Boolean(pObj?.isChampion),
                       favTeam: resolvePlayerFavTeam(cleanId, nm)
                     };
                   })
@@ -2090,8 +2232,6 @@ export default function YeniArsivPage() {
                         <div className="flex flex-col gap-1.5">
                           {winnerEntries.map((wEntry) => {
                             const cLogo = getClubLogoUrl(wEntry.favTeam);
-                            const cups = getChampionCupCount(wEntry.name, wEntry.isChamp);
-                            const showFlag = hasReigningTurkishFlag(wEntry.name);
                             const cleanNm = stripTrophies(wEntry.name);
 
                             return (
@@ -2111,14 +2251,7 @@ export default function YeniArsivPage() {
                                   />
                                 )}
                                 <span className="truncate">{cleanNm}</span>
-                                {cups > 0 && (
-                                  <span className="shrink-0 text-[10.5px] leading-none">
-                                    {'🏆'.repeat(cups)}
-                                  </span>
-                                )}
-                                {showFlag && (
-                                  <TurkishChampionBadge title="Son Şampiyon Göğüs Arması" />
-                                )}
+                                <ChampionTrophyCrest name={cleanNm} compact />
                               </div>
                             );
                           })}
