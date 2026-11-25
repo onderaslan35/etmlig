@@ -1,5 +1,6 @@
 'use client';
 import { isStrictTffMatch } from '@/utils/tffDetector';
+import PlayerSeasonDossierModal, { DossierMatchItem, DossierWeekBonusItem } from '@/components/PlayerSeasonDossierModal';
 import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
@@ -217,6 +218,8 @@ const ChampionTrophyCrest = ({
 
 const LIVE_FAV_TEAMS: Record<string, string> = {};
 
+let OPEN_LIVE_DOSSIER_TRIGGER: ((uidOrName: string, explicitId?: string) => void) | null = null;
+
 const renderLiveNameWithFlag = (
   rawOrFormattedName: string,
   userId?: string,
@@ -233,7 +236,18 @@ const renderLiveNameWithFlag = (
   const trophySize: 'xs' | 'sm' | 'md' = iconPx <= 15 ? 'xs' : iconPx <= 19 ? 'sm' : 'md';
 
   return (
-    <span className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 truncate">
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        if (OPEN_LIVE_DOSSIER_TRIGGER) {
+          e.stopPropagation();
+          OPEN_LIVE_DOSSIER_TRIGGER(cleanName, userId);
+        }
+      }}
+      title={`${cleanName} • Sezon İstatistikleri ve Bildiği Maç Kartları`}
+      className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 truncate cursor-pointer hover:text-sky-300 transition-colors"
+    >
       {clubLogo && (
         <img
           src={clubLogo}
@@ -544,6 +558,111 @@ export default function LiveMatchCard() {
   });
 
   const [isMankoman, setIsMankoman] = useState<boolean>(false);
+  const [selectedDossierPlayerId, setSelectedDossierPlayerId] = useState<string | null>(null);
+  const [dossierAllMatches, setDossierAllMatches] = useState<DossierMatchItem[]>([]);
+  const [dossierAllWeeks, setDossierAllWeeks] = useState<DossierWeekBonusItem[]>([]);
+  const dossierLoadedRef = useRef<boolean>(false);
+
+  const ensureDossierDataLoaded = async () => {
+    if (dossierLoadedRef.current) return;
+    dossierLoadedRef.current = true;
+
+    const matchCols =
+      'id, week_num, match_index, category, pool_type, match_date, match_time, home_team, away_team, home_score, away_score, status, winner_ids, points_awarded';
+    const weekCols =
+      'week_num, is_completed, bonus_enabled, puan_lideri_ids, puan_bonus, skor_krali_ids, skor_bonus';
+
+    try {
+      const ts = Number(localStorage.getItem('etml_sealed_cache_ts_v2') || '0');
+      const rawM = localStorage.getItem('etml_sealed_matches_w1_40_v2');
+      const rawW = localStorage.getItem('etml_sealed_weeks_v2');
+
+      if (Date.now() - ts < 12 * 60 * 60 * 1000 && rawM && rawW) {
+        const parsedM = JSON.parse(rawM);
+        const parsedW = JSON.parse(rawW);
+        if (Array.isArray(parsedM) && parsedM.length >= 500 && Array.isArray(parsedW)) {
+          const [recM, recW] = await Promise.all([
+            supabase
+              .from('etml_official_matches')
+              .select(matchCols)
+              .gt('week_num', 40)
+              .order('week_num', { ascending: true })
+              .order('match_index', { ascending: true })
+              .limit(500),
+            supabase
+              .from('etml_official_weeks')
+              .select(weekCols)
+              .gt('week_num', 40)
+              .order('week_num', { ascending: true })
+          ]);
+          setDossierAllMatches([...parsedM, ...((recM.data || []) as DossierMatchItem[])]);
+          setDossierAllWeeks([...parsedW, ...((recW.data || []) as DossierWeekBonusItem[])]);
+          return;
+        }
+      }
+    } catch {}
+
+    let allRows: DossierMatchItem[] = [];
+    let from = 0;
+    const step = 1000;
+    let more = true;
+    while (more) {
+      const { data, error } = await supabase
+        .from('etml_official_matches')
+        .select(matchCols)
+        .order('week_num', { ascending: true })
+        .order('match_index', { ascending: true })
+        .range(from, from + step - 1);
+      if (error || !data || data.length === 0) {
+        more = false;
+      } else {
+        allRows = [...allRows, ...(data as DossierMatchItem[])];
+        if (data.length < step) more = false;
+        else from += step;
+      }
+    }
+
+    const { data: wData } = await supabase
+      .from('etml_official_weeks')
+      .select(weekCols)
+      .order('week_num', { ascending: true });
+
+    setDossierAllMatches(allRows);
+    setDossierAllWeeks((wData || []) as DossierWeekBonusItem[]);
+  };
+
+  const dossierPlayersDirectory = useMemo(() => {
+    const dir: Record<string, { name: string; favoriteTeam?: string }> = {};
+    Object.keys(mergedAccounts).forEach((uid) => {
+      if (EXCLUDED_IDS.has(uid)) return;
+      const nm = mergedAccounts[uid]?.name || uid;
+      const fav = LIVE_FAV_TEAMS[`id:${uid}`] || LIVE_FAV_TEAMS[normLiveKey(nm)] || '';
+      dir[uid] = { name: nm, favoriteTeam: fav };
+    });
+    officialSummaryRows.forEach((r) => {
+      const uid = String(r.user_id || '').trim();
+      if (!uid || EXCLUDED_IDS.has(uid) || dir[uid]) return;
+      const nm = r.oyuncu_adi || uid;
+      const fav = LIVE_FAV_TEAMS[`id:${uid}`] || LIVE_FAV_TEAMS[normLiveKey(nm)] || '';
+      dir[uid] = { name: nm, favoriteTeam: fav };
+    });
+    return dir;
+  }, [mergedAccounts, officialSummaryRows]);
+
+  OPEN_LIVE_DOSSIER_TRIGGER = (rawName: string, explicitId?: string) => {
+    let targetId = explicitId ? String(explicitId).trim() : '';
+    if (!targetId) {
+      const targetNorm = normLiveKey(rawName);
+      targetId =
+        Object.keys(dossierPlayersDirectory).find(
+          (uid) => normLiveKey(dossierPlayersDirectory[uid]?.name || '') === targetNorm
+        ) || '';
+    }
+    if (targetId) {
+      ensureDossierDataLoaded();
+      setSelectedDossierPlayerId(targetId);
+    }
+  };
   const [isManualFetching, setIsManualFetching] = useState<boolean>(false);
   const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
 
@@ -3277,6 +3396,15 @@ export default function LiveMatchCard() {
           )}
         </div>
       </div>
+
+      <PlayerSeasonDossierModal
+        playerId={selectedDossierPlayerId}
+        onClose={() => setSelectedDossierPlayerId(null)}
+        playersDirectory={dossierPlayersDirectory}
+        matches={dossierAllMatches}
+        weeksBonus={dossierAllWeeks}
+        seasonLabel="2026-2027 SEZONU"
+      />
     </div>
   );
 }
