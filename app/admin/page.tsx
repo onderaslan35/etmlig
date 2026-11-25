@@ -1231,8 +1231,9 @@ export default function AdminRadarPortal() {
          let catLower = rawCat.toLocaleLowerCase('tr-TR');
          let finalCat = rawCat;
 
-         if (catLower.includes('kupa') || catLower.includes('türkiye') || catLower.includes('amatör') || catLower.includes('bal') || catLower.includes('2. lig') || catLower.includes('3. lig')) {
-             finalCat = '1. Lig';
+         // Artık Türkiye Kupası, 2. Lig ve 3. Lig kendi gerçek adıyla kaydedilir (TFF motoru hepsini tanır)
+         if (!finalCat.trim()) {
+             finalCat = 'TÜRKİYE SÜPER LİG';
          }
 
          return {
@@ -1357,6 +1358,39 @@ export default function AdminRadarPortal() {
           setSelectedManageLeague(''); 
           alert(`✅ KALICI OLARAK SİLİNDİ! "${leagueName}" kara listeye alındı, bir daha asla geri gelmeyecek.`);
       }
+  };
+
+  const handleRenameOrTransferLeague = (oldLeagueName: string) => {
+      const targetRaw = window.prompt(
+          `"${oldLeagueName}" kategorisindeki ${dynamicLigHavuzu[oldLeagueName]?.length || 0} takımı hangi kategori adına taşımak / değiştirmek istiyorsunuz?\n\n(Not: Yazdığınız isimde bir lig zaten varsa takımlar orayla birleştirilir!)`,
+          oldLeagueName === '1. LİG' || oldLeagueName === '1. LIG' ? 'TÜRKİYE KUPASI' : oldLeagueName
+      );
+      if (!targetRaw) return;
+      const newLeagueName = targetRaw.trim().toUpperCase();
+      if (!newLeagueName || newLeagueName === oldLeagueName) return;
+
+      const updatedHavuz = { ...dynamicLigHavuzu };
+      const existingTargetTeams = updatedHavuz[newLeagueName] || [];
+      const sourceTeams = updatedHavuz[oldLeagueName] || [];
+
+      // Takımları yeni kategoriye aktar (tekrarları önle ve alfabetik sırala)
+      const mergedSet = new Set<string>([...existingTargetTeams, ...sourceTeams]);
+      updatedHavuz[newLeagueName] = Array.from(mergedSet).sort((a, b) => a.localeCompare(b, 'tr'));
+
+      // Eski kategoriyi sil ve geri hortlamaması için kara listeye al
+      delete updatedHavuz[oldLeagueName];
+      const delLeagues: string[] = JSON.parse(localStorage.getItem('etml_deleted_leagues') || '[]');
+      if (!delLeagues.includes(oldLeagueName)) {
+          delLeagues.push(oldLeagueName);
+          localStorage.setItem('etml_deleted_leagues', JSON.stringify(delLeagues));
+      }
+      // Eğer yeni isim eskiden kara listedeyse oradan çıkar
+      const filteredDel = delLeagues.filter((l) => l !== newLeagueName);
+      localStorage.setItem('etml_deleted_leagues', JSON.stringify(filteredDel));
+
+      updateLigHavuzu(updatedHavuz);
+      setSelectedManageLeague(newLeagueName);
+      alert(`✅ TRANSFER TAMAMLANDI!\n\n"${oldLeagueName}" içindeki tüm takımlar "${newLeagueName}" kategorisine taşındı!`);
   };
 
   const handleManuelMacEkle = (e: React.FormEvent<HTMLFormElement>) => {
@@ -2171,14 +2205,24 @@ export default function AdminRadarPortal() {
                               </select>
                               
                               {selectedManageLeague && selectedManageLeague !== 'YENI_LIG' && dynamicLigHavuzu[selectedManageLeague] && (
-                                  <button
-                                      type="button"
-                                      onClick={() => handleDeleteLeague(selectedManageLeague)}
-                                      className="bg-rose-700 hover:bg-rose-600 text-white font-black px-3 py-2 rounded-lg text-[10px] uppercase shadow-md transition-all flex items-center gap-1"
-                                      title="Bu kategoriyi tamamen sil"
-                                  >
-                                      🗑️ SİL
-                                  </button>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                      <button
+                                          type="button"
+                                          onClick={() => handleRenameOrTransferLeague(selectedManageLeague)}
+                                          className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black px-2.5 py-2 rounded-lg text-[10px] uppercase shadow-md transition-all flex items-center gap-1"
+                                          title="Kategorinin adını değiştir veya başka lige aktar"
+                                      >
+                                          ✏️ TAŞI / AD DEĞİŞTİR
+                                      </button>
+                                      <button
+                                          type="button"
+                                          onClick={() => handleDeleteLeague(selectedManageLeague)}
+                                          className="bg-rose-700 hover:bg-rose-600 text-white font-black px-2.5 py-2 rounded-lg text-[10px] uppercase shadow-md transition-all flex items-center gap-1"
+                                          title="Bu kategoriyi tamamen sil"
+                                      >
+                                          🗑️ SİL
+                                      </button>
+                                  </div>
                               )}
                           </div>
 
