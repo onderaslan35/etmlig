@@ -1,4 +1,5 @@
 'use client';
+import { isStrictTffMatch } from '@/utils/tffDetector';
 import PlayerSeasonDossierModal from '@/components/PlayerSeasonDossierModal';
 import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { supabase } from '@/utils/supabase';
@@ -907,9 +908,7 @@ export default function YeniArsivPage() {
           m.points_awarded !== null && m.points_awarded !== undefined
             ? Number(m.points_awarded)
             : calcMatchPts(winners.length);
-        const isTff =
-          m.pool_type === 'TFF' ||
-          (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
+        const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);;
 
         winners.forEach((rawId) => {
           const uid = String(rawId).trim();
@@ -1118,9 +1117,7 @@ export default function YeniArsivPage() {
           (pid) => activePredictionsMap[`${pid}-${m.week_num}-${m.match_index}`] === targetScore
         );
         const pts = calcMatchPts(winners.length);
-        const isTff = offM?.pool_type
-          ? offM.pool_type === 'TFF'
-          : advancedTffCheck(m.category, m.home_team, m.away_team);
+        const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, offM?.pool_type);
 
         winners.forEach((wId) => {
           const row = liveMapClone[wId];
@@ -1155,7 +1152,7 @@ export default function YeniArsivPage() {
               (o) => Number(o.match_index) === Number(b.match_index)
             );
             if (existing) return existing;
-            const isTff = advancedTffCheck(b.category || '', b.home_team || '', b.away_team || '');
+            const isTff = isStrictTffMatch(b.category || '', b.home_team || '', b.away_team || '');
             return {
               id: getUniqueMatchId(Number(b.week_num), Number(b.match_index)),
               week_num: Number(b.week_num),
@@ -1613,9 +1610,7 @@ export default function YeniArsivPage() {
 
   const filteredArchiveMatches = selectedWeekMatches.filter((m) => {
     if (archivePoolFilter === 'ALL') return true;
-    const isTff =
-      m.pool_type === 'TFF' ||
-      (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
+    const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);
     return archivePoolFilter === 'TFF' ? isTff : !isTff;
   });
 
@@ -2029,9 +2024,7 @@ export default function YeniArsivPage() {
                 const isRadarOpen = expandedArchiveCards[key] !== false;
                 const isFin = m.status === 'FINISHED';
                 const isPost = m.status === 'POSTPONED';
-                const isTff =
-                  m.pool_type === 'TFF' ||
-                  (!m.pool_type && advancedTffCheck(m.category, m.home_team, m.away_team));
+                const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);
 
                 const bulMatch = recentBulletins.find(
                   (b: any) =>

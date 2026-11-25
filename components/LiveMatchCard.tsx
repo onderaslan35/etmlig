@@ -1,5 +1,5 @@
 'use client';
-
+import { isStrictTffMatch } from '@/utils/tffDetector';
 import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
@@ -1157,7 +1157,7 @@ export default function LiveMatchCard() {
         if (isOffFin) {
           finCount += 1;
           const pts = Number(offMatch.points_awarded || 0);
-          const isTff = offMatch.pool_type === 'TFF';
+          const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);
           (offMatch.winner_ids || []).forEach((wId: string) => {
             if (EXCLUDED_IDS.has(wId) || !wMap[wId]) return;
             if (isTff) {
@@ -1173,7 +1173,7 @@ export default function LiveMatchCard() {
           const targetScore = `${dbMatch.home_score}-${dbMatch.away_score}`.replace(/\s+/g, '');
           const winnerIds = accountIds.filter((id) => predictionsData[`${id}-${week}-${m.id}`] === targetScore);
           const pts = calcMatchPts(winnerIds.length);
-          const isTff = offMatch?.pool_type ? offMatch.pool_type === 'TFF' : advancedTffCheck(m.category, m.homeTeam, m.awayTeam);
+          const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, offMatch?.pool_type);
           winnerIds.forEach((wId) => {
             if (!wMap[wId]) return;
             if (isTff) {
