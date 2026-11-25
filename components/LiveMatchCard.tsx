@@ -1,6 +1,6 @@
 'use client';
-import { getClubLogoUrl, refreshCustomClubsCache } from '@/components/FavoriteTeamSelector';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+
+import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
   TEST_ACCOUNTS,
@@ -10,15 +10,23 @@ import {
   getUniqueMatchId,
   getTodayDateString
 } from '@/utils/themeEngine';
+import {
+  getClubLogoUrl,
+  isNationalTeamName,
+  refreshCustomClubsCache
+} from '@/components/FavoriteTeamSelector';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
 
-const formatNameWithCups = (rawName: string) => {
-  if (!rawName) return '';
-  const existing = (rawName.match(/🏆/g) || []).length;
-  const clean = rawName.replace(/(🏆|🇹🇷)+/g, '').trim();
-  const norm = clean
-    .toUpperCase()
+const stripTrophies = (rawName: string) =>
+  (rawName || '')
+    .replace(/(🏆|🇹🇷)+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const normLiveKey = (s: string) =>
+  stripTrophies(s)
+    .toLocaleUpperCase('tr-TR')
     .replace(/İ/g, 'I')
     .replace(/Ş/g, 'S')
     .replace(/Ğ/g, 'G')
@@ -29,61 +37,208 @@ const formatNameWithCups = (rawName: string) => {
     .replace(/\s+/g, ' ')
     .trim();
 
-  let cups = existing;
-  if (norm.includes('OSMAN ALI AYDIN') || norm.includes('GAZI AYAN') || norm.includes('ILHAN KARACA')) {
-    cups = 2;
-  } else if (
-    norm === 'MURAT KARA' ||
-    norm === 'MURAT KARAOGLU' ||
-    norm.includes('ISMAIL EKER') ||
-    norm.includes('ISMAIL PEKER') ||
-    norm.includes('TOPARDIC')
-  ) {
-    cups = Math.max(existing, 1);
-  }
+// 10 RESMİ ŞAMPİYON KÜNYESİ
+const OFFICIAL_CHAMPIONS: Record<string, { stars: number; reigning: boolean }> = {
+  'OSMAN ALI AYDIN': { stars: 2, reigning: true },
+  'ISMAIL EKER': { stars: 1, reigning: true },
+  'GAZI AYAN': { stars: 2, reigning: false },
+  'RECEP ILHAN KARACA': { stars: 2, reigning: false },
+  'RECEP ILAN KARACA': { stars: 2, reigning: false },
+  'R ILHAN KARACA': { stars: 2, reigning: false },
+  'YAHSI ERKAN': { stars: 1, reigning: false },
+  'AHMET BIRCAN': { stars: 1, reigning: false },
+  'CEMAL SIVRIKAYA': { stars: 1, reigning: false },
+  'HUDAVERDI TOPARDIC': { stars: 1, reigning: false },
+  'HUDAVER TOPARDIC': { stars: 1, reigning: false },
+  'MURAT KARA': { stars: 1, reigning: false },
+  'METE BUYUKGOL': { stars: 1, reigning: false }
+};
 
-  return cups > 0 ? `${clean} ${'🏆'.repeat(cups)}` : clean;
+// YILDIZLI ALTIN KUPA + KALKAN TÜRK BAYRAĞI (PUAN DURUMU İLE BİREBİR AYNI TASARIM)
+const ChampionTrophyCrest = ({
+  name,
+  size = 'md'
+}: {
+  name: string;
+  size?: 'xs' | 'sm' | 'md';
+}) => {
+  const gradId = useId().replace(/:/g, '');
+  const info = OFFICIAL_CHAMPIONS[normLiveKey(name)];
+
+  if (!info || info.stars <= 0) return null;
+
+  const { stars, reigning } = info;
+  const sizeClass =
+    size === 'xs'
+      ? 'w-4 h-4 sm:w-[18px] sm:h-[18px]'
+      : size === 'sm'
+      ? 'w-5 h-5 sm:w-6 sm:h-6'
+      : 'w-6 h-6 sm:w-7 sm:h-7';
+
+  const makeStarPoints = (cx: number, cy: number, rOut: number, rIn: number) => {
+    const pts: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? rOut : rIn;
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
+    }
+    return pts.join(' ');
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center shrink-0 select-none ${sizeClass} drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)]`}
+      title={reigning ? `${stars} Şampiyonluk • Son Şampiyon` : `${stars} Şampiyonluk`}
+    >
+      <svg viewBox="0 0 64 68" className="w-full h-full overflow-visible block">
+        <defs>
+          <linearGradient id={`liveGoldCup-${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FEF08A" />
+            <stop offset="45%" stopColor="#FACC15" />
+            <stop offset="100%" stopColor="#CA8A04" />
+          </linearGradient>
+          <linearGradient id={`liveGoldStar-${gradId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFFBEB" />
+            <stop offset="55%" stopColor="#FDE047" />
+            <stop offset="100%" stopColor="#D97706" />
+          </linearGradient>
+        </defs>
+
+        {stars === 1 ? (
+          <polygon
+            points={makeStarPoints(32, 9, 8.3, 3.6)}
+            fill={`url(#liveGoldStar-${gradId})`}
+            stroke="#92400E"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        ) : (
+          <>
+            <polygon
+              points={makeStarPoints(22, 9.5, 7.6, 3.3)}
+              fill={`url(#liveGoldStar-${gradId})`}
+              stroke="#92400E"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+            <polygon
+              points={makeStarPoints(42, 9.5, 7.6, 3.3)}
+              fill={`url(#liveGoldStar-${gradId})`}
+              stroke="#92400E"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+          </>
+        )}
+
+        <path
+          d="M17 24 H8.5 C6.5 24 5.5 25.5 6 28 C7.2 35.5 11.5 40.5 19.5 42"
+          fill="none"
+          stroke={`url(#liveGoldCup-${gradId})`}
+          strokeWidth="4.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M47 24 H55.5 C57.5 24 58.5 25.5 58 28 C56.8 35.5 52.5 40.5 44.5 42"
+          fill="none"
+          stroke={`url(#liveGoldCup-${gradId})`}
+          strokeWidth="4.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        <path
+          d="M15 20 H49 L46 39 C44.5 48.5 38.8 53 32 53 C25.2 53 19.5 48.5 18 39 Z"
+          fill={`url(#liveGoldCup-${gradId})`}
+          stroke="#854D0E"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+
+        <rect
+          x="13.5"
+          y="18"
+          width="37"
+          height="4.5"
+          rx="2.2"
+          fill="#FEF08A"
+          stroke="#854D0E"
+          strokeWidth="1.3"
+        />
+
+        <path
+          d="M28.5 52.5 H35.5 L37 60 H27 Z"
+          fill={`url(#liveGoldCup-${gradId})`}
+          stroke="#854D0E"
+          strokeWidth="1.4"
+        />
+        <rect
+          x="20"
+          y="59.5"
+          width="24"
+          height="5.5"
+          rx="2.5"
+          fill={`url(#liveGoldCup-${gradId})`}
+          stroke="#854D0E"
+          strokeWidth="1.5"
+        />
+
+        {reigning ? (
+          <g>
+            <path
+              d="M32 22.8 C36.2 24.4 40.5 24.6 44 24 V36 C44 43.8 38.6 49 32 51.4 C25.4 49 20 43.8 20 36 V24 C23.5 24.6 27.8 24.4 32 22.8 Z"
+              fill="#E30A17"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <circle cx="30.1" cy="36.6" r="5.7" fill="#FFFFFF" />
+            <circle cx="31.7" cy="36.6" r="4.5" fill="#E30A17" />
+            <polygon
+              points="35.3,36.6 39.2,37.9 36.8,34.5 36.8,38.7 39.2,35.3"
+              fill="#FFFFFF"
+            />
+          </g>
+        ) : (
+          <path
+            d="M21.5 25 L23 38 C23.6 42.5 25.8 45.8 28.5 47.5"
+            fill="none"
+            stroke="#FEF9C3"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
+        )}
+      </svg>
+    </span>
+  );
 };
 
 const LIVE_FAV_TEAMS: Record<string, string> = {};
 
-const normLiveKey = (s: string) =>
-  (s || '')
-    .replace(/(🏆|🇹🇷)+/g, '')
-    .toUpperCase()
-    .replace(/İ/g, 'I')
-    .replace(/Ş/g, 'S')
-    .replace(/Ğ/g, 'G')
-    .replace(/Ü/g, 'U')
-    .replace(/Ö/g, 'O')
-    .replace(/Ç/g, 'C')
-    .replace(/[^A-Z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
 const renderLiveNameWithFlag = (
   rawOrFormattedName: string,
   userId?: string,
-  iconPx: number = 18
+  iconPx: number = 22
 ) => {
-  const displayWithCups = formatNameWithCups(rawOrFormattedName);
-  const norm = normLiveKey(rawOrFormattedName);
-  const favTeam =
+  const cleanName = stripTrophies(rawOrFormattedName);
+  const norm = normLiveKey(cleanName);
+  const rawFavTeam =
     (userId ? LIVE_FAV_TEAMS[`id:${String(userId).trim()}`] : '') ||
     LIVE_FAV_TEAMS[norm] ||
     '';
+  const favTeam = isNationalTeamName(rawFavTeam) ? '' : rawFavTeam;
   const clubLogo = getClubLogoUrl(favTeam);
-  const hasFlag =
-    norm.includes('ISMAIL EKER') ||
-    norm.includes('ISMAIL PEKER') ||
-    norm.includes('OSMAN ALI AYDIN');
+  const trophySize: 'xs' | 'sm' | 'md' = iconPx <= 15 ? 'xs' : iconPx <= 19 ? 'sm' : 'md';
 
   return (
-    <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
+    <span className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 truncate">
       {clubLogo && (
         <img
           src={clubLogo}
           alt={favTeam}
+          title={favTeam}
           width={iconPx}
           height={iconPx}
           style={{
@@ -92,27 +247,16 @@ const renderLiveNameWithFlag = (
             minWidth: `${iconPx}px`,
             maxWidth: `${iconPx}px`
           }}
-          className="object-contain shrink-0"
+          className="object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
           loading="lazy"
         />
       )}
-      <span className="truncate">{displayWithCups}</span>
-      {hasFlag && (
-        <span
-          className="inline-flex items-center shrink-0 rounded-[2px] overflow-hidden border border-white/25 shadow-sm"
-          title="Son Şampiyon"
-        >
-          <svg viewBox="0 0 30 20" className="w-4 h-[11px] sm:w-[18px] sm:h-3 block">
-            <rect width="30" height="20" fill="#E30A17" />
-            <circle cx="10.5" cy="10" r="5" fill="#FFFFFF" />
-            <circle cx="11.8" cy="10" r="4" fill="#E30A17" />
-            <polygon points="16.2,10 19.3,11 17.4,8.4 17.4,11.6 19.3,9" fill="#FFFFFF" />
-          </svg>
-        </span>
-      )}
+      <span className="truncate uppercase">{cleanName}</span>
+      <ChampionTrophyCrest name={cleanName} size={trophySize} />
     </span>
   );
 };
+
 const TR_MONTHS = [
   '',
   'OCAK',
@@ -146,22 +290,63 @@ const formatTrDateLabel = (dateStr: string) => {
 };
 
 const engToTr: Record<string, string> = {
-  "SERBIA": "SIRBİSTAN", "GERMANY": "ALMANYA", "NETHERLANDS": "HOLLANDA", "HOLLAND": "HOLLANDA",
-  "TURKEY": "TÜRKİYE", "TURKIYE": "TÜRKİYE", "FRANCE": "FRANSA", "ITALY": "İTALYA",
-  "SPAIN": "İSPANYA", "ENGLAND": "İNGİLTERE", "BELGIUM": "BELÇİKA",
-  "PORTUGAL": "PORTEKİZ", "GREECE": "YUNANİSTAN", "NORWAY": "NORVEÇ",
-  "DENMARK": "DANİMARKA", "WALES": "GALLER", "IRELAND": "İRLANDA", "REPUBLIC OF IRELAND": "İRLANDA",
-  "SWITZERLAND": "İSVİÇRE", "SWEDEN": "İSVEÇ", "CROATIA": "HIRVATİSTAN",
-  "CZECH REPUBLIC": "ÇEKYA", "CZECHIA": "ÇEKYA", "POLAND": "POLONYA", "SCOTLAND": "İSKOÇYA",
-  "HUNGARY": "MACARİSTAN", "AUSTRIA": "AVUSTURYA", "ROMANIA": "ROMANYA", "ALBANIA": "ARNAVUTLUK",
-  "GEORGIA": "GÜRCİSTAN", "ICELAND": "İZLANDA", "SLOVAKIA": "SLOVAKYA", "SLOVENIA": "SLOVENYA",
-  "MONTENEGRO": "KARADAĞ", "NORTH MACEDONIA": "KUZEY MAKEDONYA", "MACEDONIA": "KUZEY MAKEDONYA",
-  "BOSNIA": "BOSNA-HERSEK", "BOSNIA AND HERZEGOVINA": "BOSNA-HERSEK", "CYPRUS": "KIBRIS",
-  "LITHUANIA": "LİTVANYA", "LATVIA": "LETONYA", "ESTONIA": "ESTONYA", "FINLAND": "FİNLANDİYA",
-  "BULGARIA": "BULGARİSTAN", "UKRAINE": "UKRAYNA", "RUSSIA": "RUSYA", "ARMENIA": "ERMENİSTAN",
-  "FAROE ISLANDS": "FAROE ADALARI", "KAZAKHSTAN": "KAZAKİSTAN", "MOLDOVA": "MOLDOVA",
-  "LUXEMBOURG": "LÜKSEMBURG", "LIECHTENSTEIN": "LİHTENŞTAYN", "SAN MARINO": "SAN MARİNO",
-  "MALTA": "MALTA", "ANDORRA": "ANDORRA", "KOSOVO": "KOSOVA", "BELARUS": "BELARUS"
+  SERBIA: 'SIRBİSTAN',
+  GERMANY: 'ALMANYA',
+  NETHERLANDS: 'HOLLANDA',
+  HOLLAND: 'HOLLANDA',
+  TURKEY: 'TÜRKİYE',
+  TURKIYE: 'TÜRKİYE',
+  FRANCE: 'FRANSA',
+  ITALY: 'İTALYA',
+  SPAIN: 'İSPANYA',
+  ENGLAND: 'İNGİLTERE',
+  BELGIUM: 'BELÇİKA',
+  PORTUGAL: 'PORTEKİZ',
+  GREECE: 'YUNANİSTAN',
+  NORWAY: 'NORVEÇ',
+  DENMARK: 'DANİMARKA',
+  WALES: 'GALLER',
+  IRELAND: 'İRLANDA',
+  'REPUBLIC OF IRELAND': 'İRLANDA',
+  SWITZERLAND: 'İSVİÇRE',
+  SWEDEN: 'İSVEÇ',
+  CROATIA: 'HIRVATİSTAN',
+  'CZECH REPUBLIC': 'ÇEKYA',
+  CZECHIA: 'ÇEKYA',
+  POLAND: 'POLONYA',
+  SCOTLAND: 'İSKOÇYA',
+  HUNGARY: 'MACARİSTAN',
+  AUSTRIA: 'AVUSTURYA',
+  ROMANIA: 'ROMANYA',
+  ALBANIA: 'ARNAVUTLUK',
+  GEORGIA: 'GÜRCİSTAN',
+  ICELAND: 'İZLANDA',
+  SLOVAKIA: 'SLOVAKYA',
+  SLOVENIA: 'SLOVENYA',
+  MONTENEGRO: 'KARADAĞ',
+  'NORTH MACEDONIA': 'KUZEY MAKEDONYA',
+  MACEDONIA: 'KUZEY MAKEDONYA',
+  BOSNIA: 'BOSNA-HERSEK',
+  'BOSNIA AND HERZEGOVINA': 'BOSNA-HERSEK',
+  CYPRUS: 'KIBRIS',
+  LITHUANIA: 'LİTVANYA',
+  LATVIA: 'LETONYA',
+  ESTONIA: 'ESTONYA',
+  FINLAND: 'FİNLANDİYA',
+  BULGARIA: 'BULGARİSTAN',
+  UKRAINE: 'UKRAYNA',
+  RUSSIA: 'RUSYA',
+  ARMENIA: 'ERMENİSTAN',
+  'FAROE ISLANDS': 'FAROE ADALARI',
+  KAZAKHSTAN: 'KAZAKİSTAN',
+  MOLDOVA: 'MOLDOVA',
+  LUXEMBOURG: 'LÜKSEMBURG',
+  LIECHTENSTEIN: 'LİHTENŞTAYN',
+  'SAN MARINO': 'SAN MARİNO',
+  MALTA: 'MALTA',
+  ANDORRA: 'ANDORRA',
+  KOSOVO: 'KOSOVA',
+  BELARUS: 'BELARUS'
 };
 
 const sanitizeStr = (s: string) => {
@@ -192,32 +377,64 @@ const advancedTffCheck = (category: string, home: string, away: string) => {
 
   if (
     cat.includes('UEFA') ||
-    cat.includes('SAMPIYONLAR') || cat.includes('CHAMPIONS') || cat.includes('S.L.') ||
-    cat.includes('AVRUPA LIGI') || cat.includes('EUROPA') || cat.includes('A.L.') ||
-    cat.includes('KONFERANS') || cat.includes('CONFERENCE') || cat.includes('K.L.') ||
-    cat.includes('ULUSLAR') || cat.includes('NATIONS') || cat.includes('MILLI') ||
-    cat.includes('DUNYA KUPASI') || cat.includes('WORLD CUP') || cat.includes('EURO 20') ||
-    cat.includes('INGILTERE') || cat.includes('PREMIER') ||
-    cat.includes('ISPANYA') || cat.includes('LA LIGA') ||
-    cat.includes('ITALYA') || cat.includes('SERIE A') ||
-    cat.includes('ALMANYA') || cat.includes('BUNDESLIGA') ||
-    cat.includes('FRANSA') || cat.includes('LIGUE 1') ||
-    cat.includes('HOLLANDA') || cat.includes('PORTEKIZ') || cat.includes('BELCIKA') || cat.includes('ISKOCYA') || cat.includes('DANIMARKA')
+    cat.includes('SAMPIYONLAR') ||
+    cat.includes('CHAMPIONS') ||
+    cat.includes('S.L.') ||
+    cat.includes('AVRUPA LIGI') ||
+    cat.includes('EUROPA') ||
+    cat.includes('A.L.') ||
+    cat.includes('KONFERANS') ||
+    cat.includes('CONFERENCE') ||
+    cat.includes('K.L.') ||
+    cat.includes('ULUSLAR') ||
+    cat.includes('NATIONS') ||
+    cat.includes('MILLI') ||
+    cat.includes('DUNYA KUPASI') ||
+    cat.includes('WORLD CUP') ||
+    cat.includes('EURO 20') ||
+    cat.includes('INGILTERE') ||
+    cat.includes('PREMIER') ||
+    cat.includes('ISPANYA') ||
+    cat.includes('LA LIGA') ||
+    cat.includes('ITALYA') ||
+    cat.includes('SERIE A') ||
+    cat.includes('ALMANYA') ||
+    cat.includes('BUNDESLIGA') ||
+    cat.includes('FRANSA') ||
+    cat.includes('LIGUE 1') ||
+    cat.includes('HOLLANDA') ||
+    cat.includes('PORTEKIZ') ||
+    cat.includes('BELCIKA') ||
+    cat.includes('ISKOCYA') ||
+    cat.includes('DANIMARKA')
   ) {
     return false;
   }
 
   const isTffCat =
-    cat.includes('TURKIYE') || cat.includes('TFF') || cat.includes('TRENDYOL') || cat.includes('NESINE') ||
-    cat.includes('AMATOR') || cat.includes('SUPER LIG') ||
-    cat.includes('1. LIG') || cat.includes('1.LIG') ||
-    cat.includes('2. LIG') || cat.includes('2.LIG') ||
-    cat.includes('3. LIG') || cat.includes('3.LIG') ||
-    cat.includes('BAL') || cat.includes('ZIRAAT') || cat.includes('KUPASI') || cat.includes('SUPER KUPA') || cat.includes('PTT');
+    cat.includes('TURKIYE') ||
+    cat.includes('TFF') ||
+    cat.includes('TRENDYOL') ||
+    cat.includes('NESINE') ||
+    cat.includes('AMATOR') ||
+    cat.includes('SUPER LIG') ||
+    cat.includes('1. LIG') ||
+    cat.includes('1.LIG') ||
+    cat.includes('2. LIG') ||
+    cat.includes('2.LIG') ||
+    cat.includes('3. LIG') ||
+    cat.includes('3.LIG') ||
+    cat.includes('BAL') ||
+    cat.includes('ZIRAAT') ||
+    cat.includes('KUPASI') ||
+    cat.includes('KUPA') ||
+    cat.includes('SUPER KUPA') ||
+    cat.includes('PTT');
 
   if (isTffCat) return true;
 
-  const teamRegex = /(SPOR|GUCU|YURDU|BLD|BELEDIYE|DEMIR|GENCLER|BIRLIGI|KARS|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|ALTAY|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ADANA|HATAY|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
+  const teamRegex =
+    /(SPOR|GUCU|YURDU|BLD|BELEDIYE|DEMIR|GENCLER|BIRLIGI|KARS|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|ALTAY|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ADANA|HATAY|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
 
   return teamRegex.test(h) && teamRegex.test(a);
 };
@@ -277,7 +494,7 @@ interface WeekLiveBucket {
 }
 
 export default function LiveMatchCard() {
-  const [favoriteTeamsMap, setFavoriteTeamsMap] = useState<Record<string, string>>({});
+  const [, setFavoriteTeamsMap] = useState<Record<string, string>>({});
   const [isWeekLoaded, setIsWeekLoaded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
@@ -300,14 +517,14 @@ export default function LiveMatchCard() {
   const [isLiveFocusMode, setIsLiveFocusMode] = useState<boolean>(false);
   const [onlyLiveCardsFilter, setOnlyLiveCardsFilter] = useState<boolean>(false);
 
-  const [liveTableTab, setLiveTableTab] = useState<'WEEK_LIVE' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
+  const [liveTableTab, setLiveTableTab] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
   const [selectedBulletinWeek, setSelectedBulletinWeek] = useState<number>(0);
 
   const [weekSubTab, setWeekSubTab] = useState<'MASTER' | 'DFO' | 'TFF' | 'SKOR'>('MASTER');
-  const [weekMasterMode, setWeekMasterMode] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [weekMasterMode, setWeekMasterMode] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
   const [weekSkorMode, setWeekSkorMode] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
 
-  const [masterSubTab, setMasterSubTab] = useState<'DUZ' | 'DETAYLI'>('DUZ');
+  const [masterSubTab, setMasterSubTab] = useState<'DUZ' | 'DETAYLI'>('DETAYLI');
   const [skorSubTab, setSkorSubTab] = useState<'DUZ' | 'DETAYLI' | 'DFO' | 'TFF'>('DUZ');
 
   const [openEventsMap, setOpenEventsMap] = useState<{ [key: string]: boolean }>({});
@@ -322,6 +539,7 @@ export default function LiveMatchCard() {
     Object.keys(TEST_ACCOUNTS).forEach((k) => {
       if (!EXCLUDED_IDS.has(k)) clean[k] = TEST_ACCOUNTS[k];
     });
+    clean['600060'] = { pass: '606060', name: 'METE BÜYÜKGÖL' };
     return clean;
   });
 
@@ -411,6 +629,7 @@ export default function LiveMatchCard() {
       Object.keys(TEST_ACCOUNTS).forEach((k) => {
         if (!disabledSet.has(k)) newAccounts[k] = { ...TEST_ACCOUNTS[k] };
       });
+      newAccounts['600060'] = { pass: '606060', name: 'METE BÜYÜKGÖL' };
 
       if (officialPlayersRes.data) {
         officialPlayersRes.data.forEach((op: any) => {
@@ -424,12 +643,15 @@ export default function LiveMatchCard() {
               newAccounts[uid] = { pass: newAccounts[uid]?.pass || '', name: op.full_name };
             }
             if (op.favorite_team) {
-              const fav = String(op.favorite_team).trim();
-              LIVE_FAV_TEAMS[`id:${uid}`] = fav;
-              const tName1 = op.full_name || '';
-              const tName2 = newAccounts[uid]?.name || '';
-              if (tName1) LIVE_FAV_TEAMS[normLiveKey(tName1)] = fav;
-              if (tName2) LIVE_FAV_TEAMS[normLiveKey(tName2)] = fav;
+              const rawFav = String(op.favorite_team).trim();
+              const fav = isNationalTeamName(rawFav) ? '' : rawFav;
+              if (fav) {
+                LIVE_FAV_TEAMS[`id:${uid}`] = fav;
+                const tName1 = op.full_name || '';
+                const tName2 = newAccounts[uid]?.name || '';
+                if (tName1) LIVE_FAV_TEAMS[normLiveKey(tName1)] = fav;
+                if (tName2) LIVE_FAV_TEAMS[normLiveKey(tName2)] = fav;
+              }
             }
           }
         });
@@ -445,9 +667,12 @@ export default function LiveMatchCard() {
               name: pName
             };
             if (p.favorite_team && !LIVE_FAV_TEAMS[`id:${pid}`]) {
-              const fav = String(p.favorite_team).trim();
-              LIVE_FAV_TEAMS[`id:${pid}`] = fav;
-              LIVE_FAV_TEAMS[normLiveKey(pName)] = fav;
+              const rawFav = String(p.favorite_team).trim();
+              const fav = isNationalTeamName(rawFav) ? '' : rawFav;
+              if (fav) {
+                LIVE_FAV_TEAMS[`id:${pid}`] = fav;
+                LIVE_FAV_TEAMS[normLiveKey(pName)] = fav;
+              }
             }
           }
         });
@@ -513,7 +738,6 @@ export default function LiveMatchCard() {
 
       let rows = (summaryRes.data || []) as OfficialSummaryRow[];
 
-      // Tüm sezonun bitmiş maçlarını her Realtime tetiklemesinde değil, oturumda SADECE 1 KEZ çek!
       if (rows.length > 0 && !cachedHistoricalSplit) {
         let allFinMatches: any[] = [];
         let from = 0;
@@ -599,10 +823,8 @@ export default function LiveMatchCard() {
       setAllRecentBulletinMatches(mappedBulten);
 
       const distinctWeeks = Array.from(new Set<number>(mappedBulten.map((m) => m.week_num))).sort((a, b) => a - b);
-      const candidateWeeks = distinctWeeks;
-      candidateWeeksSnapshot = candidateWeeks;
+      candidateWeeksSnapshot = distinctWeeks;
 
-      // Sadece son 72 saatte oynanmış veya önümüzdeki 36 saat içinde başlayacak haftaların tahminlerini çek (Henüz başlamamış 43-46. haftalar için boşuna binlerce satır çekmez!)
       const nowMs = Date.now();
       const predictionWeeks = distinctWeeks.filter((w) => {
         const wMatches = mappedBulten.filter((m) => m.week_num === w);
@@ -733,7 +955,6 @@ export default function LiveMatchCard() {
     const todayDateStr = getTodayDateString();
     const todayZeroDate = parseDateLocal(todayDateStr);
     todayZeroDate.setHours(0, 0, 0, 0);
-    // Son 48 saat içinde oynanan günleri de sekmede tut (gece 00:00 geçişinde dünkü maçlar asla kaybolmasın!)
     const recentHistoryCutoffMs = todayZeroDate.getTime() - 48 * 60 * 60 * 1000;
 
     const accountIds = Object.keys(mergedAccounts).filter((id) => !EXCLUDED_IDS.has(id));
@@ -741,7 +962,6 @@ export default function LiveMatchCard() {
 
     const allDistinctWeeks = Array.from(new Set<number>(allRecentBulletinMatches.map((m) => m.week_num))).sort((a, b) => a - b);
 
-    // En son oynanmaya başlamış / maçı bitmiş bülteni bul (Örn: 41. Hafta tüm 24 maçı bitse bile 42 başlayana kadar ekranda kalır!)
     let latestStartedWeek = allDistinctWeeks[0] || 41;
     allDistinctWeeks.forEach((w) => {
       const wMatches = allRecentBulletinMatches.filter((m) => m.week_num === w);
@@ -788,7 +1008,6 @@ export default function LiveMatchCard() {
 
     const activeMatchesPool = allRecentBulletinMatches.filter((m) => openWeeks.includes(m.week_num));
 
-    // Puan hesaplaması için skoru girilmiş aktif canlı maç kontrolü
     const checkIsMatchActivelyLive = (m: any) => {
       const uid = String(getUniqueMatchId(m.week_num, m.id));
       const offM = officialWeekMatchesMap[uid];
@@ -805,7 +1024,6 @@ export default function LiveMatchCard() {
       return kickoffMs > 0 && currentCheckMs >= kickoffMs && currentCheckMs <= kickoffMs + 16 * 60 * 60 * 1000;
     };
 
-    // Başlama saati geçmiş ve henüz FINISHED onaylanmamış maç kontrolü (Gece 00:00'dan sonra da 16 Kasım'ı otomatik açık tutar!)
     const checkIsMatchInPlayOrWaiting = (m: any) => {
       const uid = String(getUniqueMatchId(m.week_num, m.id));
       const offM = officialWeekMatchesMap[uid];
@@ -819,7 +1037,6 @@ export default function LiveMatchCard() {
       return kickoffMs > 0 && currentCheckMs >= kickoffMs && currentCheckMs <= kickoffMs + 18 * 60 * 60 * 1000;
     };
 
-    // 2. Üstteki Gün-Gün Tarih Sekmelerini Oluştur
     const dateGroupMap: Record<
       string,
       {
@@ -850,7 +1067,6 @@ export default function LiveMatchCard() {
       const isActLive = checkIsMatchActivelyLive(m);
       const isInPlay = checkIsMatchInPlayOrWaiting(m);
 
-      // 48 saatten daha eski ve tüm maçları bitmiş günleri kalabalık etmemesi için atla; bitmemiş tek maç varsa bile göster!
       if (dMs < recentHistoryCutoffMs && isFin && !isInPlay) {
         return;
       }
@@ -884,7 +1100,6 @@ export default function LiveMatchCard() {
         )
       }));
 
-    // 3. Her Aktif Bülten İçin Haftalık Canlı Tablolar (CANLI 41. HAFTA, CANLI 42. HAFTA...)
     const perWeekTables: Record<number, WeekLiveBucket> = {};
 
     openWeeks.forEach((week) => {
@@ -1059,7 +1274,6 @@ export default function LiveMatchCard() {
       };
     });
 
-    // 4. Genel Puan Durumları
     const baseMap: Record<
       string,
       {
@@ -1303,8 +1517,6 @@ export default function LiveMatchCard() {
     };
   }, [allRecentBulletinMatches, liveMatchesData, officialWeekMatchesMap, officialSummaryRows, predictionsData, mergedAccounts, liveWindowTick]);
 
-  // Seçili Maç Tarihi Sekmesini Otomatik Çözümle:
-  // Gece 00:00'ı geçse bile 16 Kasım'dan hâlâ oynanan/onay bekleyen maç varsa otomatik 16 Kasım'ı açar!
   const effectiveMatchDate = useMemo(() => {
     if (selectedMatchDate && availableDateTabs.some((t) => t.dateStr === selectedMatchDate)) {
       return selectedMatchDate;
@@ -1332,7 +1544,6 @@ export default function LiveMatchCard() {
   const selectedDayLabel = currentDayTabObj ? currentDayTabObj.label : formatTrDateLabel(effectiveMatchDate);
   const isSelectedDayToday = effectiveMatchDate === getTodayDateString();
 
-  // Seçili Haftalık Canlı Bülten: Önce canlı/onay bekleyen maçı olan haftayı (örn: 41), yoksa en son puan alınmış haftayı açar!
   const effectiveBulletinWeek = useMemo(() => {
     if (selectedBulletinWeek && activeBulletinWeeks.includes(selectedBulletinWeek)) {
       return selectedBulletinWeek;
@@ -1591,7 +1802,7 @@ export default function LiveMatchCard() {
 
     const matchTimeMs = getMatchTimeMs(match.date, match.time);
     const liveDurationMs = 8 * 60 * 60 * 1000;
-if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL', 'POSTPONED', 'PST'].includes(matchStatus)) {
+    if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPROVAL', 'POSTPONED', 'PST'].includes(matchStatus)) {
       if (matchStatus === 'NOT_STARTED' || matchStatus === 'NS' || matchStatus === 'TBD') {
         if (now >= matchTimeMs && now < matchTimeMs + liveDurationMs) {
           matchStatus = 'LIVE';
@@ -1680,8 +1891,8 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
     );
 
     const exactWinners: { id: string; name: string; score: string }[] = [];
-    const possibleWinners: { name: string; score: string }[] = [];
-    const eliminatedPlayers: { name: string; score: string }[] = [];
+    const possibleWinners: { id: string; name: string; score: string }[] = [];
+    const eliminatedPlayers: { id: string; name: string; score: string }[] = [];
 
     if ((isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) && homeScore !== '-' && awayScore !== '-') {
       const currentH = parseInt(String(homeScore), 10);
@@ -1718,9 +1929,9 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
           seenExactIds.add(id);
           exactWinners.push({ id, name, score: `${currentH}-${currentA}` });
         } else if (pH >= currentH && pA >= currentA && !isFinishedStatus) {
-          possibleWinners.push({ name, score: predStr });
+          possibleWinners.push({ id, name, score: predStr });
         } else {
-          eliminatedPlayers.push({ name, score: predStr });
+          eliminatedPlayers.push({ id, name, score: predStr });
         }
       });
 
@@ -2055,7 +2266,8 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                   className="w-full flex items-center justify-center py-2.5 px-4 bg-slate-950 hover:bg-slate-900/50"
                                 >
                                   <span className="text-slate-100 font-black text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2">
-                                    {renderLiveNameWithFlag(formatNameWithCups(winner.name))} <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
+                                    {renderLiveNameWithFlag(winner.name, winner.id, 18)}{' '}
+                                    <span className="text-slate-500 text-[10px]">{isRankOpen ? '▲' : '▼'}</span>
                                   </span>
                                 </button>
                                 {isRankOpen && (
@@ -2092,7 +2304,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         >
                           <span className="text-sky-300 font-bold text-[9px] sm:text-[10px]">⏳ ŞANSI DEVAM EDENLER ({possibleWinners.length})</span>
                           <span className="text-sky-300 text-[10px]">{isPossibleOpen ? '▲' : '▼'}</span>
-            </button>
+                        </button>
                         {isPossibleOpen && (
                           <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto border-t border-blue-900/50">
                             {possibleWinners.map((winner, idx) => (
@@ -2100,7 +2312,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                 key={idx}
                                 className="inline-flex items-center gap-1 border px-1.5 py-0.5 rounded text-[8.5px] sm:text-[9.5px] bg-blue-900/30 text-slate-200 border-blue-700/50 font-bold uppercase"
                               >
-                                {renderLiveNameWithFlag(winner.name, undefined, 14)}
+                                {renderLiveNameWithFlag(winner.name, winner.id, 14)}
                                 <strong className="text-cyan-300 shrink-0">[{winner.score}]</strong>
                               </span>
                             ))}
@@ -2121,7 +2333,10 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         {isEliminatedOpen && (
                           <div className="p-2.5 flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto border-t border-red-900/30">
                             {eliminatedPlayers.map((winner, idx) => {
-                              const elimLogo = getClubLogoUrl(LIVE_FAV_TEAMS[normLiveKey(winner.name)] || '');
+                              const rawElimFav =
+                                LIVE_FAV_TEAMS[`id:${winner.id}`] || LIVE_FAV_TEAMS[normLiveKey(winner.name)] || '';
+                              const elimLogo = isNationalTeamName(rawElimFav) ? '' : getClubLogoUrl(rawElimFav);
+                              const cleanElimName = stripTrophies(winner.name);
                               return (
                                 <span
                                   key={idx}
@@ -2138,7 +2353,8 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                       loading="lazy"
                                     />
                                   )}
-                                  <span className="line-through">{formatNameWithCups(winner.name)}</span>
+                                  <span className="line-through">{cleanElimName}</span>
+                                  <ChampionTrophyCrest name={cleanElimName} size="xs" />
                                   <strong className="text-red-500 shrink-0">[{winner.score}]</strong>
                                 </span>
                               );
@@ -2328,216 +2544,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
         </>
       )}
 
-      {/* CANLI HAFTALIK BÜLTEN & GENEL PUAN DURUMU PANELİ */}
-              <div className="sticky top-16 sm:top-20 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2 pt-2.5 pb-2 sm:px-6 sm:pt-3.5 shadow-md">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800 px-1">
-            <button onClick={() => setIsLiveStandingsOpen(!isLiveStandingsOpen)} className="flex items-center gap-2 text-left">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className={`absolute inline-flex h-full w-full rounded-full ${totalActiveLiveMatches > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''}`} />
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${totalActiveLiveMatches > 0 ? 'bg-emerald-500' : 'bg-sky-400'}`} />
-              </span>
-              <h2 className="text-xs sm:text-sm font-black text-sky-200 uppercase tracking-wider">
-                CANLI GENEL PUAN DURUMU
-              </h2>
-              <span className="text-slate-400 text-xs">{isLiveStandingsOpen ? '▲' : '▼'}</span>
-            </button>
-
-            {isLiveStandingsOpen && (
-              <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                {activeBulletinWeeks.map((w) => {
-                  const isSelectedWeekTab = liveTableTab === 'WEEK_LIVE' && effectiveBulletinWeek === w;
-                  const wLiveCount = weeklyLiveTables[w]?.liveCount || 0;
-                  return (
-                    <button
-                      key={`week-live-${w}`}
-                      onClick={() => {
-                        setLiveTableTab('WEEK_LIVE');
-                        setSelectedBulletinWeek(w);
-                      }}
-                      className={`px-2 sm:px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${
-                        isSelectedWeekTab
-                          ? 'bg-emerald-700 text-white border-emerald-400/80'
-                          : wLiveCount > 0
-                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/70 hover:bg-emerald-900/60'
-                          : 'bg-[#040917] text-emerald-300 border-slate-800 hover:border-emerald-600 hover:text-white'
-                      }`}
-                    >
-                      {`CANLI ${w}. HAFTA${wLiveCount > 0 ? ` (${wLiveCount})` : ''}`}
-                    </button>
-                  );
-                })}
-
-                {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((tab) => {
-                  const isTabActive = liveTableTab === tab;
-                  let btnCls = 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white';
-                  if (isTabActive) {
-                    if (tab === 'TFF') btnCls = 'bg-rose-700 text-white border-rose-400/80';
-                    else if (tab === 'DFO') btnCls = 'bg-blue-700 text-white border-sky-400/80';
-                    else if (tab === 'SKOR') btnCls = 'bg-orange-600 text-white border-orange-300/80';
-                    else btnCls = 'bg-sky-700 text-white border-sky-300/80';
-                  } else if (tab === 'TFF') {
-                    btnCls = 'bg-[#040917] text-rose-400 border-slate-800 hover:border-rose-700';
-                  } else if (tab === 'DFO') {
-                    btnCls = 'bg-[#040917] text-sky-400 border-slate-800 hover:border-sky-700';
-                  } else if (tab === 'SKOR') {
-                    btnCls = 'bg-[#040917] text-orange-400 border-slate-800 hover:border-orange-700';
-                  }
-                  return (
-                    <button
-                      key={tab}
-                      onClick={() => {
-                        setLiveTableTab(tab);
-                        if (tab === 'MASTER') setMasterSubTab('DETAYLI');
-                        if (tab === 'SKOR') setSkorSubTab('DUZ');
-                      }}
-                      className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition-colors border ${btnCls}`}
-                    >
-                      {tab}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {isLiveStandingsOpen && liveTableTab === 'WEEK_LIVE' && currentWeekBucket && (
-            <div className="pt-2">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 border-b border-slate-800 px-1">
-                <div className="text-[10px] sm:text-xs font-bold text-sky-200/90">
-                  <span className="text-emerald-400 font-black">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</span>{' '}
-                  <span>
-                    {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
-                  </span>
-                  {currentWeekBucket.liveCount > 0 && (
-                    <span className="ml-1.5 text-emerald-400 font-black">• {currentWeekBucket.liveCount} maç canlı</span>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1">
-                  {(['MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wTab) => (
-                    <button
-                      key={`wsub-${wTab}`}
-                      onClick={() => {
-                        setWeekSubTab(wTab);
-                        if (wTab === 'MASTER') setWeekMasterMode('DETAYLI');
-                        if (wTab === 'SKOR') setWeekSkorMode('DUZ');
-                      }}
-                      className={`px-2 sm:px-2.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
-                        weekSubTab === wTab
-                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400/80'
-                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {wTab}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {weekSubTab === 'MASTER' && (
-                <div className="flex items-center justify-center gap-1.5 pt-1.5">
-                  <button
-                    onClick={() => setWeekMasterMode('DUZ')}
-                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                      weekMasterMode === 'DUZ'
-                        ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    MASTER PUAN
-                  </button>
-                  <button
-                    onClick={() => setWeekMasterMode('DETAYLI')}
-                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                      weekMasterMode === 'DETAYLI'
-                        ? 'bg-sky-900/50 text-white border-sky-300/70'
-                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    DETAYLI MASTER
-                  </button>
-                </div>
-              )}
-
-              {weekSubTab === 'SKOR' && (
-                <div className="flex flex-wrap items-center justify-center gap-1 pt-1.5">
-                  {([
-                    { key: 'DUZ', label: 'MASTER SKOR' },
-                    { key: 'DETAYLI', label: 'DETAYLI' },
-                    { key: 'DFO', label: 'DFO SKOR' },
-                    { key: 'TFF', label: 'TFF SKOR' }
-                  ] as const).map((sm) => (
-                    <button
-                      key={`wskor-${sm.key}`}
-                      onClick={() => setWeekSkorMode(sm.key)}
-                      className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                        weekSkorMode === sm.key
-                          ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
-                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {sm.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {isLiveStandingsOpen && liveTableTab !== 'WEEK_LIVE' && (
-            <>
-              {liveTableTab === 'MASTER' && (
-                <div className="flex items-center justify-center gap-1.5 pt-2">
-                  <button
-                    onClick={() => setMasterSubTab('DUZ')}
-                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                      masterSubTab === 'DUZ'
-                        ? 'bg-sky-900/50 text-sky-200 border-sky-400/70'
-                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    MASTER PUAN
-                  </button>
-                  <button
-                    onClick={() => setMasterSubTab('DETAYLI')}
-                    className={`px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                      masterSubTab === 'DETAYLI'
-                        ? 'bg-sky-900/50 text-white border-sky-300/70'
-                        : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    DETAYLI MASTER
-                  </button>
-                </div>
-              )}
-
-              {liveTableTab === 'SKOR' && (
-                <div className="flex flex-wrap items-center justify-center gap-1 pt-2">
-                  {([
-                    { key: 'DUZ', label: 'MASTER SKOR' },
-                    { key: 'DETAYLI', label: 'DETAYLI' },
-                    { key: 'DFO', label: 'DFO SKOR' },
-                    { key: 'TFF', label: 'TFF SKOR' }
-                  ] as const).map((st) => (
-                    <button
-                      key={st.key}
-                      onClick={() => setSkorSubTab(st.key)}
-                      className={`px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${
-                        skorSubTab === st.key
-                          ? 'bg-orange-950/60 text-orange-300 border-orange-400/70'
-                          : 'bg-[#040917] text-slate-400 border-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* İKİ MÜSTAKİL PUAN BLOĞU SARMALAYICISI (SIKI ARALIK: gap-2) */}
+      {/* İKİ MÜSTAKİL PUAN BLOĞU SARMALAYICISI (TEKRARLAYAN ÇİFT BAŞLIK TEMİZLENDİ) */}
       <div className="flex flex-col gap-2">
         {/* MÜSTAKİL BLOK 2 (ALTTA - AKTİF HAFTA BÜLTENİ & CANLI PUAN ALANLAR) */}
         {currentWeekBucket && (
@@ -2550,36 +2557,55 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
               } bg-[#071126]/95 backdrop-blur-md px-2.5 py-2.5 sm:px-5 shadow-md`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsWeekLiveOpen(!isWeekLiveOpen)}
-                  className="flex flex-wrap items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span
-                      className={`absolute inline-flex h-full w-full rounded-full ${
-                        currentWeekBucket.liveCount > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''
-                      }`}
-                    />
-                    <span
-                      className={`relative inline-flex rounded-full h-2 w-2 ${
-                        currentWeekBucket.liveCount > 0 ? 'bg-emerald-500' : 'bg-sky-400'
-                      }`}
-                    />
-                  </span>
-                  <span className="text-[10.5px] sm:text-xs font-bold text-sky-200/95">
-                    <span className="text-emerald-400 font-black">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</span>{' '}
-                    <span>
-                      {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsWeekLiveOpen(!isWeekLiveOpen)}
+                    className="flex flex-wrap items-center gap-1.5 text-left cursor-pointer"
+                  >
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span
+                        className={`absolute inline-flex h-full w-full rounded-full ${
+                          currentWeekBucket.liveCount > 0 ? 'animate-ping bg-emerald-400 opacity-75' : ''
+                        }`}
+                      />
+                      <span
+                        className={`relative inline-flex rounded-full h-2 w-2 ${
+                          currentWeekBucket.liveCount > 0 ? 'bg-emerald-500' : 'bg-sky-400'
+                        }`}
+                      />
                     </span>
-                    {currentWeekBucket.liveCount > 0 && (
-                      <span className="ml-1.5 text-emerald-400 font-black">• {currentWeekBucket.liveCount} maç canlı</span>
-                    )}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-[#040917] border border-slate-700 text-[9px] font-black text-slate-300">
-                    {isWeekLiveOpen ? '▲' : '▼'}
-                  </span>
-                </button>
+                    <span className="text-[10.5px] sm:text-xs font-bold text-sky-200/95">
+                      <span className="text-emerald-400 font-black">{effectiveBulletinWeek}. HAFTA BÜLTENİ:</span>{' '}
+                      <span>
+                        {currentWeekBucket.finishedCount} / {currentWeekBucket.totalMatches} maç tamamlandı
+                      </span>
+                      {currentWeekBucket.liveCount > 0 && (
+                        <span className="ml-1.5 text-emerald-400 font-black">• {currentWeekBucket.liveCount} maç canlı</span>
+                      )}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-[#040917] border border-slate-700 text-[9px] font-black text-slate-300">
+                      {isWeekLiveOpen ? '▲' : '▼'}
+                    </span>
+                  </button>
+
+                  {activeBulletinWeeks.length > 1 && (
+                    <select
+                      value={effectiveBulletinWeek}
+                      onChange={(e) => {
+                        setSelectedBulletinWeek(Number(e.target.value));
+                        setIsWeekLiveOpen(true);
+                      }}
+                      className="bg-[#040917] border border-emerald-500/40 text-emerald-300 text-[9.5px] sm:text-[10.5px] font-black rounded-lg px-1.5 py-0.5 outline-none cursor-pointer"
+                    >
+                      {activeBulletinWeeks.map((w) => (
+                        <option key={w} value={w} className="bg-[#071126] text-white">
+                          {w}. Hafta
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
 
                 {isWeekLiveOpen && (
                   <div className="flex flex-wrap items-center gap-1">
@@ -2589,7 +2615,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         type="button"
                         onClick={() => {
                           setWeekSubTab(wTab);
-                          if (wTab === 'MASTER') setWeekMasterMode('DUZ');
+                          if (wTab === 'MASTER') setWeekMasterMode('DETAYLI');
                           if (wTab === 'SKOR') setWeekSkorMode('DUZ');
                         }}
                         className={`px-2 sm:px-2.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border transition-colors ${
@@ -2634,12 +2660,14 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
 
               {isWeekLiveOpen && weekSubTab === 'SKOR' && (
                 <div className="flex flex-wrap items-center justify-center gap-1 pt-2 mt-1.5 border-t border-slate-800/80">
-                  {([
-                    { key: 'DUZ', label: 'MASTER SKOR' },
-                    { key: 'DETAYLI', label: 'DETAYLI' },
-                    { key: 'DFO', label: 'DFO SKOR' },
-                    { key: 'TFF', label: 'TFF SKOR' }
-                  ] as const).map((sm) => (
+                  {(
+                    [
+                      { key: 'DUZ', label: 'MASTER SKOR' },
+                      { key: 'DETAYLI', label: 'DETAYLI' },
+                      { key: 'DFO', label: 'DFO SKOR' },
+                      { key: 'TFF', label: 'TFF SKOR' }
+                    ] as const
+                  ).map((sm) => (
                     <button
                       key={`wskor-${sm.key}`}
                       type="button"
@@ -2659,7 +2687,6 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
 
             {isWeekLiveOpen && (
               <div className="px-1 pb-3 sm:px-6 sm:pb-5 pt-1.5">
-                <>
                 {weekSubTab === 'MASTER' && weekMasterMode === 'DUZ' ? (
                   currentWeekBucket.MASTER.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-xs font-bold tracking-widest uppercase">
@@ -2677,10 +2704,10 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                       <tbody className="divide-y divide-slate-800/70">
                         {currentWeekBucket.MASTER.map((row) => (
                           <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
-                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
+                            <td className="py-2 px-1.5 sm:px-2 font-black text-slate-400 text-[11.5px] sm:text-sm">{row.rank}</td>
+                            <td className="py-2 px-1.5 sm:px-2 font-black text-white text-[12px] sm:text-base">
+                              <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                                {renderLiveNameWithFlag(row.name, row.id, 24)}
                                 {row.canliMaster > 0 && (
                                   <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
                                     +{row.canliMaster}
@@ -2688,7 +2715,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                 )}
                               </div>
                             </td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
+                            <td className="py-2 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2725,16 +2752,16 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                       <tbody className="divide-y divide-slate-800/70">
                         {currentWeekBucket.MASTER.map((row) => (
                           <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-slate-400 text-[10.5px] sm:text-sm">{row.rank}</td>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
+                            <td className="py-2 px-1 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
+                            <td className="py-2 px-1 sm:px-2 font-black text-white text-[11px] sm:text-[15px]" title={row.name}>
                               <div className="flex items-center min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
+                                {renderLiveNameWithFlag(row.name, row.id, 22)}
                               </div>
                             </td>
-                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
-                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
-                            <td className="py-1.5 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
-                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
+                            <td className="py-2 px-0 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
+                            <td className="py-2 px-0 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
+                            <td className="py-2 px-0 text-center text-orange-400 font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                            <td className="py-2 px-0 text-center font-black text-[9.5px] sm:text-xs">
                               {row.canliMaster > 0 ? (
                                 <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
                                   +{row.canliMaster}
@@ -2743,7 +2770,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                 <span className="text-slate-600">-</span>
                               )}
                             </td>
-                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-sky-200 font-black text-[11.5px] sm:text-base bg-sky-500/10">
+                            <td className="py-2 px-0.5 sm:px-2 text-center text-sky-200 font-black text-[12px] sm:text-base bg-sky-500/10">
                               {row.toplamMaster}
                             </td>
                           </tr>
@@ -2779,15 +2806,15 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                       <tbody className="divide-y divide-slate-800/70">
                         {currentWeekBucket.SKOR_MASTER.map((row) => (
                           <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-slate-400 text-[10.5px] sm:text-sm">{row.rank}</td>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
+                            <td className="py-2 px-1 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
+                            <td className="py-2 px-1 sm:px-2 font-black text-white text-[11px] sm:text-[15px]" title={row.name}>
                               <div className="flex items-center min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
+                                {renderLiveNameWithFlag(row.name, row.id, 22)}
                               </div>
                             </td>
-                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfoSkor}</td>
-                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTffSkor}</td>
-                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
+                            <td className="py-2 px-0 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                            <td className="py-2 px-0 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                            <td className="py-2 px-0 text-center font-black text-[9.5px] sm:text-xs">
                               {row.canliSkor > 0 ? (
                                 <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
                                   +{row.canliSkor}
@@ -2796,7 +2823,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                 <span className="text-slate-600">-</span>
                               )}
                             </td>
-                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-orange-400 font-black text-[11.5px] sm:text-base bg-orange-500/10">
+                            <td className="py-2 px-0.5 sm:px-2 text-center text-orange-400 font-black text-[12px] sm:text-base bg-orange-500/10">
                               {row.toplamSkor}
                             </td>
                           </tr>
@@ -2849,10 +2876,10 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         <tbody className="divide-y divide-slate-800/70">
                           {list.map((row) => (
                             <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                              <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">{row.rank}</td>
-                              <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
-                                <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                                  {renderLiveNameWithFlag(row.name)}
+                              <td className="py-2 px-1.5 sm:px-2 font-black text-slate-400 text-[11.5px] sm:text-sm">{row.rank}</td>
+                              <td className="py-2 px-1.5 sm:px-2 font-black text-white text-[12px] sm:text-base">
+                                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                                  {renderLiveNameWithFlag(row.name, row.id, 24)}
                                   {row.liveAdd > 0 && (
                                     <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
                                       +{row.liveAdd}
@@ -2860,7 +2887,7 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                                   )}
                                 </div>
                               </td>
-                              <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base">
+                              <td className="py-2 px-2 sm:px-3 text-right font-black text-xs sm:text-base">
                                 {weekSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
                                 {weekSubTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
                                 {weekSubTab === 'SKOR' && weekSkorMode === 'DUZ' && <span className="text-orange-400">{row.pts}</span>}
@@ -2872,15 +2899,13 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
                         </tbody>
                       </table>
                     );
-                  })()
-                )}
-              </>
+                  })())}
               </div>
             )}
           </div>
         )}
 
-        {/* MÜSTAKİL BLOK 1 (ÜSTTE - SADECE MASTER / DFO / TFF / TURUNCU SKOR) */}
+        {/* MÜSTAKİL BLOK 1 (ÜSTTE - CANLI GENEL PUAN DURUMU) */}
         <div className="order-1 bg-gradient-to-b from-[#0a1838] via-[#071126] to-[#050b18] border border-slate-800 rounded-2xl shadow-xl">
           <div
             className={`${
@@ -2980,12 +3005,14 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
 
             {isLiveStandingsOpen && liveTableTab === 'SKOR' && (
               <div className="flex flex-wrap items-center justify-center gap-1 pt-2 mt-2 border-t border-slate-800/80">
-                {([
-                  { key: 'DUZ', label: 'MASTER SKOR' },
-                  { key: 'DETAYLI', label: 'DETAYLI' },
-                  { key: 'DFO', label: 'DFO SKOR' },
-                  { key: 'TFF', label: 'TFF SKOR' }
-                ] as const).map((st) => (
+                {(
+                  [
+                    { key: 'DUZ', label: 'MASTER SKOR' },
+                    { key: 'DETAYLI', label: 'DETAYLI' },
+                    { key: 'DFO', label: 'DFO SKOR' },
+                    { key: 'TFF', label: 'TFF SKOR' }
+                  ] as const
+                ).map((st) => (
                   <button
                     key={st.key}
                     type="button"
@@ -3005,249 +3032,247 @@ if (!['FINISHED', 'FT', 'AET', 'PEN', 'HT', '1H', '2H', 'ET', 'P', 'WAITING_APPR
 
           {isLiveStandingsOpen && (
             <div className="px-1 pb-4 sm:px-6 sm:pb-6 pt-2">
-              <>
-                {liveTableTab === 'MASTER' && masterSubTab === 'DUZ' ? (
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <thead>
-                      <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
-                        <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
-                        <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
-                        <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right text-sky-300">Master</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {liveStandingsTable.MASTER.map((row) => {
-                        const diff = row.kesinSira - row.rankMaster;
-                        return (
-                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">
-                              <span>{row.rankMaster}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
-                            </td>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
-                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
-                                {row.canliMaster > 0 && (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
-                                    +{row.canliMaster}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : liveTableTab === 'MASTER' && masterSubTab === 'DETAYLI' ? (
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
-                        <th className="py-2 px-0.5 sm:px-2 w-[24px] sm:w-10 align-bottom">#</th>
-                        <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
-                        <th className="py-1.5 px-0 w-[23px] sm:w-14 text-center text-sky-400 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
-                        </th>
-                        <th className="py-1.5 px-0 w-[23px] sm:w-14 text-center text-rose-500 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
-                        </th>
-                        <th className="py-1.5 px-0 w-[22px] sm:w-16 text-center text-emerald-400 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">BNS</span>
-                        </th>
-                        <th className="py-1.5 px-0 w-[23px] sm:w-16 text-center text-orange-400 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
-                        </th>
-                        <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-emerald-300 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
-                        </th>
-                        <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">MASTER</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {liveStandingsTable.MASTER.map((row) => {
-                        const diff = row.kesinSira - row.rankMaster;
-                        return (
-                          <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-0.5 sm:px-2 font-black text-slate-400 text-[10px] sm:text-sm whitespace-nowrap">
-                              <span>{row.rankMaster}</span>
-                              {diff > 0 && <span className="text-[7.5px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="text-[7.5px] text-rose-400">▼</span>}
-                            </td>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
-                              <div className="flex items-center min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
-                              </div>
-                            </td>
-                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfo}</td>
-                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTff}</td>
-                            <td className="py-1.5 px-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm">
-                              {row.bonus > 0 ? `+${row.bonus}` : '0'}
-                            </td>
-                            <td className="py-1.5 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm">{row.toplamSkor}</td>
-                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
-                              {row.canliMaster > 0 ? (
-                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
+              {liveTableTab === 'MASTER' && masterSubTab === 'DUZ' ? (
+                <table className="w-full table-fixed text-left tabular-nums">
+                  <thead>
+                    <tr className="bg-[#040a18]/90 text-sky-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                      <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
+                      <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                      <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right text-sky-300">Master</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {liveStandingsTable.MASTER.map((row) => {
+                      const diff = row.kesinSira - row.rankMaster;
+                      return (
+                        <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                          <td className="py-2 px-1.5 sm:px-2 font-black text-slate-400 text-[11.5px] sm:text-sm">
+                            <span>{row.rankMaster}</span>
+                            {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
+                            {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
+                          </td>
+                          <td className="py-2 px-1.5 sm:px-2 font-black text-white text-[12px] sm:text-base">
+                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                              {renderLiveNameWithFlag(row.name, row.id, 24)}
+                              {row.canliMaster > 0 && (
+                                <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
                                   +{row.canliMaster}
                                 </span>
-                              ) : (
-                                <span className="text-slate-600">-</span>
                               )}
-                            </td>
-                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-sky-200 font-black text-[11.5px] sm:text-base bg-sky-500/10">
-                              {row.toplamMaster}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : liveTableTab === 'SKOR' && skorSubTab === 'DUZ' ? (
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
-                        <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
-                        <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
-                        <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right text-orange-400">Skor</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {liveStandingsTable.SKOR_MASTER.map((row) => {
-                        const diff = row.prevSkorRank - row.rankSkor;
-                        return (
-                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">
-                              <span>{row.rankSkor}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
-                            </td>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
-                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
-                                {row.canliSkor > 0 && (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
-                                    +{row.canliSkor}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-orange-400">{row.toplamSkor}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : liveTableTab === 'SKOR' && skorSubTab === 'DETAYLI' ? (
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
-                        <th className="py-2 px-1 sm:px-2 w-[24px] sm:w-12 align-bottom">#</th>
-                        <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
-                        <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-sky-400 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
-                        </th>
-                        <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-rose-500 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
-                        </th>
-                        <th className="py-1.5 px-0 w-[26px] sm:w-20 text-center text-emerald-400 align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
-                        </th>
-                        <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t align-bottom">
-                          <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {liveStandingsTable.SKOR_MASTER.map((row) => {
-                        const diff = row.prevSkorRank - row.rankSkor;
-                        return (
-                          <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-slate-400 text-[10px] sm:text-sm whitespace-nowrap">
-                              <span>{row.rankSkor}</span>
-                              {diff > 0 && <span className="text-[7.5px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="text-[7.5px] text-rose-400">▼</span>}
-                            </td>
-                            <td className="py-1.5 px-1 sm:px-2 font-black text-white text-[10.5px] sm:text-sm" title={row.name}>
-                              <div className="flex items-center min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
-                              </div>
-                            </td>
-                            <td className="py-1.5 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm">{row.toplamDfoSkor}</td>
-                            <td className="py-1.5 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm">{row.toplamTffSkor}</td>
-                            <td className="py-1.5 px-0 text-center font-black text-[9.5px] sm:text-xs">
-                              {row.canliSkor > 0 ? (
-                                <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-sky-300">{row.toplamMaster}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : liveTableTab === 'MASTER' && masterSubTab === 'DETAYLI' ? (
+                <table className="w-full table-fixed text-left tabular-nums">
+                  <thead>
+                    <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                      <th className="py-2 px-0.5 sm:px-2 w-[24px] sm:w-10 align-bottom">#</th>
+                      <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
+                      <th className="py-1.5 px-0 w-[23px] sm:w-14 text-center text-sky-400 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
+                      </th>
+                      <th className="py-1.5 px-0 w-[23px] sm:w-14 text-center text-rose-500 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
+                      </th>
+                      <th className="py-1.5 px-0 w-[22px] sm:w-16 text-center text-emerald-400 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">BNS</span>
+                      </th>
+                      <th className="py-1.5 px-0 w-[23px] sm:w-16 text-center text-orange-400 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
+                      </th>
+                      <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-emerald-300 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
+                      </th>
+                      <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-sky-200 bg-sky-500/15 rounded-t align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">MASTER</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {liveStandingsTable.MASTER.map((row) => {
+                      const diff = row.kesinSira - row.rankMaster;
+                      return (
+                        <tr key={row.id} className={row.canliMaster > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                          <td className="py-2 px-0.5 sm:px-2 font-black text-slate-400 text-[10.5px] sm:text-sm whitespace-nowrap">
+                            <span>{row.rankMaster}</span>
+                            {diff > 0 && <span className="text-[7.5px] text-emerald-400">▲</span>}
+                            {diff < 0 && <span className="text-[7.5px] text-rose-400">▼</span>}
+                          </td>
+                          <td className="py-2 px-1 sm:px-2 font-black text-white text-[11px] sm:text-[15px]" title={row.name}>
+                            <div className="flex items-center min-w-0 overflow-hidden">
+                              {renderLiveNameWithFlag(row.name, row.id, 22)}
+                            </div>
+                          </td>
+                          <td className="py-2 px-0 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfo}</td>
+                          <td className="py-2 px-0 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTff}</td>
+                          <td className="py-2 px-0 text-center text-emerald-400 font-bold text-[11px] sm:text-sm">
+                            {row.bonus > 0 ? `+${row.bonus}` : '0'}
+                          </td>
+                          <td className="py-2 px-0 text-center text-orange-400 font-black text-[11px] sm:text-sm">{row.toplamSkor}</td>
+                          <td className="py-2 px-0 text-center font-black text-[9.5px] sm:text-xs">
+                            {row.canliMaster > 0 ? (
+                              <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
+                                +{row.canliMaster}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600">-</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-0.5 sm:px-2 text-center text-sky-200 font-black text-[12px] sm:text-base bg-sky-500/10">
+                            {row.toplamMaster}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : liveTableTab === 'SKOR' && skorSubTab === 'DUZ' ? (
+                <table className="w-full table-fixed text-left tabular-nums">
+                  <thead>
+                    <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                      <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
+                      <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                      <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right text-orange-400">Skor</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {liveStandingsTable.SKOR_MASTER.map((row) => {
+                      const diff = row.prevSkorRank - row.rankSkor;
+                      return (
+                        <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                          <td className="py-2 px-1.5 sm:px-2 font-black text-slate-400 text-[11.5px] sm:text-sm">
+                            <span>{row.rankSkor}</span>
+                            {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
+                            {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
+                          </td>
+                          <td className="py-2 px-1.5 sm:px-2 font-black text-white text-[12px] sm:text-base">
+                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                              {renderLiveNameWithFlag(row.name, row.id, 24)}
+                              {row.canliSkor > 0 && (
+                                <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
                                   +{row.canliSkor}
                                 </span>
-                              ) : (
-                                <span className="text-slate-600">-</span>
                               )}
-                            </td>
-                            <td className="py-1.5 px-0.5 sm:px-2 text-center text-orange-400 font-black text-[11.5px] sm:text-base bg-orange-500/10">
-                              {row.toplamSkor}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : (
-                  <table className="w-full table-fixed text-left tabular-nums">
-                    <thead>
-                      <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
-                        <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
-                        <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
-                        <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right">
-                          {liveTableTab === 'DFO' && <span className="text-sky-400">DFO Puan</span>}
-                          {liveTableTab === 'TFF' && <span className="text-rose-500">TFF Puan</span>}
-                          {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
-                          {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {(liveTableTab === 'DFO'
-                        ? liveStandingsTable.DFO
-                        : liveTableTab === 'TFF'
-                        ? liveStandingsTable.TFF
-                        : skorSubTab === 'DFO'
-                        ? liveStandingsTable.SKOR_DFO
-                        : liveStandingsTable.SKOR_TFF
-                      ).map((row) => {
-                        const diff = row.prevRank - row.rank;
-                        return (
-                          <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-slate-400 text-[11px] sm:text-sm">
-                              <span>{row.rank}</span>
-                              {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
-                              {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
-                            </td>
-                            <td className="py-1.5 px-1.5 sm:px-2 font-black text-white text-[11px] sm:text-sm">
-                              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                                {renderLiveNameWithFlag(row.name)}
-                                {row.liveAdd > 0 || row.liveAdd > 0 ? (
-                                  <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
-                                    +{row.liveAdd}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-black text-xs sm:text-base">
-                              {liveTableTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
-                              {liveTableTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
-                              {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
-                              {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
-                            </td>
-                          </tr>
-                        );
-                     })}
-                    </tbody>
-                  </table>
-                )}
-              </>
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 sm:px-3 text-right font-black text-xs sm:text-base text-orange-400">{row.toplamSkor}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : liveTableTab === 'SKOR' && skorSubTab === 'DETAYLI' ? (
+                <table className="w-full table-fixed text-left tabular-nums">
+                  <thead>
+                    <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
+                      <th className="py-2 px-1 sm:px-2 w-[24px] sm:w-12 align-bottom">#</th>
+                      <th className="py-2 px-1 sm:px-2 text-white align-bottom">Yarışmacı</th>
+                      <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-sky-400 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">DFO</span>
+                      </th>
+                      <th className="py-1.5 px-0 w-[25px] sm:w-20 text-center text-rose-500 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">TFF</span>
+                      </th>
+                      <th className="py-1.5 px-0 w-[26px] sm:w-20 text-center text-emerald-400 align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">CANLI</span>
+                      </th>
+                      <th className="py-1.5 px-0.5 sm:px-2 w-[32px] sm:w-24 text-center text-orange-400 bg-orange-500/15 rounded-t align-bottom">
+                        <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">SKOR</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {liveStandingsTable.SKOR_MASTER.map((row) => {
+                      const diff = row.prevSkorRank - row.rankSkor;
+                      return (
+                        <tr key={row.id} className={row.canliSkor > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                          <td className="py-2 px-1 sm:px-2 font-black text-slate-400 text-[10.5px] sm:text-sm whitespace-nowrap">
+                            <span>{row.rankSkor}</span>
+                            {diff > 0 && <span className="text-[7.5px] text-emerald-400">▲</span>}
+                            {diff < 0 && <span className="text-[7.5px] text-rose-400">▼</span>}
+                          </td>
+                          <td className="py-2 px-1 sm:px-2 font-black text-white text-[11px] sm:text-[15px]" title={row.name}>
+                            <div className="flex items-center min-w-0 overflow-hidden">
+                              {renderLiveNameWithFlag(row.name, row.id, 22)}
+                            </div>
+                          </td>
+                          <td className="py-2 px-0 text-center text-sky-400 font-bold text-[11px] sm:text-sm">{row.toplamDfoSkor}</td>
+                          <td className="py-2 px-0 text-center text-rose-500 font-bold text-[11px] sm:text-sm">{row.toplamTffSkor}</td>
+                          <td className="py-2 px-0 text-center font-black text-[9.5px] sm:text-xs">
+                            {row.canliSkor > 0 ? (
+                              <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 px-1 py-0.5 rounded">
+                                +{row.canliSkor}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600">-</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-0.5 sm:px-2 text-center text-orange-400 font-black text-[12px] sm:text-base bg-orange-500/10">
+                            {row.toplamSkor}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full table-fixed text-left tabular-nums">
+                  <thead>
+                    <tr className="bg-[#040a18]/90 text-slate-200 border-b border-slate-800 text-[10px] sm:text-xs uppercase tracking-wider font-black">
+                      <th className="py-2 px-1.5 sm:px-2 w-[30px] sm:w-14">#</th>
+                      <th className="py-2 px-1.5 sm:px-2 text-white">Yarışmacı</th>
+                      <th className="py-2 px-2 sm:px-3 w-[88px] sm:w-40 text-right">
+                        {liveTableTab === 'DFO' && <span className="text-sky-400">DFO Puan</span>}
+                        {liveTableTab === 'TFF' && <span className="text-rose-500">TFF Puan</span>}
+                        {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">DFO Skor</span>}
+                        {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">TFF Skor</span>}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {(liveTableTab === 'DFO'
+                      ? liveStandingsTable.DFO
+                      : liveTableTab === 'TFF'
+                      ? liveStandingsTable.TFF
+                      : skorSubTab === 'DFO'
+                      ? liveStandingsTable.SKOR_DFO
+                      : liveStandingsTable.SKOR_TFF
+                    ).map((row) => {
+                      const diff = row.prevRank - row.rank;
+                      return (
+                        <tr key={row.id} className={row.liveAdd > 0 ? 'bg-emerald-950/30 hover:bg-emerald-950/45' : 'hover:bg-blue-900/20'}>
+                          <td className="py-2 px-1.5 sm:px-2 font-black text-slate-400 text-[11.5px] sm:text-sm">
+                            <span>{row.rank}</span>
+                            {diff > 0 && <span className="ml-0.5 text-[8.5px] text-emerald-400">▲</span>}
+                            {diff < 0 && <span className="ml-0.5 text-[8.5px] text-rose-400">▼</span>}
+                          </td>
+                          <td className="py-2 px-1.5 sm:px-2 font-black text-white text-[12px] sm:text-base">
+                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                              {renderLiveNameWithFlag(row.name, row.id, 24)}
+                              {row.liveAdd > 0 && (
+                                <span className="shrink-0 bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[8.5px] font-black px-1 py-0.5 rounded leading-none">
+                                  +{row.liveAdd}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 sm:px-3 text-right font-black text-xs sm:text-base">
+                            {liveTableTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
+                            {liveTableTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
+                            {liveTableTab === 'SKOR' && skorSubTab === 'DFO' && <span className="text-sky-400">{row.pts}</span>}
+                            {liveTableTab === 'SKOR' && skorSubTab === 'TFF' && <span className="text-rose-500">{row.pts}</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
         </div>
