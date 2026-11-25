@@ -1,5 +1,5 @@
 'use client';
-
+import PlayerSeasonDossierModal from '@/components/PlayerSeasonDossierModal';
 import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
@@ -361,6 +361,7 @@ interface PlayerStatRow {
 }
 
 export default function YeniArsivPage() {
+  const [selectedDossierPlayerId, setSelectedDossierPlayerId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [, setClubLogosVersion] = useState<number>(0);
 
@@ -1263,18 +1264,37 @@ export default function YeniArsivPage() {
       );
 
   const renderPlayerNameWithCup = (
-    name: string,
-    _isChamp: boolean,
-    liveAdd: number = 0,
-    favoriteTeam: string = ''
-  ) => {
-    const cleanDisplay = stripTrophies(name);
-    const effectiveFav =
-      favoriteTeam || favTeamByNormName[normalizeTrName(name)] || '';
-    const clubLogo = getClubLogoUrl(effectiveFav);
+  name: string,
+  _isChamp: boolean,
+  liveAdd: number = 0,
+  favoriteTeam: string = '',
+  playerId?: string
+) => {
+  const cleanDisplay = stripTrophies(name);
+  const effectiveFav =
+    favoriteTeam || favTeamByNormName[normalizeTrName(name)] || '';
+  const clubLogo = getClubLogoUrl(effectiveFav);
 
-    return (
-      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+  const resolvedId =
+    playerId ||
+    Object.keys(playersMap).find(
+      (uid) => normalizeTrName(playersMap[uid]?.name || '') === normalizeTrName(cleanDisplay)
+    ) ||
+    '';
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        if (resolvedId) {
+          e.stopPropagation();
+          setSelectedDossierPlayerId(resolvedId);
+        }
+      }}
+      title={`${cleanDisplay} • Sezon İstatistikleri ve Bildiği Maç Kartları için tıklayın`}
+      className="flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer hover:text-sky-300 transition-colors"
+    >
         {clubLogo && (
           <img
             src={clubLogo}
@@ -2612,6 +2632,15 @@ export default function YeniArsivPage() {
           </div>
         </div>
       )}
+
+      <PlayerSeasonDossierModal
+        playerId={selectedDossierPlayerId}
+        onClose={() => setSelectedDossierPlayerId(null)}
+        playersDirectory={playersMap}
+        matches={officialMatches}
+        weeksBonus={officialWeeks}
+        seasonLabel="2026-2027 SEZONU"
+      />
     </div>
   );
 }
