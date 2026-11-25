@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState, useId } from 'react';
+import React, { useMemo, useState, useEffect, useId } from 'react';
+import { supabase } from '@/utils/supabase';
 import { getEliteTheme } from '@/utils/themeEngine';
 import { getClubLogoUrl, isNationalTeamName } from '@/components/FavoriteTeamSelector';
 
@@ -60,6 +61,16 @@ const normKey = (s?: string | null) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const normalizeScoreText = (raw?: string | null) => {
+  const cleaned = String(raw || '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(':', '-');
+  if (!/^\d+-\d+$/.test(cleaned)) return '';
+  const [h, a] = cleaned.split('-');
+  return `${Number(h)}-${Number(a)}`;
+};
+
 const OFFICIAL_CHAMPIONS: Record<string, { stars: number; reigning: boolean }> = {
   'OSMAN ALI AYDIN': { stars: 2, reigning: true },
   'ISMAIL EKER': { stars: 1, reigning: true },
@@ -75,6 +86,12 @@ const OFFICIAL_CHAMPIONS: Record<string, { stars: number; reigning: boolean }> =
   'MURAT KARA': { stars: 1, reigning: false },
   'METE BUYUKGOL': { stars: 1, reigning: false }
 };
+
+// Sadece tıklanan yarışmacının tahminlerini oturum boyunca bellekte tutar (tekrar tıklamada 0 Byte Egress)
+const PLAYER_PRED_CACHE: Record<
+  string,
+  { totalCount: number; distinctWeeks: number; freqMap: Record<string, number> }
+> = {};
 
 const calcPtsByWinners = (cnt: number) => {
   if (cnt === 1) return 12;
@@ -123,7 +140,8 @@ const checkIsTff = (poolType?: string, category?: string, home?: string, away?: 
   }
   const h = normKey(home);
   const a = normKey(away);
-  const rx = /(SPOR|GUCU|GENCLER|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KARSIYAKA|ALTAY|TRABZON|BURSA|ESKISEHIR|KASIMPASA|EYUP|AMED|IGDIR)/;
+  const rx =
+    /(SPOR|GUCU|GENCLER|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KARSIYAKA|ALTAY|TRABZON|BURSA|ESKISEHIR|KASIMPASA|EYUP|AMED|IGDIR)/;
   return rx.test(h) && rx.test(a);
 };
 
@@ -190,13 +208,13 @@ const ModalCupCrest = ({ name }: { name: string }) => {
 };
 
 const TIERS = [
-  { pts: 12, label: '12 PUAN (TEK BAŞINA)', short: '12P TEK', desc: 'Tek başına tam isabet', badgeCls: 'bg-amber-500/20 border-amber-400 text-amber-300' },
-  { pts: 6, label: '6 PUAN (2 KİŞİ)', short: '6 PUAN', desc: '2 kişi bildi', badgeCls: 'bg-purple-500/20 border-purple-400 text-purple-200' },
-  { pts: 5, label: '5 PUAN (3 KİŞİ)', short: '5 PUAN', desc: '3 kişi bildi', badgeCls: 'bg-indigo-500/20 border-indigo-400 text-indigo-200' },
-  { pts: 4, label: '4 PUAN (4 KİŞİ)', short: '4 PUAN', desc: '4 kişi bildi', badgeCls: 'bg-sky-500/20 border-sky-400 text-sky-200' },
-  { pts: 3, label: '3 PUAN (5 KİŞİ)', short: '3 PUAN', desc: '5 kişi bildi', badgeCls: 'bg-cyan-500/20 border-cyan-400 text-cyan-200' },
-  { pts: 2, label: '2 PUAN (6 KİŞİ)', short: '2 PUAN', desc: '6 kişi bildi', badgeCls: 'bg-teal-500/20 border-teal-400 text-teal-200' },
-  { pts: 1, label: '1 PUAN (7+ KİŞİ)', short: '1 PUAN', desc: '7 ve üzeri kişi bildi', badgeCls: 'bg-emerald-500/20 border-emerald-400 text-emerald-200' }
+  { pts: 12, label: '12 PUAN (TEK BAŞINA)', short: '12P TEK', badgeCls: 'bg-amber-500/20 border-amber-400 text-amber-300' },
+  { pts: 6, label: '6 PUAN (2 KİŞİ)', short: '6 PUAN', badgeCls: 'bg-purple-500/20 border-purple-400 text-purple-200' },
+  { pts: 5, label: '5 PUAN (3 KİŞİ)', short: '5 PUAN', badgeCls: 'bg-indigo-500/20 border-indigo-400 text-indigo-200' },
+  { pts: 4, label: '4 PUAN (4 KİŞİ)', short: '4 PUAN', badgeCls: 'bg-sky-500/20 border-sky-400 text-sky-200' },
+  { pts: 3, label: '3 PUAN (5 KİŞİ)', short: '3 PUAN', badgeCls: 'bg-cyan-500/20 border-cyan-400 text-cyan-200' },
+  { pts: 2, label: '2 PUAN (6 KİŞİ)', short: '2 PUAN', badgeCls: 'bg-teal-500/20 border-teal-400 text-teal-200' },
+  { pts: 1, label: '1 PUAN (7+ KİŞİ)', short: '1 PUAN', badgeCls: 'bg-emerald-500/20 border-emerald-400 text-emerald-200' }
 ] as const;
 
 export default function PlayerSeasonDossierModal({
@@ -211,6 +229,96 @@ export default function PlayerSeasonDossierModal({
   const [tierFilter, setTierFilter] = useState<number | 'ALL'>('ALL');
   const [poolFilter, setPoolFilter] = useState<'ALL' | 'DFO' | 'TFF'>('ALL');
   const [weekFilter, setWeekFilter] = useState<number | 'ALL'>('ALL');
+  const [scoreFilter, setScoreFilter] = useState<string | 'ALL'>('ALL');
+
+  const [predHabitState, setPredHabitState] = useState<{
+    loading: boolean;
+    totalCount: number;
+    distinctWeeks: number;
+    freqMap: Record<string, number>;
+  }>({ loading: false, totalCount: 0, distinctWeeks: 0, freqMap: {} });
+
+  // Yarışmacı değiştiğinde filtreleri sıfırla ve SADECE bu yarışmacının tahmin dağılımını çek (~3-4 KB)
+  useEffect(() => {
+    setActiveView('STATS');
+    setTierFilter('ALL');
+    setPoolFilter('ALL');
+    setWeekFilter('ALL');
+    setScoreFilter('ALL');
+
+    if (!playerId) return;
+    const pid = String(playerId).trim();
+
+    if (PLAYER_PRED_CACHE[pid]) {
+      setPredHabitState({
+        loading: false,
+        ...PLAYER_PRED_CACHE[pid]
+      });
+      return;
+    }
+
+    let active = true;
+    setPredHabitState({ loading: true, totalCount: 0, distinctWeeks: 0, freqMap: {} });
+
+    (async () => {
+      try {
+        let allRows: { week_num: number; predicted_score: string }[] = [];
+        let from = 0;
+        const step = 1000;
+        let keepGoing = true;
+
+        while (keepGoing) {
+          const { data, error } = await supabase
+            .from('player_predictions')
+            .select('week_num, predicted_score')
+            .eq('user_id', pid)
+            .range(from, from + step - 1);
+
+          if (error || !data || data.length === 0) {
+            keepGoing = false;
+          } else {
+            allRows = [...allRows, ...(data as any[])];
+            if (data.length < step) keepGoing = false;
+            else from += step;
+          }
+        }
+
+        if (!active) return;
+
+        const freq: Record<string, number> = {};
+        const weekSet = new Set<number>();
+        let validTotal = 0;
+
+        allRows.forEach((r) => {
+          const normSc = normalizeScoreText(r.predicted_score);
+          if (!normSc) return;
+          validTotal += 1;
+          if (r.week_num) weekSet.add(Number(r.week_num));
+          freq[normSc] = (freq[normSc] || 0) + 1;
+        });
+
+        const payload = {
+          totalCount: validTotal,
+          distinctWeeks: weekSet.size,
+          freqMap: freq
+        };
+        PLAYER_PRED_CACHE[pid] = payload;
+
+        setPredHabitState({
+          loading: false,
+          ...payload
+        });
+      } catch {
+        if (active) {
+          setPredHabitState({ loading: false, totalCount: 0, distinctWeeks: 0, freqMap: {} });
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [playerId]);
 
   const dossier = useMemo(() => {
     if (!playerId) return null;
@@ -272,10 +380,17 @@ export default function PlayerSeasonDossierModal({
       1: { count: 0, totalPts: 0, dfoCount: 0, tffCount: 0 }
     };
 
+    // EN ÇOK TAM İSABET ALDIĞI SKORLAR HAVUZU
+    const exactHitScoresMap: Record<
+      string,
+      { score: string; count: number; totalPts: number; dfoCount: number; tffCount: number }
+    > = {};
+
     const wonMatches: (DossierMatchItem & {
       ptsEarned: number;
       winnerCount: number;
       isTff: boolean;
+      scoreStr: string;
       coWinnerNames: string[];
     })[] = [];
 
@@ -334,6 +449,30 @@ export default function PlayerSeasonDossierModal({
           if (isTff) tierStats[tierKey].tffCount += 1;
           else tierStats[tierKey].dfoCount += 1;
 
+          const scKey =
+            m.home_score !== null &&
+            m.home_score !== undefined &&
+            m.away_score !== null &&
+            m.away_score !== undefined
+              ? normalizeScoreText(`${m.home_score}-${m.away_score}`)
+              : '';
+
+          if (scKey) {
+            if (!exactHitScoresMap[scKey]) {
+              exactHitScoresMap[scKey] = {
+                score: scKey,
+                count: 0,
+                totalPts: 0,
+                dfoCount: 0,
+                tffCount: 0
+              };
+            }
+            exactHitScoresMap[scKey].count += 1;
+            exactHitScoresMap[scKey].totalPts += pts;
+            if (isTff) exactHitScoresMap[scKey].tffCount += 1;
+            else exactHitScoresMap[scKey].dfoCount += 1;
+          }
+
           const coWinnerNames = winners
             .filter((id) => id !== pid)
             .map((id) => stripEmojis(playersDirectory[id]?.name || id))
@@ -344,6 +483,7 @@ export default function PlayerSeasonDossierModal({
             ptsEarned: pts,
             winnerCount: winners.length,
             isTff,
+            scoreStr: scKey,
             coWinnerNames
           });
         }
@@ -354,7 +494,7 @@ export default function PlayerSeasonDossierModal({
         const pB = Number(wb.puan_bonus || 0);
         const sB = Number(wb.skor_bonus || 0);
         if (pB > 0 && Array.isArray(wb.puan_lideri_ids)) {
-          wb.puan_lideri_ids.forEach(( rawId ) => {
+          wb.puan_lideri_ids.forEach((rawId) => {
             const u = String(rawId).trim();
             if (runningMaster[u]) runningMaster[u].pts += pB;
             if (u === pid) {
@@ -398,6 +538,10 @@ export default function PlayerSeasonDossierModal({
       (a, b) => Number(b.week_num) - Number(a.week_num) || Number(a.match_index) - Number(b.match_index)
     );
 
+    const exactHitScoresRanked = Object.values(exactHitScoresMap).sort(
+      (a, b) => b.count - a.count || b.totalPts - a.totalPts || a.score.localeCompare(b.score)
+    );
+
     const activeRanks = weeklyHistory.map((h) => h.rankAfterWeek);
     const bestRank = activeRanks.length > 0 ? Math.min(...activeRanks) : null;
     const worstRank = activeRanks.length > 0 ? Math.max(...activeRanks) : null;
@@ -431,6 +575,8 @@ export default function PlayerSeasonDossierModal({
       puanLiderWeeks,
       skorKralWeeks,
       tierStats,
+      exactHitScoresMap,
+      exactHitScoresRanked,
       wonMatches,
       weeklyHistory,
       bestRank,
@@ -443,6 +589,16 @@ export default function PlayerSeasonDossierModal({
     };
   }, [playerId, playersDirectory, matches, weeksBonus]);
 
+  // EN ÇOK TAHMİN YAPTIĞI SKORLAR SIRALAMASI
+  const predictedScoresRanked = useMemo(() => {
+    const entries = Object.entries(predHabitState.freqMap).map(([score, count]) => ({
+      score,
+      count,
+      pct: predHabitState.totalCount > 0 ? ((count / predHabitState.totalCount) * 100).toFixed(1) : '0.0'
+    }));
+    return entries.sort((a, b) => b.count - a.count || a.score.localeCompare(b.score));
+  }, [predHabitState]);
+
   if (!playerId || !dossier) return null;
 
   const filteredCards = dossier.wonMatches.filter((m) => {
@@ -453,12 +609,15 @@ export default function PlayerSeasonDossierModal({
     if (poolFilter === 'DFO' && m.isTff) return false;
     if (poolFilter === 'TFF' && !m.isTff) return false;
     if (weekFilter !== 'ALL' && Number(m.week_num) !== weekFilter) return false;
+    if (scoreFilter !== 'ALL' && m.scoreStr !== scoreFilter) return false;
     return true;
   });
 
   const wonDistinctWeeks = Array.from(new Set(dossier.wonMatches.map((m) => Number(m.week_num)))).sort(
     (a, b) => b - a
   );
+
+  const wonDistinctScores = dossier.exactHitScoresRanked.map((x) => x.score);
 
   return (
     <div
@@ -546,7 +705,7 @@ export default function PlayerSeasonDossierModal({
           </div>
         </div>
 
-        {/* SEKME GEÇİŞİ: SEZON İSTATİSTİKLERİ vs BİLDİĞİ MAÇ KARTLARI */}
+        {/* SEKME GEÇİŞİ */}
         <div className="px-3 py-2 sm:px-6 bg-[#040a18] border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-1.5">
             <button
@@ -558,7 +717,7 @@ export default function PlayerSeasonDossierModal({
                   : 'bg-[#071126] text-slate-300 border-slate-800 hover:text-white'
               }`}
             >
-              📈 SEZON İSTATİSTİKLERİ & KADEMELER
+              📈 SEZON İSTATİSTİKLERİ & SKOR ANALİZİ
             </button>
             <button
               type="button"
@@ -580,6 +739,7 @@ export default function PlayerSeasonDossierModal({
                 setTierFilter(12);
                 setPoolFilter('ALL');
                 setWeekFilter('ALL');
+                setScoreFilter('ALL');
                 setActiveView('CARDS');
               }}
               className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/70 text-amber-300 text-[10px] font-black uppercase tracking-wider cursor-pointer"
@@ -634,11 +794,168 @@ export default function PlayerSeasonDossierModal({
                 </div>
               </div>
 
-              {/* 2. PUAN KADEMELERİ ANALİZ TABLOSU (12 - 6 - 5 - 4 - 3 - 2 - 1) */}
+              {/* 2. YENİ: SKOR ANALİZİ İKİZ PANEL (EN ÇOK İSABET ALDIĞI SKORLAR & EN ÇOK TAHMİN YAPTIĞI SKORLAR) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 tabular-nums">
+                {/* SOL PANEL: EN ÇOK TAM İSABET ALDIĞI SKORLAR */}
+                <div className="bg-[#071329] border border-emerald-500/35 rounded-2xl overflow-hidden flex flex-col">
+                  <div className="px-3.5 py-2.5 bg-[#040a18] border-b border-slate-800 flex items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-[11px] sm:text-xs font-black text-emerald-300 uppercase tracking-wider">
+                        🎯 EN ÇOK TAM İSABET ALDIĞI SKORLAR
+                      </h3>
+                      <p className="text-[9.5px] font-bold text-slate-400">
+                        Skora dokununca o skorla bildiği maç kartlarını açar
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-[9.5px] font-black shrink-0">
+                      {dossier.totalSkor} İSABET
+                    </span>
+                  </div>
+
+                  {dossier.exactHitScoresRanked.length === 0 ? (
+                    <div className="py-8 text-center text-[11px] font-bold text-slate-400 uppercase">
+                      Henüz tam isabet kaydı bulunmuyor
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-800/80 max-h-[300px] overflow-y-auto">
+                      {dossier.exactHitScoresRanked.map((item, idx) => {
+                        const pctOfHits =
+                          dossier.totalSkor > 0
+                            ? ((item.count / dossier.totalSkor) * 100).toFixed(1)
+                            : '0.0';
+                        const maxCnt = dossier.exactHitScoresRanked[0]?.count || 1;
+                        const barWidth = Math.max(8, Math.round((item.count / maxCnt) * 100));
+
+                        return (
+                          <button
+                            key={item.score}
+                            type="button"
+                            onClick={() => {
+                              setScoreFilter(item.score);
+                              setTierFilter('ALL');
+                              setPoolFilter('ALL');
+                              setWeekFilter('ALL');
+                              setActiveView('CARDS');
+                            }}
+                            className="w-full px-3 py-2 hover:bg-emerald-950/30 transition-colors flex items-center justify-between gap-2 text-left cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-5 text-[10px] font-black text-slate-400">
+                                {idx + 1}.
+                              </span>
+                              <span className="px-2.5 py-0.5 rounded-lg bg-[#040a18] border border-emerald-500/50 text-white font-black text-xs sm:text-sm tracking-wider min-w-[46px] text-center">
+                                {item.score}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="w-20 sm:w-24 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-300"
+                                    style={{ width: `${barWidth}%` }}
+                                  />
+                                </div>
+                                <div className="text-[9px] font-bold text-slate-400 mt-0.5">
+                                  DFO: <span className="text-sky-400">{item.dfoCount}</span> • TFF:{' '}
+                                  <span className="text-rose-400">{item.tffCount}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <div className="text-xs sm:text-sm font-black text-white">
+                                {item.count} Kez{' '}
+                                <span className="text-[10px] text-emerald-400">(%{pctOfHits})</span>
+                              </div>
+                              <div className="text-[9.5px] font-black text-amber-300">
+                                +{item.totalPts} Puan ↗
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* SAĞ PANEL: EN ÇOK TAHMİN YAPTIĞI SKORLAR (FAVORİ SKOR TERCİHİ) */}
+                <div className="bg-[#071329] border border-sky-500/35 rounded-2xl overflow-hidden flex flex-col">
+                  <div className="px-3.5 py-2.5 bg-[#040a18] border-b border-slate-800 flex items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-[11px] sm:text-xs font-black text-sky-300 uppercase tracking-wider">
+                        🎲 EN ÇOK TAHMİN YAPTIĞI SKORLAR
+                      </h3>
+                      <p className="text-[9.5px] font-bold text-slate-400">
+                        Kayıtlı bültenlerde en sık oynadığı favori skorlar
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-sky-950 border border-sky-500/40 text-sky-300 text-[9.5px] font-black shrink-0">
+                      {predHabitState.totalCount > 0
+                        ? `${predHabitState.totalCount} TAHMİN`
+                        : 'ARŞİV'}
+                    </span>
+                  </div>
+
+                  {predHabitState.loading ? (
+                    <div className="py-10 text-center text-xs font-black text-sky-300 animate-pulse uppercase tracking-wider">
+                      Tahmin alışkanlığı hesaplanıyor...
+                    </div>
+                  ) : predictedScoresRanked.length === 0 ? (
+                    <div className="py-8 px-4 text-center text-[11px] font-bold text-slate-400">
+                      Bu yarışmacı için dijital bülten tahmin kaydı bulunamadı.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-800/80 max-h-[300px] overflow-y-auto">
+                      {predictedScoresRanked.slice(0, 15).map((item, idx) => {
+                        const maxPred = predictedScoresRanked[0]?.count || 1;
+                        const barWidth = Math.max(8, Math.round((item.count / maxPred) * 100));
+                        const hitCountForScore = dossier.exactHitScoresMap[item.score]?.count || 0;
+
+                        return (
+                          <div
+                            key={item.score}
+                            className="w-full px-3 py-2 hover:bg-sky-950/25 transition-colors flex items-center justify-between gap-2"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-5 text-[10px] font-black text-slate-400">
+                                {idx + 1}.
+                              </span>
+                              <span className="px-2.5 py-0.5 rounded-lg bg-[#040a18] border border-sky-500/50 text-white font-black text-xs sm:text-sm tracking-wider min-w-[46px] text-center">
+                                {item.score}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="w-20 sm:w-24 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-sky-500 to-indigo-400"
+                                    style={{ width: `${barWidth}%` }}
+                                  />
+                                </div>
+                                <div className="text-[9px] font-bold text-slate-400 mt-0.5">
+                                  {predHabitState.totalCount} maçta {item.count} kez oynadı
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <div className="text-xs sm:text-sm font-black text-sky-300">
+                                %{item.pct}{' '}
+                                <span className="text-[10.5px] text-white">({item.count}x)</span>
+                              </div>
+                              <div className="text-[9px] font-bold text-emerald-400">
+                                Sezon İsabeti: {hitCountForScore}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 3. PUAN KADEMELERİ ANALİZ TABLOSU (12 - 6 - 5 - 4 - 3 - 2 - 1) */}
               <div className="bg-[#071329] border border-slate-800 rounded-2xl overflow-hidden">
                 <div className="px-3.5 py-2.5 bg-[#040a18] border-b border-slate-800 flex items-center justify-between">
                   <h3 className="text-[11px] sm:text-xs font-black text-sky-200 uppercase tracking-wider">
-                    🎯 KAÇ PUANLIK KAÇ MAÇ BİLDİ? (SATIRA TIKLAYINCA MAÇ KARTLARINI AÇAR)
+                    🏅 KAÇ PUANLIK KAÇ MAÇ BİLDİ? (SATIRA TIKLAYINCA MAÇ KARTLARINI AÇAR)
                   </h3>
                   <span className="text-[9.5px] font-bold text-slate-400">
                     Toplam {dossier.totalSkor} İsabet
@@ -662,6 +979,7 @@ export default function PlayerSeasonDossierModal({
                           setTierFilter(t.pts);
                           setPoolFilter('ALL');
                           setWeekFilter('ALL');
+                          setScoreFilter('ALL');
                           setActiveView('CARDS');
                         }}
                         className={`w-full px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-left transition-colors ${
@@ -715,7 +1033,7 @@ export default function PlayerSeasonDossierModal({
                 </div>
               </div>
 
-              {/* 3. HAFTA HAFTA SIRA SEYRİ ÖZETİ (SON 12 HAFTA) */}
+              {/* 4. HAFTALIK SIRA VE PUAN SEYRİ */}
               {dossier.weeklyHistory.length > 0 && (
                 <div className="bg-[#071329] border border-slate-800 rounded-2xl p-3.5">
                   <div className="text-[10.5px] sm:text-xs font-black text-sky-200 uppercase tracking-wider mb-2.5">
@@ -730,6 +1048,7 @@ export default function PlayerSeasonDossierModal({
                           setWeekFilter(wh.week);
                           setTierFilter('ALL');
                           setPoolFilter('ALL');
+                          setScoreFilter('ALL');
                           setActiveView('CARDS');
                         }}
                         className="shrink-0 bg-[#040a18] hover:bg-sky-950/60 border border-slate-800 hover:border-sky-400/60 rounded-xl px-2.5 py-2 text-center min-w-[68px] transition-colors cursor-pointer"
@@ -751,9 +1070,14 @@ export default function PlayerSeasonDossierModal({
                 <div className="flex flex-wrap items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setTierFilter('ALL')}
+                    onClick={() => {
+                      setTierFilter('ALL');
+                      setScoreFilter('ALL');
+                      setWeekFilter('ALL');
+                      setPoolFilter('ALL');
+                    }}
                     className={`px-2.5 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase border cursor-pointer ${
-                      tierFilter === 'ALL'
+                      tierFilter === 'ALL' && scoreFilter === 'ALL' && weekFilter === 'ALL' && poolFilter === 'ALL'
                         ? 'bg-sky-600 text-white border-sky-300'
                         : 'bg-[#040a18] text-slate-300 border-slate-800 hover:text-white'
                     }`}
@@ -780,7 +1104,7 @@ export default function PlayerSeasonDossierModal({
                   })}
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {(['ALL', 'DFO', 'TFF'] as const).map((pf) => (
                     <button
                       key={pf}
@@ -797,6 +1121,19 @@ export default function PlayerSeasonDossierModal({
                       {pf === 'ALL' ? 'DFO+TFF' : pf}
                     </button>
                   ))}
+
+                  <select
+                    value={scoreFilter}
+                    onChange={(e) => setScoreFilter(e.target.value)}
+                    className="bg-[#040a18] border border-emerald-500/50 text-emerald-300 text-[10px] font-black rounded-lg px-2 py-1 outline-none cursor-pointer"
+                  >
+                    <option value="ALL">Tüm Skorlar</option>
+                    {wonDistinctScores.map((sc) => (
+                      <option key={sc} value={sc}>
+                        Skor: {sc} ({dossier.exactHitScoresMap[sc]?.count || 0})
+                      </option>
+                    ))}
+                  </select>
 
                   <select
                     value={weekFilter}
@@ -917,7 +1254,7 @@ export default function PlayerSeasonDossierModal({
                           </div>
                         ) : (
                           <div className="pt-1.5 border-t border-amber-400/25 text-[9.5px] font-black text-amber-300 text-center uppercase tracking-wider">
-                            ★ 54 Yarışmacı Arasında Sadece {dossier.cleanName} Bildi!
+                            ★ Tüm Yarışmacılar Arasında Sadece {dossier.cleanName} Bildi!
                           </div>
                         )}
                       </div>
