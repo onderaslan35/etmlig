@@ -206,7 +206,7 @@ export default function Navbar() {
 
       {/* MOBİL AÇILIR MENÜ */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-[#050b14] border-b border-slate-800 px-4 pt-2 pb-6 space-y-2.5 shadow-2xl absolute w-full left-0 top-full">
+        <div className="lg:hidden bg-[#050b14] border-t border-slate-800/80 px-4 pt-3 pb-5 space-y-2.5 w-full">
           {navLinks.map((link) => {
             const isActive =
               pathname === link.path ||

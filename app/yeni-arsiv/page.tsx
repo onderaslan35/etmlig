@@ -1330,7 +1330,7 @@ export default function YeniArsivPage() {
     return (
       <div className="w-full text-left tabular-nums select-none">
         <div
-          className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800 flex items-end w-full uppercase font-black transition-all duration-300 ${
+          className={` bg-[#050c1d] border-b border-slate-800 flex items-end w-full uppercase font-black transition-all duration-300 ${
             isDetailOpen ? 'h-12 sm:h-11 text-[10px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
           }`}
         >
@@ -1517,7 +1517,7 @@ export default function YeniArsivPage() {
 
     return (
       <table className="w-full table-fixed text-left tabular-nums">
-        <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+        <thead className=" bg-[#050c1d] border-b border-slate-800">
           <tr className="text-[11px] sm:text-xs uppercase tracking-wider font-black">
             <th className="py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">#</th>
             <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
@@ -1570,7 +1570,7 @@ export default function YeniArsivPage() {
 
     return (
       <table className="w-full table-fixed text-left tabular-nums">
-        <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+        <thead className=" bg-[#050c1d] border-b border-slate-800">
           <tr className="text-[11px] sm:text-xs uppercase tracking-wider font-black">
             <th className="py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">#</th>
             <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
@@ -1664,85 +1664,87 @@ export default function YeniArsivPage() {
 
       {/* ===================== 1. SEKME: GENEL PUAN DURUMU ===================== */}
       {activeTab === 'TOTAL_STANDINGS' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
-            <button
-              type="button"
-              onClick={() => setIsStandingsMenuOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
-            >
-              {standingsFilter === 'CANLI' && liveActiveMatchCount > 0 && (
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-              )}
-              <h1 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
-                {standingsFilter === 'CANLI'
-                  ? liveActiveMatchCount > 0
-                    ? `CANLI PUAN DURUMU (${liveActiveMatchCount} MAÇ)`
-                    : 'CANLI PUAN DURUMU'
-                  : standingsFilter === 'DFO'
-                  ? 'DFO PUAN DURUMU'
-                  : standingsFilter === 'TFF'
-                  ? 'TFF PUAN DURUMU'
-                  : standingsFilter === 'SKOR'
-                  ? 'SKOR SIRALAMASI'
-                  : standingsFilter === 'BONUS'
-                  ? 'BONUS PUANLARI'
-                  : 'GENEL PUAN DURUMU'}
-              </h1>
-              <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 group-hover:border-sky-400 text-[9.5px] sm:text-[10px] font-black text-amber-300">
-                {isStandingsMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
-              </span>
-            </button>
-
-            <div className="flex items-center gap-1 shrink-0">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-[#071126] border-b border-slate-800">
+            <div className="min-h-[48px] px-2.5 sm:px-5 py-2 flex items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  userManuallyChangedFilterRef.current = true;
-                  if (standingsFilter !== 'CANLI') setStandingsFilter('MASTER');
-                  setMasterSubFilter('DUZ');
-                  setIsStandingsMenuOpen(false);
-                }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors ${
-                  (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
-                  masterSubFilter === 'DUZ'
-                    ? 'bg-sky-600 text-white border-sky-300/80'
-                    : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
-                }`}
+                onClick={() => setIsStandingsMenuOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
               >
-                MASTER
+                {standingsFilter === 'CANLI' && liveActiveMatchCount > 0 && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                )}
+                <h1 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
+                  {standingsFilter === 'CANLI'
+                    ? liveActiveMatchCount > 0
+                      ? `CANLI PUAN DURUMU (${liveActiveMatchCount} MAÇ)`
+                      : 'CANLI PUAN DURUMU'
+                    : standingsFilter === 'DFO'
+                    ? 'DFO PUAN DURUMU'
+                    : standingsFilter === 'TFF'
+                    ? 'TFF PUAN DURUMU'
+                    : standingsFilter === 'SKOR'
+                    ? 'SKOR SIRALAMASI'
+                    : standingsFilter === 'BONUS'
+                    ? 'BONUS PUANLARI'
+                    : 'GENEL PUAN DURUMU'}
+                </h1>
+                <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 group-hover:border-sky-400 text-[9.5px] sm:text-[10px] font-black text-amber-300">
+                  {isStandingsMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
+                </span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  userManuallyChangedFilterRef.current = true;
-                  const isCurrentlyMasterOrLive =
-                    standingsFilter === 'MASTER' || standingsFilter === 'CANLI';
-                  if (!isCurrentlyMasterOrLive) {
-                    setStandingsFilter(liveActiveMatchCount > 0 ? 'CANLI' : 'MASTER');
-                    setMasterSubFilter('DETAYLI');
-                  } else {
-                    setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
-                  }
-                  setIsStandingsMenuOpen(false);
-                }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors ${
-                  (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
-                  masterSubFilter === 'DETAYLI'
-                    ? 'bg-indigo-600 text-white border-indigo-300/80 shadow-[0_0_12px_rgba(99,102,241,0.35)]'
-                    : 'bg-[#040917] text-sky-300 border-slate-800 hover:border-sky-500 hover:text-white'
-                }`}
-              >
-                {masterSubFilter === 'DETAYLI' &&
-                (standingsFilter === 'MASTER' || standingsFilter === 'CANLI')
-                  ? 'DETAYLI MASTER ▶'
-                  : '◀ DETAYLI MASTER'}
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    userManuallyChangedFilterRef.current = true;
+                    if (standingsFilter !== 'CANLI') setStandingsFilter('MASTER');
+                    setMasterSubFilter('DUZ');
+                    setIsStandingsMenuOpen(false);
+                  }}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
+                    (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
+                    masterSubFilter === 'DUZ'
+                      ? 'bg-sky-600 text-white border-sky-300/80'
+                      : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    userManuallyChangedFilterRef.current = true;
+                    const isCurrentlyMasterOrLive =
+                      standingsFilter === 'MASTER' || standingsFilter === 'CANLI';
+                    if (!isCurrentlyMasterOrLive) {
+                      setStandingsFilter(liveActiveMatchCount > 0 ? 'CANLI' : 'MASTER');
+                      setMasterSubFilter('DETAYLI');
+                    } else {
+                      setMasterSubFilter((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                    }
+                    setIsStandingsMenuOpen(false);
+                  }}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
+                    (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
+                    masterSubFilter === 'DETAYLI'
+                      ? 'bg-indigo-600 text-white border-indigo-300/80 shadow-[0_0_12px_rgba(99,102,241,0.35)]'
+                      : 'bg-[#040917] text-sky-300 border-slate-800 hover:border-sky-500 hover:text-white'
+                  }`}
+                >
+                  {masterSubFilter === 'DETAYLI' &&
+                  (standingsFilter === 'MASTER' || standingsFilter === 'CANLI')
+                    ? 'DETAYLI MASTER ▶'
+                    : '◀ DETAYLI MASTER'}
+                </button>
+              </div>
             </div>
 
             {isStandingsMenuOpen && (
-              <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-col gap-2.5">
+              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-col gap-2.5">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
@@ -1753,7 +1755,7 @@ export default function YeniArsivPage() {
                       setMasterSubFilter('DETAYLI');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'CANLI'
                         ? 'bg-emerald-700 text-white border-emerald-400/80'
                         : 'bg-[#071126] text-emerald-300 border-slate-800 hover:border-emerald-600'
@@ -1770,7 +1772,7 @@ export default function YeniArsivPage() {
                       setMasterSubFilter('DUZ');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'MASTER' && masterSubFilter === 'DUZ'
                         ? 'bg-sky-600 text-white border-sky-300/80'
                         : 'bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-500'
@@ -1787,7 +1789,7 @@ export default function YeniArsivPage() {
                       setMasterSubFilter('DETAYLI');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI'
                         ? 'bg-indigo-600 text-white border-indigo-300/80'
                         : 'bg-[#071126] text-sky-300 border-slate-800 hover:border-indigo-400'
@@ -1803,7 +1805,7 @@ export default function YeniArsivPage() {
                       setStandingsFilter('DFO');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'DFO'
                         ? 'bg-blue-700 text-white border-sky-400/80'
                         : 'bg-[#071126] text-sky-400 border-slate-800 hover:border-sky-600'
@@ -1819,7 +1821,7 @@ export default function YeniArsivPage() {
                       setStandingsFilter('TFF');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'TFF'
                         ? 'bg-rose-700 text-white border-rose-400/80'
                         : 'bg-[#071126] text-rose-500 border-slate-800 hover:border-rose-600'
@@ -1834,7 +1836,7 @@ export default function YeniArsivPage() {
                       userManuallyChangedFilterRef.current = true;
                       setStandingsFilter('SKOR');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'SKOR'
                         ? 'bg-orange-600 text-white border-orange-300/80'
                         : 'bg-[#071126] text-orange-400 border-slate-800 hover:border-orange-600'
@@ -1850,7 +1852,7 @@ export default function YeniArsivPage() {
                       setStandingsFilter('BONUS');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'BONUS'
                         ? 'bg-emerald-700 text-white border-emerald-400/80'
                         : 'bg-[#071126] text-emerald-400 border-slate-800 hover:border-emerald-600'
@@ -1878,7 +1880,7 @@ export default function YeniArsivPage() {
                           setSkorSubFilter(sf.key);
                           setIsStandingsMenuOpen(false);
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase tracking-wider border ${
+                        className={`px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase tracking-wider border cursor-pointer ${
                           skorSubFilter === sf.key
                             ? 'bg-orange-950/80 text-orange-300 border-orange-400/80'
                             : 'bg-[#071126] text-slate-300 border-slate-800 hover:text-white'
@@ -1922,7 +1924,7 @@ export default function YeniArsivPage() {
             {standingsFilter === 'SKOR' &&
               (skorSubFilter === 'DETAYLI' ? (
                 <table className="w-full table-fixed text-left tabular-nums">
-                  <thead className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-800">
+                  <thead className=" bg-[#050c1d] border-b border-slate-800">
                     <tr className="text-[10px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
                       <th className="py-2 px-1 sm:px-3 w-[24px] sm:w-12 text-slate-400 align-bottom">#</th>
                       <th className="py-2 px-1 sm:px-3 text-slate-200 align-bottom">YARIŞMACI</th>
@@ -2287,7 +2289,7 @@ export default function YeniArsivPage() {
 
       {/* ===================== 3. SEKME: SEÇİLİ HAFTA ÖZETİ ===================== */}
       {activeTab === 'WEEK_CHECK' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
           {selectedWeekBonusInfo && selectedWeekBonusInfo.is_completed && (
             <div className="px-3 pt-2.5 pb-1 sm:px-5 flex flex-wrap items-center gap-2 text-[10px] font-bold border-b border-slate-800/60">
               {(selectedWeekBonusInfo.puan_lideri_ids || []).length > 0 && (
@@ -2309,61 +2311,63 @@ export default function YeniArsivPage() {
             </div>
           )}
 
-          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
-            <button
-              type="button"
-              onClick={() => setIsWeekSummaryMenuOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
-            >
-              <h2 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
-                {selectedWeek}. HAFTA ÖZETİ
-              </h2>
-              <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 text-[9.5px] sm:text-[10px] font-black text-amber-300">
-                {isWeekSummaryMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
-              </span>
-            </button>
+          <div className="bg-[#071126] border-b border-slate-800">
+            <div className="min-h-[48px] px-2.5 sm:px-5 py-2 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setIsWeekSummaryMenuOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
+              >
+                <h2 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
+                  {selectedWeek}. HAFTA ÖZETİ
+                </h2>
+                <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 text-[9.5px] sm:text-[10px] font-black text-amber-300">
+                  {isWeekSummaryMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
+                </span>
+              </button>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setWeekSummaryFilter('MASTER');
-                  setWeekSummaryMasterMode('DUZ');
-                  setIsWeekSummaryMenuOpen(false);
-                }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
-                  weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DUZ'
-                    ? 'bg-sky-600 text-white border-sky-300/80'
-                    : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
-                }`}
-              >
-                MASTER
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (weekSummaryFilter !== 'MASTER') {
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
                     setWeekSummaryFilter('MASTER');
-                    setWeekSummaryMasterMode('DETAYLI');
-                  } else {
-                    setWeekSummaryMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
-                  }
-                  setIsWeekSummaryMenuOpen(false);
-                }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
-                  weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
-                    ? 'bg-indigo-600 text-white border-indigo-300/80'
-                    : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
-                }`}
-              >
-                {weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
-                  ? 'DETAYLI MASTER ▶'
-                  : '◀ DETAYLI MASTER'}
-              </button>
+                    setWeekSummaryMasterMode('DUZ');
+                    setIsWeekSummaryMenuOpen(false);
+                  }}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
+                    weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DUZ'
+                      ? 'bg-sky-600 text-white border-sky-300/80'
+                      : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (weekSummaryFilter !== 'MASTER') {
+                      setWeekSummaryFilter('MASTER');
+                      setWeekSummaryMasterMode('DETAYLI');
+                    } else {
+                      setWeekSummaryMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                    }
+                    setIsWeekSummaryMenuOpen(false);
+                  }}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
+                    weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
+                      ? 'bg-indigo-600 text-white border-indigo-300/80'
+                      : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  {weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
+                    ? 'DETAYLI MASTER ▶'
+                    : '◀ DETAYLI MASTER'}
+                </button>
+              </div>
             </div>
 
             {isWeekSummaryMenuOpen && (
-              <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-wrap items-center gap-1.5">
+              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-wrap items-center gap-1.5">
                 {(['MASTER', 'DETAYLI_MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wf) => (
                   <button
                     key={wf}
@@ -2380,7 +2384,7 @@ export default function YeniArsivPage() {
                       }
                       setIsWeekSummaryMenuOpen(false);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400"
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400 cursor-pointer"
                   >
                     {wf === 'DETAYLI_MASTER' ? '◀ DETAYLI MASTER' : wf}
                   </button>
@@ -2422,62 +2426,64 @@ export default function YeniArsivPage() {
 
       {/* ===================== 4. SEKME: SEÇİLİ HAFTA GENEL ===================== */}
       {activeTab === 'WEEK_CUMULATIVE' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
-          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-2.5 sm:px-5 flex items-center justify-between gap-2 relative">
-            <button
-              type="button"
-              onClick={() => setIsWeekGenelMenuOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
-            >
-              <h2 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
-                {selectedWeek}. HAFTA GENEL
-              </h2>
-              <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 text-[9.5px] sm:text-[10px] font-black text-amber-300">
-                {isWeekGenelMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
-              </span>
-            </button>
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-[#071126] border-b border-slate-800">
+            <div className="min-h-[48px] px-2.5 sm:px-5 py-2 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setIsWeekGenelMenuOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
+              >
+                <h2 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
+                  {selectedWeek}. HAFTA GENEL
+                </h2>
+                <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 text-[9.5px] sm:text-[10px] font-black text-amber-300">
+                  {isWeekGenelMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
+                </span>
+              </button>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setWeekGenelFilter('MASTER');
-                  setWeekGenelMasterMode('DUZ');
-                  setIsWeekGenelMenuOpen(false);
-                }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
-                  weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DUZ'
-                    ? 'bg-sky-600 text-white border-sky-300/80'
-                    : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
-                }`}
-              >
-                MASTER
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (weekGenelFilter !== 'MASTER') {
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
                     setWeekGenelFilter('MASTER');
-                    setWeekGenelMasterMode('DETAYLI');
-                  } else {
-                    setWeekGenelMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
-                  }
-                  setIsWeekGenelMenuOpen(false);
-                }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
-                  weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
-                    ? 'bg-indigo-600 text-white border-indigo-300/80'
-                    : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
-                }`}
-              >
-                {weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
-                  ? 'DETAYLI MASTER ▶'
-                  : '◀ DETAYLI MASTER'}
-              </button>
+                    setWeekGenelMasterMode('DUZ');
+                    setIsWeekGenelMenuOpen(false);
+                  }}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
+                    weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DUZ'
+                      ? 'bg-sky-600 text-white border-sky-300/80'
+                      : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  MASTER
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (weekGenelFilter !== 'MASTER') {
+                      setWeekGenelFilter('MASTER');
+                      setWeekGenelMasterMode('DETAYLI');
+                    } else {
+                      setWeekGenelMasterMode((prev) => (prev === 'DETAYLI' ? 'DUZ' : 'DETAYLI'));
+                    }
+                    setIsWeekGenelMenuOpen(false);
+                  }}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
+                    weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
+                      ? 'bg-indigo-600 text-white border-indigo-300/80'
+                      : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  {weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
+                    ? 'DETAYLI MASTER ▶'
+                    : '◀ DETAYLI MASTER'}
+                </button>
+              </div>
             </div>
 
             {isWeekGenelMenuOpen && (
-              <div className="absolute left-0 right-0 top-full z-40 bg-[#040a18]/98 backdrop-blur-md border-b border-slate-700 shadow-2xl px-3 py-3 flex flex-wrap items-center gap-1.5">
+              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-wrap items-center gap-1.5">
                 {(['MASTER', 'DETAYLI_MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((gf) => (
                   <button
                     key={gf}
@@ -2494,7 +2500,7 @@ export default function YeniArsivPage() {
                       }
                       setIsWeekGenelMenuOpen(false);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400"
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400 cursor-pointer"
                   >
                     {gf === 'DETAYLI_MASTER' ? '◀ DETAYLI MASTER' : gf}
                   </button>
@@ -2533,7 +2539,7 @@ export default function YeniArsivPage() {
 
           <div className="px-1 pb-4 sm:px-4 sm:pb-6">
             <table className="w-full table-fixed text-left tabular-nums">
-              <thead className="sticky top-[92px] sm:top-[98px] z-20 bg-[#050c1d] border-b border-slate-800">
+              <thead className=" bg-[#050c1d] border-b border-slate-800">
                 <tr className="text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
                   <th className="py-2 px-1 sm:px-3 w-[34px] sm:w-20 text-slate-400 align-bottom">HFT</th>
                   <th className="py-2 px-1 sm:px-3 text-slate-200 align-bottom">LİDER YARIŞMACI</th>
