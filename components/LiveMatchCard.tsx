@@ -2871,28 +2871,22 @@ export default function LiveMatchCard() {
       </div>
 
       {(() => {
-        // SADECE AKTİF BÜLTEN HAFTASINA (effectiveBulletinWeek) AİT TARİHLERİ VE MAÇLARI TUT
-        const activeWeekDateCounts = new Map<string, number>();
-        if (effectiveBulletinWeek > 0) {
-          (matches || []).forEach((m: any) => {
-            if (Number(m.week_num) === Number(effectiveBulletinWeek)) {
-              const dKey = String(m.date || m.match_date || '').trim();
-              if (dKey) {
-                activeWeekDateCounts.set(dKey, (activeWeekDateCounts.get(dKey) || 0) + 1);
-              }
-            }
-          });
+        // SADECE AKTİF BÜLTENİN GÜNLERİNİ TUT (GEÇMİŞ HAFTALARIN ESKİ GÜNLERİNİ GİZLE)
+        const currentBucketTotal = Number(currentWeekBucket?.totalMatches || 24);
+        let runningMatchSum = 0;
+        const keptDateSet = new Set<string>();
+
+        for (let i = availableDateTabs.length - 1; i >= 0; i--) {
+          const tab = availableDateTabs[i];
+          if (keptDateSet.size === 0 || runningMatchSum < currentBucketTotal) {
+            keptDateSet.add(String(tab.dateStr).trim());
+            runningMatchSum += Number(tab.totalCount || 0);
+          }
         }
 
-        const filteredDateTabs =
-          activeWeekDateCounts.size > 0
-            ? availableDateTabs
-                .filter((dTab) => activeWeekDateCounts.has(String(dTab.dateStr).trim()))
-                .map((dTab) => ({
-                  ...dTab,
-                  totalCount: activeWeekDateCounts.get(String(dTab.dateStr).trim()) || dTab.totalCount
-                }))
-            : availableDateTabs;
+        const filteredDateTabs = availableDateTabs.filter((dTab) =>
+          keptDateSet.has(String(dTab.dateStr).trim())
+        );
 
         const isOnlyActiveWeek = (m: any) =>
           !effectiveBulletinWeek || Number(m.week_num) === Number(effectiveBulletinWeek);

@@ -21,6 +21,21 @@ import {
 
 const NON_COMPETING_IDS = new Set(['mankoman', '272727', '262787', '600060']);
 const MAX_SAME_SCORE_LIMIT = 6;
+const SCORE_OPTIONS = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
+
+function formatCountdownText(kickoffMs: number, nowMs: number): string {
+  if (!kickoffMs || kickoffMs <= nowMs) return '';
+  const diffSec = Math.max(0, Math.floor((kickoffMs - nowMs) / 1000));
+  const days = Math.floor(diffSec / 86400);
+  const hours = Math.floor((diffSec % 86400) / 3600);
+  const mins = Math.floor((diffSec % 3600) / 60);
+  const secs = diffSec % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  if (days > 0) {
+    return `${days}G ${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+  }
+  return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+}
 
 export default function PredictionPortal() {
   const [portalSession, setPortalSession] = useState<PortalSession | null>(null);
@@ -37,13 +52,6 @@ export default function PredictionPortal() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string; away: string }>>({});
 
-  // FOTMOB TARZI SKOR SEÇİCİ STATE'LERİ
-  const [activePickerMatchId, setActivePickerMatchId] = useState<number | null>(null);
-  const [activePickerSide, setActivePickerSide] = useState<'home' | 'away'>('home');
-  const [autoAdvanceNext, setAutoAdvanceNext] = useState<boolean>(true);
-  const [showHighScores, setShowHighScores] = useState<boolean>(false);
-  const [pickerQuotaWarning, setPickerQuotaWarning] = useState<string>('');
-
   const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
 
@@ -54,10 +62,6 @@ export default function PredictionPortal() {
 
   const [missingPlayersNeon, setMissingPlayersNeon] = useState<string[]>([]);
   const [submittedPlayersNeon, setSubmittedPlayersNeon] = useState<string[]>([]);
-
-  const scoreOptionsArr = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-  const quickDigits = ['0', '1', '2', '3', '4', '5'];
-  const highDigits = ['6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 
   const getDisplayWeek = (week: number) => {
     if (customWeekNames[week]) return customWeekNames[week];
@@ -334,122 +338,57 @@ export default function PredictionPortal() {
     [now]
   );
 
-  const openFotmobPicker = (matchId: number, initialSide: 'home' | 'away' = 'home') => {
-    const mObj = activeMatchesList.find((x: any) => x.id === matchId);
-    if (!mObj || isMatchLockedFn(mObj)) return;
-    setPickerQuotaWarning('');
-    setShowHighScores(false);
-    setActivePickerMatchId(matchId);
-    setActivePickerSide(initialSide);
+  // CANLI KART İLE BİREBİR AYNI DİKEY + / - ADIMLAMA MOTORU
+  const handleStepScore = (matchIndex: number, side: 'home' | 'away', delta: 1 | -1) => {
+    setPredictions((prev) => {
+      const cur = prev[matchIndex] || { home: '-', away: '-' };
+
+      if (cur.home === '-' && cur.away === '-') {
+        if (delta === 1) {
+          return { ...prev, [matchIndex]: { home: '0', away: '0' } };
+        }
+        return prev;
+      }
+
+      let h = cur.home === '-' ? 0 : parseInt(cur.home, 10);
+      let a = cur.away === '-' ? 0 : parseInt(cur.away, 10);
+      if (isNaN(h)) h = 0;
+      if (isNaN(a)) a = 0;
+
+      if (delta === -1 && h === 0 && a === 0) {
+        return { ...prev, [matchIndex]: { home: '-', away: '-' } };
+      }
+
+      if (side === 'home') {
+        h = Math.min(15, Math.max(0, h + delta));
+      } else {
+        a = Math.min(15, Math.max(0, a + delta));
+      }
+
+      return {
+        ...prev,
+        [matchIndex]: { home: String(h), away: String(a) }
+      };
+    });
   };
 
-  const goToAdjacentUnlockedMatch = useCallback(
-    (dir: 1 | -1) => {
-      if (activePickerMatchId === null) return;
-      const unlocked = activeMatchesList.filter((m: any) => !isMatchLockedFn(m));
-      if (unlocked.length === 0) return;
-      const curIdx = unlocked.findIndex((m: any) => m.id === activePickerMatchId);
-      const nextIdx = curIdx === -1 ? 0 : (curIdx + dir + unlocked.length) % unlocked.length;
-      setPickerQuotaWarning('');
-      setShowHighScores(false);
-      setActivePickerMatchId(unlocked[nextIdx].id);
-      setActivePickerSide('home');
-    },
-    [activePickerMatchId, activeMatchesList, isMatchLockedFn]
-  );
+  // CANLI KART İLE BİREBİR AYNI DOĞRUDAN LİSTEDEN SEÇME MOTORU
+  const handleDirectSelect = (matchIndex: number, side: 'home' | 'away', valStr: string) => {
+    setPredictions((prev) => {
+      const cur = prev[matchIndex] || { home: '-', away: '-' };
+      const nextH = side === 'home' ? valStr : cur.home === '-' ? '0' : cur.home;
+      const nextA = side === 'away' ? valStr : cur.away === '-' ? '0' : cur.away;
 
-  const handleFotmobDigitSelect = useCallback(
-    (digitStr: string) => {
-      if (activePickerMatchId === null) return;
-      const mObj = activeMatchesList.find((x: any) => x.id === activePickerMatchId);
-      if (!mObj || isMatchLockedFn(mObj)) return;
-
-      const cur = predictions[activePickerMatchId] || { home: '-', away: '-' };
-      const nextHome = activePickerSide === 'home' ? digitStr : cur.home;
-      const nextAway = activePickerSide === 'away' ? digitStr : cur.away;
-
-      // İki taraf da dolduysa 6 skor kotasını kontrol et
-      if (nextHome !== '-' && nextAway !== '-') {
-        const candidateScore = `${nextHome}-${nextAway}`;
-        let usedElsewhere = 0;
-        Object.keys(predictions).forEach((k) => {
-          const idNum = Number(k);
-          if (idNum !== activePickerMatchId) {
-            const p = predictions[idNum];
-            if (p && `${p.home}-${p.away}` === candidateScore) {
-              usedElsewhere++;
-            }
-          }
-        });
-
-        if (usedElsewhere >= MAX_SAME_SCORE_LIMIT) {
-          setPickerQuotaWarning(
-            `⚠️ "${candidateScore}" skorunu bültende zaten ${MAX_SAME_SCORE_LIMIT} kez kullandınız! (%25 Kuralı)`
-          );
-          return;
-        }
+      if (nextH === '-' || nextA === '-') {
+        return { ...prev, [matchIndex]: { home: '-', away: '-' } };
       }
 
-      setPickerQuotaWarning('');
-      setPredictions((prev) => ({
+      return {
         ...prev,
-        [activePickerMatchId]: { home: nextHome, away: nextAway }
-      }));
-
-      if (activePickerSide === 'home') {
-        setActivePickerSide('away');
-      } else if (autoAdvanceNext) {
-        // Deplasman da girildiyse FotMob gibi yumuşakça sıradaki boş (veya kilitlenmemiş) maça geç
-        setTimeout(() => {
-          const unlocked = activeMatchesList.filter((m: any) => !isMatchLockedFn(m));
-          const curPos = unlocked.findIndex((m: any) => m.id === activePickerMatchId);
-          if (curPos !== -1 && curPos + 1 < unlocked.length) {
-            setActivePickerMatchId(unlocked[curPos + 1].id);
-            setActivePickerSide('home');
-            setShowHighScores(false);
-          }
-        }, 240);
-      }
-    },
-    [activePickerMatchId, activePickerSide, activeMatchesList, autoAdvanceNext, isMatchLockedFn, predictions]
-  );
-
-  const handleClearMatchScore = useCallback((matchIndex: number) => {
-    setPickerQuotaWarning('');
-    setPredictions((prev) => ({
-      ...prev,
-      [matchIndex]: { home: '-', away: '-' }
-    }));
-    setActivePickerSide('home');
-  }, []);
-
-  // Bilgisayar klavyesinden hızlı giriş desteği (0-9, Ok tuşları, Backspace, Enter, Esc)
-  useEffect(() => {
-    if (activePickerMatchId === null) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') {
-        e.preventDefault();
-        handleFotmobDigitSelect(e.key);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setActivePickerSide('home');
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        setActivePickerSide('away');
-      } else if (e.key === 'Backspace' || e.key === 'Delete') {
-        e.preventDefault();
-        handleClearMatchScore(activePickerMatchId);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        goToAdjacentUnlockedMatch(1);
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        setActivePickerMatchId(null);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activePickerMatchId, handleFotmobDigitSelect, handleClearMatchScore, goToAdjacentUnlockedMatch]);
+        [matchIndex]: { home: nextH, away: nextA }
+      };
+    });
+  };
 
   const scoreUsageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -476,10 +415,37 @@ export default function PredictionPortal() {
   }, [predictions, savedSnapshot]);
 
   const handleTahminmatikChange = (matchId: number, type: 'home' | 'away', val: string) => {
-    setTahminmatikScores((prev) => ({
-      ...prev,
-      [matchId]: { ...(prev[matchId] || { home: '-', away: '-' }), [type]: val }
-    }));
+    setTahminmatikScores((prev) => {
+      const cur = prev[matchId] || { home: '-', away: '-' };
+      const nextH = type === 'home' ? val : cur.home === '-' ? '0' : cur.home;
+      const nextA = type === 'away' ? val : cur.away === '-' ? '0' : cur.away;
+      if (nextH === '-' || nextA === '-') {
+        return { ...prev, [matchId]: { home: '-', away: '-' } };
+      }
+      return { ...prev, [matchId]: { home: nextH, away: nextA } };
+    });
+  };
+
+  const handleTahminmatikStep = (matchId: number, side: 'home' | 'away', delta: 1 | -1) => {
+    setTahminmatikScores((prev) => {
+      const cur = prev[matchId] || { home: '-', away: '-' };
+      if (cur.home === '-' && cur.away === '-') {
+        if (delta === 1) return { ...prev, [matchId]: { home: '0', away: '0' } };
+        return prev;
+      }
+      let h = cur.home === '-' ? 0 : parseInt(cur.home, 10);
+      let a = cur.away === '-' ? 0 : parseInt(cur.away, 10);
+      if (isNaN(h)) h = 0;
+      if (isNaN(a)) a = 0;
+
+      if (delta === -1 && h === 0 && a === 0) {
+        return { ...prev, [matchId]: { home: '-', away: '-' } };
+      }
+      if (side === 'home') h = Math.min(15, Math.max(0, h + delta));
+      else a = Math.min(15, Math.max(0, a + delta));
+
+      return { ...prev, [matchId]: { home: String(h), away: String(a) } };
+    });
   };
 
   const handleTahminMatikRastgele = () => {
@@ -535,30 +501,46 @@ export default function PredictionPortal() {
 
     setIsSaving(true);
     try {
-      const payload = Object.keys(predictions)
-        .map((matchIndex) => {
-          const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === Number(matchIndex));
-          const isLocked = matchObj && now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000;
+      const upsertRows: any[] = [];
+      const clearedMatchIds: number[] = [];
 
-          if (isLocked) return null;
+      Object.keys(predictions).forEach((matchIndex) => {
+        const mId = Number(matchIndex);
+        const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === mId);
+        const isLocked = matchObj && now >= getMatchTimeMs(matchObj.date, matchObj.time) - 60000;
+        if (isLocked) return;
 
-          const hVal = predictions[Number(matchIndex)].home;
-          const aVal = predictions[Number(matchIndex)].away;
-          if (hVal === '-' || aVal === '-') return null;
+        const hVal = predictions[mId].home;
+        const aVal = predictions[mId].away;
+        if (hVal === '-' || aVal === '-') {
+          const oldSnap = savedSnapshot[mId];
+          if (oldSnap && oldSnap.home !== '-' && oldSnap.away !== '-') {
+            clearedMatchIds.push(mId);
+          }
+          return;
+        }
 
-          return {
-            user_id: loggedUserId,
-            week_num: activeBulletinWeek,
-            match_index: Number(matchIndex),
-            predicted_score: `${hVal}-${aVal}`
-          };
-        })
-        .filter((p) => p !== null);
+        upsertRows.push({
+          user_id: loggedUserId,
+          week_num: activeBulletinWeek,
+          match_index: mId,
+          predicted_score: `${hVal}-${aVal}`
+        });
+      });
 
-      if (payload.length > 0) {
+      if (clearedMatchIds.length > 0) {
+        await supabase
+          .from('player_predictions')
+          .delete()
+          .eq('user_id', loggedUserId)
+          .eq('week_num', activeBulletinWeek)
+          .in('match_index', clearedMatchIds);
+      }
+
+      if (upsertRows.length > 0) {
         const { error } = await supabase
           .from('player_predictions')
-          .upsert(payload, { onConflict: 'user_id,week_num,match_index' });
+          .upsert(upsertRows, { onConflict: 'user_id,week_num,match_index' });
         if (error) throw error;
       }
 
@@ -568,7 +550,6 @@ export default function PredictionPortal() {
         delete next[activeBulletinWeek];
         return next;
       });
-      setActivePickerMatchId(null);
       setShowSuccessModal(true);
     } catch {
       alert('❌ Kayıt sırasında bir hata oluştu!');
@@ -643,20 +624,15 @@ export default function PredictionPortal() {
 
   const filledCount = Object.values(predictions).filter((p) => p.home !== '-' && p.away !== '-').length;
 
-  // Açık olan FotMob Seçici Maç Bilgisi
-  const pickerMatchObj =
-    activePickerMatchId !== null ? activeMatchesList.find((m: any) => m.id === activePickerMatchId) || null : null;
-
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 px-2 sm:px-4 pt-3 pb-28 font-sans">
-      {/* KAYIT BAŞARILI MODALI */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-7 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)]">
             <div className="text-5xl mb-4">🏆</div>
             <h3 className="text-2xl font-black text-emerald-400 mb-2 tracking-widest">MÜHÜRLENDİ!</h3>
             <p className="text-slate-300 font-medium mb-6 text-xs sm:text-sm leading-relaxed">
-              Tahminleriniz sisteme kaydedildi. Maç saatine 1 dakika kalana kadar istediğiniz maça dokunarak skorunuzu güncelleyebilirsiniz.
+              Tahminleriniz sisteme kaydedildi. Maç saatine 1 dakika kalana kadar kartların ortasındaki + / - sütunlarından skorunuzu güncelleyebilirsiniz.
             </p>
             <button
               onClick={() => setShowSuccessModal(false)}
@@ -667,238 +643,6 @@ export default function PredictionPortal() {
           </div>
         </div>
       )}
-
-      {/* ===================== FOTMOB TARZI HIZLI SKOR GİRİŞ PANELİ ===================== */}
-      {pickerMatchObj && !isVisitor && (() => {
-        const pPalette = getStandardCardPalette(
-          pickerMatchObj.category,
-          pickerMatchObj.homeTeam,
-          pickerMatchObj.awayTeam
-        );
-        const pIsTff = pPalette.isTff;
-        const pRawCat = String(
-          pickerMatchObj.category && pickerMatchObj.category !== 'GENEL'
-            ? pickerMatchObj.category
-            : pIsTff
-            ? 'TÜRKİYE SÜPER LİG'
-            : 'AVRUPA FUTBOLU'
-        ).trim();
-        const pTheme: any = getEliteTheme(
-          pIsTff && !pRawCat.toLocaleUpperCase('tr-TR').includes('TÜRKİYE') && !pRawCat.toUpperCase().includes('TFF')
-            ? `TÜRKİYE ${pRawCat}`
-            : pRawCat,
-          String(pickerMatchObj.homeTeam || '').toUpperCase(),
-          String(pickerMatchObj.awayTeam || '').toUpperCase()
-        );
-        const pCur = predictions[pickerMatchObj.id] || { home: '-', away: '-' };
-        const pIsFilled = pCur.home !== '-' && pCur.away !== '-';
-        const pKey = pIsFilled ? `${pCur.home}-${pCur.away}` : '';
-        const pUsedCnt = pKey ? scoreUsageCounts[pKey] || 0 : 0;
-
-        return (
-          <div
-            onClick={() => setActivePickerMatchId(null)}
-            className="fixed inset-0 z-[115] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className={`w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-t-2 sm:border-2 p-4 sm:p-5 shadow-[0_-10px_50px_rgba(0,0,0,0.9)] flex flex-col gap-3.5 select-none ${pPalette.cardOuterCls}`}
-            >
-              {/* ÜST GEZİNME ÇUBUĞU */}
-              <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/15">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => goToAdjacentUnlockedMatch(-1)}
-                    className="px-2.5 py-1 rounded-lg bg-black/50 hover:bg-black/80 border border-white/15 text-xs font-black text-white cursor-pointer"
-                  >
-                    ← Önceki
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => goToAdjacentUnlockedMatch(1)}
-                    className="px-2.5 py-1 rounded-lg bg-black/50 hover:bg-black/80 border border-white/15 text-xs font-black text-white cursor-pointer"
-                  >
-                    Sonraki →
-                  </button>
-                </div>
-
-                <span className="text-[10px] font-black text-slate-200 uppercase tracking-wider">
-                  {pickerMatchObj.id} / {activeMatchesList.length}. MAÇ
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePickerMatchId(null)}
-                  className="w-7 h-7 rounded-full bg-black/60 hover:bg-rose-700 border border-white/20 text-white text-xs font-black flex items-center justify-center cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* TAKIMLAR VE ORTA FOTMOB SKOR KUTULARI */}
-              <div className="grid grid-cols-3 items-center gap-2 py-1">
-                <div
-                  onClick={() => setActivePickerSide('home')}
-                  className="flex flex-col items-center gap-1.5 cursor-pointer"
-                >
-                  <img
-                    src={pTheme.homeLogo}
-                    alt={pickerMatchObj.homeTeam}
-                    className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.6)]"
-                  />
-                  <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
-                    {cleanTeamName(pickerMatchObj.homeTeam)}
-                  </span>
-                </div>
-
-                {/* İKİLİ AKTİF SKOR KUTUSU */}
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setActivePickerSide('home')}
-                    className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl font-black text-2xl sm:text-3xl tabular-nums transition-all cursor-pointer border-2 ${
-                      activePickerSide === 'home'
-                        ? 'bg-black text-emerald-300 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.45)] scale-105'
-                        : 'bg-black/70 text-white border-white/20 hover:border-white/50'
-                    }`}
-                  >
-                    {pCur.home}
-                  </button>
-
-                  <span className="text-white/60 font-black text-xl">:</span>
-
-                  <button
-                    type="button"
-                    onClick={() => setActivePickerSide('away')}
-                    className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl font-black text-2xl sm:text-3xl tabular-nums transition-all cursor-pointer border-2 ${
-                      activePickerSide === 'away'
-                        ? 'bg-black text-emerald-300 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.45)] scale-105'
-                        : 'bg-black/70 text-white border-white/20 hover:border-white/50'
-                    }`}
-                  >
-                    {pCur.away}
-                  </button>
-                </div>
-
-                <div
-                  onClick={() => setActivePickerSide('away')}
-                  className="flex flex-col items-center gap-1.5 cursor-pointer"
-                >
-                  <img
-                    src={pTheme.awayLogo}
-                    alt={pickerMatchObj.awayTeam}
-                    className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.6)]"
-                  />
-                  <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
-                    {cleanTeamName(pickerMatchObj.awayTeam)}
-                  </span>
-                </div>
-              </div>
-
-              {/* REHBER & KOTA BİLGİSİ */}
-              <div className="text-center">
-                {pickerQuotaWarning ? (
-                  <div className="px-3 py-1.5 rounded-xl bg-rose-950/90 border border-rose-400 text-rose-200 text-[11px] font-black">
-                    {pickerQuotaWarning}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between px-2 text-[10.5px] font-black">
-                    <span className="text-emerald-300">
-                      {activePickerSide === 'home' ? '👉 Ev Sahibi Golünü Seçin' : '👉 Deplasman Golünü Seçin'}
-                    </span>
-                    {pIsFilled ? (
-                      <span className="text-amber-300">
-                        {pKey} Kotası: {pUsedCnt}/{MAX_SAME_SCORE_LIMIT}
-                      </span>
-                    ) : (
-                      <span className="text-slate-300">{pickerMatchObj.time}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* FOTMOB HIZLI RAKAM TUŞ TAKIMI (0 - 5 ANA SATIR) */}
-              <div className="grid grid-cols-6 gap-2">
-                {quickDigits.map((d) => {
-                  const isSelectedNow =
-                    (activePickerSide === 'home' && pCur.home === d) ||
-                    (activePickerSide === 'away' && pCur.away === d);
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => handleFotmobDigitSelect(d)}
-                      className={`h-12 sm:h-13 rounded-xl font-black text-lg sm:text-xl transition-all active:scale-95 cursor-pointer border ${
-                        isSelectedNow
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.5)]'
-                          : 'bg-[#050c1a]/90 hover:bg-slate-800 text-white border-white/15'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* YÜKSEK SKORLAR (6 - 15) AÇILIR ALANI */}
-              {showHighScores && (
-                <div className="grid grid-cols-5 gap-1.5 pt-1">
-                  {highDigits.map((hd) => (
-                    <button
-                      key={hd}
-                      type="button"
-                      onClick={() => handleFotmobDigitSelect(hd)}
-                      className="h-9 rounded-lg bg-[#050c1a]/90 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-black text-xs cursor-pointer"
-                    >
-                      {hd}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* ALT KONTROLLER: 6+ GOL, SIFIRLA, OTO-GEÇİŞ VE TAMAM */}
-              <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/15">
-                <button
-                  type="button"
-                  onClick={() => setShowHighScores((prev) => !prev)}
-                  className="px-2.5 py-2 rounded-xl bg-black/55 hover:bg-black/80 border border-white/15 text-[10px] font-black text-amber-300 cursor-pointer"
-                >
-                  {showHighScores ? '6+ Gizle ▲' : '6+ Gol ▼'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleClearMatchScore(pickerMatchObj.id)}
-                  className="px-2.5 py-2 rounded-xl bg-black/55 hover:bg-rose-950 border border-white/15 text-[10px] font-black text-rose-300 cursor-pointer"
-                >
-                  ⌫ Sıfırla
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAutoAdvanceNext((prev) => !prev)}
-                  className={`px-2.5 py-2 rounded-xl border text-[10px] font-black cursor-pointer ${
-                    autoAdvanceNext
-                      ? 'bg-sky-950/80 border-sky-400/60 text-sky-200'
-                      : 'bg-black/50 border-white/15 text-slate-400'
-                  }`}
-                >
-                  Oto-Geçiş: {autoAdvanceNext ? 'AÇIK' : 'KAPALI'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePickerMatchId(null)}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase cursor-pointer"
-                >
-                  Tamam
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       <div className="max-w-6xl mx-auto space-y-4">
         {!isVisitor && (
@@ -951,7 +695,7 @@ export default function PredictionPortal() {
           </div>
         )}
 
-        {/* ===================== 1. FOTMOB TİPİ TEMİZ MAÇ KARTLARI ===================== */}
+        {/* ===================== 1. YARIŞMACI TAHMİN KARTLARI (CANLI İLE BİREBİR AYNI DİKEY + / SKOR / - FORMATI) ===================== */}
         {effectiveView === 'entry' && !isVisitor && (
           <div className="w-full space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-[#071126] p-4 sm:p-5 rounded-2xl border border-amber-500/35 shadow-lg max-w-5xl mx-auto">
@@ -979,10 +723,11 @@ export default function PredictionPortal() {
               </div>
             </div>
 
-            {/* 24 MAÇ KARTI - BİREBİR ARŞİV / CANLI GÖRÜNÜMÜ + FOTMOB DOKUNMATİK SKOR KUTUSU */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
               {activeMatchesList.map((match: any) => {
+                const kickoffMs = getMatchTimeMs(match.date, match.time);
                 const isLocked = isMatchLockedFn(match);
+                const countdownText = !isLocked ? formatCountdownText(kickoffMs, now) : '';
 
                 const palette = getStandardCardPalette(match.category, match.homeTeam, match.awayTeam);
                 const isTff = palette.isTff;
@@ -1020,42 +765,38 @@ export default function PredictionPortal() {
                 return (
                   <div
                     key={match.id}
-                    onClick={() => {
-                      if (!isLocked) openFotmobPicker(match.id, 'home');
-                    }}
                     className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-3 transition-all select-none ${palette.cardOuterCls} ${
                       isLocked
-                        ? 'opacity-70 saturate-75 cursor-not-allowed'
+                        ? 'opacity-75 saturate-75'
                         : isOverQuota
-                        ? 'ring-2 ring-rose-500 cursor-pointer'
+                        ? 'ring-2 ring-rose-500'
                         : isFilled
-                        ? 'ring-2 ring-emerald-400/75 cursor-pointer hover:brightness-110'
-                        : 'cursor-pointer hover:brightness-110'
+                        ? 'ring-2 ring-emerald-400/70'
+                        : ''
                     }`}
                   >
-                    {/* ÜST HAFTA VE SAAT ŞERİDİ */}
+                    {/* 1. ÜST HAFTA VE TARİH ŞERİDİ */}
                     <div className="flex items-center justify-center text-[10px] sm:text-[10.5px] font-black tracking-wider text-slate-200 uppercase">
                       <span>
                         {activeBulletinWeek}. HAFTA {match.id}. MAÇ
                         {match.date ? ` • ${match.date}` : ''}
-                        {match.time ? ` ${match.time}` : ''}
                       </span>
                     </div>
 
-                    {/* LİG BANNER */}
+                    {/* 2. LİG BANNER */}
                     <div
                       className={`w-full py-1.5 px-3 rounded-xl border text-center text-[10px] sm:text-[11px] font-black uppercase tracking-widest truncate ${palette.bannerCls}`}
                     >
                       {leagueTitle}
                     </div>
 
-                    {/* ORTA 3 SÜTUN: EV SAHİBİ - FOTMOB SKOR PİLL - DEPLASMAN */}
-                    <div className="grid grid-cols-3 items-center gap-2 py-1.5">
+                    {/* 3. ORTA 3 SÜTUN: EV SAHİBİ - CANLI KART İLE BİREBİR AYNI DİKEY SKOR KUTUSU - DEPLASMAN */}
+                    <div className="grid grid-cols-3 items-center gap-2 py-1">
                       <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.homeLogo}
                           alt={match.homeTeam}
-                          className="w-[66px] h-[66px] sm:w-[76px] sm:h-[76px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
+                          className="w-[66px] h-[66px] sm:w-[78px] sm:h-[78px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
                           loading="lazy"
                         />
                         <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
@@ -1074,66 +815,117 @@ export default function PredictionPortal() {
                         )}
 
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                          className={`px-3 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border ${
                             isLocked
                               ? 'bg-slate-900/90 text-slate-400 border-slate-700'
-                              : isFilled
-                              ? 'bg-emerald-950/90 text-emerald-300 border-emerald-400/70'
-                              : 'bg-amber-950/80 text-amber-300 border-amber-400/60'
+                              : 'bg-[#08152c]/90 text-sky-300 border-sky-500/40'
                           }`}
                         >
-                          {isLocked ? '🔒 KİLİTLİ' : isFilled ? '✓ TAHMİNİN' : 'SKOR GİR'}
+                          {isLocked ? '🔒 KİLİTLİ' : `🕒 ${match.time || '--:--'}`}
                         </span>
 
-                        {/* FOTMOB İKİLİ DOKUNMATİK SKOR KUTUSU */}
-                        <div
-                          className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl border shadow-inner transition-transform ${
-                            isFilled
-                              ? 'bg-black/85 border-emerald-400/70'
-                              : 'bg-black/70 border-white/20 hover:border-amber-400/80'
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            disabled={isLocked}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openFotmobPicker(match.id, 'home');
-                            }}
-                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg font-black text-lg sm:text-xl tabular-nums flex items-center justify-center cursor-pointer ${
-                              isFilled
-                                ? 'bg-white/10 text-white'
-                                : 'bg-white/5 text-amber-300/80 hover:bg-white/15'
-                            }`}
+                        {!isLocked ? (
+                          <div
+                            className={`w-full bg-[#080d1a]/90 border ${
+                              isOverQuota
+                                ? 'border-rose-500 shadow-[0_0_18px_rgba(244,63,94,0.35)]'
+                                : isFilled
+                                ? 'border-emerald-400/80 shadow-[0_0_18px_rgba(16,185,129,0.25)]'
+                                : theme?.scoreBorder || 'border-slate-700/80'
+                            } py-2 px-2 rounded-xl flex items-center justify-center gap-2.5 sm:gap-3.5 backdrop-blur-md`}
                           >
-                            {curPred.home}
-                          </button>
+                            {/* EV SAHİBİ SÜTUNU: ÜSTTE + / ORTADA BÜYÜK PUNTO SKOR / ALTTA - */}
+                            <div className="flex flex-col items-center bg-black/75 border border-slate-700/80 rounded-xl overflow-hidden w-11 sm:w-[54px] shadow-inner">
+                              <button
+                                type="button"
+                                onClick={() => handleStepScore(match.id, 'home', 1)}
+                                className="w-full h-6 sm:h-7 bg-emerald-700/90 hover:bg-emerald-600 active:scale-95 text-white font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors"
+                              >
+                                +
+                              </button>
+                              <select
+                                value={curPred.home}
+                                onChange={(e) => handleDirectSelect(match.id, 'home', e.target.value)}
+                                className={`w-full h-9 sm:h-11 bg-transparent text-center font-black text-xl sm:text-3xl outline-none appearance-none cursor-pointer ${
+                                  curPred.home !== '-' ? 'text-amber-300' : 'text-white'
+                                }`}
+                                style={{ textAlignLast: 'center' }}
+                              >
+                                {SCORE_OPTIONS.map((opt) => (
+                                  <option key={`th-${match.id}-${opt}`} value={opt} className="bg-slate-950 text-white text-base">
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleStepScore(match.id, 'home', -1)}
+                                className="w-full h-6 sm:h-7 bg-slate-900 hover:bg-rose-700 active:scale-95 text-slate-200 font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors border-t border-slate-800"
+                              >
+                                −
+                              </button>
+                            </div>
 
-                          <span className="text-slate-400 font-black text-base">:</span>
+                            <span className="text-xl sm:text-2xl font-black text-slate-300">:</span>
 
-                          <button
-                            type="button"
-                            disabled={isLocked}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openFotmobPicker(match.id, 'away');
-                            }}
-                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg font-black text-lg sm:text-xl tabular-nums flex items-center justify-center cursor-pointer ${
-                              isFilled
-                                ? 'bg-white/10 text-white'
-                                : 'bg-white/5 text-amber-300/80 hover:bg-white/15'
-                            }`}
-                          >
-                            {curPred.away}
-                          </button>
-                        </div>
+                            {/* DEPLASMAN SÜTUNU: ÜSTTE + / ORTADA BÜYÜK PUNTO SKOR / ALTTA - */}
+                            <div className="flex flex-col items-center bg-black/75 border border-slate-700/80 rounded-xl overflow-hidden w-11 sm:w-[54px] shadow-inner">
+                              <button
+                                type="button"
+                                onClick={() => handleStepScore(match.id, 'away', 1)}
+                                className="w-full h-6 sm:h-7 bg-emerald-700/90 hover:bg-emerald-600 active:scale-95 text-white font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors"
+                              >
+                                +
+                              </button>
+                              <select
+                                value={curPred.away}
+                                onChange={(e) => handleDirectSelect(match.id, 'away', e.target.value)}
+                                className={`w-full h-9 sm:h-11 bg-transparent text-center font-black text-xl sm:text-3xl outline-none appearance-none cursor-pointer ${
+                                  curPred.away !== '-' ? 'text-amber-300' : 'text-white'
+                                }`}
+                                style={{ textAlignLast: 'center' }}
+                              >
+                                {SCORE_OPTIONS.map((opt) => (
+                                  <option key={`ta-${match.id}-${opt}`} value={opt} className="bg-slate-950 text-white text-base">
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleStepScore(match.id, 'away', -1)}
+                                className="w-full h-6 sm:h-7 bg-slate-900 hover:bg-rose-700 active:scale-95 text-slate-200 font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors border-t border-slate-800"
+                              >
+                                −
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full bg-[#080d1a]/80 border border-slate-700/80 py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 backdrop-blur-md">
+                            <span className={`text-xl sm:text-3xl font-black ${isFilled ? 'text-amber-300' : 'text-slate-400'}`}>
+                              {curPred.home}
+                            </span>
+                            <span className="text-base sm:text-xl font-bold text-slate-400">:</span>
+                            <span className={`text-xl sm:text-3xl font-black ${isFilled ? 'text-amber-300' : 'text-slate-400'}`}>
+                              {curPred.away}
+                            </span>
+                          </div>
+                        )}
+
+                        {countdownText && (
+                          <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center mt-0.5">
+                            <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest">
+                              {countdownText}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.awayLogo}
                           alt={match.awayTeam}
-                          className="w-[66px] h-[66px] sm:w-[76px] sm:h-[76px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
+                          className="w-[66px] h-[66px] sm:w-[78px] sm:h-[78px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
                           loading="lazy"
                         />
                         <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
@@ -1142,7 +934,7 @@ export default function PredictionPortal() {
                       </div>
                     </div>
 
-                    {/* ALT BAR */}
+                    {/* 4. ALT BAR */}
                     <div className="flex items-center justify-between pt-2 border-t border-white/15 text-[10px] font-black">
                       {isLocked ? (
                         <span className="text-slate-400">🔒 Maç başladı / kilitli</span>
@@ -1152,10 +944,10 @@ export default function PredictionPortal() {
                         </span>
                       ) : isFilled ? (
                         <span className="text-emerald-300">
-                          Kota: {sameScoreCount}/{MAX_SAME_SCORE_LIMIT} • Değiştirmek için dokun
+                          Kota: {sameScoreCount}/{MAX_SAME_SCORE_LIMIT}
                         </span>
                       ) : (
-                        <span className="text-slate-300">Skor girmek için karta dokun</span>
+                        <span className="text-slate-400 italic">Maç saatini bekliyor...</span>
                       )}
 
                       <span className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider ${palette.poolPillCls}`}>
@@ -1168,7 +960,7 @@ export default function PredictionPortal() {
             </div>
 
             {/* EKRAN ALTI SABİT MÜHÜRLEME ÇUBUĞU */}
-            <div className="fixed bottom-14 sm:bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[94%] max-w-xl bg-[#040a18]/95 backdrop-blur-md border-2 border-emerald-500/70 rounded-2xl px-4 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3">
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[94%] max-w-xl bg-[#040a18]/95 backdrop-blur-md border-2 border-emerald-500/70 rounded-2xl px-4 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3">
               <div className="text-left min-w-0">
                 <div className="text-[11px] sm:text-xs font-black text-white truncate">
                   {hasUnsavedChanges
@@ -1343,7 +1135,7 @@ export default function PredictionPortal() {
           </div>
         )}
 
-        {/* ===================== 4. TAHMİNMATİK ===================== */}
+        {/* ===================== 4. TAHMİNMATİK (AYNI DİKEY + / SKOR / - FORMATI) ===================== */}
         {effectiveView === 'tahminmatik' && !isVisitor && (
           <div className="w-full space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/70 p-4 sm:p-5 rounded-2xl border border-emerald-800/50 max-w-5xl mx-auto">
@@ -1407,102 +1199,156 @@ export default function PredictionPortal() {
                   theme?.leagueName || theme?.title || rawCat || (isTff ? 'TÜRKİYE TFF' : 'DFO AVRUPA')
                 ).toUpperCase();
 
+                const leagueLogo = String(
+                  theme?.leagueLogo || theme?.catLogo || theme?.tournamentLogo || ''
+                ).trim();
+
                 return (
                   <div
                     key={`tm-${m.id}`}
-                    className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-2.5 ${palette.cardOuterCls}`}
+                    className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-3 ${palette.cardOuterCls}`}
                   >
-                    <div className="flex justify-between items-center text-[10px] font-black text-slate-200 uppercase">
+                    <div className="flex justify-center items-center text-[10px] sm:text-[10.5px] font-black text-slate-200 uppercase">
                       <span>
                         {selectedTahminWeek}. HAFTA {m.id}. MAÇ • {m.date} {m.time}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full border text-[9px] ${palette.poolPillCls}`}>
-                        {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
                       </span>
                     </div>
 
                     <div
-                      className={`w-full py-1 px-2.5 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest truncate ${palette.bannerCls}`}
+                      className={`w-full py-1.5 px-3 rounded-xl border text-center text-[10px] sm:text-[11px] font-black uppercase tracking-widest truncate ${palette.bannerCls}`}
                     >
                       {leagueTitle}
                     </div>
 
                     <div className="grid grid-cols-3 items-center gap-2 py-1">
-                      <div className="flex flex-col items-center gap-1.5 min-w-0">
+                      <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.homeLogo}
                           alt={m.homeTeam}
-                          className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow"
+                          className="w-[66px] h-[66px] sm:w-[78px] sm:h-[78px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
                           loading="lazy"
                         />
-                        <span className="text-[10px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
+                        <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {cleanTeamName(m.homeTeam)}
                         </span>
                       </div>
 
                       <div className="flex flex-col items-center gap-1.5">
+                        {leagueLogo && (
+                          <img
+                            src={leagueLogo}
+                            alt={leagueTitle}
+                            className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow"
+                            loading="lazy"
+                          />
+                        )}
                         {liveInfo?.score && liveInfo.score !== '---' && (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-400/60 text-emerald-300 text-[9px] font-black">
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-400/60 text-emerald-300 text-[9px] font-black">
                             CANLI: {liveInfo.score}
                           </span>
                         )}
-                        <div className={`flex items-center gap-1 p-1.5 rounded-xl border ${palette.scoreBoxCls}`}>
-                          <select
-                            disabled={!isStarted}
-                            value={customSc.home}
-                            onChange={(e) => handleTahminmatikChange(m.id, 'home', e.target.value)}
-                            className="w-10 h-9 sm:w-11 sm:h-10 bg-black/80 border border-slate-700 rounded-lg text-center text-xs sm:text-sm font-black text-emerald-300 outline-none"
-                          >
-                            {scoreOptionsArr.map((s) => (
-                              <option key={s} value={s} className="bg-slate-950 text-white">
-                                {s}
-                              </option>
-                            ))}
-                          </select>
-                          <span className="text-slate-400 font-black">:</span>
-                          <select
-                            disabled={!isStarted}
-                            value={customSc.away}
-                            onChange={(e) => handleTahminmatikChange(m.id, 'away', e.target.value)}
-                            className="w-10 h-9 sm:w-11 sm:h-10 bg-black/80 border border-slate-700 rounded-lg text-center text-xs sm:text-sm font-black text-emerald-300 outline-none"
-                          >
-                            {scoreOptionsArr.map((s) => (
-                              <option key={s} value={s} className="bg-slate-950 text-white">
-                                {s}
-                              </option>
-                            ))}
-                          </select>
+
+                        <div className="w-full bg-[#080d1a]/90 border border-slate-700/80 py-2 px-2 rounded-xl flex items-center justify-center gap-2.5 sm:gap-3.5 backdrop-blur-md">
+                          <div className="flex flex-col items-center bg-black/75 border border-slate-700/80 rounded-xl overflow-hidden w-11 sm:w-[54px] shadow-inner">
+                            <button
+                              type="button"
+                              disabled={!isStarted}
+                              onClick={() => handleTahminmatikStep(m.id, 'home', 1)}
+                              className="w-full h-6 sm:h-7 bg-emerald-700/90 hover:bg-emerald-600 disabled:opacity-35 text-white font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer"
+                            >
+                              +
+                            </button>
+                            <select
+                              disabled={!isStarted}
+                              value={customSc.home}
+                              onChange={(e) => handleTahminmatikChange(m.id, 'home', e.target.value)}
+                              className={`w-full h-9 sm:h-11 bg-transparent text-center font-black text-xl sm:text-3xl outline-none appearance-none cursor-pointer disabled:cursor-not-allowed ${
+                                customSc.home !== '-' ? 'text-amber-300' : 'text-white'
+                              }`}
+                              style={{ textAlignLast: 'center' }}
+                            >
+                              {SCORE_OPTIONS.map((s) => (
+                                <option key={`tmh-${m.id}-${s}`} value={s} className="bg-slate-950 text-white text-base">
+                                  {s}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              disabled={!isStarted}
+                              onClick={() => handleTahminmatikStep(m.id, 'home', -1)}
+                              className="w-full h-6 sm:h-7 bg-slate-900 hover:bg-rose-700 disabled:opacity-35 text-slate-200 font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer border-t border-slate-800"
+                            >
+                              −
+                            </button>
+                          </div>
+
+                          <span className="text-xl sm:text-2xl font-black text-slate-300">:</span>
+
+                          <div className="flex flex-col items-center bg-black/75 border border-slate-700/80 rounded-xl overflow-hidden w-11 sm:w-[54px] shadow-inner">
+                            <button
+                              type="button"
+                              disabled={!isStarted}
+                              onClick={() => handleTahminmatikStep(m.id, 'away', 1)}
+                              className="w-full h-6 sm:h-7 bg-emerald-700/90 hover:bg-emerald-600 disabled:opacity-35 text-white font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer"
+                            >
+                              +
+                            </button>
+                            <select
+                              disabled={!isStarted}
+                              value={customSc.away}
+                              onChange={(e) => handleTahminmatikChange(m.id, 'away', e.target.value)}
+                              className={`w-full h-9 sm:h-11 bg-transparent text-center font-black text-xl sm:text-3xl outline-none appearance-none cursor-pointer disabled:cursor-not-allowed ${
+                                customSc.away !== '-' ? 'text-amber-300' : 'text-white'
+                              }`}
+                              style={{ textAlignLast: 'center' }}
+                            >
+                              {SCORE_OPTIONS.map((s) => (
+                                <option key={`tma-${m.id}-${s}`} value={s} className="bg-slate-950 text-white text-base">
+                                  {s}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              disabled={!isStarted}
+                              onClick={() => handleTahminmatikStep(m.id, 'away', -1)}
+                              className="w-full h-6 sm:h-7 bg-slate-900 hover:bg-rose-700 disabled:opacity-35 text-slate-200 font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer border-t border-slate-800"
+                            >
+                              −
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center gap-1.5 min-w-0">
+                      <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.awayLogo}
                           alt={m.awayTeam}
-                          className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow"
+                          className="w-[66px] h-[66px] sm:w-[78px] sm:h-[78px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
                           loading="lazy"
                         />
-                        <span className="text-[10px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
+                        <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {cleanTeamName(m.awayTeam)}
                         </span>
                       </div>
                     </div>
 
-                    {!isStarted ? (
-                      <div className="text-[10px] text-slate-300/80 italic text-center pt-1.5 border-t border-white/10">
-                        🔒 Maç başladığında simülasyon açılır
-                      </div>
-                    ) : (
-                      <div className="text-[10px] text-emerald-300 bg-[#031214]/85 border border-emerald-500/40 rounded-xl p-2 mt-1">
-                        {matchedNames.length > 0 ? (
-                          <span>
-                            <strong>{matchedNames.length} kişi tam isabet:</strong> {matchedNames.join(', ')}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300">Bu skoru bilen yok</span>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/15 text-[10px] font-black">
+                      {!isStarted ? (
+                        <span className="text-slate-300/80 italic">🔒 Maç başladığında simülasyon açılır</span>
+                      ) : matchedNames.length > 0 ? (
+                        <span className="text-emerald-300">
+                          ✓ {matchedNames.length} kişi tam isabet: {matchedNames.join(', ')}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">Bu skoru bilen yok</span>
+                      )}
+
+                      <span className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider shrink-0 ml-2 ${palette.poolPillCls}`}>
+                        {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
