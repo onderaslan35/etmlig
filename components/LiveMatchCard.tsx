@@ -1,4 +1,5 @@
 'use client';
+import { PORTAL_SESSION_EVENT, PortalSession, readPortalSession } from '@/components/PortalAuthGate';
 import { isStrictTffMatch } from '@/utils/tffDetector';
 import PlayerSeasonDossierModal, { DossierMatchItem, DossierWeekBonusItem } from '@/components/PlayerSeasonDossierModal';
 import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
@@ -719,7 +720,117 @@ export default function LiveMatchCard() {
     }
   };
 
-  const triggerGoalAlert = (matchKey: string) => {
+  const [livePortalSession, setLivePortalSession] = useState<PortalSession | null>(null);
+  const liveSessionRef = useRef<PortalSession | null>(null);
+  const predictionsDataRef = useRef<Record<string, string>>({});
+  const [personalGoalBanner, setPersonalGoalBanner] = useState<{
+    mood: 'JOY' | 'HOPE' | 'SAD';
+    title: string;
+    subtitle: string;
+    score: string;
+  } | null>(null);
+  const [savingCardKey, setSavingCardKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sync = () => {
+      const s = readPortalSession();
+      setLivePortalSession(s);
+      liveSessionRef.current = s;
+    };
+    sync();
+    window.addEventListener(PORTAL_SESSION_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(PORTAL_SESSION_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    predictionsDataRef.current = predictionsData;
+  }, [predictionsData]);
+
+  // Canlı sayfasında başlamamış maç kartının üstünden [ - ] / [ + ] ile anında tahmin yapma (Maksimum 3 aynı skor kuralıyla!)
+  const handleLiveCardStepScore = async (
+    weekNum: number,
+    matchIdx: number,
+    side: 'home' | 'away',
+    delta: 1 | -1
+  ) => {
+    const sess = liveSessionRef.current;
+    if (!sess || sess.role !== 'player' || !sess.userId) return;
+    const uid = String(sess.userId).trim();
+    const predKey = `${uid}-${weekNum}-${matchIdx}`;
+    const curRaw = predictionsDataRef.current[predKey] || '';
+
+    let h = -1;
+    let a = -1;
+    if (curRaw && curRaw.includes('-')) {
+      const parts = curRaw.split('-');
+      h = parseInt(parts[0], 10);
+      a = parseInt(parts[1], 10);
+    }
+
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) {
+      if (delta === -1) return;
+      h = 0;
+      a = 0;
+    } else if (delta === -1 && h === 0 && a === 0) {
+      // 0-0 iken eksiye basılırsa tahmini sıfırla
+      setSavingCardKey(predKey);
+      await supabase
+        .from('player_predictions')
+        .delete()
+        .eq('user_id', uid)
+        .eq('week_num', weekNum)
+        .eq('match_index', matchIdx);
+      setPredictionsData((prev) => {
+        const next = { ...prev };
+        delete next[predKey];
+        return next;
+      });
+      setSavingCardKey(null);
+      return;
+    } else {
+      if (side === 'home') h = Math.min(15, Math.max(0, h + delta));
+      else a = Math.min(15, Math.max(0, a + delta));
+    }
+
+    const nextScore = `${h}-${a}`;
+
+    // 3 SKOR SINIRI KONTROLÜ: Aynı bültende hiçbir skor 3'ten fazla kullanılamaz!
+    let sameWeekCount = 0;
+    for (let i = 1; i <= 24; i++) {
+      if (i === matchIdx) continue;
+      if (predictionsDataRef.current[`${uid}-${weekNum}-${i}`] === nextScore) {
+        sameWeekCount++;
+      }
+    }
+
+    if (sameWeekCount >= 6) {
+      alert(
+        `⚠️ DİKKAT ${sess.name}!\nBir bültende aynı skoru (${nextScore}) en fazla 6 kez kullanabilirsiniz! (%25 Kuralı)`
+      );
+      return;
+    }
+
+    setPredictionsData((prev) => ({ ...prev, [predKey]: nextScore }));
+    setSavingCardKey(predKey);
+    await supabase.from('player_predictions').upsert(
+      [
+        {
+          user_id: uid,
+          week_num: weekNum,
+          match_index: matchIdx,
+          predicted_score: nextScore
+        }
+      ],
+      { onConflict: 'user_id,week_num,match_index' }
+    );
+    setSavingCardKey(null);
+  };
+
+  const triggerGoalAlert = (matchKey: string, newScoreOpt?: string) => {
     if (soundEnabledRef.current) {
       const audio = new Audio('/sounds/goal.mp3');
       audio.play().catch((e) => console.log('Ses çalınamadı:', e));
@@ -732,6 +843,44 @@ export default function LiveMatchCard() {
         return next;
       });
     }, 8000);
+
+    // GİRİŞ YAPAN YARIŞMACIYA ÖZEL GOL SEVİNCİ / HÜZÜN ANİMASYONU
+    const sess = liveSessionRef.current;
+    if (sess && sess.role === 'player' && sess.userId && newScoreOpt) {
+      const numId = Number(matchKey);
+      const wk = Math.floor(numId / 100);
+      const mIdx = numId % 100;
+      const myPred = predictionsDataRef.current[`${sess.userId}-${wk}-${mIdx}`];
+      if (myPred && myPred.includes('-') && newScoreOpt.includes('-')) {
+        const [pH, pA] = myPred.split('-').map(Number);
+        const [nH, nA] = newScoreOpt.split('-').map(Number);
+        if (!isNaN(pH) && !isNaN(pA) && !isNaN(nH) && !isNaN(nA)) {
+          if (pH === nH && pA === nA) {
+            setPersonalGoalBanner({
+              mood: 'JOY',
+              title: `🎉 GOOOL! TAM İSABET GELDİ ${sess.name}!`,
+              subtitle: `Oynadığın [${myPred}] skoru şu an tutuyor! Puanlar yazılıyor!`,
+              score: newScoreOpt
+            });
+          } else if (nH > pH || nA > pA) {
+            setPersonalGoalBanner({
+              mood: 'SAD',
+              title: `💔 AH BE ${sess.name}! TAHMİN YANDI...`,
+              subtitle: `Maç ${newScoreOpt} oldu, senin [${myPred}] tahmini maalesef elendi.`,
+              score: newScoreOpt
+            });
+          } else {
+            setPersonalGoalBanner({
+              mood: 'HOPE',
+              title: `⏳ GOL OLDU! UMUT DEVAM EDİYOR!`,
+              subtitle: `Skor ${newScoreOpt} oldu. Senin [${myPred}] hedefin için şansın sürüyor!`,
+              score: newScoreOpt
+            });
+          }
+          setTimeout(() => setPersonalGoalBanner(null), 7500);
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -1040,7 +1189,7 @@ export default function LiveMatchCard() {
           const newScore = `${row.home_score}-${row.away_score}`;
           const prevScore = prevScoresRef.current[key];
           if (prevScore && prevScore !== newScore) {
-            triggerGoalAlert(key);
+            triggerGoalAlert(key, newScore);
           }
           prevScoresRef.current[key] = newScore;
         }
@@ -2252,6 +2401,85 @@ export default function LiveMatchCard() {
                       <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest">{countdownText}</span>
                     </div>
                   )}
+
+                  {/* GİRİŞ YAPAN YARIŞMACIYA ÖZEL KART ÜSTÜ +/- HIZLI TAHMİN PANELİ */}
+                  {livePortalSession?.role === 'player' &&
+                    livePortalSession.userId &&
+                    (() => {
+                      const myKey = `${livePortalSession.userId}-${match.week_num}-${match.id}`;
+                      const mySc = predictionsData[myKey] || '';
+                      const isLockedForPred = matchTimeMs > 0 && now >= matchTimeMs - 60000;
+                      const [mH, mA] = mySc.includes('-') ? mySc.split('-') : ['-', '-'];
+
+                      if (isLockedForPred) {
+                        if (!mySc) return null;
+                        const isHitNow =
+                          (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) &&
+                          `${homeScore}-${awayScore}` === mySc;
+                        const isDeadNow =
+                          (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) &&
+                          homeScore !== '-' &&
+                          awayScore !== '-' &&
+                          (Number(homeScore) > Number(mH) || Number(awayScore) > Number(mA));
+
+                        return (
+                          <div
+                            className={`mt-1 px-2.5 py-1 rounded-lg border text-[9.5px] font-black uppercase tracking-wider text-center ${
+                              isHitNow
+                                ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 animate-bounce'
+                                : isDeadNow
+                                ? 'bg-rose-950/70 border-rose-500/50 text-rose-300 line-through'
+                                : 'bg-amber-500/15 border-amber-400/50 text-amber-200'
+                            }`}
+                          >
+                            {isHitNow ? `🎉 TAHMİNİN TUTUYOR: ${mySc}` : isDeadNow ? `💔 TAHMİNİN: ${mySc}` : `🎯 TAHMİNİN: ${mySc}`}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="mt-1.5 w-full bg-slate-950/90 border border-amber-500/50 rounded-xl p-1.5 flex flex-col items-center gap-1 shadow-lg">
+                          <span className="text-[8.5px] font-black text-amber-300 uppercase tracking-wider">
+                            {savingCardKey === myKey ? '💾 KAYDEDİLİYOR...' : '⚽ TAHMİNİN (+ / -)'}
+                          </span>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', -1)}
+                              className="w-6 h-6 rounded bg-slate-800 hover:bg-rose-700 text-white font-black text-xs cursor-pointer"
+                            >
+                              −
+                            </button>
+                            <span className="text-sm font-black text-amber-300 min-w-[14px] text-center">{mH}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', 1)}
+                              className="w-6 h-6 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer"
+                            >
+                              +
+                            </button>
+
+                            <span className="text-slate-400 font-black text-xs mx-0.5">:</span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', -1)}
+                              className="w-6 h-6 rounded bg-slate-800 hover:bg-rose-700 text-white font-black text-xs cursor-pointer"
+                            >
+                              −
+                            </button>
+                            <span className="text-sm font-black text-amber-300 min-w-[14px] text-center">{mA}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', 1)}
+                              className="w-6 h-6 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                 </div>
 
                 <div className="flex flex-col items-center justify-center flex-1 gap-3">
@@ -3396,6 +3624,33 @@ export default function LiveMatchCard() {
           )}
         </div>
       </div>
+
+      {/* KİŞİYE ÖZEL CANLI GOL SEVİNCİ 🎉 / HÜZÜN 💔 ANİMASYON AFİŞİ */}
+      {personalGoalBanner && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[130] w-[92%] max-w-md pointer-events-auto animate-bounce">
+          <div
+            className={`rounded-3xl border-2 p-4 sm:p-5 text-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] backdrop-blur-md ${
+              personalGoalBanner.mood === 'JOY'
+                ? 'bg-gradient-to-r from-emerald-900/95 via-green-800/95 to-teal-900/95 border-emerald-300 text-white'
+                : personalGoalBanner.mood === 'SAD'
+                ? 'bg-gradient-to-r from-rose-950/95 via-red-900/95 to-slate-950/95 border-rose-400 text-rose-100'
+                : 'bg-gradient-to-r from-sky-950/95 via-blue-900/95 to-indigo-950/95 border-sky-400 text-sky-100'
+            }`}
+          >
+            <div className="text-3xl sm:text-4xl mb-1">
+              {personalGoalBanner.mood === 'JOY'
+                ? '🎉⚽🏆🥳'
+                : personalGoalBanner.mood === 'SAD'
+                ? '💔😢🌧️'
+                : '🔥⏳⚽'}
+            </div>
+            <div className="text-sm sm:text-base font-black uppercase tracking-wider">
+              {personalGoalBanner.title}
+            </div>
+            <div className="text-xs font-bold mt-1 opacity-95">{personalGoalBanner.subtitle}</div>
+          </div>
+        </div>
+      )}
 
       <PlayerSeasonDossierModal
         playerId={selectedDossierPlayerId}

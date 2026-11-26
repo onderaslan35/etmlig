@@ -4,9 +4,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-// 🔴 KAYBOLAN ÜST MENÜYÜ (NAVBAR) GERİ ÇAĞIRIYORUZ 🔴
-import Navbar from "@/components/Navbar"; 
-
+import Navbar from "@/components/Navbar";
+import PortalAuthGate from "@/components/PortalAuthGate";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,15 +23,16 @@ export default function RootLayout({
     <html lang="tr">
       <body className={inter.className}>
         <OnlinePresenceTracker />
-        
-        {/* 🔴 SİTENİN TEPESİNDEKİ MENÜ BURADA DEVREYE GİRİYOR 🔴 */}
-        <Navbar />
-        
-        {/* 🔴 ALT SAYFALAR (ARŞİV, TAHMİNLER VB.) BURADA YÜKLENİR 🔴 */}
-        {children}
 
-        {/* 🔴 VERCEL RADARI 🔴 */}
-        <Analytics />
+        <PortalAuthGate>
+          {/* SİTENİN TEPESİNDEKİ MENÜ */}
+          <Navbar />
+
+          {/* ALT SAYFALAR */}
+          {children}
+        </PortalAuthGate>
+
+        {/* VERCEL ANALİTİK */}
         <Analytics />
       </body>
     </html>
