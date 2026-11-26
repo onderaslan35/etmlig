@@ -89,7 +89,7 @@ const ChampionTrophyCrest = ({
   if (stars <= 0) return null;
 
   const sizeClass = compact
-    ? 'w-[17px] h-[17px] sm:w-7 sm:h-7'
+    ? 'w-[21px] h-[21px] sm:w-7 sm:h-7'
     : 'w-6 h-6 sm:w-8 sm:h-8';
 
   const makeStarPoints = (cx: number, cy: number, rOut: number, rIn: number) => {
@@ -1291,7 +1291,7 @@ export default function YeniArsivPage() {
         }}
         title={`${cleanDisplay} • Sezon İstatistikleri ve Bildiği Maç Kartları için tıklayın`}
         className={`flex items-center min-w-0 cursor-pointer hover:text-sky-300 transition-colors ${
-          tightMobile ? 'gap-[3px] sm:gap-2' : 'gap-1.5 sm:gap-2'
+          tightMobile ? 'gap-[4px] sm:gap-2' : 'gap-1.5 sm:gap-2'
         }`}
       >
         {clubLogo && (
@@ -1300,13 +1300,15 @@ export default function YeniArsivPage() {
             alt={effectiveFav}
             title={effectiveFav}
             className={`${
-              tightMobile ? 'w-[17px] h-[17px] sm:w-7 sm:h-7' : 'w-6 h-6 sm:w-7 sm:h-7'
+              tightMobile ? 'w-[22px] h-[22px] sm:w-7 sm:h-7' : 'w-6 h-6 sm:w-7 sm:h-7'
             } object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]`}
           />
         )}
         <span
-          className={`truncate uppercase ${
-            tightMobile ? 'tracking-[-0.035em] sm:tracking-normal' : 'tracking-tight sm:tracking-normal'
+          className={`truncate uppercase leading-none ${
+            tightMobile
+              ? 'tracking-[-0.03em] sm:tracking-normal'
+              : 'tracking-tight sm:tracking-normal'
           }`}
         >
           {cleanDisplay}
@@ -1316,7 +1318,7 @@ export default function YeniArsivPage() {
           <span
             className={`shrink-0 bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 font-black rounded leading-none ${
               tightMobile
-                ? 'text-[8px] sm:text-[10.5px] px-[3px] py-[1px] sm:px-1.5 sm:py-0.5'
+                ? 'text-[9.5px] sm:text-[10.5px] px-[4px] py-[2px] sm:px-1.5 sm:py-0.5'
                 : 'text-[9.5px] sm:text-[10.5px] px-1.5 py-0.5'
             }`}
           >
@@ -1347,13 +1349,13 @@ export default function YeniArsivPage() {
       <div className="w-full -mx-1 sm:mx-0 text-left tabular-nums select-none">
         <div
           className={`bg-[#050c1d] border-b border-slate-800 flex items-end w-full uppercase font-black transition-all duration-300 ${
-            isDetailOpen ? 'h-11 sm:h-11 text-[9px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
+            isDetailOpen ? 'h-12 sm:h-11 text-[10px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
           }`}
         >
           <div
             className={`shrink-0 py-2 text-slate-400 transition-all duration-300 ${
               isDetailOpen
-                ? 'w-[16px] sm:w-11 pl-[2px] sm:pl-3 text-left'
+                ? 'w-[20px] sm:w-11 pl-[2px] sm:pl-3 text-left'
                 : 'w-8 sm:w-14 pl-2 sm:pl-3'
             }`}
           >
@@ -1368,29 +1370,30 @@ export default function YeniArsivPage() {
             YARIŞMACI
           </div>
 
+          {/* DFO (3 hane: 27px) | TFF (3 hane: 26px) | SKOR (3 hane: 25px) | BNS (+2 hane: 22px) = 100px */}
           <div
             className={`flex items-end shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
               isDetailOpen
-                ? 'w-[80px] sm:w-[288px] opacity-100 translate-x-0 py-1.5 sm:py-2'
+                ? 'w-[100px] sm:w-[288px] opacity-100 translate-x-0 py-1.5 sm:py-2'
                 : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
             }`}
           >
-            <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-sky-400">
+            <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 DFO
               </span>
             </div>
-            <div className="w-[20px] sm:w-[72px] shrink-0 text-center text-rose-500">
+            <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 TFF
               </span>
             </div>
-            <div className="w-[19px] sm:w-[72px] shrink-0 text-center text-orange-400">
+            <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-orange-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 SKOR
               </span>
             </div>
-            <div className="w-[19px] sm:w-[72px] shrink-0 text-center text-emerald-400">
+            <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 BNS
               </span>
@@ -1403,7 +1406,7 @@ export default function YeniArsivPage() {
             title={isDetailOpen ? 'Sadece Master Göster' : 'Detaylı Sütunları Sağdan Sola Aç'}
             className={`shrink-0 self-stretch flex items-end bg-sky-500/15 hover:bg-sky-500/25 text-sky-100 transition-all duration-300 cursor-pointer ${
               isDetailOpen
-                ? 'w-[28px] sm:w-24 pr-[2px] sm:pr-0 justify-end sm:justify-center py-1.5 sm:py-2'
+                ? 'w-[33px] sm:w-24 pr-[2px] sm:pr-0 justify-end sm:justify-center py-1.5 sm:py-2'
                 : 'w-20 sm:w-36 py-2 px-2 justify-end sm:justify-center'
             }`}
           >
@@ -1430,21 +1433,23 @@ export default function YeniArsivPage() {
                   : 'hover:bg-slate-800/35'
               }`}
             >
+              {/* SIRA RAKAMI: EN SOLA YASLI VE OKUNAKLI */}
               <div
-                className={`shrink-0 py-2 sm:py-3 font-bold text-slate-400 transition-all duration-300 ${
+                className={`shrink-0 py-[11px] sm:py-3 font-bold text-slate-400 transition-all duration-300 ${
                   isDetailOpen
-                    ? 'w-[16px] sm:w-11 pl-[2px] sm:pl-3 text-[10px] sm:text-[15px] tracking-tighter'
-                    : 'w-8 sm:w-14 pl-2 sm:pl-3 text-[12.5px] sm:text-[15px]'
+                    ? 'w-[20px] sm:w-11 pl-[2px] sm:pl-3 text-[12px] sm:text-[15px] tracking-tighter leading-none'
+                    : 'w-8 sm:w-14 pl-2 sm:pl-3 text-[13px] sm:text-[15px]'
                 }`}
               >
                 {idx + 1}
               </div>
 
+              {/* İSİM + ARMA + KUPA + ÇİFT HANE CANLI PUAN (HÜDAVERDİ TOPARDİÇ KISTASI: DFO'YA DEĞDİ DEĞECEK KADAR DOLGUN) */}
               <div
-                className={`flex-1 min-w-0 py-2 sm:py-3 font-black text-white transition-all duration-300 ${
+                className={`flex-1 min-w-0 py-[11px] sm:py-3 font-black text-white transition-all duration-300 ${
                   isDetailOpen
-                    ? 'px-[2px] sm:px-3 text-[10.8px] sm:text-[15px]'
-                    : 'px-1.5 sm:px-3 text-[13px] sm:text-base'
+                    ? 'pl-[1px] pr-[2px] sm:px-3 text-[12.8px] sm:text-[15px]'
+                    : 'px-1.5 sm:px-3 text-[13.5px] sm:text-base'
                 }`}
                 title={row.name}
               >
@@ -1458,31 +1463,33 @@ export default function YeniArsivPage() {
                 )}
               </div>
 
+              {/* DFO (3 hane) | TFF (3 hane) | SKOR (3 hane) | BNS (+2 hane) */}
               <div
                 className={`flex items-center shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
                   isDetailOpen
-                    ? 'w-[80px] sm:w-[288px] opacity-100 translate-x-0 py-2 sm:py-3'
+                    ? 'w-[100px] sm:w-[288px] opacity-100 translate-x-0 py-[11px] sm:py-3'
                     : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
                 }`}
               >
-                <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[10.8px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.dfoPts}
                 </div>
-                <div className="w-[20px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[10.8px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.tffPts}
                 </div>
-                <div className="w-[19px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[10.8px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.totalSkor}
                 </div>
-                <div className="w-[19px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-[15px] tracking-tighter sm:tracking-normal">
+                <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
                 </div>
               </div>
 
+              {/* MASTER PUANI */}
               <div
                 className={`shrink-0 self-stretch flex items-center bg-sky-500/10 font-black text-white transition-all duration-300 ${
                   isDetailOpen
-                    ? 'w-[28px] sm:w-24 pr-[2px] sm:pr-0 justify-end sm:justify-center text-[11.5px] sm:text-base tracking-tighter sm:tracking-normal'
+                    ? 'w-[33px] sm:w-24 pr-[2px] sm:pr-0 justify-end sm:justify-center text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none'
                     : 'w-20 sm:w-36 pr-2.5 sm:pr-0 justify-end sm:justify-center text-sm sm:text-lg'
                 }`}
               >
