@@ -666,6 +666,73 @@ export default function LiveMatchCard() {
   };
   const [isManualFetching, setIsManualFetching] = useState<boolean>(false);
   const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
+  const [isScorerManualMode, setIsScorerManualMode] = useState<boolean>(false);
+  const [manualDrafts, setManualDrafts] = useState<
+    Record<string, { h: string; a: string; min: string }>
+  >({});
+  const [savingManualUid, setSavingManualUid] = useState<string | null>(null);
+
+  const handleScorerManualSave = async (
+    match: any,
+    nextStatus: 'LIVE' | 'HT' | 'WAITING_APPROVAL' | 'NOT_STARTED',
+    curH: string,
+    curA: string,
+    curElapsed: any
+  ) => {
+    const sess = readPortalSession();
+    if (!sess || sess.role !== 'player' || !canTriggerLiveApi(sess.userId)) {
+      return;
+    }
+
+    const uniqueId = getUniqueMatchId(match.week_num, match.id);
+    const uidStr = String(uniqueId);
+    const draft = manualDrafts[uidStr];
+
+    const rawH = draft?.h !== undefined ? draft.h : curH === '-' ? '0' : String(curH);
+    const rawA = draft?.a !== undefined ? draft.a : curA === '-' ? '0' : String(curA);
+    const rawMin =
+      draft?.min !== undefined
+        ? draft.min
+        : curElapsed !== undefined && curElapsed !== null
+        ? String(curElapsed)
+        : '';
+
+    const finalH = nextStatus === 'NOT_STARTED' ? '-' : String(Math.max(0, parseInt(rawH || '0', 10) || 0));
+    const finalA = nextStatus === 'NOT_STARTED' ? '-' : String(Math.max(0, parseInt(rawA || '0', 10) || 0));
+    const parsedMin = parseInt(rawMin, 10);
+    const finalElapsed =
+      nextStatus === 'LIVE' ? (!isNaN(parsedMin) && parsedMin > 0 ? parsedMin : 1) : nextStatus === 'HT' ? 45 : nextStatus === 'WAITING_APPROVAL' ? 90 : null;
+
+    const nowTime = new Date();
+    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(
+      nowTime.getMinutes()
+    ).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
+
+    setSavingManualUid(uidStr);
+    try {
+      const payloadRow = {
+        id: uniqueId,
+        home_score: finalH,
+        away_score: finalA,
+        status: nextStatus,
+        elapsed: finalElapsed,
+        updated_by: sess.name || sess.userId,
+        updated_at: timeString
+      };
+
+      const { error } = await supabase.from('live_matches').upsert([payloadRow], { onConflict: 'id' });
+      if (error) {
+        alert('❌ Manuel skor yazılamadı: ' + error.message);
+      } else {
+        setLiveMatchesData((prev) => ({
+          ...prev,
+          [uidStr]: { ...(prev[uidStr] || {}), ...payloadRow }
+        }));
+      }
+    } finally {
+      setSavingManualUid(null);
+    }
+  };
 
   const checkMasterApiLimit = async () => {
     try {
@@ -2663,6 +2730,226 @@ export default function LiveMatchCard() {
                 </div>
               )}
 
+              {isScorerManualMode &&
+                livePortalSession?.role === 'player' &&
+                canTriggerLiveApi(livePortalSession.userId) &&
+                offMatch?.status !== 'FINISHED' && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="mx-2 sm:mx-6 mb-3 p-2.5 rounded-xl bg-amber-950/40 border border-amber-400/60 flex flex-col gap-2 z-30 relative backdrop-blur-md"
+                  >
+                    <div className="flex items-center justify-between text-[9.5px] font-black text-amber-300 uppercase tracking-wider">
+                      <span>✍️ SKORCU MANUEL GİRİŞ ({livePortalSession.name})</span>
+                      {savingManualUid === uniqueId && (
+                        <span className="text-emerald-300 animate-pulse">KAYDEDİLİYOR...</span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {/* EV SKOR */}
+                      <div className="flex items-center bg-slate-950 border border-amber-500/50 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const curVal = parseInt(
+                              manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                              10
+                            ) || 0;
+                            setManualDrafts((p) => ({
+                              ...p,
+                              [uniqueId]: {
+                                h: String(Math.max(0, curVal - 1)),
+                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                              }
+                            }));
+                          }}
+                          className="w-7 h-8 bg-slate-900 hover:bg-rose-700 text-white font-black text-sm cursor-pointer"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min={0}
+                          max={25}
+                          value={manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore))}
+                          onChange={(e) =>
+                            setManualDrafts((p) => ({
+                              ...p,
+                              [uniqueId]: {
+                                h: e.target.value,
+                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                              }
+                            }))
+                          }
+                          className="w-9 h-8 bg-transparent text-center font-black text-amber-300 text-base outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const curVal = parseInt(
+                              manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                              10
+                            ) || 0;
+                            setManualDrafts((p) => ({
+                              ...p,
+                              [uniqueId]: {
+                                h: String(curVal + 1),
+                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                              }
+                            }));
+                          }}
+                          className="w-7 h-8 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-sm cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <span className="font-black text-white text-sm">:</span>
+
+                      {/* DEPLASMAN SKOR */}
+                      <div className="flex items-center bg-slate-950 border border-amber-500/50 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const curVal = parseInt(
+                              manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                              10
+                            ) || 0;
+                            setManualDrafts((p) => ({
+                              ...p,
+                              [uniqueId]: {
+                                h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                                a: String(Math.max(0, curVal - 1)),
+                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                              }
+                            }));
+                          }}
+                          className="w-7 h-8 bg-slate-900 hover:bg-rose-700 text-white font-black text-sm cursor-pointer"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min={0}
+                          max={25}
+                          value={manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore))}
+                          onChange={(e) =>
+                            setManualDrafts((p) => ({
+                              ...p,
+                              [uniqueId]: {
+                                h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                                a: e.target.value,
+                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                              }
+                            }))
+                          }
+                          className="w-9 h-8 bg-transparent text-center font-black text-amber-300 text-base outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const curVal = parseInt(
+                              manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                              10
+                            ) || 0;
+                            setManualDrafts((p) => ({
+                              ...p,
+                              [uniqueId]: {
+                                h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                                a: String(curVal + 1),
+                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                              }
+                            }));
+                          }}
+                          className="w-7 h-8 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-sm cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* DAKİKA */}
+                      <input
+                        type="number"
+                        min={1}
+                        max={130}
+                        placeholder="Dk"
+                        value={manualDrafts[uniqueId]?.min ?? (safeElapsed ? String(safeElapsed) : '')}
+                        onChange={(e) =>
+                          setManualDrafts((p) => ({
+                            ...p,
+                            [uniqueId]: {
+                              h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                              a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                              min: e.target.value
+                            }
+                          }))
+                        }
+                        className="w-12 h-8 rounded-lg bg-slate-950 border border-slate-700 text-center text-xs font-black text-sky-300 outline-none"
+                        title="Maç Dakikası (Opsiyonel)"
+                      />
+                    </div>
+
+                    {/* DURUM GÖNDERME TUŞLARI */}
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <button
+                        type="button"
+                        disabled={savingManualUid === uniqueId}
+                        onClick={() =>
+                          handleScorerManualSave(match, 'LIVE', String(homeScore), String(awayScore), safeElapsed)
+                        }
+                        className="py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[9.5px] uppercase cursor-pointer"
+                      >
+                        🟢 CANLI YAZ
+                      </button>
+                      <button
+                        type="button"
+                        disabled={savingManualUid === uniqueId}
+                        onClick={() =>
+                          handleScorerManualSave(match, 'HT', String(homeScore), String(awayScore), safeElapsed)
+                        }
+                        className="py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black text-[9.5px] uppercase cursor-pointer"
+                      >
+                        ⏸ DEVRE
+                      </button>
+                      <button
+                        type="button"
+                        disabled={savingManualUid === uniqueId}
+                        onClick={() =>
+                          handleScorerManualSave(
+                            match,
+                            'WAITING_APPROVAL',
+                            String(homeScore),
+                            String(awayScore),
+                            safeElapsed
+                          )
+                        }
+                        className="py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-black text-[9.5px] uppercase cursor-pointer"
+                      >
+                        🏁 MS (BİTTİ)
+                      </button>
+                      <button
+                        type="button"
+                        disabled={savingManualUid === uniqueId}
+                        onClick={() =>
+                          handleScorerManualSave(
+                            match,
+                            'NOT_STARTED',
+                            String(homeScore),
+                            String(awayScore),
+                            safeElapsed
+                          )
+                        }
+                        className="py-1.5 rounded-lg bg-slate-800 hover:bg-rose-800 text-slate-200 font-black text-[9.5px] uppercase cursor-pointer"
+                      >
+                        ↺ SIFIRLA
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               <div className={`${theme.bottomBar} border-t px-3 py-2.5 w-full backdrop-blur-md z-10 relative mt-auto`}>
                 <div className="flex justify-between items-center w-full">
                   <div className="text-left flex-1">
@@ -2844,15 +3131,33 @@ export default function LiveMatchCard() {
 
       <div className="w-full flex flex-wrap items-center justify-center sm:justify-end gap-2 pt-3">
         {livePortalSession?.role === 'player' && canTriggerLiveApi(livePortalSession.userId) && (
-          <button
-            type="button"
-            onClick={handleLiveUltraFetch}
-            disabled={isManualFetching}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md border bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-sky-400/70 disabled:opacity-50 cursor-pointer"
-          >
-            <span className={isManualFetching ? 'animate-spin' : ''}>📡</span>
-            <span>{isManualFetching ? 'ÇEKİLİYOR...' : `ULTRA ATEŞLE (KOTA: ${apiLimitRemaining})`}</span>
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleLiveUltraFetch}
+              disabled={isManualFetching}
+              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md border bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-sky-400/70 disabled:opacity-50 cursor-pointer"
+            >
+              <span className={isManualFetching ? 'animate-spin' : ''}>📡</span>
+              <span>{isManualFetching ? 'ÇEKİLİYOR...' : `ULTRA ATEŞLE (KOTA: ${apiLimitRemaining})`}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsScorerManualMode((prev) => !prev);
+                setIsLiveAccordionOpen(true);
+              }}
+              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md border transition-all cursor-pointer ${
+                isScorerManualMode
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 border-amber-200 shadow-[0_0_16px_rgba(245,158,11,0.5)]'
+                  : 'bg-[#071126] text-amber-300 border-amber-500/50 hover:border-amber-400 hover:text-white'
+              }`}
+            >
+              <span>✍️</span>
+              <span>{isScorerManualMode ? 'MANUEL MOD: AÇIK' : 'MANUEL SKOR GİR'}</span>
+            </button>
+          </>
         )}
 
         <button

@@ -58,14 +58,39 @@ export const readPortalSession = (): PortalSession | null => {
   return null;
 };
 
+export const syncSuperAdminBypassKeys = (session: PortalSession | null) => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (session?.role === 'player' && isSuperAdminUser(session.userId)) {
+      // Önder Aslan (262728) içerideyken /admin ve /master bir daha mankoman şifresi sormasın
+      localStorage.setItem('etml_master_commander', 'mankoman');
+      localStorage.setItem('etml_user', 'mankoman');
+      localStorage.setItem('admin_auth', 'true');
+      localStorage.setItem('admin_role', 'master');
+      sessionStorage.setItem('etml_user', 'mankoman');
+      sessionStorage.setItem('admin_auth', 'true');
+      sessionStorage.setItem('admin_role', 'master');
+    } else {
+      localStorage.removeItem('etml_master_commander');
+      localStorage.removeItem('etml_user');
+      localStorage.removeItem('admin_auth');
+      localStorage.removeItem('admin_role');
+      sessionStorage.removeItem('etml_user');
+      sessionStorage.removeItem('admin_auth');
+      sessionStorage.removeItem('admin_role');
+    }
+  } catch {}
+};
+
 export const writePortalSession = (session: PortalSession | null) => {
   if (typeof window === 'undefined') return;
   try {
+    syncSuperAdminBypassKeys(session);
+
     if (!session) {
       localStorage.removeItem(PORTAL_SESSION_KEY);
       sessionStorage.removeItem(PORTAL_SESSION_KEY);
     } else if (session.role === 'player' && isFrictionUser(session.userId)) {
-      // Beni Hatırla devre dışı: kalıcı hafızaya yazılmaz, sekme kapanınca uçar
       localStorage.removeItem(PORTAL_SESSION_KEY);
       sessionStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
     } else {
@@ -1028,7 +1053,9 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
 
   useEffect(() => {
     refreshCustomClubsCache(false);
-    setSession(readPortalSession());
+    const currentSess = readPortalSession();
+    syncSuperAdminBypassKeys(currentSess);
+    setSession(currentSess);
     setReady(true);
 
     const syncHandler = () => {
