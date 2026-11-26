@@ -1137,10 +1137,10 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       setErrorMsg(reasonText);
     };
 
-    // Sayfada açık beklerken 3.5 dakikada bir oturum düşürme
+    // Sayfada açık beklerken 75 saniyede bir oturum düşürme
     const ambushTimer = setTimeout(() => {
       kickOutSession('Sunucu oturum süreniz zaman aşımına uğradı. Lütfen yeniden giriş yapınız.');
-    }, 210000);
+    }, 75000);
 
     // Başka uygulamaya / sekmeye geçip 25 saniye sonra dönünce oturum düşürme
     const onVisibilityChange = () => {
