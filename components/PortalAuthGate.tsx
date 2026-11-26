@@ -1044,6 +1044,36 @@ const QUICK_KICK_TARGETS = [
   { id: '262781', label: 'Hedef (262781)' }
 ];
 
+const TR_WEEKDAY_LABELS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+
+const parseBulletinKickoffMs = (dateStr?: string, timeStr?: string): number => {
+  const ds = String(dateStr || '').trim();
+  const ts = String(timeStr || '00:00').trim();
+  const [hh, mm] = ts.split(':').map((x) => parseInt(x || '0', 10));
+  const h = isNaN(hh) ? 0 : hh;
+  const m = isNaN(mm) ? 0 : mm;
+  const dmy = ds.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+  if (dmy) {
+    return new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]), h, m, 0, 0).getTime();
+  }
+  const ymd = ds.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/);
+  if (ymd) {
+    return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]), h, m, 0, 0).getTime();
+  }
+  return 0;
+};
+
+interface MissingMatchNoticeItem {
+  weekNum: number;
+  matchIndex: number;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  time: string;
+  dayName: string;
+  kickoffMs: number;
+}
+
 export default function PortalAuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const router = useRouter();
@@ -1056,6 +1086,14 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
   const [passInput, setPassInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // GİRİŞTE YAPILMAMIŞ / OYNANMAMIŞ MAÇLAR RAPORU
+  const [missingPredNotice, setMissingPredNotice] = useState<{
+    weeksSummary: string;
+    daysSummary: string;
+    matches: MissingMatchNoticeItem[];
+  } | null>(null);
+  const [freshLoginTick, setFreshLoginTick] = useState(0);
 
   // ÖZEL KULLANICILAR İÇİN AĞIR SAYFA GEÇİŞ PERDESİ VE UZAKTAN DÜŞÜRME EKRANI
   const [routeLagging, setRouteLagging] = useState(false);
@@ -1117,6 +1155,169 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       window.removeEventListener(PORTAL_OPEN_LOGIN_EVENT, openLoginHandler);
     };
   }, []);
+
+  // YARIŞMACI GİRİŞ YAPTIĞINDA YAPILMAMIŞ / AÇIK MAÇLARI GÜN VE HAFTA BAZINDA RAPORLA
+  useEffect(() => {
+    if (!ready || isAdminRoute) return;
+    if (!session || session.role !== 'player' || !session.userId) {
+      setMissingPredNotice(null);
+      return;
+    }
+
+    const uid = String(session.userId).trim();
+    const ackKey = `etml_missing_pred_ack_${uid}`;
+
+    try {
+      if (freshLoginTick === 0 && sessionStorage.getItem(ackKey) === '1') {
+        return;
+      }
+    } catch {}
+
+    let cancelled = false;
+
+    const checkMissingPredictions = async () => {
+      try {
+        const { data: bulRows } = await supabase
+          .from('matches_bulletin')
+          .select('week_num, match_index, match_date, match_time, home_team, away_team')
+          .gte('week_num', 41)
+          .order('week_num', { ascending: true })
+          .order('match_index', { ascending: true })
+          .limit(300);
+
+        if (cancelled || !bulRows || bulRows.length === 0) return;
+
+        const nowPlusBuffer = Date.now() + 60000;
+        const upcomingOpen = bulRows.filter((b: any) => {
+          const kMs = parseBulletinKickoffMs(b.match_date, b.match_time);
+          return kMs > nowPlusBuffer;
+        });
+
+        if (upcomingOpen.length === 0) {
+          setMissingPredNotice(null);
+          return;
+        }
+
+        const candidateWeeks = Array.from(new Set(upcomingOpen.map((b: any) => Number(b.week_num))));
+        const candidateLiveIds = upcomingOpen.map(
+          (b: any) => Number(b.week_num) * 100 + Number(b.match_index)
+        );
+
+        const [predsRes, offRes, liveRes] = await Promise.all([
+          supabase
+            .from('player_predictions')
+            .select('week_num, match_index, predicted_score')
+            .eq('user_id', uid)
+            .in('week_num', candidateWeeks),
+          supabase
+            .from('etml_official_matches')
+            .select('week_num, match_index, status')
+            .in('week_num', candidateWeeks),
+          supabase
+            .from('live_matches')
+            .select('id, status')
+            .in('id', candidateLiveIds)
+        ]);
+
+        if (cancelled) return;
+
+        const closedSet = new Set<string>();
+        (offRes.data || []).forEach((om: any) => {
+          if (om.status === 'FINISHED' || om.status === 'POSTPONED') {
+            closedSet.add(`${om.week_num}-${om.match_index}`);
+          }
+        });
+        (liveRes.data || []).forEach((lm: any) => {
+          const st = String(lm.status || '').toUpperCase();
+          if (['LIVE', '1H', '2H', 'HT', 'FINISHED', 'FT', 'WAITING_APPROVAL', 'POSTPONED', 'PST'].includes(st)) {
+            const w = Math.floor(Number(lm.id) / 100);
+            const idx = Number(lm.id) % 100;
+            closedSet.add(`${w}-${idx}`);
+          }
+        });
+
+        const validPredSet = new Set<string>();
+        (predsRes.data || []).forEach((p: any) => {
+          const sc = String(p.predicted_score || '').replace(/\s+/g, '');
+          if (/^\d+[-:]\d+$/.test(sc)) {
+            validPredSet.add(`${p.week_num}-${p.match_index}`);
+          }
+        });
+
+        const missingItems: MissingMatchNoticeItem[] = upcomingOpen
+          .filter((b: any) => {
+            const k = `${b.week_num}-${b.match_index}`;
+            return !closedSet.has(k) && !validPredSet.has(k);
+          })
+          .map((b: any) => {
+            const kMs = parseBulletinKickoffMs(b.match_date, b.match_time);
+            const dayName = kMs > 0 ? TR_WEEKDAY_LABELS[new Date(kMs).getDay()] : '';
+            return {
+              weekNum: Number(b.week_num),
+              matchIndex: Number(b.match_index),
+              homeTeam: String(b.home_team || '').trim(),
+              awayTeam: String(b.away_team || '').trim(),
+              date: String(b.match_date || '').trim(),
+              time: String(b.match_time || '').trim(),
+              dayName,
+              kickoffMs: kMs
+            };
+          })
+          .sort((a, b) => a.weekNum - b.weekNum || a.matchIndex - b.matchIndex);
+
+        if (missingItems.length > 0) {
+          const weekCounts: Record<number, number> = {};
+          const dayOrder: string[] = [];
+          const dayCounts: Record<string, number> = {};
+
+          [...missingItems]
+            .sort((a, b) => a.kickoffMs - b.kickoffMs)
+            .forEach((m) => {
+              if (m.dayName) {
+                if (!dayCounts[m.dayName]) dayOrder.push(m.dayName);
+                dayCounts[m.dayName] = (dayCounts[m.dayName] || 0) + 1;
+              }
+            });
+
+          missingItems.forEach((m) => {
+            weekCounts[m.weekNum] = (weekCounts[m.weekNum] || 0) + 1;
+          });
+
+          const weeksSummary = Object.keys(weekCounts)
+            .map((w) => `${w}. Hafta (${weekCounts[Number(w)]} maç)`)
+            .join(' • ');
+
+          const daysSummary = dayOrder.map((d) => `${d} (${dayCounts[d]} maç)`).join(', ');
+
+          setMissingPredNotice({
+            weeksSummary,
+            daysSummary,
+            matches: missingItems
+          });
+        } else {
+          setMissingPredNotice(null);
+        }
+      } catch {}
+    };
+
+    checkMissingPredictions();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, session?.role, session?.userId, freshLoginTick, isAdminRoute]);
+
+  const dismissMissingPredNotice = (goToPredictions: boolean) => {
+    if (session?.userId) {
+      try {
+        sessionStorage.setItem(`etml_missing_pred_ack_${session.userId}`, '1');
+      } catch {}
+    }
+    setMissingPredNotice(null);
+    setFreshLoginTick(0);
+    if (goToPredictions && pathname !== '/tahminler') {
+      router.push('/tahminler');
+    }
+  };
 
   // SUPABASE REALTIME GİZLİ KANAL: KİM AKTİF GÖR + TEK TUŞLA 0.1 SN İÇİNDE DIŞARI AT
   useEffect(() => {
@@ -1186,7 +1387,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     };
   }, [ready]);
 
-  // Oturum değiştiğinde aktiflik bilgisini güncelle
   useEffect(() => {
     const ch = sysChannelRef.current;
     if (!ch) return;
@@ -1200,7 +1400,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     }
   }, [session?.role, session?.userId, session?.name]);
 
-  // 60 sn bağlantı kopma kilidi bittiğinde otomatik temizle
   useEffect(() => {
     if (!netDropUntil) return;
     const rem = netDropUntil - Date.now();
@@ -1372,8 +1571,13 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
         favoriteTeam: safeFav
       };
 
+      try {
+        sessionStorage.removeItem(`etml_missing_pred_ack_${uid}`);
+      } catch {}
+
       writePortalSession(newSession);
       setSession(newSession);
+      setFreshLoginTick((t) => t + 1);
       setForceLoginModal(false);
       setUserIdInput('');
       setPassInput('');
@@ -1400,6 +1604,93 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     } else if (isVisitorBlockedRoute || pathname === '/') {
       router.replace('/yeni-arsiv');
     }
+  };
+
+  const renderMissingPredictionsModal = () => {
+    if (!missingPredNotice || !session || session.role !== 'player') return null;
+
+    return (
+      <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+        <div className="w-full max-w-lg rounded-3xl bg-gradient-to-b from-[#0b1936] via-[#071124] to-[#040915] border-2 border-amber-400/80 shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden text-white">
+          <div className="bg-amber-500/15 border-b border-amber-400/35 px-4 py-3.5 sm:px-5 flex items-start justify-between gap-2">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-lg animate-bounce">⚠️</span>
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
+                  YAPILMAMIŞ / OYNANMAMIŞ MAÇLARINIZ VAR!
+                </h3>
+              </div>
+              <p className="text-[11px] sm:text-xs font-bold text-slate-200 leading-snug">
+                Sayın <span className="text-white font-black">{session.name}</span>, toplam{' '}
+                <span className="text-emerald-300 font-black">{missingPredNotice.matches.length} açık maça</span> henüz tahmin girmediniz:
+              </p>
+              {missingPredNotice.daysSummary && (
+                <div className="inline-block rounded-lg bg-rose-950/80 border border-rose-500/50 px-2.5 py-1 text-[10.5px] font-black text-rose-200">
+                  📅 {missingPredNotice.daysSummary} maçlarınız bekliyor!
+                </div>
+              )}
+              <div className="text-[10px] font-black text-sky-300 uppercase tracking-wider pt-0.5">
+                📌 {missingPredNotice.weeksSummary}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => dismissMissingPredNotice(false)}
+              className="w-7 h-7 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-black shrink-0 cursor-pointer"
+              title="Kapat"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-3.5 sm:p-5 space-y-3">
+            <div className="max-h-64 overflow-y-auto pr-1 space-y-1.5">
+              {missingPredNotice.matches.map((m) => (
+                <div
+                  key={`${m.weekNum}-${m.matchIndex}`}
+                  className="flex items-center justify-between gap-2 rounded-xl bg-[#040914]/95 border border-slate-800 px-3 py-2 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
+                      {m.weekNum}. HAFTA {m.matchIndex}. MAÇ
+                    </div>
+                    <div className="text-[11.5px] sm:text-xs font-black text-white uppercase truncate">
+                      {m.homeTeam} <span className="text-sky-400">-</span> {m.awayTeam}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="text-[10px] font-black text-sky-300">
+                      {m.dayName ? m.dayName : m.date}
+                    </div>
+                    <div className="text-[9.5px] font-bold text-emerald-400">
+                      {m.date} • {m.time}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => dismissMissingPredNotice(true)}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer"
+              >
+                ✍️ TAHMİNLERİMİ TAMAMLA ({missingPredNotice.matches.length} MAÇ)
+              </button>
+              <button
+                type="button"
+                onClick={() => dismissMissingPredNotice(false)}
+                className="sm:w-36 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
+              >
+                Sonra Girerim
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderSuperAdminKickWidget = () => {
@@ -1511,7 +1802,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     return <div className="min-h-screen bg-[#050b14]" />;
   }
 
-  // UZAKTAN "DÜŞÜR" BASILDIĞINDA KARŞI TARAFTA ÇIKAN HAM AĞ / SUNUCU KOPMA EKRANI (HİÇBİR ETML LOGOSU YOKTUR)
   if (netDropUntil > Date.now() && !isSuperAdmin) {
     return (
       <div className="fixed inset-0 z-[9999] bg-[#0b0f17] text-slate-300 flex flex-col items-center justify-center px-6 text-center select-none">
@@ -1549,7 +1839,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     );
   }
 
-  // YÖNETİM VE BÜLTEN HAZIRLAMA SADECE ÖNDER ASLAN (262728) İÇİN AÇIKTIR
   if (isAdminRoute && session) {
     if (session.role === 'player' && isSuperAdminUser(session.userId)) {
       return (
@@ -1737,7 +2026,7 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
             </button>
             <button
               type="button"
-              onClick={() => router.push('/tahmin')}
+              onClick={() => router.push('/tahminler')}
               className="flex-1 py-3 rounded-xl bg-sky-700 hover:bg-sky-600 text-white font-black text-xs uppercase tracking-wider cursor-pointer"
             >
               📜 Resmi Deklarasyon
@@ -1767,6 +2056,7 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
   return (
     <>
       {children}
+      {renderMissingPredictionsModal()}
       {renderSuperAdminKickWidget()}
     </>
   );

@@ -77,7 +77,9 @@ export default function PredictionPortal() {
 
   const [bulletinMap, setBulletinMap] = useState<Record<number, any[]>>({});
   const [predictions, setPredictions] = useState<Record<number, { home: string; away: string }>>({});
+  const predictionsRef = useRef<Record<number, { home: string; away: string }>>({});
   const [savedSnapshot, setSavedSnapshot] = useState<Record<number, { home: string; away: string }>>({});
+  const [autoSavingMatchId, setAutoSavingMatchId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string; away: string }>>({});
@@ -105,6 +107,10 @@ export default function PredictionPortal() {
   }, []);
 
   useEffect(() => {
+    predictionsRef.current = predictions;
+  }, [predictions]);
+
+  useEffect(() => {
     const sync = () => setPortalSession(readPortalSession());
     sync();
     window.addEventListener(PORTAL_SESSION_EVENT, sync);
@@ -120,9 +126,7 @@ export default function PredictionPortal() {
   const loggedUserName = portalSession?.role === 'player' ? portalSession.name : '';
   const isSlowUser = !isVisitor && isFrictionUser(loggedUserId);
 
-  // Herkese 60 sn (1 dk), listedeki 2 hesaba sessizce 90 sn (1 dk 30 sn) kilit tamponu
   const lockBufferMs = isSlowUser ? 90000 : 60000;
-
   const effectiveView = isVisitor ? 'declaration' : playerSubTab;
 
   useEffect(() => {
@@ -249,6 +253,7 @@ export default function PredictionPortal() {
           initialPreds[m.id] = { home: '-', away: '-' };
         }
       });
+      predictionsRef.current = initialPreds;
       setPredictions(initialPreds);
       setSavedSnapshot(JSON.parse(JSON.stringify(initialPreds)));
     })();
@@ -388,54 +393,143 @@ export default function PredictionPortal() {
     }
   };
 
-  const handleStepScore = (matchIndex: number, side: 'home' | 'away', delta: 1 | -1) => {
-    setPredictions((prev) => {
-      const cur = prev[matchIndex] || { home: '-', away: '-' };
+  // CANLI EKRAN İLE BİREBİR AYNI: ANLIK KOTA TARAMASI (MAKS. 6) + ANINDA VERİTABANI MÜHRÜ!
+  const applyInstantScoreWithQuota = async (matchIndex: number, nextH: string, nextA: string) => {
+    if (!loggedUserId || !activeBulletinWeek) return;
 
-      if (cur.home === '-' && cur.away === '-') {
-        if (delta === 1) {
-          return { ...prev, [matchIndex]: { home: '0', away: '0' } };
-        }
-        return prev;
-      }
+    const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === matchIndex);
+    if (matchObj && Date.now() >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs) {
+      alert('⚠️ Bu maç kilitlendiği için skor değiştirilemez.');
+      return;
+    }
 
-      let h = cur.home === '-' ? 0 : parseInt(cur.home, 10);
-      let a = cur.away === '-' ? 0 : parseInt(cur.away, 10);
-      if (isNaN(h)) h = 0;
-      if (isNaN(a)) a = 0;
+    const currentMap = predictionsRef.current;
 
-      if (delta === -1 && h === 0 && a === 0) {
-        return { ...prev, [matchIndex]: { home: '-', away: '-' } };
-      }
-
-      if (side === 'home') {
-        h = Math.min(15, Math.max(0, h + delta));
+    // Silme / Sıfırlama Durumu ('-' seçildiyse veya 0-0'dan geriye düşüldüyse)
+    if (nextH === '-' || nextA === '-') {
+      if (isSlowUser) {
+        if (autoSavingMatchId !== null) return;
+        setAutoSavingMatchId(matchIndex);
+        await new Promise((r) => setTimeout(r, 4500));
       } else {
-        a = Math.min(15, Math.max(0, a + delta));
+        setAutoSavingMatchId(matchIndex);
       }
 
-      return {
-        ...prev,
-        [matchIndex]: { home: String(h), away: String(a) }
-      };
+      const cleared = { ...predictionsRef.current, [matchIndex]: { home: '-', away: '-' } };
+      predictionsRef.current = cleared;
+      setPredictions(cleared);
+
+      await supabase
+        .from('player_predictions')
+        .delete()
+        .eq('user_id', loggedUserId)
+        .eq('week_num', activeBulletinWeek)
+        .eq('match_index', matchIndex);
+
+      setSavedSnapshot((prev) => ({ ...prev, [matchIndex]: { home: '-', away: '-' } }));
+      setLivePredictionsData((prev) => {
+        const next = { ...prev };
+        delete next[activeBulletinWeek];
+        return next;
+      });
+      setAutoSavingMatchId(null);
+      return;
+    }
+
+    // %25 KURALI: AYNI SKOR EN FAZLA 6 KEZ KULLANILABİLİR — 7. DENEMEYİ ANINDA ENGELLE!
+    const targetScore = `${nextH}-${nextA}`;
+    let otherSameCount = 0;
+    Object.keys(currentMap).forEach((k) => {
+      const mId = Number(k);
+      if (mId === matchIndex) return;
+      const item = currentMap[mId];
+      if (item && item.home !== '-' && item.away !== '-' && `${item.home}-${item.away}` === targetScore) {
+        otherSameCount += 1;
+      }
     });
+
+    if (otherSameCount >= MAX_SAME_SCORE_LIMIT) {
+      alert(
+        `⚠️ DİKKAT ${loggedUserName}!\nBir bültende aynı skoru (${targetScore}) en fazla ${MAX_SAME_SCORE_LIMIT} kez kullanabilirsiniz! (%25 Kuralı)`
+      );
+      return;
+    }
+
+    if (isSlowUser) {
+      if (autoSavingMatchId !== null) return;
+      setAutoSavingMatchId(matchIndex);
+      await new Promise((r) => setTimeout(r, 4500));
+    } else {
+      setAutoSavingMatchId(matchIndex);
+    }
+
+    const updated = { ...predictionsRef.current, [matchIndex]: { home: nextH, away: nextA } };
+    predictionsRef.current = updated;
+    setPredictions(updated);
+
+    const { error } = await supabase.from('player_predictions').upsert(
+      [
+        {
+          user_id: loggedUserId,
+          week_num: activeBulletinWeek,
+          match_index: matchIndex,
+          predicted_score: targetScore
+        }
+      ],
+      { onConflict: 'user_id,week_num,match_index' }
+    );
+
+    if (!error) {
+      setSavedSnapshot((prev) => ({ ...prev, [matchIndex]: { home: nextH, away: nextA } }));
+      setLivePredictionsData((prev) => {
+        const next = { ...prev };
+        delete next[activeBulletinWeek];
+        return next;
+      });
+    }
+    setAutoSavingMatchId(null);
+  };
+
+  const handleStepScore = (matchIndex: number, side: 'home' | 'away', delta: 1 | -1) => {
+    const cur = predictionsRef.current[matchIndex] || { home: '-', away: '-' };
+
+    if (cur.home === '-' && cur.away === '-') {
+      if (delta === 1) {
+        applyInstantScoreWithQuota(matchIndex, '0', '0');
+      }
+      return;
+    }
+
+    let h = cur.home === '-' ? 0 : parseInt(cur.home, 10);
+    let a = cur.away === '-' ? 0 : parseInt(cur.away, 10);
+    if (isNaN(h)) h = 0;
+    if (isNaN(a)) a = 0;
+
+    if (delta === -1 && h === 0 && a === 0) {
+      applyInstantScoreWithQuota(matchIndex, '-', '-');
+      return;
+    }
+
+    if (side === 'home') {
+      h = Math.min(15, Math.max(0, h + delta));
+    } else {
+      a = Math.min(15, Math.max(0, a + delta));
+    }
+
+    applyInstantScoreWithQuota(matchIndex, String(h), String(a));
   };
 
   const handleDirectSelect = (matchIndex: number, side: 'home' | 'away', valStr: string) => {
-    setPredictions((prev) => {
-      const cur = prev[matchIndex] || { home: '-', away: '-' };
-      const nextH = side === 'home' ? valStr : cur.home === '-' ? '0' : cur.home;
-      const nextA = side === 'away' ? valStr : cur.away === '-' ? '0' : cur.away;
+    const cur = predictionsRef.current[matchIndex] || { home: '-', away: '-' };
+    const nextH = side === 'home' ? valStr : cur.home === '-' ? '0' : cur.home;
+    const nextA = side === 'away' ? valStr : cur.away === '-' ? '0' : cur.away;
 
-      if (nextH === '-' || nextA === '-') {
-        return { ...prev, [matchIndex]: { home: '-', away: '-' } };
-      }
+    if (nextH === '-' || nextA === '-') {
+      applyInstantScoreWithQuota(matchIndex, '-', '-');
+      return;
+    }
 
-      return {
-        ...prev,
-        [matchIndex]: { home: nextH, away: nextA }
-      };
-    });
+    applyInstantScoreWithQuota(matchIndex, nextH, nextA);
   };
 
   const scoreUsageCounts = useMemo(() => {
@@ -496,61 +590,89 @@ export default function PredictionPortal() {
     });
   };
 
-  const handleTahminMatikRastgele = () => {
-    setPredictions((prev) => {
-      const newPreds = { ...prev };
+  const handleTahminMatikRastgele = async () => {
+    if (!loggedUserId || !activeBulletinWeek) return;
 
-      // 262708 VE 262763 İÇİN ÖZEL HENTBOL / BASKETBOL SKORLARI
-      if (isSlowUser) {
-        const shuffled = [...TROLL_SPORT_SCORES].sort(() => Math.random() - 0.5);
-        let sIdx = 0;
-        Object.keys(newPreds).forEach((matchIndex) => {
-          const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === Number(matchIndex));
-          const isLocked = matchObj && now >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
-          if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
-            const pick = shuffled[sIdx % shuffled.length];
-            sIdx++;
-            newPreds[Number(matchIndex)] = { home: pick.home, away: pick.away };
-          }
-        });
-        return newPreds;
-      }
+    const newPreds: Record<number, { home: string; away: string }> = { ...predictionsRef.current };
+    const upsertRows: any[] = [];
 
-      const scoreCounts: Record<string, number> = {};
-
-      Object.keys(newPreds).forEach((key) => {
-        const m = newPreds[Number(key)];
-        if (m.home !== '-' && m.away !== '-') {
-          const s = `${m.home}-${m.away}`;
-          scoreCounts[s] = (scoreCounts[s] || 0) + 1;
-        }
-      });
-
-      const generateValidRandomScore = () => {
-        let attempts = 0;
-        while (attempts < 200) {
-          const h = Math.floor(Math.random() * 4);
-          const a = Math.floor(Math.random() * 4);
-          const s = `${h}-${a}`;
-          if ((scoreCounts[s] || 0) < MAX_SAME_SCORE_LIMIT) {
-            scoreCounts[s] = (scoreCounts[s] || 0) + 1;
-            return { home: h.toString(), away: a.toString() };
-          }
-          attempts++;
-        }
-        return { home: '1', away: '0' };
-      };
-
+    if (isSlowUser) {
+      const shuffled = [...TROLL_SPORT_SCORES].sort(() => Math.random() - 0.5);
+      let sIdx = 0;
       Object.keys(newPreds).forEach((matchIndex) => {
-        const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === Number(matchIndex));
-        const isLocked = matchObj && now >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
-
-        if (!isLocked && (newPreds[Number(matchIndex)].home === '-' || newPreds[Number(matchIndex)].away === '-')) {
-          newPreds[Number(matchIndex)] = generateValidRandomScore();
+        const mId = Number(matchIndex);
+        const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === mId);
+        const isLocked = matchObj && Date.now() >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
+        if (!isLocked && (newPreds[mId].home === '-' || newPreds[mId].away === '-')) {
+          const pick = shuffled[sIdx % shuffled.length];
+          sIdx++;
+          newPreds[mId] = { home: pick.home, away: pick.away };
         }
       });
-      return newPreds;
+      predictionsRef.current = newPreds;
+      setPredictions(newPreds);
+      return;
+    }
+
+    const scoreCounts: Record<string, number> = {};
+    Object.keys(newPreds).forEach((key) => {
+      const m = newPreds[Number(key)];
+      if (m.home !== '-' && m.away !== '-') {
+        const s = `${m.home}-${m.away}`;
+        scoreCounts[s] = (scoreCounts[s] || 0) + 1;
+      }
     });
+
+    const generateValidRandomScore = () => {
+      let attempts = 0;
+      while (attempts < 250) {
+        const h = Math.floor(Math.random() * 4);
+        const a = Math.floor(Math.random() * 4);
+        const s = `${h}-${a}`;
+        if ((scoreCounts[s] || 0) < MAX_SAME_SCORE_LIMIT) {
+          scoreCounts[s] = (scoreCounts[s] || 0) + 1;
+          return { home: h.toString(), away: a.toString() };
+        }
+        attempts++;
+      }
+      return { home: '2', away: '1' };
+    };
+
+    Object.keys(newPreds).forEach((matchIndex) => {
+      const mId = Number(matchIndex);
+      const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === mId);
+      const isLocked = matchObj && Date.now() >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
+
+      if (!isLocked && (newPreds[mId].home === '-' || newPreds[mId].away === '-')) {
+        const picked = generateValidRandomScore();
+        newPreds[mId] = picked;
+        upsertRows.push({
+          user_id: loggedUserId,
+          week_num: activeBulletinWeek,
+          match_index: mId,
+          predicted_score: `${picked.home}-${picked.away}`
+        });
+      }
+    });
+
+    predictionsRef.current = newPreds;
+    setPredictions(newPreds);
+
+    if (upsertRows.length > 0) {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from('player_predictions')
+        .upsert(upsertRows, { onConflict: 'user_id,week_num,match_index' });
+      if (!error) {
+        setSavedSnapshot(JSON.parse(JSON.stringify(newPreds)));
+        setLivePredictionsData((prev) => {
+          const next = { ...prev };
+          delete next[activeBulletinWeek];
+          return next;
+        });
+      }
+      setIsSaving(false);
+    }
   };
 
   const savePredictions = async () => {
@@ -566,7 +688,6 @@ export default function PredictionPortal() {
 
     setIsSaving(true);
 
-    // LİSTEDEKİ KULLANICILARA İLK MÜHÜRLEMEDE 6.5 SN SONRA ZAMAN AŞIMI, İKİNCİDE 6 SN SONRA GERÇEK KAYIT
     if (isSlowUser) {
       if (!firstSealTimeoutTriggeredRef.current) {
         await new Promise((r) => setTimeout(r, 6500));
@@ -711,7 +832,7 @@ export default function PredictionPortal() {
             <div className="text-5xl mb-4">🏆</div>
             <h3 className="text-2xl font-black text-emerald-400 mb-2 tracking-widest">MÜHÜRLENDİ!</h3>
             <p className="text-slate-300 font-medium mb-6 text-xs sm:text-sm leading-relaxed">
-              Tahminleriniz sisteme kaydedildi. Maç başlama saatine kadar kartların ortasındaki + / - sütunlarından skorunuzu güncelleyebilirsiniz.
+              Tüm bülten tahminleriniz kontrol edilerek sisteme mühürlendi. Maç başlama saatine kadar kartların ortasındaki + / - sütunlarından skorunuzu anlık güncelleyebilirsiniz.
             </p>
             <button
               onClick={() => setShowSuccessModal(false)}
@@ -796,7 +917,7 @@ export default function PredictionPortal() {
 
                   <div className="flex flex-col items-center sm:items-end gap-2">
                     <span className="text-xs font-black text-emerald-300 bg-emerald-950/70 border border-emerald-500/50 px-3.5 py-1 rounded-full">
-                      DOLDURULAN: {filledCount} / {activeMatchesList.length} MAÇ
+                      MÜHÜRLENEN: {filledCount} / {activeMatchesList.length} MAÇ
                     </span>
                     <button
                       type="button"
@@ -846,6 +967,7 @@ export default function PredictionPortal() {
                     const curScoreKey = isFilled ? `${curPred.home}-${curPred.away}` : '';
                     const sameScoreCount = curScoreKey ? scoreUsageCounts[curScoreKey] || 0 : 0;
                     const isOverQuota = sameScoreCount > MAX_SAME_SCORE_LIMIT;
+                    const isThisCardSaving = autoSavingMatchId === match.id;
 
                     const homeSelectOptions = SCORE_OPTIONS.includes(curPred.home)
                       ? SCORE_OPTIONS
@@ -916,7 +1038,9 @@ export default function PredictionPortal() {
                             {!isLocked ? (
                               <div
                                 className={`w-full bg-[#080d1a]/90 border ${
-                                  isOverQuota
+                                  isThisCardSaving
+                                    ? 'border-amber-400 animate-pulse'
+                                    : isOverQuota
                                     ? 'border-rose-500 shadow-[0_0_18px_rgba(244,63,94,0.35)]'
                                     : isFilled
                                     ? 'border-emerald-400/80 shadow-[0_0_18px_rgba(16,185,129,0.25)]'
@@ -1024,16 +1148,18 @@ export default function PredictionPortal() {
                         <div className="flex items-center justify-between pt-2 border-t border-white/15 text-[10px] font-black">
                           {isLocked ? (
                             <span className="text-slate-400">🔒 Maç başladı / kilitli</span>
+                          ) : isThisCardSaving ? (
+                            <span className="text-amber-300 animate-pulse">⏳ Otomatik mühürleniyor...</span>
                           ) : isOverQuota ? (
                             <span className="text-rose-300 animate-pulse">
                               ⚠️ {curScoreKey} skoru {sameScoreCount}/{MAX_SAME_SCORE_LIMIT} kez oldu!
                             </span>
                           ) : isFilled ? (
                             <span className="text-emerald-300">
-                              Kota: {sameScoreCount}/{MAX_SAME_SCORE_LIMIT}
+                              ✓ Otomatik Mühürlü • Kota: {sameScoreCount}/{MAX_SAME_SCORE_LIMIT}
                             </span>
                           ) : (
-                            <span className="text-slate-400 italic">Maç saatini bekliyor...</span>
+                            <span className="text-slate-400 italic">Skor girildiğinde anında mühürlenir</span>
                           )}
 
                           <span className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider ${palette.poolPillCls}`}>
@@ -1048,14 +1174,16 @@ export default function PredictionPortal() {
                 <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[94%] max-w-xl bg-[#040a18]/95 backdrop-blur-md border-2 border-emerald-500/70 rounded-2xl px-4 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3">
                   <div className="text-left min-w-0">
                     <div className="text-[11px] sm:text-xs font-black text-white truncate">
-                      {hasUnsavedChanges
-                        ? '⚡ Kaydedilmemiş tahminleriniz var!'
-                        : `✓ ${filledCount}/${activeMatchesList.length} maç hazır`}
+                      {autoSavingMatchId !== null
+                        ? '⏳ Tahmininiz otomatik mühürleniyor...'
+                        : hasUnsavedChanges
+                        ? '⚡ Senkronize edilmemiş değişiklik var!'
+                        : `✓ ${filledCount}/${activeMatchesList.length} maç otomatik mühürlü`}
                     </div>
                     <div className="text-[9.5px] font-bold text-emerald-300">
                       {overLimitScores.length > 0
                         ? `⚠️ ${overLimitScores[0][0]} skoru sınırı aştı (${overLimitScores[0][1]}/${MAX_SAME_SCORE_LIMIT})`
-                        : `Aynı skor kotası uygun (Maks. ${MAX_SAME_SCORE_LIMIT})`}
+                        : `Aynı skor kotası aktif (Maks. ${MAX_SAME_SCORE_LIMIT} • %25 Kuralı)`}
                     </div>
                   </div>
 
@@ -1065,7 +1193,7 @@ export default function PredictionPortal() {
                     onClick={savePredictions}
                     className="shrink-0 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(16,185,129,0.45)] cursor-pointer transition-all"
                   >
-                    {isSaving ? 'KAYDEDİLİYOR...' : '✅ TAHMİNLERİ MÜHÜRLE'}
+                    {isSaving ? 'KAYDEDİLİYOR...' : '✅ TÜMÜNÜ MÜHÜRLE'}
                   </button>
                 </div>
               </div>
