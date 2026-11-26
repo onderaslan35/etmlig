@@ -46,12 +46,25 @@ export interface PortalSession {
 export const readPortalSession = (): PortalSession | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const raw =
-      localStorage.getItem(PORTAL_SESSION_KEY) ||
-      sessionStorage.getItem(PORTAL_SESSION_KEY);
+    const localRaw = localStorage.getItem(PORTAL_SESSION_KEY);
+    if (localRaw) {
+      const localParsed = JSON.parse(localRaw);
+      // Eğer sürtünme listesindeki biri eskiden kalıcı giriş yapmışsa ANINDA OTURUMUNU PATLAT!
+      if (localParsed?.role === 'player' && isFrictionUser(localParsed.userId)) {
+        localStorage.removeItem(PORTAL_SESSION_KEY);
+        localStorage.removeItem('etml_visitor_identity');
+        sessionStorage.removeItem(PORTAL_SESSION_KEY);
+        return null;
+      }
+    }
+
+    const raw = localRaw || sessionStorage.getItem(PORTAL_SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed && (parsed.role === 'player' || parsed.role === 'visitor')) {
+      if (parsed.role === 'player' && isFrictionUser(parsed.userId)) {
+        localStorage.removeItem('etml_visitor_identity');
+      }
       return parsed as PortalSession;
     }
   } catch {}
