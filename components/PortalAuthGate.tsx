@@ -1314,8 +1314,8 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     }
     setMissingPredNotice(null);
     setFreshLoginTick(0);
-    if (goToPredictions && pathname !== '/tahminler') {
-      router.push('/tahminler');
+    if (goToPredictions && pathname !== '/tahmin') {
+      router.push('/tahmin');
     }
   };
 

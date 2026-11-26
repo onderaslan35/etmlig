@@ -24,33 +24,6 @@ const NON_COMPETING_IDS = new Set(['mankoman', '272727', '262787', '600060']);
 const MAX_SAME_SCORE_LIMIT = 6;
 const SCORE_OPTIONS = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 
-const TROLL_SPORT_SCORES: Array<{ home: string; away: string }> = [
-  { home: '28', away: '21' },
-  { home: '31', away: '26' },
-  { home: '24', away: '29' },
-  { home: '33', away: '27' },
-  { home: '84', away: '77' },
-  { home: '92', away: '85' },
-  { home: '76', away: '81' },
-  { home: '89', away: '94' },
-  { home: '27', away: '23' },
-  { home: '30', away: '25' },
-  { home: '96', away: '88' },
-  { home: '73', away: '69' },
-  { home: '29', away: '32' },
-  { home: '34', away: '28' },
-  { home: '82', away: '79' },
-  { home: '91', away: '84' },
-  { home: '26', away: '22' },
-  { home: '35', away: '31' },
-  { home: '87', away: '90' },
-  { home: '78', away: '74' },
-  { home: '25', away: '20' },
-  { home: '32', away: '29' },
-  { home: '95', away: '86' },
-  { home: '80', away: '72' }
-];
-
 function formatCountdownText(kickoffMs: number, nowMs: number): string {
   if (!kickoffMs || kickoffMs <= nowMs) return '';
   const diffSec = Math.max(0, Math.floor((kickoffMs - nowMs) / 1000));
@@ -69,18 +42,14 @@ export default function PredictionPortal() {
   const [portalSession, setPortalSession] = useState<PortalSession | null>(null);
   const [playerSubTab, setPlayerSubTab] = useState<'entry' | 'status' | 'declaration' | 'tahminmatik'>('entry');
   const [subTabLagging, setSubTabLagging] = useState(false);
-  const firstSealTimeoutTriggeredRef = useRef<boolean>(false);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'A-Z' | 'Z-A' | 'ZAMAN'>('A-Z');
 
   const [bulletinMap, setBulletinMap] = useState<Record<number, any[]>>({});
   const [predictions, setPredictions] = useState<Record<number, { home: string; away: string }>>({});
   const predictionsRef = useRef<Record<number, { home: string; away: string }>>({});
-  const [savedSnapshot, setSavedSnapshot] = useState<Record<number, { home: string; away: string }>>({});
   const [autoSavingMatchId, setAutoSavingMatchId] = useState<number | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string; away: string }>>({});
 
@@ -128,10 +97,6 @@ export default function PredictionPortal() {
 
   const lockBufferMs = isSlowUser ? 90000 : 60000;
   const effectiveView = isVisitor ? 'declaration' : playerSubTab;
-
-  useEffect(() => {
-    firstSealTimeoutTriggeredRef.current = false;
-  }, [activeBulletinWeek, loggedUserId]);
 
   useEffect(() => {
     const fetchDbPlayers = async () => {
@@ -255,7 +220,6 @@ export default function PredictionPortal() {
       });
       predictionsRef.current = initialPreds;
       setPredictions(initialPreds);
-      setSavedSnapshot(JSON.parse(JSON.stringify(initialPreds)));
     })();
 
     return () => {
@@ -393,7 +357,7 @@ export default function PredictionPortal() {
     }
   };
 
-  // CANLI EKRAN İLE BİREBİR AYNI: ANLIK KOTA TARAMASI (MAKS. 6) + ANINDA VERİTABANI MÜHRÜ!
+  // ANLIK KOTA TARAMASI (MAKS. 6 • %25 KURALI) + ANINDA OTOMATİK MÜHÜRLEME
   const applyInstantScoreWithQuota = async (matchIndex: number, nextH: string, nextA: string) => {
     if (!loggedUserId || !activeBulletinWeek) return;
 
@@ -405,7 +369,6 @@ export default function PredictionPortal() {
 
     const currentMap = predictionsRef.current;
 
-    // Silme / Sıfırlama Durumu ('-' seçildiyse veya 0-0'dan geriye düşüldüyse)
     if (nextH === '-' || nextA === '-') {
       if (isSlowUser) {
         if (autoSavingMatchId !== null) return;
@@ -426,7 +389,6 @@ export default function PredictionPortal() {
         .eq('week_num', activeBulletinWeek)
         .eq('match_index', matchIndex);
 
-      setSavedSnapshot((prev) => ({ ...prev, [matchIndex]: { home: '-', away: '-' } }));
       setLivePredictionsData((prev) => {
         const next = { ...prev };
         delete next[activeBulletinWeek];
@@ -436,7 +398,6 @@ export default function PredictionPortal() {
       return;
     }
 
-    // %25 KURALI: AYNI SKOR EN FAZLA 6 KEZ KULLANILABİLİR — 7. DENEMEYİ ANINDA ENGELLE!
     const targetScore = `${nextH}-${nextA}`;
     let otherSameCount = 0;
     Object.keys(currentMap).forEach((k) => {
@@ -480,7 +441,6 @@ export default function PredictionPortal() {
     );
 
     if (!error) {
-      setSavedSnapshot((prev) => ({ ...prev, [matchIndex]: { home: nextH, away: nextA } }));
       setLivePredictionsData((prev) => {
         const next = { ...prev };
         delete next[activeBulletinWeek];
@@ -543,19 +503,6 @@ export default function PredictionPortal() {
     return counts;
   }, [predictions]);
 
-  const overLimitScores = useMemo(() => {
-    return Object.entries(scoreUsageCounts).filter(([, cnt]) => cnt > MAX_SAME_SCORE_LIMIT);
-  }, [scoreUsageCounts]);
-
-  const hasUnsavedChanges = useMemo(() => {
-    return Object.keys(predictions).some((k) => {
-      const idx = Number(k);
-      const cur = predictions[idx];
-      const old = savedSnapshot[idx] || { home: '-', away: '-' };
-      return cur?.home !== old.home || cur?.away !== old.away;
-    });
-  }, [predictions, savedSnapshot]);
-
   const handleTahminmatikChange = (matchId: number, type: 'home' | 'away', val: string) => {
     setTahminmatikScores((prev) => {
       const cur = prev[matchId] || { home: '-', away: '-' };
@@ -588,173 +535,6 @@ export default function PredictionPortal() {
 
       return { ...prev, [matchId]: { home: String(h), away: String(a) } };
     });
-  };
-
-  const handleTahminMatikRastgele = async () => {
-    if (!loggedUserId || !activeBulletinWeek) return;
-
-    const newPreds: Record<number, { home: string; away: string }> = { ...predictionsRef.current };
-    const upsertRows: any[] = [];
-
-    if (isSlowUser) {
-      const shuffled = [...TROLL_SPORT_SCORES].sort(() => Math.random() - 0.5);
-      let sIdx = 0;
-      Object.keys(newPreds).forEach((matchIndex) => {
-        const mId = Number(matchIndex);
-        const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === mId);
-        const isLocked = matchObj && Date.now() >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
-        if (!isLocked && (newPreds[mId].home === '-' || newPreds[mId].away === '-')) {
-          const pick = shuffled[sIdx % shuffled.length];
-          sIdx++;
-          newPreds[mId] = { home: pick.home, away: pick.away };
-        }
-      });
-      predictionsRef.current = newPreds;
-      setPredictions(newPreds);
-      return;
-    }
-
-    const scoreCounts: Record<string, number> = {};
-    Object.keys(newPreds).forEach((key) => {
-      const m = newPreds[Number(key)];
-      if (m.home !== '-' && m.away !== '-') {
-        const s = `${m.home}-${m.away}`;
-        scoreCounts[s] = (scoreCounts[s] || 0) + 1;
-      }
-    });
-
-    const generateValidRandomScore = () => {
-      let attempts = 0;
-      while (attempts < 250) {
-        const h = Math.floor(Math.random() * 4);
-        const a = Math.floor(Math.random() * 4);
-        const s = `${h}-${a}`;
-        if ((scoreCounts[s] || 0) < MAX_SAME_SCORE_LIMIT) {
-          scoreCounts[s] = (scoreCounts[s] || 0) + 1;
-          return { home: h.toString(), away: a.toString() };
-        }
-        attempts++;
-      }
-      return { home: '2', away: '1' };
-    };
-
-    Object.keys(newPreds).forEach((matchIndex) => {
-      const mId = Number(matchIndex);
-      const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === mId);
-      const isLocked = matchObj && Date.now() >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
-
-      if (!isLocked && (newPreds[mId].home === '-' || newPreds[mId].away === '-')) {
-        const picked = generateValidRandomScore();
-        newPreds[mId] = picked;
-        upsertRows.push({
-          user_id: loggedUserId,
-          week_num: activeBulletinWeek,
-          match_index: mId,
-          predicted_score: `${picked.home}-${picked.away}`
-        });
-      }
-    });
-
-    predictionsRef.current = newPreds;
-    setPredictions(newPreds);
-
-    if (upsertRows.length > 0) {
-      setIsSaving(true);
-      const { error } = await supabase
-        .from('player_predictions')
-        .upsert(upsertRows, { onConflict: 'user_id,week_num,match_index' });
-      if (!error) {
-        setSavedSnapshot(JSON.parse(JSON.stringify(newPreds)));
-        setLivePredictionsData((prev) => {
-          const next = { ...prev };
-          delete next[activeBulletinWeek];
-          return next;
-        });
-      }
-      setIsSaving(false);
-    }
-  };
-
-  const savePredictions = async () => {
-    if (!loggedUserId) return;
-
-    if (overLimitScores.length > 0) {
-      const [badSc, badCnt] = overLimitScores[0];
-      alert(
-        `⚠️ KOTA AŞIMI!\n"${badSc}" skorunu bültende ${badCnt} kez seçtiniz.\nBir bültende aynı skoru en fazla ${MAX_SAME_SCORE_LIMIT} kez kullanabilirsiniz! (%25 Kuralı)`
-      );
-      return;
-    }
-
-    setIsSaving(true);
-
-    if (isSlowUser) {
-      if (!firstSealTimeoutTriggeredRef.current) {
-        await new Promise((r) => setTimeout(r, 6500));
-        firstSealTimeoutTriggeredRef.current = true;
-        setIsSaving(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        alert('⚠️ Sunucu yoğunluğu nedeniyle bağlantı zaman aşımına uğradı (Kod: 504). Lütfen tekrar deneyin.');
-        return;
-      }
-      await new Promise((r) => setTimeout(r, 6000));
-    }
-
-    try {
-      const upsertRows: any[] = [];
-      const clearedMatchIds: number[] = [];
-
-      Object.keys(predictions).forEach((matchIndex) => {
-        const mId = Number(matchIndex);
-        const matchObj = bulletinMap[activeBulletinWeek]?.find((m: any) => m.id === mId);
-        const isLocked = matchObj && now >= getMatchTimeMs(matchObj.date, matchObj.time) - lockBufferMs;
-        if (isLocked) return;
-
-        const hVal = predictions[mId].home;
-        const aVal = predictions[mId].away;
-        if (hVal === '-' || aVal === '-') {
-          const oldSnap = savedSnapshot[mId];
-          if (oldSnap && oldSnap.home !== '-' && oldSnap.away !== '-') {
-            clearedMatchIds.push(mId);
-          }
-          return;
-        }
-
-        upsertRows.push({
-          user_id: loggedUserId,
-          week_num: activeBulletinWeek,
-          match_index: mId,
-          predicted_score: `${hVal}-${aVal}`
-        });
-      });
-
-      if (clearedMatchIds.length > 0) {
-        await supabase
-          .from('player_predictions')
-          .delete()
-          .eq('user_id', loggedUserId)
-          .eq('week_num', activeBulletinWeek)
-          .in('match_index', clearedMatchIds);
-      }
-
-      if (upsertRows.length > 0) {
-        const { error } = await supabase
-          .from('player_predictions')
-          .upsert(upsertRows, { onConflict: 'user_id,week_num,match_index' });
-        if (error) throw error;
-      }
-
-      setSavedSnapshot(JSON.parse(JSON.stringify(predictions)));
-      setLivePredictionsData((prev) => {
-        const next = { ...prev };
-        delete next[activeBulletinWeek];
-        return next;
-      });
-      setShowSuccessModal(true);
-    } catch {
-      alert('❌ Kayıt sırasında bir hata oluştu!');
-    }
-    setIsSaving(false);
   };
 
   const toggleSortOrder = () => {
@@ -825,25 +605,7 @@ export default function PredictionPortal() {
   const filledCount = Object.values(predictions).filter((p) => p.home !== '-' && p.away !== '-').length;
 
   return (
-    <div className="min-h-screen bg-[#050b14] text-slate-200 px-2 sm:px-4 pt-3 pb-28 font-sans">
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-7 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)]">
-            <div className="text-5xl mb-4">🏆</div>
-            <h3 className="text-2xl font-black text-emerald-400 mb-2 tracking-widest">MÜHÜRLENDİ!</h3>
-            <p className="text-slate-300 font-medium mb-6 text-xs sm:text-sm leading-relaxed">
-              Tüm bülten tahminleriniz kontrol edilerek sisteme mühürlendi. Maç başlama saatine kadar kartların ortasındaki + / - sütunlarından skorunuzu anlık güncelleyebilirsiniz.
-            </p>
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl uppercase cursor-pointer"
-            >
-              TAMAM
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="min-h-screen bg-[#050b14] text-slate-200 px-2 sm:px-4 pt-3 pb-12 font-sans">
       <div className="max-w-6xl mx-auto space-y-4">
         {!isVisitor && (
           <div className="bg-[#071126] border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2 shadow-lg">
@@ -919,13 +681,6 @@ export default function PredictionPortal() {
                     <span className="text-xs font-black text-emerald-300 bg-emerald-950/70 border border-emerald-500/50 px-3.5 py-1 rounded-full">
                       MÜHÜRLENEN: {filledCount} / {activeMatchesList.length} MAÇ
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleTahminMatikRastgele}
-                      className="px-3.5 py-1.5 rounded-xl bg-indigo-700 hover:bg-indigo-600 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer"
-                    >
-                      🎲 Boş Maçları Rastgele Doldur
-                    </button>
                   </div>
                 </div>
 
@@ -1169,32 +924,6 @@ export default function PredictionPortal() {
                       </div>
                     );
                   })}
-                </div>
-
-                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[94%] max-w-xl bg-[#040a18]/95 backdrop-blur-md border-2 border-emerald-500/70 rounded-2xl px-4 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3">
-                  <div className="text-left min-w-0">
-                    <div className="text-[11px] sm:text-xs font-black text-white truncate">
-                      {autoSavingMatchId !== null
-                        ? '⏳ Tahmininiz otomatik mühürleniyor...'
-                        : hasUnsavedChanges
-                        ? '⚡ Senkronize edilmemiş değişiklik var!'
-                        : `✓ ${filledCount}/${activeMatchesList.length} maç otomatik mühürlü`}
-                    </div>
-                    <div className="text-[9.5px] font-bold text-emerald-300">
-                      {overLimitScores.length > 0
-                        ? `⚠️ ${overLimitScores[0][0]} skoru sınırı aştı (${overLimitScores[0][1]}/${MAX_SAME_SCORE_LIMIT})`
-                        : `Aynı skor kotası aktif (Maks. ${MAX_SAME_SCORE_LIMIT} • %25 Kuralı)`}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={isSaving || overLimitScores.length > 0}
-                    onClick={savePredictions}
-                    className="shrink-0 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(16,185,129,0.45)] cursor-pointer transition-all"
-                  >
-                    {isSaving ? 'KAYDEDİLİYOR...' : '✅ TÜMÜNÜ MÜHÜRLE'}
-                  </button>
                 </div>
               </div>
             )}
