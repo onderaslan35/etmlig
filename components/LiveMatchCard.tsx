@@ -3099,22 +3099,44 @@ export default function LiveMatchCard() {
                     </span>
                   </button>
 
-                  {activeBulletinWeeks.length > 1 && (
-                    <select
-                      value={effectiveBulletinWeek}
-                      onChange={(e) => {
-                        setSelectedBulletinWeek(Number(e.target.value));
-                        setIsWeekLiveOpen(true);
-                      }}
-                      className="bg-[#040917] border border-emerald-500/40 text-emerald-300 text-[9.5px] sm:text-[10.5px] font-black rounded-lg px-1.5 py-0.5 outline-none cursor-pointer"
-                    >
-                      {activeBulletinWeeks.map((w) => (
-                        <option key={w} value={w} className="bg-[#071126] text-white">
-                          {w}. Hafta
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  {(() => {
+                    // Kapanmış bültenin (örn. 44) altındaki eski 0/24 haftaları (41, 42, 43) listeden temizle; sadece 45, 46, 47 gibi kesintisiz aktif/gelecek haftaları tut
+                    const sortedAsc = [...activeBulletinWeeks].map(Number).sort((a, b) => a - b);
+                    let cleanStartIdx = 0;
+                    for (let i = sortedAsc.length - 1; i > 0; i--) {
+                      if (sortedAsc[i] - sortedAsc[i - 1] > 1) {
+                        cleanStartIdx = i;
+                        break;
+                      }
+                    }
+                    const cleanActiveWeeks = sortedAsc.slice(cleanStartIdx);
+
+                    if (
+                      cleanActiveWeeks.length > 0 &&
+                      !cleanActiveWeeks.includes(Number(effectiveBulletinWeek))
+                    ) {
+                      setTimeout(() => setSelectedBulletinWeek(cleanActiveWeeks[0]), 0);
+                    }
+
+                    if (cleanActiveWeeks.length <= 1) return null;
+
+                    return (
+                      <select
+                        value={effectiveBulletinWeek}
+                        onChange={(e) => {
+                          setSelectedBulletinWeek(Number(e.target.value));
+                          setIsWeekLiveOpen(true);
+                        }}
+                        className="bg-[#040917] border border-emerald-500/40 text-emerald-300 text-[9.5px] sm:text-[10.5px] font-black rounded-lg px-1.5 py-0.5 outline-none cursor-pointer"
+                      >
+                        {cleanActiveWeeks.map((w) => (
+                          <option key={w} value={w} className="bg-[#071126] text-white">
+                            {w}. Hafta
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  })()}
                 </div>
 
                 {isWeekLiveOpen && (
