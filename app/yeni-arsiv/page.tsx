@@ -1346,9 +1346,10 @@ export default function YeniArsivPage() {
     }
 
     return (
-      <div className="w-full -mx-1 sm:mx-0 text-left tabular-nums select-none">
+      <div className="w-full text-left tabular-nums select-none">
+        {/* DONDURULMUŞ SÜTUN BAŞLIĞI */}
         <div
-          className={`bg-[#050c1d] border-b border-slate-800 flex items-end w-full uppercase font-black transition-all duration-300 ${
+          className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 shadow-[0_4px_10px_rgba(0,0,0,0.45)] flex items-end w-full uppercase font-black transition-all duration-300 ${
             isDetailOpen ? 'h-12 sm:h-11 text-[10px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
           }`}
         >
@@ -1370,11 +1371,11 @@ export default function YeniArsivPage() {
             YARIŞMACI
           </div>
 
-          {/* DFO (3 hane: 27px) | TFF (3 hane: 26px) | SKOR (3 hane: 25px) | BNS (+2 hane: 22px) = 100px */}
+          {/* DFO (27px) | TFF (26px) | SKOR (24px) | BNS (22px) = 99px */}
           <div
             className={`flex items-end shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
               isDetailOpen
-                ? 'w-[100px] sm:w-[288px] opacity-100 translate-x-0 py-1.5 sm:py-2'
+                ? 'w-[99px] sm:w-[288px] opacity-100 translate-x-0 py-1.5 sm:py-2'
                 : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
             }`}
           >
@@ -1388,7 +1389,7 @@ export default function YeniArsivPage() {
                 TFF
               </span>
             </div>
-            <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-orange-400">
+            <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 SKOR
               </span>
@@ -1400,22 +1401,23 @@ export default function YeniArsivPage() {
             </div>
           </div>
 
+          {/* MASTER BAŞLIĞI: TAM ORTALI VE CAN ALICI ALTIN VURGULU */}
           <button
             type="button"
             onClick={onToggleDetail}
             title={isDetailOpen ? 'Sadece Master Göster' : 'Detaylı Sütunları Sağdan Sola Aç'}
-            className={`shrink-0 self-stretch flex items-end bg-sky-500/15 hover:bg-sky-500/25 text-sky-100 transition-all duration-300 cursor-pointer ${
+            className={`shrink-0 self-stretch flex items-end justify-center text-center bg-amber-500/25 hover:bg-amber-500/35 border-l border-amber-400/35 text-amber-200 transition-all duration-300 cursor-pointer ${
               isDetailOpen
-                ? 'w-[33px] sm:w-24 pr-[2px] sm:pr-0 justify-end sm:justify-center py-1.5 sm:py-2'
-                : 'w-20 sm:w-36 py-2 px-2 justify-end sm:justify-center'
+                ? 'w-[34px] sm:w-24 py-1.5 sm:py-2 px-0'
+                : 'w-20 sm:w-36 py-2 px-2'
             }`}
           >
             {isDetailOpen ? (
-              <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
-                MASTER <span className="hidden sm:inline text-sky-300">▶</span>
+              <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none text-amber-300">
+                MASTER <span className="hidden sm:inline text-amber-200">▶</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 leading-none tracking-wider">
+              <span className="inline-flex items-center justify-center gap-1 leading-none tracking-wider text-amber-200">
                 <span className="text-amber-300 text-[9px] sm:text-[10px]">◀</span>
                 <span>MASTER</span>
               </span>
@@ -1433,7 +1435,6 @@ export default function YeniArsivPage() {
                   : 'hover:bg-slate-800/35'
               }`}
             >
-              {/* SIRA RAKAMI: EN SOLA YASLI VE OKUNAKLI */}
               <div
                 className={`shrink-0 py-[11px] sm:py-3 font-bold text-slate-400 transition-all duration-300 ${
                   isDetailOpen
@@ -1444,7 +1445,6 @@ export default function YeniArsivPage() {
                 {idx + 1}
               </div>
 
-              {/* İSİM + ARMA + KUPA + ÇİFT HANE CANLI PUAN (HÜDAVERDİ TOPARDİÇ KISTASI: DFO'YA DEĞDİ DEĞECEK KADAR DOLGUN) */}
               <div
                 className={`flex-1 min-w-0 py-[11px] sm:py-3 font-black text-white transition-all duration-300 ${
                   isDetailOpen
@@ -1463,11 +1463,10 @@ export default function YeniArsivPage() {
                 )}
               </div>
 
-              {/* DFO (3 hane) | TFF (3 hane) | SKOR (3 hane) | BNS (+2 hane) */}
               <div
                 className={`flex items-center shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
                   isDetailOpen
-                    ? 'w-[100px] sm:w-[288px] opacity-100 translate-x-0 py-[11px] sm:py-3'
+                    ? 'w-[99px] sm:w-[288px] opacity-100 translate-x-0 py-[11px] sm:py-3'
                     : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
                 }`}
               >
@@ -1477,7 +1476,7 @@ export default function YeniArsivPage() {
                 <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.tffPts}
                 </div>
-                <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.totalSkor}
                 </div>
                 <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
@@ -1485,12 +1484,12 @@ export default function YeniArsivPage() {
                 </div>
               </div>
 
-              {/* MASTER PUANI */}
+              {/* MASTER DEĞERİ: 1, 2 VE 3 HANEDE TAM ORTALI VE PARLAK ALTIN ARKA PLANLI */}
               <div
-                className={`shrink-0 self-stretch flex items-center bg-sky-500/10 font-black text-white transition-all duration-300 ${
+                className={`shrink-0 self-stretch flex items-center justify-center text-center bg-amber-500/15 border-l border-amber-400/25 font-black text-amber-300 transition-all duration-300 ${
                   isDetailOpen
-                    ? 'w-[33px] sm:w-24 pr-[2px] sm:pr-0 justify-end sm:justify-center text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none'
-                    : 'w-20 sm:w-36 pr-2.5 sm:pr-0 justify-end sm:justify-center text-sm sm:text-lg'
+                    ? 'w-[34px] sm:w-24 px-0 text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none'
+                    : 'w-20 sm:w-36 px-0 text-sm sm:text-lg'
                 }`}
               >
                 {row.masterPts}
@@ -1548,15 +1547,23 @@ export default function YeniArsivPage() {
         ? 'text-rose-500'
         : metric.startsWith('SKOR')
         ? 'text-orange-400'
-        : 'text-sky-200';
+        : 'text-amber-300';
 
     return (
       <table className="w-full table-fixed text-left tabular-nums">
-        <thead className=" bg-[#050c1d] border-b border-slate-800">
+        <thead>
           <tr className="text-[11px] sm:text-xs uppercase tracking-wider font-black">
-            <th className="py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">#</th>
-            <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
-            <th className={`py-2.5 px-2.5 sm:px-3 w-28 sm:w-40 text-right ${colColor}`}>{colTitle}</th>
+            <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">
+              #
+            </th>
+            <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-1.5 sm:px-3 text-slate-200">
+              YARIŞMACI
+            </th>
+            <th
+              className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-2 sm:px-3 w-28 sm:w-40 text-center ${colColor}`}
+            >
+              {colTitle}
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/70">
@@ -1580,9 +1587,9 @@ export default function YeniArsivPage() {
                   {idx + 1}
                 </td>
                 <td className="py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white text-[13px] sm:text-base">
-                  {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
+                  {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam, row.id)}
                 </td>
-                <td className={`py-2.5 sm:py-3 px-2.5 sm:px-3 text-right font-black text-sm sm:text-lg ${colColor}`}>
+                <td className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center font-black text-sm sm:text-lg ${colColor}`}>
                   {val}
                 </td>
               </tr>
@@ -1605,11 +1612,15 @@ export default function YeniArsivPage() {
 
     return (
       <table className="w-full table-fixed text-left tabular-nums">
-        <thead className=" bg-[#050c1d] border-b border-slate-800">
+        <thead>
           <tr className="text-[11px] sm:text-xs uppercase tracking-wider font-black">
-            <th className="py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">#</th>
-            <th className="py-2.5 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</th>
-            <th className="py-2.5 px-2.5 sm:px-3 w-28 sm:w-40 text-right text-emerald-400">
+            <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-2 sm:px-3 w-9 sm:w-14 text-slate-400">
+              #
+            </th>
+            <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-1.5 sm:px-3 text-slate-200">
+              YARIŞMACI
+            </th>
+            <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-2 sm:px-3 w-28 sm:w-40 text-center text-emerald-400">
               BONUS PUAN
             </th>
           </tr>
@@ -1621,9 +1632,9 @@ export default function YeniArsivPage() {
                 {idx + 1}
               </td>
               <td className="py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white text-[13px] sm:text-base">
-                {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
+                {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam, row.id)}
               </td>
-              <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 text-right font-black text-sm sm:text-lg text-emerald-400">
+              <td className="py-2.5 sm:py-3 px-2 sm:px-3 text-center font-black text-sm sm:text-lg text-emerald-400">
                 +{row.bonusPts}
               </td>
             </tr>
@@ -1685,7 +1696,7 @@ export default function YeniArsivPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-colors border ${
+              className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-colors border cursor-pointer ${
                 isAct
                   ? 'bg-blue-600 text-white border-sky-400/70'
                   : 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
@@ -1699,9 +1710,9 @@ export default function YeniArsivPage() {
 
       {/* ===================== 1. SEKME: GENEL PUAN DURUMU ===================== */}
       {activeTab === 'TOTAL_STANDINGS' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-[#071126] border-b border-slate-800">
-            <div className="min-h-[48px] px-2.5 sm:px-5 py-2 flex items-center justify-between gap-2">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800">
+            <div className="h-12 px-2.5 sm:px-5 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setIsStandingsMenuOpen((prev) => !prev)}
@@ -1779,7 +1790,7 @@ export default function YeniArsivPage() {
             </div>
 
             {isStandingsMenuOpen && (
-              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-col gap-2.5">
+              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-col gap-2.5 shadow-2xl">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
@@ -1930,7 +1941,7 @@ export default function YeniArsivPage() {
             )}
           </div>
 
-          <div className="px-1 pb-4 sm:px-4 sm:pb-6">
+          <div className="px-0 pb-4 sm:px-4 sm:pb-6">
             {standingsFilter === 'CANLI' &&
               renderSlidingMasterTable(
                 totalStandings.canli,
@@ -1959,21 +1970,25 @@ export default function YeniArsivPage() {
             {standingsFilter === 'SKOR' &&
               (skorSubFilter === 'DETAYLI' ? (
                 <table className="w-full table-fixed text-left tabular-nums">
-                  <thead className=" bg-[#050c1d] border-b border-slate-800">
+                  <thead>
                     <tr className="text-[10px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
-                      <th className="py-2 px-1 sm:px-3 w-[24px] sm:w-12 text-slate-400 align-bottom">#</th>
-                      <th className="py-2 px-1 sm:px-3 text-slate-200 align-bottom">YARIŞMACI</th>
-                      <th className="py-1.5 px-0 w-[28px] sm:w-24 text-center text-sky-400 align-bottom">
+                      <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2 pl-[2px] pr-0.5 sm:px-3 w-[22px] sm:w-12 text-slate-400 align-bottom">
+                        #
+                      </th>
+                      <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2 px-1 sm:px-3 text-slate-200 align-bottom">
+                        YARIŞMACI
+                      </th>
+                      <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-1.5 px-0 w-[28px] sm:w-24 text-center text-sky-400 align-bottom">
                         <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                           DFO
                         </span>
                       </th>
-                      <th className="py-1.5 px-0 w-[28px] sm:w-24 text-center text-rose-500 align-bottom">
+                      <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-1.5 px-0 w-[28px] sm:w-24 text-center text-rose-500 align-bottom">
                         <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                           TFF
                         </span>
                       </th>
-                      <th className="py-1.5 px-1 sm:px-3 w-[36px] sm:w-28 text-center text-orange-400 bg-orange-500/10 align-bottom">
+                      <th className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-1.5 px-0 sm:px-3 w-[36px] sm:w-28 text-center text-orange-300 border-l border-orange-400/30 align-bottom">
                         <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                           SKOR
                         </span>
@@ -1983,19 +1998,19 @@ export default function YeniArsivPage() {
                   <tbody className="divide-y divide-slate-800/70">
                     {sortSkorMaster(totalStandings.kesin).map((row, idx) => (
                       <tr key={row.id} className="hover:bg-slate-800/35 transition-colors">
-                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 font-bold text-slate-400 text-[11.5px] sm:text-[15px]">
+                        <td className="py-[11px] sm:py-3 pl-[2px] pr-0.5 sm:px-3 font-bold text-slate-400 text-[12px] sm:text-[15px]">
                           {idx + 1}
                         </td>
-                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 font-black text-white text-[12px] sm:text-[15px]">
-                          {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam)}
+                        <td className="py-[11px] sm:py-3 px-1 sm:px-3 font-black text-white text-[12.8px] sm:text-[15px]">
+                          {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam, row.id, true)}
                         </td>
-                        <td className="py-2.5 sm:py-3 px-0 text-center text-sky-400 font-bold text-[12px] sm:text-[15px]">
+                        <td className="py-[11px] sm:py-3 px-0 text-center text-sky-400 font-bold text-[12.5px] sm:text-[15px]">
                           {row.dfoSkor}
                         </td>
-                        <td className="py-2.5 sm:py-3 px-0 text-center text-rose-500 font-bold text-[12px] sm:text-[15px]">
+                        <td className="py-[11px] sm:py-3 px-0 text-center text-rose-500 font-bold text-[12.5px] sm:text-[15px]">
                           {row.tffSkor}
                         </td>
-                        <td className="py-2.5 sm:py-3 px-1 sm:px-3 text-center text-orange-400 font-black text-[13px] sm:text-base bg-orange-500/10">
+                        <td className="py-[11px] sm:py-3 px-0 sm:px-3 text-center text-orange-300 font-black text-[13.5px] sm:text-base bg-orange-500/15 border-l border-orange-400/25">
                           {row.totalSkor}
                         </td>
                       </tr>
@@ -2324,7 +2339,7 @@ export default function YeniArsivPage() {
 
       {/* ===================== 3. SEKME: SEÇİLİ HAFTA ÖZETİ ===================== */}
       {activeTab === 'WEEK_CHECK' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
           {selectedWeekBonusInfo && selectedWeekBonusInfo.is_completed && (
             <div className="px-3 pt-2.5 pb-1 sm:px-5 flex flex-wrap items-center gap-2 text-[10px] font-bold border-b border-slate-800/60">
               {(selectedWeekBonusInfo.puan_lideri_ids || []).length > 0 && (
@@ -2346,8 +2361,8 @@ export default function YeniArsivPage() {
             </div>
           )}
 
-          <div className="bg-[#071126] border-b border-slate-800">
-            <div className="min-h-[48px] px-2.5 sm:px-5 py-2 flex items-center justify-between gap-2">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800">
+            <div className="h-12 px-2.5 sm:px-5 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setIsWeekSummaryMenuOpen((prev) => !prev)}
@@ -2402,7 +2417,7 @@ export default function YeniArsivPage() {
             </div>
 
             {isWeekSummaryMenuOpen && (
-              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-wrap items-center gap-1.5">
+              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-wrap items-center gap-1.5 shadow-2xl">
                 {(['MASTER', 'DETAYLI_MASTER', 'DFO', 'TFF', 'SKOR'] as const).map((wf) => (
                   <button
                     key={wf}
@@ -2428,7 +2443,7 @@ export default function YeniArsivPage() {
             )}
           </div>
 
-          <div className="px-1 pb-4 sm:px-4 sm:pb-6">
+          <div className="px-0 pb-4 sm:px-4 sm:pb-6">
             {weekSummaryFilter === 'MASTER' &&
               renderSlidingMasterTable(
                 weekSummaryRows.filter((r) => r.masterPts > 0),
@@ -2461,9 +2476,9 @@ export default function YeniArsivPage() {
 
       {/* ===================== 4. SEKME: SEÇİLİ HAFTA GENEL ===================== */}
       {activeTab === 'WEEK_CUMULATIVE' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-[#071126] border-b border-slate-800">
-            <div className="min-h-[48px] px-2.5 sm:px-5 py-2 flex items-center justify-between gap-2">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          <div className="sticky top-14 sm:top-16 z-30 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800">
+            <div className="h-12 px-2.5 sm:px-5 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setIsWeekGenelMenuOpen((prev) => !prev)}
@@ -2518,7 +2533,7 @@ export default function YeniArsivPage() {
             </div>
 
             {isWeekGenelMenuOpen && (
-              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-wrap items-center gap-1.5">
+              <div className="bg-[#040a18] border-t border-slate-800 px-3 py-3 flex flex-wrap items-center gap-1.5 shadow-2xl">
                 {(['MASTER', 'DETAYLI_MASTER', 'DFO', 'TFF', 'SKOR', 'BONUS'] as const).map((gf) => (
                   <button
                     key={gf}
@@ -2544,7 +2559,7 @@ export default function YeniArsivPage() {
             )}
           </div>
 
-          <div className="px-1 pb-4 sm:px-4 sm:pb-6">
+          <div className="px-0 pb-4 sm:px-4 sm:pb-6">
             {weekGenelFilter === 'MASTER' &&
               renderSlidingMasterTable(
                 weekGenelRows,
@@ -2560,11 +2575,11 @@ export default function YeniArsivPage() {
         </div>
       )}
 
-      {/* ===================== 5. SEKME: LİDERLER ===================== */}
+      {/* ===================== 5. SEKME: LİDERLER (BÜYÜK PUNTO + DONDURULMUŞ BAŞLIK + ALTIN MASTER) ===================== */}
       {activeTab === 'LEADERS_TIMELINE' && (
-        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-[#071126] border-b border-slate-800 px-3 py-3 sm:px-5 flex items-center justify-between gap-2">
-            <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider">
+        <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
+          <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 sm:px-5 flex items-center justify-between gap-2">
+            <h2 className="text-xs sm:text-sm font-black text-sky-100 uppercase tracking-wider truncate">
               HAFTALARA GÖRE GENEL LİDERLER
             </h2>
             <span className="text-[9.5px] sm:text-[10.5px] font-bold text-sky-400 shrink-0">
@@ -2573,39 +2588,45 @@ export default function YeniArsivPage() {
           </div>
 
           <div className="px-0 pb-4 sm:px-4 sm:pb-6">
-            <table className="w-full table-fixed text-left tabular-nums">
-              <thead className="bg-[#050c1d] border-b border-slate-800">
-                <tr className="text-[9px] sm:text-xs uppercase tracking-tight sm:tracking-wider font-black">
-                  <th className="py-2 pl-[2px] pr-0.5 sm:px-3 w-[27px] sm:w-20 text-slate-400 align-bottom">HFT</th>
-                  <th className="py-2 px-[2px] sm:px-3 text-slate-200 align-bottom">LİDER YARIŞMACI</th>
-                  <th className="py-1.5 px-0 w-[22px] sm:w-20 text-center text-sky-400 align-bottom">
+            <div className="w-full text-left tabular-nums select-none">
+              {/* LİDERLER DONDURULMUŞ SÜTUN BAŞLIĞI */}
+              <div className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 shadow-[0_4px_10px_rgba(0,0,0,0.45)] h-12 sm:h-11 flex items-end w-full uppercase font-black text-[10px] sm:text-xs">
+                <div className="w-[33px] sm:w-16 shrink-0 py-2 pl-[3px] sm:pl-3 text-slate-400">
+                  HFT
+                </div>
+                <div className="flex-1 min-w-0 py-2 px-[2px] sm:px-3 text-slate-200 tracking-wider">
+                  LİDER YARIŞMACI
+                </div>
+                <div className="flex items-end shrink-0 w-[99px] sm:w-[288px] py-1.5 sm:py-2">
+                  <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       DFO
                     </span>
-                  </th>
-                  <th className="py-1.5 px-0 w-[20px] sm:w-20 text-center text-rose-500 align-bottom">
+                  </div>
+                  <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       TFF
                     </span>
-                  </th>
-                  <th className="py-1.5 px-0 w-[19px] sm:w-20 text-center text-orange-400 align-bottom">
+                  </div>
+                  <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       SKOR
                     </span>
-                  </th>
-                  <th className="py-1.5 px-0 w-[19px] sm:w-20 text-center text-emerald-400 align-bottom">
+                  </div>
+                  <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       BNS
                     </span>
-                  </th>
-                  <th className="py-1.5 pl-0 pr-[2px] sm:px-3 w-[28px] sm:w-28 text-right sm:text-center text-sky-100 bg-sky-500/15 align-bottom">
-                    <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
-                      MASTER
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/70">
+                  </div>
+                </div>
+                <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-end justify-center text-center py-1.5 sm:py-2 bg-amber-500/25 border-l border-amber-400/35 text-amber-300">
+                  <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
+                    MASTER
+                  </span>
+                </div>
+              </div>
+
+              <div className="divide-y divide-slate-800/70">
                 {[...leadersTimeline].reverse().map((row) => {
                   const goToWeekStandings = () => {
                     setSelectedWeek(row.weekNum);
@@ -2618,7 +2639,7 @@ export default function YeniArsivPage() {
                   };
 
                   return (
-                    <tr
+                    <div
                       key={row.weekNum}
                       role="button"
                       tabIndex={0}
@@ -2630,12 +2651,12 @@ export default function YeniArsivPage() {
                         }
                       }}
                       title={`${row.weekNum}. Hafta Genel Puan Durumunu Aç`}
-                      className="group cursor-pointer hover:bg-sky-900/30 active:bg-sky-800/40 transition-colors"
+                      className="group flex items-center w-full cursor-pointer hover:bg-sky-900/30 active:bg-sky-800/40 transition-colors"
                     >
-                      <td className="py-2 pl-[2px] pr-0.5 sm:px-3 font-black text-sky-300 group-hover:text-sky-200 text-[10px] sm:text-sm underline decoration-sky-500/50 underline-offset-2">
+                      <div className="w-[33px] sm:w-16 shrink-0 py-[11px] sm:py-3 pl-[3px] sm:pl-3 font-black text-sky-300 group-hover:text-sky-200 text-[11.5px] sm:text-[15px] underline decoration-sky-500/50 underline-offset-2 leading-none tracking-tighter">
                         {row.weekNum}.H
-                      </td>
-                      <td className="py-2 px-[2px] sm:px-3 font-black text-white group-hover:text-sky-200 text-[10.8px] sm:text-sm transition-colors">
+                      </div>
+                      <div className="flex-1 min-w-0 py-[11px] sm:py-3 px-[2px] sm:px-3 font-black text-white group-hover:text-sky-200 text-[12.8px] sm:text-[15px] transition-colors">
                         {renderPlayerNameWithCup(
                           row.leaderName,
                           row.isChampion,
@@ -2644,27 +2665,29 @@ export default function YeniArsivPage() {
                           row.leaderId,
                           true
                         )}
-                      </td>
-                      <td className="py-2 px-0 text-center text-sky-400 font-bold text-[10.5px] sm:text-sm tracking-tighter sm:tracking-normal">
-                        {row.dfoPts}
-                      </td>
-                      <td className="py-2 px-0 text-center text-rose-500 font-bold text-[10.5px] sm:text-sm tracking-tighter sm:tracking-normal">
-                        {row.tffPts}
-                      </td>
-                      <td className="py-2 px-0 text-center text-orange-400 font-black text-[10.5px] sm:text-sm tracking-tighter sm:tracking-normal">
-                        {row.totalSkor}
-                      </td>
-                      <td className="py-2 px-0 text-center text-emerald-400 font-bold text-[10.5px] sm:text-sm tracking-tighter sm:tracking-normal">
-                        {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
-                      </td>
-                      <td className="py-2 pl-0 pr-[2px] sm:px-3 text-right sm:text-center text-white font-black text-[11.5px] sm:text-base bg-sky-500/10 group-hover:bg-sky-500/20 tracking-tighter sm:tracking-normal">
+                      </div>
+                      <div className="flex items-center shrink-0 w-[99px] sm:w-[288px] py-[11px] sm:py-3">
+                        <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                          {row.dfoPts}
+                        </div>
+                        <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                          {row.tffPts}
+                        </div>
+                        <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                          {row.totalSkor}
+                        </div>
+                        <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                          {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
+                        </div>
+                      </div>
+                      <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-center justify-center text-center bg-amber-500/15 group-hover:bg-amber-500/25 border-l border-amber-400/25 font-black text-amber-300 text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none">
                         {row.masterPts}
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </div>
       )}
