@@ -1356,7 +1356,7 @@ export default function YeniArsivPage() {
           <div
             className={`shrink-0 py-2 text-slate-400 transition-all duration-300 ${
               isDetailOpen
-                ? 'w-[20px] sm:w-11 pl-[2px] sm:pl-3 text-left'
+                ? 'w-[19px] sm:w-11 pl-[2px] sm:pl-3 text-left'
                 : 'w-8 sm:w-14 pl-2 sm:pl-3'
             }`}
           >
@@ -1371,54 +1371,67 @@ export default function YeniArsivPage() {
             YARIŞMACI
           </div>
 
-          {/* DFO (27px) | TFF (26px) | SKOR (24px) | BNS (22px) = 99px */}
+          {/* CANLI (DFO ÖNÜNDE) | DFO | TFF | SKOR | BNS */}
           <div
             className={`flex items-end shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
               isDetailOpen
-                ? 'w-[99px] sm:w-[288px] opacity-100 translate-x-0 py-1.5 sm:py-2'
+                ? showLiveBadge
+                  ? 'w-[119px] sm:w-[348px] opacity-100 translate-x-0 py-1.5 sm:py-2'
+                  : 'w-[95px] sm:w-[288px] opacity-100 translate-x-0 py-1.5 sm:py-2'
                 : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
             }`}
           >
-            <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400">
+            {showLiveBadge && (
+              <div className="w-[24px] sm:w-[60px] shrink-0 flex flex-col sm:flex-row items-center justify-end sm:justify-center gap-0.5 sm:gap-1 text-center text-emerald-400">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-90" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                </span>
+                <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none animate-pulse">
+                  CANLI
+                </span>
+              </div>
+            )}
+            <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-sky-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 DFO
               </span>
             </div>
-            <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500">
+            <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-rose-500">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 TFF
               </span>
             </div>
-            <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400">
+            <div className="w-[23px] sm:w-[72px] shrink-0 text-center text-orange-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 SKOR
               </span>
             </div>
-            <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400">
+            <div className="w-[21px] sm:w-[72px] shrink-0 text-center text-emerald-400">
               <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                 BNS
               </span>
             </div>
           </div>
 
-          {/* MASTER BAŞLIĞI: TAM ORTALI VE CAN ALICI ALTIN VURGULU */}
+          {/* MASTER BAŞLIĞI: GÖZ ALICI NEON FUŞYA / MOR VURGU */}
           <button
             type="button"
             onClick={onToggleDetail}
             title={isDetailOpen ? 'Sadece Master Göster' : 'Detaylı Sütunları Sağdan Sola Aç'}
-            className={`shrink-0 self-stretch flex items-end justify-center text-center bg-amber-500/25 hover:bg-amber-500/35 border-l border-amber-400/35 text-amber-200 transition-all duration-300 cursor-pointer ${
+            className={`shrink-0 self-stretch flex items-end justify-center text-center bg-fuchsia-600/35 hover:bg-fuchsia-500/45 border-l border-fuchsia-400/70 text-white shadow-[inset_0_0_14px_rgba(217,70,239,0.4)] transition-all duration-300 cursor-pointer ${
               isDetailOpen
                 ? 'w-[34px] sm:w-24 py-1.5 sm:py-2 px-0'
                 : 'w-20 sm:w-36 py-2 px-2'
             }`}
           >
             {isDetailOpen ? (
-              <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none text-amber-300">
-                MASTER <span className="hidden sm:inline text-amber-200">▶</span>
+              <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none text-fuchsia-200 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]">
+                MASTER <span className="hidden sm:inline text-white">▶</span>
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center gap-1 leading-none tracking-wider text-amber-200">
-                <span className="text-amber-300 text-[9px] sm:text-[10px]">◀</span>
+              <span className="inline-flex items-center justify-center gap-1 leading-none tracking-wider text-fuchsia-100 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]">
+                <span className="text-fuchsia-300 text-[9px] sm:text-[10px]">◀</span>
                 <span>MASTER</span>
               </span>
             )}
@@ -1438,17 +1451,18 @@ export default function YeniArsivPage() {
               <div
                 className={`shrink-0 py-[11px] sm:py-3 font-bold text-slate-400 transition-all duration-300 ${
                   isDetailOpen
-                    ? 'w-[20px] sm:w-11 pl-[2px] sm:pl-3 text-[12px] sm:text-[15px] tracking-tighter leading-none'
+                    ? 'w-[19px] sm:w-11 pl-[2px] sm:pl-3 text-[12px] sm:text-[15px] tracking-tighter leading-none'
                     : 'w-8 sm:w-14 pl-2 sm:pl-3 text-[13px] sm:text-[15px]'
                 }`}
               >
                 {idx + 1}
               </div>
 
+              {/* DETAY AÇIKKEN CANLI PUANI SAĞDAKİ SÜTUNA GEÇTİĞİ İÇİN İSİM ALANI TAM FERAH */}
               <div
                 className={`flex-1 min-w-0 py-[11px] sm:py-3 font-black text-white transition-all duration-300 ${
                   isDetailOpen
-                    ? 'pl-[1px] pr-[2px] sm:px-3 text-[12.8px] sm:text-[15px]'
+                    ? 'pl-[1px] pr-[2px] sm:px-3 text-[12.6px] sm:text-[15px]'
                     : 'px-1.5 sm:px-3 text-[13.5px] sm:text-base'
                 }`}
                 title={row.name}
@@ -1456,37 +1470,51 @@ export default function YeniArsivPage() {
                 {renderPlayerNameWithCup(
                   row.name,
                   row.isChampion,
-                  showLiveBadge ? row.liveAddPts : 0,
+                  showLiveBadge && !isDetailOpen ? row.liveAddPts : 0,
                   row.favoriteTeam,
                   row.id,
                   isDetailOpen
                 )}
               </div>
 
+              {/* CANLI (DFO ÖNÜNDE) | DFO | TFF | SKOR | BNS */}
               <div
                 className={`flex items-center shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
                   isDetailOpen
-                    ? 'w-[99px] sm:w-[288px] opacity-100 translate-x-0 py-[11px] sm:py-3'
+                    ? showLiveBadge
+                      ? 'w-[119px] sm:w-[348px] opacity-100 translate-x-0 py-[11px] sm:py-3'
+                      : 'w-[95px] sm:w-[288px] opacity-100 translate-x-0 py-[11px] sm:py-3'
                     : 'w-0 opacity-0 translate-x-4 py-0 pointer-events-none'
                 }`}
               >
-                <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                {showLiveBadge && (
+                  <div className="w-[24px] sm:w-[60px] shrink-0 text-center leading-none">
+                    {row.liveAddPts > 0 ? (
+                      <span className="inline-block bg-emerald-500/25 border border-emerald-400 text-emerald-300 font-black text-[10.5px] sm:text-xs px-[3px] sm:px-1.5 py-[2px] rounded leading-none animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.35)]">
+                        +{row.liveAddPts}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 font-bold text-[11px] sm:text-xs">-</span>
+                    )}
+                  </div>
+                )}
+                <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[12.2px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.dfoPts}
                 </div>
-                <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.2px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.tffPts}
                 </div>
-                <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                <div className="w-[23px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.2px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.totalSkor}
                 </div>
-                <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                <div className="w-[21px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[11.8px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                   {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
                 </div>
               </div>
 
-              {/* MASTER DEĞERİ: 1, 2 VE 3 HANEDE TAM ORTALI VE PARLAK ALTIN ARKA PLANLI */}
+              {/* MASTER DEĞERİ: ORTALI VE PARLAK NEON FUŞYA */}
               <div
-                className={`shrink-0 self-stretch flex items-center justify-center text-center bg-amber-500/15 border-l border-amber-400/25 font-black text-amber-300 transition-all duration-300 ${
+                className={`shrink-0 self-stretch flex items-center justify-center text-center bg-fuchsia-600/25 border-l border-fuchsia-400/55 font-black text-fuchsia-100 drop-shadow-[0_0_8px_rgba(232,121,249,0.75)] transition-all duration-300 ${
                   isDetailOpen
                     ? 'w-[34px] sm:w-24 px-0 text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none'
                     : 'w-20 sm:w-36 px-0 text-sm sm:text-lg'
@@ -1547,7 +1575,7 @@ export default function YeniArsivPage() {
         ? 'text-rose-500'
         : metric.startsWith('SKOR')
         ? 'text-orange-400'
-        : 'text-amber-300';
+        : 'text-fuchsia-200 drop-shadow-[0_0_6px_rgba(232,121,249,0.75)]';
 
     return (
       <table className="w-full table-fixed text-left tabular-nums">
@@ -1589,7 +1617,11 @@ export default function YeniArsivPage() {
                 <td className="py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white text-[13px] sm:text-base">
                   {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam, row.id)}
                 </td>
-                <td className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center font-black text-sm sm:text-lg ${colColor}`}>
+                <td
+                  className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center font-black text-sm sm:text-lg ${colColor} ${
+                    metric === 'MASTER' ? 'bg-fuchsia-600/20 border-l border-fuchsia-400/45' : ''
+                  }`}
+                >
                   {val}
                 </td>
               </tr>
@@ -1718,9 +1750,6 @@ export default function YeniArsivPage() {
                 onClick={() => setIsStandingsMenuOpen((prev) => !prev)}
                 className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 text-left group cursor-pointer"
               >
-                {standingsFilter === 'CANLI' && liveActiveMatchCount > 0 && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                )}
                 <h1 className="text-[11px] sm:text-sm font-black text-sky-100 group-hover:text-sky-300 uppercase tracking-wider truncate">
                   {standingsFilter === 'CANLI'
                     ? liveActiveMatchCount > 0
@@ -1739,6 +1768,13 @@ export default function YeniArsivPage() {
                 <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 group-hover:border-sky-400 text-[9.5px] sm:text-[10px] font-black text-amber-300">
                   {isStandingsMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
                 </span>
+                {/* SEÇENEKLERİN HEMEN SONUNDA YANIP SÖNEN CANLI YEŞİL IŞIĞI */}
+                {(liveActiveMatchCount > 0 || standingsFilter === 'CANLI') && (
+                  <span className="relative flex h-3 w-3 shrink-0 ml-0.5" title="Canlı Skor Takibi Aktif">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-95" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 animate-pulse shadow-[0_0_10px_#10b981]" />
+                  </span>
+                )}
               </button>
 
               <div className="flex items-center gap-1 shrink-0">
@@ -1777,7 +1813,7 @@ export default function YeniArsivPage() {
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
                     (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
                     masterSubFilter === 'DETAYLI'
-                      ? 'bg-indigo-600 text-white border-indigo-300/80 shadow-[0_0_12px_rgba(99,102,241,0.35)]'
+                      ? 'bg-fuchsia-600 text-white border-fuchsia-300/80 shadow-[0_0_12px_rgba(217,70,239,0.45)]'
                       : 'bg-[#040917] text-sky-300 border-slate-800 hover:border-sky-500 hover:text-white'
                   }`}
                 >
@@ -1801,13 +1837,14 @@ export default function YeniArsivPage() {
                       setMasterSubFilter('DETAYLI');
                       setIsStandingsMenuOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer inline-flex items-center gap-1.5 ${
                       standingsFilter === 'CANLI'
                         ? 'bg-emerald-700 text-white border-emerald-400/80'
                         : 'bg-[#071126] text-emerald-300 border-slate-800 hover:border-emerald-600'
                     }`}
                   >
-                    {liveActiveMatchCount > 0 ? `CANLI (${liveActiveMatchCount})` : 'CANLI'}
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>{liveActiveMatchCount > 0 ? `CANLI (${liveActiveMatchCount})` : 'CANLI'}</span>
                   </button>
 
                   <button
@@ -1837,8 +1874,8 @@ export default function YeniArsivPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI'
-                        ? 'bg-indigo-600 text-white border-indigo-300/80'
-                        : 'bg-[#071126] text-sky-300 border-slate-800 hover:border-indigo-400'
+                        ? 'bg-fuchsia-600 text-white border-fuchsia-300/80'
+                        : 'bg-[#071126] text-sky-300 border-slate-800 hover:border-fuchsia-400'
                     }`}
                   >
                     ◀ DETAYLI MASTER
@@ -2405,7 +2442,7 @@ export default function YeniArsivPage() {
                   }}
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
                     weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
-                      ? 'bg-indigo-600 text-white border-indigo-300/80'
+                      ? 'bg-fuchsia-600 text-white border-fuchsia-300/80'
                       : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2521,7 +2558,7 @@ export default function YeniArsivPage() {
                   }}
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
                     weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
-                      ? 'bg-indigo-600 text-white border-indigo-300/80'
+                      ? 'bg-fuchsia-600 text-white border-fuchsia-300/80'
                       : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2575,7 +2612,7 @@ export default function YeniArsivPage() {
         </div>
       )}
 
-      {/* ===================== 5. SEKME: LİDERLER (BÜYÜK PUNTO + DONDURULMUŞ BAŞLIK + ALTIN MASTER) ===================== */}
+      {/* ===================== 5. SEKME: LİDERLER ===================== */}
       {activeTab === 'LEADERS_TIMELINE' && (
         <div className="bg-[#071126] border border-slate-800 rounded-2xl shadow-lg">
           <div className="sticky top-14 sm:top-16 z-30 h-12 bg-[#071126]/95 backdrop-blur-md rounded-t-2xl border-b border-slate-800 px-3 sm:px-5 flex items-center justify-between gap-2">
@@ -2589,7 +2626,6 @@ export default function YeniArsivPage() {
 
           <div className="px-0 pb-4 sm:px-4 sm:pb-6">
             <div className="w-full text-left tabular-nums select-none">
-              {/* LİDERLER DONDURULMUŞ SÜTUN BAŞLIĞI */}
               <div className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 shadow-[0_4px_10px_rgba(0,0,0,0.45)] h-12 sm:h-11 flex items-end w-full uppercase font-black text-[10px] sm:text-xs">
                 <div className="w-[33px] sm:w-16 shrink-0 py-2 pl-[3px] sm:pl-3 text-slate-400">
                   HFT
@@ -2597,29 +2633,29 @@ export default function YeniArsivPage() {
                 <div className="flex-1 min-w-0 py-2 px-[2px] sm:px-3 text-slate-200 tracking-wider">
                   LİDER YARIŞMACI
                 </div>
-                <div className="flex items-end shrink-0 w-[99px] sm:w-[288px] py-1.5 sm:py-2">
-                  <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400">
+                <div className="flex items-end shrink-0 w-[95px] sm:w-[288px] py-1.5 sm:py-2">
+                  <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-sky-400">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       DFO
                     </span>
                   </div>
-                  <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500">
+                  <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-rose-500">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       TFF
                     </span>
                   </div>
-                  <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400">
+                  <div className="w-[23px] sm:w-[72px] shrink-0 text-center text-orange-400">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       SKOR
                     </span>
                   </div>
-                  <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400">
+                  <div className="w-[21px] sm:w-[72px] shrink-0 text-center text-emerald-400">
                     <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                       BNS
                     </span>
                   </div>
                 </div>
-                <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-end justify-center text-center py-1.5 sm:py-2 bg-amber-500/25 border-l border-amber-400/35 text-amber-300">
+                <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-end justify-center text-center py-1.5 sm:py-2 bg-fuchsia-600/35 border-l border-fuchsia-400/70 text-fuchsia-200 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]">
                   <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                     MASTER
                   </span>
@@ -2656,7 +2692,7 @@ export default function YeniArsivPage() {
                       <div className="w-[33px] sm:w-16 shrink-0 py-[11px] sm:py-3 pl-[3px] sm:pl-3 font-black text-sky-300 group-hover:text-sky-200 text-[11.5px] sm:text-[15px] underline decoration-sky-500/50 underline-offset-2 leading-none tracking-tighter">
                         {row.weekNum}.H
                       </div>
-                      <div className="flex-1 min-w-0 py-[11px] sm:py-3 px-[2px] sm:px-3 font-black text-white group-hover:text-sky-200 text-[12.8px] sm:text-[15px] transition-colors">
+                      <div className="flex-1 min-w-0 py-[11px] sm:py-3 px-[2px] sm:px-3 font-black text-white group-hover:text-sky-200 text-[12.6px] sm:text-[15px] transition-colors">
                         {renderPlayerNameWithCup(
                           row.leaderName,
                           row.isChampion,
@@ -2666,21 +2702,21 @@ export default function YeniArsivPage() {
                           true
                         )}
                       </div>
-                      <div className="flex items-center shrink-0 w-[99px] sm:w-[288px] py-[11px] sm:py-3">
-                        <div className="w-[27px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                      <div className="flex items-center shrink-0 w-[95px] sm:w-[288px] py-[11px] sm:py-3">
+                        <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-sky-400 font-bold text-[12.2px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                           {row.dfoPts}
                         </div>
-                        <div className="w-[26px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                        <div className="w-[25px] sm:w-[72px] shrink-0 text-center text-rose-500 font-bold text-[12.2px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                           {row.tffPts}
                         </div>
-                        <div className="w-[24px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.5px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                        <div className="w-[23px] sm:w-[72px] shrink-0 text-center text-orange-400 font-black text-[12.2px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                           {row.totalSkor}
                         </div>
-                        <div className="w-[22px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[12px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
+                        <div className="w-[21px] sm:w-[72px] shrink-0 text-center text-emerald-400 font-bold text-[11.8px] sm:text-[15px] tracking-tighter sm:tracking-normal leading-none">
                           {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
                         </div>
                       </div>
-                      <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-center justify-center text-center bg-amber-500/15 group-hover:bg-amber-500/25 border-l border-amber-400/25 font-black text-amber-300 text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none">
+                      <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-center justify-center text-center bg-fuchsia-600/25 group-hover:bg-fuchsia-500/35 border-l border-fuchsia-400/55 font-black text-fuchsia-100 drop-shadow-[0_0_8px_rgba(232,121,249,0.75)] text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none">
                         {row.masterPts}
                       </div>
                     </div>
