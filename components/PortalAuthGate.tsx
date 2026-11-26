@@ -216,7 +216,7 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
                   YARIŞMACI GİRİŞİ
                 </h2>
                 <p className="text-xs text-slate-300 mb-5 leading-relaxed">
-                  Maç kartlarının üzerinde <strong className="text-amber-300">+ / -</strong> ile anında skor tahmini yapın, canlı maçlarda size özel <strong className="text-emerald-300">sevinç</strong> ve <strong className="text-rose-300">hüzün</strong> efektlerini açın.
+                  Maç kartlarının üzerinde <strong className="text-amber-300">+ / -</strong> ile anında skor tahmini yapın <strong className="text-emerald-300"></strong>  <strong className="text-rose-300"></strong> 
                 </p>
 
                 <form onSubmit={handleContestantLogin} className="space-y-3">
