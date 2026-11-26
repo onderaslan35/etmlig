@@ -48,15 +48,28 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: 'PUAN DURUMLARI VE ARŞİV', path: '/yeni-arsiv' },
+    { name: 'PUAN DURUMLARI VE ARŞİV', path: '/yeni-arsiv', isCanli: false },
     {
-      name: isVisitor ? '📜 RESMİ DEKLARASYON' : 'TAHMİNLER',
-      path: '/tahmin'
+      name: isVisitor ? 'RESMİ DEKLARASYON' : 'TAHMİNLER',
+      path: '/tahmin',
+      isCanli: false
     },
-    { name: '🔴 CANLI', path: '/canli', isCanli: true }
+    { name: 'CANLI', path: '/canli', isCanli: true }
   ];
 
   const isAdminActive = pathname?.startsWith('/admin');
+
+  const desktopBtnCls = (active: boolean) =>
+    `px-4 xl:px-5 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap bg-black text-white inline-flex items-center justify-center gap-2 ${
+      active
+        ? 'border-2 border-white shadow-[0_0_14px_rgba(255,255,255,0.2)]'
+        : 'border border-slate-700 hover:border-white'
+    }`;
+
+  const mobileBtnCls = (active: boolean) =>
+    `px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all bg-black text-white flex items-center gap-2 ${
+      active ? 'border-2 border-white' : 'border border-slate-700'
+    }`;
 
   const renderAuthBadge = (compactMobile: boolean = false) => {
     if (!portalSession) return null;
@@ -127,33 +140,20 @@ export default function Navbar() {
                   pathname === link.path ||
                   (link.path === '/tahmin' && pathname === '/tahminler');
 
-                if (link.isCanli) {
-                  return (
-                    <Link
-                      key={link.path}
-                      href={link.path}
-                      className={`px-3.5 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
-                        isActive
-                          ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)] scale-105'
-                          : 'text-rose-500/80 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30'
-                      }`}
-                    >
-                      <span className={isActive ? 'animate-pulse' : ''}>{link.name}</span>
-                    </Link>
-                  );
-                }
-
                 return (
                   <Link
                     key={link.path}
                     href={link.path}
-                    className={`px-4 xl:px-5 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap bg-black text-white ${
-                      isActive
-                        ? 'border-2 border-white shadow-[0_0_14px_rgba(255,255,255,0.2)]'
-                        : 'border border-slate-700 hover:border-white'
-                    }`}
+                    className={desktopBtnCls(isActive)}
                   >
-                    {link.name}
+                    {link.isCanli && (
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] shrink-0 ${
+                          isActive ? 'animate-pulse' : ''
+                        }`}
+                      />
+                    )}
+                    <span>{link.name}</span>
                   </Link>
                 );
               })}
@@ -161,21 +161,14 @@ export default function Navbar() {
 
             <div className="flex-1 flex items-center justify-end">
               {!isVisitor && (
-                <Link
-                  href="/admin"
-                  className={`px-3.5 xl:px-4 py-2.5 rounded-xl text-[10px] xl:text-xs font-black tracking-widest uppercase transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
-                    isAdminActive
-                      ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.3)] scale-105'
-                      : 'text-rose-500/70 hover:text-rose-400 hover:bg-rose-950/30'
-                  }`}
-                >
-                  <span className="text-sm drop-shadow-md">🛡️</span> YÖNETİM
+                <Link href="/admin" className={desktopBtnCls(Boolean(isAdminActive))}>
+                  YÖNETİM
                 </Link>
               )}
             </div>
           </div>
 
-          {/* MOBİL ÜST BAR: SOLDA BAŞLIK - ORTADA İSİM/ÇIKIŞ - SAĞDA MENÜ BUTONU */}
+          {/* MOBİL ÜST BAR */}
           <div className="lg:hidden flex items-center justify-between gap-1.5 w-full px-1">
             <Link
               href="/yeni-arsiv"
@@ -214,33 +207,21 @@ export default function Navbar() {
               pathname === link.path ||
               (link.path === '/tahmin' && pathname === '/tahminler');
 
-            if (link.isCanli) {
-              return (
-                <Link
-                  key={link.path}
-                  href={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${
-                    isActive
-                      ? 'bg-rose-950/80 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(225,29,72,0.4)]'
-                      : 'text-rose-500/80 hover:bg-rose-950/40 hover:text-rose-400'
-                  }`}
-                >
-                  <span className={isActive ? 'animate-pulse' : ''}>{link.name}</span>
-                </Link>
-              );
-            }
-
             return (
               <Link
                 key={link.path}
                 href={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all bg-black text-white ${
-                  isActive ? 'border-2 border-white' : 'border border-slate-700'
-                }`}
+                className={mobileBtnCls(isActive)}
               >
-                {link.name}
+                {link.isCanli && (
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] shrink-0 ${
+                      isActive ? 'animate-pulse' : ''
+                    }`}
+                  />
+                )}
+                <span>{link.name}</span>
               </Link>
             );
           })}
@@ -249,13 +230,9 @@ export default function Navbar() {
             <Link
               href="/admin"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`px-4 py-3.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2 ${
-                isAdminActive
-                  ? 'bg-rose-950/80 text-rose-400 border border-rose-500/50'
-                  : 'text-rose-500/70 hover:bg-rose-950/30 hover:text-rose-400'
-              }`}
+              className={mobileBtnCls(Boolean(isAdminActive))}
             >
-              <span className="text-lg">🛡️</span> YÖNETİM
+              YÖNETİM
             </Link>
           )}
         </div>

@@ -2445,7 +2445,7 @@ export default function LiveMatchCard() {
                       <span className="text-slate-300 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
                     </div>
                   )}
-                  {/* ORTA ANA SKOR KUTUSU: MAÇ BAŞLAMADIYSA YARIŞMACI BURADAN DİREKT SEÇER / + - YAPAR */}
+                  {/* ORTA GERÇEK SKOR KUTUSU: MAÇ BAŞLAMADIYSA DİKEY (+ ÜSTTE / BÜYÜK SKOR / - ALTTA), BAŞLAYINCA CANLI SKOR */}
                   {(() => {
                     const isMatchOpenForPred =
                       !isLiveStatus &&
@@ -2473,92 +2473,86 @@ export default function LiveMatchCard() {
                         <div
                           onClick={(e) => e.stopPropagation()}
                           className={`w-full bg-[#080d1a]/90 border ${
-                            mySavedPred ? 'border-emerald-400/80 shadow-[0_0_18px_rgba(16,185,129,0.25)]' : theme.scoreBorder
-                          } py-1.5 px-1.5 rounded-xl flex flex-col items-center justify-center gap-1 backdrop-blur-md`}
+                            savingCardKey === myPredKey
+                              ? 'border-amber-400 animate-pulse'
+                              : mySavedPred
+                              ? 'border-emerald-400/80 shadow-[0_0_18px_rgba(16,185,129,0.25)]'
+                              : theme.scoreBorder
+                          } py-2 px-2 rounded-xl flex items-center justify-center gap-2.5 sm:gap-3.5 backdrop-blur-md`}
                         >
-                          <div className="flex items-center justify-center gap-1 sm:gap-1.5 w-full">
-                            {/* EV SAHİBİ - / SEÇİCİ / + */}
-                            <div className="flex items-center bg-black/70 border border-slate-700/80 rounded-lg overflow-hidden">
-                              <button
-                                type="button"
-                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', -1)}
-                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-rose-800 text-slate-200 font-black text-xs flex items-center justify-center cursor-pointer"
-                              >
-                                −
-                              </button>
-                              <select
-                                value={myH}
-                                onChange={(e) =>
-                                  handleLiveCardDirectSelect(match.week_num, match.id, 'home', e.target.value)
-                                }
-                                className={`w-7 h-8 sm:w-8 sm:h-9 bg-transparent text-center font-black text-base sm:text-xl outline-none appearance-none cursor-pointer ${
-                                  myH !== '-' ? 'text-amber-300' : 'text-white'
-                                }`}
-                                style={{ textAlignLast: 'center' }}
-                              >
-                                {['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(
-                                  (opt) => (
-                                    <option key={`lh-${opt}`} value={opt} className="bg-slate-950 text-white">
-                                      {opt}
-                                    </option>
-                                  )
-                                )}
-                              </select>
-                              <button
-                                type="button"
-                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', 1)}
-                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-emerald-700 text-emerald-300 font-black text-xs flex items-center justify-center cursor-pointer"
-                              >
-                                +
-                              </button>
-                            </div>
-
-                            <span className="text-sm sm:text-lg font-black text-slate-400">:</span>
-
-                            {/* DEPLASMAN - / SEÇİCİ / + */}
-                            <div className="flex items-center bg-black/70 border border-slate-700/80 rounded-lg overflow-hidden">
-                              <button
-                                type="button"
-                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', -1)}
-                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-rose-800 text-slate-200 font-black text-xs flex items-center justify-center cursor-pointer"
-                              >
-                                −
-                              </button>
-                              <select
-                                value={myA}
-                                onChange={(e) =>
-                                  handleLiveCardDirectSelect(match.week_num, match.id, 'away', e.target.value)
-                                }
-                                className={`w-7 h-8 sm:w-8 sm:h-9 bg-transparent text-center font-black text-base sm:text-xl outline-none appearance-none cursor-pointer ${
-                                  myA !== '-' ? 'text-amber-300' : 'text-white'
-                                }`}
-                                style={{ textAlignLast: 'center' }}
-                              >
-                                {['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(
-                                  (opt) => (
-                                    <option key={`la-${opt}`} value={opt} className="bg-slate-950 text-white">
-                                      {opt}
-                                    </option>
-                                  )
-                                )}
-                              </select>
-                              <button
-                                type="button"
-                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', 1)}
-                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-emerald-700 text-emerald-300 font-black text-xs flex items-center justify-center cursor-pointer"
-                              >
-                                +
-                              </button>
-                            </div>
+                          {/* EV SAHİBİ SÜTUNU: ÜSTTE + / ORTADA BÜYÜK PUNTO SKOR / ALTTA - */}
+                          <div className="flex flex-col items-center bg-black/75 border border-slate-700/80 rounded-xl overflow-hidden w-11 sm:w-[54px] shadow-inner">
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', 1)}
+                              className="w-full h-6 sm:h-7 bg-emerald-700/90 hover:bg-emerald-600 active:scale-95 text-white font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors"
+                            >
+                              +
+                            </button>
+                            <select
+                              value={myH}
+                              onChange={(e) =>
+                                handleLiveCardDirectSelect(match.week_num, match.id, 'home', e.target.value)
+                              }
+                              className={`w-full h-9 sm:h-11 bg-transparent text-center font-black text-xl sm:text-3xl outline-none appearance-none cursor-pointer ${
+                                myH !== '-' ? 'text-amber-300' : 'text-white'
+                              }`}
+                              style={{ textAlignLast: 'center' }}
+                            >
+                              {['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(
+                                (opt) => (
+                                  <option key={`lh-${opt}`} value={opt} className="bg-slate-950 text-white text-base">
+                                    {opt}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', -1)}
+                              className="w-full h-6 sm:h-7 bg-slate-900 hover:bg-rose-700 active:scale-95 text-slate-200 font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors border-t border-slate-800"
+                            >
+                              −
+                            </button>
                           </div>
 
-                          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-300/90">
-                            {savingCardKey === myPredKey
-                              ? '💾 KAYDEDİLİYOR...'
-                              : mySavedPred
-                              ? `✓ TAHMİNİN: ${mySavedPred}`
-                              : 'TAHMİN GİR'}
-                          </span>
+                          <span className="text-xl sm:text-2xl font-black text-slate-300">:</span>
+
+                          {/* DEPLASMAN SÜTUNU: ÜSTTE + / ORTADA BÜYÜK PUNTO SKOR / ALTTA - */}
+                          <div className="flex flex-col items-center bg-black/75 border border-slate-700/80 rounded-xl overflow-hidden w-11 sm:w-[54px] shadow-inner">
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', 1)}
+                              className="w-full h-6 sm:h-7 bg-emerald-700/90 hover:bg-emerald-600 active:scale-95 text-white font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors"
+                            >
+                              +
+                            </button>
+                            <select
+                              value={myA}
+                              onChange={(e) =>
+                                handleLiveCardDirectSelect(match.week_num, match.id, 'away', e.target.value)
+                              }
+                              className={`w-full h-9 sm:h-11 bg-transparent text-center font-black text-xl sm:text-3xl outline-none appearance-none cursor-pointer ${
+                                myA !== '-' ? 'text-amber-300' : 'text-white'
+                              }`}
+                              style={{ textAlignLast: 'center' }}
+                            >
+                              {['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(
+                                (opt) => (
+                                  <option key={`la-${opt}`} value={opt} className="bg-slate-950 text-white text-base">
+                                    {opt}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', -1)}
+                              className="w-full h-6 sm:h-7 bg-slate-900 hover:bg-rose-700 active:scale-95 text-slate-200 font-black text-sm sm:text-base leading-none flex items-center justify-center cursor-pointer transition-colors border-t border-slate-800"
+                            >
+                              −
+                            </button>
+                          </div>
                         </div>
                       );
                     }
@@ -2581,120 +2575,6 @@ export default function LiveMatchCard() {
                       <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest">{countdownText}</span>
                     </div>
                   )}
-
-                  {/* SADECE ÖNDER ASLAN (262728) İÇİN MAÇ OYNANIRKEN GÖRÜNEN DURUM ROZETİ */}
-                  {livePortalSession?.role === 'player' &&
-                    (String(livePortalSession.userId || '').trim() === '262728' ||
-                      normLiveKey(livePortalSession.name || '') === 'ONDER ASLAN') &&
-                    (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) &&
-                    (() => {
-                      const myKey = `${livePortalSession.userId}-${match.week_num}-${match.id}`;
-                      const mySc = predictionsData[myKey] || '';
-                      if (!mySc || !mySc.includes('-')) return null;
-                      const [mH, mA] = mySc.split('-');
-                      const isHitNow = `${homeScore}-${awayScore}` === mySc;
-                      const isDeadNow =
-                        homeScore !== '-' &&
-                        awayScore !== '-' &&
-                        (Number(homeScore) > Number(mH) || Number(awayScore) > Number(mA));
-
-                      return (
-                        <div
-                          className={`mt-1 px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider text-center ${
-                            isHitNow
-                              ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 animate-bounce'
-                              : isDeadNow
-                              ? 'bg-rose-950/70 border-rose-500/50 text-rose-300 line-through'
-                              : 'bg-amber-500/15 border-amber-400/50 text-amber-200'
-                          }`}
-                        >
-                          {isHitNow
-                            ? `🎉 TUTUYOR: ${mySc}`
-                            : isDeadNow
-                            ? `💔 TAHMİNİN: ${mySc}`
-                            : `🎯 TAHMİNİN: ${mySc}`}
-                        </div>
-                      );
-                    })()}
-
-                  {/* GİRİŞ YAPAN YARIŞMACIYA ÖZEL KART ÜSTÜ +/- HIZLI TAHMİN PANELİ */}
-                  {livePortalSession?.role === 'player' &&
-                    livePortalSession.userId &&
-                    (() => {
-                      const myKey = `${livePortalSession.userId}-${match.week_num}-${match.id}`;
-                      const mySc = predictionsData[myKey] || '';
-                      const isLockedForPred = matchTimeMs > 0 && now >= matchTimeMs - 60000;
-                      const [mH, mA] = mySc.includes('-') ? mySc.split('-') : ['-', '-'];
-
-                      if (isLockedForPred) {
-                        if (!mySc) return null;
-                        const isHitNow =
-                          (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) &&
-                          `${homeScore}-${awayScore}` === mySc;
-                        const isDeadNow =
-                          (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) &&
-                          homeScore !== '-' &&
-                          awayScore !== '-' &&
-                          (Number(homeScore) > Number(mH) || Number(awayScore) > Number(mA));
-
-                        return (
-                          <div
-                            className={`mt-1 px-2.5 py-1 rounded-lg border text-[9.5px] font-black uppercase tracking-wider text-center ${
-                              isHitNow
-                                ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 animate-bounce'
-                                : isDeadNow
-                                ? 'bg-rose-950/70 border-rose-500/50 text-rose-300 line-through'
-                                : 'bg-amber-500/15 border-amber-400/50 text-amber-200'
-                            }`}
-                          >
-                            {isHitNow ? `🎉 TAHMİNİN TUTUYOR: ${mySc}` : isDeadNow ? `💔 TAHMİNİN: ${mySc}` : `🎯 TAHMİNİN: ${mySc}`}
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div className="mt-1.5 w-full bg-slate-950/90 border border-amber-500/50 rounded-xl p-1.5 flex flex-col items-center gap-1 shadow-lg">
-                          <span className="text-[8.5px] font-black text-amber-300 uppercase tracking-wider">
-                            {savingCardKey === myKey ? '💾 KAYDEDİLİYOR...' : '⚽ TAHMİNİN (+ / -)'}
-                          </span>
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', -1)}
-                              className="w-6 h-6 rounded bg-slate-800 hover:bg-rose-700 text-white font-black text-xs cursor-pointer"
-                            >
-                              −
-                            </button>
-                            <span className="text-sm font-black text-amber-300 min-w-[14px] text-center">{mH}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', 1)}
-                              className="w-6 h-6 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer"
-                            >
-                              +
-                            </button>
-
-                            <span className="text-slate-400 font-black text-xs mx-0.5">:</span>
-
-                            <button
-                              type="button"
-                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', -1)}
-                              className="w-6 h-6 rounded bg-slate-800 hover:bg-rose-700 text-white font-black text-xs cursor-pointer"
-                            >
-                              −
-                            </button>
-                            <span className="text-sm font-black text-amber-300 min-w-[14px] text-center">{mA}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', 1)}
-                              className="w-6 h-6 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })()}
                 </div>
 
                 <div className="flex flex-col items-center justify-center flex-1 gap-3">
