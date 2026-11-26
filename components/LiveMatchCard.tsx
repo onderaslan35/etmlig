@@ -2871,39 +2871,53 @@ export default function LiveMatchCard() {
       </div>
 
       {(() => {
-        // SADECE AKTİF BÜLTENİN GÜNLERİNİ TUT (GEÇMİŞ HAFTALARIN ESKİ GÜNLERİNİ GİZLE)
-        const currentBucketTotal = Number(currentWeekBucket?.totalMatches || 24);
-        let runningMatchSum = 0;
-        const keptDateSet = new Set<string>();
-
-        for (let i = availableDateTabs.length - 1; i >= 0; i--) {
-          const tab = availableDateTabs[i];
-          if (keptDateSet.size === 0 || runningMatchSum < currentBucketTotal) {
-            keptDateSet.add(String(tab.dateStr).trim());
-            runningMatchSum += Number(tab.totalCount || 0);
+        // SADECE GEÇMİŞ HAFTALARIN ESKİ TARİHLERİNİ (15-24 KASIM VB.) GİZLE; DÜN + BUGÜN + YARIN + GELECEK TÜM BÜLTENLERİ TUT
+        const parseTabDayMs = (dateStr: string, labelStr: string): number => {
+          const s1 = String(dateStr || '').trim();
+          const dmy = s1.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+          if (dmy) {
+            return new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]), 0, 0, 0, 0).getTime();
           }
-        }
+          const ymd = s1.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/);
+          if (ymd) {
+            return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]), 0, 0, 0, 0).getTime();
+          }
+          const trMonths = [
+            'OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN',
+            'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'
+          ];
+          const upper = `${s1} ${String(labelStr || '')}`.toLocaleUpperCase('tr-TR');
+          const mMatch = upper.match(
+            /(\d{1,2})\s+(OCAK|ŞUBAT|MART|NİSAN|MAYIS|HAZİRAN|TEMMUZ|AĞUSTOS|EYLÜL|EKİM|KASIM|ARALIK)/
+          );
+          if (mMatch) {
+            const mIdx = trMonths.indexOf(mMatch[2]);
+            if (mIdx !== -1) {
+              const curY = new Date().getFullYear();
+              return new Date(curY, mIdx, Number(mMatch[1]), 0, 0, 0, 0).getTime();
+            }
+          }
+          return 0;
+        };
 
-        const filteredDateTabs = availableDateTabs.filter((dTab) =>
-          keptDateSet.has(String(dTab.dateStr).trim())
-        );
+        const nowDt = new Date();
+        const todayStartMs = new Date(nowDt.getFullYear(), nowDt.getMonth(), nowDt.getDate(), 0, 0, 0, 0).getTime();
 
-        const isOnlyActiveWeek = (m: any) =>
-          !effectiveBulletinWeek || Number(m.week_num) === Number(effectiveBulletinWeek);
+        const filteredDateTabs = availableDateTabs.filter((dTab) => {
+          const tMs = parseTabDayMs(dTab.dateStr, dTab.label);
+          if (!tMs) return true;
+          return tMs >= todayStartMs - 86400000 || dTab.liveCount > 0;
+        });
 
-        const strictDayMatches = selectedDayMatches.filter(isOnlyActiveWeek);
-        const strictFinishedMatches = finishedMatches.filter(isOnlyActiveWeek);
-        const strictActiveMatches = activeMatches.filter(isOnlyActiveWeek);
-        const strictCurrentlyPlaying = currentlyPlayingMatches.filter(isOnlyActiveWeek);
-        const strictDisplayedActive = displayedActiveMatches.filter(isOnlyActiveWeek);
+        const tabsToRender = filteredDateTabs.length > 0 ? filteredDateTabs : availableDateTabs;
 
-        // Eğer seçili gün eski bir haftada kaldıysa otomatik olarak aktif bültenin gününe (varsa bugüne, yoksa ilk gününe) geç
+        // Seçili tarih gizlenen eski bir günde kaldıysa otomatik olarak BUGÜNE (yoksa ilk aktif güne) odakla
         if (
-          filteredDateTabs.length > 0 &&
-          !filteredDateTabs.some((t) => t.dateStr === effectiveMatchDate)
+          tabsToRender.length > 0 &&
+          !tabsToRender.some((t) => t.dateStr === effectiveMatchDate)
         ) {
-          const fallbackTab =
-            filteredDateTabs.find((t) => t.liveCount > 0) || filteredDateTabs[0];
+          const todayTab = tabsToRender.find((t) => parseTabDayMs(t.dateStr, t.label) === todayStartMs);
+          const fallbackTab = todayTab || tabsToRender.find((t) => t.liveCount > 0) || tabsToRender[0];
           if (fallbackTab && fallbackTab.dateStr !== selectedMatchDate) {
             setTimeout(() => setSelectedMatchDate(fallbackTab.dateStr), 0);
           }
@@ -2911,10 +2925,10 @@ export default function LiveMatchCard() {
 
         return (
           <>
-            {filteredDateTabs.length > 0 && (
+            {tabsToRender.length > 0 && (
               <div className="bg-[#071126]/90 border border-blue-500/30 rounded-2xl p-2 sm:p-2.5 shadow-lg">
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                  {filteredDateTabs.map((dTab) => {
+                  {tabsToRender.map((dTab) => {
                     const isSelected = dTab.dateStr === effectiveMatchDate;
                     const hasLive = dTab.liveCount > 0;
                     return (
@@ -2923,6 +2937,8 @@ export default function LiveMatchCard() {
                         onClick={() => {
                           setSelectedMatchDate(dTab.dateStr);
                           setIsLiveAccordionOpen(true);
+                          setOnlyLiveCardsFilter(false);
+                          setIsLiveFocusMode(false);
                         }}
                         className={`shrink-0 flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider border cursor-pointer ${
                           isSelected
@@ -2949,15 +2965,15 @@ export default function LiveMatchCard() {
               </div>
             )}
 
-            {strictDayMatches.length === 0 ? (
+            {selectedDayMatches.length === 0 ? (
               <div className="w-full text-center py-10 bg-[#071126]/70 border border-blue-900/40 rounded-2xl">
                 <p className="text-slate-300 text-sm font-bold tracking-widest uppercase">
-                  {selectedDayLabel} İÇİN AKTİF BÜLTENDE MAÇ BULUNMUYOR
+                  {selectedDayLabel} İÇİN PLANLANAN MAÇ BULUNMUYOR
                 </p>
               </div>
             ) : (
               <>
-                {strictFinishedMatches.length > 0 && (
+                {finishedMatches.length > 0 && (
                   <div className="bg-[#071126]/80 rounded-2xl border border-blue-900/50 shadow-xl overflow-hidden">
                     <button
                       onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
@@ -2965,7 +2981,7 @@ export default function LiveMatchCard() {
                     >
                       <div className="flex-1" />
                       <h2 className="text-[10px] sm:text-xs font-black text-sky-200 uppercase tracking-widest text-center">
-                        📅 {isSelectedDayToday ? 'GÜNÜN BİTEN MAÇLARI' : `${selectedDayLabel} BİTEN MAÇLAR`} ({strictFinishedMatches.length})
+                        📅 {isSelectedDayToday ? 'GÜNÜN BİTEN MAÇLARI' : `${selectedDayLabel} BİTEN MAÇLAR`} ({finishedMatches.length})
                       </h2>
                       <div className="flex-1 flex justify-end text-sky-300 text-xs">
                         {isFinishedAccordionOpen ? '▲' : '▼'}
@@ -2973,13 +2989,13 @@ export default function LiveMatchCard() {
                     </button>
                     {isFinishedAccordionOpen && (
                       <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
-                        {strictFinishedMatches.map((match) => renderMatchCard(match, true))}
+                        {finishedMatches.map((match) => renderMatchCard(match, true))}
                       </div>
                     )}
                   </div>
                 )}
 
-                {strictActiveMatches.length > 0 && (
+                {activeMatches.length > 0 && (
                   <div className="bg-[#071126]/90 rounded-2xl border border-emerald-500/40 shadow-2xl overflow-hidden">
                     <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 bg-emerald-950/30 border-b border-emerald-500/30">
                       <button
@@ -2989,10 +3005,10 @@ export default function LiveMatchCard() {
                       >
                         <h2 className="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">
                           {onlyLiveCardsFilter
-                            ? `🟢 SADECE CANLI OYNANANLAR (${strictCurrentlyPlaying.length})`
+                            ? `🟢 SADECE CANLI OYNANANLAR (${currentlyPlayingMatches.length})`
                             : isSelectedDayToday
-                            ? `GÜNÜN CANLI MAÇLARI (${strictActiveMatches.length})`
-                            : `${selectedDayLabel} MAÇLARI (${strictActiveMatches.length})`}
+                            ? `GÜNÜN CANLI MAÇLARI (${activeMatches.length})`
+                            : `${selectedDayLabel} MAÇLARI (${activeMatches.length})`}
                         </h2>
                         <span className="text-emerald-300 text-xs">{isLiveAccordionOpen ? '▲' : '▼'}</span>
                       </button>
@@ -3014,19 +3030,19 @@ export default function LiveMatchCard() {
                         }`}
                       >
                         {onlyLiveCardsFilter
-                          ? `TÜMÜNÜ GÖSTER (${strictActiveMatches.length})`
-                          : `🟢 SADECE CANLILARI GÖSTER (${strictCurrentlyPlaying.length})`}
+                          ? `TÜMÜNÜ GÖSTER (${activeMatches.length})`
+                          : `🟢 SADECE CANLILARI GÖSTER (${currentlyPlayingMatches.length})`}
                       </button>
                     </div>
 
                     {isLiveAccordionOpen && (
                       <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
-                        {strictDisplayedActive.length === 0 ? (
+                        {displayedActiveMatches.length === 0 ? (
                           <div className="col-span-full py-6 text-center text-xs font-black text-slate-300 uppercase">
-                            ŞU AN OYNANAN AKTİF CANLI MAÇ YOK
+                            ŞU AN OYNANAN AKTİF CANLI MAÇ YOK (BAŞLAYACAK MAÇLAR İÇİN SAĞ ÜSTTEN TÜMÜNÜ GÖSTER&apos;E BASIN)
                           </div>
                         ) : (
-                          strictDisplayedActive.map((match) => renderMatchCard(match, false))
+                          displayedActiveMatches.map((match) => renderMatchCard(match, false))
                         )}
                       </div>
                     )}
