@@ -8,6 +8,7 @@ import { getClubLogoUrl, isNationalTeamName, refreshCustomClubsCache } from '@/c
 
 export const PORTAL_SESSION_KEY = 'etml_portal_session_v1';
 export const PORTAL_SESSION_EVENT = 'etml-portal-session-changed';
+export const PORTAL_OPEN_LOGIN_EVENT = 'etml-portal-open-login';
 
 export interface PortalSession {
   role: 'player' | 'visitor';
@@ -78,11 +79,14 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     const syncHandler = () => {
       setSession(readPortalSession());
     };
+    const openLoginHandler = () => setForceLoginModal(true);
     window.addEventListener(PORTAL_SESSION_EVENT, syncHandler);
     window.addEventListener('storage', syncHandler);
+    window.addEventListener(PORTAL_OPEN_LOGIN_EVENT, openLoginHandler);
     return () => {
       window.removeEventListener(PORTAL_SESSION_EVENT, syncHandler);
       window.removeEventListener('storage', syncHandler);
+      window.removeEventListener(PORTAL_OPEN_LOGIN_EVENT, openLoginHandler);
     };
   }, []);
 
@@ -347,43 +351,5 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       ? getClubLogoUrl(session.favoriteTeam)
       : '';
 
-  return (
-    <>
-      {children}
-
-      {/* SAĞ ALT KÖŞE KULLANICI / ZİYARETÇİ KİMLİK HAPI */}
-      <div className="fixed bottom-3 right-3 z-[90] flex items-center gap-2 bg-[#040a18]/95 backdrop-blur-md border border-slate-700/90 rounded-full px-3 py-1.5 shadow-[0_8px_25px_rgba(0,0,0,0.75)] text-[10px] sm:text-[11px] font-black">
-        {session.role === 'player' ? (
-          <>
-            {playerClubLogo ? (
-              <img src={playerClubLogo} alt="" className="w-4 h-4 object-contain shrink-0" />
-            ) : (
-              <span className="text-emerald-400">⚽</span>
-            )}
-            <span className="text-white uppercase tracking-wider max-w-[130px] sm:max-w-[180px] truncate">
-              {session.name}
-            </span>
-            <button
-              type="button"
-              onClick={handleLogoutOrSwitch}
-              className="ml-1 px-2 py-0.5 rounded-full bg-rose-950/90 hover:bg-rose-700 text-rose-200 border border-rose-500/40 transition-colors cursor-pointer"
-            >
-              Çıkış
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="text-sky-400">👁️ ZİYARETÇİ</span>
-            <button
-              type="button"
-              onClick={() => setForceLoginModal(true)}
-              className="px-2.5 py-0.5 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition-colors cursor-pointer"
-            >
-              Yarışmacı Girişi
-            </button>
-          </>
-        )}
-      </div>
-    </>
-  );
+  return <>{children}</>;
 }

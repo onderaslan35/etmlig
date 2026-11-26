@@ -751,6 +751,64 @@ export default function LiveMatchCard() {
   }, [predictionsData]);
 
   // Canlı sayfasında başlamamış maç kartının üstünden [ - ] / [ + ] ile anında tahmin yapma (Maksimum 3 aynı skor kuralıyla!)
+  const handleLiveCardDirectSelect = async (
+    weekNum: number,
+    matchIdx: number,
+    side: 'home' | 'away',
+    valStr: string
+  ) => {
+    const sess = liveSessionRef.current;
+    if (!sess || sess.role !== 'player' || !sess.userId) return;
+    const uid = String(sess.userId).trim();
+    const predKey = `${uid}-${weekNum}-${matchIdx}`;
+    const curRaw = predictionsDataRef.current[predKey] || '';
+    const [curH, curA] = curRaw && curRaw.includes('-') ? curRaw.split('-') : ['-', '-'];
+
+    const nextH = side === 'home' ? valStr : curH === '-' ? '0' : curH;
+    const nextA = side === 'away' ? valStr : curA === '-' ? '0' : curA;
+
+    if (nextH === '-' || nextA === '-') {
+      setSavingCardKey(predKey);
+      await supabase
+        .from('player_predictions')
+        .delete()
+        .eq('user_id', uid)
+        .eq('week_num', weekNum)
+        .eq('match_index', matchIdx);
+      setPredictionsData((prev) => {
+        const next = { ...prev };
+        delete next[predKey];
+        return next;
+      });
+      setSavingCardKey(null);
+      return;
+    }
+
+    const nextScore = `${nextH}-${nextA}`;
+    let sameWeekCount = 0;
+    for (let i = 1; i <= 24; i++) {
+      if (i === matchIdx) continue;
+      if (predictionsDataRef.current[`${uid}-${weekNum}-${i}`] === nextScore) { sameWeekCount++; } }  if (sameWeekCount >= 6) { alert( `⚠️ DİKKAT ${sess.name}!\nBir bültende aynı skoru (${nextScore}) en fazla 6 kez kullanabilirsiniz! (%25 Kuralı)`
+      );
+      return;
+    }
+
+    setPredictionsData((prev) => ({ ...prev, [predKey]: nextScore }));
+    setSavingCardKey(predKey);
+    await supabase.from('player_predictions').upsert(
+      [
+        {
+          user_id: uid,
+          week_num: weekNum,
+          match_index: matchIdx,
+          predicted_score: nextScore
+        }
+      ],
+      { onConflict: 'user_id,week_num,match_index' }
+    );
+    setSavingCardKey(null);
+  };
+
   const handleLiveCardStepScore = async (
     weekNum: number,
     matchIdx: number,
@@ -2387,20 +2445,177 @@ export default function LiveMatchCard() {
                       <span className="text-slate-300 text-[10px] font-black tracking-widest">MS (BİTTİ)</span>
                     </div>
                   )}
-                  <div
-                    className={`w-full bg-[#080d1a]/80 border ${
-                      isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder
-                    } py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 backdrop-blur-md`}
-                  >
-                    <span className="text-xl sm:text-3xl font-black text-white">{homeScore}</span>
-                    <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
-                    <span className="text-xl sm:text-3xl font-black text-white">{awayScore}</span>
-                  </div>
+                  {/* ORTA ANA SKOR KUTUSU: MAÇ BAŞLAMADIYSA YARIŞMACI BURADAN DİREKT SEÇER / + - YAPAR */}
+                  {(() => {
+                    const isMatchOpenForPred =
+                      !isLiveStatus &&
+                      !isFinishedStatus &&
+                      !isHT &&
+                      !isWaitingApproval &&
+                      matchTimeMs > 0 &&
+                      now < matchTimeMs - 60000;
+
+                    const canEditHere =
+                      isMatchOpenForPred &&
+                      livePortalSession?.role === 'player' &&
+                      Boolean(livePortalSession.userId);
+
+                    const myPredKey =
+                      livePortalSession?.role === 'player' && livePortalSession.userId
+                        ? `${livePortalSession.userId}-${match.week_num}-${match.id}`
+                        : '';
+                    const mySavedPred = myPredKey ? predictionsData[myPredKey] || '' : '';
+                    const [myH, myA] =
+                      mySavedPred && mySavedPred.includes('-') ? mySavedPred.split('-') : ['-', '-'];
+
+                    if (canEditHere) {
+                      return (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className={`w-full bg-[#080d1a]/90 border ${
+                            mySavedPred ? 'border-emerald-400/80 shadow-[0_0_18px_rgba(16,185,129,0.25)]' : theme.scoreBorder
+                          } py-1.5 px-1.5 rounded-xl flex flex-col items-center justify-center gap-1 backdrop-blur-md`}
+                        >
+                          <div className="flex items-center justify-center gap-1 sm:gap-1.5 w-full">
+                            {/* EV SAHİBİ - / SEÇİCİ / + */}
+                            <div className="flex items-center bg-black/70 border border-slate-700/80 rounded-lg overflow-hidden">
+                              <button
+                                type="button"
+                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', -1)}
+                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-rose-800 text-slate-200 font-black text-xs flex items-center justify-center cursor-pointer"
+                              >
+                                −
+                              </button>
+                              <select
+                                value={myH}
+                                onChange={(e) =>
+                                  handleLiveCardDirectSelect(match.week_num, match.id, 'home', e.target.value)
+                                }
+                                className={`w-7 h-8 sm:w-8 sm:h-9 bg-transparent text-center font-black text-base sm:text-xl outline-none appearance-none cursor-pointer ${
+                                  myH !== '-' ? 'text-amber-300' : 'text-white'
+                                }`}
+                                style={{ textAlignLast: 'center' }}
+                              >
+                                {['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(
+                                  (opt) => (
+                                    <option key={`lh-${opt}`} value={opt} className="bg-slate-950 text-white">
+                                      {opt}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'home', 1)}
+                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-emerald-700 text-emerald-300 font-black text-xs flex items-center justify-center cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <span className="text-sm sm:text-lg font-black text-slate-400">:</span>
+
+                            {/* DEPLASMAN - / SEÇİCİ / + */}
+                            <div className="flex items-center bg-black/70 border border-slate-700/80 rounded-lg overflow-hidden">
+                              <button
+                                type="button"
+                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', -1)}
+                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-rose-800 text-slate-200 font-black text-xs flex items-center justify-center cursor-pointer"
+                              >
+                                −
+                              </button>
+                              <select
+                                value={myA}
+                                onChange={(e) =>
+                                  handleLiveCardDirectSelect(match.week_num, match.id, 'away', e.target.value)
+                                }
+                                className={`w-7 h-8 sm:w-8 sm:h-9 bg-transparent text-center font-black text-base sm:text-xl outline-none appearance-none cursor-pointer ${
+                                  myA !== '-' ? 'text-amber-300' : 'text-white'
+                                }`}
+                                style={{ textAlignLast: 'center' }}
+                              >
+                                {['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(
+                                  (opt) => (
+                                    <option key={`la-${opt}`} value={opt} className="bg-slate-950 text-white">
+                                      {opt}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleLiveCardStepScore(match.week_num, match.id, 'away', 1)}
+                                className="w-5 h-8 sm:w-6 sm:h-9 bg-slate-900 hover:bg-emerald-700 text-emerald-300 font-black text-xs flex items-center justify-center cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-300/90">
+                            {savingCardKey === myPredKey
+                              ? '💾 KAYDEDİLİYOR...'
+                              : mySavedPred
+                              ? `✓ TAHMİNİN: ${mySavedPred}`
+                              : 'TAHMİN GİR'}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        className={`w-full bg-[#080d1a]/80 border ${
+                          isGoalFlashing ? 'border-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.9)]' : theme.scoreBorder
+                        } py-2 sm:py-3 rounded-xl flex items-center justify-center gap-2 sm:gap-3 backdrop-blur-md`}
+                      >
+                        <span className="text-xl sm:text-3xl font-black text-white">{homeScore}</span>
+                        <span className={`text-base sm:text-xl font-bold ${isChampionsLeague ? 'text-white/50' : 'text-blue-400/50'}`}>:</span>
+                        <span className="text-xl sm:text-3xl font-black text-white">{awayScore}</span>
+                      </div>
+                    );
+                  })()}
+
                   {!isLiveStatus && !isFinishedStatus && !isHT && !isWaitingApproval && countdownText && (
                     <div className="w-full bg-[#0c2a3b]/50 border border-[#164e63]/50 py-1 rounded-lg text-center mt-1">
                       <span className="text-[#38bdf8] text-[9px] sm:text-[10px] font-mono font-bold tracking-widest">{countdownText}</span>
                     </div>
                   )}
+
+                  {/* SADECE ÖNDER ASLAN (262728) İÇİN MAÇ OYNANIRKEN GÖRÜNEN DURUM ROZETİ */}
+                  {livePortalSession?.role === 'player' &&
+                    (String(livePortalSession.userId || '').trim() === '262728' ||
+                      normLiveKey(livePortalSession.name || '') === 'ONDER ASLAN') &&
+                    (isLiveStatus || isFinishedStatus || isHT || isWaitingApproval) &&
+                    (() => {
+                      const myKey = `${livePortalSession.userId}-${match.week_num}-${match.id}`;
+                      const mySc = predictionsData[myKey] || '';
+                      if (!mySc || !mySc.includes('-')) return null;
+                      const [mH, mA] = mySc.split('-');
+                      const isHitNow = `${homeScore}-${awayScore}` === mySc;
+                      const isDeadNow =
+                        homeScore !== '-' &&
+                        awayScore !== '-' &&
+                        (Number(homeScore) > Number(mH) || Number(awayScore) > Number(mA));
+
+                      return (
+                        <div
+                          className={`mt-1 px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider text-center ${
+                            isHitNow
+                              ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 animate-bounce'
+                              : isDeadNow
+                              ? 'bg-rose-950/70 border-rose-500/50 text-rose-300 line-through'
+                              : 'bg-amber-500/15 border-amber-400/50 text-amber-200'
+                          }`}
+                        >
+                          {isHitNow
+                            ? `🎉 TUTUYOR: ${mySc}`
+                            : isDeadNow
+                            ? `💔 TAHMİNİN: ${mySc}`
+                            : `🎯 TAHMİNİN: ${mySc}`}
+                        </div>
+                      );
+                    })()}
 
                   {/* GİRİŞ YAPAN YARIŞMACIYA ÖZEL KART ÜSTÜ +/- HIZLI TAHMİN PANELİ */}
                   {livePortalSession?.role === 'player' &&
