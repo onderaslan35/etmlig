@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase';
 import {
   TEST_ACCOUNTS,
@@ -37,6 +37,13 @@ export default function PredictionPortal() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [tahminmatikScores, setTahminmatikScores] = useState<Record<number, { home: string; away: string }>>({});
 
+  // FOTMOB TARZI SKOR SEÇİCİ STATE'LERİ
+  const [activePickerMatchId, setActivePickerMatchId] = useState<number | null>(null);
+  const [activePickerSide, setActivePickerSide] = useState<'home' | 'away'>('home');
+  const [autoAdvanceNext, setAutoAdvanceNext] = useState<boolean>(true);
+  const [showHighScores, setShowHighScores] = useState<boolean>(false);
+  const [pickerQuotaWarning, setPickerQuotaWarning] = useState<string>('');
+
   const [activeBulletinWeek, setActiveBulletinWeek] = useState<number>(0);
   const [selectedTahminWeek, setSelectedTahminWeek] = useState<number>(0);
 
@@ -49,6 +56,8 @@ export default function PredictionPortal() {
   const [submittedPlayersNeon, setSubmittedPlayersNeon] = useState<string[]>([]);
 
   const scoreOptionsArr = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
+  const quickDigits = ['0', '1', '2', '3', '4', '5'];
+  const highDigits = ['6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 
   const getDisplayWeek = (week: number) => {
     if (customWeekNames[week]) return customWeekNames[week];
@@ -313,59 +322,134 @@ export default function PredictionPortal() {
     fetchLivePreds();
   }, [selectedTahminWeek, effectiveView, livePredictionsData]);
 
-  const handleStepScore = (matchIndex: number, side: 'home' | 'away', delta: 1 | -1) => {
-    setPredictions((prev) => {
-      const cur = prev[matchIndex] || { home: '-', away: '-' };
+  const activeMatchesList = useMemo(() => bulletinMap[activeBulletinWeek] || [], [bulletinMap, activeBulletinWeek]);
+  const selectedWeekMatchesList = useMemo(() => bulletinMap[selectedTahminWeek] || [], [bulletinMap, selectedTahminWeek]);
 
-      if (cur.home === '-' && cur.away === '-') {
-        if (delta === 1) {
-          return { ...prev, [matchIndex]: { home: '0', away: '0' } };
-        }
-        return prev;
-      }
+  const isMatchLockedFn = useCallback(
+    (m: any) => {
+      if (!m) return true;
+      const kMs = getMatchTimeMs(m.date, m.time);
+      return kMs > 0 && now >= kMs - 60000;
+    },
+    [now]
+  );
 
-      const rawSide = cur[side];
-      const otherSide: 'home' | 'away' = side === 'home' ? 'away' : 'home';
-      const safeOther = cur[otherSide] === '-' ? '0' : cur[otherSide];
-
-      if (rawSide === '-') {
-        if (delta === 1) {
-          return {
-            ...prev,
-            [matchIndex]: { ...cur, [side]: '0', [otherSide]: safeOther }
-          };
-        }
-        return prev;
-      }
-
-      const num = parseInt(rawSide, 10);
-      if (isNaN(num)) return prev;
-
-      if (delta === -1) {
-        if (num === 0 && safeOther === '0') {
-          return { ...prev, [matchIndex]: { home: '-', away: '-' } };
-        }
-        const nextVal = Math.max(0, num - 1);
-        return {
-          ...prev,
-          [matchIndex]: { ...cur, [side]: String(nextVal), [otherSide]: safeOther }
-        };
-      }
-
-      const nextVal = Math.min(15, num + 1);
-      return {
-        ...prev,
-        [matchIndex]: { ...cur, [side]: String(nextVal), [otherSide]: safeOther }
-      };
-    });
+  const openFotmobPicker = (matchId: number, initialSide: 'home' | 'away' = 'home') => {
+    const mObj = activeMatchesList.find((x: any) => x.id === matchId);
+    if (!mObj || isMatchLockedFn(mObj)) return;
+    setPickerQuotaWarning('');
+    setShowHighScores(false);
+    setActivePickerMatchId(matchId);
+    setActivePickerSide(initialSide);
   };
 
-  const handleClearMatchScore = (matchIndex: number) => {
+  const goToAdjacentUnlockedMatch = useCallback(
+    (dir: 1 | -1) => {
+      if (activePickerMatchId === null) return;
+      const unlocked = activeMatchesList.filter((m: any) => !isMatchLockedFn(m));
+      if (unlocked.length === 0) return;
+      const curIdx = unlocked.findIndex((m: any) => m.id === activePickerMatchId);
+      const nextIdx = curIdx === -1 ? 0 : (curIdx + dir + unlocked.length) % unlocked.length;
+      setPickerQuotaWarning('');
+      setShowHighScores(false);
+      setActivePickerMatchId(unlocked[nextIdx].id);
+      setActivePickerSide('home');
+    },
+    [activePickerMatchId, activeMatchesList, isMatchLockedFn]
+  );
+
+  const handleFotmobDigitSelect = useCallback(
+    (digitStr: string) => {
+      if (activePickerMatchId === null) return;
+      const mObj = activeMatchesList.find((x: any) => x.id === activePickerMatchId);
+      if (!mObj || isMatchLockedFn(mObj)) return;
+
+      const cur = predictions[activePickerMatchId] || { home: '-', away: '-' };
+      const nextHome = activePickerSide === 'home' ? digitStr : cur.home;
+      const nextAway = activePickerSide === 'away' ? digitStr : cur.away;
+
+      // İki taraf da dolduysa 6 skor kotasını kontrol et
+      if (nextHome !== '-' && nextAway !== '-') {
+        const candidateScore = `${nextHome}-${nextAway}`;
+        let usedElsewhere = 0;
+        Object.keys(predictions).forEach((k) => {
+          const idNum = Number(k);
+          if (idNum !== activePickerMatchId) {
+            const p = predictions[idNum];
+            if (p && `${p.home}-${p.away}` === candidateScore) {
+              usedElsewhere++;
+            }
+          }
+        });
+
+        if (usedElsewhere >= MAX_SAME_SCORE_LIMIT) {
+          setPickerQuotaWarning(
+            `⚠️ "${candidateScore}" skorunu bültende zaten ${MAX_SAME_SCORE_LIMIT} kez kullandınız! (%25 Kuralı)`
+          );
+          return;
+        }
+      }
+
+      setPickerQuotaWarning('');
+      setPredictions((prev) => ({
+        ...prev,
+        [activePickerMatchId]: { home: nextHome, away: nextAway }
+      }));
+
+      if (activePickerSide === 'home') {
+        setActivePickerSide('away');
+      } else if (autoAdvanceNext) {
+        // Deplasman da girildiyse FotMob gibi yumuşakça sıradaki boş (veya kilitlenmemiş) maça geç
+        setTimeout(() => {
+          const unlocked = activeMatchesList.filter((m: any) => !isMatchLockedFn(m));
+          const curPos = unlocked.findIndex((m: any) => m.id === activePickerMatchId);
+          if (curPos !== -1 && curPos + 1 < unlocked.length) {
+            setActivePickerMatchId(unlocked[curPos + 1].id);
+            setActivePickerSide('home');
+            setShowHighScores(false);
+          }
+        }, 240);
+      }
+    },
+    [activePickerMatchId, activePickerSide, activeMatchesList, autoAdvanceNext, isMatchLockedFn, predictions]
+  );
+
+  const handleClearMatchScore = useCallback((matchIndex: number) => {
+    setPickerQuotaWarning('');
     setPredictions((prev) => ({
       ...prev,
       [matchIndex]: { home: '-', away: '-' }
     }));
-  };
+    setActivePickerSide('home');
+  }, []);
+
+  // Bilgisayar klavyesinden hızlı giriş desteği (0-9, Ok tuşları, Backspace, Enter, Esc)
+  useEffect(() => {
+    if (activePickerMatchId === null) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        handleFotmobDigitSelect(e.key);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setActivePickerSide('home');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setActivePickerSide('away');
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        handleClearMatchScore(activePickerMatchId);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        goToAdjacentUnlockedMatch(1);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setActivePickerMatchId(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activePickerMatchId, handleFotmobDigitSelect, handleClearMatchScore, goToAdjacentUnlockedMatch]);
 
   const scoreUsageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -444,7 +528,7 @@ export default function PredictionPortal() {
     if (overLimitScores.length > 0) {
       const [badSc, badCnt] = overLimitScores[0];
       alert(
-        `⚠️ KOTA AŞIMI!\n"${badSc}" skorunu bültende ${badCnt} kez seçtiniz.\nHiçbir skor bültende ${MAX_SAME_SCORE_LIMIT}'ten fazla kullanılamaz!`
+        `⚠️ KOTA AŞIMI!\n"${badSc}" skorunu bültende ${badCnt} kez seçtiniz.\nBir bültende aynı skoru en fazla ${MAX_SAME_SCORE_LIMIT} kez kullanabilirsiniz! (%25 Kuralı)`
       );
       return;
     }
@@ -484,6 +568,7 @@ export default function PredictionPortal() {
         delete next[activeBulletinWeek];
         return next;
       });
+      setActivePickerMatchId(null);
       setShowSuccessModal(true);
     } catch {
       alert('❌ Kayıt sırasında bir hata oluştu!');
@@ -556,19 +641,22 @@ export default function PredictionPortal() {
     setIsDownloading(false);
   };
 
-  const activeMatchesList = bulletinMap[activeBulletinWeek] || [];
-  const selectedWeekMatchesList = bulletinMap[selectedTahminWeek] || [];
   const filledCount = Object.values(predictions).filter((p) => p.home !== '-' && p.away !== '-').length;
+
+  // Açık olan FotMob Seçici Maç Bilgisi
+  const pickerMatchObj =
+    activePickerMatchId !== null ? activeMatchesList.find((m: any) => m.id === activePickerMatchId) || null : null;
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-200 px-2 sm:px-4 pt-3 pb-28 font-sans">
+      {/* KAYIT BAŞARILI MODALI */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#050b14]/90 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-emerald-500/50 rounded-3xl p-7 max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)]">
             <div className="text-5xl mb-4">🏆</div>
             <h3 className="text-2xl font-black text-emerald-400 mb-2 tracking-widest">MÜHÜRLENDİ!</h3>
             <p className="text-slate-300 font-medium mb-6 text-xs sm:text-sm leading-relaxed">
-              Tahminleriniz başarıyla kaydedildi. Maç saatine 1 dakika kalana kadar kartların üstünden + / - ile güncelleme yapabilirsiniz.
+              Tahminleriniz sisteme kaydedildi. Maç saatine 1 dakika kalana kadar istediğiniz maça dokunarak skorunuzu güncelleyebilirsiniz.
             </p>
             <button
               onClick={() => setShowSuccessModal(false)}
@@ -579,6 +667,238 @@ export default function PredictionPortal() {
           </div>
         </div>
       )}
+
+      {/* ===================== FOTMOB TARZI HIZLI SKOR GİRİŞ PANELİ ===================== */}
+      {pickerMatchObj && !isVisitor && (() => {
+        const pPalette = getStandardCardPalette(
+          pickerMatchObj.category,
+          pickerMatchObj.homeTeam,
+          pickerMatchObj.awayTeam
+        );
+        const pIsTff = pPalette.isTff;
+        const pRawCat = String(
+          pickerMatchObj.category && pickerMatchObj.category !== 'GENEL'
+            ? pickerMatchObj.category
+            : pIsTff
+            ? 'TÜRKİYE SÜPER LİG'
+            : 'AVRUPA FUTBOLU'
+        ).trim();
+        const pTheme: any = getEliteTheme(
+          pIsTff && !pRawCat.toLocaleUpperCase('tr-TR').includes('TÜRKİYE') && !pRawCat.toUpperCase().includes('TFF')
+            ? `TÜRKİYE ${pRawCat}`
+            : pRawCat,
+          String(pickerMatchObj.homeTeam || '').toUpperCase(),
+          String(pickerMatchObj.awayTeam || '').toUpperCase()
+        );
+        const pCur = predictions[pickerMatchObj.id] || { home: '-', away: '-' };
+        const pIsFilled = pCur.home !== '-' && pCur.away !== '-';
+        const pKey = pIsFilled ? `${pCur.home}-${pCur.away}` : '';
+        const pUsedCnt = pKey ? scoreUsageCounts[pKey] || 0 : 0;
+
+        return (
+          <div
+            onClick={() => setActivePickerMatchId(null)}
+            className="fixed inset-0 z-[115] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-t-2 sm:border-2 p-4 sm:p-5 shadow-[0_-10px_50px_rgba(0,0,0,0.9)] flex flex-col gap-3.5 select-none ${pPalette.cardOuterCls}`}
+            >
+              {/* ÜST GEZİNME ÇUBUĞU */}
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/15">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => goToAdjacentUnlockedMatch(-1)}
+                    className="px-2.5 py-1 rounded-lg bg-black/50 hover:bg-black/80 border border-white/15 text-xs font-black text-white cursor-pointer"
+                  >
+                    ← Önceki
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goToAdjacentUnlockedMatch(1)}
+                    className="px-2.5 py-1 rounded-lg bg-black/50 hover:bg-black/80 border border-white/15 text-xs font-black text-white cursor-pointer"
+                  >
+                    Sonraki →
+                  </button>
+                </div>
+
+                <span className="text-[10px] font-black text-slate-200 uppercase tracking-wider">
+                  {pickerMatchObj.id} / {activeMatchesList.length}. MAÇ
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePickerMatchId(null)}
+                  className="w-7 h-7 rounded-full bg-black/60 hover:bg-rose-700 border border-white/20 text-white text-xs font-black flex items-center justify-center cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* TAKIMLAR VE ORTA FOTMOB SKOR KUTULARI */}
+              <div className="grid grid-cols-3 items-center gap-2 py-1">
+                <div
+                  onClick={() => setActivePickerSide('home')}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer"
+                >
+                  <img
+                    src={pTheme.homeLogo}
+                    alt={pickerMatchObj.homeTeam}
+                    className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.6)]"
+                  />
+                  <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
+                    {cleanTeamName(pickerMatchObj.homeTeam)}
+                  </span>
+                </div>
+
+                {/* İKİLİ AKTİF SKOR KUTUSU */}
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActivePickerSide('home')}
+                    className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl font-black text-2xl sm:text-3xl tabular-nums transition-all cursor-pointer border-2 ${
+                      activePickerSide === 'home'
+                        ? 'bg-black text-emerald-300 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.45)] scale-105'
+                        : 'bg-black/70 text-white border-white/20 hover:border-white/50'
+                    }`}
+                  >
+                    {pCur.home}
+                  </button>
+
+                  <span className="text-white/60 font-black text-xl">:</span>
+
+                  <button
+                    type="button"
+                    onClick={() => setActivePickerSide('away')}
+                    className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl font-black text-2xl sm:text-3xl tabular-nums transition-all cursor-pointer border-2 ${
+                      activePickerSide === 'away'
+                        ? 'bg-black text-emerald-300 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.45)] scale-105'
+                        : 'bg-black/70 text-white border-white/20 hover:border-white/50'
+                    }`}
+                  >
+                    {pCur.away}
+                  </button>
+                </div>
+
+                <div
+                  onClick={() => setActivePickerSide('away')}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer"
+                >
+                  <img
+                    src={pTheme.awayLogo}
+                    alt={pickerMatchObj.awayTeam}
+                    className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.6)]"
+                  />
+                  <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
+                    {cleanTeamName(pickerMatchObj.awayTeam)}
+                  </span>
+                </div>
+              </div>
+
+              {/* REHBER & KOTA BİLGİSİ */}
+              <div className="text-center">
+                {pickerQuotaWarning ? (
+                  <div className="px-3 py-1.5 rounded-xl bg-rose-950/90 border border-rose-400 text-rose-200 text-[11px] font-black">
+                    {pickerQuotaWarning}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-2 text-[10.5px] font-black">
+                    <span className="text-emerald-300">
+                      {activePickerSide === 'home' ? '👉 Ev Sahibi Golünü Seçin' : '👉 Deplasman Golünü Seçin'}
+                    </span>
+                    {pIsFilled ? (
+                      <span className="text-amber-300">
+                        {pKey} Kotası: {pUsedCnt}/{MAX_SAME_SCORE_LIMIT}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300">{pickerMatchObj.time}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* FOTMOB HIZLI RAKAM TUŞ TAKIMI (0 - 5 ANA SATIR) */}
+              <div className="grid grid-cols-6 gap-2">
+                {quickDigits.map((d) => {
+                  const isSelectedNow =
+                    (activePickerSide === 'home' && pCur.home === d) ||
+                    (activePickerSide === 'away' && pCur.away === d);
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => handleFotmobDigitSelect(d)}
+                      className={`h-12 sm:h-13 rounded-xl font-black text-lg sm:text-xl transition-all active:scale-95 cursor-pointer border ${
+                        isSelectedNow
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.5)]'
+                          : 'bg-[#050c1a]/90 hover:bg-slate-800 text-white border-white/15'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* YÜKSEK SKORLAR (6 - 15) AÇILIR ALANI */}
+              {showHighScores && (
+                <div className="grid grid-cols-5 gap-1.5 pt-1">
+                  {highDigits.map((hd) => (
+                    <button
+                      key={hd}
+                      type="button"
+                      onClick={() => handleFotmobDigitSelect(hd)}
+                      className="h-9 rounded-lg bg-[#050c1a]/90 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-black text-xs cursor-pointer"
+                    >
+                      {hd}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* ALT KONTROLLER: 6+ GOL, SIFIRLA, OTO-GEÇİŞ VE TAMAM */}
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/15">
+                <button
+                  type="button"
+                  onClick={() => setShowHighScores((prev) => !prev)}
+                  className="px-2.5 py-2 rounded-xl bg-black/55 hover:bg-black/80 border border-white/15 text-[10px] font-black text-amber-300 cursor-pointer"
+                >
+                  {showHighScores ? '6+ Gizle ▲' : '6+ Gol ▼'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleClearMatchScore(pickerMatchObj.id)}
+                  className="px-2.5 py-2 rounded-xl bg-black/55 hover:bg-rose-950 border border-white/15 text-[10px] font-black text-rose-300 cursor-pointer"
+                >
+                  ⌫ Sıfırla
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAutoAdvanceNext((prev) => !prev)}
+                  className={`px-2.5 py-2 rounded-xl border text-[10px] font-black cursor-pointer ${
+                    autoAdvanceNext
+                      ? 'bg-sky-950/80 border-sky-400/60 text-sky-200'
+                      : 'bg-black/50 border-white/15 text-slate-400'
+                  }`}
+                >
+                  Oto-Geçiş: {autoAdvanceNext ? 'AÇIK' : 'KAPALI'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePickerMatchId(null)}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase cursor-pointer"
+                >
+                  Tamam
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="max-w-6xl mx-auto space-y-4">
         {!isVisitor && (
@@ -605,7 +925,7 @@ export default function PredictionPortal() {
             <div className="flex flex-wrap items-center gap-1.5">
               {(
                 [
-                  { key: 'entry', label: '⚽ KARTLARDA TAHMİN YAP' },
+                  { key: 'entry', label: '⚽ TAHMİNLERİM' },
                   { key: 'declaration', label: '📜 RESMİ DEKLARASYON' },
                   { key: 'tahminmatik', label: '⚡ TAHMİNMATİK' },
                   { key: 'status', label: '📋 YAPANLAR / EKSİKLER' }
@@ -631,12 +951,13 @@ export default function PredictionPortal() {
           </div>
         )}
 
+        {/* ===================== 1. FOTMOB TİPİ TEMİZ MAÇ KARTLARI ===================== */}
         {effectiveView === 'entry' && !isVisitor && (
           <div className="w-full space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-[#071126] p-4 sm:p-5 rounded-2xl border border-amber-500/35 shadow-lg max-w-5xl mx-auto">
               <div className="flex flex-col items-center sm:items-start gap-1.5">
                 <h2 className="text-base sm:text-xl font-black text-amber-400 tracking-wider uppercase">
-                  {getDisplayWeek(activeBulletinWeek)} • MAÇ KARTLARI ÜZERİNDEN TAHMİN
+                  {getDisplayWeek(activeBulletinWeek)} • TAHMİN KARTLARI
                 </h2>
                 <p className="text-slate-300 text-xs sm:text-sm">
                   Yarışmacı: <span className="text-white font-black uppercase">{loggedUserName}</span>
@@ -658,10 +979,10 @@ export default function PredictionPortal() {
               </div>
             </div>
 
+            {/* 24 MAÇ KARTI - BİREBİR ARŞİV / CANLI GÖRÜNÜMÜ + FOTMOB DOKUNMATİK SKOR KUTUSU */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
               {activeMatchesList.map((match: any) => {
-                const kickoffMs = getMatchTimeMs(match.date, match.time);
-                const isLocked = kickoffMs > 0 && now >= kickoffMs - 60000;
+                const isLocked = isMatchLockedFn(match);
 
                 const palette = getStandardCardPalette(match.category, match.homeTeam, match.awayTeam);
                 const isTff = palette.isTff;
@@ -686,6 +1007,10 @@ export default function PredictionPortal() {
                   theme?.leagueName || theme?.title || rawCat || (isTff ? 'TÜRKİYE TFF' : 'DFO AVRUPA')
                 ).toUpperCase();
 
+                const leagueLogo = String(
+                  theme?.leagueLogo || theme?.catLogo || theme?.tournamentLogo || ''
+                ).trim();
+
                 const curPred = predictions[match.id] || { home: '-', away: '-' };
                 const isFilled = curPred.home !== '-' && curPred.away !== '-';
                 const curScoreKey = isFilled ? `${curPred.home}-${curPred.away}` : '';
@@ -695,158 +1020,165 @@ export default function PredictionPortal() {
                 return (
                   <div
                     key={match.id}
+                    onClick={() => {
+                      if (!isLocked) openFotmobPicker(match.id, 'home');
+                    }}
                     className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-3 transition-all select-none ${palette.cardOuterCls} ${
                       isLocked
-                        ? 'opacity-70 saturate-75'
+                        ? 'opacity-70 saturate-75 cursor-not-allowed'
                         : isOverQuota
-                        ? 'ring-2 ring-rose-500'
+                        ? 'ring-2 ring-rose-500 cursor-pointer'
                         : isFilled
-                        ? 'ring-2 ring-emerald-400/75'
-                        : ''
+                        ? 'ring-2 ring-emerald-400/75 cursor-pointer hover:brightness-110'
+                        : 'cursor-pointer hover:brightness-110'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-[10px] sm:text-[10.5px] font-black tracking-wider text-slate-200 uppercase">
+                    {/* ÜST HAFTA VE SAAT ŞERİDİ */}
+                    <div className="flex items-center justify-center text-[10px] sm:text-[10.5px] font-black tracking-wider text-slate-200 uppercase">
                       <span>
-                        {activeBulletinWeek}. HAFTA {match.id}. MAÇ • {match.date} {match.time}
-                      </span>
-                      <span className={`px-2.5 py-0.5 rounded-full border text-[9px] ${palette.poolPillCls}`}>
-                        {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
+                        {activeBulletinWeek}. HAFTA {match.id}. MAÇ
+                        {match.date ? ` • ${match.date}` : ''}
+                        {match.time ? ` ${match.time}` : ''}
                       </span>
                     </div>
 
+                    {/* LİG BANNER */}
                     <div
                       className={`w-full py-1.5 px-3 rounded-xl border text-center text-[10px] sm:text-[11px] font-black uppercase tracking-widest truncate ${palette.bannerCls}`}
                     >
                       {leagueTitle}
                     </div>
 
-                    <div className="grid grid-cols-3 items-center gap-1.5 sm:gap-2 py-1">
+                    {/* ORTA 3 SÜTUN: EV SAHİBİ - FOTMOB SKOR PİLL - DEPLASMAN */}
+                    <div className="grid grid-cols-3 items-center gap-2 py-1.5">
                       <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.homeLogo}
                           alt={match.homeTeam}
-                          className="w-[58px] h-[58px] sm:w-[72px] sm:h-[72px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
+                          className="w-[66px] h-[66px] sm:w-[76px] sm:h-[76px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
                           loading="lazy"
                         />
-                        <span className="text-[10px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
+                        <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {cleanTeamName(match.homeTeam)}
                         </span>
                       </div>
 
                       <div className="flex flex-col items-center justify-center gap-1.5">
-                        <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                          <div className="flex flex-col items-center bg-black/75 border border-white/15 rounded-xl p-1 shadow-inner">
-                            <button
-                              type="button"
-                              disabled={isLocked}
-                              onClick={() => handleStepScore(match.id, 'home', 1)}
-                              className="w-9 h-7 sm:w-10 sm:h-8 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-base leading-none flex items-center justify-center cursor-pointer transition-transform"
-                            >
-                              +
-                            </button>
-                            <span
-                              className={`py-1 text-lg sm:text-2xl font-black tabular-nums ${
-                                isFilled ? 'text-amber-300' : 'text-slate-500'
-                              }`}
-                            >
-                              {curPred.home}
-                            </span>
-                            <button
-                              type="button"
-                              disabled={isLocked || curPred.home === '-'}
-                              onClick={() => handleStepScore(match.id, 'home', -1)}
-                              className="w-9 h-7 sm:w-10 sm:h-8 rounded-lg bg-slate-800 hover:bg-rose-700 active:scale-95 disabled:opacity-40 text-white font-black text-base leading-none flex items-center justify-center cursor-pointer transition-transform"
-                            >
-                              −
-                            </button>
-                          </div>
+                        {leagueLogo && (
+                          <img
+                            src={leagueLogo}
+                            alt={leagueTitle}
+                            className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow"
+                            loading="lazy"
+                          />
+                        )}
 
-                          <span className="text-white/70 font-black text-lg">:</span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                            isLocked
+                              ? 'bg-slate-900/90 text-slate-400 border-slate-700'
+                              : isFilled
+                              ? 'bg-emerald-950/90 text-emerald-300 border-emerald-400/70'
+                              : 'bg-amber-950/80 text-amber-300 border-amber-400/60'
+                          }`}
+                        >
+                          {isLocked ? '🔒 KİLİTLİ' : isFilled ? '✓ TAHMİNİN' : 'SKOR GİR'}
+                        </span>
 
-                          <div className="flex flex-col items-center bg-black/75 border border-white/15 rounded-xl p-1 shadow-inner">
-                            <button
-                              type="button"
-                              disabled={isLocked}
-                              onClick={() => handleStepScore(match.id, 'away', 1)}
-                              className="w-9 h-7 sm:w-10 sm:h-8 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-base leading-none flex items-center justify-center cursor-pointer transition-transform"
-                            >
-                              +
-                            </button>
-                            <span
-                              className={`py-1 text-lg sm:text-2xl font-black tabular-nums ${
-                                isFilled ? 'text-amber-300' : 'text-slate-500'
-                              }`}
-                            >
-                              {curPred.away}
-                            </span>
-                            <button
-                              type="button"
-                              disabled={isLocked || curPred.away === '-'}
-                              onClick={() => handleStepScore(match.id, 'away', -1)}
-                              className="w-9 h-7 sm:w-10 sm:h-8 rounded-lg bg-slate-800 hover:bg-rose-700 active:scale-95 disabled:opacity-40 text-white font-black text-base leading-none flex items-center justify-center cursor-pointer transition-transform"
-                            >
-                              −
-                            </button>
-                          </div>
-                        </div>
-
-                        {!isLocked && isFilled && (
+                        {/* FOTMOB İKİLİ DOKUNMATİK SKOR KUTUSU */}
+                        <div
+                          className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl border shadow-inner transition-transform ${
+                            isFilled
+                              ? 'bg-black/85 border-emerald-400/70'
+                              : 'bg-black/70 border-white/20 hover:border-amber-400/80'
+                          }`}
+                        >
                           <button
                             type="button"
-                            onClick={() => handleClearMatchScore(match.id)}
-                            className="text-[9px] font-bold text-slate-300 hover:text-rose-300 underline cursor-pointer"
+                            disabled={isLocked}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openFotmobPicker(match.id, 'home');
+                            }}
+                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg font-black text-lg sm:text-xl tabular-nums flex items-center justify-center cursor-pointer ${
+                              isFilled
+                                ? 'bg-white/10 text-white'
+                                : 'bg-white/5 text-amber-300/80 hover:bg-white/15'
+                            }`}
                           >
-                            Sıfırla
+                            {curPred.home}
                           </button>
-                        )}
+
+                          <span className="text-slate-400 font-black text-base">:</span>
+
+                          <button
+                            type="button"
+                            disabled={isLocked}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openFotmobPicker(match.id, 'away');
+                            }}
+                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg font-black text-lg sm:text-xl tabular-nums flex items-center justify-center cursor-pointer ${
+                              isFilled
+                                ? 'bg-white/10 text-white'
+                                : 'bg-white/5 text-amber-300/80 hover:bg-white/15'
+                            }`}
+                          >
+                            {curPred.away}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex flex-col items-center gap-2 min-w-0">
                         <img
                           src={theme.awayLogo}
                           alt={match.awayTeam}
-                          className="w-[58px] h-[58px] sm:w-[72px] sm:h-[72px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
+                          className="w-[66px] h-[66px] sm:w-[76px] sm:h-[76px] object-contain shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]"
                           loading="lazy"
                         />
-                        <span className="text-[10px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
+                        <span className="text-[10.5px] sm:text-xs font-black text-white uppercase text-center leading-tight line-clamp-2">
                           {cleanTeamName(match.awayTeam)}
                         </span>
                       </div>
                     </div>
 
+                    {/* ALT BAR */}
                     <div className="flex items-center justify-between pt-2 border-t border-white/15 text-[10px] font-black">
                       {isLocked ? (
-                        <span className="text-rose-300">🔒 Maç başladı / kilitli</span>
+                        <span className="text-slate-400">🔒 Maç başladı / kilitli</span>
                       ) : isOverQuota ? (
                         <span className="text-rose-300 animate-pulse">
-                          ⚠️ {curScoreKey} skoru {sameScoreCount}/{MAX_SAME_SCORE_LIMIT} kez oldu! Azaltın.
+                          ⚠️ {curScoreKey} skoru {sameScoreCount}/{MAX_SAME_SCORE_LIMIT} kez oldu!
                         </span>
                       ) : isFilled ? (
                         <span className="text-emerald-300">
-                          ✓ Tahmin: {curScoreKey} (Kota: {sameScoreCount}/{MAX_SAME_SCORE_LIMIT})
+                          Kota: {sameScoreCount}/{MAX_SAME_SCORE_LIMIT} • Değiştirmek için dokun
                         </span>
                       ) : (
-                        <span className="text-amber-200/90">+ tuşuna dokunarak skoru girin</span>
+                        <span className="text-slate-300">Skor girmek için karta dokun</span>
                       )}
 
-                      <span className="text-slate-300">{match.time}</span>
+                      <span className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider ${palette.poolPillCls}`}>
+                        {isTff ? 'TFF MAÇI' : 'DFO MAÇI'}
+                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
 
+            {/* EKRAN ALTI SABİT MÜHÜRLEME ÇUBUĞU */}
             <div className="fixed bottom-14 sm:bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[94%] max-w-xl bg-[#040a18]/95 backdrop-blur-md border-2 border-emerald-500/70 rounded-2xl px-4 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3">
               <div className="text-left min-w-0">
                 <div className="text-[11px] sm:text-xs font-black text-white truncate">
                   {hasUnsavedChanges
-                    ? '⚡ Kaydedilmemiş skor değişiklikleriniz var!'
+                    ? '⚡ Kaydedilmemiş tahminleriniz var!'
                     : `✓ ${filledCount}/${activeMatchesList.length} maç hazır`}
                 </div>
                 <div className="text-[9.5px] font-bold text-emerald-300">
                   {overLimitScores.length > 0
                     ? `⚠️ ${overLimitScores[0][0]} skoru sınırı aştı (${overLimitScores[0][1]}/${MAX_SAME_SCORE_LIMIT})`
-                    : `Aynı skor sınırı uygun (Maks. ${MAX_SAME_SCORE_LIMIT})`}
+                    : `Aynı skor kotası uygun (Maks. ${MAX_SAME_SCORE_LIMIT})`}
                 </div>
               </div>
 
@@ -862,6 +1194,7 @@ export default function PredictionPortal() {
           </div>
         )}
 
+        {/* ===================== 2. YAPANLAR / EKSİKLER ===================== */}
         {effectiveView === 'status' && !isVisitor && (
           <div className="max-w-4xl mx-auto bg-[#071126] border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
             <h2 className="text-center text-sm sm:text-lg font-black text-amber-400 uppercase tracking-widest mb-4">
@@ -897,6 +1230,7 @@ export default function PredictionPortal() {
           </div>
         )}
 
+        {/* ===================== 3. RESMİ DEKLARASYON ===================== */}
         {effectiveView === 'declaration' && (
           <div className="w-full">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-slate-900/70 p-4 sm:p-5 rounded-2xl border border-blue-800/50">
@@ -1009,6 +1343,7 @@ export default function PredictionPortal() {
           </div>
         )}
 
+        {/* ===================== 4. TAHMİNMATİK ===================== */}
         {effectiveView === 'tahminmatik' && !isVisitor && (
           <div className="w-full space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/70 p-4 sm:p-5 rounded-2xl border border-emerald-800/50 max-w-5xl mx-auto">
