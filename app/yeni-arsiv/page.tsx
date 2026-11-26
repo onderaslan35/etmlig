@@ -1414,24 +1414,24 @@ export default function YeniArsivPage() {
             </div>
           </div>
 
-          {/* MASTER BAŞLIĞI: GÖZ ALICI NEON FUŞYA / MOR VURGU */}
+          {/* MASTER BAŞLIĞI: ASİL PARLAMENT MAVİSİ */}
           <button
             type="button"
             onClick={onToggleDetail}
             title={isDetailOpen ? 'Sadece Master Göster' : 'Detaylı Sütunları Sağdan Sola Aç'}
-            className={`shrink-0 self-stretch flex items-end justify-center text-center bg-fuchsia-600/35 hover:bg-fuchsia-500/45 border-l border-fuchsia-400/70 text-white shadow-[inset_0_0_14px_rgba(217,70,239,0.4)] transition-all duration-300 cursor-pointer ${
+            className={`shrink-0 self-stretch flex items-end justify-center text-center bg-gradient-to-b from-[#15368a] to-[#0e2460] hover:from-[#1b43a8] hover:to-[#13307a] border-l border-blue-400/50 text-white shadow-[inset_0_0_12px_rgba(37,99,235,0.45)] transition-all duration-300 cursor-pointer ${
               isDetailOpen
                 ? 'w-[34px] sm:w-24 py-1.5 sm:py-2 px-0'
                 : 'w-20 sm:w-36 py-2 px-2'
             }`}
           >
             {isDetailOpen ? (
-              <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none text-fuchsia-200 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]">
+              <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none text-blue-100">
                 MASTER <span className="hidden sm:inline text-white">▶</span>
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center gap-1 leading-none tracking-wider text-fuchsia-100 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]">
-                <span className="text-fuchsia-300 text-[9px] sm:text-[10px]">◀</span>
+              <span className="inline-flex items-center justify-center gap-1 leading-none tracking-wider text-white">
+                <span className="text-sky-300 text-[9px] sm:text-[10px]">◀</span>
                 <span>MASTER</span>
               </span>
             )}
@@ -1458,7 +1458,6 @@ export default function YeniArsivPage() {
                 {idx + 1}
               </div>
 
-              {/* DETAY AÇIKKEN CANLI PUANI SAĞDAKİ SÜTUNA GEÇTİĞİ İÇİN İSİM ALANI TAM FERAH */}
               <div
                 className={`flex-1 min-w-0 py-[11px] sm:py-3 font-black text-white transition-all duration-300 ${
                   isDetailOpen
@@ -1512,9 +1511,9 @@ export default function YeniArsivPage() {
                 </div>
               </div>
 
-              {/* MASTER DEĞERİ: ORTALI VE PARLAK NEON FUŞYA */}
+              {/* MASTER DEĞERİ: TAM ORTALI VE TOK PARLAMENT MAVİSİ */}
               <div
-                className={`shrink-0 self-stretch flex items-center justify-center text-center bg-fuchsia-600/25 border-l border-fuchsia-400/55 font-black text-fuchsia-100 drop-shadow-[0_0_8px_rgba(232,121,249,0.75)] transition-all duration-300 ${
+                className={`shrink-0 self-stretch flex items-center justify-center text-center bg-[#102a6b]/75 border-l border-blue-400/40 font-black text-white shadow-[inset_0_0_10px_rgba(29,78,216,0.35)] transition-all duration-300 ${
                   isDetailOpen
                     ? 'w-[34px] sm:w-24 px-0 text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none'
                     : 'w-20 sm:w-36 px-0 text-sm sm:text-lg'
@@ -1575,7 +1574,7 @@ export default function YeniArsivPage() {
         ? 'text-rose-500'
         : metric.startsWith('SKOR')
         ? 'text-orange-400'
-        : 'text-fuchsia-200 drop-shadow-[0_0_6px_rgba(232,121,249,0.75)]';
+        : 'text-blue-100';
 
     return (
       <table className="w-full table-fixed text-left tabular-nums">
@@ -1588,7 +1587,11 @@ export default function YeniArsivPage() {
               YARIŞMACI
             </th>
             <th
-              className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 py-2.5 px-2 sm:px-3 w-28 sm:w-40 text-center ${colColor}`}
+              className={`sticky top-[104px] sm:top-[112px] z-20 border-b border-slate-700/90 py-2.5 px-2 sm:px-3 w-28 sm:w-40 text-center ${colColor} ${
+                metric === 'MASTER'
+                  ? 'bg-gradient-to-b from-[#15368a] to-[#0e2460] border-l border-blue-400/50 text-white'
+                  : 'bg-[#050c1d]'
+              }`}
             >
               {colTitle}
             </th>
@@ -1618,8 +1621,10 @@ export default function YeniArsivPage() {
                   {renderPlayerNameWithCup(row.name, row.isChampion, 0, row.favoriteTeam, row.id)}
                 </td>
                 <td
-                  className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center font-black text-sm sm:text-lg ${colColor} ${
-                    metric === 'MASTER' ? 'bg-fuchsia-600/20 border-l border-fuchsia-400/45' : ''
+                  className={`py-2.5 sm:py-3 px-2 sm:px-3 text-center font-black text-sm sm:text-lg ${
+                    metric === 'MASTER'
+                      ? 'bg-[#102a6b]/75 border-l border-blue-400/40 text-white'
+                      : colColor
                   }`}
                 >
                   {val}
@@ -1730,7 +1735,7 @@ export default function YeniArsivPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-colors border cursor-pointer ${
                 isAct
-                  ? 'bg-blue-600 text-white border-sky-400/70'
+                  ? 'bg-blue-700 text-white border-blue-400/70 shadow-[0_0_12px_rgba(29,78,216,0.4)]'
                   : 'bg-[#040917] text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
               }`}
             >
@@ -1768,7 +1773,6 @@ export default function YeniArsivPage() {
                 <span className="shrink-0 px-2 py-0.5 rounded-md bg-[#040917] border border-slate-700 group-hover:border-sky-400 text-[9.5px] sm:text-[10px] font-black text-amber-300">
                   {isStandingsMenuOpen ? 'KAPAT ▲' : 'SEÇENEKLER ▼'}
                 </span>
-                {/* SEÇENEKLERİN HEMEN SONUNDA YANIP SÖNEN CANLI YEŞİL IŞIĞI */}
                 {(liveActiveMatchCount > 0 || standingsFilter === 'CANLI') && (
                   <span className="relative flex h-3 w-3 shrink-0 ml-0.5" title="Canlı Skor Takibi Aktif">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-95" />
@@ -1789,7 +1793,7 @@ export default function YeniArsivPage() {
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
                     (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
                     masterSubFilter === 'DUZ'
-                      ? 'bg-sky-600 text-white border-sky-300/80'
+                      ? 'bg-[#15368a] text-white border-blue-400/80 shadow-[0_0_12px_rgba(37,99,235,0.4)]'
                       : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -1813,8 +1817,8 @@ export default function YeniArsivPage() {
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
                     (standingsFilter === 'MASTER' || standingsFilter === 'CANLI') &&
                     masterSubFilter === 'DETAYLI'
-                      ? 'bg-fuchsia-600 text-white border-fuchsia-300/80 shadow-[0_0_12px_rgba(217,70,239,0.45)]'
-                      : 'bg-[#040917] text-sky-300 border-slate-800 hover:border-sky-500 hover:text-white'
+                      ? 'bg-[#15368a] text-white border-blue-400/80 shadow-[0_0_12px_rgba(37,99,235,0.45)]'
+                      : 'bg-[#040917] text-sky-300 border-slate-800 hover:border-blue-500 hover:text-white'
                   }`}
                 >
                   {masterSubFilter === 'DETAYLI' &&
@@ -1857,8 +1861,8 @@ export default function YeniArsivPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'MASTER' && masterSubFilter === 'DUZ'
-                        ? 'bg-sky-600 text-white border-sky-300/80'
-                        : 'bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-500'
+                        ? 'bg-[#15368a] text-white border-blue-400/80'
+                        : 'bg-[#071126] text-slate-200 border-slate-800 hover:border-blue-500'
                     }`}
                   >
                     MASTER
@@ -1874,8 +1878,8 @@ export default function YeniArsivPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'MASTER' && masterSubFilter === 'DETAYLI'
-                        ? 'bg-fuchsia-600 text-white border-fuchsia-300/80'
-                        : 'bg-[#071126] text-sky-300 border-slate-800 hover:border-fuchsia-400'
+                        ? 'bg-[#15368a] text-white border-blue-400/80'
+                        : 'bg-[#071126] text-sky-300 border-slate-800 hover:border-blue-400'
                     }`}
                   >
                     ◀ DETAYLI MASTER
@@ -1890,7 +1894,7 @@ export default function YeniArsivPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer ${
                       standingsFilter === 'DFO'
-                        ? 'bg-blue-700 text-white border-sky-400/80'
+                        ? 'bg-sky-700 text-white border-sky-400/80'
                         : 'bg-[#071126] text-sky-400 border-slate-800 hover:border-sky-600'
                     }`}
                   >
@@ -2092,7 +2096,7 @@ export default function YeniArsivPage() {
                     archivePoolFilter === pf.key
                       ? pf.key === 'TFF'
                         ? 'bg-rose-700 text-white border-rose-400/80'
-                        : 'bg-sky-600 text-white border-sky-300/80'
+                        : 'bg-[#15368a] text-white border-blue-400/80'
                       : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2423,7 +2427,7 @@ export default function YeniArsivPage() {
                   }}
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
                     weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DUZ'
-                      ? 'bg-sky-600 text-white border-sky-300/80'
+                      ? 'bg-[#15368a] text-white border-blue-400/80'
                       : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2442,7 +2446,7 @@ export default function YeniArsivPage() {
                   }}
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
                     weekSummaryFilter === 'MASTER' && weekSummaryMasterMode === 'DETAYLI'
-                      ? 'bg-fuchsia-600 text-white border-fuchsia-300/80'
+                      ? 'bg-[#15368a] text-white border-blue-400/80'
                       : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2471,7 +2475,7 @@ export default function YeniArsivPage() {
                       }
                       setIsWeekSummaryMenuOpen(false);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-blue-400 cursor-pointer"
                   >
                     {wf === 'DETAYLI_MASTER' ? '◀ DETAYLI MASTER' : wf}
                   </button>
@@ -2539,7 +2543,7 @@ export default function YeniArsivPage() {
                   }}
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
                     weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DUZ'
-                      ? 'bg-sky-600 text-white border-sky-300/80'
+                      ? 'bg-[#15368a] text-white border-blue-400/80'
                       : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2558,7 +2562,7 @@ export default function YeniArsivPage() {
                   }}
                   className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
                     weekGenelFilter === 'MASTER' && weekGenelMasterMode === 'DETAYLI'
-                      ? 'bg-fuchsia-600 text-white border-fuchsia-300/80'
+                      ? 'bg-[#15368a] text-white border-blue-400/80'
                       : 'bg-[#040917] text-sky-300 border-slate-800 hover:text-white'
                   }`}
                 >
@@ -2587,7 +2591,7 @@ export default function YeniArsivPage() {
                       }
                       setIsWeekGenelMenuOpen(false);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-sky-400 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-[#071126] text-slate-200 border-slate-800 hover:border-blue-400 cursor-pointer"
                   >
                     {gf === 'DETAYLI_MASTER' ? '◀ DETAYLI MASTER' : gf}
                   </button>
@@ -2655,7 +2659,7 @@ export default function YeniArsivPage() {
                     </span>
                   </div>
                 </div>
-                <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-end justify-center text-center py-1.5 sm:py-2 bg-fuchsia-600/35 border-l border-fuchsia-400/70 text-fuchsia-200 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]">
+                <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-end justify-center text-center py-1.5 sm:py-2 bg-gradient-to-b from-[#15368a] to-[#0e2460] border-l border-blue-400/50 text-blue-100">
                   <span className="inline-block max-sm:[writing-mode:vertical-rl] max-sm:rotate-180 leading-none">
                     MASTER
                   </span>
@@ -2716,7 +2720,7 @@ export default function YeniArsivPage() {
                           {row.bonusPts > 0 ? `+${row.bonusPts}` : '0'}
                         </div>
                       </div>
-                      <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-center justify-center text-center bg-fuchsia-600/25 group-hover:bg-fuchsia-500/35 border-l border-fuchsia-400/55 font-black text-fuchsia-100 drop-shadow-[0_0_8px_rgba(232,121,249,0.75)] text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none">
+                      <div className="w-[34px] sm:w-24 shrink-0 self-stretch flex items-center justify-center text-center bg-[#102a6b]/75 group-hover:bg-[#15368a]/85 border-l border-blue-400/40 font-black text-white text-[13.5px] sm:text-base tracking-tighter sm:tracking-normal leading-none">
                         {row.masterPts}
                       </div>
                     </div>
