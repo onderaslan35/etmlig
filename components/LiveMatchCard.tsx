@@ -2870,121 +2870,179 @@ export default function LiveMatchCard() {
         </button>
       </div>
 
-      {availableDateTabs.length > 0 && (
-        <div className="bg-[#071126]/90 border border-blue-500/30 rounded-2xl p-2 sm:p-2.5 shadow-lg">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            {availableDateTabs.map((dTab) => {
-              const isSelected = dTab.dateStr === effectiveMatchDate;
-              const hasLive = dTab.liveCount > 0;
-              return (
-                <button
-                  key={dTab.dateStr}
-                  onClick={() => {
-                    setSelectedMatchDate(dTab.dateStr);
-                    setIsLiveAccordionOpen(true);
-                  }}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider border ${
-                    isSelected
-                      ? hasLive
-                        ? 'bg-emerald-600 text-white border-emerald-300'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-sky-300'
-                      : hasLive
-                      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60'
-                      : 'bg-[#040917] text-slate-300 border-blue-900/60 hover:text-white'
-                  }`}
-                >
-                  <span>{dTab.label}</span>
-                  <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${isSelected ? 'bg-black/35 text-white' : 'bg-blue-950/80 text-sky-300'}`}>
-                    {dTab.totalCount}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {(() => {
+        // SADECE AKTİF BÜLTEN HAFTASINA (effectiveBulletinWeek) AİT TARİHLERİ VE MAÇLARI TUT
+        const activeWeekDateCounts = new Map<string, number>();
+        if (effectiveBulletinWeek > 0) {
+          (matches || []).forEach((m: any) => {
+            if (Number(m.week_num) === Number(effectiveBulletinWeek)) {
+              const dKey = String(m.date || m.match_date || '').trim();
+              if (dKey) {
+                activeWeekDateCounts.set(dKey, (activeWeekDateCounts.get(dKey) || 0) + 1);
+              }
+            }
+          });
+        }
 
-      {selectedDayMatches.length === 0 ? (
-        <div className="w-full text-center py-10 bg-[#071126]/70 border border-blue-900/40 rounded-2xl">
-          <p className="text-slate-300 text-sm font-bold tracking-widest uppercase">{selectedDayLabel} İÇİN PLANLANAN MAÇ BULUNMUYOR</p>
-        </div>
-      ) : (
-        <>
-          {finishedMatches.length > 0 && (
-            <div className="bg-[#071126]/80 rounded-2xl border border-blue-900/50 shadow-xl overflow-hidden">
-              <button
-                onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-[#040a18]/80 border-b border-blue-900/40"
-              >
-                <div className="flex-1" />
-                <h2 className="text-[10px] sm:text-xs font-black text-sky-200 uppercase tracking-widest text-center">
-                  📅 {isSelectedDayToday ? 'GÜNÜN BİTEN MAÇLARI' : `${selectedDayLabel} BİTEN MAÇLAR`} ({finishedMatches.length})
-                </h2>
-                <div className="flex-1 flex justify-end text-sky-300 text-xs">{isFinishedAccordionOpen ? '▲' : '▼'}</div>
-              </button>
-              {isFinishedAccordionOpen && (
-                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
-                  {finishedMatches.map((match) => renderMatchCard(match, true))}
+        const filteredDateTabs =
+          activeWeekDateCounts.size > 0
+            ? availableDateTabs
+                .filter((dTab) => activeWeekDateCounts.has(String(dTab.dateStr).trim()))
+                .map((dTab) => ({
+                  ...dTab,
+                  totalCount: activeWeekDateCounts.get(String(dTab.dateStr).trim()) || dTab.totalCount
+                }))
+            : availableDateTabs;
+
+        const isOnlyActiveWeek = (m: any) =>
+          !effectiveBulletinWeek || Number(m.week_num) === Number(effectiveBulletinWeek);
+
+        const strictDayMatches = selectedDayMatches.filter(isOnlyActiveWeek);
+        const strictFinishedMatches = finishedMatches.filter(isOnlyActiveWeek);
+        const strictActiveMatches = activeMatches.filter(isOnlyActiveWeek);
+        const strictCurrentlyPlaying = currentlyPlayingMatches.filter(isOnlyActiveWeek);
+        const strictDisplayedActive = displayedActiveMatches.filter(isOnlyActiveWeek);
+
+        // Eğer seçili gün eski bir haftada kaldıysa otomatik olarak aktif bültenin gününe (varsa bugüne, yoksa ilk gününe) geç
+        if (
+          filteredDateTabs.length > 0 &&
+          !filteredDateTabs.some((t) => t.dateStr === effectiveMatchDate)
+        ) {
+          const fallbackTab =
+            filteredDateTabs.find((t) => t.liveCount > 0) || filteredDateTabs[0];
+          if (fallbackTab && fallbackTab.dateStr !== selectedMatchDate) {
+            setTimeout(() => setSelectedMatchDate(fallbackTab.dateStr), 0);
+          }
+        }
+
+        return (
+          <>
+            {filteredDateTabs.length > 0 && (
+              <div className="bg-[#071126]/90 border border-blue-500/30 rounded-2xl p-2 sm:p-2.5 shadow-lg">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  {filteredDateTabs.map((dTab) => {
+                    const isSelected = dTab.dateStr === effectiveMatchDate;
+                    const hasLive = dTab.liveCount > 0;
+                    return (
+                      <button
+                        key={dTab.dateStr}
+                        onClick={() => {
+                          setSelectedMatchDate(dTab.dateStr);
+                          setIsLiveAccordionOpen(true);
+                        }}
+                        className={`shrink-0 flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider border cursor-pointer ${
+                          isSelected
+                            ? hasLive
+                              ? 'bg-emerald-600 text-white border-emerald-300'
+                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-sky-300'
+                            : hasLive
+                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60'
+                            : 'bg-[#040917] text-slate-300 border-blue-900/60 hover:text-white'
+                        }`}
+                      >
+                        <span>{dTab.label}</span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
+                            isSelected ? 'bg-black/35 text-white' : 'bg-blue-950/80 text-sky-300'
+                          }`}
+                        >
+                          {dTab.totalCount}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
-
-          {activeMatches.length > 0 && (
-            <div className="bg-[#071126]/90 rounded-2xl border border-emerald-500/40 shadow-2xl overflow-hidden">
-              <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 bg-emerald-950/30 border-b border-emerald-500/30">
-                <button
-                  type="button"
-                  onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
-                  className="flex items-center gap-2 text-left"
-                >
-                  <h2 className="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">
-                    {onlyLiveCardsFilter
-                      ? `🔴 SADECE CANLI OYNANANLAR (${currentlyPlayingMatches.length})`
-                      : isSelectedDayToday
-                      ? `GÜNÜN CANLI MAÇLARI (${activeMatches.length})`
-                      : `${selectedDayLabel} MAÇLARI (${activeMatches.length})`}
-                  </h2>
-                  <span className="text-emerald-300 text-xs">{isLiveAccordionOpen ? '▲' : '▼'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOnlyLiveCardsFilter((prev) => {
-                      const next = !prev;
-                      if (!next) setIsLiveFocusMode(false);
-                      return next;
-                    });
-                    setIsLiveAccordionOpen(true);
-                  }}
-                  className={`px-2.5 py-1 rounded-xl text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border ${
-                    onlyLiveCardsFilter
-                      ? 'bg-rose-600 text-white border-rose-300'
-                      : 'bg-[#040917] text-emerald-300 border-emerald-500/50 hover:text-white'
-                  }`}
-                >
-                  {onlyLiveCardsFilter
-                    ? `TÜMÜNÜ GÖSTER (${activeMatches.length})`
-                    : `🔴 SADECE CANLILARI GÖSTER (${currentlyPlayingMatches.length})`}
-                </button>
               </div>
+            )}
 
-              {isLiveAccordionOpen && (
-                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
-                  {displayedActiveMatches.length === 0 ? (
-                    <div className="col-span-full py-6 text-center text-xs font-black text-slate-300 uppercase">
-                      ŞU AN OYNANAN AKTİF CANLI MAÇ YOK
+            {strictDayMatches.length === 0 ? (
+              <div className="w-full text-center py-10 bg-[#071126]/70 border border-blue-900/40 rounded-2xl">
+                <p className="text-slate-300 text-sm font-bold tracking-widest uppercase">
+                  {selectedDayLabel} İÇİN AKTİF BÜLTENDE MAÇ BULUNMUYOR
+                </p>
+              </div>
+            ) : (
+              <>
+                {strictFinishedMatches.length > 0 && (
+                  <div className="bg-[#071126]/80 rounded-2xl border border-blue-900/50 shadow-xl overflow-hidden">
+                    <button
+                      onClick={() => setIsFinishedAccordionOpen(!isFinishedAccordionOpen)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-[#040a18]/80 border-b border-blue-900/40 cursor-pointer"
+                    >
+                      <div className="flex-1" />
+                      <h2 className="text-[10px] sm:text-xs font-black text-sky-200 uppercase tracking-widest text-center">
+                        📅 {isSelectedDayToday ? 'GÜNÜN BİTEN MAÇLARI' : `${selectedDayLabel} BİTEN MAÇLAR`} ({strictFinishedMatches.length})
+                      </h2>
+                      <div className="flex-1 flex justify-end text-sky-300 text-xs">
+                        {isFinishedAccordionOpen ? '▲' : '▼'}
+                      </div>
+                    </button>
+                    {isFinishedAccordionOpen && (
+                      <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
+                        {strictFinishedMatches.map((match) => renderMatchCard(match, true))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {strictActiveMatches.length > 0 && (
+                  <div className="bg-[#071126]/90 rounded-2xl border border-emerald-500/40 shadow-2xl overflow-hidden">
+                    <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 bg-emerald-950/30 border-b border-emerald-500/30">
+                      <button
+                        type="button"
+                        onClick={() => setIsLiveAccordionOpen(!isLiveAccordionOpen)}
+                        className="flex items-center gap-2 text-left cursor-pointer"
+                      >
+                        <h2 className="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">
+                          {onlyLiveCardsFilter
+                            ? `🟢 SADECE CANLI OYNANANLAR (${strictCurrentlyPlaying.length})`
+                            : isSelectedDayToday
+                            ? `GÜNÜN CANLI MAÇLARI (${strictActiveMatches.length})`
+                            : `${selectedDayLabel} MAÇLARI (${strictActiveMatches.length})`}
+                        </h2>
+                        <span className="text-emerald-300 text-xs">{isLiveAccordionOpen ? '▲' : '▼'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOnlyLiveCardsFilter((prev) => {
+                            const next = !prev;
+                            if (!next) setIsLiveFocusMode(false);
+                            return next;
+                          });
+                          setIsLiveAccordionOpen(true);
+                        }}
+                        className={`px-2.5 py-1 rounded-xl text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider border cursor-pointer ${
+                          onlyLiveCardsFilter
+                            ? 'bg-emerald-600 text-white border-emerald-300'
+                            : 'bg-[#040917] text-emerald-300 border-emerald-500/50 hover:text-white'
+                        }`}
+                      >
+                        {onlyLiveCardsFilter
+                          ? `TÜMÜNÜ GÖSTER (${strictActiveMatches.length})`
+                          : `🟢 SADECE CANLILARI GÖSTER (${strictCurrentlyPlaying.length})`}
+                      </button>
                     </div>
-                  ) : (
-                    displayedActiveMatches.map((match) => renderMatchCard(match, false))
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+
+                    {isLiveAccordionOpen && (
+                      <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start bg-[#050b18]/60">
+                        {strictDisplayedActive.length === 0 ? (
+                          <div className="col-span-full py-6 text-center text-xs font-black text-slate-300 uppercase">
+                            ŞU AN OYNANAN AKTİF CANLI MAÇ YOK
+                          </div>
+                        ) : (
+                          strictDisplayedActive.map((match) => renderMatchCard(match, false))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        );
+      })()}
 
       {/* İKİ MÜSTAKİL PUAN BLOĞU SARMALAYICISI (TEKRARLAYAN ÇİFT BAŞLIK TEMİZLENDİ) */}
       <div className="flex flex-col gap-2">
