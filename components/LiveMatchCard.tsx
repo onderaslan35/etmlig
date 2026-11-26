@@ -690,17 +690,22 @@ export default function LiveMatchCard() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const isMasterSession =
-      localStorage.getItem('etml_master_commander') === 'mankoman' ||
-      (sessionStorage.getItem('admin_auth') === 'true' && sessionStorage.getItem('admin_role') === 'master') ||
-      localStorage.getItem('etml_user') === 'mankoman' ||
-      sessionStorage.getItem('etml_user') === 'mankoman';
-
-    if (isMasterSession) {
-      localStorage.setItem('etml_master_commander', 'mankoman');
-      setIsMankoman(true);
-      checkMasterApiLimit();
-    }
+    // Eski kalıcı mankoman çerezlerini temizle; yalnızca yetkili 4 ID (262728, 262734, 262771, 262706) aktifse kota sorgula
+    const syncApiAuth = () => {
+      const s = readPortalSession();
+      const allowed = Boolean(s && s.role === 'player' && canTriggerLiveApi(s.userId));
+      setIsMankoman(allowed);
+      if (allowed) {
+        checkMasterApiLimit();
+      }
+    };
+    syncApiAuth();
+    window.addEventListener(PORTAL_SESSION_EVENT, syncApiAuth);
+    window.addEventListener('storage', syncApiAuth);
+    return () => {
+      window.removeEventListener(PORTAL_SESSION_EVENT, syncApiAuth);
+      window.removeEventListener('storage', syncApiAuth);
+    };
   }, []);
 
   const toggleSound = () => {
@@ -1893,6 +1898,10 @@ export default function LiveMatchCard() {
   const totalActiveLiveMatches = activeBulletinWeeks.reduce((acc, w) => acc + (weeklyLiveTables[w]?.liveCount || 0), 0);
 
   const handleLiveUltraFetch = async () => {
+    const activeUid = String(readPortalSession()?.userId || '').trim();
+    if (!canTriggerLiveApi(activeUid)) {
+      return;
+    }
     setIsManualFetching(true);
     try {
       const todayStr = getTodayDateString();
@@ -2834,11 +2843,12 @@ export default function LiveMatchCard() {
       />
 
       <div className="w-full flex flex-wrap items-center justify-center sm:justify-end gap-2 pt-3">
-        {isMankoman && (
+        {livePortalSession?.role === 'player' && canTriggerLiveApi(livePortalSession.userId) && (
           <button
+            type="button"
             onClick={handleLiveUltraFetch}
             disabled={isManualFetching}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md border bg-gradient-to-r from-blue-700 to-indigo-700 text-white border-sky-400/70 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md border bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-sky-400/70 disabled:opacity-50 cursor-pointer"
           >
             <span className={isManualFetching ? 'animate-spin' : ''}>📡</span>
             <span>{isManualFetching ? 'ÇEKİLİYOR...' : `ULTRA ATEŞLE (KOTA: ${apiLimitRemaining})`}</span>
