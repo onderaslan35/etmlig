@@ -1038,6 +1038,12 @@ function OuterGateMatchFixture({ onEnterVisitorCanli }: { onEnterVisitorCanli: (
 }
 
 /* ===================== ANA PORTAL GİRİŞ VE YETKİ KAPISI ===================== */
+const QUICK_KICK_TARGETS = [
+  { id: '262763', label: 'Mustafa Elmas' },
+  { id: '262708', label: 'Bayram Yılmaz' },
+  { id: '262781', label: 'Hedef (262781)' }
+];
+
 export default function PortalAuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const router = useRouter();
@@ -1051,10 +1057,21 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // ÖZEL KULLANICILAR İÇİN AĞIR SAYFA GEÇİŞ PERDESİ
+  // ÖZEL KULLANICILAR İÇİN AĞIR SAYFA GEÇİŞ PERDESİ VE UZAKTAN DÜŞÜRME EKRANI
   const [routeLagging, setRouteLagging] = useState(false);
+  const [netDropUntil, setNetDropUntil] = useState<number>(0);
+  const [retryingDrop, setRetryingDrop] = useState(false);
+
+  // SADECE 262728 (ÖNDER ASLAN) İÇİN GİZLİ ANINDA ATMA PANELİ
+  const [remotePanelOpen, setRemotePanelOpen] = useState(false);
+  const [customKickId, setCustomKickId] = useState('');
+  const [kickToast, setKickToast] = useState('');
+  const [onlineUserMap, setOnlineUserMap] = useState<Record<string, string>>({});
+
   const prevPathRef = React.useRef<string>(pathname);
   const hiddenTimestampRef = React.useRef<number>(0);
+  const sessionRef = React.useRef<PortalSession | null>(null);
+  const sysChannelRef = React.useRef<any>(null);
 
   const isAdminRoute =
     pathname.startsWith('/admin') ||
@@ -1063,16 +1080,31 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
 
   const isVisitorBlockedRoute = pathname.startsWith('/tahminmatik');
   const isSlowTarget = Boolean(session?.role === 'player' && isFrictionUser(session.userId));
+  const isSuperAdmin = Boolean(session?.role === 'player' && isSuperAdminUser(session.userId));
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     refreshCustomClubsCache(false);
     const currentSess = readPortalSession();
     syncSuperAdminBypassKeys(currentSess);
     setSession(currentSess);
+
+    try {
+      const savedDrop = Number(sessionStorage.getItem('etml_net_drop_until') || '0');
+      if (savedDrop > Date.now() && !isSuperAdminUser(currentSess?.userId)) {
+        setNetDropUntil(savedDrop);
+      }
+    } catch {}
+
     setReady(true);
 
     const syncHandler = () => {
-      setSession(readPortalSession());
+      const nextSess = readPortalSession();
+      setSession(nextSess);
+      sessionRef.current = nextSess;
     };
     const openLoginHandler = () => setForceLoginModal(true);
 
@@ -1085,6 +1117,129 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       window.removeEventListener(PORTAL_OPEN_LOGIN_EVENT, openLoginHandler);
     };
   }, []);
+
+  // SUPABASE REALTIME GİZLİ KANAL: KİM AKTİF GÖR + TEK TUŞLA 0.1 SN İÇİNDE DIŞARI AT
+  useEffect(() => {
+    if (!ready) return;
+
+    const ch = supabase.channel('etml-sys-heartbeat', {
+      config: {
+        broadcast: { self: true },
+        presence: { key: 'client' }
+      }
+    });
+
+    ch.on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState();
+      const nextMap: Record<string, string> = {};
+      Object.values(state).forEach((presArr: any) => {
+        (presArr || []).forEach((p: any) => {
+          if (p?.userId) {
+            nextMap[String(p.userId).trim()] = String(p.name || p.userId);
+          }
+        });
+      });
+      setOnlineUserMap(nextMap);
+    });
+
+    ch.on('broadcast', { event: 'sys_pulse' }, ({ payload }: { payload: any }) => {
+      const cur = sessionRef.current || readPortalSession();
+      const myUid = cur?.role === 'player' ? String(cur.userId || '').trim() : '';
+      if (!myUid || isSuperAdminUser(myUid)) return;
+
+      const targetId = String(payload?.targetId || '').trim();
+      if (targetId && targetId === myUid) {
+        writePortalSession(null);
+        setSession(null);
+        setRouteLagging(false);
+
+        if (payload?.mode === 'blackout') {
+          const untilTs = Date.now() + 60000;
+          try {
+            sessionStorage.setItem('etml_net_drop_until', String(untilTs));
+          } catch {}
+          setNetDropUntil(untilTs);
+        } else {
+          setErrorMsg('Sunucu oturum bağlantınız koptu. Güvenlik nedeniyle tekrar giriş yapınız.');
+        }
+      }
+    });
+
+    ch.subscribe(async (status: string) => {
+      if (status === 'SUBSCRIBED') {
+        const cur = sessionRef.current || readPortalSession();
+        if (cur?.role === 'player' && cur.userId) {
+          try {
+            await ch.track({
+              userId: String(cur.userId).trim(),
+              name: cur.name || ''
+            });
+          } catch {}
+        }
+      }
+    });
+
+    sysChannelRef.current = ch;
+    return () => {
+      supabase.removeChannel(ch);
+      sysChannelRef.current = null;
+    };
+  }, [ready]);
+
+  // Oturum değiştiğinde aktiflik bilgisini güncelle
+  useEffect(() => {
+    const ch = sysChannelRef.current;
+    if (!ch) return;
+    if (session?.role === 'player' && session.userId) {
+      ch.track({
+        userId: String(session.userId).trim(),
+        name: session.name || ''
+      }).catch(() => {});
+    } else {
+      ch.untrack().catch(() => {});
+    }
+  }, [session?.role, session?.userId, session?.name]);
+
+  // 60 sn bağlantı kopma kilidi bittiğinde otomatik temizle
+  useEffect(() => {
+    if (!netDropUntil) return;
+    const rem = netDropUntil - Date.now();
+    if (rem <= 0) {
+      setNetDropUntil(0);
+      try {
+        sessionStorage.removeItem('etml_net_drop_until');
+      } catch {}
+      return;
+    }
+    const t = setTimeout(() => {
+      setNetDropUntil(0);
+      try {
+        sessionStorage.removeItem('etml_net_drop_until');
+      } catch {}
+      setErrorMsg('Sunucu bağlantısı yeniden sağlandı. Lütfen giriş yapınız.');
+    }, rem);
+    return () => clearTimeout(t);
+  }, [netDropUntil]);
+
+  const sendInstantKick = async (targetIdRaw: string, mode: 'logout' | 'blackout') => {
+    const cleanTarget = String(targetIdRaw || '').trim();
+    if (!cleanTarget || isSuperAdminUser(cleanTarget)) return;
+    const ch = sysChannelRef.current;
+    if (!ch) return;
+
+    await ch.send({
+      type: 'broadcast',
+      event: 'sys_pulse',
+      payload: { targetId: cleanTarget, mode, ts: Date.now() }
+    });
+
+    setKickToast(
+      mode === 'blackout'
+        ? `⚡ ${cleanTarget} siteden düşürüldü (60 sn bağlantı koptu ekranı)`
+        : `🚪 ${cleanTarget} anında şifre kapısına atıldı`
+    );
+    setTimeout(() => setKickToast(''), 3500);
+  };
 
   // 1) SAYFALAR ARASI GEZİNİRKEN 9-12 SANİYE BEKLETME VE HER 4. GEÇİŞTE OTURUMDAN ATMA
   useEffect(() => {
@@ -1103,7 +1258,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       sessionStorage.setItem('etml_nav_hop', String(stepCount));
     } catch {}
 
-    // Her 4. menü geçişinde oturumu düşürüp şifre ekranına at
     if (stepCount >= 4) {
       try {
         sessionStorage.setItem('etml_nav_hop', '0');
@@ -1115,7 +1269,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       return;
     }
 
-    // Diğer tüm sayfa geçişlerinde 9 ile 12 saniye arası ağır yükleme
     setRouteLagging(true);
     const heavyDelayMs = 9000 + Math.floor(Math.random() * 3200);
     const timer = setTimeout(() => {
@@ -1126,7 +1279,7 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     return () => clearTimeout(timer);
   }, [pathname, isSlowTarget, ready]);
 
-  // 2) CANLIDA PUSU BEKLERKEN (3.5 DK) VEYA SEKME DEĞİŞTİRİNCE (25 SN) SAYFADAN ATMA
+  // 2) CANLIDA PUSU BEKLERKEN (75 SN) VEYA SEKME DEĞİŞTİRİNCE (25 SN) SAYFADAN ATMA
   useEffect(() => {
     if (!isSlowTarget) return;
 
@@ -1137,12 +1290,10 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
       setErrorMsg(reasonText);
     };
 
-    // Sayfada açık beklerken 75 saniyede bir oturum düşürme
     const ambushTimer = setTimeout(() => {
       kickOutSession('Sunucu oturum süreniz zaman aşımına uğradı. Lütfen yeniden giriş yapınız.');
     }, 75000);
 
-    // Başka uygulamaya / sekmeye geçip 25 saniye sonra dönünce oturum düşürme
     const onVisibilityChange = () => {
       if (document.hidden) {
         hiddenTimestampRef.current = Date.now();
@@ -1251,14 +1402,162 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     }
   };
 
+  const renderSuperAdminKickWidget = () => {
+    if (!isSuperAdmin) return null;
+    return (
+      <div className="fixed bottom-3 left-3 z-[150] select-none">
+        {remotePanelOpen && (
+          <div className="mb-2 w-72 sm:w-80 rounded-2xl bg-[#060d1d]/95 backdrop-blur-md border border-slate-700/90 p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.85)] text-white space-y-2.5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">
+                ⚡ CANLI OTURUM KONTROLÜ
+              </span>
+              <button
+                type="button"
+                onClick={() => setRemotePanelOpen(false)}
+                className="text-slate-400 hover:text-white text-xs font-black cursor-pointer px-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              {QUICK_KICK_TARGETS.map((t) => {
+                const isOnline = Boolean(onlineUserMap[t.id]);
+                return (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between gap-1.5 bg-[#040914] border border-slate-800 rounded-xl px-2.5 py-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${
+                            isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'
+                          }`}
+                        />
+                        <span className="text-[10.5px] font-black truncate">{t.label}</span>
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-500">
+                        {t.id} • {isOnline ? 'ŞU AN SİTEDE' : 'Çevrimdışı'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => sendInstantKick(t.id, 'logout')}
+                        title="Anında şifre ekranına at"
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-amber-600 text-[9px] font-black uppercase cursor-pointer transition-colors"
+                      >
+                        🚪 AT
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => sendInstantKick(t.id, 'blackout')}
+                        title="60 saniye boyunca bağlantı koptu ekranına düşür"
+                        className="px-2 py-1 rounded-lg bg-rose-900/90 hover:bg-rose-600 text-rose-100 text-[9px] font-black uppercase cursor-pointer transition-colors"
+                      >
+                        🔌 DÜŞÜR
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-1.5 border-t border-slate-800 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={customKickId}
+                  onChange={(e) => setCustomKickId(e.target.value)}
+                  placeholder="Başka ID (örn: 2627xx)"
+                  className="flex-1 bg-[#040914] border border-slate-700 rounded-lg px-2.5 py-1.5 text-[10.5px] font-black text-white outline-none focus:border-amber-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (customKickId.trim()) sendInstantKick(customKickId.trim(), 'blackout');
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-600 text-white text-[9.5px] font-black uppercase cursor-pointer shrink-0"
+                >
+                  🔌 DÜŞÜR
+                </button>
+              </div>
+
+              {kickToast && (
+                <div className="text-[9.5px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 rounded-lg px-2 py-1 text-center">
+                  {kickToast}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setRemotePanelOpen((p) => !p)}
+          title="Canlı Oturum Kontrolü"
+          className="w-8 h-8 rounded-full bg-[#081226]/90 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-slate-700/80 shadow-lg flex items-center justify-center text-xs font-black cursor-pointer transition-all"
+        >
+          ⚡
+        </button>
+      </div>
+    );
+  };
+
   if (!ready) {
     return <div className="min-h-screen bg-[#050b14]" />;
+  }
+
+  // UZAKTAN "DÜŞÜR" BASILDIĞINDA KARŞI TARAFTA ÇIKAN HAM AĞ / SUNUCU KOPMA EKRANI (HİÇBİR ETML LOGOSU YOKTUR)
+  if (netDropUntil > Date.now() && !isSuperAdmin) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#0b0f17] text-slate-300 flex flex-col items-center justify-center px-6 text-center select-none">
+        <div className="max-w-md w-full space-y-4">
+          <div className="text-slate-500 text-4xl font-mono">:(</div>
+          <h1 className="text-base sm:text-lg font-bold text-slate-200">
+            Bu siteye ulaşılamıyor
+          </h1>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Sunucu yanıt vermemekte gecikti. İnternet bağlantınızı kontrol edin veya birkaç dakika sonra yeniden deneyin.
+          </p>
+          <p className="text-[10.5px] font-mono text-slate-500">
+            ERR_CONNECTION_TIMED_OUT
+          </p>
+          <div className="pt-2">
+            <button
+              type="button"
+              disabled={retryingDrop}
+              onClick={() => {
+                setRetryingDrop(true);
+                setTimeout(() => {
+                  setRetryingDrop(false);
+                  if (Date.now() >= netDropUntil) {
+                    setNetDropUntil(0);
+                  }
+                }, 2200);
+              }}
+              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer disabled:opacity-50"
+            >
+              {retryingDrop ? 'Bağlanıyor...' : 'Yeniden Yükle'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // YÖNETİM VE BÜLTEN HAZIRLAMA SADECE ÖNDER ASLAN (262728) İÇİN AÇIKTIR
   if (isAdminRoute && session) {
     if (session.role === 'player' && isSuperAdminUser(session.userId)) {
-      return <>{children}</>;
+      return (
+        <>
+          {children}
+          {renderSuperAdminKickWidget()}
+        </>
+      );
     }
     return (
       <div className="min-h-[80vh] bg-[#050b14] flex items-center justify-center p-4">
@@ -1449,7 +1748,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     );
   }
 
-  // ÖZEL AĞIRLAŞTIRILMIŞ SAYFA GEÇİŞ PERDESİ
   if (routeLagging && isSlowTarget) {
     return (
       <div className="min-h-[82vh] bg-[#050b14] flex flex-col items-center justify-center px-4 text-center gap-4">
@@ -1466,5 +1764,10 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {renderSuperAdminKickWidget()}
+    </>
+  );
 }
