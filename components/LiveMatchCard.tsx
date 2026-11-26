@@ -667,17 +667,14 @@ export default function LiveMatchCard() {
   const [isManualFetching, setIsManualFetching] = useState<boolean>(false);
   const [apiLimitRemaining, setApiLimitRemaining] = useState<number | string>('...');
   const [isScorerManualMode, setIsScorerManualMode] = useState<boolean>(false);
-  const [manualDrafts, setManualDrafts] = useState<
-    Record<string, { h: string; a: string; min: string }>
-  >({});
+  const [manualDrafts, setManualDrafts] = useState<Record<string, { h: string; a: string }>>({});
   const [savingManualUid, setSavingManualUid] = useState<string | null>(null);
 
   const handleScorerManualSave = async (
     match: any,
-    nextStatus: 'LIVE' | 'HT' | 'WAITING_APPROVAL' | 'NOT_STARTED',
+    nextStatus: 'LIVE' | 'HT' | 'FINISHED' | 'NOT_STARTED',
     curH: string,
-    curA: string,
-    curElapsed: any
+    curA: string
   ) => {
     const sess = readPortalSession();
     if (!sess || sess.role !== 'player' || !canTriggerLiveApi(sess.userId)) {
@@ -690,27 +687,60 @@ export default function LiveMatchCard() {
 
     const rawH = draft?.h !== undefined ? draft.h : curH === '-' ? '0' : String(curH);
     const rawA = draft?.a !== undefined ? draft.a : curA === '-' ? '0' : String(curA);
-    const rawMin =
-      draft?.min !== undefined
-        ? draft.min
-        : curElapsed !== undefined && curElapsed !== null
-        ? String(curElapsed)
-        : '';
 
-    const finalH = nextStatus === 'NOT_STARTED' ? '-' : String(Math.max(0, parseInt(rawH || '0', 10) || 0));
-    const finalA = nextStatus === 'NOT_STARTED' ? '-' : String(Math.max(0, parseInt(rawA || '0', 10) || 0));
-    const parsedMin = parseInt(rawMin, 10);
+    const numH = Math.max(0, parseInt(rawH || '0', 10) || 0);
+    const numA = Math.max(0, parseInt(rawA || '0', 10) || 0);
+
+    const finalH = nextStatus === 'NOT_STARTED' ? '-' : String(numH);
+    const finalA = nextStatus === 'NOT_STARTED' ? '-' : String(numA);
     const finalElapsed =
-      nextStatus === 'LIVE' ? (!isNaN(parsedMin) && parsedMin > 0 ? parsedMin : 1) : nextStatus === 'HT' ? 45 : nextStatus === 'WAITING_APPROVAL' ? 90 : null;
+      nextStatus === 'LIVE' ? null : nextStatus === 'HT' ? 45 : nextStatus === 'FINISHED' ? 90 : null;
 
     const nowTime = new Date();
-    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String(
-      nowTime.getMinutes()
-    ).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
+    const timeString = `${String(nowTime.getHours()).padStart(2, '0')}:${String( nowTime.getMinutes() ).padStart(2, '0')}:${String(nowTime.getSeconds()).padStart(2, '0')}`;
 
     setSavingManualUid(uidStr);
     try {
-      const payloadRow = {
+      // 1) Önce eğer bu maç daha önce resmi kasaya (FINISHED) işlendiyse, eski puanları kasadan düş (mükerrer puan olmasın)
+      const prevOff = officialWeekMatchesMap[uidStr];
+      const homeUpper = String(match.homeTeam || match.home_team || '').toUpperCase();
+      const awayUpper = String(match.awayTeam || match.away_team || '').toUpperCase();
+      const poolType: 'TFF' | 'DFO' = isStrictTffMatch(
+        match.category,
+        homeUpper,
+        awayUpper,
+        prevOff?.pool_type
+      )
+        ? 'TFF'
+        : 'DFO';
+
+      if (prevOff && prevOff.status === 'FINISHED' && Array.isArray(prevOff.winner_ids) && prevOff.winner_ids.length > 0) {
+        const oldPts = Number(prevOff.points_awarded || 0);
+        const oldPool = prevOff.pool_type === 'TFF' ? 'TFF' : 'DFO';
+        const { data: oldRows } = await supabase
+          .from('etml_standings_summary')
+          .select('*')
+          .in('user_id', prevOff.winner_ids);
+
+        if (oldRows && oldRows.length > 0) {
+          const revertedRows = oldRows.map((r: any) => {
+            const nextDfo = oldPool === 'DFO' ? Math.max(0, Number(r.dfo_puan || 0) - oldPts) : Number(r.dfo_puan || 0);
+            const nextTff = oldPool === 'TFF' ? Math.max(0, Number(r.tff_puan || 0) - oldPts) : Number(r.tff_puan || 0);
+            const bonus = Number(r.bonus_puan || 0);
+            return {
+              ...r,
+              dfo_puan: nextDfo,
+              tff_puan: nextTff,
+              master_puan: nextDfo + nextTff + bonus,
+              tam_isabet: Math.max(0, Number(r.tam_isabet || 0) - 1)
+            };
+          });
+          await supabase.from('etml_standings_summary').upsert(revertedRows, { onConflict: 'user_id' });
+        }
+      }
+
+      // 2) live_matches tablosunu güncelle
+      const livePayload = {
         id: uniqueId,
         home_score: finalH,
         away_score: finalA,
@@ -720,14 +750,136 @@ export default function LiveMatchCard() {
         updated_at: timeString
       };
 
-      const { error } = await supabase.from('live_matches').upsert([payloadRow], { onConflict: 'id' });
-      if (error) {
-        alert('❌ Manuel skor yazılamadı: ' + error.message);
-      } else {
-        setLiveMatchesData((prev) => ({
-          ...prev,
-          [uidStr]: { ...(prev[uidStr] || {}), ...payloadRow }
-        }));
+      const { error: liveErr } = await supabase.from('live_matches').upsert([livePayload], { onConflict: 'id' });
+      if (liveErr) {
+        alert('❌ Canlı skor yazılamadı: ' + liveErr.message);
+        return;
+      }
+
+      setLiveMatchesData((prev) => ({
+        ...prev,
+        [uidStr]: { ...(prev[uidStr] || {}), ...livePayload }
+      }));
+
+      // 3) Eğer "MAÇI BİTİR & ONAYLA" (FINISHED) seçildiyse resmi kasaya ve genel puan özetine de mühürle!
+      if (nextStatus === 'FINISHED') {
+        const { data: matchPreds } = await supabase
+          .from('player_predictions')
+          .select('user_id, predicted_score')
+          .eq('week_num', match.week_num)
+          .eq('match_index', match.id);
+
+        const targetScore = `${numH}-${numA}`;
+        const winnerIds = Array.from(
+          new Set(
+            (matchPreds || [])
+              .filter((p: any) => {
+                const uid = String(p.user_id || '').trim();
+                if (!uid || EXCLUDED_IDS.has(uid)) return false;
+                const sc = String(p.predicted_score || '')
+                  .replace(/\s+/g, '')
+                  .replace(':', '-');
+                return sc === targetScore;
+              })
+              .map((p: any) => String(p.user_id).trim())
+          )
+        );
+
+        const awardedPts = calcMatchPts(winnerIds.length);
+
+        const offPayload = {
+          id: uniqueId,
+          week_num: Number(match.week_num),
+          match_index: Number(match.id),
+          category: match.category || '',
+          pool_type: poolType,
+          match_date: match.date || '',
+          match_time: match.time || '',
+          home_team: match.homeTeam || match.home_team || '',
+          away_team: match.awayTeam || match.away_team || '',
+          home_score: numH,
+          away_score: numA,
+          status: 'FINISHED',
+          winner_ids: winnerIds,
+          points_awarded: awardedPts
+        };
+
+        const { error: offErr } = await supabase
+          .from('etml_official_matches')
+          .upsert([offPayload], { onConflict: 'id' });
+
+        if (offErr) {
+          alert('⚠️ Canlı skor bitti olarak işlendi ancak resmi kasa kaydında uyarı oluştu: ' + offErr.message);
+        } else {
+          if (winnerIds.length > 0) {
+            const { data: sumRows } = await supabase
+              .from('etml_standings_summary')
+              .select('*')
+              .in('user_id', winnerIds);
+
+            const existingMap: Record<string, any> = {};
+            (sumRows || []).forEach((r: any) => {
+              existingMap[String(r.user_id)] = r;
+            });
+
+            const updatedSummaryRows = winnerIds.map((wId) => {
+              const ex = existingMap[wId] || {
+                master_sira: 99,
+                user_id: wId,
+                oyuncu_adi: mergedAccounts[wId]?.name || wId,
+                dfo_puan: 0,
+                tff_puan: 0,
+                bonus_puan: 0,
+                master_puan: 0,
+                tam_isabet: 0
+              };
+              const nextDfo = poolType === 'DFO' ? Number(ex.dfo_puan || 0) + awardedPts : Number(ex.dfo_puan || 0);
+              const nextTff = poolType === 'TFF' ? Number(ex.tff_puan || 0) + awardedPts : Number(ex.tff_puan || 0);
+              const bonus = Number(ex.bonus_puan || 0);
+              return {
+                ...ex,
+                dfo_puan: nextDfo,
+                tff_puan: nextTff,
+                master_puan: nextDfo + nextTff + bonus,
+                tam_isabet: Number(ex.tam_isabet || 0) + 1
+              };
+            });
+
+            await supabase.from('etml_standings_summary').upsert(updatedSummaryRows, { onConflict: 'user_id' });
+          }
+
+          // Sıralamayı yeniden numaralandır ve ekran state'ini tazele
+          const { data: allSum } = await supabase.from('etml_standings_summary').select('*');
+          if (allSum && allSum.length > 0) {
+            const sorted = [...allSum].sort(
+              (a: any, b: any) =>
+                Number(b.master_puan || 0) - Number(a.master_puan || 0) ||
+                Number(b.tam_isabet || 0) - Number(a.tam_isabet || 0) ||
+                String(a.oyuncu_adi || '').localeCompare(String(b.oyuncu_adi || ''), 'tr')
+            );
+            const ranked = sorted.map((r: any, idx: number) => ({ ...r, master_sira: idx + 1 }));
+            await supabase.from('etml_standings_summary').upsert(ranked, { onConflict: 'user_id' });
+            setOfficialSummaryRows(ranked as OfficialSummaryRow[]);
+          }
+
+          setOfficialWeekMatchesMap((prev) => ({ ...prev, [uidStr]: offPayload }));
+        }
+      } else if (prevOff && prevOff.status === 'FINISHED') {
+        // Biten maçı tekrar CANLI / DEVRE / SIFIRLA yaparlarsa resmi kasadan da açık duruma çek
+        const resetOffPayload = {
+          ...prevOff,
+          status: nextStatus === 'NOT_STARTED' ? 'NOT_STARTED' : 'LIVE',
+          winner_ids: [],
+          points_awarded: 0
+        };
+        await supabase.from('etml_official_matches').upsert([resetOffPayload], { onConflict: 'id' });
+        setOfficialWeekMatchesMap((prev) => ({ ...prev, [uidStr]: resetOffPayload }));
+
+        const { data: allSum } = await supabase
+          .from('etml_standings_summary')
+          .select('*')
+          .order('master_puan', { ascending: false });
+        if (allSum) setOfficialSummaryRows(allSum as OfficialSummaryRow[]);
       }
     } finally {
       setSavingManualUid(null);
@@ -1232,13 +1384,12 @@ export default function LiveMatchCard() {
       const nowMs = Date.now();
       const predictionWeeks = distinctWeeks.filter((w) => {
         const wMatches = mappedBulten.filter((m) => m.week_num === w);
-        const hasRecentOrUpcoming = wMatches.some((m) => {
+        return wMatches.some((m) => {
           const kMs = getMatchTimeMs(m.date, m.time);
-          return kMs > 0 && kMs <= nowMs + 36 * 60 * 60 * 1000 && nowMs - kMs <= 96 * 60 * 60 * 1000;
+          return kMs > 0 && kMs <= nowMs + 7 * 24 * 60 * 60 * 1000 && nowMs - kMs <= 7 * 24 * 60 * 60 * 1000;
         });
-        return hasRecentOrUpcoming;
       });
-      const targetPredWeeks = predictionWeeks.length > 0 ? predictionWeeks : distinctWeeks.slice(0, 2);
+      const targetPredWeeks = predictionWeeks.length > 0 ? predictionWeeks : distinctWeeks.slice(-3);
 
       const targetMatchIds = mappedBulten
         .filter((m) => targetPredWeeks.includes(m.week_num))
@@ -2730,41 +2881,44 @@ export default function LiveMatchCard() {
                 </div>
               )}
 
-              {isScorerManualMode &&
+              {(isScorerManualMode || isWaitingApproval) &&
                 livePortalSession?.role === 'player' &&
-                canTriggerLiveApi(livePortalSession.userId) &&
-                offMatch?.status !== 'FINISHED' && (
+                canTriggerLiveApi(livePortalSession.userId) && (
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    className="mx-2 sm:mx-6 mb-3 p-2.5 rounded-xl bg-amber-950/40 border border-amber-400/60 flex flex-col gap-2 z-30 relative backdrop-blur-md"
+                    className="mx-2 sm:mx-6 mb-3 p-2.5 rounded-xl bg-amber-950/45 border border-amber-400/65 flex flex-col gap-2.5 z-30 relative backdrop-blur-md"
                   >
                     <div className="flex items-center justify-between text-[9.5px] font-black text-amber-300 uppercase tracking-wider">
-                      <span>✍️ SKORCU MANUEL GİRİŞ ({livePortalSession.name})</span>
-                      {savingManualUid === uniqueId && (
-                        <span className="text-emerald-300 animate-pulse">KAYDEDİLİYOR...</span>
-                      )}
+                      <span>✍️ SKOR & ONAY YETKİSİ ({livePortalSession.name})</span>
+                      {savingManualUid === uniqueId ? (
+                        <span className="text-emerald-300 animate-pulse">İŞLENİYOR...</span>
+                      ) : isFinishedStatus ? (
+                        <span className="text-emerald-400">✓ ONAYLANDI</span>
+                      ) : isWaitingApproval ? (
+                        <span className="text-sky-300 animate-pulse">ONAY BEKLİYOR</span>
+                      ) : null}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2.5">
                       {/* EV SKOR */}
                       <div className="flex items-center bg-slate-950 border border-amber-500/50 rounded-lg overflow-hidden">
                         <button
                           type="button"
                           onClick={() => {
-                            const curVal = parseInt(
-                              manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
-                              10
-                            ) || 0;
+                            const curVal =
+                              parseInt(
+                                manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                                10
+                              ) || 0;
                             setManualDrafts((p) => ({
                               ...p,
                               [uniqueId]: {
                                 h: String(Math.max(0, curVal - 1)),
-                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
-                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore))
                               }
                             }));
                           }}
-                          className="w-7 h-8 bg-slate-900 hover:bg-rose-700 text-white font-black text-sm cursor-pointer"
+                          className="w-8 h-8 bg-slate-900 hover:bg-rose-700 text-white font-black text-base cursor-pointer"
                         >
                           −
                         </button>
@@ -2778,56 +2932,55 @@ export default function LiveMatchCard() {
                               ...p,
                               [uniqueId]: {
                                 h: e.target.value,
-                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
-                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore))
                               }
                             }))
                           }
-                          className="w-9 h-8 bg-transparent text-center font-black text-amber-300 text-base outline-none"
+                          className="w-10 h-8 bg-transparent text-center font-black text-amber-300 text-lg outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => {
-                            const curVal = parseInt(
-                              manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
-                              10
-                            ) || 0;
+                            const curVal =
+                              parseInt(
+                                manualDrafts[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
+                                10
+                              ) || 0;
                             setManualDrafts((p) => ({
                               ...p,
                               [uniqueId]: {
                                 h: String(curVal + 1),
-                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
-                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                                a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore))
                               }
                             }));
                           }}
-                          className="w-7 h-8 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-sm cursor-pointer"
+                          className="w-8 h-8 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-base cursor-pointer"
                         >
                           +
                         </button>
                       </div>
 
-                      <span className="font-black text-white text-sm">:</span>
+                      <span className="font-black text-white text-base">:</span>
 
                       {/* DEPLASMAN SKOR */}
                       <div className="flex items-center bg-slate-950 border border-amber-500/50 rounded-lg overflow-hidden">
                         <button
                           type="button"
                           onClick={() => {
-                            const curVal = parseInt(
-                              manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
-                              10
-                            ) || 0;
+                            const curVal =
+                              parseInt(
+                                manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                                10
+                              ) || 0;
                             setManualDrafts((p) => ({
                               ...p,
                               [uniqueId]: {
                                 h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
-                                a: String(Math.max(0, curVal - 1)),
-                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                                a: String(Math.max(0, curVal - 1))
                               }
                             }));
                           }}
-                          className="w-7 h-8 bg-slate-900 hover:bg-rose-700 text-white font-black text-sm cursor-pointer"
+                          className="w-8 h-8 bg-slate-900 hover:bg-rose-700 text-white font-black text-base cursor-pointer"
                         >
                           −
                         </button>
@@ -2841,66 +2994,44 @@ export default function LiveMatchCard() {
                               ...p,
                               [uniqueId]: {
                                 h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
-                                a: e.target.value,
-                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                                a: e.target.value
                               }
                             }))
                           }
-                          className="w-9 h-8 bg-transparent text-center font-black text-amber-300 text-base outline-none"
+                          className="w-10 h-8 bg-transparent text-center font-black text-amber-300 text-lg outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => {
-                            const curVal = parseInt(
-                              manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
-                              10
-                            ) || 0;
+                            const curVal =
+                              parseInt(
+                                manualDrafts[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
+                                10
+                              ) || 0;
                             setManualDrafts((p) => ({
                               ...p,
                               [uniqueId]: {
                                 h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
-                                a: String(curVal + 1),
-                                min: p[uniqueId]?.min ?? String(safeElapsed || '')
+                                a: String(curVal + 1)
                               }
                             }));
                           }}
-                          className="w-7 h-8 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-sm cursor-pointer"
+                          className="w-8 h-8 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-base cursor-pointer"
                         >
                           +
                         </button>
                       </div>
-
-                      {/* DAKİKA */}
-                      <input
-                        type="number"
-                        min={1}
-                        max={130}
-                        placeholder="Dk"
-                        value={manualDrafts[uniqueId]?.min ?? (safeElapsed ? String(safeElapsed) : '')}
-                        onChange={(e) =>
-                          setManualDrafts((p) => ({
-                            ...p,
-                            [uniqueId]: {
-                              h: p[uniqueId]?.h ?? (homeScore === '-' ? '0' : String(homeScore)),
-                              a: p[uniqueId]?.a ?? (awayScore === '-' ? '0' : String(awayScore)),
-                              min: e.target.value
-                            }
-                          }))
-                        }
-                        className="w-12 h-8 rounded-lg bg-slate-950 border border-slate-700 text-center text-xs font-black text-sky-300 outline-none"
-                        title="Maç Dakikası (Opsiyonel)"
-                      />
                     </div>
 
-                    {/* DURUM GÖNDERME TUŞLARI */}
-                    <div className="grid grid-cols-4 gap-1.5">
+                    {/* DURUM VE ONAYLAMA TUŞLARI (DAKİKASIZ, SINIRSIZ YETKİ) */}
+                    <div className="grid grid-cols-3 gap-1.5">
                       <button
                         type="button"
                         disabled={savingManualUid === uniqueId}
                         onClick={() =>
-                          handleScorerManualSave(match, 'LIVE', String(homeScore), String(awayScore), safeElapsed)
+                          handleScorerManualSave(match, 'LIVE', String(homeScore), String(awayScore))
                         }
-                        className="py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[9.5px] uppercase cursor-pointer"
+                        className="py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[9.5px] sm:text-[10px] uppercase cursor-pointer"
                       >
                         🟢 CANLI YAZ
                       </button>
@@ -2908,9 +3039,9 @@ export default function LiveMatchCard() {
                         type="button"
                         disabled={savingManualUid === uniqueId}
                         onClick={() =>
-                          handleScorerManualSave(match, 'HT', String(homeScore), String(awayScore), safeElapsed)
+                          handleScorerManualSave(match, 'HT', String(homeScore), String(awayScore))
                         }
-                        className="py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black text-[9.5px] uppercase cursor-pointer"
+                        className="py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black text-[9.5px] sm:text-[10px] uppercase cursor-pointer"
                       >
                         ⏸ DEVRE
                       </button>
@@ -2918,35 +3049,24 @@ export default function LiveMatchCard() {
                         type="button"
                         disabled={savingManualUid === uniqueId}
                         onClick={() =>
-                          handleScorerManualSave(
-                            match,
-                            'WAITING_APPROVAL',
-                            String(homeScore),
-                            String(awayScore),
-                            safeElapsed
-                          )
+                          handleScorerManualSave(match, 'NOT_STARTED', String(homeScore), String(awayScore))
                         }
-                        className="py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-black text-[9.5px] uppercase cursor-pointer"
-                      >
-                        🏁 MS (BİTTİ)
-                      </button>
-                      <button
-                        type="button"
-                        disabled={savingManualUid === uniqueId}
-                        onClick={() =>
-                          handleScorerManualSave(
-                            match,
-                            'NOT_STARTED',
-                            String(homeScore),
-                            String(awayScore),
-                            safeElapsed
-                          )
-                        }
-                        className="py-1.5 rounded-lg bg-slate-800 hover:bg-rose-800 text-slate-200 font-black text-[9.5px] uppercase cursor-pointer"
+                        className="py-2 rounded-lg bg-slate-800 hover:bg-rose-800 text-slate-200 font-black text-[9.5px] sm:text-[10px] uppercase cursor-pointer"
                       >
                         ↺ SIFIRLA
                       </button>
                     </div>
+
+                    <button
+                      type="button"
+                      disabled={savingManualUid === uniqueId}
+                      onClick={() =>
+                        handleScorerManualSave(match, 'FINISHED', String(homeScore), String(awayScore))
+                      }
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-[10.5px] sm:text-xs uppercase tracking-wider shadow-[0_0_16px_rgba(245,158,11,0.45)] cursor-pointer"
+                    >
+                      ✅ MAÇI BİTİR & ONAYLA
+                    </button>
                   </div>
                 )}
 
