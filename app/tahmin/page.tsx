@@ -500,7 +500,7 @@ export default function PredictionPortal() {
     setPredictions((prev) => {
       const newPreds = { ...prev };
 
-      // 262781 VE 262763 İÇİN ÖZEL HENTBOL / BASKETBOL SKORLARI
+      // 262708 VE 262763 İÇİN ÖZEL HENTBOL / BASKETBOL SKORLARI
       if (isSlowUser) {
         const shuffled = [...TROLL_SPORT_SCORES].sort(() => Math.random() - 0.5);
         let sIdx = 0;

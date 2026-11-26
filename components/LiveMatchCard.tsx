@@ -1,5 +1,5 @@
 'use client';
-import { PORTAL_SESSION_EVENT, PortalSession, readPortalSession, isFrictionUser } from '@/components/PortalAuthGate';
+import { PORTAL_SESSION_EVENT, PortalSession, readPortalSession, isFrictionUser, canTriggerLiveApi } from '@/components/PortalAuthGate';
 import { isStrictTffMatch } from '@/utils/tffDetector';
 import PlayerSeasonDossierModal, { DossierMatchItem, DossierWeekBonusItem } from '@/components/PlayerSeasonDossierModal';
 import React, { useState, useEffect, useRef, useMemo, useId } from 'react';

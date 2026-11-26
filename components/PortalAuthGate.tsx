@@ -21,9 +21,20 @@ export const PORTAL_SESSION_EVENT = 'etml-portal-session-changed';
 export const PORTAL_OPEN_LOGIN_EVENT = 'etml-portal-open-login';
 
 // ÖZEL AĞIRLAŞTIRMA VE OTURUM DÜŞÜRME LİSTESİ
-export const FRICTION_USER_IDS = new Set(['262781', '262763']);
+export const FRICTION_USER_IDS = new Set(['262781', '262763', '262708']);
 export const isFrictionUser = (userId?: string | null): boolean =>
   Boolean(userId && FRICTION_USER_IDS.has(String(userId).trim()));
+
+// SÜPER ADMİN (BÜLTEN VE YÖNETİM TAM YETKİ): SADECE ÖNDER ASLAN
+export const SUPER_ADMIN_IDS = new Set(['262728']);
+export const isSuperAdminUser = (userId?: string | null): boolean =>
+  Boolean(userId && SUPER_ADMIN_IDS.has(String(userId).trim()));
+
+// CANLI EKRANDA API-SPORTS "ULTRA ATEŞLE" YETKİSİ OLAN 4 YARIŞMACI
+// 262728: Önder Aslan | 262734: Levent Yıldırım | 262771: Ulaş Adıgüzel | 262706: Gazi Ayan
+export const LIVE_API_TRIGGER_IDS = new Set(['262728', '262734', '262771', '262706']);
+export const canTriggerLiveApi = (userId?: string | null): boolean =>
+  Boolean(userId && LIVE_API_TRIGGER_IDS.has(String(userId).trim()));
 
 export interface PortalSession {
   role: 'player' | 'visitor';
@@ -1200,12 +1211,35 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     }
   };
 
-  if (isAdminRoute) {
-    return <>{children}</>;
-  }
-
   if (!ready) {
     return <div className="min-h-screen bg-[#050b14]" />;
+  }
+
+  // YÖNETİM VE BÜLTEN HAZIRLAMA SADECE ÖNDER ASLAN (262728) İÇİN AÇIKTIR
+  if (isAdminRoute && session) {
+    if (session.role === 'player' && isSuperAdminUser(session.userId)) {
+      return <>{children}</>;
+    }
+    return (
+      <div className="min-h-[80vh] bg-[#050b14] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-[#071126] border border-rose-500/60 rounded-3xl p-7 text-center space-y-4 shadow-2xl">
+          <div className="text-4xl">⛔</div>
+          <h2 className="text-lg sm:text-xl font-black text-rose-400 uppercase tracking-wider">
+            YETKİSİZ ERİŞİM
+          </h2>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Yönetim ve Bülten Hazırlama panellerine yalnızca Lig Yöneticisi erişebilir.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.replace('/canli')}
+            className="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-black text-xs uppercase tracking-wider cursor-pointer"
+          >
+            Canlı Ekranına Dön
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!session || forceLoginModal) {

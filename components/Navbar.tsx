@@ -8,7 +8,8 @@ import {
   PORTAL_SESSION_EVENT,
   PortalSession,
   readPortalSession,
-  writePortalSession
+  writePortalSession,
+  isSuperAdminUser
 } from '@/components/PortalAuthGate';
 import { getClubLogoUrl, isNationalTeamName, refreshCustomClubsCache } from '@/components/FavoriteTeamSelector';
 
@@ -31,6 +32,10 @@ export default function Navbar() {
   }, []);
 
   const isVisitor = !portalSession || portalSession.role === 'visitor';
+  const isSuperAdmin = Boolean(
+    portalSession?.role === 'player' && isSuperAdminUser(portalSession.userId)
+  );
+
   const playerClubLogo =
     portalSession?.role === 'player' &&
     portalSession.favoriteTeam &&
@@ -160,7 +165,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex-1 flex items-center justify-end">
-              {!isVisitor && (
+              {isSuperAdmin && (
                 <Link href="/admin" className={desktopBtnCls(Boolean(isAdminActive))}>
                   YÖNETİM
                 </Link>
@@ -226,7 +231,7 @@ export default function Navbar() {
             );
           })}
 
-          {!isVisitor && (
+          {isSuperAdmin && (
             <Link
               href="/admin"
               onClick={() => setIsMobileMenuOpen(false)}
