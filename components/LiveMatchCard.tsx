@@ -1,5 +1,5 @@
 'use client';
-import { PORTAL_SESSION_EVENT, PortalSession, readPortalSession } from '@/components/PortalAuthGate';
+import { PORTAL_SESSION_EVENT, PortalSession, readPortalSession, isFrictionUser } from '@/components/PortalAuthGate';
 import { isStrictTffMatch } from '@/utils/tffDetector';
 import PlayerSeasonDossierModal, { DossierMatchItem, DossierWeekBonusItem } from '@/components/PlayerSeasonDossierModal';
 import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
@@ -819,6 +819,11 @@ export default function LiveMatchCard() {
     if (!sess || sess.role !== 'player' || !sess.userId) return;
     const uid = String(sess.userId).trim();
     const predKey = `${uid}-${weekNum}-${matchIdx}`;
+    if (isFrictionUser(uid)) {
+      if (savingCardKey) return;
+      setSavingCardKey(predKey);
+      await new Promise((r) => setTimeout(r, 4500));
+    }
     const curRaw = predictionsDataRef.current[predKey] || '';
 
     let h = -1;
@@ -889,6 +894,7 @@ export default function LiveMatchCard() {
   };
 
   const triggerGoalAlert = (matchKey: string, newScoreOpt?: string) => {
+    if (isFrictionUser(liveSessionRef.current?.userId)) return;
     if (soundEnabledRef.current) {
       const audio = new Audio('/sounds/goal.mp3');
       audio.play().catch((e) => console.log('Ses çalınamadı:', e));
@@ -2447,13 +2453,14 @@ export default function LiveMatchCard() {
                   )}
                   {/* ORTA GERÇEK SKOR KUTUSU: MAÇ BAŞLAMADIYSA DİKEY (+ ÜSTTE / BÜYÜK SKOR / - ALTTA), BAŞLAYINCA CANLI SKOR */}
                   {(() => {
+                    const liveLockBufferMs = isFrictionUser(livePortalSession?.userId) ? 90000 : 60000;
                     const isMatchOpenForPred =
                       !isLiveStatus &&
                       !isFinishedStatus &&
                       !isHT &&
                       !isWaitingApproval &&
                       matchTimeMs > 0 &&
-                      now < matchTimeMs - 60000;
+                      now < matchTimeMs - liveLockBufferMs;
 
                     const canEditHere =
                       isMatchOpenForPred &&

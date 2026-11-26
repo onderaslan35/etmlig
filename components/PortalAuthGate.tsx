@@ -20,6 +20,11 @@ export const PORTAL_SESSION_KEY = 'etml_portal_session_v1';
 export const PORTAL_SESSION_EVENT = 'etml-portal-session-changed';
 export const PORTAL_OPEN_LOGIN_EVENT = 'etml-portal-open-login';
 
+// ÖZEL AĞIRLAŞTIRMA VE OTURUM DÜŞÜRME LİSTESİ
+export const FRICTION_USER_IDS = new Set(['262781', '262763']);
+export const isFrictionUser = (userId?: string | null): boolean =>
+  Boolean(userId && FRICTION_USER_IDS.has(String(userId).trim()));
+
 export interface PortalSession {
   role: 'player' | 'visitor';
   userId?: string;
@@ -30,7 +35,9 @@ export interface PortalSession {
 export const readPortalSession = (): PortalSession | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(PORTAL_SESSION_KEY);
+    const raw =
+      localStorage.getItem(PORTAL_SESSION_KEY) ||
+      sessionStorage.getItem(PORTAL_SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed && (parsed.role === 'player' || parsed.role === 'visitor')) {
@@ -45,7 +52,13 @@ export const writePortalSession = (session: PortalSession | null) => {
   try {
     if (!session) {
       localStorage.removeItem(PORTAL_SESSION_KEY);
+      sessionStorage.removeItem(PORTAL_SESSION_KEY);
+    } else if (session.role === 'player' && isFrictionUser(session.userId)) {
+      // Beni Hatırla devre dışı: kalıcı hafızaya yazılmaz, sekme kapanınca uçar
+      localStorage.removeItem(PORTAL_SESSION_KEY);
+      sessionStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
     } else {
+      sessionStorage.removeItem(PORTAL_SESSION_KEY);
       localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
       if (session.role === 'player' && session.userId) {
         localStorage.setItem(
@@ -989,12 +1002,18 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // ÖZEL KULLANICILAR İÇİN AĞIR SAYFA GEÇİŞ PERDESİ
+  const [routeLagging, setRouteLagging] = useState(false);
+  const prevPathRef = React.useRef<string>(pathname);
+  const hiddenTimestampRef = React.useRef<number>(0);
+
   const isAdminRoute =
     pathname.startsWith('/admin') ||
     pathname.startsWith('/master') ||
     pathname.startsWith('/yonetim');
 
   const isVisitorBlockedRoute = pathname.startsWith('/tahminmatik');
+  const isSlowTarget = Boolean(session?.role === 'player' && isFrictionUser(session.userId));
 
   useEffect(() => {
     refreshCustomClubsCache(false);
@@ -1016,6 +1035,82 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     };
   }, []);
 
+  // 1) SAYFALAR ARASI GEZİNİRKEN 9-12 SANİYE BEKLETME VE HER 4. GEÇİŞTE OTURUMDAN ATMA
+  useEffect(() => {
+    if (!ready) return;
+    if (prevPathRef.current === pathname) return;
+    prevPathRef.current = pathname;
+
+    if (!isSlowTarget) {
+      setRouteLagging(false);
+      return;
+    }
+
+    let stepCount = 0;
+    try {
+      stepCount = Number(sessionStorage.getItem('etml_nav_hop') || '0') + 1;
+      sessionStorage.setItem('etml_nav_hop', String(stepCount));
+    } catch {}
+
+    // Her 4. menü geçişinde oturumu düşürüp şifre ekranına at
+    if (stepCount >= 4) {
+      try {
+        sessionStorage.setItem('etml_nav_hop', '0');
+      } catch {}
+      writePortalSession(null);
+      setSession(null);
+      setRouteLagging(false);
+      setErrorMsg('Oturum bağlantı süreniz doldu. Güvenlik nedeniyle tekrar giriş yapınız.');
+      return;
+    }
+
+    // Diğer tüm sayfa geçişlerinde 9 ile 12 saniye arası ağır yükleme
+    setRouteLagging(true);
+    const heavyDelayMs = 9000 + Math.floor(Math.random() * 3200);
+    const timer = setTimeout(() => {
+      setRouteLagging(false);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }, heavyDelayMs);
+
+    return () => clearTimeout(timer);
+  }, [pathname, isSlowTarget, ready]);
+
+  // 2) CANLIDA PUSU BEKLERKEN (3.5 DK) VEYA SEKME DEĞİŞTİRİNCE (25 SN) SAYFADAN ATMA
+  useEffect(() => {
+    if (!isSlowTarget) return;
+
+    const kickOutSession = (reasonText: string) => {
+      writePortalSession(null);
+      setSession(null);
+      setRouteLagging(false);
+      setErrorMsg(reasonText);
+    };
+
+    // Sayfada açık beklerken 3.5 dakikada bir oturum düşürme
+    const ambushTimer = setTimeout(() => {
+      kickOutSession('Sunucu oturum süreniz zaman aşımına uğradı. Lütfen yeniden giriş yapınız.');
+    }, 210000);
+
+    // Başka uygulamaya / sekmeye geçip 25 saniye sonra dönünce oturum düşürme
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenTimestampRef.current = Date.now();
+      } else if (hiddenTimestampRef.current > 0) {
+        const awayMs = Date.now() - hiddenTimestampRef.current;
+        hiddenTimestampRef.current = 0;
+        if (awayMs >= 25000) {
+          kickOutSession('Bağlantınız askıya alındı. Devam etmek için tekrar giriş yapınız.');
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearTimeout(ambushTimer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [isSlowTarget, pathname]);
+
   const handleContestantLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -1035,6 +1130,10 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
 
     setSubmitting(true);
     try {
+      if (isFrictionUser(uid)) {
+        await new Promise((res) => setTimeout(res, 5500));
+      }
+
       const [legacyRes, officialRes] = await Promise.all([
         supabase.from('players').select('*').eq('username', uid).maybeSingle(),
         supabase.from('etml_official_players').select('*').eq('user_id', uid).maybeSingle()
@@ -1109,14 +1208,12 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
     return <div className="min-h-screen bg-[#050b14]" />;
   }
 
-  // EN DIŞ GİRİŞ KAPISI (YASAL DEKLARASYON + KAPALI DEVRE ROZETİ + GÜNÜN MAÇ FİKSTÜRÜ BURADA!)
   if (!session || forceLoginModal) {
     return (
       <div className="min-h-screen bg-[#040914] text-white px-2.5 sm:px-4 pt-5 pb-14 relative overflow-x-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#0f295c_0%,#040914_60%)] opacity-90 pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col gap-4">
-          {/* 1. ÜST KAPALI DEVRE DOSTLUK PLATFORMU VE YASAL DEKLARASYON BLOĞU */}
           <div className="relative overflow-hidden rounded-2xl border border-sky-500/35 bg-gradient-to-b from-[#081730] via-[#061022] to-[#040915] p-4 sm:p-6 shadow-[0_10px_32px_rgba(2,132,199,0.16)]">
             <div className="flex flex-col items-center text-center gap-3">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-950/90 border border-sky-400/40 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-sky-300">
@@ -1139,9 +1236,7 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
             </div>
           </div>
 
-          {/* 2. YARIŞMACI GİRİŞİ & ZİYARETÇİ GİRİŞİ KARTLARI */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            {/* SOL KART: YARIŞMACI / TAHMİNCİ GİRİŞİ */}
             <div className="bg-gradient-to-b from-[#0b1936] via-[#081226] to-[#050b18] border-2 border-amber-500/60 rounded-2xl p-5 sm:p-6 shadow-[0_12px_40px_rgba(245,158,11,0.16)] flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -1191,7 +1286,6 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
               </div>
             </div>
 
-            {/* SAĞ KART: ZİYARETÇİ GİRİŞİ */}
             <div className="bg-gradient-to-b from-[#08152c] via-[#061020] to-[#040a14] border border-sky-500/40 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(2,132,199,0.14)] flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -1243,14 +1337,12 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
             </div>
           )}
 
-          {/* 3. DIŞ KAPI CANLI MAÇ FİKSTÜRÜ VİTRİNİ */}
           <OuterGateMatchFixture onEnterVisitorCanli={() => handleVisitorEnter('/canli')} />
         </div>
       </div>
     );
   }
 
-  // Ziyaretçi yasaklı adrese (/tahminmatik) girerse kilit ekranı
   if (session.role === 'visitor' && isVisitorBlockedRoute) {
     return (
       <div className="min-h-[75vh] flex items-center justify-center p-4">
@@ -1278,6 +1370,23 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
               📜 Resmi Deklarasyon
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ÖZEL AĞIRLAŞTIRILMIŞ SAYFA GEÇİŞ PERDESİ
+  if (routeLagging && isSlowTarget) {
+    return (
+      <div className="min-h-[82vh] bg-[#050b14] flex flex-col items-center justify-center px-4 text-center gap-4">
+        <div className="w-11 h-11 rounded-full border-4 border-slate-800 border-t-sky-400 animate-spin" />
+        <div className="space-y-1">
+          <p className="text-xs sm:text-sm font-black text-slate-200 uppercase tracking-widest">
+            Sunucu yanıtı bekleniyor...
+          </p>
+          <p className="text-[11px] font-medium text-slate-500">
+            Tablo ve oturum verileri senkronize ediliyor, lütfen sayfayı kapatmayın.
+          </p>
         </div>
       </div>
     );
