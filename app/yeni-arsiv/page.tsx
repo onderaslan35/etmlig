@@ -14,8 +14,13 @@ import {
   isNationalTeamName,
   refreshCustomClubsCache
 } from '@/components/FavoriteTeamSelector';
+import {
+  PORTAL_SESSION_EVENT,
+  readPortalSession
+} from '@/components/PortalAuthGate';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
+const PREMIER_VIP_USER_ID = '262728';
 const SEALED_MATCHES_CACHE_KEY = 'etml_sealed_matches_w1_40_v2';
 const SEALED_WEEKS_CACHE_KEY = 'etml_sealed_weeks_v2';
 const SEALED_CACHE_TS_KEY = 'etml_sealed_cache_ts_v2';
@@ -40,21 +45,128 @@ const normalizeTrName = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// 10 RESMİ ŞAMPİYON KÜNYESİ (Gerçek Yarışmacı İsimleri)
+// İNGİLTERE PREMIER LİG MAÇ TESPİT MOTORU (1. Haftadan Bugüne Tüm PL Maçlarını Yakalar, UEFA / Kupa Maçlarını Ayıklar)
+const EPL_CLUB_PATTERNS: RegExp[] = [
+  /\bARSENAL\b/,
+  /\bASTON VILLA\b/,
+  /\bBOURNEMOUTH\b/,
+  /\bBRENTFORD\b/,
+  /\bBRIGHTON\b/,
+  /\bBURNLEY\b/,
+  /\bCHELSEA\b/,
+  /\bCOVENTRY\b/,
+  /\bCRYSTAL PALACE\b/,
+  /\bEVERTON\b/,
+  /\bFULHAM\b/,
+  /\bHULL\b/,
+  /\bIPSWICH\b/,
+  /\bLEEDS\b/,
+  /\bLEICESTER\b/,
+  /\bLIVERPOOL\b/,
+  /\bLUTON\b/,
+  /\bMANCHESTER CITY\b|\bMAN CITY\b|\bM CITY\b/,
+  /\bMANCHESTER UNITED\b|\bMANCHESTER UTD\b|\bMAN UNITED\b|\bMAN UTD\b|\bM UNITED\b/,
+  /\bNEWCASTLE\b/,
+  /\bNOTTINGHAM\b|\bNOTTM FOREST\b/,
+  /\bSHEFFIELD UNITED\b|\bSHEFFIELD UTD\b/,
+  /\bSOUTHAMPTON\b/,
+  /\bSUNDERLAND\b/,
+  /\bTOTTENHAM\b|\bSPURS\b/,
+  /\bWEST HAM\b/,
+  /\bWOLVERHAMPTON\b|\bWOLVES\b/
+];
+
+const isEnglishPremierClub = (teamName: string) => {
+  const norm = normalizeTrName(teamName);
+  if (!norm) return false;
+  return EPL_CLUB_PATTERNS.some((rx) => rx.test(norm));
+};
+
+const isEnglishPremierLeagueMatch = (
+  category?: string | null,
+  homeTeam?: string | null,
+  awayTeam?: string | null,
+  poolType?: string | null
+) => {
+  if (isStrictTffMatch(category || '', homeTeam || '', awayTeam || '', poolType || undefined)) {
+    return false;
+  }
+
+  const cat = normalizeTrName(category || '');
+
+  // Şampiyonlar Ligi, Avrupa Ligi, Konferans Ligi, Milli Maçlar ve İngiltere Kupalarını hariç tut
+  if (
+    cat.includes('UEFA') ||
+    cat.includes('SAMPIYONLAR') ||
+    cat.includes('CHAMPIONS') ||
+    cat.includes('AVRUPA LIGI') ||
+    cat.includes('EUROPA') ||
+    cat.includes('KONFERANS') ||
+    cat.includes('CONFERENCE') ||
+    cat.includes('FA CUP') ||
+    cat.includes('FEDERASYON KUPASI') ||
+    cat.includes('EFL') ||
+    cat.includes('CARABAO') ||
+    cat.includes('LIG KUPASI') ||
+    cat.includes('COMMUNITY SHIELD') ||
+    cat.includes('CHAMPIONSHIP') ||
+    cat.includes('LEAGUE ONE') ||
+    cat.includes('LEAGUE TWO') ||
+    cat.includes('ISKOCYA') ||
+    cat.includes('SCOTLAND') ||
+    cat.includes('RUSYA') ||
+    cat.includes('UKRAYNA') ||
+    cat.includes('ULUSLAR') ||
+    cat.includes('NATIONS') ||
+    cat.includes('DUNYA KUPASI') ||
+    cat.includes('WORLD CUP') ||
+    cat.includes('LA LIGA') ||
+    cat.includes('ISPANYA') ||
+    cat.includes('SERIE A') ||
+    cat.includes('ITALYA') ||
+    cat.includes('BUNDESLIGA') ||
+    cat.includes('ALMANYA') ||
+    cat.includes('LIGUE 1') ||
+    cat.includes('FRANSA') ||
+    cat.includes('HOLLANDA') ||
+    cat.includes('PORTEKIZ')
+  ) {
+    return false;
+  }
+
+  if (
+    cat.includes('PREMIER LIG') ||
+    cat.includes('PREMIER LEAGUE') ||
+    cat.includes('INGILTERE PREMIER') ||
+    cat === 'PREMIER' ||
+    cat === 'EPL'
+  ) {
+    return true;
+  }
+
+  const bothEplClubs =
+    isEnglishPremierClub(homeTeam || '') && isEnglishPremierClub(awayTeam || '');
+
+  if (cat.includes('INGILTERE') || cat.includes('ENGLAND')) {
+    return bothEplClubs;
+  }
+
+  // Eski bültenlerde kategori GENEL / AVRUPA FUTBOLU / boş girilmişse iki takımın da EPL kulübü olmasına bak
+  if (!cat || cat === 'GENEL' || cat.includes('AVRUPA FUTBOLU') || cat === 'DFO') {
+    return bothEplClubs;
+  }
+
+  return false;
+};
+
+// 10 RESMİ ŞAMPİYON KÜNYESİ
 const OFFICIAL_CHAMPIONS: Record<string, { stars: number; reigning: boolean }> = {
-  // 2 Yıldız + Türk Bayraklı Son Şampiyon
   'OSMAN ALI AYDIN': { stars: 2, reigning: true },
-
-  // 1 Yıldız + Türk Bayraklı Son Şampiyon
   'ISMAIL EKER': { stars: 1, reigning: true },
-
-  // 2 Yıldız + Türk Bayraksız Şampiyonlar
   'GAZI AYAN': { stars: 2, reigning: false },
   'RECEP ILHAN KARACA': { stars: 2, reigning: false },
   'RECEP ILAN KARACA': { stars: 2, reigning: false },
   'R ILHAN KARACA': { stars: 2, reigning: false },
-
-  // 1 Yıldız + Türk Bayraksız Şampiyonlar (60. Yarışmacı METE BÜYÜKGÖL dahil)
   'YAHSI ERKAN': { stars: 1, reigning: false },
   'AHMET BIRCAN': { stars: 1, reigning: false },
   'CEMAL SIVRIKAYA': { stars: 1, reigning: false },
@@ -75,7 +187,6 @@ const hasChampionCup = (name: string, isChampFlag?: boolean) => {
   return Boolean(isChampFlag);
 };
 
-// YILDIZLI ALTIN KUPA + BURSASPOR ARMASI TARZINDA TOK KALKAN TÜRK BAYRAĞI (0 Byte Egress SVG)
 const ChampionTrophyCrest = ({
   name,
   compact = false
@@ -125,7 +236,6 @@ const ChampionTrophyCrest = ({
           </linearGradient>
         </defs>
 
-        {/* ÜSTTEKİ ŞAMPİYONLUK YILDIZLARI */}
         {stars === 1 ? (
           <polygon
             points={makeStarPoints(32, 9, 8.3, 3.6)}
@@ -153,7 +263,6 @@ const ChampionTrophyCrest = ({
           </>
         )}
 
-        {/* KUPA KULPLARI */}
         <path
           d="M17 24 H8.5 C6.5 24 5.5 25.5 6 28 C7.2 35.5 11.5 40.5 19.5 42"
           fill="none"
@@ -171,7 +280,6 @@ const ChampionTrophyCrest = ({
           strokeLinejoin="round"
         />
 
-        {/* KUPA ANA GÖVDESİ */}
         <path
           d="M15 20 H49 L46 39 C44.5 48.5 38.8 53 32 53 C25.2 53 19.5 48.5 18 39 Z"
           fill={`url(#goldCup-${gradId})`}
@@ -180,7 +288,6 @@ const ChampionTrophyCrest = ({
           strokeLinejoin="round"
         />
 
-        {/* KUPA ÜST AĞIZ BANDI */}
         <rect
           x="13.5"
           y="18"
@@ -192,7 +299,6 @@ const ChampionTrophyCrest = ({
           strokeWidth="1.3"
         />
 
-        {/* KUPA AYAĞI VE ALT KAİDE */}
         <path
           d="M28.5 52.5 H35.5 L37 60 H27 Z"
           fill={`url(#goldCup-${gradId})`}
@@ -210,7 +316,6 @@ const ChampionTrophyCrest = ({
           strokeWidth="1.5"
         />
 
-        {/* BURSASPOR ARMASI FORMUNDA TOK KALKAN TÜRK BAYRAĞI (SON ŞAMPİYONLARDA) */}
         {reigning ? (
           <g>
             <path
@@ -251,64 +356,6 @@ const calcMatchPts = (winnerCount: number) => {
   if (winnerCount === 6) return 2;
   if (winnerCount >= 7) return 1;
   return 0;
-};
-
-const advancedTffCheck = (category: string, home: string, away: string) => {
-  const cat = normalizeTrName(category);
-  const h = normalizeTrName(home);
-  const a = normalizeTrName(away);
-
-  if (
-    cat.includes('UEFA') ||
-    cat.includes('SAMPIYONLAR') ||
-    cat.includes('CHAMPIONS') ||
-    cat.includes('AVRUPA LIGI') ||
-    cat.includes('EUROPA') ||
-    cat.includes('KONFERANS') ||
-    cat.includes('CONFERENCE') ||
-    cat.includes('ULUSLAR') ||
-    cat.includes('NATIONS') ||
-    cat.includes('MILLI') ||
-    cat.includes('DUNYA KUPASI') ||
-    cat.includes('WORLD CUP') ||
-    cat.includes('INGILTERE') ||
-    cat.includes('PREMIER') ||
-    cat.includes('ISPANYA') ||
-    cat.includes('LA LIGA') ||
-    cat.includes('ITALYA') ||
-    cat.includes('SERIE A') ||
-    cat.includes('ALMANYA') ||
-    cat.includes('BUNDESLIGA') ||
-    cat.includes('FRANSA') ||
-    cat.includes('LIGUE 1') ||
-    cat.includes('HOLLANDA') ||
-    cat.includes('PORTEKIZ') ||
-    cat.includes('BELCIKA') ||
-    cat.includes('ISKOCYA') ||
-    cat.includes('DANIMARKA')
-  ) {
-    return false;
-  }
-
-  if (
-    cat.includes('TURKIYE') ||
-    cat.includes('TFF') ||
-    cat.includes('TRENDYOL') ||
-    cat.includes('NESINE') ||
-    cat.includes('SUPER LIG') ||
-    cat.includes('1. LIG') ||
-    cat.includes('1.LIG') ||
-    cat.includes('2. LIG') ||
-    cat.includes('3. LIG') ||
-    cat.includes('ZIRAAT') ||
-    cat.includes('KUPA')
-  ) {
-    return true;
-  }
-
-  const teamRegex =
-    /(SPOR|GUCU|GENCLER|ANKARA|IZMIR|ISTANBUL|BURSA|TRABZON|ANTALYA|ESKISEHIR|KARSIYAKA|KASIMPASA|GAZIANTEP|SARIYER|IGDIR|GALATASARAY|FENERBAHCE|BESIKTAS|GOZTEPE|KAYSERI|SIVAS|ALANYA|RIZE|KONYA|SAMSUN|BODRUM|PENDIK|KARAGUMRUK|EYUP|AMED|ERZURUM|KOCAELI|BANDIRMA|UMRANIYE|MARDIN|MUGLA|BATMAN|CORUM|MANISA|BOLU|EROK)/;
-  return teamRegex.test(h) && teamRegex.test(a);
 };
 
 const isLiveMatchStatus = (st?: string | null) =>
@@ -361,14 +408,33 @@ interface PlayerStatRow {
   skorKralWeeks: number[];
 }
 
+interface PremierLeaguePlayerRow {
+  id: string;
+  name: string;
+  isChampion: boolean;
+  favoriteTeam: string;
+  plPts: number;
+  plSkor: number;
+  solo12Count: number;
+}
+
 export default function YeniArsivPage() {
   const [selectedDossierPlayerId, setSelectedDossierPlayerId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [, setClubLogosVersion] = useState<number>(0);
+  const [loggedViewerId, setLoggedViewerId] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<
-    'TOTAL_STANDINGS' | 'CARDS' | 'WEEK_CHECK' | 'WEEK_CUMULATIVE' | 'LEADERS_TIMELINE'
+    | 'TOTAL_STANDINGS'
+    | 'CARDS'
+    | 'WEEK_CHECK'
+    | 'WEEK_CUMULATIVE'
+    | 'LEADERS_TIMELINE'
+    | 'PREMIER_LEAGUE'
   >('TOTAL_STANDINGS');
+
+  const [plSubView, setPlSubView] = useState<'STANDINGS' | 'MATCHES'>('STANDINGS');
+  const [plSortBy, setPlSortBy] = useState<'PUAN' | 'SKOR'>('PUAN');
 
   const [standingsFilter, setStandingsFilter] = useState<
     'CANLI' | 'MASTER' | 'DFO' | 'TFF' | 'SKOR' | 'BONUS'
@@ -405,6 +471,34 @@ export default function YeniArsivPage() {
   const [activePredictionsMap, setActivePredictionsMap] = useState<Record<string, string>>({});
   const fetchedPredWeeksRef = useRef<Set<number>>(new Set());
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+
+  // SADECE 262728 (ÖNDER ASLAN) OTURUM KONTROLÜ
+  useEffect(() => {
+    const syncSession = () => {
+      try {
+        const s = readPortalSession();
+        const uid = s?.role === 'player' && s.userId ? String(s.userId).trim() : '';
+        setLoggedViewerId(uid);
+      } catch {
+        setLoggedViewerId('');
+      }
+    };
+    syncSession();
+    window.addEventListener(PORTAL_SESSION_EVENT, syncSession);
+    window.addEventListener('storage', syncSession);
+    return () => {
+      window.removeEventListener(PORTAL_SESSION_EVENT, syncSession);
+      window.removeEventListener('storage', syncSession);
+    };
+  }, []);
+
+  const isOnderVip = loggedViewerId === PREMIER_VIP_USER_ID;
+
+  useEffect(() => {
+    if (!isOnderVip && activeTab === 'PREMIER_LEAGUE') {
+      setActiveTab('TOTAL_STANDINGS');
+    }
+  }, [isOnderVip, activeTab]);
 
   useEffect(() => {
     const t = setInterval(() => setNowMs(Date.now()), 30000);
@@ -591,7 +685,6 @@ export default function YeniArsivPage() {
           }
         });
 
-        // 60. Yarışmacı METE BÜYÜKGÖL her koşulda tabloda yer alır
         pMap['600060'] = {
           name: 'METE BÜYÜKGÖL',
           isChampion: true,
@@ -802,6 +895,123 @@ export default function YeniArsivPage() {
     return !isNationalTeamName(byName) ? byName : '';
   };
 
+  // ÖNDER ASLAN (262728) ÖZEL PREMIER LİG PUAN DURUMU VE MAÇ HAVUZU HESABI
+  const premierLeagueData = useMemo(() => {
+    if (!isOnderVip) {
+      return {
+        standings: [] as PremierLeaguePlayerRow[],
+        matches: [] as Array<OfficialMatchRow & { effectiveCategory: string; calcPts: number; cleanWinners: string[] }>,
+        distinctWeekCount: 0,
+        totalAwardedPts: 0
+      };
+    }
+
+    const bulCatLookup: Record<string, string> = {};
+    recentBulletins.forEach((b: any) => {
+      if (b.category) {
+        bulCatLookup[`${Number(b.week_num)}-${Number(b.match_index)}`] = String(b.category);
+      }
+    });
+
+    const plStatsMap: Record<string, PremierLeaguePlayerRow> = {};
+    Object.keys(playersMap).forEach((uid) => {
+      if (EXCLUDED_IDS.has(uid)) return;
+      const nm = playersMap[uid]?.name || uid;
+      plStatsMap[uid] = {
+        id: uid,
+        name: nm,
+        isChampion: Boolean(playersMap[uid]?.isChampion),
+        favoriteTeam: resolvePlayerFavTeam(uid, nm),
+        plPts: 0,
+        plSkor: 0,
+        solo12Count: 0
+      };
+    });
+
+    const plFinishedMatches: Array<
+      OfficialMatchRow & { effectiveCategory: string; calcPts: number; cleanWinners: string[] }
+    > = [];
+    const plWeekSet = new Set<number>();
+    let totalAwardedPts = 0;
+
+    officialMatches.forEach((m) => {
+      if (m.status !== 'FINISHED') return;
+      const effCat =
+        (m.category && m.category !== 'GENEL' ? m.category : '') ||
+        bulCatLookup[`${Number(m.week_num)}-${Number(m.match_index)}`] ||
+        m.category ||
+        '';
+
+      if (!isEnglishPremierLeagueMatch(effCat, m.home_team, m.away_team, m.pool_type)) {
+        return;
+      }
+
+      const cleanWinners = (m.winner_ids || [])
+        .map((id) => String(id).trim())
+        .filter((id) => id && !EXCLUDED_IDS.has(id));
+
+      const pts =
+        m.points_awarded !== null && m.points_awarded !== undefined
+          ? Number(m.points_awarded)
+          : calcMatchPts(cleanWinners.length);
+
+      plWeekSet.add(Number(m.week_num));
+      plFinishedMatches.push({
+        ...m,
+        effectiveCategory: effCat || 'İNGİLTERE PREMIER LİG',
+        calcPts: pts,
+        cleanWinners
+      });
+
+      cleanWinners.forEach((uid) => {
+        if (!plStatsMap[uid]) {
+          const nm = playersMap[uid]?.name || TEST_ACCOUNTS[uid]?.name || uid;
+          plStatsMap[uid] = {
+            id: uid,
+            name: nm,
+            isChampion: hasChampionCup(nm, playersMap[uid]?.isChampion),
+            favoriteTeam: resolvePlayerFavTeam(uid, nm),
+            plPts: 0,
+            plSkor: 0,
+            solo12Count: 0
+          };
+        }
+        plStatsMap[uid].plPts += pts;
+        plStatsMap[uid].plSkor += 1;
+        if (pts === 12) plStatsMap[uid].solo12Count += 1;
+        totalAwardedPts += pts;
+      });
+    });
+
+    plFinishedMatches.sort(
+      (a, b) => Number(b.week_num) - Number(a.week_num) || Number(b.match_index) - Number(a.match_index)
+    );
+
+    const sortedStandings = Object.values(plStatsMap).sort((a, b) => {
+      if (plSortBy === 'SKOR') {
+        return (
+          b.plSkor - a.plSkor ||
+          b.plPts - a.plPts ||
+          b.solo12Count - a.solo12Count ||
+          a.name.localeCompare(b.name, 'tr')
+        );
+      }
+      return (
+        b.plPts - a.plPts ||
+        b.plSkor - a.plSkor ||
+        b.solo12Count - a.solo12Count ||
+        a.name.localeCompare(b.name, 'tr')
+      );
+    });
+
+    return {
+      standings: sortedStandings,
+      matches: plFinishedMatches,
+      distinctWeekCount: plWeekSet.size,
+      totalAwardedPts
+    };
+  }, [isOnderVip, officialMatches, recentBulletins, playersMap, favTeamByNormName, plSortBy]);
+
   const {
     totalStandings,
     weekSummaryRows,
@@ -908,7 +1118,7 @@ export default function YeniArsivPage() {
           m.points_awarded !== null && m.points_awarded !== undefined
             ? Number(m.points_awarded)
             : calcMatchPts(winners.length);
-        const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);;
+        const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);
 
         winners.forEach((rawId) => {
           const uid = String(rawId).trim();
@@ -1347,7 +1557,6 @@ export default function YeniArsivPage() {
 
     return (
       <div className="w-full text-left tabular-nums select-none">
-        {/* DONDURULMUŞ SÜTUN BAŞLIĞI */}
         <div
           className={`sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 shadow-[0_4px_10px_rgba(0,0,0,0.45)] flex items-end w-full uppercase font-black transition-all duration-300 ${
             isDetailOpen ? 'h-12 sm:h-11 text-[10px] sm:text-xs' : 'h-10 sm:h-11 text-[11px] sm:text-xs'
@@ -1371,7 +1580,6 @@ export default function YeniArsivPage() {
             YARIŞMACI
           </div>
 
-          {/* CANLI (DFO ÖNÜNDE) | DFO | TFF | SKOR | BNS */}
           <div
             className={`flex items-end shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
               isDetailOpen
@@ -1414,7 +1622,6 @@ export default function YeniArsivPage() {
             </div>
           </div>
 
-          {/* MASTER BAŞLIĞI: ASİL PARLAMENT MAVİSİ */}
           <button
             type="button"
             onClick={onToggleDetail}
@@ -1476,7 +1683,6 @@ export default function YeniArsivPage() {
                 )}
               </div>
 
-              {/* CANLI (DFO ÖNÜNDE) | DFO | TFF | SKOR | BNS */}
               <div
                 className={`flex items-center shrink-0 overflow-hidden transition-all duration-300 ease-out origin-right ${
                   isDetailOpen
@@ -1511,7 +1717,6 @@ export default function YeniArsivPage() {
                 </div>
               </div>
 
-              {/* MASTER DEĞERİ: TAM ORTALI VE TOK PARLAMENT MAVİSİ */}
               <div
                 className={`shrink-0 self-stretch flex items-center justify-center text-center bg-[#102a6b]/75 border-l border-blue-400/40 font-black text-white shadow-[inset_0_0_10px_rgba(29,78,216,0.35)] transition-all duration-300 ${
                   isDetailOpen
@@ -1743,6 +1948,23 @@ export default function YeniArsivPage() {
             </button>
           );
         })}
+
+        {/* LİDERLERİN HEMEN YANINDA — YALNIZCA 262728 (ÖNDER ASLAN) GİRİŞİNDE GÖRÜNÜR */}
+        {isOnderVip && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('PREMIER_LEAGUE')}
+            className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-colors border cursor-pointer inline-flex items-center gap-1.5 ${
+              activeTab === 'PREMIER_LEAGUE'
+                ? 'bg-gradient-to-r from-[#38003c] via-[#580c64] to-[#00a859] text-white border-emerald-300 shadow-[0_0_16px_rgba(0,255,133,0.35)]'
+                : 'bg-[#190524] text-emerald-300 border-purple-500/60 hover:border-emerald-400 hover:text-white'
+            }`}
+            title="Sadece Önder Aslan (262728) Özel Görünümü"
+          >
+            <span>🦁</span>
+            <span>PREMIER LİG</span>
+          </button>
+        )}
       </div>
 
       {/* ===================== 1. SEKME: GENEL PUAN DURUMU ===================== */}
@@ -2729,6 +2951,233 @@ export default function YeniArsivPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===================== 6. ÖZEL SEKME: İNGİLTERE PREMIER LİG (SADECE 262728 ÖNDER ASLAN) ===================== */}
+      {activeTab === 'PREMIER_LEAGUE' && isOnderVip && (
+        <div className="bg-[#071126] border border-emerald-500/45 rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-[#2b0430] via-[#1b0836] to-[#062925] border-b border-emerald-500/35 px-3.5 py-3.5 sm:px-5 sm:py-4 flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 text-[9.5px] font-black uppercase tracking-widest">
+                  🔒 ÖNDER ASLAN (262728) ÖZEL LABORATUVARI
+                </div>
+                <h2 className="text-sm sm:text-lg font-black text-white uppercase tracking-wider mt-1">
+                  🦁 İNGİLTERE PREMIER LİG PUAN DURUMU
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setPlSubView('STANDINGS')}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider border cursor-pointer transition-colors ${
+                    plSubView === 'STANDINGS'
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-200 shadow'
+                      : 'bg-[#040917] text-slate-200 border-slate-700 hover:text-white'
+                  }`}
+                >
+                  📊 PUAN SIRALAMASI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlSubView('MATCHES')}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider border cursor-pointer transition-colors ${
+                    plSubView === 'MATCHES'
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-200 shadow'
+                      : 'bg-[#040917] text-emerald-300 border-slate-700 hover:text-white'
+                  }`}
+                >
+                  ⚽ PL MAÇLARI ({premierLeagueData.matches.length})
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 tabular-nums text-center">
+              <div className="rounded-xl bg-[#040a18]/85 border border-purple-400/35 py-2 px-2">
+                <div className="text-[9px] sm:text-[10px] font-black text-purple-300 uppercase">
+                  SONUÇLANAN PL MAÇI
+                </div>
+                <div className="text-base sm:text-xl font-black text-white mt-0.5">
+                  {premierLeagueData.matches.length} MAÇ
+                </div>
+              </div>
+              <div className="rounded-xl bg-[#040a18]/85 border border-sky-400/35 py-2 px-2">
+                <div className="text-[9px] sm:text-[10px] font-black text-sky-300 uppercase">
+                  YER ALDIĞI BÜLTEN
+                </div>
+                <div className="text-base sm:text-xl font-black text-white mt-0.5">
+                  {premierLeagueData.distinctWeekCount} HAFTA
+                </div>
+              </div>
+              <div className="rounded-xl bg-[#040a18]/85 border border-emerald-400/35 py-2 px-2">
+                <div className="text-[9px] sm:text-[10px] font-black text-emerald-300 uppercase">
+                  DAĞITILAN PL PUANI
+                </div>
+                <div className="text-base sm:text-xl font-black text-emerald-300 mt-0.5">
+                  {premierLeagueData.totalAwardedPts} P
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {plSubView === 'STANDINGS' ? (
+            <div className="px-0 pb-4 sm:px-4 sm:pb-6">
+              <div className="px-3 py-2 flex items-center justify-end gap-1.5 border-b border-slate-800/80">
+                <span className="text-[10px] font-black text-slate-400 uppercase mr-1">Sıralama:</span>
+                <button
+                  type="button"
+                  onClick={() => setPlSortBy('PUAN')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border cursor-pointer ${
+                    plSortBy === 'PUAN'
+                      ? 'bg-[#15368a] text-white border-blue-400'
+                      : 'bg-[#040917] text-slate-300 border-slate-800'
+                  }`}
+                >
+                  PL PUANINA GÖRE
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlSortBy('SKOR')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border cursor-pointer ${
+                    plSortBy === 'SKOR'
+                      ? 'bg-orange-600 text-white border-orange-300'
+                      : 'bg-[#040917] text-slate-300 border-slate-800'
+                  }`}
+                >
+                  PL SKORUNA GÖRE
+                </button>
+              </div>
+
+              {premierLeagueData.matches.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 text-xs font-black uppercase tracking-widest">
+                  ARŞİVDE HENÜZ SONUÇLANMIŞ PREMIER LİG MAÇI BULUNAMADI
+                </div>
+              ) : (
+                <div className="w-full text-left tabular-nums select-none">
+                  <div className="sticky top-[104px] sm:top-[112px] z-20 bg-[#050c1d] border-b border-slate-700/90 h-11 flex items-center w-full uppercase font-black text-[10px] sm:text-xs">
+                    <div className="w-8 sm:w-12 shrink-0 pl-2 sm:pl-3 text-slate-400">#</div>
+                    <div className="flex-1 min-w-0 px-1.5 sm:px-3 text-slate-200">YARIŞMACI</div>
+                    <div className="w-12 sm:w-20 shrink-0 text-center text-amber-300" title="Tek Başına 12 Puan">
+                      12P
+                    </div>
+                    <div className="w-12 sm:w-20 shrink-0 text-center text-orange-400">SKOR</div>
+                    <div className="w-14 sm:w-24 shrink-0 text-center text-sky-300 hidden sm:block">
+                      ORT
+                    </div>
+                    <div className="w-16 sm:w-28 shrink-0 self-stretch flex items-center justify-center bg-gradient-to-b from-[#38003c] to-[#1f0324] border-l border-emerald-400/50 text-emerald-300">
+                      PL PUAN
+                    </div>
+                  </div>
+
+                  <div className="divide-y divide-slate-800/70">
+                    {premierLeagueData.standings.map((row, idx) => {
+                      const avg =
+                        row.plSkor > 0 ? (row.plPts / row.plSkor).toFixed(2) : '0.00';
+                      const isZero = row.plPts === 0;
+
+                      return (
+                        <div
+                          key={row.id}
+                          className={`flex items-center w-full transition-colors ${
+                            row.id === PREMIER_VIP_USER_ID
+                              ? 'bg-emerald-950/25 hover:bg-emerald-950/40'
+                              : isZero
+                              ? 'opacity-55 hover:opacity-90 hover:bg-slate-800/30'
+                              : 'hover:bg-slate-800/35'
+                          }`}
+                        >
+                          <div className="w-8 sm:w-12 shrink-0 py-2.5 sm:py-3 pl-2 sm:pl-3 font-bold text-slate-400 text-xs sm:text-[15px]">
+                            {idx + 1}
+                          </div>
+
+                          <div className="flex-1 min-w-0 py-2.5 sm:py-3 px-1.5 sm:px-3 font-black text-white text-[13px] sm:text-base">
+                            {renderPlayerNameWithCup(
+                              row.name,
+                              row.isChampion,
+                              0,
+                              row.favoriteTeam,
+                              row.id,
+                              true
+                            )}
+                          </div>
+
+                          <div className="w-12 sm:w-20 shrink-0 text-center font-black text-xs sm:text-sm text-amber-300">
+                            {row.solo12Count > 0 ? `${row.solo12Count}x` : '-'}
+                          </div>
+
+                          <div className="w-12 sm:w-20 shrink-0 text-center font-black text-xs sm:text-[15px] text-orange-400">
+                            {row.plSkor}
+                          </div>
+
+                          <div className="w-14 sm:w-24 shrink-0 text-center font-bold text-xs sm:text-sm text-sky-300 hidden sm:block">
+                            {avg}
+                          </div>
+
+                          <div className="w-16 sm:w-28 shrink-0 self-stretch flex items-center justify-center bg-[#240429]/80 border-l border-emerald-400/35 font-black text-sm sm:text-lg text-emerald-300">
+                            {row.plPts}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-3 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5 tabular-nums">
+              {premierLeagueData.matches.map((m) => {
+                const winnerNames = m.cleanWinners
+                  .map((uid) => stripTrophies(playersMap[uid]?.name || uid))
+                  .sort((a, b) => a.localeCompare(b, 'tr'));
+
+                return (
+                  <div
+                    key={`plm-${m.week_num}-${m.match_index}`}
+                    className="rounded-2xl bg-gradient-to-b from-[#1e092b] via-[#0d1229] to-[#050b18] border border-purple-500/45 p-3.5 flex flex-col gap-2"
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase">
+                      <span className="text-emerald-300">
+                        {m.week_num}. HAFTA {m.match_index}. MAÇ
+                        {m.match_date ? ` • ${m.match_date}` : ''}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950">
+                        {m.cleanWinners.length > 0
+                          ? `+${m.calcPts} P (${m.cleanWinners.length} Kişi)`
+                          : '0 İsabet'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 bg-[#040914]/90 border border-slate-800 rounded-xl px-3 py-2">
+                      <span className="text-xs sm:text-sm font-black text-white uppercase truncate flex-1">
+                        {m.home_team}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-lg bg-[#2b0430] border border-emerald-400/50 text-sm sm:text-base font-black text-white shrink-0">
+                        {m.home_score} : {m.away_score}
+                      </span>
+                      <span className="text-xs sm:text-sm font-black text-white uppercase truncate flex-1 text-right">
+                        {m.away_team}
+                      </span>
+                    </div>
+
+                    <div className="text-[10px] text-slate-300 leading-snug">
+                      {winnerNames.length > 0 ? (
+                        <>
+                          <span className="font-black text-sky-300">Bilenler: </span>
+                          {winnerNames.join(', ')}
+                        </>
+                      ) : (
+                        <span className="text-rose-300/80 font-bold">
+                          Bu maçta tam skor bilen çıkmadı.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
