@@ -1491,7 +1491,7 @@ export default function PortalAuthGate({ children }: { children: React.ReactNode
 
     const ambushTimer = setTimeout(() => {
       kickOutSession('Sunucu oturum süreniz zaman aşımına uğradı. Lütfen yeniden giriş yapınız.');
-    }, 75000);
+    }, 150000);
 
     const onVisibilityChange = () => {
       if (document.hidden) {
