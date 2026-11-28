@@ -62,7 +62,6 @@ interface PlayedMatchDetail {
   matchTime: string;
   predictedScore: string;
   actualScore: string;
-  status: string;
   isExactHit: boolean;
   pointsEarned: number;
   isTff: boolean;
@@ -102,11 +101,6 @@ export default function PlayerSeasonDossierModal({
     Array<{
       week_num: number;
       match_index: number;
-      category: string;
-      match_date: string;
-      match_time: string;
-      home_team: string;
-      away_team: string;
     }>
   >([]);
   const [activeTabView, setActiveTabView] = useState<'ACTIVITY' | 'HITS'>('ACTIVITY');
@@ -148,10 +142,8 @@ export default function PlayerSeasonDossierModal({
 
         const { data: bulData } = await supabase
           .from('matches_bulletin')
-          .select('week_num, match_index, category, match_date, match_time, home_team, away_team')
+          .select('week_num, match_index')
           .gte('week_num', 41)
-          .order('week_num', { ascending: true })
-          .order('match_index', { ascending: true })
           .limit(500);
 
         if (!cancelled) {
@@ -288,7 +280,6 @@ export default function PlayerSeasonDossierModal({
             matchTime: mTimeStr,
             predictedScore: actualSc,
             actualScore: actualSc,
-            status: 'FINISHED',
             isExactHit: true,
             pointsEarned: pts,
             isTff,
@@ -352,47 +343,22 @@ export default function PlayerSeasonDossierModal({
       }
     });
 
-    const bulletinLookup: Record<
-      string,
-      {
-        home_team: string;
-        away_team: string;
-        match_date: string;
-        match_time: string;
-        category: string;
-      }
-    > = {};
     const matchCountPerWeek: Record<number, number> = {};
-
     matches.forEach((m) => {
       const wn = Number(m.week_num);
       const idx = Number(m.match_index);
-      bulletinLookup[`${wn}-${idx}`] = {
-        home_team: m.home_team,
-        away_team: m.away_team,
-        match_date: String(m.match_date || ''),
-        match_time: String(m.match_time || ''),
-        category: String(m.category || '')
-      };
       matchCountPerWeek[wn] = Math.max(matchCountPerWeek[wn] || 0, idx);
     });
-
     recentBulletinRows.forEach((b) => {
       const wn = Number(b.week_num);
       const idx = Number(b.match_index);
-      bulletinLookup[`${wn}-${idx}`] = {
-        home_team: b.home_team,
-        away_team: b.away_team,
-        match_date: b.match_date || '',
-        match_time: b.match_time || '',
-        category: b.category || ''
-      };
       matchCountPerWeek[wn] = Math.max(matchCountPerWeek[wn] || 0, idx);
       if (wn > latestStartedLeagueWeek) {
         latestStartedLeagueWeek = wn;
       }
     });
 
+    // Geçerli tahminler (yalnızca bülten doluluk sayacı ve SONUÇLANMIŞ maçlar için kullanılır!)
     const validPredByWeek: Record<number, Array<{ matchIndex: number; score: string }>> = {};
     rawUserPreds.forEach((pr) => {
       const sc = String(pr.predicted_score || '')
@@ -442,64 +408,69 @@ export default function PlayerSeasonDossierModal({
         ? latestStartedLeagueWeek - lastPlayedWeek
         : 0;
 
-    const playedMatchTimeline: PlayedMatchDetail[] = [];
+    // KESİN SPOILER KİLİDİ: YALNIZCA RESMİ OLARAK SONUÇLANMIŞ (FINISHED) MAÇLAR LİSTEYE GİRER!
+    // Oynanmamış / devam eden hiçbir maçın tahmini asla okunmaz ve gösterilmez.
+    const finishedPlayedTimeline: PlayedMatchDetail[] = [];
     predictedWeeksDesc.forEach((wn) => {
       const entries = [...validPredByWeek[wn]].sort((a, b) => b.matchIndex - a.matchIndex);
       entries.forEach((ent) => {
         const key = `${wn}-${ent.matchIndex}`;
         const offM = officialLookup[key];
-        const bulM = bulletinLookup[key];
-        const homeTeam = offM?.home_team || bulM?.home_team || `${ent.matchIndex}. Maç Ev`;
-        const awayTeam = offM?.away_team || bulM?.away_team || 'Deplasman';
-        const mDate = String(offM?.match_date || bulM?.match_date || '');
-        const mTime = String(offM?.match_time || bulM?.match_time || '');
-        const cat = String(offM?.category || bulM?.category || '');
 
-        const isFin = offM?.status === 'FINISHED';
-        const actualSc =
-          isFin && offM?.home_score !== null && offM?.away_score !== null
-            ? `${offM.home_score}-${offM.away_score}`
-            : offM?.status === 'POSTPONED'
-            ? 'ERT'
-            : 'Oynanmadı';
+        // Maç resmi olarak bitmemişse (Oynanmadı / Ertelendi / Başlamadı) KESİNLİKLE ATLA!
+        if (
+          !offM ||
+          offM.status !== 'FINISHED' ||
+          offM.home_score === null ||
+          offM.home_score === undefined ||
+          offM.away_score === null ||
+          offM.away_score === undefined
+        ) {
+          return;
+        }
 
-        const winners = (offM?.winner_ids || []).map((x) => String(x).trim());
-        const isHit = Boolean(isFin && (winners.includes(targetId) || actualSc === ent.score));
+        const actualSc = `${offM.home_score}-${offM.away_score}`.replace(/\s+/g, '');
+        const winners = (offM.winner_ids || []).map((x) => String(x).trim());
+        const isHit = Boolean(winners.includes(targetId) || actualSc === ent.score);
         const pts = isHit
-          ? offM?.points_awarded !== null && offM?.points_awarded !== undefined
+          ? offM.points_awarded !== null && offM.points_awarded !== undefined
             ? Number(offM.points_awarded)
             : calcFallbackPts(winners.filter((id) => !EXCLUDED_IDS.has(id)).length)
           : 0;
 
+        const mDate = String(offM.match_date || '');
+        const mTime = String(offM.match_time || '');
+        const cat = String(offM.category || '');
         const kMs = getMatchTimeMs(mDate, mTime);
-        playedMatchTimeline.push({
+
+        finishedPlayedTimeline.push({
           weekNum: wn,
           matchIndex: ent.matchIndex,
-          homeTeam,
-          awayTeam,
+          homeTeam: offM.home_team,
+          awayTeam: offM.away_team,
           matchDate: mDate,
           matchTime: mTime,
           predictedScore: ent.score,
           actualScore: actualSc,
-          status: String(offM?.status || 'PENDING'),
           isExactHit: isHit,
           pointsEarned: pts,
-          isTff: isStrictTffMatch(cat, homeTeam, awayTeam, offM?.pool_type || undefined),
+          isTff: isStrictTffMatch(cat, offM.home_team, offM.away_team, offM.pool_type || undefined),
           sortKey: wn * 10000000000000 + (kMs > 0 ? kMs : ent.matchIndex * 1000)
         });
       });
     });
 
-    playedMatchTimeline.sort((a, b) => b.weekNum - a.weekNum || b.matchIndex - a.matchIndex);
+    finishedPlayedTimeline.sort((a, b) => b.weekNum - a.weekNum || b.matchIndex - a.matchIndex);
 
-    const effectiveRecentMatches =
-      playedMatchTimeline.length > 0
-        ? playedMatchTimeline.slice(0, 5)
+    const effectiveRecentFinished =
+      finishedPlayedTimeline.length > 0
+        ? finishedPlayedTimeline.slice(0, 5)
         : [...exactHitMatches]
             .sort((a, b) => b.weekNum - a.weekNum || b.matchIndex - a.matchIndex)
             .slice(0, 5);
 
-    const lastSingleMatch = effectiveRecentMatches.length > 0 ? effectiveRecentMatches[0] : null;
+    const lastFinishedMatch =
+      effectiveRecentFinished.length > 0 ? effectiveRecentFinished[0] : null;
 
     const masterPts = dfoPts + tffPts + bonusPts;
     const totalSkor = dfoSkor + tffSkor;
@@ -535,8 +506,8 @@ export default function PlayerSeasonDossierModal({
       lastWeekTotalMatches,
       missedWeeksAfterLast,
       latestStartedLeagueWeek,
-      lastSingleMatch,
-      recentFiveMatches: effectiveRecentMatches,
+      lastFinishedMatch,
+      recentFiveFinishedMatches: effectiveRecentFinished,
       exactHitsSorted: [...exactHitMatches].sort(
         (a, b) => b.weekNum - a.weekNum || b.matchIndex - a.matchIndex
       )
@@ -554,6 +525,7 @@ export default function PlayerSeasonDossierModal({
         className="w-full max-w-2xl rounded-3xl bg-gradient-to-b from-[#091733] via-[#061024] to-[#040915] border border-blue-500/45 shadow-[0_24px_70px_rgba(0,0,0,0.92)] overflow-hidden text-white my-auto max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ÜST BAŞLIK */}
         <div className="bg-gradient-to-r from-[#0c214a] via-[#091838] to-[#071229] border-b border-slate-700/80 px-4 py-3.5 sm:px-6 sm:py-4 shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -610,6 +582,7 @@ export default function PlayerSeasonDossierModal({
           </div>
         </div>
 
+        {/* İÇERİK GÖVDESİ */}
         <div className="p-3.5 sm:p-5 space-y-4 overflow-y-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="rounded-2xl bg-[#050c1d] border border-amber-400/45 p-3 text-center">
@@ -665,6 +638,7 @@ export default function PlayerSeasonDossierModal({
             </div>
           </div>
 
+          {/* SON TAHMİN VE KATILIM DURUMU (SIFIR SPOILER: SADECE ADET VE SON BİTEN MAÇ!) */}
           <div
             className={`rounded-2xl border p-3.5 sm:p-4 space-y-2.5 ${
               dossier.missedWeeksAfterLast > 0
@@ -714,41 +688,53 @@ export default function PlayerSeasonDossierModal({
                   <div className="text-[10.5px] font-bold text-slate-400 mt-0.5">
                     {dossier.missedWeeksAfterLast > 0
                       ? `${dossier.lastPlayedWeek}. Haftadan sonra (${dossier.lastPlayedWeek + 1} - ${dossier.latestStartedLeagueWeek}. Hafta) tahmin girişi yok.`
-                      : 'Son yayınlanan haftada tahminlerini girdi.'}
+                      : '🔒 Oynanmamış maçların skorları maç bitene kadar gizlidir.'}
                   </div>
                 </div>
 
                 <div className="rounded-xl bg-[#040914]/90 border border-slate-800 px-3 py-2.5">
                   <div className="text-[9.5px] font-black text-emerald-400 uppercase tracking-wider">
-                    EN SON TAHMİN YAPTIĞI MAÇ
+                    SON SONUÇLANAN MAÇ TAHMİNİ
                   </div>
-                  {dossier.lastSingleMatch ? (
+                  {dossier.lastFinishedMatch ? (
                     <>
                       <div className="text-xs sm:text-sm font-black text-white uppercase truncate mt-0.5">
-                        {dossier.lastSingleMatch.homeTeam} - {dossier.lastSingleMatch.awayTeam}
+                        {dossier.lastFinishedMatch.homeTeam} - {dossier.lastFinishedMatch.awayTeam}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 text-[10.5px] font-black mt-0.5">
-                        <span className="text-amber-300">
-                          {dossier.lastSingleMatch.weekNum}. Hafta {dossier.lastSingleMatch.matchIndex}. Maç
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10.5px] font-black mt-1">
+                        <span className="text-slate-300">
+                          {dossier.lastFinishedMatch.weekNum}.H {dossier.lastFinishedMatch.matchIndex}.M
                         </span>
-                        <span className="text-sky-300">
-                          Tahmin: {dossier.lastSingleMatch.predictedScore}
+                        <span className="px-1.5 py-0.5 rounded bg-slate-800 text-white">
+                          Sonuç: {dossier.lastFinishedMatch.actualScore}
                         </span>
-                        {dossier.lastSingleMatch.matchDate && (
-                          <span className="text-slate-400">
-                            ({dossier.lastSingleMatch.matchDate} {dossier.lastSingleMatch.matchTime})
+                        <span
+                          className={`px-1.5 py-0.5 rounded border ${
+                            dossier.lastFinishedMatch.isExactHit
+                              ? 'bg-emerald-950/90 border-emerald-400 text-emerald-300'
+                              : 'bg-rose-950/90 border-rose-500 text-rose-300'
+                          }`}
+                        >
+                          Tahmin: {dossier.lastFinishedMatch.predictedScore}
+                        </span>
+                        {dossier.lastFinishedMatch.isExactHit && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950">
+                            +{dossier.lastFinishedMatch.pointsEarned} Puan Aldı
                           </span>
                         )}
                       </div>
                     </>
                   ) : (
-                    <div className="text-xs font-bold text-slate-400 mt-1">Veri bulunamadı</div>
+                    <div className="text-xs font-bold text-slate-400 mt-1">
+                      🔒 Maçlar sonuçlandığında açılır
+                    </div>
                   )}
                 </div>
               </div>
             )}
           </div>
 
+          {/* ALT SEKMELER */}
           <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
             <button
               type="button"
@@ -759,7 +745,7 @@ export default function PlayerSeasonDossierModal({
                   : 'bg-[#040917] text-slate-300 border-slate-800 hover:text-white'
               }`}
             >
-              🕒 SON OYNADIĞI 5 MAÇ
+              🕒 SON SONUÇLANAN 5 MAÇI
             </button>
             <button
               type="button"
@@ -778,20 +764,20 @@ export default function PlayerSeasonDossierModal({
             <div className="space-y-2">
               {activityLoading ? (
                 <div className="text-center py-8 text-xs font-black text-sky-300 uppercase tracking-widest animate-pulse">
-                  Son oynadığı maçlar yükleniyor...
+                  Sonuçlanan maçlar yükleniyor...
                 </div>
-              ) : dossier.recentFiveMatches.length === 0 ? (
+              ) : dossier.recentFiveFinishedMatches.length === 0 ? (
                 <div className="text-center py-8 text-xs font-bold text-slate-400 uppercase">
-                  Henüz oynanmış maç kaydı bulunmuyor.
+                  🔒 Henüz sonuçlanmış maç kaydı bulunmuyor (Açık bülten tahminleri gizlidir).
                 </div>
               ) : (
-                dossier.recentFiveMatches.map((rm) => (
+                dossier.recentFiveFinishedMatches.map((rm) => (
                   <div
                     key={`rec-${rm.weekNum}-${rm.matchIndex}`}
-                    className={`rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2 ${
+                    className={`rounded-xl border px-3 sm:px-3.5 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 ${
                       rm.isExactHit
-                        ? 'bg-emerald-950/30 border-emerald-500/50'
-                        : 'bg-[#050b18] border-slate-800'
+                        ? 'bg-emerald-950/30 border-emerald-500/60'
+                        : 'bg-rose-950/15 border-rose-900/50'
                     }`}
                   >
                     <div className="min-w-0 flex-1">
@@ -819,24 +805,41 @@ export default function PlayerSeasonDossierModal({
                       </div>
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-2 text-right">
-                      <div className="px-2.5 py-1 rounded-lg bg-[#040914] border border-slate-700 text-center">
-                        <div className="text-[8.5px] font-black text-slate-400 uppercase">TAHMİN</div>
-                        <div className="text-xs sm:text-sm font-black text-amber-300 tabular-nums">
-                          {rm.predictedScore}
-                        </div>
-                      </div>
-
-                      <div className="px-2.5 py-1 rounded-lg bg-[#040914] border border-slate-700 text-center min-w-[64px]">
+                    {/* ÖNCE SONUÇ, SONRA YEŞİL/KIRMIZI TAHMİN, BİLMİŞSE YANINA +X PUAN ALDI */}
+                    <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+                      <div className="px-2.5 py-1 rounded-lg bg-[#040914] border border-slate-700 text-center min-w-[54px]">
                         <div className="text-[8.5px] font-black text-slate-400 uppercase">SONUÇ</div>
                         <div className="text-xs sm:text-sm font-black text-white tabular-nums">
                           {rm.actualScore}
                         </div>
                       </div>
 
+                      <div
+                        className={`px-2.5 py-1 rounded-lg border text-center min-w-[56px] ${
+                          rm.isExactHit
+                            ? 'bg-emerald-950/90 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                            : 'bg-rose-950/90 border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.2)]'
+                        }`}
+                      >
+                        <div
+                          className={`text-[8.5px] font-black uppercase ${
+                            rm.isExactHit ? 'text-emerald-300' : 'text-rose-300'
+                          }`}
+                        >
+                          TAHMİN
+                        </div>
+                        <div
+                          className={`text-xs sm:text-sm font-black tabular-nums ${
+                            rm.isExactHit ? 'text-emerald-300' : 'text-rose-400'
+                          }`}
+                        >
+                          {rm.predictedScore}
+                        </div>
+                      </div>
+
                       {rm.isExactHit && (
-                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-slate-950 text-[10.5px] font-black">
-                          +{rm.pointsEarned}P
+                        <span className="px-2.5 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-[10px] sm:text-[11px] font-black uppercase tracking-wide whitespace-nowrap shadow">
+                          +{rm.pointsEarned} PUAN ALDI
                         </span>
                       )}
                     </div>
@@ -882,7 +885,7 @@ export default function PlayerSeasonDossierModal({
                         {hm.actualScore}
                       </span>
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 text-xs font-black tabular-nums">
-                        +{hm.pointsEarned} P
+                        +{hm.pointsEarned} PUAN ALDI
                       </span>
                     </div>
                   </div>
