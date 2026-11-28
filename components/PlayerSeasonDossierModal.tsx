@@ -8,45 +8,48 @@ import { getMatchTimeMs } from '@/utils/themeEngine';
 
 const EXCLUDED_IDS = new Set(['mankoman']);
 
-interface DossierMatchRow {
-  id: number | string;
+export interface DossierMatchItem {
+  id?: number | string;
   week_num: number;
   match_index: number;
-  category: string;
-  pool_type?: 'DFO' | 'TFF' | string;
-  match_date: string;
-  match_time: string;
+  category?: string | null;
+  pool_type?: 'DFO' | 'TFF' | string | null;
+  match_date?: string | null;
+  match_time?: string | null;
   home_team: string;
   away_team: string;
-  home_score: string | number | null;
-  away_score: string | number | null;
-  status: string;
-  winner_ids: string[] | null;
-  points_awarded: number | null;
+  home_score?: string | number | null;
+  away_score?: string | number | null;
+  status?: string | null;
+  winner_ids?: string[] | null;
+  points_awarded?: number | null;
 }
 
-interface DossierWeekBonusRow {
+export interface DossierWeekBonusItem {
   week_num: number;
-  is_completed: boolean;
-  bonus_enabled: boolean;
-  puan_lideri_ids: string[] | null;
-  puan_bonus: number | null;
-  skor_krali_ids: string[] | null;
-  skor_bonus: number | null;
+  is_completed?: boolean | null;
+  bonus_enabled?: boolean | null;
+  puan_lideri_ids?: string[] | null;
+  puan_bonus?: number | null;
+  skor_krali_ids?: string[] | null;
+  skor_bonus?: number | null;
 }
 
-interface PlayerDirectoryEntry {
+export type DossierMatchRow = DossierMatchItem;
+export type DossierWeekBonusRow = DossierWeekBonusItem;
+
+export interface PlayerDirectoryEntry {
   name: string;
   isChampion?: boolean;
   favoriteTeam?: string;
 }
 
-interface PlayerSeasonDossierModalProps {
+export interface PlayerSeasonDossierModalProps {
   playerId: string | null;
   onClose: () => void;
   playersDirectory: Record<string, PlayerDirectoryEntry>;
-  matches: DossierMatchRow[];
-  weeksBonus: DossierWeekBonusRow[];
+  matches: DossierMatchItem[];
+  weeksBonus: DossierWeekBonusItem[];
   seasonLabel?: string;
 }
 
@@ -177,7 +180,6 @@ export default function PlayerSeasonDossierModal({
         : '';
     const clubLogo = getClubLogoUrl(favTeam);
 
-    // Tüm yarışmacıların haftalık kümülatif sıralama simülasyonu (Güncel Sıra + En Yüksek Sıra ve Haftası)
     const allPlayerIds = Array.from(
       new Set([
         ...Object.keys(playersDirectory).filter((id) => !EXCLUDED_IDS.has(id)),
@@ -194,8 +196,8 @@ export default function PlayerSeasonDossierModal({
       };
     });
 
-    const matchesByWeek: Record<number, DossierMatchRow[]> = {};
-    const officialLookup: Record<string, DossierMatchRow> = {};
+    const matchesByWeek: Record<number, DossierMatchItem[]> = {};
+    const officialLookup: Record<string, DossierMatchItem> = {};
     matches.forEach((m) => {
       const wn = Number(m.week_num);
       if (!matchesByWeek[wn]) matchesByWeek[wn] = [];
@@ -203,7 +205,7 @@ export default function PlayerSeasonDossierModal({
       officialLookup[`${wn}-${Number(m.match_index)}`] = m;
     });
 
-    const bonusByWeek: Record<number, DossierWeekBonusRow> = {};
+    const bonusByWeek: Record<number, DossierWeekBonusItem> = {};
     weeksBonus.forEach((wb) => {
       bonusByWeek[Number(wb.week_num)] = wb;
     });
@@ -246,7 +248,12 @@ export default function PlayerSeasonDossierModal({
           m.points_awarded !== null && m.points_awarded !== undefined
             ? Number(m.points_awarded)
             : calcFallbackPts(winners.length);
-        const isTff = isStrictTffMatch(m.category, m.home_team, m.away_team, m.pool_type);
+        const isTff = isStrictTffMatch(
+          m.category || '',
+          m.home_team,
+          m.away_team,
+          m.pool_type || undefined
+        );
 
         winners.forEach((wId) => {
           if (!runningStats[wId]) {
@@ -269,14 +276,16 @@ export default function PlayerSeasonDossierModal({
             dfoSkor += 1;
           }
           const actualSc = `${m.home_score ?? '-'}-${m.away_score ?? '-'}`;
-          const kMs = getMatchTimeMs(String(m.match_date || ''), String(m.match_time || ''));
+          const mDateStr = String(m.match_date || '');
+          const mTimeStr = String(m.match_time || '');
+          const kMs = getMatchTimeMs(mDateStr, mTimeStr);
           exactHitMatches.push({
             weekNum: wn,
             matchIndex: Number(m.match_index),
             homeTeam: m.home_team,
             awayTeam: m.away_team,
-            matchDate: m.match_date || '',
-            matchTime: m.match_time || '',
+            matchDate: mDateStr,
+            matchTime: mTimeStr,
             predictedScore: actualSc,
             actualScore: actualSc,
             status: 'FINISHED',
@@ -343,7 +352,6 @@ export default function PlayerSeasonDossierModal({
       }
     });
 
-    // Bülten + Resmi Maç Sözlüğü (Takım adları ve bülten maç sayısı için)
     const bulletinLookup: Record<
       string,
       {
@@ -362,9 +370,9 @@ export default function PlayerSeasonDossierModal({
       bulletinLookup[`${wn}-${idx}`] = {
         home_team: m.home_team,
         away_team: m.away_team,
-        match_date: m.match_date || '',
-        match_time: m.match_time || '',
-        category: m.category || ''
+        match_date: String(m.match_date || ''),
+        match_time: String(m.match_time || ''),
+        category: String(m.category || '')
       };
       matchCountPerWeek[wn] = Math.max(matchCountPerWeek[wn] || 0, idx);
     });
@@ -385,7 +393,6 @@ export default function PlayerSeasonDossierModal({
       }
     });
 
-    // Yarışmacının geçerli tahminleri (PAS veya '-' olmayan gerçek tahminler)
     const validPredByWeek: Record<number, Array<{ matchIndex: number; score: string }>> = {};
     rawUserPreds.forEach((pr) => {
       const sc = String(pr.predicted_score || '')
@@ -403,7 +410,6 @@ export default function PlayerSeasonDossierModal({
       }
     });
 
-    // Arşivde (1-40. haftalar gibi) player_predictions silinmişse bile bildiği resmi maçlardan son aktif haftasını yakala
     const hitWeeksFallback = Array.from(new Set(exactHitMatches.map((hm) => hm.weekNum))).sort(
       (a, b) => b - a
     );
@@ -436,7 +442,6 @@ export default function PlayerSeasonDossierModal({
         ? latestStartedLeagueWeek - lastPlayedWeek
         : 0;
 
-    // Son Oynadığı Maçlar Listesi (En son bültenden geriye doğru son 5 tahmin yaptığı maç)
     const playedMatchTimeline: PlayedMatchDetail[] = [];
     predictedWeeksDesc.forEach((wn) => {
       const entries = [...validPredByWeek[wn]].sort((a, b) => b.matchIndex - a.matchIndex);
@@ -446,9 +451,9 @@ export default function PlayerSeasonDossierModal({
         const bulM = bulletinLookup[key];
         const homeTeam = offM?.home_team || bulM?.home_team || `${ent.matchIndex}. Maç Ev`;
         const awayTeam = offM?.away_team || bulM?.away_team || 'Deplasman';
-        const mDate = offM?.match_date || bulM?.match_date || '';
-        const mTime = offM?.match_time || bulM?.match_time || '';
-        const cat = offM?.category || bulM?.category || '';
+        const mDate = String(offM?.match_date || bulM?.match_date || '');
+        const mTime = String(offM?.match_time || bulM?.match_time || '');
+        const cat = String(offM?.category || bulM?.category || '');
 
         const isFin = offM?.status === 'FINISHED';
         const actualSc =
@@ -476,18 +481,16 @@ export default function PlayerSeasonDossierModal({
           matchTime: mTime,
           predictedScore: ent.score,
           actualScore: actualSc,
-          status: offM?.status || 'PENDING',
+          status: String(offM?.status || 'PENDING'),
           isExactHit: isHit,
           pointsEarned: pts,
-          isTff: isStrictTffMatch(cat, homeTeam, awayTeam, offM?.pool_type),
+          isTff: isStrictTffMatch(cat, homeTeam, awayTeam, offM?.pool_type || undefined),
           sortKey: wn * 10000000000000 + (kMs > 0 ? kMs : ent.matchIndex * 1000)
         });
       });
     });
 
-    playedMatchTimeline.sort(
-      (a, b) => b.weekNum - a.weekNum || b.matchIndex - a.matchIndex
-    );
+    playedMatchTimeline.sort((a, b) => b.weekNum - a.weekNum || b.matchIndex - a.matchIndex);
 
     const effectiveRecentMatches =
       playedMatchTimeline.length > 0
@@ -500,7 +503,7 @@ export default function PlayerSeasonDossierModal({
 
     const masterPts = dfoPts + tffPts + bonusPts;
     const totalSkor = dfoSkor + tffSkor;
-    const avgPtsPerHit = totalSkor > 0 ? ( (dfoPts + tffPts) / totalSkor ).toFixed(2) : '0.00';
+    const avgPtsPerHit = totalSkor > 0 ? ((dfoPts + tffPts) / totalSkor).toFixed(2) : '0.00';
 
     const formatBestWeeksText = (wks: number[]) => {
       if (wks.length === 0) return 'Henüz oluşmadı';
@@ -551,7 +554,6 @@ export default function PlayerSeasonDossierModal({
         className="w-full max-w-2xl rounded-3xl bg-gradient-to-b from-[#091733] via-[#061024] to-[#040915] border border-blue-500/45 shadow-[0_24px_70px_rgba(0,0,0,0.92)] overflow-hidden text-white my-auto max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ===================== ÜST BAŞLIK: YARIŞMACI İSMİ İLE AYNI BÜYÜKLÜKTE GÜNCEL SIRA (HASHTAG YOK!) ===================== */}
         <div className="bg-gradient-to-r from-[#0c214a] via-[#091838] to-[#071229] border-b border-slate-700/80 px-4 py-3.5 sm:px-6 sm:py-4 shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -587,7 +589,6 @@ export default function PlayerSeasonDossierModal({
             </div>
 
             <div className="flex items-start gap-2 shrink-0">
-              {/* DEV GÜNCEL SIRA KUTUSU (HASHTAG YOK, İSİM BÜYÜKLÜĞÜNDE) */}
               <div className="rounded-2xl bg-gradient-to-b from-[#173b96] to-[#0e2460] border-2 border-sky-400/75 px-3 py-1.5 sm:px-4 sm:py-2 text-center shadow-[0_0_20px_rgba(37,99,235,0.45)]">
                 <div className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-sky-200 leading-none mb-1">
                   GÜNCEL SIRA
@@ -609,9 +610,7 @@ export default function PlayerSeasonDossierModal({
           </div>
         </div>
 
-        {/* ===================== KAYDIRILABİLİR İÇERİK GÖVDESİ ===================== */}
         <div className="p-3.5 sm:p-5 space-y-4 overflow-y-auto">
-          {/* 4'LÜ ANA ÖZET KARTLARI (ZİRVE HAFTASI NET YAZILI, HASHTAG YOK) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="rounded-2xl bg-[#050c1d] border border-amber-400/45 p-3 text-center">
               <div className="text-[9.5px] font-black uppercase tracking-wider text-amber-300">
@@ -666,7 +665,6 @@ export default function PlayerSeasonDossierModal({
             </div>
           </div>
 
-          {/* HERKESİN GÖRECEĞİ NET "SON TAHMİN YAPILAN HAFTA & DEVAMLILIK" KARTI */}
           <div
             className={`rounded-2xl border p-3.5 sm:p-4 space-y-2.5 ${
               dossier.missedWeeksAfterLast > 0
@@ -751,7 +749,6 @@ export default function PlayerSeasonDossierModal({
             )}
           </div>
 
-          {/* ALT SEKMELER: SON 5 TAHMİN YAPTIĞI MAÇ vs TAM İSABET BİLDİĞİ MAÇLAR */}
           <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
             <button
               type="button"
